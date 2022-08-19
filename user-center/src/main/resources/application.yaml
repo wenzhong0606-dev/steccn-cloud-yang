@@ -1,0 +1,26 @@
+server:
+  port: 9001
+spring:
+  application:
+    name: user-center
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        file-extension: yaml
+        server-addr: 127.0.0.1:8848
+  r2dbc:
+    url: r2dbcs:mysql://127.0.0.1:3306/upmsx
+    username: root
+    password: root
+    pool:
+      enabled: true
+      validation-query: select 1
+      max-idle-time: 3s
+
+logging:
+    level:
+      com.jingtaichina.usercenter: debug
+
+#  ?useSSL=true&userUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
