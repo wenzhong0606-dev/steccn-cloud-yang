@@ -1,5 +1,6 @@
 package com.steccn.authserver.config;
 
+import com.google.common.collect.Maps;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -34,6 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -49,7 +52,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfiguration {
-
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -135,12 +137,15 @@ public class AuthorizationServerConfiguration {
     OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
         return context -> {
             if (context.getTokenType() == OAuth2TokenType.ACCESS_TOKEN) {
+                //todo 携带额外信息 存放类
                 Authentication principal = context.getPrincipal();
                 Set<String> authorities = principal.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toSet());
-                log.info("#### jwtCustomizer authorities {} call at {}",authorities,LocalDateTime.now().toString());
+                log.info("#### jwtCustomizer authorities {} call at {}", authorities, LocalDateTime.now().toString());
+                //角色信息的集合
                 context.getClaims().claim("roles", authorities);
+                context.getClaims().claim("userName", principal.getName());
             }
         };
     }

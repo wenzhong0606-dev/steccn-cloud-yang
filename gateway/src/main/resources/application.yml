@@ -5,12 +5,26 @@ spring:
   application:
     name: steccn_gateway
   cloud:
+    loadbalancer:
+      cache:
+        enabled: true
+      caffeine:
+        spec: initialCapacity=500,expireAfterWrite=5s
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+        namespace: steccn_dev
       config:
         file-extension: yaml
         server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: user
+          uri: lb://user-center
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment}
 
   security:
     oauth2:
