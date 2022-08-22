@@ -52,6 +52,17 @@
                 <artifactId>steccn-common-core</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>user-center</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>auth-server</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>
