@@ -21,6 +21,4 @@ spring:
 
 logging:
     level:
-      com.jingtaichina.usercenter: debug
-
-#  ?useSSL=true&userUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      com.steccn.usercenter: debug

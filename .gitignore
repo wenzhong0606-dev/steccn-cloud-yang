@@ -2,6 +2,11 @@
 *.class
 
 **/.idea/
+**/logs/
+
+**/target/
+**/.gitignore
+.idea
 
 steccn-cloud.iml
 

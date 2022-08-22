@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.steccn</groupId>
+        <artifactId>steccn-cloud</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <groupId>com.steccn</groupId>
+    <artifactId>steccn-common</artifactId>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+    <description>凯盛节能公共模块</description>
+    <modules>
+        <module>steccn-common-bom</module>
+        <module>steccn-common-core</module>
+    </modules>
+</project>

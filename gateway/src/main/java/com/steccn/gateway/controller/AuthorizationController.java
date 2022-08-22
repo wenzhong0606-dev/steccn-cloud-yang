@@ -20,6 +20,7 @@ public class AuthorizationController {
 
     @GetMapping("/token")
     Object getAuthorizationCode(@RegisteredOAuth2AuthorizedClient("gatewayclient") OAuth2AuthorizedClient client) {
+       //todo 安全性考虑，统一返回R
         return client;
     }
 }
