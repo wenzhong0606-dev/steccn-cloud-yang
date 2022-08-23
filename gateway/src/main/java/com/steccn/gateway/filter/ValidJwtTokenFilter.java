@@ -2,12 +2,14 @@ package com.steccn.gateway.filter;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.nimbusds.jwt.JWT;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -15,6 +17,9 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
+
+    @Autowired
+    private JwtDecoder jwtDecoder;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -33,7 +38,12 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             return exchange.getResponse().setComplete();
         }
 
+
+
         //3.校验token是否正确
+        Jwt decode = jwtDecoder.decode(token);
+
+        log.info("decode -> {}", decode);
 
 
         return chain.filter(exchange);

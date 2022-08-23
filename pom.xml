@@ -20,6 +20,8 @@
         <module>gateway</module>
         <module>user-center</module>
         <module>steccn-common</module>
+        <module>steccn-qms</module>
+        <module>steccn-pms</module>
     </modules>
 
 
@@ -30,7 +32,6 @@
         <spring-cloud.version>2021.0.1</spring-cloud.version>
         <alibaba-spring-cloud.version>2021.1</alibaba-spring-cloud.version>
         <alibaba-nacos.version>2021.1</alibaba-nacos.version>
-
         <jasypt.version>3.0.4</jasypt.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>

@@ -1,17 +1,20 @@
 server:
   port: 9002
 
+
 spring:
   application:
     name: auth-server
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: 10.1.103.235:8848
         namespace: steccn_dev
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  main:
+    allow-bean-definition-overriding: true
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
 #    url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud

@@ -6,15 +6,15 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: 10.1.103.235:8848
         namespace: steccn_dev
       config:
         file-extension: yaml
-        server-addr: 127.0.0.1:8848
+        server-addr: 10.1.103.235:8848
   r2dbc:
-    url: r2dbcs:mysql://127.0.0.1:3306/upmsx?locale=zh-CN
-    username: root
-    password: root
+    url: r2dbcs:mysql://10.1.103.235:3306/jingtai_cloud
+    username: jingtai_platform_user
+    password: JingTai-Platform-User#
     pool:
       enabled: true
       validation-query: select 1
