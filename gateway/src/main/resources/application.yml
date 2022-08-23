@@ -43,3 +43,5 @@ spring:
             authorization-uri: http://127.0.0.1:9002/oauth2/authorize
             token-uri: http://127.0.0.1:9002/oauth2/token
             jwk-set-uri: http://127.0.0.1:9002/oauth2/jwks
+  main:
+    allow-bean-definition-overriding: true

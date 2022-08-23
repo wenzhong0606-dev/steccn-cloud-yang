@@ -63,6 +63,12 @@
                 <artifactId>auth-server</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!--steccn-common-data-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-common-data</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>

@@ -15,5 +15,6 @@
         <module>steccn-common-bom</module>
         <module>steccn-common-core</module>
         <module>steccn-common-redis</module>
+        <module>steccn-common-data</module>
     </modules>
 </project>

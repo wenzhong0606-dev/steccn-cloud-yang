@@ -1,16 +1,19 @@
 package com.steccn.usercenter.controller;
 
+import com.steccn.common.util.SteccnUserBaseUtils;
 import com.steccn.common.vo.R;
+import com.steccn.common.vo.SteccnUserBaseInfo;
 import com.steccn.usercenter.domain.SysUser;
 import com.steccn.usercenter.repository.UserRepository;
 import com.steccn.usercenter.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-
-import java.security.Security;
 
 /**
  * 类说明
@@ -21,6 +24,7 @@ import java.security.Security;
 @Api(tags = "用户中心")
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class SysUserController {
     @Autowired
     private UserRepository userRepository;
@@ -37,9 +41,10 @@ public class SysUserController {
     public Mono<R> findUserByName(@PathVariable String name) {
         return userRepository.getUserByName(name).map(sysUser -> R.success(sysUser));
     }
+
     @ApiOperation("新增用户")
     @PostMapping("/add")
-    public Mono<R> addUserByName(@RequestBody SysUser user){
+    public Mono<R> addUserByName(@RequestBody SysUser user) {
         return userRepository.save(user).map(sysUser -> R.success(sysUser));
     }
 
@@ -52,7 +57,21 @@ public class SysUserController {
 
     @GetMapping("/userinfo/name/{name}")
     @ApiOperation("查询用户信息")
-    public Mono<R> getUserInfoByName(@PathVariable String name) {
+    public Mono<R> getUserInfoByName(ServerHttpRequest request, @PathVariable String name) {
+        // 获取相关对象
+        SteccnUserBaseInfo userBaseInfo = SteccnUserBaseUtils.getUserBaseInfo(request);
         return userService.getUserInfoByUsername(name).map(userDTO -> R.success(userDTO));
     }
+
+    @GetMapping("/userinfo/name/tl/{name}")
+    @ApiOperation("查询用户信息")
+    public Mono<R<SteccnUserBaseInfo>> getUserInfoByNameTl(@PathVariable String name) {
+        return userService.getUserInfoByUsername(name).map(userDTO -> {
+            SteccnUserBaseInfo userBaseInfo = new SteccnUserBaseInfo();
+            BeanUtils.copyProperties(userDTO, userBaseInfo);
+            R<SteccnUserBaseInfo> success = R.success(userBaseInfo);
+            return success;
+        });
+    }
+
 }

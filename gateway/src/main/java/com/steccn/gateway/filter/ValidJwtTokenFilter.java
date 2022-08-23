@@ -25,7 +25,6 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
         if (inAllowRoutes(url)) {
             return chain.filter(exchange);
         }
-
         //2.获取token
         String token = exchange.getRequest().getHeaders().getFirst("access_token");
         if (StrUtil.isBlank(token)) {
@@ -33,7 +32,6 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-
         try {
             //3.校验token是否正确
             JWT jwt = JWTUtil.parseToken(token);
@@ -41,18 +39,21 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             String sub = (String) jwt.getPayload("sub");
             //3.2存放到threadlocal中去，但threadlocal需要释放，避免内存泄漏
             log.info("用户名 ->{}", sub);
+            //3.3校验用户传过来的userId是否为当前jwt中解析出来的userId，用于安全验证
+
         } catch (Exception e) {
             log.error("{}", e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-        return chain.filter(exchange);
+        Mono<Void> filter = chain.filter(exchange);
+        return filter;
     }
 
 
     @Override
     public int getOrder() {
-        return -1000;
+        return LOWEST_PRECEDENCE;
     }
 
     /**
