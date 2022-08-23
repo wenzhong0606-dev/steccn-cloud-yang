@@ -1,0 +1,22 @@
+server:
+  port: 13000
+spring:
+  application:
+    name: steccn-pms
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.1.103.235:8848
+        namespace: steccn_dev
+      config:
+        file-extension: yaml
+        server-addr: 10.1.103.235:8848
+  r2dbc:
+    url: r2dbcs:mysql://10.1.103.235:3306/jingtai_cloud
+    username: jingtai_platform_user
+    password: JingTai-Platform-User#
+    pool:
+      enabled: true
+      validation-query: select 1
+      max-idle-time: 3s
+

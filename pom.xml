@@ -22,6 +22,7 @@
         <module>steccn-common</module>
         <module>steccn-qms</module>
         <module>steccn-pms</module>
+        <module>steccn-portal</module>
     </modules>
 
 
