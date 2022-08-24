@@ -69,6 +69,42 @@
                 <artifactId>steccn-common-data</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!--steccn-user-center-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-user-center-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-user-center-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-user-center-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-pms-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-pms-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-pms-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-pms-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-qms-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-qms-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-qms-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-qms-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>

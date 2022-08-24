@@ -4,7 +4,11 @@ package com.steccn.gateway.filter;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
+import com.google.common.collect.Lists;
+import com.steccn.common.constant.JwtConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -12,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -26,7 +32,7 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
         //2.获取token
-        String token = exchange.getRequest().getHeaders().getFirst("access_token");
+        String token = exchange.getRequest().getHeaders().getFirst(JwtConstants.STR_ACCESS_TOKEN);
         if (StrUtil.isBlank(token)) {
             log.error("token is empty ...");
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -36,10 +42,9 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             //3.校验token是否正确
             JWT jwt = JWTUtil.parseToken(token);
             //3.1获取用户名
-            String sub = (String) jwt.getPayload("sub");
-            //3.2存放到threadlocal中去，但threadlocal需要释放，避免内存泄漏
+            String sub = (String) jwt.getPayload(JwtConstants.STR_SUB);
             log.info("用户名 ->{}", sub);
-            //3.3校验用户传过来的userId是否为当前jwt中解析出来的userId，用于安全验证
+            //3.2校验用户传过来的userId是否为当前jwt中解析出来的userId，用于安全验证
 
         } catch (Exception e) {
             log.error("{}", e);
@@ -65,6 +70,8 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
      * @date 2022/7/9 15:02
      */
     private boolean inAllowRoutes(String route) {
+        //获取token无需走认证逻辑
+        List<String> list = Lists.newArrayList();
         return false;
     }
 }

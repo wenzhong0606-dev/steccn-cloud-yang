@@ -1,7 +1,7 @@
 package com.steccn.authserver.service;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.steccn.authserver.openfeign.UserInfoService;
+import com.steccn.authserver.UserInfoService;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.usercenter.dto.UserDTO;

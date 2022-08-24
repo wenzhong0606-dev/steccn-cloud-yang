@@ -18,11 +18,11 @@
     <modules>
         <module>auth-server</module>
         <module>gateway</module>
-        <module>user-center</module>
         <module>steccn-common</module>
         <module>steccn-qms</module>
         <module>steccn-pms</module>
         <module>steccn-portal</module>
+        <module>steccn-user-center</module>
     </modules>
 
 
