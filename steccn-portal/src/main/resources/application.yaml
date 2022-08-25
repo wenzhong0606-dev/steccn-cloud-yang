@@ -2,7 +2,7 @@ server:
   port: 13000
 spring:
   application:
-    name: steccn-pms
+    name: steccn-portal
   cloud:
     nacos:
       discovery:

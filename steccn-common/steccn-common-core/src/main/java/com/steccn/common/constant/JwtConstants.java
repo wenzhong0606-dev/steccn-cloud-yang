@@ -15,6 +15,12 @@ public interface JwtConstants {
       */
      String STR_SUB = "sub";
 
+     /**
+      * sub字符串
+      */
+     String ROLES = "roles";
+
+
 
 
 

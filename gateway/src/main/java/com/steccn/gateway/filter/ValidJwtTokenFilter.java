@@ -6,6 +6,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.JwtConstants;
+import com.steccn.common.vo.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
