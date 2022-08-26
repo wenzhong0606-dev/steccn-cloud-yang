@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.Optional;
+
 /**
  * @desc 菜单权限业务
  */
@@ -21,19 +24,17 @@ public class PermissionInfoService {
 
     private final PermissonInfoRepository permissonInfoRepository;
 
-    public Mono<PermissionInfoDTO> getPermissionByCode(String code) {
-        //1.获取所有的菜单
-        Flux<PermissionInfo> all = permissonInfoRepository.findAll();
-        //2.根据code过滤菜单
-        Flux<PermissionInfo> filter = all.filter(v -> code.equals(v.getCode()));
-        //3.获取单个元素
-        Mono<PermissionInfo> single = filter.single();
-        //4.拷贝属性，返回
-        Mono<PermissionInfoDTO> resMono = single.map(v -> {
-            PermissionInfoDTO dto = new PermissionInfoDTO();
-            BeanUtils.copyProperties(v, dto);
-            return dto;
-        });
-        return resMono;
+    public Mono<Optional<Object>> getPermissionByCode(String code) {
+        return permissonInfoRepository.findAll().filter(v ->code.equals(v.getCode()))
+                .collectList().flatMap(pl -> Mono.just(Optional.ofNullable(translateDTO(pl))));
+    }
+
+    private PermissionInfoDTO translateDTO(List pl){
+        if(pl.size() == 0)
+            return null;
+        PermissionInfo permissionInfo = (PermissionInfo) pl.get(0);
+        PermissionInfoDTO dto = new PermissionInfoDTO();
+        BeanUtils.copyProperties(permissionInfo, dto);
+        return dto;
     }
 }

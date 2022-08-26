@@ -28,7 +28,12 @@ public class PermissionInfoController {
 
     @ApiOperation("根据菜单code获取菜单")
     @GetMapping("/{code}")
-    public Mono<R<PermissionInfoDTO>> getPermissionByCode(@PathVariable("code") String code) {
-        return permissionInfoService.getPermissionByCode(code).map(v -> R.success(v));
-    }
+    public Mono<R> getPermissionByCode(@PathVariable("code") String code) {
+        return permissionInfoService.getPermissionByCode(code).map(optional ->{
+                    if(optional.isPresent())
+                        return R.success(optional.get());
+                    else
+                        return R.failure("您无此代码代表的权限");
+                });
+   }
 }
