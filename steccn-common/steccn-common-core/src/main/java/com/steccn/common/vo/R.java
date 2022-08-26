@@ -57,7 +57,6 @@ public class R<T> {
     /**
      * 方法说明
      *
-     * @param null
      * @return
      * @author Jinglihui
      * @date 2022/7/15 17:57
@@ -92,6 +91,14 @@ public class R<T> {
 
         return r;
     }
+    public static R success(String msg) {
+        R r = new R();
+        r.code = ResultCode.SUCCESS.getCode();
+        r.msg = msg;
+        r.data = null;
+
+        return r;
+    }
 
     public static <K> R<K> failure(K data) {
         R<K> r = new R<>();
@@ -114,6 +121,14 @@ public class R<T> {
         R r = new R();
         r.code = resultCode.getCode();
         r.msg = resultCode.getMsg();
+
+        return r;
+    }
+    public static R failure(String msg) {
+        R r = new R();
+        r.code = ResultCode.FAILURE.getCode();
+        r.msg = msg;
+        r.data = null;
 
         return r;
     }
