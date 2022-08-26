@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 类说明
@@ -29,7 +30,7 @@ public class CustomUserDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         R r = userInfoService.getUserInfoByname(username);
-        if (r.getCode() != ResultCode.SUCCESS.getCode()) {
+        if (Objects.isNull(r) || r.getCode() != ResultCode.SUCCESS.getCode()) {
             throw new UsernameNotFoundException("查询用户" + username + "出错。");
         }
         Map<String, Object> map = (Map<String, Object>) r.getData();
