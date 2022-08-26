@@ -4,26 +4,33 @@ package com.steccn.gateway.filter;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.steccn.common.constant.JwtConstants;
 import com.steccn.common.vo.R;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
 @Slf4j
+@AllArgsConstructor
 @Component
 public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
 
+    private final ObjectMapper objectMapper;
+
+    @SneakyThrows
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String url = exchange.getRequest().getURI().getPath();
@@ -36,8 +43,11 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
         String token = exchange.getRequest().getHeaders().getFirst(JwtConstants.STR_ACCESS_TOKEN);
         if (StrUtil.isBlank(token)) {
             log.error("token is empty ...");
+            ServerHttpResponse response = exchange.getResponse();
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response.writeWith(Mono.just(
+                    response.bufferFactory().wrap(objectMapper.writeValueAsBytes(R.failure("请求头中access_token为空")))));
         }
         try {
             //3.校验token是否正确
@@ -46,7 +56,6 @@ public class ValidJwtTokenFilter implements GlobalFilter, Ordered {
             String sub = (String) jwt.getPayload(JwtConstants.STR_SUB);
             log.info("用户名 ->{}", sub);
             //3.2校验用户传过来的userId是否为当前jwt中解析出来的userId，用于安全验证
-
         } catch (Exception e) {
             log.error("{}", e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
