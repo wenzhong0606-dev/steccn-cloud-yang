@@ -1,6 +1,8 @@
 package com.steccn.authserver.config;
 
+import com.steccn.authserver.authentication.OAAuthenticationSecurityConfig;
 import com.steccn.authserver.service.CustomUserDetailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,6 +20,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity(debug = false)
 public class SpringSecurityConfiguration {
 
+    @Autowired
+    private OAAuthenticationSecurityConfig oaAuthenticationSecurityConfig;
+
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(
@@ -26,6 +31,7 @@ public class SpringSecurityConfiguration {
                                 .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults());
+        httpSecurity.apply(oaAuthenticationSecurityConfig);
         return httpSecurity.build();
     }
 

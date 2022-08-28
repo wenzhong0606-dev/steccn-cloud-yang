@@ -44,7 +44,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-public class AuthorizationServerConfiguration {
+public class AuthorizationServerConfiguration{
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -74,6 +74,7 @@ public class AuthorizationServerConfiguration {
                 .clientSecret(encoder.encode("steccn-gateway"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.IMPLICIT)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri("http://127.0.0.1:9000/login/oauth2/code/gatewayclient")
                 .redirectUri("http://127.0.0.1:9000/authorized")

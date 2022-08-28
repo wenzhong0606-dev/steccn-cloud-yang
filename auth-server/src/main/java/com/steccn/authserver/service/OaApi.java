@@ -1,6 +1,6 @@
-package com.steccn.portal.api.oa;
+package com.steccn.authserver.service;
 
-import com.steccn.portal.dto.oa.OaLoginParam;
+import com.steccn.authserver.dto.OaLoginParam;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;

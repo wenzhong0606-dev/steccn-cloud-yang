@@ -1,4 +1,4 @@
-package com.steccn.authserver;
+package com.steccn.usercenter.feign;
 
 import com.steccn.common.vo.R;
 import org.springframework.cloud.openfeign.FeignClient;
