@@ -3,8 +3,12 @@
  */
 package com.steccn.authserver.authentication;
 
+import com.alibaba.fastjson.JSONObject;
 import com.steccn.authserver.dto.OaLoginParam;
+import com.steccn.authserver.dto.OaLoginResult;
 import com.steccn.authserver.service.OaApi;
+import com.steccn.common.constant.Constant;
+import com.steccn.usercenter.dto.UserSaveDTO;
 import com.steccn.usercenter.feign.UserInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -16,6 +20,7 @@ import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * @author zhailiang
@@ -52,7 +57,6 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
         if (postOnly && !request.getMethod().equals("POST")) {
             throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
         }
-
         String username = request.getParameter(usernameParameter);
         String password = request.getParameter(passwordParameter);
         //去OA验证，如果成功，插入数据库中
@@ -63,13 +67,16 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
         oaLoginParam.setUserpassword(password);
         String s = oaApi.checkLogin(oaLoginParam);
         log.info("s ->{}", s);
-
-
+        OaLoginResult oaLoginResult = JSONObject.parseObject(s, OaLoginResult.class);
+        if (Objects.nonNull(oaLoginResult) && Constant.OA_SUCCESS_CODE.equals(oaLoginResult.getMsgCode())) {
+            //如果不为空，并且成功，会去判断数据库的用户表中是否存在用户，如果不存在则直接插入数据库
+            UserSaveDTO userSaveDTO = new UserSaveDTO();
+            userSaveDTO.setUsername(username);
+            userSaveDTO.setPassword(password);
+            userInfoService.saveUserInfo(userSaveDTO);
+        }
         OAAuthenticationToken authRequest = new OAAuthenticationToken(username, password);
-
-        // Allow subclasses to set the "details" property
         setDetails(request, authRequest);
-
         return this.getAuthenticationManager().authenticate(authRequest);
     }
 
