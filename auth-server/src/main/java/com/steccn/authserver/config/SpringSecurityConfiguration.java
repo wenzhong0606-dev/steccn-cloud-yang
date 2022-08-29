@@ -49,28 +49,9 @@ public class SpringSecurityConfiguration {
 
         return customUserDetailService;
     }
-//    public UserDetailsService users(PasswordEncoder encoder) {
-//
-//        UserDetails user = User.withUsername("user")
-//                .password(encoder.encode("password"))
-//                .roles("USER")
-//                .build();
-//        return new InMemoryUserDetailsManager(user);
-//
-//    }
 
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-//    public static void main(String[] args) {
-//        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-//        String ari = encoder.encode("Ari");
-//        boolean ari1 = encoder.matches("Ari", ari);
-//        System.out.println(ari);
-//        System.out.println(ari1);
-//
-//
-//    }
 }
