@@ -72,22 +72,20 @@ public class UserService {
      * @param userSaveDTO 用户保存的dto
      * @return
      */
-    public Mono<Boolean> saveUserInfo(UserSaveDTO userSaveDTO) {
+    public Mono<SysUser> saveUserInfo(UserSaveDTO userSaveDTO) {
         Mono<SysUser> userByName = userRepository.getUserByName(userSaveDTO.getUsername());
-        Mono<Boolean> booleanMono = userByName.flatMap(v -> {
-            if (Objects.isNull(v) || Objects.isNull(v.getId())) {
-                log.info("v-> {}",v);
+        Mono<SysUser> resSysUser = userByName.hasElement().flatMap(v -> {
+            if (Objects.isNull(v) || !v) {
+                log.info("v-> {}", v);
                 SysUser sysUser = new SysUser();
                 BeanUtils.copyProperties(userSaveDTO, sysUser);
-                //雪花算法id
-                sysUser.setId(IdUtil.getSnowflake().nextId());
                 sysUser.setPassword(bCryptPasswordEncoder.encode(sysUser.getPassword()));
-                userRepository.save(sysUser);
+                Mono<SysUser> save = userRepository.save(sysUser);
+                return save;
             }
-            return Mono.just(Boolean.TRUE);
+            return userByName;
         });
-        return booleanMono;
-
+        return resSysUser;
     }
 
 }

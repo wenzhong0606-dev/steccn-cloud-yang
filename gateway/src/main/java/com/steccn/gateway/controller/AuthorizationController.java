@@ -27,7 +27,7 @@ public class AuthorizationController {
 
     @GetMapping("/token")
     R<UserBaseInfoVO> getAuthorizationCode(@RegisteredOAuth2AuthorizedClient("gatewayclient") OAuth2AuthorizedClient client) {
-       //todo 安全性考虑，统一返回R
+        //todo 安全性考虑，统一返回R
         UserBaseInfoVO vo = new UserBaseInfoVO();
         vo.setAccessToken(client.getAccessToken().getTokenValue());
         vo.setExpiresAt(LocalDateTime.ofInstant(client.getAccessToken().getExpiresAt(), ZoneId.systemDefault()));

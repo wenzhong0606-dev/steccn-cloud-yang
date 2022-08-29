@@ -66,8 +66,7 @@ public class SysUserController {
 
     @PostMapping("/userinfo/save")
     @ApiOperation("保存用户信息")
-    public Mono<R<Boolean>> saveUserInfo(@RequestBody UserSaveDTO userSaveDTO) {
-        return userService.saveUserInfo(userSaveDTO).map(v -> R.success(v));
+    public Mono<SysUser> saveUserInfo(@RequestBody UserSaveDTO userSaveDTO) {
+        return userService.saveUserInfo(userSaveDTO);
     }
-
 }

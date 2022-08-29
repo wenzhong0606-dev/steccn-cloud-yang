@@ -8,12 +8,15 @@ import com.steccn.authserver.dto.OaLoginParam;
 import com.steccn.authserver.dto.OaLoginResult;
 import com.steccn.authserver.service.OaApi;
 import com.steccn.common.constant.Constant;
+import com.steccn.common.vo.R;
 import com.steccn.usercenter.dto.UserSaveDTO;
 import com.steccn.usercenter.feign.UserInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
@@ -32,6 +35,8 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
     private UserInfoService userInfoService;
 
     private OaApi oaApi;
+
+    private PasswordEncoder bCryptPasswordEncoder;
 
     /**
      * 默认的OA登录请求处理url
@@ -65,6 +70,9 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
         OaLoginParam oaLoginParam = new OaLoginParam();
         oaLoginParam.setLoginid(username);
         oaLoginParam.setUserpassword(password);
+        String encode = bCryptPasswordEncoder.encode(password);
+        log.info("encode -> {}",encode);
+        
         String s = oaApi.checkLogin(oaLoginParam);
         log.info("s ->{}", s);
         OaLoginResult oaLoginResult = JSONObject.parseObject(s, OaLoginResult.class);
@@ -73,9 +81,12 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
             UserSaveDTO userSaveDTO = new UserSaveDTO();
             userSaveDTO.setUsername(username);
             userSaveDTO.setPassword(password);
-            userInfoService.saveUserInfo(userSaveDTO);
+            R<Boolean> booleanR = userInfoService.saveUserInfo(userSaveDTO);
+            log.info("booleanR -> {}", booleanR);
+        }else{
+            throw new AuthenticationServiceException(oaLoginResult.getMsg());
         }
-        OAAuthenticationToken authRequest = new OAAuthenticationToken(username, password);
+        OAAuthenticationToken authRequest = new OAAuthenticationToken(username, bCryptPasswordEncoder.encode(password));
         setDetails(request, authRequest);
         return this.getAuthenticationManager().authenticate(authRequest);
     }
@@ -132,5 +143,9 @@ public class OAAuthenticationFilter extends AbstractAuthenticationProcessingFilt
 
     public void setOaApi(OaApi oaApi) {
         this.oaApi = oaApi;
+    }
+
+    public void setBCryptPasswordEncoder(PasswordEncoder bCryptPasswordEncoder) {
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 }

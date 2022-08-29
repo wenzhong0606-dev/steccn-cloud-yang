@@ -4,7 +4,9 @@
 package com.steccn.authserver.authentication;
 
 import com.steccn.usercenter.feign.UserInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  * @author zhailiang
  *
  */
+@Slf4j
 public class OAAuthenticationProvider implements AuthenticationProvider {
 
 	private UserDetailsService userDetailsService;
@@ -29,18 +32,10 @@ public class OAAuthenticationProvider implements AuthenticationProvider {
 	 */
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
 		OAAuthenticationToken authenticationToken = (OAAuthenticationToken) authentication;
-		
 		UserDetails user = userDetailsService.loadUserByUsername((String) authenticationToken.getPrincipal());
-
 		if (user == null) {
-//			throw new InternalAuthenticationServiceException("无法获取用户信息");
-			//前面oa验证成功，插入数据库之后，这里可以抛异常
-			user =  User.withUsername((String)authentication.getPrincipal())
-					.password("123445")
-					.authorities("admin")
-					.build();
+			throw new InternalAuthenticationServiceException("无法获取用户信息");
 		}
 		OAAuthenticationToken authenticationResult = new OAAuthenticationToken(user, user.getAuthorities());
 		authenticationResult.setDetails(authenticationToken.getDetails());
