@@ -4,6 +4,7 @@ import com.steccn.common.util.SteccnUserBaseUtils;
 import com.steccn.common.vo.R;
 import com.steccn.common.vo.SteccnUserBaseInfo;
 import com.steccn.usercenter.domain.SysUser;
+import com.steccn.usercenter.dto.UserSaveDTO;
 import com.steccn.usercenter.repository.UserRepository;
 import com.steccn.usercenter.service.UserService;
 import io.swagger.annotations.Api;
@@ -63,4 +64,9 @@ public class SysUserController {
         return userService.getUserInfoByUsername(name).map(userDTO -> R.success(userDTO));
     }
 
+    @PostMapping("/userinfo/save")
+    @ApiOperation("保存用户信息")
+    public Mono<SysUser> saveUserInfo(@RequestBody UserSaveDTO userSaveDTO) {
+        return userService.saveUserInfo(userSaveDTO);
+    }
 }

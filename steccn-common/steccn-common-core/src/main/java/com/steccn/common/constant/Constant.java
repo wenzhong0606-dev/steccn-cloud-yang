@@ -24,5 +24,11 @@ public class Constant {
 
     public static final Integer AUTHENTICATION_FAILURE = 1005;
 
+    /**
+     * OA成功的code
+     */
+    public static final Integer OA_SUCCESS_CODE = 0;
+
+
 
 }
