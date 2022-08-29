@@ -24,7 +24,7 @@ public class PermissionInfoService {
 
     private final PermissonInfoRepository permissonInfoRepository;
 
-    public Mono<Optional<Object>> getPermissionByCode(String code) {
+    public Mono<Optional<PermissionInfoDTO>> getPermissionByCode(String code) {
         return permissonInfoRepository.findAll().filter(v ->code.equals(v.getCode()))
                 .collectList().flatMap(pl -> Mono.just(Optional.ofNullable(translateDTO(pl))));
     }

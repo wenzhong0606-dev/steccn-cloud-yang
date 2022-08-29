@@ -1,9 +1,8 @@
-package com.steccn.portal.service;
+package com.steccn.authserver.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.steccn.portal.api.oa.OaApi;
-import com.steccn.portal.dto.oa.OaLoginParam;
-import com.steccn.portal.dto.oa.OaLoginResult;
+import com.steccn.authserver.dto.OaLoginParam;
+import com.steccn.authserver.dto.OaLoginResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;

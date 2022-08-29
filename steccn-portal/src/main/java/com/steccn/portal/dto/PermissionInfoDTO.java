@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
  */
 @Data
 @ApiModel("菜单权限DTO-PermissionInfoDTO")
-public class PermissionInfoDTO extends Object {
+public class PermissionInfoDTO {
     @ApiModelProperty("主键id")
     private Integer id;
 

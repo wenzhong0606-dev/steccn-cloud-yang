@@ -75,5 +75,9 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-user-center-api</artifactId>
+        </dependency>
     </dependencies>
 </project>
