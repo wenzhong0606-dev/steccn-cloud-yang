@@ -16,12 +16,11 @@ spring:
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
-#  datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud
-#    username: jingtai_platform_user
-#    password: JingTai-Platform-User#
-#    type: com.alibaba.druid.pool.DruidDataSource
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud
+    username: jingtai_platform_user
+    password: JingTai-Platform-User#
 logging:
   level:
     com:
