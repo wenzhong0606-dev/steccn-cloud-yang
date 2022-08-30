@@ -56,18 +56,17 @@ public class SysUserController {
         return userService.getUserInfoByUserId(id).map(userDTO -> R.success(userDTO));
     }
 
-    @GetMapping("/userinfo/name/{name}")
+    @GetMapping("/userinfo/name")
     @ApiOperation("查询用户信息")
-    public Mono<R> getUserInfoByName(ServerHttpRequest request, @PathVariable String name) {
+    public Mono<R> getUserInfoByName(ServerHttpRequest request, @RequestParam("name") String name) {
         // 获取相关对象
         SteccnUserBaseInfo userBaseInfo = SteccnUserBaseUtils.getUserBaseInfo(request);
         return userService.getUserInfoByUsername(name).map(userDTO -> R.success(userDTO));
     }
 
-    @PostMapping("/userinfo/save")
+    @PostMapping("/userinfo/save/test")
     @ApiOperation("保存用户信息")
-    public Mono<R<Boolean>> saveUserInfo(@RequestBody UserSaveDTO userSaveDTO) {
-        return userService.saveUserInfo(userSaveDTO).map(v -> R.success(v));
+    public Mono<SysUser> saveUserInfo(@RequestBody UserSaveDTO userSaveDTO) {
+        return userService.saveUserInfo(userSaveDTO);
     }
-
 }
