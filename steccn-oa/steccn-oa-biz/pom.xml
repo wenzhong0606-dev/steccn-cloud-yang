@@ -69,5 +69,10 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-oa-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>

@@ -1,14 +1,11 @@
-package com.steccn.authserver.service;
+package com.steccn.oa.service;
 
-import com.steccn.authserver.dto.OaLoginParam;
-import com.steccn.authserver.dto.OaSsoTokenParam;
+import com.steccn.oa.dto.OaLoginParam;
+import com.steccn.oa.dto.OaSsoTokenParam;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 类说明
@@ -47,4 +44,13 @@ public interface OaApi {
     @PostMapping(value = "/api/ec/dev/auth/applytoken")
     @ResponseBody
     String getApiToken(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取菜单,请求oa接口用
+     * @param headers 传参需要放入header中
+     * @return
+     */
+    @GetMapping(value = "/api/portal/menu/getFrontEndMenu?isLoadAll=1")
+    @ResponseBody
+    String getOaMenu(@RequestHeader MultiValueMap<String,String> headers);
 }

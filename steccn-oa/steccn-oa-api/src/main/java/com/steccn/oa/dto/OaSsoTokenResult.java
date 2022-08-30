@@ -1,4 +1,4 @@
-package com.steccn.authserver.dto;
+package com.steccn.oa.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
