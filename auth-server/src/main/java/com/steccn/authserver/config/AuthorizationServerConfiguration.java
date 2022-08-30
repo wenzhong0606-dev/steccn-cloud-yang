@@ -4,12 +4,13 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.steccn.authserver.handler.MyAuthenticationSuccessHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +45,11 @@ import java.util.UUID;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-public class AuthorizationServerConfiguration{
+public class AuthorizationServerConfiguration {
+
+
+    @Autowired
+    private MyAuthenticationSuccessHandler successHandler;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -52,8 +57,7 @@ public class AuthorizationServerConfiguration{
             throws Exception {
 
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(httpSecurity);
-
-        return httpSecurity.formLogin(Customizer.withDefaults()).build();
+        return httpSecurity.formLogin(v -> v.successHandler(successHandler)).build();
     }
 
 

@@ -105,6 +105,31 @@
                 <artifactId>steccn-qms-biz</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+            <!--steccn-portal-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-portal-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-portal-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-portal-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-oa-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-oa-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-oa-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-oa-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>

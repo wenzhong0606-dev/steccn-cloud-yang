@@ -23,6 +23,7 @@
         <module>steccn-pms</module>
         <module>steccn-portal</module>
         <module>steccn-user-center</module>
+        <module>steccn-oa</module>
     </modules>
 
 

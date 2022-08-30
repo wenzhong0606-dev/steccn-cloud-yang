@@ -2,10 +2,11 @@ package com.steccn.authserver.config;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
+import com.steccn.authserver.handler.MyAuthenticationSuccessHandler;
 import com.steccn.authserver.service.CustomUserDetailService;
 import org.bouncycastle.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,6 +21,10 @@ import org.springframework.security.web.SecurityFilterChain;
  */
 @EnableWebSecurity(debug = false)
 public class SpringSecurityConfiguration {
+
+    @Autowired
+    private MyAuthenticationSuccessHandler successHandler;
+
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(
@@ -27,7 +32,8 @@ public class SpringSecurityConfiguration {
                                 .antMatchers("/login", "/actuator/health").permitAll()
                                 .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults());
+//                .formLogin(Customizer.withDefaults());
+                .formLogin().successHandler(successHandler);
         return httpSecurity.build();
     }
 
@@ -64,4 +70,7 @@ public class SpringSecurityConfiguration {
             }
         };
     }
+
+
+
 }

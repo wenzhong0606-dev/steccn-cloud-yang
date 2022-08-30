@@ -1,8 +1,6 @@
 package com.steccn.portal.controller;
 
 import com.steccn.common.vo.R;
-import com.steccn.portal.dto.PermissionInfoDTO;
-import com.steccn.portal.repository.PermissonInfoRepository;
 import com.steccn.portal.service.PermissionInfoService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
