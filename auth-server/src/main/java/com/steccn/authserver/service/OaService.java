@@ -3,15 +3,13 @@ package com.steccn.authserver.service;
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.authserver.dto.OaLoginParam;
 import com.steccn.authserver.dto.OaLoginResult;
-import com.steccn.authserver.dto.OaSSoParam;
-import com.steccn.authserver.dto.OaSSoResult;
+import com.steccn.authserver.dto.OaSsoTokenParam;
+import com.steccn.authserver.dto.OaSsoTokenResult;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -62,20 +60,39 @@ public class OaService {
 
     /**
      * 获得oa跳过登录token
-     * @param oaSSoParam
+     * @param oaSSoTokenParam
      * @return
      */
-    public OaSSoResult getSsoToken(OaSSoParam oaSSoParam){
-        String result = oaApi.getSsoToken(oaSSoParam);
+    public OaSsoTokenResult getSsoToken(OaSsoTokenParam oaSSoTokenParam){
+        String result = oaApi.getSsoToken(oaSSoTokenParam);
+        String res = result.substring(0,9);
+        OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
+        if(res.equals("Token获取失败")){
+            oaSsoTokenResult.setStatus(false);
+        }else {
+            oaSsoTokenResult.setStatus(true);
+        }
+        oaSsoTokenResult.setToken(result);
+        return oaSsoTokenResult;
+    }
+
+    /**
+     * 获得oa跳过登录token
+     * @param oaSSoTokenParam
+     * @return
+     */
+    public OaSsoTokenResult getApiToken(OaSsoTokenParam oaSSoTokenParam){
+        String result = oaApi.getSsoToken(oaSSoTokenParam);
         //json转对象
         JSONObject ssoObj = JSONObject.parseObject(result);
-        OaSSoResult oaSSoResult = new OaSSoResult();
-        oaSSoResult.setMsg(ssoObj.getString("msg"));
-        oaSSoResult.setCode(ssoObj.getIntValue("code"));
-        oaSSoResult.setStatus(ssoObj.getBoolean("status"));
+        OaSsoTokenResult oaSSoTokenResult = new OaSsoTokenResult();
+        String res = result.substring(9);
+//        oaSSoResult.setMsg(ssoObj.getString("msg"));
+//        oaSSoResult.setCode(ssoObj.getIntValue("code"));
+        oaSSoTokenResult.setStatus(ssoObj.getBoolean("status"));
         if(ssoObj.getString("token")!=null){
-            oaSSoResult.setToken(ssoObj.getString("token"));
+            oaSSoTokenResult.setToken(ssoObj.getString("token"));
         }
-        return oaSSoResult;
+        return oaSSoTokenResult;
     }
 }

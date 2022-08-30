@@ -1,11 +1,13 @@
 package com.steccn.authserver.service;
 
 import com.steccn.authserver.dto.OaLoginParam;
-import com.steccn.authserver.dto.OaSSoParam;
+import com.steccn.authserver.dto.OaSsoTokenParam;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -29,10 +31,20 @@ public interface OaApi {
 
     /**
      * oa跳过登录页token
-     * @param oaSSoParam
+     * @param oaSSoTokenParam
      * @return
      */
-    @PostMapping(value = "/ssologin/getToken")
+    @PostMapping(value = "/ssologin/getToken",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
-    String getSsoToken(@RequestBody OaSSoParam oaSSoParam);
+    String getSsoToken(@RequestBody OaSsoTokenParam oaSSoTokenParam);
+
+    /**
+     * 获取apiToken,请求oa接口用
+     * @param headers 传参需要放入header中
+     * @return
+     */
+    @PostMapping(value = "/api/ec/dev/auth/applytoken")
+    @ResponseBody
+    String getApiToken(@RequestHeader MultiValueMap<String,String> headers);
 }

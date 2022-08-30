@@ -12,7 +12,7 @@ import lombok.Data;
  */
 @Data
 @ApiModel("Oa跳转登录页传入参数")
-public class OaSSoParam {
+public class OaSsoTokenParam {
     @ApiModelProperty("用户名")
     private String loginid;
     @ApiModelProperty("appid默认ssso")
