@@ -2,9 +2,8 @@ package com.steccn.oa.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.oa.dto.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,9 +27,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class OaService {
-    @Autowired
-    private OaApi oaApi;
+
+    private final OaApi oaApi;
 
     /**
      * 防止因为webflux产生的返回值报错
@@ -131,7 +131,7 @@ public class OaService {
             //递归拿到树状数据
             if(jsonObject.getJSONObject("data")!=null && !jsonObject.getJSONArray("data").isEmpty()){
                 for(int i = 0; i < jsonObject.getJSONArray("data").size(); i++){
-                    this.transferJsonToObject(jsonObject.getJSONArray("data").getJSONObject(i));
+                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray("data").getJSONObject(i)));
                 }
             }
             return oaMenuResults;
