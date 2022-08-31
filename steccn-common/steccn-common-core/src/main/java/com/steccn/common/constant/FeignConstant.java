@@ -1,0 +1,20 @@
+package com.steccn.common.constant;
+
+/**
+ * feign的服务信息常量
+ *
+ * @author Adolph.Ye
+ * @date 2022/7/7
+ */
+public interface FeignConstant {
+
+    /**
+     * 统一门户的服务名称
+     */
+    String STECCN_PORTAL_SERVICE_NAME = "steccn-portal";
+
+    /**
+     * 统一门户的服务名称
+     */
+    String STECCN_OA_SERVICE_NAME = "steccn-oa";
+}

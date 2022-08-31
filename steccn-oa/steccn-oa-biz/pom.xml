@@ -5,7 +5,7 @@
     <parent>
         <artifactId>steccn-oa</artifactId>
         <groupId>com.steccn</groupId>
-        <version>1.0.0</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -72,7 +72,6 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-oa-api</artifactId>
-            <version>1.0.0</version>
         </dependency>
     </dependencies>
 </project>
