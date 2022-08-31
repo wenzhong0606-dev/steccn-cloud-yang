@@ -17,5 +17,4 @@ public interface RemoteLoginFeign {
      */
     @GetMapping("/portal/login")
     R login(@RequestParam("username") String username, @RequestParam("password") String password);
-
 }

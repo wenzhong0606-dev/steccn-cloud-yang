@@ -36,20 +36,20 @@ public class OaController {
 
     @ApiOperation(value = "校验oa中的用户名密码")
     @PostMapping("/checkLogin")
-    public Mono<R> checkLogin(@RequestBody OaLoginParam oaLoginParam){
-        return Mono.just(R.success(oaService.checkLogin(oaLoginParam)));
+    public R checkLogin(@RequestBody OaLoginParam oaLoginParam){
+        return R.success(oaService.checkLogin(oaLoginParam));
     }
 
     @ApiOperation(value = "获取oa跳过登录页token")
     @GetMapping("/ssoToken/{loginId}")
-    public Mono<R> getSsoToken(@PathVariable("loginId") String loginId) {
+    public R getSsoToken(@PathVariable("loginId") String loginId) {
         OaSsoTokenParam param = new OaSsoTokenParam();
         param.setLoginid(loginId);
         OaSsoTokenResult oaSsoTokenResult = oaService.getSsoToken(param);
         if(oaSsoTokenResult.isStatus()){
-            return Mono.just(R.success(oaSsoTokenResult));
+            return R.success(oaSsoTokenResult);
         }else {
-            return Mono.just(R.failure(oaSsoTokenResult.getToken()));
+            return R.failure(oaSsoTokenResult.getToken());
         }
     }
 

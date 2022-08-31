@@ -22,8 +22,7 @@ public interface OaInfoService {
      * @return R
      */
     @PostMapping("/oa/checkLogin")
-    
-    Mono<R> checkLogin(@RequestBody OaLoginParam oaLoginParam);
+    R checkLogin(@RequestBody OaLoginParam oaLoginParam);
 
     /**
      * 获取oa菜单
@@ -33,7 +32,7 @@ public interface OaInfoService {
      */
   
    @GetMapping("oa/menuList/{userId}")
-   Mono<R> getMenuList(@RequestParam String userId);
+   R getMenuList(@RequestParam String userId);
 
     /**
      * 获取应用token
@@ -42,5 +41,5 @@ public interface OaInfoService {
      * @return
      */
    @GetMapping("/ssoToken/{loginId}")
-   Mono<R> getSsoToken(@RequestParam String loginId);
+   R getSsoToken(@RequestParam String loginId);
 }

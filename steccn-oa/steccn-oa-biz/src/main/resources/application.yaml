@@ -19,4 +19,6 @@ spring:
       enabled: true
       validation-query: select 1
       max-idle-time: 3s
-
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
