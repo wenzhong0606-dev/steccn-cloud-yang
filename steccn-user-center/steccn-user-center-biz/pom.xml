@@ -23,21 +23,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
-        </dependency>
-        <!--Mysql驱动-->
-        <dependency>
-            <groupId>dev.miku</groupId>
-            <artifactId>r2dbc-mysql</artifactId>
-            <version>0.8.2.RELEASE</version>
-        </dependency>
-        <!--连接池-->
-        <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-pool</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
@@ -57,19 +42,11 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-user-center-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
-<!--        &lt;!&ndash;Swagger3增加工具&ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>com.github.xiaoymin</groupId>-->
-<!--            <artifactId>knife4j-spring-boot-starter</artifactId>-->
-<!--            <version>3.0.3</version>-->
-<!--        </dependency>-->
         <!--如果SpringBoot版本大于2.3则需要引入下面依赖-->
         <dependency>
             <groupId>javax.validation</groupId>
@@ -78,6 +55,16 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-user-center-api</artifactId>
+        </dependency>
+        <!--mybatis-plus-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <!--导入mysql驱动-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
         </dependency>
     </dependencies>
 </project>

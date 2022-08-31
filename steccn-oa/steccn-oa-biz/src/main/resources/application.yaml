@@ -11,14 +11,13 @@ spring:
       config:
         file-extension: yaml
         server-addr: 10.1.103.235:8848
-  r2dbc:
-    url: r2dbcs:mysql://61.177.139.244:3307/hrmresource
+
+  datasource:
     username: ecology
     password: ecology_kaisheng@2022#
-    pool:
-      enabled: true
-      validation-query: select 1
-      max-idle-time: 3s
+    url: jdbc:mysql://61.177.139.244:3307/hrmresource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher

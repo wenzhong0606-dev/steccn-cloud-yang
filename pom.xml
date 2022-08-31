@@ -9,12 +9,6 @@
     <name>steccn-cloud</name>
     <packaging>pom</packaging>
     <description>steccn-cloud</description>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.2</version>
-        <relativePath/>
-    </parent>
     <modules>
         <module>auth-server</module>
         <module>gateway</module>
@@ -30,7 +24,7 @@
     <properties>
         <version>1.0.0</version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>2.7.2</spring-boot.version>
+        <spring-boot.version>2.5.6</spring-boot.version>
         <spring-cloud.version>2021.0.1</spring-cloud.version>
         <alibaba-spring-cloud.version>2021.1</alibaba-spring-cloud.version>
         <alibaba-nacos.version>2021.1</alibaba-nacos.version>
@@ -59,7 +53,7 @@
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
-                    <version>2.7.2</version>
+                    <version>2.5.6</version>
                     <executions>
                         <execution>
                             <goals>

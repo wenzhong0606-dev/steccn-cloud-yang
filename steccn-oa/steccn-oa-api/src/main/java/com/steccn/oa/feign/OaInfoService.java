@@ -4,8 +4,10 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * 类说明
@@ -31,7 +33,7 @@ public interface OaInfoService {
      * @return
      */
   
-   @GetMapping("oa/menuList/{userId}")
+   @GetMapping("/oa/menuList/{userId}")
    R getMenuList(@RequestParam String userId);
 
     /**

@@ -11,14 +11,11 @@ spring:
       config:
         file-extension: yaml
         server-addr: 10.1.103.235:8848
-  r2dbc:
-    url: r2dbcs:mysql://10.1.103.235:3306/jingtai_cloud
+  datasource:
     username: jingtai_platform_user
     password: JingTai-Platform-User#
-    pool:
-      enabled: true
-      validation-query: select 1
-      max-idle-time: 3s
+    url: jdbc:mysql://10.1.103.235:3306/steccn_qms
+    driver-class-name: com.mysql.cj.jdbc.Driver
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher

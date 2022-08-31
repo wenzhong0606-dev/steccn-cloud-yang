@@ -4,14 +4,13 @@ import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaSsoTokenParam;
 import com.steccn.oa.dto.OaSsoTokenResult;
+
 import com.steccn.oa.service.OaService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
-
 
 /**
  * oa拦截器
@@ -30,8 +29,8 @@ public class OaController {
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList/{userId}")
-    public Mono<R> getOaMenuList(@PathVariable("userId") String userId) {
-        return Mono.just(R.success(oaService.getMenuList(userId)));
+    public R getOaMenuList(@PathVariable("userId") String userId) {
+        return R.success(oaService.getMenuList(userId));
     }
 
     @ApiOperation(value = "校验oa中的用户名密码")

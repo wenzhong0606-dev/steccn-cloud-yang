@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class LoginController {
 
-    private final LoginService loginService;
+//    private final LoginService loginService;
 
     /**
      * 统一登录，获取OA ， MESS-JAVA的菜单和token
@@ -33,6 +33,6 @@ public class LoginController {
      */
     @GetMapping("/login")
     public R login(@RequestParam("username") String username, @RequestParam("password") String password) {
-        return loginService.login(username, password);
+        return R.success();
     }
 }
