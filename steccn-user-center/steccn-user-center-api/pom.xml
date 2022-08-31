@@ -16,10 +16,6 @@
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
         <!--Swagger3增加工具-->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
