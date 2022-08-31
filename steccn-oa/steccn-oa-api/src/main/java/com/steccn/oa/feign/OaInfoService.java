@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Mono;
 
 /**
  * 类说明
@@ -22,7 +23,7 @@ public interface OaInfoService {
      * @return R
      */
     @PostMapping("/oa/checkLogin")
-    R checkLogin(@RequestBody OaLoginParam oaLoginParam);
+    Mono<R> checkLogin(@RequestBody OaLoginParam oaLoginParam);
 
     /**
      * 获取oa菜单
@@ -30,7 +31,7 @@ public interface OaInfoService {
      * @return
      */
    @GetMapping("oa/menuList/{userId}")
-    R getMenuList(@RequestParam String userId);
+   Mono<R> getMenuList(@RequestParam String userId);
 
     /**
      * 获取应用token
@@ -38,5 +39,5 @@ public interface OaInfoService {
      * @return
      */
    @GetMapping("/ssoToken/{loginId}")
-    R getSsoToken(@RequestParam String loginId);
+   Mono<R> getSsoToken(@RequestParam String loginId);
 }

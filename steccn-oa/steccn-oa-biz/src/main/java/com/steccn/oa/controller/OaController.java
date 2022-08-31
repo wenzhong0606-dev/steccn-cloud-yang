@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 
 /**
@@ -29,26 +30,26 @@ public class OaController {
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList/{userId}")
-    public R getOaMenuList(@PathVariable("userId") String userId) {
-        return R.success(oaService.getMenuList(userId));
+    public Mono<R> getOaMenuList(@PathVariable("userId") String userId) {
+        return Mono.just(R.success(oaService.getMenuList(userId)));
     }
 
     @ApiOperation(value = "校验oa中的用户名密码")
     @PostMapping("/checkLogin")
-    public R checkLogin(@RequestBody OaLoginParam oaLoginParam){
-        return R.success(oaService.checkLogin(oaLoginParam));
+    public Mono<R> checkLogin(@RequestBody OaLoginParam oaLoginParam){
+        return Mono.just(R.success(oaService.checkLogin(oaLoginParam)));
     }
 
     @ApiOperation(value = "获取oa跳过登录页token")
     @GetMapping("/ssoToken/{loginId}")
-    public R getSsoToken(@PathVariable("loginId") String loginId) {
+    public Mono<R> getSsoToken(@PathVariable("loginId") String loginId) {
         OaSsoTokenParam param = new OaSsoTokenParam();
         param.setLoginid(loginId);
         OaSsoTokenResult oaSsoTokenResult = oaService.getSsoToken(param);
         if(oaSsoTokenResult.isStatus()){
-            return R.success(oaSsoTokenResult);
+            return Mono.just(R.success(oaSsoTokenResult));
         }else {
-            return R.failure(oaSsoTokenResult.getToken());
+            return Mono.just(R.failure(oaSsoTokenResult.getToken()));
         }
     }
 
