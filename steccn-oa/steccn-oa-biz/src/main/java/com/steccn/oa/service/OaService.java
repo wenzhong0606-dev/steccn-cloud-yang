@@ -129,7 +129,7 @@ public class OaService {
             String result = oaApi.getOaMenu(headers);
             JSONObject jsonObject = JSONObject.parseObject(result);
             //递归拿到树状数据
-            if(jsonObject.getJSONObject("data")!=null && !jsonObject.getJSONArray("data").isEmpty()){
+            if(jsonObject.getJSONArray("data")!=null && !jsonObject.getJSONArray("data").isEmpty()){
                 for(int i = 0; i < jsonObject.getJSONArray("data").size(); i++){
                     oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray("data").getJSONObject(i)));
                 }
@@ -146,13 +146,13 @@ public class OaService {
      */
     public OaMenuResult transferJsonToObject(JSONObject jsonObject){
         OaMenuResult oaMenuResult = new OaMenuResult();
-        if(jsonObject.getJSONObject("child")==null && jsonObject.getJSONArray("child").isEmpty()){
+        if(jsonObject.getJSONArray("child")==null || jsonObject.getJSONArray("child").isEmpty()){
             OaMenuResult tmp = new OaMenuResult();
             tmp.setPid(jsonObject.getIntValue("pid"));
             tmp.setId(jsonObject.getIntValue("id"));
             tmp.setName(jsonObject.getString("name"));
             tmp.setStatus(true);
-            if(jsonObject.getJSONObject("url")!=null){
+            if(jsonObject.getString("url")!=null){
                 tmp.setUrl(jsonObject.getString("url"));
             }
             return tmp;
@@ -165,7 +165,7 @@ public class OaService {
         oaMenuResult.setId(jsonObject.getIntValue("id"));
         oaMenuResult.setName(jsonObject.getString("name"));
         oaMenuResult.setStatus(true);
-        if(jsonObject.getJSONObject("url")!=null){
+        if(jsonObject.getString("url")!=null){
             oaMenuResult.setUrl(jsonObject.getString("url"));
         }
         oaMenuResult.setChild(oaMenuResults);

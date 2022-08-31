@@ -17,6 +17,10 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-core</artifactId>
+        </dependency>
         <!--Swagger3增加工具-->
 
     </dependencies>
