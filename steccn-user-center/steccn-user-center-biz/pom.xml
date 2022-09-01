@@ -66,5 +66,9 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-oauth</artifactId>
+        </dependency>
     </dependencies>
 </project>

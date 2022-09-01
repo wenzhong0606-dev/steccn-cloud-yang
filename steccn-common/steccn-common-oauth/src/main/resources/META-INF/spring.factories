@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.steccn.authserver.config.ResourcesServerConfig,\
+  com.steccn.authserver.config.JwtTokenEnhancer,\
+  com.steccn.authserver.config.JwtConfig
