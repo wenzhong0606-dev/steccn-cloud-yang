@@ -73,13 +73,15 @@ public class LoginService {
                 throw new RuntimeException("OA用户登录失败");
             }
             //5.获取ssotoken
-            R ssoToken = oaInfoService.getSsoToken(String.valueOf(oaLoginResult.getUserId()));
-            OaSsoTokenResult oaSsoTokenResult = JSONObject.parseObject((String) ssoToken.getData(), OaSsoTokenResult.class);
+            R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
+            Map ssoMap = (Map) ssoToken.getData();
+            OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
+            BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
             if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
                 throw new RuntimeException("OA用户获取ssotoken失败");
             }
             steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
-            //再去获取mess的token
+            //6.获取mess的token
             String mesToken = mesMenuService.getMesToken(username);
             steccnTokenVO.setMessToken(mesToken);
             flag = Boolean.TRUE;
