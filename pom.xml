@@ -29,9 +29,9 @@
         <alibaba-spring-cloud.version>2021.1</alibaba-spring-cloud.version>
         <alibaba-nacos.version>2021.1</alibaba-nacos.version>
         <jasypt.version>3.0.4</jasypt.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <java.version>17</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <java.version>8</java.version>
     </properties>
 
     <dependencyManagement>
