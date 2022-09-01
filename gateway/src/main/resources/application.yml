@@ -31,6 +31,12 @@ spring:
             - Path=/api/portal/**
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment}
+        - id: oa
+          uri: lb://steccn-oa
+          predicates:
+            - Path=/api/oa/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment}
 
   security:
     oauth2:
