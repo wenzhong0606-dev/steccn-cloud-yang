@@ -8,10 +8,7 @@ import com.steccn.portal.util.MesToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -32,8 +29,8 @@ public class MesMenuController {
 
 
     @ApiOperation("获取mes系统用户菜单数据")
-    @GetMapping("/menuRoute/{userName}")
-    public R menuRoute(@PathVariable("userName")String userName) throws IOException {
+    @GetMapping("/menuRoute")
+    public R menuRoute(@RequestParam("userName")String userName) throws IOException {
         return mesMenuService.menuRoute(userName);
     }
 
