@@ -29,6 +29,9 @@ public class SteccnTokenVO implements Serializable {
     @ApiModelProperty("oa系统的token")
     private String oaToken;
 
+    @ApiModelProperty("oa系统的用户id")
+    private Integer oaUserId;
+
     @ApiModelProperty("mess系统的token")
     private String messToken;
 

@@ -68,6 +68,7 @@ public class LoginService {
             Map oaMap = (Map) r.getData();
             OaLoginResult oaLoginResult = new OaLoginResult();
             BeanUtil.fillBeanWithMap(oaMap, oaLoginResult, true);
+            steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
             //4.如果oa登录失败，则直接跑异常
             if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
                 throw new RuntimeException("OA用户登录失败");
