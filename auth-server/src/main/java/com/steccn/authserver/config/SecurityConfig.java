@@ -22,8 +22,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * OAuth2AuthenticationManager 来处理我们密码模式的密码
      *
      * @return org.springframework.security.authentication.AuthenticationManager
-     * @author wanglufei
-     * @date 2022/4/11 10:44 PM
      */
     @Bean
     public AuthenticationManager authenticationManager() throws Exception {
@@ -34,8 +32,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * 自定义加密逻辑
      *
      * @return org.springframework.security.crypto.password.PasswordEncoder
-     * @author wanglufei
-     * @date 2022/4/11 6:32 PM
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -46,8 +42,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * 自定义web相关的属性
      *
      * @param http
-     * @author wanglufei
-     * @date 2022/4/11 7:30 PM
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {

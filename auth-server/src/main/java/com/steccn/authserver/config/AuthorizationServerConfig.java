@@ -14,16 +14,12 @@ import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author wanglufei
  * @description: 授权服务器的配置
  * 用来对资源拥有者的身份进行认证、对访问资源进行授权。客户端要想访问资源需要通过认证服务器由资源拥有者授权后可访问。
- * @date 2022/4/11/7:38 PM
  */
 @Configuration
 @EnableAuthorizationServer
@@ -31,6 +27,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -40,6 +37,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Autowired
     @Qualifier("jwtTokenStore")
     TokenStore tokenStore;
+
     @Autowired
     JwtAccessTokenConverter jwtAccessTokenConverter;
 
@@ -51,8 +49,6 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      * 使用密码所需要的配置
      *
      * @param endpoints
-     * @author wanglufei
-     * @date 2022/4/11 10:41 PM
      */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
@@ -81,8 +77,6 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      * * - `Revocat ion Endpoint` ：撤销端点，撒销授权
      *
      * @param clients
-     * @author wanglufei
-     * @date 2022/4/11 7:47 PM
      */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -90,9 +84,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 //配置client Id
                 .withClient("admin")
                 //client-secret
-                .secret(passwordEncoder.encode("112233"))
-                //配置访问token的有效期
-                .accessTokenValiditySeconds(3600)
+                .secret(passwordEncoder.encode("admin"))
+                //配置访问token的有效期设置为1个月
+                .accessTokenValiditySeconds(3600*24*30)
                 //配置重定向的跳转，用于授权成功之后的跳转
                 .redirectUris("http://www.baidu.com")
                 //作用域

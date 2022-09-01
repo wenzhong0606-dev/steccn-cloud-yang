@@ -7,9 +7,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 /**
- * @author wanglufei
- * @description: jwtToken配置类
- * @date 2022/4/12/3:48 PM
+ * @desc: jwtToken配置类
  */
 @Configuration
 public class JwtConfig {
@@ -18,8 +16,6 @@ public class JwtConfig {
      * 将授权码存放在jwtToken
      *
      * @return org.springframework.security.oauth2.provider.token.TokenStore
-     * @author wanglufei
-     * @date 2022/4/12 3:55 PM
      */
     @Bean
     public TokenStore jwtTokenStore() {
@@ -30,8 +26,6 @@ public class JwtConfig {
      * jwtToken和AccessToken的相互转换
      *
      * @return org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter
-     * @author wanglufei
-     * @date 2022/4/12 3:54 PM
      */
     @Bean
     public JwtAccessTokenConverter jwtAccessTokenConverter() {
@@ -43,8 +37,6 @@ public class JwtConfig {
 
     /**
      * @return com.uin.config.JwtTokenEnhancer
-     * @author wanglufei
-     * @date 2022/4/12 4:27 PM
      */
     @Bean
     public JwtTokenEnhancer jwtTokenEnhancer() {

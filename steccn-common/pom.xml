@@ -17,5 +17,6 @@
         <module>steccn-common-core</module>
         <module>steccn-common-redis</module>
         <module>steccn-common-data</module>
+        <module>steccn-common-oauth</module>
     </modules>
 </project>

@@ -25,12 +25,6 @@ public class MyUserDetailsService implements UserDetailsService {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.springframework.security.core.userdetails.UserDetailsService#
-	 * loadUserByUsername(java.lang.String)
-	 */
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		logger.info("表单登录用户名:" + username);

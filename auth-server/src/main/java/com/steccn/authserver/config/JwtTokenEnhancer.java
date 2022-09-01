@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author wanglufei
  * @description: 配置token内容增强器
- * @date 2022/4/12/4:21 PM
  */
 public class JwtTokenEnhancer implements TokenEnhancer {
     @Override
