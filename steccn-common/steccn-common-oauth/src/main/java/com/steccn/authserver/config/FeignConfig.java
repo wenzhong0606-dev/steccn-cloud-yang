@@ -10,7 +10,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 
 @Configuration
-public class NaisiFeignConfig {
+public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor(){
         return new RequestInterceptor() {

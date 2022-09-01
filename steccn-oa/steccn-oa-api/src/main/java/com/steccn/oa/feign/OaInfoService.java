@@ -3,6 +3,7 @@ package com.steccn.oa.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
+import com.steccn.oa.dto.OaUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,4 +42,13 @@ public interface OaInfoService {
      */
    @GetMapping("/oa/ssoToken/{loginId}")
    R getSsoToken(@PathVariable("loginId") String loginId);
+
+
+    /**
+     * 根据用户名查询用户
+     * @param username 用户id
+     * @return
+     */
+   @GetMapping("/oa/username")
+   R<OaUserDTO> loadByUsername(@RequestParam("username") String username);
 }

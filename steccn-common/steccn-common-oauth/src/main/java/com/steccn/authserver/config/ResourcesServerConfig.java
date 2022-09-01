@@ -27,8 +27,8 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
 //        http.authorizeRequests().anyRequest().authenticated();
 //        //唯独user 可以访问 放行我们的资源
 //        http.requestMatchers().antMatchers("/user/**","/portal/login");
-
-        http.authorizeRequests().antMatchers("/portal/login").permitAll().anyRequest().authenticated();
+        String[] allIgnoredPath = ignorenPath.getAllIgnoredPath();
+        http.authorizeRequests().antMatchers("/portal/login","/oa/username").permitAll().anyRequest().authenticated();
 
     }
 
