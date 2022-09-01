@@ -17,4 +17,9 @@ public interface FeignConstant {
      * 统一门户的服务名称
      */
     String STECCN_OA_SERVICE_NAME = "steccn-oa";
+
+    /**
+     * 认证服务
+     */
+    String STECCN_AUTH_SERVER = "auth-server";
 }

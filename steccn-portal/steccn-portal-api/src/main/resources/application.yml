@@ -1,0 +1,5 @@
+
+ignore:
+  resource:
+      igpath:
+       - /portal/login
