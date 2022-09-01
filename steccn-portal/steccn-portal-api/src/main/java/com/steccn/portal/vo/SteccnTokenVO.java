@@ -11,6 +11,9 @@ import java.io.Serializable;
 @ApiModel("凯盛token")
 public class SteccnTokenVO implements Serializable {
 
+    @ApiModelProperty("用户名")
+    private String username;
+
     @ApiModelProperty("accessToken")
     private String accessToken;
 
