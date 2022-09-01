@@ -11,7 +11,7 @@
     <groupId>com.steccn</groupId>
     <artifactId>steccn-qms</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <description>质量管理</description>
     <modules>
         <module>steccn-qms-api</module>

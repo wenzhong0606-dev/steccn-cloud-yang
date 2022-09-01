@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.steccn</groupId>
     <artifactId>steccn-common-bom</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -13,7 +13,7 @@
         <spring-cloud.version>2020.0.4</spring-cloud.version>
         <spring-boot.version>2.5.6</spring-boot.version>
         <spring-cloud-alibaba.version>2021.1</spring-cloud-alibaba.version>
-        <steccn-cloud.version>0.0.1-SNAPSHOT</steccn-cloud.version>
+        <steccn-cloud.version>1.0.0</steccn-cloud.version>
         <hutool-all.version>5.7.15</hutool-all.version>
         <commons-lang.version>2.6</commons-lang.version>
         <lombok.version>1.18.22</lombok.version>

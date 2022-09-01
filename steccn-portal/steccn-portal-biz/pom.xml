@@ -5,7 +5,7 @@
     <parent>
         <artifactId>steccn-portal</artifactId>
         <groupId>com.steccn</groupId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -42,6 +42,7 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <!--Swagger3增加工具-->
         <dependency>
@@ -67,10 +68,12 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-portal-api</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-oa-api</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -78,11 +81,7 @@
             <version>4.3.5</version>
         </dependency>
 
-        <!--mybatis-plus-->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-        </dependency>
+
         <!--导入mysql驱动-->
         <dependency>
             <groupId>mysql</groupId>

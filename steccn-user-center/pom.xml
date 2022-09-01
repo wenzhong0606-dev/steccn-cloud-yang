@@ -14,7 +14,7 @@
     </parent>
 
     <artifactId>steccn-user-center</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>steccn-user-center</name>
     <description>用户基础模块</description>
 

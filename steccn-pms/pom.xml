@@ -11,7 +11,7 @@
     <groupId>com.steccn</groupId>
     <artifactId>steccn-pms</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <description>生产管理</description>
     <modules>
         <module>steccn-pms-api</module>
