@@ -9,7 +9,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableOpenApi
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.steccn")
 public class SteccnOaApplication {
 
     public static void main(String[] args) {
