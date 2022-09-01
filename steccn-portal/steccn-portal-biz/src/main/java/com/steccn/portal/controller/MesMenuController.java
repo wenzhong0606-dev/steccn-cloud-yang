@@ -21,7 +21,7 @@ import java.util.Objects;
  */
 @Api(tags = "mes系统接口")
 @RestController
-@RequestMapping("/mes")
+@RequestMapping("/portal/mes")
 @RequiredArgsConstructor
 public class MesMenuController {
 
@@ -30,7 +30,7 @@ public class MesMenuController {
 
     @ApiOperation("获取mes系统用户菜单数据")
     @GetMapping("/menuRoute")
-    public R menuRoute(@RequestParam("userName")String userName) throws IOException {
+    public R menuRoute(@RequestParam("userName") String userName) throws IOException {
         return mesMenuService.menuRoute(userName);
     }
 
