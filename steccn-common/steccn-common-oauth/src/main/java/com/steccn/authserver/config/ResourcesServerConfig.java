@@ -1,5 +1,6 @@
 package com.steccn.authserver.config;
 
+import com.google.common.collect.Lists;
 import com.steccn.authserver.path.IgnorenPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +9,8 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
+
+import java.util.List;
 
 /**
  * @description: 资源服务器的配置
@@ -23,13 +26,12 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
-//        //所有的访问都需要认证访问
-//        http.authorizeRequests().anyRequest().authenticated();
-//        //唯独user 可以访问 放行我们的资源
-//        http.requestMatchers().antMatchers("/user/**","/portal/login");
         String[] allIgnoredPath = ignorenPath.getAllIgnoredPath();
-        http.authorizeRequests().antMatchers("/portal/login","/oa/username").permitAll().anyRequest().authenticated();
-
+        List<String> list = Lists.newArrayList(allIgnoredPath);
+        list.add("/portal/login");
+        list.add("/oa/username");
+        list.add("/v3/api-docs");
+        http.authorizeRequests().antMatchers(list.toArray(new String[list.size()])).permitAll().anyRequest().authenticated();
     }
 
     @Override
