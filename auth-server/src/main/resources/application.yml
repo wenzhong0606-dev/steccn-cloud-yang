@@ -21,10 +21,7 @@ spring:
     url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud
     username: steccn_app_user
     password: Steccn_App_User!@#123
+
 logging:
   level:
-    com:
-      steccn: debug
-    org:
-      springframework:
-        security: debug
+    com.steccn.authserver: debug

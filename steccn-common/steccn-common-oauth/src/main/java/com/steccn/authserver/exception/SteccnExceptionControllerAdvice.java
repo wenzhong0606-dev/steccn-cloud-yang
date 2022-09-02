@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * @desc 全局异常类捕获
+ */
 @Slf4j
 @RestControllerAdvice(basePackages = "com.steccn")
 public class SteccnExceptionControllerAdvice {

@@ -18,14 +18,8 @@ public class TestController {
 
     private final QtCheckItemMapper qtCheckItemMapper;
 
-
-    @GetMapping("/test")
-    public R test() {
-        return R.success("success");
-    }
-
-    @DeleteMapping("/{id}")
-    public R remove(@PathVariable("id") Long id) {
-        return R.success(qtCheckItemService.removeMy(id));
+    @GetMapping("/{id}")
+    public R getById(@PathVariable("id") Long id) {
+        return R.success(qtCheckItemService.getById(id));
     }
 }
