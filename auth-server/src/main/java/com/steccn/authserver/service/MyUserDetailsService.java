@@ -3,6 +3,8 @@
  */
 package com.steccn.authserver.service;
 
+import cn.hutool.crypto.digest.MD5;
+import com.alibaba.nacos.common.utils.MD5Utils;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaUserDTO;

@@ -12,7 +12,7 @@ spring:
         file-extension: yaml
         server-addr: 10.1.103.235:8848
   datasource:
-    username: jingtai_platform_user
-    password: JingTai-Platform-User#
+    username: steccn_app_user
+    password: Steccn_App_User!@#123
     url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud
     driver-class-name: com.mysql.cj.jdbc.Driver

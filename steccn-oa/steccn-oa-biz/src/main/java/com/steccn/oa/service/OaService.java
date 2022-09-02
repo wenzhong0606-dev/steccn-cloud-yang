@@ -68,7 +68,7 @@ public class OaService {
      * @return OaSsoTokenResult
      */
     public OaSsoTokenResult getSsoToken(OaSsoTokenParam oaSSoTokenParam){
-        oaSSoTokenParam.setAppid(OaConstant.OA_API_APPID);
+        oaSSoTokenParam.setAppid(OaConstant.OA_SSO_APPID);
         String result = oaApi.getSsoToken(oaSSoTokenParam);
         String res = result.substring(0,9);
         OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();

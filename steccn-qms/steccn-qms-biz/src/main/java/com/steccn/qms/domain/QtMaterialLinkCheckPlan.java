@@ -1,12 +1,13 @@
 package com.steccn.qms.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 物料关联检验计划表
@@ -49,7 +50,7 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新人id
@@ -64,11 +65,12 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     /**
      * 更新人时间
      */
-    private Date updateTime;
+      private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)

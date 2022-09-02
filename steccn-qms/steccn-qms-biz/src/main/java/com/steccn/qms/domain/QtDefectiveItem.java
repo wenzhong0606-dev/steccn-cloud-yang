@@ -1,10 +1,9 @@
 package com.steccn.qms.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
 
@@ -19,7 +18,7 @@ public class QtDefectiveItem implements Serializable {
      * 主键id
      */
     @TableId(type = IdType.AUTO)
-    private Object id;
+    private Integer id;
 
     /**
      * 编码
@@ -59,7 +58,7 @@ public class QtDefectiveItem implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新人id
@@ -74,11 +73,12 @@ public class QtDefectiveItem implements Serializable {
     /**
      * 更新人时间
      */
-    private Date updateTime;
+      private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)
