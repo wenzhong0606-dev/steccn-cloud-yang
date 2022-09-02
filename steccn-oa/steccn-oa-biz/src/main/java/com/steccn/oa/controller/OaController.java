@@ -61,7 +61,9 @@ public class OaController {
     @ApiOperation("根据用户名查询用户")
     @GetMapping("/username")
     R loadByUsername(@RequestParam("username") String username) {
-        Hrmresource one = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>().eq(Hrmresource::getLoginid, username));
+        Hrmresource one = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getLoginid, username)
+                .select(Hrmresource::getLoginid,Hrmresource::getPassword));
         OaUserDTO oaUserDTO = null;
         if (Objects.nonNull(one)) {
             oaUserDTO = new OaUserDTO();

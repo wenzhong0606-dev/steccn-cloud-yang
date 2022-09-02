@@ -18,8 +18,8 @@
         <module>steccn-portal</module>
         <module>steccn-user-center</module>
         <module>steccn-oa</module>
+        <module>steccn-platform</module>
     </modules>
-
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -34,7 +34,8 @@
         <validation-api.version>2.0.1.Final</validation-api.version>
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<minio.version>7.0.2</minio.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencyManagement>
@@ -146,7 +147,18 @@
                 <artifactId>steccn-common-oauth</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
-
+            <!--steccn-platform-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-platform-api</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!--steccn-platform-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-platform-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>
@@ -183,6 +195,13 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql-connector.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

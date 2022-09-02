@@ -1,4 +1,4 @@
-package com.steccn.qms.domain;
+package com.steccn.platform.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
 

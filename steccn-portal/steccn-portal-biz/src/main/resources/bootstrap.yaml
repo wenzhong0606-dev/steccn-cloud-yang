@@ -1,0 +1,17 @@
+server:
+  port: 9300
+spring:
+  application:
+    name: steccn-portal
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.1.103.235:8848
+        namespace: steccn_dev
+      config:
+        server-addr: 10.1.103.235:8848
+        file-extension: yaml
+        shared-configs:
+          - data-id: bootstrap.yaml
+            refresh: true
+        namespace: steccn_dev

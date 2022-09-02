@@ -1,6 +1,6 @@
-package com.steccn.qms.service;
+package com.steccn.platform.service;
 
-import com.steccn.qms.domain.SysDict;
+import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
