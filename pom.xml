@@ -21,7 +21,6 @@
         <module>steccn-platform</module>
     </modules>
 
-
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
@@ -35,6 +34,7 @@
         <validation-api.version>2.0.1.Final</validation-api.version>
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
+        <minio.version>7.0.2</minio.version>
     </properties>
 
     <dependencyManagement>
@@ -194,6 +194,13 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql-connector.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
