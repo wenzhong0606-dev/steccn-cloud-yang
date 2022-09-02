@@ -3,11 +3,8 @@ package com.steccn.oa.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.vo.R;
 import com.steccn.oa.domain.Hrmresource;
-import com.steccn.oa.dto.OaLoginParam;
-import com.steccn.oa.dto.OaSsoTokenParam;
-import com.steccn.oa.dto.OaSsoTokenResult;
+import com.steccn.oa.dto.*;
 
-import com.steccn.oa.dto.OaUserDTO;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
 import io.swagger.annotations.Api;
@@ -74,4 +71,13 @@ public class OaController {
         return R.success(oaUserDTO);
     }
 
+    @GetMapping("/userInfo/{loginId}")
+    R getUserInfo(@PathVariable String loginId){
+        OaUserInfo oaUserInfo = oaService.getOaUserInfo(loginId);
+        if(oaUserInfo.getStatus()){
+            return R.success(oaUserInfo);
+        }else {
+            return R.failure("userInfo为空");
+        }
+    }
 }

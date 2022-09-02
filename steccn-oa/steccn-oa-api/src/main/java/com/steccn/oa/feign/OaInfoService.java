@@ -51,4 +51,12 @@ public interface OaInfoService {
      */
    @GetMapping("/oa/username")
    R<OaUserDTO> loadByUsername(@RequestParam("username") String username);
+
+    /**
+     * 根据用户名查询用户信息
+     * @param loginId
+     * @return
+     */
+   @GetMapping("/oa/userInfo/{loginId}")
+   R getOaUserInfo(@PathVariable("loginId") String loginId);
 }

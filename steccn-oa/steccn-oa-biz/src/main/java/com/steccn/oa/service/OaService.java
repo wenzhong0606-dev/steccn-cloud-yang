@@ -173,4 +173,41 @@ public class OaService {
         return oaMenuResult;
     }
 
+    /**
+     * 通过用户名获取oa用户信息
+     * @param loginId
+     * @return  OaUserInfo
+     */
+    public OaUserInfo getOaUserInfo(String loginId){
+        OaUserInfo oaUserInfo = new OaUserInfo();
+        //放入Token
+        OaApiTokenResult oaApiTokenResult = this.getApiToken();;
+        if(!oaApiTokenResult.isStatus()){
+            oaUserInfo.setStatus(false);
+            log.error(oaApiTokenResult.getMsg());
+            return oaUserInfo;
+        }else{
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            //放入Token
+            headers.set("appid",OaConstant.OA_API_APPID);
+            headers.set("token",oaApiTokenResult.getToken());
+            headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+            OaUserParam oaUserParam = new OaUserParam();
+            oaUserParam.setQ(loginId);
+            String result = oaApi.getOaUserInfo(headers,oaUserParam);
+            //转成对象
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+                oaUserInfo.setDepartmentName(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_DEPARTMENTNAME));
+                oaUserInfo.setName(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_NAME));
+                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_ICON));
+                oaUserInfo.setStatus(true);
+            }else {
+                oaUserInfo.setStatus(false);
+                log.error("没有获取userInfo");
+            }
+            return oaUserInfo;
+        }
+    }
+
 }

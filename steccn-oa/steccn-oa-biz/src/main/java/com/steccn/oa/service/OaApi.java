@@ -2,6 +2,7 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaSsoTokenParam;
+import com.steccn.oa.dto.OaUserParam;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.util.MultiValueMap;
@@ -53,4 +54,14 @@ public interface OaApi {
     @GetMapping(value = "/api/portal/menu/getFrontEndMenu?isLoadAll=1")
     @ResponseBody
     String getOaMenu(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 调用oa
+     * @param oaUserParam MultiValueMap
+     * @return
+     */
+    @PostMapping(value = "/api/public/browser/complete/1",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getOaUserInfo(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaUserParam oaUserParam);
 }
