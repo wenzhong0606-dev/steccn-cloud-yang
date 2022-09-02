@@ -9,12 +9,10 @@ spring:
       discovery:
         server-addr: 10.1.103.235:8848
         namespace: yq
-  datasource:
-    username: steccn_app_user
-    password: Steccn_App_User!@#123
-    url: jdbc:mysql://10.1.103.235:3306/steccn_qms
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-logging:
-  level:
-    com.steccn.authserver: debug
+      config:
+        server-addr: 10.1.103.235:8848
+        file-extension: yaml
+        shared-configs:
+          - data-id: application.yaml
+            refresh: true
+        namespace: yq
