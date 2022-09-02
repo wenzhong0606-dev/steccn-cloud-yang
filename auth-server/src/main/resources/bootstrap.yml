@@ -9,17 +9,11 @@ spring:
       discovery:
         server-addr: 10.1.103.235:8848
         namespace: yq
-  mvc:
-    pathmatch:
-      matching-strategy: ant_path_matcher
-  main:
-    allow-bean-definition-overriding: true
-    allow-circular-references: true
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://10.1.103.235:3306/jingtai_cloud
     username: steccn_app_user
     password: Steccn_App_User!@#123
+    url: jdbc:mysql://10.1.103.235:3306/steccn_qms
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 logging:
   level:
