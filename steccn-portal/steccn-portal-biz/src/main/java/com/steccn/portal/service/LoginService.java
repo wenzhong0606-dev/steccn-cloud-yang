@@ -4,10 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.alibaba.fastjson.JSONObject;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaLoginResult;
 import com.steccn.oa.dto.OaSsoTokenResult;
+import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.vo.SteccnTokenVO;
@@ -41,7 +43,7 @@ public class LoginService {
     public R<SteccnTokenVO> login(String username, String password) {
         //1.定义变量
         //自己系统的token返回
-        Object token;
+        Object token = null;
         //返回vo
         SteccnTokenVO steccnTokenVO = null;
         //自己系统返回的token以map接收数据
@@ -50,7 +52,12 @@ public class LoginService {
         boolean flag = Boolean.FALSE;
         try {
             //2.调用自己系统的获取token信息
-            token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
+            try {
+                token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new RuntimeException("用户名密码错误");
+            }
             //2.1map接受token的数据
             map = (Map<String, String>) token;
             //2.2定义返回vo并且组装token的数据
@@ -61,6 +68,15 @@ public class LoginService {
             steccnTokenVO.setExpiresIn(Long.valueOf(String.valueOf(map.get(TokenConstant.STR_EXPIRES_IN))));
             steccnTokenVO.setScope(map.get(TokenConstant.STR_SCOPE));
             steccnTokenVO.setUsername(username);
+
+            R<OaUserInfo> oaUserInfoRes = oaInfoService.getOaUserInfo(username);
+            if (Objects.isNull(oaUserInfoRes) || ResultCode.SUCCESS.getCode() != oaUserInfoRes.getCode()) {
+                throw new RuntimeException("获取用户信息失败");
+            }
+            OaUserInfo oaUserInfo = oaUserInfoRes.getData();
+            steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
+            steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
+            steccnTokenVO.setRealName(oaUserInfo.getName());
             //3.用户oa登录
             OaLoginParam oaLoginParam = new OaLoginParam();
             oaLoginParam.setLoginid(username);
@@ -89,6 +105,7 @@ public class LoginService {
             flag = Boolean.TRUE;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
+            throw new RuntimeException(e.getLocalizedMessage());
         }
         if (flag) {
             return R.success(steccnTokenVO);

@@ -2,6 +2,7 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author W10
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2022-09-02 16:25:59
 * @Entity com.steccn.platform.domain.SysOffice
 */
+@Mapper
 public interface SysOfficeMapper extends BaseMapper<SysOffice> {
 
 }

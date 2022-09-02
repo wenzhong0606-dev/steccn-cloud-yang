@@ -14,6 +14,17 @@ public class SteccnExceptionControllerAdvice {
 
     /**
      * 异常捕获
+     * @param runtimeException
+     * @return
+     */
+    @ExceptionHandler(value = RuntimeException.class)
+    public R handleRuntimeException(RuntimeException runtimeException) {
+        log.error("错误：", runtimeException);
+        return R.failure(runtimeException.getLocalizedMessage());
+    }
+
+    /**
+     * 异常捕获
      * @param throwable
      * @return
      */
