@@ -3,6 +3,7 @@ package com.steccn.portal.controller;
 import com.steccn.common.vo.R;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.portal.service.LoginService;
+import com.steccn.portal.vo.SteccnTokenVO;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class LoginController {
      * @return r
      */
     @GetMapping("/login")
-    public R login(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public R<SteccnTokenVO> login(@RequestParam("username") String username, @RequestParam("password") String password) {
         return loginService.login(username,password);
     }
 }

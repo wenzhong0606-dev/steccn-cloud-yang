@@ -1,0 +1,17 @@
+server:
+  port: 9200
+spring:
+  application:
+    name: steccn-pms
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.1.103.235:8848
+        namespace: yq
+      config:
+        server-addr: 10.1.103.235:8848
+        file-extension: yaml
+        shared-configs:
+          - data-id: application.yaml
+            refresh: true
+        namespace: yq

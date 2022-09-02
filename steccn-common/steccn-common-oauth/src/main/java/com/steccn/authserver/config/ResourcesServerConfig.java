@@ -28,8 +28,6 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         String[] allIgnoredPath = ignorenPath.getAllIgnoredPath();
         List<String> list = Lists.newArrayList(allIgnoredPath);
-        list.add("/portal/login");
-        list.add("/oa/username");
         list.add("/v3/api-docs");
         http.authorizeRequests().antMatchers(list.toArray(new String[list.size()])).permitAll().anyRequest().authenticated();
     }

@@ -38,4 +38,12 @@ public class SteccnTokenVO implements Serializable {
     @ApiModelProperty("mess系统的token")
     private String messToken;
 
+    @ApiModelProperty("真实名称")
+    private String realName;
+
+    @ApiModelProperty("头像")
+    private String headImage;
+
+    @ApiModelProperty("部门信息")
+    private String department;
 }
