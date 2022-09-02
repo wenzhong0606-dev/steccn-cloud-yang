@@ -34,8 +34,8 @@ public class OaController {
     private final HrmresourceService hrmresourceService;
 
     @ApiOperation(value = "获取oa用户的菜单权限")
-    @GetMapping("/menuList/{userId}")
-    public R getOaMenuList(@PathVariable("userId") String userId) {
+    @GetMapping("/menuList")
+    public R getOaMenuList(@RequestParam("userId") String userId) {
         return R.success(oaService.getMenuList(userId));
     }
 
@@ -46,8 +46,8 @@ public class OaController {
     }
 
     @ApiOperation(value = "获取oa跳过登录页token")
-    @GetMapping("/ssoToken/{loginId}")
-    public R getSsoToken(@PathVariable("loginId") String loginId) {
+    @GetMapping("/ssoToken")
+    public R getSsoToken(@RequestParam("loginId") String loginId) {
         OaSsoTokenParam param = new OaSsoTokenParam();
         param.setLoginid(loginId);
         OaSsoTokenResult oaSsoTokenResult = oaService.getSsoToken(param);
@@ -73,8 +73,8 @@ public class OaController {
         return R.success(oaUserDTO);
     }
 
-    @GetMapping("/userInfo/{loginId}")
-    R getUserInfo(@PathVariable String loginId){
+    @GetMapping("/userInfo")
+    R getUserInfo(@RequestParam("loginId") String loginId){
         OaUserInfo oaUserInfo = oaService.getOaUserInfo(loginId);
         if(oaUserInfo.getStatus()){
             return R.success(oaUserInfo);
