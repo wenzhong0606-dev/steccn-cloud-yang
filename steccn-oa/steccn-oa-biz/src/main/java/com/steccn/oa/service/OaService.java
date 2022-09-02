@@ -1,6 +1,7 @@
 package com.steccn.oa.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,12 +53,12 @@ public class OaService {
         String result = oaApi.checkLogin(loginParam);
         JSONObject loginObj = JSONObject.parseObject(result);
         OaLoginResult oaLoginResult = new OaLoginResult();
-        oaLoginResult.setLoginStatus(loginObj.getBoolean("loginstatus"));
-        if(loginObj.getInteger("userid")!=null){
-            oaLoginResult.setUserId(loginObj.getIntValue("userid"));
+        oaLoginResult.setLoginStatus(loginObj.getBoolean(OaConstant.OA_JSON_LOGIN_STATUS));
+        if(loginObj.getInteger(OaConstant.OA_JSON_USER_ID)!=null){
+            oaLoginResult.setUserId(loginObj.getIntValue(OaConstant.OA_JSON_USER_ID));
         }
-        oaLoginResult.setMsgCode(loginObj.getIntValue("msgcode"));
-        oaLoginResult.setMsg(loginObj.getString("msg"));
+        oaLoginResult.setMsgCode(loginObj.getIntValue(OaConstant.OA_JSON_MSG_CODE));
+        oaLoginResult.setMsg(loginObj.getString(OaConstant.OA_JSON_MSG));
         return oaLoginResult;
     }
 
@@ -67,7 +68,7 @@ public class OaService {
      * @return OaSsoTokenResult
      */
     public OaSsoTokenResult getSsoToken(OaSsoTokenParam oaSSoTokenParam){
-        oaSSoTokenParam.setAppid("ssso");
+        oaSSoTokenParam.setAppid(OaConstant.OA_API_APPID);
         String result = oaApi.getSsoToken(oaSSoTokenParam);
         String res = result.substring(0,9);
         OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
@@ -86,16 +87,16 @@ public class OaService {
      */
     public OaApiTokenResult getApiToken(){
         MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-        headers.set("appid","fad36a4ac8412767c11007fc1736cff5");
-        headers.set("secret","wbSRHWiPyCMBY3NNkcsDHJVXjCe6y1NJglmzNeNlAgOTpqxbhh7Xe3ib2X2zm3Fq8kySb7guECI1ykYoew3DmHYvf6tAiWxrUPdAx7Cuzoo9NDW+cwTPuYHTH5njvSNY6NRnopr4QXHoAk2UY//I8X0l9v3Uz3CB6IkPz2mByXYLQoSHC6p1CovDDVJXhJf90hh844G5pj+63fQZUzuSOyBLlGcQ/DqYceHgtE5RCuWiDz1wsX7CehoRKqrmfkyguiiKCOhF5KYOpxpvys/1MI34IXh4t9UO06MfOrT9gCjlVKITql3Z6SHdqSv981DXgERCUmP30HHxLB8oPpvsrQ==");
+        headers.set("appid",OaConstant.OA_API_APPID);
+        headers.set("secret",OaConstant.OA_API_SECRET);
         String result = oaApi.getApiToken(headers);
         JSONObject jsonObject = JSONObject.parseObject(result);
         OaApiTokenResult oaApiTokenResult = new OaApiTokenResult();
-        if(jsonObject.getBoolean("status")){
-            oaApiTokenResult.setToken(jsonObject.getString("token"));
+        if(jsonObject.getBoolean(OaConstant.OA_JSON_STATUS)){
+            oaApiTokenResult.setToken(jsonObject.getString(OaConstant.OA_JSON_TOKEN));
         }
-        oaApiTokenResult.setStatus(jsonObject.getBoolean("status"));
-        oaApiTokenResult.setMsg(jsonObject.getString("msg"));
+        oaApiTokenResult.setStatus(jsonObject.getBoolean(OaConstant.OA_JSON_STATUS));
+        oaApiTokenResult.setMsg(jsonObject.getString(OaConstant.OA_JSON_MSG));
         return oaApiTokenResult;
     }
 
@@ -117,21 +118,21 @@ public class OaService {
         }else{
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             //放入Token
-            headers.set("appid","fad36a4ac8412767c11007fc1736cff5");
+            headers.set("appid",OaConstant.OA_API_APPID);
             headers.set("token",oaApiTokenResult.getToken());
             //根据泛微加密算法加入rsa
             RSA rsa = new RSA();
             //注册进系统时已生成
-            String spk = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4vp8JgKbgJ5r6fp1nS48hl/UFUv1OVcP9pAlxsMrvdELjglzsQqArKchASjJR3JblIjZBQiFwdt9v4wufj3jyoGRMdKEsxIzdSIvVuEjcvTDoyZeIeOUZPqlGyln6Me4ddekqtB9SK9HOmiwVuJYiajF3Do5zWcY1MBp+wUyH63KyjOKnwLv2+SkTexYsjEcEc585TCpUnxJIRfEN1ckY8s9y8oUVTlXhFFU9z/SAOADDmv2D0bYSOiKBRy/OjUZNbU9OMY0ErKt9epzXvccgGyTUpAG9mQohN55OSzjVmSW9sT8fgxGO96TphJRwmBDpW3q1A4ELHJza99+0RmZ8QIDAQAB";
+            String spk = OaConstant.OA_SPK;
             //用户id加密
             String userIdSecret = rsa.encrypt(null, userId, null, "utf-8", spk, false);
             headers.set("userid",userIdSecret);
             String result = oaApi.getOaMenu(headers);
             JSONObject jsonObject = JSONObject.parseObject(result);
             //递归拿到树状数据
-            if(jsonObject.getJSONArray("data")!=null && !jsonObject.getJSONArray("data").isEmpty()){
-                for(int i = 0; i < jsonObject.getJSONArray("data").size(); i++){
-                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray("data").getJSONObject(i)));
+            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
+                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
+                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
                 }
             }
             return oaMenuResults;
@@ -142,31 +143,31 @@ public class OaService {
     /**
      * 递归获取菜单数据
      * @param jsonObject
-     * @return
+     * @return OaMenuResult
      */
     public OaMenuResult transferJsonToObject(JSONObject jsonObject){
         OaMenuResult oaMenuResult = new OaMenuResult();
-        if(jsonObject.getJSONArray("child")==null || jsonObject.getJSONArray("child").isEmpty()){
+        if(jsonObject.getJSONArray(OaConstant.OA_JSON_CHILD)==null || jsonObject.getJSONArray(OaConstant.OA_JSON_CHILD).isEmpty()){
             OaMenuResult tmp = new OaMenuResult();
-            tmp.setPid(jsonObject.getIntValue("pid"));
-            tmp.setId(jsonObject.getIntValue("id"));
-            tmp.setName(jsonObject.getString("name"));
+            tmp.setPid(jsonObject.getIntValue(OaConstant.OA_JSON_PID));
+            tmp.setId(jsonObject.getIntValue(OaConstant.OA_JSON_ID));
+            tmp.setName(jsonObject.getString(OaConstant.OA_JSON_NAME));
             tmp.setStatus(true);
-            if(jsonObject.getString("url")!=null){
-                tmp.setUrl(jsonObject.getString("url"));
+            if(jsonObject.getString(OaConstant.OA_JSON_URL)!=null){
+                tmp.setUrl(jsonObject.getString(OaConstant.OA_JSON_URL));
             }
             return tmp;
         }
         List<OaMenuResult> oaMenuResults = new ArrayList<>();
-        for(int i = 0; i <jsonObject.getJSONArray("child").size(); i++){
-            oaMenuResults.add(transferJsonToObject(jsonObject.getJSONArray("child").getJSONObject(i)));
+        for(int i = 0; i <jsonObject.getJSONArray(OaConstant.OA_JSON_CHILD).size(); i++){
+            oaMenuResults.add(transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_CHILD).getJSONObject(i)));
         }
-        oaMenuResult.setPid(jsonObject.getIntValue("pid"));
-        oaMenuResult.setId(jsonObject.getIntValue("id"));
-        oaMenuResult.setName(jsonObject.getString("name"));
+        oaMenuResult.setPid(jsonObject.getIntValue(OaConstant.OA_JSON_PID));
+        oaMenuResult.setId(jsonObject.getIntValue(OaConstant.OA_JSON_ID));
+        oaMenuResult.setName(jsonObject.getString(OaConstant.OA_JSON_NAME));
         oaMenuResult.setStatus(true);
-        if(jsonObject.getString("url")!=null){
-            oaMenuResult.setUrl(jsonObject.getString("url"));
+        if(jsonObject.getString(OaConstant.OA_JSON_URL)!=null){
+            oaMenuResult.setUrl(jsonObject.getString(OaConstant.OA_JSON_URL));
         }
         oaMenuResult.setChild(oaMenuResults);
         return oaMenuResult;
