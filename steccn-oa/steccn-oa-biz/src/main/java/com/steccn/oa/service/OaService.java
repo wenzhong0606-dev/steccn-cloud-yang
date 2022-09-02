@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
@@ -105,7 +106,7 @@ public class OaService {
      * @param userId
      * @return List<OaMenuResult>
      */
-    public List<OaMenuResult> getMenuList(String userId){
+    public JSONArray getMenuList(String userId){
         List<OaMenuResult> oaMenuResults = new ArrayList<>();
         //先获取apiToken
         OaApiTokenResult oaApiTokenResult = this.getApiToken();;
@@ -114,7 +115,7 @@ public class OaService {
             oaMenuResult.setStatus(false);
             oaMenuResults.add(oaMenuResult);
             log.error(oaApiTokenResult.getMsg());
-            return oaMenuResults;
+            return new JSONArray();
         }else{
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             //放入Token
@@ -128,14 +129,14 @@ public class OaService {
             String userIdSecret = rsa.encrypt(null, userId, null, "utf-8", spk, false);
             headers.set("userid",userIdSecret);
             String result = oaApi.getOaMenu(headers);
-            JSONObject jsonObject = JSONObject.parseObject(result);
+            JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATA);
             //递归拿到树状数据
-            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
-                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
-                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
-                }
-            }
-            return oaMenuResults;
+//            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).isEmpty()){
+//                for(int i = 0; i < jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).size(); i++){
+//                    oaMenuResults.add(this.transferJsonToObject(jsonObject.getJSONArray(OaConstant.OA_JSON_DATA).getJSONObject(i)));
+//                }
+//            }
+            return jsonArray;
         }
 
     }
