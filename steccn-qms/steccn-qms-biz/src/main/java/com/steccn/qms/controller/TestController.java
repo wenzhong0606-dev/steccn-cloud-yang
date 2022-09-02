@@ -22,4 +22,9 @@ public class TestController {
     public R getById(@PathVariable("id") Long id) {
         return R.success(qtCheckItemService.getById(id));
     }
+
+    @DeleteMapping("/{id}")
+    public R remove(@PathVariable("id") Long id) {
+        return R.success(qtCheckItemService.removeById(id));
+    }
 }

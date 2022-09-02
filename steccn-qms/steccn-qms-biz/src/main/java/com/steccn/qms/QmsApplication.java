@@ -7,6 +7,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+
 @EnableOpenApi
 public class QmsApplication {
 

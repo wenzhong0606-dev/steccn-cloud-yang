@@ -13,7 +13,7 @@ spring:
     nacos:
       discovery:
         server-addr: 10.1.103.235:8848
-        namespace: steccn_dev
+        namespace: yq
       config:
         file-extension: yaml
         server-addr: 10.1.103.235:8848
