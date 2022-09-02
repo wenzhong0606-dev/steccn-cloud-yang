@@ -85,6 +85,13 @@
 <!--            <groupId>org.projectlombok</groupId>-->
 <!--            <artifactId>lombok</artifactId>-->
 <!--        </dependency>-->
+        <dependency>
+            <groupId>weaver.rsa</groupId>
+            <artifactId>security</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/RSA-0.0.1-SNAPSHOT.jar</systemPath>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -94,5 +101,14 @@
                 <version>2.5.6</version>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/lib</directory>
+                <targetPath>BOOT-INF/lib/</targetPath>
+                <includes>
+                    <include>**/*.jar</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
 </project>
