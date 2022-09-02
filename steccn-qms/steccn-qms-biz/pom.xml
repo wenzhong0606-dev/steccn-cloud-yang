@@ -75,5 +75,9 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-oauth</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-qms-api</artifactId>
+        </dependency>
     </dependencies>
 </project>
