@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaUserDTO;
+import com.steccn.oa.dto.OaUserInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,9 +31,9 @@ public interface OaInfoService {
      * @param userId
      * @return
      */
-  
-   @GetMapping("/oa/menuList/{userId}")
-   R getMenuList(@PathVariable("userId") String userId);
+
+   @GetMapping("/oa/menuList")
+   R getMenuList(@RequestParam("userId") String userId);
 
     /**
      * 获取应用token
@@ -40,8 +41,8 @@ public interface OaInfoService {
      * @param loginId
      * @return
      */
-   @GetMapping("/oa/ssoToken/{loginId}")
-   R getSsoToken(@PathVariable("loginId") String loginId);
+   @GetMapping("/oa/ssoToken")
+   R getSsoToken(@RequestParam("loginId") String loginId);
 
 
     /**
@@ -57,6 +58,6 @@ public interface OaInfoService {
      * @param loginId
      * @return
      */
-   @GetMapping("/oa/userInfo/{loginId}")
-   R getOaUserInfo(@PathVariable("loginId") String loginId);
+   @GetMapping("/oa/userInfo")
+   R<OaUserInfo> getOaUserInfo(@RequestParam("loginId") String loginId);
 }
