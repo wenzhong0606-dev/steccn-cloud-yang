@@ -1,12 +1,23 @@
 package com.steccn.portal.service;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.digest.MD5;
+import com.alibaba.fastjson.JSONObject;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaLoginParam;
+import com.steccn.oa.dto.OaLoginResult;
+import com.steccn.oa.dto.OaSsoTokenResult;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.Strings;
 import org.springframework.stereotype.Service;
+
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @desc 登录服务
@@ -17,6 +28,8 @@ import java.util.Map;
 public class LoginService {
 
     private final RemoteTokenApi remoteTokenApi;
+    private final OaInfoService oaInfoService;
+    private final MesMenuService mesMenuService;
 
     /**
      * 登录模块
@@ -26,27 +39,58 @@ public class LoginService {
      * @return
      */
     public R<SteccnTokenVO> login(String username, String password) {
-        //先去我们系统认证
+        //1.定义变量
+        //自己系统的token返回
         Object token;
-        Map<String, String> map = null;
+        //返回vo
+        SteccnTokenVO steccnTokenVO = null;
+        //自己系统返回的token以map接收数据
+        Map<String, String> map;
+        //成功标识【全部成功才算成功】
         boolean flag = Boolean.FALSE;
         try {
+            //2.调用自己系统的获取token信息
             token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
-            flag = Boolean.TRUE;
+            //2.1map接受token的数据
             map = (Map<String, String>) token;
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
-        }
-        if (flag) {
-            //表示登录成功
-            SteccnTokenVO steccnTokenVO = new SteccnTokenVO();
+            //2.2定义返回vo并且组装token的数据
+            steccnTokenVO = new SteccnTokenVO();
             steccnTokenVO.setAccessToken(map.get(TokenConstant.STR_ACCESS_TOKEN));
             steccnTokenVO.setTokenType(map.get(TokenConstant.STR_TOKEN_TYPE));
             steccnTokenVO.setRefreshToken(map.get(TokenConstant.STR_REFRESH_TOKEN));
             steccnTokenVO.setExpiresIn(Long.valueOf(String.valueOf(map.get(TokenConstant.STR_EXPIRES_IN))));
             steccnTokenVO.setScope(map.get(TokenConstant.STR_SCOPE));
-            //再去获取oa的token
-            //再去获取mess的token
+            steccnTokenVO.setUsername(username);
+            //3.用户oa登录
+            OaLoginParam oaLoginParam = new OaLoginParam();
+            oaLoginParam.setLoginid(username);
+            oaLoginParam.setUserpassword(password);
+            R r = oaInfoService.checkLogin(oaLoginParam);
+            Map oaMap = (Map) r.getData();
+            OaLoginResult oaLoginResult = new OaLoginResult();
+            BeanUtil.fillBeanWithMap(oaMap, oaLoginResult, true);
+            steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
+            //4.如果oa登录失败，则直接跑异常
+            if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
+                throw new RuntimeException("OA用户登录失败");
+            }
+            //5.获取ssotoken
+            R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
+            Map ssoMap = (Map) ssoToken.getData();
+            OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
+            BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
+            if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
+                throw new RuntimeException("OA用户获取ssotoken失败");
+            }
+            steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
+            //6.获取mess的token
+            String mesToken = mesMenuService.getMesToken(username);
+            steccnTokenVO.setMessToken(mesToken);
+            flag = Boolean.TRUE;
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
+        if (flag) {
             return R.success(steccnTokenVO);
         } else {
             return R.failure("用户名密码错误");

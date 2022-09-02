@@ -13,8 +13,8 @@ public class Constant {
     //TOKEN有效期：10分钟
     public static final long TOKEN_EXPIRATION_TIME = 1000 * 60 * 10;
 
-    public static final Integer SUCCESS = 1000;
-    public static final Integer FAILURE = 1001;
+    public static final Integer SUCCESS = 1;
+    public static final Integer FAILURE = 0;
 
     public static final Integer VALIDATE_ERROR = 1002;
 

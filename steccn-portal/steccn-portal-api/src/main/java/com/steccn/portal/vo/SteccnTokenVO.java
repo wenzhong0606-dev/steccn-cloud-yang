@@ -11,6 +11,9 @@ import java.io.Serializable;
 @ApiModel("凯盛token")
 public class SteccnTokenVO implements Serializable {
 
+    @ApiModelProperty("用户名")
+    private String username;
+
     @ApiModelProperty("accessToken")
     private String accessToken;
 
@@ -28,6 +31,9 @@ public class SteccnTokenVO implements Serializable {
 
     @ApiModelProperty("oa系统的token")
     private String oaToken;
+
+    @ApiModelProperty("oa系统的用户id")
+    private Integer oaUserId;
 
     @ApiModelProperty("mess系统的token")
     private String messToken;

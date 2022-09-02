@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.HrmresourceMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.Hrmresource">
+            <id property="id" column="ID" jdbcType="INTEGER"/>
+            <result property="loginid" column="LOGINID" jdbcType="VARCHAR"/>
+            <result property="password" column="PASSWORD" jdbcType="VARCHAR"/>
+            <result property="lastname" column="LASTNAME" jdbcType="VARCHAR"/>
+            <result property="sex" column="SEX" jdbcType="CHAR"/>
+            <result property="birthday" column="BIRTHDAY" jdbcType="CHAR"/>
+            <result property="nationality" column="NATIONALITY" jdbcType="INTEGER"/>
+            <result property="systemlanguage" column="SYSTEMLANGUAGE" jdbcType="INTEGER"/>
+            <result property="maritalstatus" column="MARITALSTATUS" jdbcType="CHAR"/>
+            <result property="telephone" column="TELEPHONE" jdbcType="VARCHAR"/>
+            <result property="mobile" column="MOBILE" jdbcType="VARCHAR"/>
+            <result property="mobilecall" column="MOBILECALL" jdbcType="VARCHAR"/>
+            <result property="email" column="EMAIL" jdbcType="VARCHAR"/>
+            <result property="locationid" column="LOCATIONID" jdbcType="INTEGER"/>
+            <result property="workroom" column="WORKROOM" jdbcType="VARCHAR"/>
+            <result property="homeaddress" column="HOMEADDRESS" jdbcType="VARCHAR"/>
+            <result property="resourcetype" column="RESOURCETYPE" jdbcType="CHAR"/>
+            <result property="startdate" column="STARTDATE" jdbcType="CHAR"/>
+            <result property="enddate" column="ENDDATE" jdbcType="CHAR"/>
+            <result property="jobtitle" column="JOBTITLE" jdbcType="INTEGER"/>
+            <result property="jobactivitydesc" column="JOBACTIVITYDESC" jdbcType="VARCHAR"/>
+            <result property="joblevel" column="JOBLEVEL" jdbcType="INTEGER"/>
+            <result property="seclevel" column="SECLEVEL" jdbcType="INTEGER"/>
+            <result property="departmentid" column="DEPARTMENTID" jdbcType="INTEGER"/>
+            <result property="subcompanyid1" column="SUBCOMPANYID1" jdbcType="INTEGER"/>
+            <result property="costcenterid" column="COSTCENTERID" jdbcType="INTEGER"/>
+            <result property="managerid" column="MANAGERID" jdbcType="INTEGER"/>
+            <result property="assistantid" column="ASSISTANTID" jdbcType="INTEGER"/>
+            <result property="bankid1" column="BANKID1" jdbcType="INTEGER"/>
+            <result property="accountid1" column="ACCOUNTID1" jdbcType="VARCHAR"/>
+            <result property="resourceimageid" column="RESOURCEIMAGEID" jdbcType="INTEGER"/>
+            <result property="createrid" column="CREATERID" jdbcType="INTEGER"/>
+            <result property="createdate" column="CREATEDATE" jdbcType="CHAR"/>
+            <result property="lastmodid" column="LASTMODID" jdbcType="INTEGER"/>
+            <result property="lastmoddate" column="LASTMODDATE" jdbcType="CHAR"/>
+            <result property="lastlogindate" column="LASTLOGINDATE" jdbcType="CHAR"/>
+            <result property="datefield1" column="DATEFIELD1" jdbcType="VARCHAR"/>
+            <result property="datefield2" column="DATEFIELD2" jdbcType="VARCHAR"/>
+            <result property="datefield3" column="DATEFIELD3" jdbcType="VARCHAR"/>
+            <result property="datefield4" column="DATEFIELD4" jdbcType="VARCHAR"/>
+            <result property="datefield5" column="DATEFIELD5" jdbcType="VARCHAR"/>
+            <result property="numberfield1" column="NUMBERFIELD1" jdbcType="DOUBLE"/>
+            <result property="numberfield2" column="NUMBERFIELD2" jdbcType="DOUBLE"/>
+            <result property="numberfield3" column="NUMBERFIELD3" jdbcType="DOUBLE"/>
+            <result property="numberfield4" column="NUMBERFIELD4" jdbcType="DOUBLE"/>
+            <result property="numberfield5" column="NUMBERFIELD5" jdbcType="DOUBLE"/>
+            <result property="textfield1" column="TEXTFIELD1" jdbcType="VARCHAR"/>
+            <result property="textfield2" column="TEXTFIELD2" jdbcType="VARCHAR"/>
+            <result property="textfield3" column="TEXTFIELD3" jdbcType="VARCHAR"/>
+            <result property="textfield4" column="TEXTFIELD4" jdbcType="VARCHAR"/>
+            <result property="textfield5" column="TEXTFIELD5" jdbcType="VARCHAR"/>
+            <result property="tinyintfield1" column="TINYINTFIELD1" jdbcType="INTEGER"/>
+            <result property="tinyintfield2" column="TINYINTFIELD2" jdbcType="INTEGER"/>
+            <result property="tinyintfield3" column="TINYINTFIELD3" jdbcType="INTEGER"/>
+            <result property="tinyintfield4" column="TINYINTFIELD4" jdbcType="INTEGER"/>
+            <result property="tinyintfield5" column="TINYINTFIELD5" jdbcType="INTEGER"/>
+            <result property="certificatenum" column="CERTIFICATENUM" jdbcType="VARCHAR"/>
+            <result property="nativeplace" column="NATIVEPLACE" jdbcType="VARCHAR"/>
+            <result property="educationlevel" column="EDUCATIONLEVEL" jdbcType="INTEGER"/>
+            <result property="bememberdate" column="BEMEMBERDATE" jdbcType="CHAR"/>
+            <result property="bepartydate" column="BEPARTYDATE" jdbcType="CHAR"/>
+            <result property="workcode" column="WORKCODE" jdbcType="VARCHAR"/>
+            <result property="regresidentplace" column="REGRESIDENTPLACE" jdbcType="VARCHAR"/>
+            <result property="healthinfo" column="HEALTHINFO" jdbcType="CHAR"/>
+            <result property="residentplace" column="RESIDENTPLACE" jdbcType="VARCHAR"/>
+            <result property="policy" column="POLICY" jdbcType="VARCHAR"/>
+            <result property="degree" column="DEGREE" jdbcType="VARCHAR"/>
+            <result property="height" column="HEIGHT" jdbcType="VARCHAR"/>
+            <result property="usekind" column="USEKIND" jdbcType="INTEGER"/>
+            <result property="jobcall" column="JOBCALL" jdbcType="INTEGER"/>
+            <result property="accumfundaccount" column="ACCUMFUNDACCOUNT" jdbcType="VARCHAR"/>
+            <result property="birthplace" column="BIRTHPLACE" jdbcType="VARCHAR"/>
+            <result property="folk" column="FOLK" jdbcType="VARCHAR"/>
+            <result property="residentphone" column="RESIDENTPHONE" jdbcType="VARCHAR"/>
+            <result property="residentpostcode" column="RESIDENTPOSTCODE" jdbcType="VARCHAR"/>
+            <result property="extphone" column="EXTPHONE" jdbcType="VARCHAR"/>
+            <result property="managerstr" column="MANAGERSTR" jdbcType="VARCHAR"/>
+            <result property="status" column="STATUS" jdbcType="INTEGER"/>
+            <result property="fax" column="FAX" jdbcType="VARCHAR"/>
+            <result property="islabouunion" column="ISLABOUUNION" jdbcType="CHAR"/>
+            <result property="weight" column="WEIGHT" jdbcType="INTEGER"/>
+            <result property="tempresidentnumber" column="TEMPRESIDENTNUMBER" jdbcType="VARCHAR"/>
+            <result property="probationenddate" column="PROBATIONENDDATE" jdbcType="CHAR"/>
+            <result property="countryid" column="COUNTRYID" jdbcType="INTEGER"/>
+            <result property="passwdchgdate" column="PASSWDCHGDATE" jdbcType="CHAR"/>
+            <result property="needusb" column="NEEDUSB" jdbcType="INTEGER"/>
+            <result property="serial" column="SERIAL" jdbcType="VARCHAR"/>
+            <result property="account" column="ACCOUNT" jdbcType="VARCHAR"/>
+            <result property="lloginid" column="LLOGINID" jdbcType="VARCHAR"/>
+            <result property="needdynapass" column="NEEDDYNAPASS" jdbcType="INTEGER"/>
+            <result property="dsporder" column="DSPORDER" jdbcType="DOUBLE"/>
+            <result property="passwordstate" column="PASSWORDSTATE" jdbcType="INTEGER"/>
+            <result property="accounttype" column="ACCOUNTTYPE" jdbcType="INTEGER"/>
+            <result property="belongto" column="BELONGTO" jdbcType="INTEGER"/>
+            <result property="dactylogram" column="DACTYLOGRAM" jdbcType="VARCHAR"/>
+            <result property="assistantdactylogram" column="ASSISTANTDACTYLOGRAM" jdbcType="VARCHAR"/>
+            <result property="passwordlock" column="PASSWORDLOCK" jdbcType="INTEGER"/>
+            <result property="sumpasswordwrong" column="SUMPASSWORDWRONG" jdbcType="INTEGER"/>
+            <result property="oldpassword1" column="OLDPASSWORD1" jdbcType="VARCHAR"/>
+            <result property="oldpassword2" column="OLDPASSWORD2" jdbcType="VARCHAR"/>
+            <result property="msgstyle" column="MSGSTYLE" jdbcType="VARCHAR"/>
+            <result property="messagerurl" column="MESSAGERURL" jdbcType="VARCHAR"/>
+            <result property="pinyinlastname" column="pinyinlastname" jdbcType="VARCHAR"/>
+            <result property="tokenkey" column="TOKENKEY" jdbcType="VARCHAR"/>
+            <result property="userusbtype" column="USERUSBTYPE" jdbcType="VARCHAR"/>
+            <result property="outkey" column="OUTKEY" jdbcType="VARCHAR"/>
+            <result property="adsjgs" column="ADSJGS" jdbcType="VARCHAR"/>
+            <result property="adgs" column="ADGS" jdbcType="VARCHAR"/>
+            <result property="adbm" column="ADBM" jdbcType="VARCHAR"/>
+            <result property="mobileshowtype" column="MOBILESHOWTYPE" jdbcType="INTEGER"/>
+            <result property="usbstate" column="USBSTATE" jdbcType="INTEGER"/>
+            <result property="totalspace" column="TOTALSPACE" jdbcType="DOUBLE"/>
+            <result property="occupyspace" column="OCCUPYSPACE" jdbcType="DOUBLE"/>
+            <result property="ecologyPinyinSearch" column="ECOLOGY_PINYIN_SEARCH" jdbcType="VARCHAR"/>
+            <result property="isadaccount" column="ISADACCOUNT" jdbcType="CHAR"/>
+            <result property="accountname" column="ACCOUNTNAME" jdbcType="VARCHAR"/>
+            <result property="haschangepwd" column="haschangepwd" jdbcType="VARCHAR"/>
+            <result property="created" column="created" jdbcType="TIMESTAMP"/>
+            <result property="creater" column="creater" jdbcType="INTEGER"/>
+            <result property="modified" column="modified" jdbcType="TIMESTAMP"/>
+            <result property="modifier" column="modifier" jdbcType="INTEGER"/>
+            <result property="passwordlocktime" column="passwordlocktime" jdbcType="TIMESTAMP"/>
+            <result property="mobilecaflag" column="mobilecaflag" jdbcType="VARCHAR"/>
+            <result property="salt" column="salt" jdbcType="VARCHAR"/>
+            <result property="companystartdate" column="companystartdate" jdbcType="VARCHAR"/>
+            <result property="workstartdate" column="workstartdate" jdbcType="VARCHAR"/>
+            <result property="secondarypwd" column="secondaryPwd" jdbcType="VARCHAR"/>
+            <result property="usesecondarypwd" column="useSecondaryPwd" jdbcType="INTEGER"/>
+            <result property="classification" column="classification" jdbcType="CHAR"/>
+            <result property="uuid" column="uuid" jdbcType="VARCHAR"/>
+            <result property="passwordlockreason" column="passwordLockReason" jdbcType="VARCHAR"/>
+            <result property="companyworkyear" column="companyworkyear" jdbcType="DECIMAL"/>
+            <result property="workyear" column="workyear" jdbcType="DECIMAL"/>
+            <result property="dismissdate" column="DISMISSDATE" jdbcType="VARCHAR"/>
+            <result property="enckey" column="encKey" jdbcType="VARCHAR"/>
+            <result property="crc" column="crc" jdbcType="VARCHAR"/>
+            <result property="usbscope" column="usbscope" jdbcType="INTEGER"/>
+            <result property="tenantKey" column="tenant_key" jdbcType="VARCHAR"/>
+            <result property="clauthtype" column="clauthtype" jdbcType="VARCHAR"/>
+            <result property="hashdata" column="hashData" jdbcType="VARCHAR"/>
+            <result property="signdata" column="signData" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,LOGINID,PASSWORD,
+        LASTNAME,SEX,BIRTHDAY,
+        NATIONALITY,SYSTEMLANGUAGE,MARITALSTATUS,
+        TELEPHONE,MOBILE,MOBILECALL,
+        EMAIL,LOCATIONID,WORKROOM,
+        HOMEADDRESS,RESOURCETYPE,STARTDATE,
+        ENDDATE,JOBTITLE,JOBACTIVITYDESC,
+        JOBLEVEL,SECLEVEL,DEPARTMENTID,
+        SUBCOMPANYID1,COSTCENTERID,MANAGERID,
+        ASSISTANTID,BANKID1,ACCOUNTID1,
+        RESOURCEIMAGEID,CREATERID,CREATEDATE,
+        LASTMODID,LASTMODDATE,LASTLOGINDATE,
+        DATEFIELD1,DATEFIELD2,DATEFIELD3,
+        DATEFIELD4,DATEFIELD5,NUMBERFIELD1,
+        NUMBERFIELD2,NUMBERFIELD3,NUMBERFIELD4,
+        NUMBERFIELD5,TEXTFIELD1,TEXTFIELD2,
+        TEXTFIELD3,TEXTFIELD4,TEXTFIELD5,
+        TINYINTFIELD1,TINYINTFIELD2,TINYINTFIELD3,
+        TINYINTFIELD4,TINYINTFIELD5,CERTIFICATENUM,
+        NATIVEPLACE,EDUCATIONLEVEL,BEMEMBERDATE,
+        BEPARTYDATE,WORKCODE,REGRESIDENTPLACE,
+        HEALTHINFO,RESIDENTPLACE,POLICY,
+        DEGREE,HEIGHT,USEKIND,
+        JOBCALL,ACCUMFUNDACCOUNT,BIRTHPLACE,
+        FOLK,RESIDENTPHONE,RESIDENTPOSTCODE,
+        EXTPHONE,MANAGERSTR,STATUS,
+        FAX,ISLABOUUNION,WEIGHT,
+        TEMPRESIDENTNUMBER,PROBATIONENDDATE,COUNTRYID,
+        PASSWDCHGDATE,NEEDUSB,SERIAL,
+        ACCOUNT,LLOGINID,NEEDDYNAPASS,
+        DSPORDER,PASSWORDSTATE,ACCOUNTTYPE,
+        BELONGTO,DACTYLOGRAM,ASSISTANTDACTYLOGRAM,
+        PASSWORDLOCK,SUMPASSWORDWRONG,OLDPASSWORD1,
+        OLDPASSWORD2,MSGSTYLE,MESSAGERURL,
+        pinyinlastname,TOKENKEY,USERUSBTYPE,
+        OUTKEY,ADSJGS,ADGS,
+        ADBM,MOBILESHOWTYPE,USBSTATE,
+        TOTALSPACE,OCCUPYSPACE,ECOLOGY_PINYIN_SEARCH,
+        ISADACCOUNT,ACCOUNTNAME,haschangepwd,
+        created,creater,modified,
+        modifier,passwordlocktime,mobilecaflag,
+        salt,companystartdate,workstartdate,
+        secondaryPwd,useSecondaryPwd,classification,
+        uuid,passwordLockReason,companyworkyear,
+        workyear,DISMISSDATE,encKey,
+        crc,usbscope,tenant_key,
+        clauthtype,hashData,signData
+    </sql>
+</mapper>

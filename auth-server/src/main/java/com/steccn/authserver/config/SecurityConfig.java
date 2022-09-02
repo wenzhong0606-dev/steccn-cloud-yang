@@ -1,5 +1,8 @@
 package com.steccn.authserver.config;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.SecureUtil;
+import org.bouncycastle.util.Strings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,8 +37,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * @return org.springframework.security.crypto.password.PasswordEncoder
      */
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    PasswordEncoder passwordEncoder() {
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                String s = SecureUtil.md5((String) rawPassword);
+                return Strings.toUpperCase(s);
+            }
+
+            @Override
+            public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                if (StrUtil.isBlank(encodedPassword)) {
+                    throw new IllegalArgumentException("rawPassword is blank");
+                }
+                return encodedPassword.equalsIgnoreCase(SecureUtil.md5((String) rawPassword));
+            }
+        };
     }
 
     /**

@@ -15,7 +15,7 @@ spring:
   datasource:
     username: ecology
     password: ecology_kaisheng@2022#
-    url: jdbc:mysql://61.177.139.244:3307/hrmresource
+    url: jdbc:mysql://61.177.139.244:3307/ecology
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   mvc:
