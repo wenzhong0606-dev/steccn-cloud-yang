@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.SysEqpSpareMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.SysEqpSpare">
+            <id property="id" column="ID" jdbcType="VARCHAR"/>
+            <result property="code" column="CODE" jdbcType="VARCHAR"/>
+            <result property="name" column="NAME" jdbcType="VARCHAR"/>
+            <result property="specifications" column="SPECIFICATIONS" jdbcType="VARCHAR"/>
+            <result property="unit" column="UNIT" jdbcType="VARCHAR"/>
+            <result property="status" column="STATUS" jdbcType="CHAR"/>
+            <result property="createBy" column="CREATE_BY" jdbcType="VARCHAR"/>
+            <result property="createDate" column="CREATE_DATE" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="UPDATE_BY" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="UPDATE_DATE" jdbcType="TIMESTAMP"/>
+            <result property="type" column="TYPE" jdbcType="VARCHAR"/>
+            <result property="state" column="STATE" jdbcType="CHAR"/>
+            <result property="batchType" column="BATCH_TYPE" jdbcType="CHAR"/>
+            <result property="remarks" column="REMARKS" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID,CODE,NAME,
+        SPECIFICATIONS,UNIT,STATUS,
+        CREATE_BY,CREATE_DATE,UPDATE_BY,
+        UPDATE_DATE,TYPE,STATE,
+        BATCH_TYPE,REMARKS
+    </sql>
+</mapper>

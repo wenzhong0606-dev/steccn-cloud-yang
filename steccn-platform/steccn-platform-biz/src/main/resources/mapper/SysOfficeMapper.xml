@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.SysOfficeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.SysOffice">
+            <result property="officeCode" column="office_code" jdbcType="VARCHAR"/>
+            <result property="parentCode" column="parent_code" jdbcType="VARCHAR"/>
+            <result property="parentCodes" column="parent_codes" jdbcType="VARCHAR"/>
+            <result property="treeSort" column="tree_sort" jdbcType="DECIMAL"/>
+            <result property="treeSorts" column="tree_sorts" jdbcType="VARCHAR"/>
+            <result property="treeLeaf" column="tree_leaf" jdbcType="CHAR"/>
+            <result property="treeLevel" column="tree_level" jdbcType="DECIMAL"/>
+            <result property="treeNames" column="tree_names" jdbcType="VARCHAR"/>
+            <result property="viewCode" column="view_code" jdbcType="VARCHAR"/>
+            <result property="officeName" column="office_name" jdbcType="VARCHAR"/>
+            <result property="fullName" column="full_name" jdbcType="VARCHAR"/>
+            <result property="officeType" column="office_type" jdbcType="CHAR"/>
+            <result property="leader" column="leader" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="address" column="address" jdbcType="VARCHAR"/>
+            <result property="zipCode" column="zip_code" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="CHAR"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateDate" column="update_date" jdbcType="TIMESTAMP"/>
+            <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        office_code,parent_code,parent_codes,
+        tree_sort,tree_sorts,tree_leaf,
+        tree_level,tree_names,view_code,
+        office_name,full_name,office_type,
+        leader,phone,address,
+        zip_code,email,status,
+        create_by,create_date,update_by,
+        update_date,remarks
+    </sql>
+</mapper>
