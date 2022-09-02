@@ -3,9 +3,11 @@ package com.steccn.portal.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.portal.util.MesToken;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nonapi.io.github.classgraph.json.JSONUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -35,6 +37,7 @@ import java.util.concurrent.Executor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MesMenuService {
 
     /**
@@ -60,11 +63,12 @@ public class MesMenuService {
                 String content = EntityUtils.toString(entity, "utf-8");
                 JSONArray jsonArray = JSON.parseArray(content);
                 objectR.setData(jsonArray);
+                objectR.setCode(ResultCode.SUCCESS.getCode());
             }
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            objectR.setCode(ResultCode.FAILURE.getCode());
+            objectR.setMsg("用户暂无菜单权限");
         } finally {
             if (response != null) {
                 response.close();

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.qms.mapper.QtCheckItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckItem">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="dataType" column="data_type" jdbcType="INTEGER"/>
+            <result property="measureUnit" column="measure_unit" jdbcType="INTEGER"/>
+            <result property="possibleValue" column="possible_value" jdbcType="OTHER"/>
+            <result property="defaultValue" column="default_value" jdbcType="OTHER"/>
+            <result property="categoryId" column="category_id" jdbcType="INTEGER"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="opDesc" column="op_desc" jdbcType="VARCHAR"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,code,name,
+        data_type,measure_unit,possible_value,
+        default_value,category_id,status,
+        op_desc,note,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time,del_flag
+    </sql>
+</mapper>
