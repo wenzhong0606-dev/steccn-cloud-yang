@@ -1,9 +1,9 @@
-package com.steccn.qms.service.impl;
+package com.steccn.platform.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.qms.domain.SysDictType;
-import com.steccn.qms.service.SysDictTypeService;
-import com.steccn.qms.mapper.SysDictTypeMapper;
+import com.steccn.platform.domain.SysDictType;
+import com.steccn.platform.mapper.SysDictTypeMapper;
+import com.steccn.platform.service.SysDictTypeService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 */
 @Service
 public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDictType>
-    implements SysDictTypeService{
+    implements SysDictTypeService {
 
 }
 
