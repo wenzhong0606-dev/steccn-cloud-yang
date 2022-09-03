@@ -89,6 +89,7 @@ public class LoginService {
             //5.获取ssotoken
             R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
             Map ssoMap = (Map) ssoToken.getData();
+            log.debug(ssoMap.toString());
             OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
             BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
             if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {

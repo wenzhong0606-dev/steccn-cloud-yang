@@ -71,6 +71,7 @@ public class OaService {
     public OaSsoTokenResult getSsoToken(OaSsoTokenParam oaSSoTokenParam){
         oaSSoTokenParam.setAppid(OaConstant.OA_SSO_APPID);
         String result = oaApi.getSsoToken(oaSSoTokenParam);
+        log.debug(result);
         String res = result.substring(0,9);
         OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
         if(res.equals("Token获取失败")){
