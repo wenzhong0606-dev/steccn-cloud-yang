@@ -1,10 +1,14 @@
 package com.steccn.qms.controller;
 
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.vo.R;
 import com.steccn.qms.service.QtBackendService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +23,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/qms")
+@Slf4j
 public class QtBackendController {
 
     private final QtBackendService qtBackendService;
@@ -26,6 +31,7 @@ public class QtBackendController {
     @ApiOperation("获取种类列表")
     @GetMapping("/category/list")
     public R<List<QtItemCategoryVO>> getCategoryList(@ApiParam("类别 0检验项 1缺陷项") @RequestParam("type") Integer type) {
+        SteccnUser user = SecurityUtils.getUser();
         return R.success(qtBackendService.getCategoryList(type));
     }
 }

@@ -63,12 +63,14 @@ public class OaController {
     R loadByUsername(@RequestParam("username") String username) {
         Hrmresource one = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
                 .eq(Hrmresource::getLoginid, username)
-                .select(Hrmresource::getLoginid,Hrmresource::getPassword));
+                .select(Hrmresource::getId,Hrmresource::getLoginid,Hrmresource::getPassword,Hrmresource::getLastname));
         OaUserDTO oaUserDTO = null;
         if (Objects.nonNull(one)) {
             oaUserDTO = new OaUserDTO();
             oaUserDTO.setUsername(one.getLoginid());
             oaUserDTO.setPassword(one.getPassword());
+            oaUserDTO.setUserId(one.getId().longValue());
+            oaUserDTO.setName(one.getLastname());
         }
         return R.success(oaUserDTO);
     }
