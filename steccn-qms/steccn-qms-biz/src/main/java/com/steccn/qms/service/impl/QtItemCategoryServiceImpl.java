@@ -7,15 +7,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.qms.domain.QtItemCategory;
-import com.steccn.qms.service.QtItemCategoryService;
-import com.steccn.qms.mapper.QtItemCategoryMapper;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtItemCategorySaveDTO;
+import com.steccn.qms.mapper.QtItemCategoryMapper;
+import com.steccn.qms.service.QtCheckItemService;
+import com.steccn.qms.service.QtItemCategoryService;
+import com.steccn.qms.vo.QtItemCategoryVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.steccn.qms.vo.QtItemCategoryVO;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,8 +30,12 @@ import java.util.Objects;
  * @createDate 2022-09-02 08:54:09
  */
 @Service
+@Slf4j
 public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper, QtItemCategory>
         implements QtItemCategoryService {
+
+    @Autowired
+    private QtCheckItemService qtCheckItemService;
 
     @Override
     public List<QtItemCategoryVO> getCategoryList(Integer type) {
@@ -83,6 +91,17 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
             BeanUtils.copyProperties(model, resVo);
         }
         return resVo;
+    }
+
+    @Override
+    public Boolean delete(Integer id) {
+        int count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getCategoryId, id));
+        if (count > 0) {
+            throw new BusinessException("该类别包含至少1个检验项，不允许删除");
+        }
+        Boolean delete = removeById(id);
+        return delete;
     }
 }
 

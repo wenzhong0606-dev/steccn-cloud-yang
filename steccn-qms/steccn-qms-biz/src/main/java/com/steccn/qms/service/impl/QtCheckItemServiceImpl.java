@@ -21,6 +21,7 @@ import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +37,8 @@ import java.util.Objects;
 public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtCheckItem>
         implements QtCheckItemService {
 
-    private final QtItemCategoryService qtItemCategoryService;
+    @Autowired
+    private QtItemCategoryService qtItemCategoryService;
 
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {

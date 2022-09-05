@@ -1,8 +1,8 @@
 package com.steccn.qms.service;
 
-import com.steccn.common.vo.R;
-import com.steccn.qms.domain.QtItemCategory;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.domain.QtItemCategory;
+import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 
@@ -35,4 +35,11 @@ public interface QtItemCategoryService extends IService<QtItemCategory> {
      * @return
      */
     QtItemCategoryVO info(Integer id);
+
+    /**
+     * 缺陷项类别删除
+     * @param id 主键
+     * @return
+     */
+    Boolean delete(Integer id);
 }
