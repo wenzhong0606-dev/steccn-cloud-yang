@@ -84,15 +84,16 @@ public class LoginService {
             steccnTokenVO.setOaUserId(oaLoginResult.getUserId());
             //4.如果oa登录失败，则直接跑异常
             if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
+                log.error("r -> {}",r);
                 throw new BusinessException("OA用户登录失败");
             }
             //5.获取ssotoken
             R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
             Map ssoMap = (Map) ssoToken.getData();
-            log.debug(ssoMap.toString());
             OaSsoTokenResult oaSsoTokenResult = new OaSsoTokenResult();
             BeanUtil.fillBeanWithMap(ssoMap, oaSsoTokenResult, true);
             if (Objects.isNull(oaSsoTokenResult) || !oaSsoTokenResult.isStatus()) {
+                log.error(" ssoToken -> {} ",ssoToken);
                 throw new BusinessException("OA用户获取ssotoken失败");
             }
             steccnTokenVO.setOaToken(oaSsoTokenResult.getToken());
