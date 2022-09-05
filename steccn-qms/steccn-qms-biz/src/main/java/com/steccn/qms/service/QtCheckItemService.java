@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckItem;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtCheckItemAddDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.vo.QtCheckItemPageVO;
 
@@ -21,4 +22,11 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @return 列表
      */
     Page<QtCheckItemPageVO> pageList(QtCheckItemPageDTO dto);
+
+    /**
+     * 新建检验项
+     * @param dto
+     * @return
+     */
+    Boolean add(QtCheckItemAddDTO dto);
 }

@@ -27,5 +27,12 @@ public interface QtItemCategoryService extends IService<QtItemCategory> {
      * @param dto com.steccn.qms.dto
      * @return 是否成功
      */
-    R<Boolean> saveCategory(QtItemCategorySaveDTO dto);
+    Boolean saveCategory(QtItemCategorySaveDTO dto);
+
+    /**
+     * 根据id获取信息
+     * @param id
+     * @return
+     */
+    QtItemCategoryVO info(Integer id);
 }

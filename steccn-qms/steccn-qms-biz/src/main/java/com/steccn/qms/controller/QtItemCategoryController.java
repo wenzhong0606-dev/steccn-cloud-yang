@@ -34,7 +34,7 @@ public class QtItemCategoryController {
         return R.success(qtItemCategoryService.getCategoryList(type));
     }
 
-    @ApiOperation("保存检验项|缺陷项目类别")
+    @ApiOperation("保存检验项|缺陷项类别")
     @PostMapping("/category")
     public R<Boolean> saveCategory(@Valid @RequestBody QtItemCategorySaveDTO dto) {
         //1.检验类别类型是否正常
@@ -42,6 +42,13 @@ public class QtItemCategoryController {
             throw new BusinessException("类别参数不正确");
         }
         //2.插入数据库
-        return qtItemCategoryService.saveCategory(dto);
+        return R.success(qtItemCategoryService.saveCategory(dto));
     }
+
+    @ApiOperation("检验项|缺陷项类别详情")
+    @GetMapping("/info/{id}")
+    public R<QtItemCategoryVO> info(@PathVariable("id") Integer id) {
+        return R.success(qtItemCategoryService.info(id));
+    }
+
 }

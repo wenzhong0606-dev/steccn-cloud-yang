@@ -32,6 +32,12 @@ public class QtCheckItem implements Serializable {
      */
     private String name;
 
+
+    /**
+     * 检验项名称全拼
+     */
+    private String nameEn;
+
     /**
      * 数据类型
      */

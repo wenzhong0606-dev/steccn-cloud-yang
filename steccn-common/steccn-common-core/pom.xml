@@ -53,6 +53,22 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.stuxuhai</groupId>
+            <artifactId>jpinyin</artifactId>
+            <version>1.1.8</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.github.biezhi</groupId>-->
+<!--            <artifactId>TinyPinyin</artifactId>-->
+<!--            <version>2.0.3.RELEASE</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.belerweb</groupId>-->
+<!--            <artifactId>pinyin4j</artifactId>-->
+<!--            <version>2.5.1</version>-->
+<!--        </dependency>-->
     </dependencies>
 
 

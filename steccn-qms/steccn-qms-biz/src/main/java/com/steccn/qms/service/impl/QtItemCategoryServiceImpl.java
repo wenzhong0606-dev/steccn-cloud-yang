@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.mapper.QtItemCategoryMapper;
@@ -45,7 +44,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R<Boolean> saveCategory(QtItemCategorySaveDTO dto) {
+    public Boolean saveCategory(QtItemCategorySaveDTO dto) {
         //1.去数据库查询是否存在[编辑传id，新增不传id]
         int count = count(new LambdaQueryWrapper<QtItemCategory>()
                 .ne(Objects.nonNull(dto.getId()), QtItemCategory::getId, dto.getId())
@@ -69,7 +68,21 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(model);
-        return R.success(save);
+        return save;
+    }
+
+    @Override
+    public QtItemCategoryVO info(Integer id) {
+        //1.定义返回vo
+        QtItemCategoryVO resVo = null;
+        //2.根据id查询数据库数据
+        QtItemCategory model = getById(id);
+        //3.不为空，则返回拷贝的数据
+        if (Objects.nonNull(model)) {
+            resVo = new QtItemCategoryVO();
+            BeanUtils.copyProperties(model, resVo);
+        }
+        return resVo;
     }
 }
 
