@@ -12,6 +12,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
+import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -133,6 +135,16 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(oldModel);
         return save;
+    }
+
+    @Override
+    public Boolean status(QtCheckItemStatusDTO dto) {
+        throw new BusinessException("停用启用功能暂未实现");
+    }
+
+    @Override
+    public Boolean delete(Integer id) {
+        throw new BusinessException("删除功能暂未实现");
     }
 
     /**

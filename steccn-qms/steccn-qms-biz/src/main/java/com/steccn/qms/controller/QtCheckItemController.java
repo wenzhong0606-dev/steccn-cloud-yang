@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
+import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
 import io.swagger.annotations.ApiOperation;
@@ -44,5 +45,17 @@ public class QtCheckItemController {
     @ApiOperation(value = "编辑检验项")
     public R<Boolean> edit(@RequestBody QtCheckItemSaveDTO dto) {
         return R.success(qtCheckItemService.edit(dto));
+    }
+
+    @PutMapping("/status")
+    @ApiOperation(value = "停用启用")
+    public R<Boolean> status(@RequestBody QtCheckItemStatusDTO dto) {
+        return R.success(qtCheckItemService.status(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "删除检验项")
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
+        return R.success(qtCheckItemService.delete(id));
     }
 }

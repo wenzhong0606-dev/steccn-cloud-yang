@@ -17,6 +17,6 @@ public class BasePageDTO implements Serializable {
     private Integer current = 1;
 
     @ApiModelProperty(value = "分页大小")
-    private Integer size = 10;
+    private Integer size = 20;
 
 }

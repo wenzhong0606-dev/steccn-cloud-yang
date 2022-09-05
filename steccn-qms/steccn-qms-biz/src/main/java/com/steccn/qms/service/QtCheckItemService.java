@@ -5,6 +5,7 @@ import com.steccn.qms.domain.QtCheckItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
+import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
 
 /**
@@ -41,4 +42,18 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @return 是否成功
      */
     Boolean edit(QtCheckItemSaveDTO dto);
+
+    /**
+     * 停用启用
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean status(QtCheckItemStatusDTO dto);
+
+    /**
+     * 删除检验项
+     * @param id 主键id
+     * @return 是否
+     */
+    Boolean delete(Integer id);
 }
