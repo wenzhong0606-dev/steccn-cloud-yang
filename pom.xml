@@ -19,6 +19,7 @@
         <module>steccn-user-center</module>
         <module>steccn-oa</module>
         <module>steccn-platform</module>
+        <module>steccn-minio</module>
     </modules>
 
     <properties>

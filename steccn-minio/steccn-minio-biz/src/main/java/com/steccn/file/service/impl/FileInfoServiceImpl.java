@@ -1,0 +1,152 @@
+package com.steccn.file.service.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.vo.R;
+import com.steccn.file.domain.FileInfo;
+import com.steccn.file.mapper.FileInfoMapper;
+import com.steccn.file.service.FileInfoService;
+import com.steccn.file.util.MinioFileUtils;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.codec.binary.Hex;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.util.Date;
+
+/**
+ * @author MongKnife
+ * @description 针对表【file_info(文件信息)】的数据库操作Service实现
+ * @createDate 2022-09-05 13:34:24
+ */
+@Service
+@RequiredArgsConstructor
+public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
+        implements FileInfoService {
+
+    private final MinioFileUtils minioFileUtils;
+    private final FileInfoMapper fileInfoMapper;
+    private final String UTF_8 = "UTF-8";
+    private final String MD5 = "MD5";
+    private final String bucketName = "jeesite";
+
+
+    @Override
+    public R<FileInfo> uploadFile(MultipartFile multipartFile) {
+        //1.定义返回数据信息
+        R<FileInfo> r = new R<FileInfo>();
+        //2.获取文件拓展名,文件名称
+        String fileExtension = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
+        String fileName = "file/" + md5(multipartFile.getOriginalFilename() + System.currentTimeMillis()) + fileExtension;
+        String url;
+        //3.上传文件并保存文件信息
+        try {
+            url = minioFileUtils.uploadFile(fileName, multipartFile);
+            FileInfo file = new FileInfo();
+            BeanUtils.copyProperties(multipartFile, file);
+            file.setFileName(multipartFile.getOriginalFilename());
+            file.setFileUrl(url);
+            file.setBucketName(bucketName);
+            file.setFileExtension(fileExtension);
+            file.setFileSize((double) multipartFile.getSize());
+            //3.1获取当前登录用户信息并保存
+            SteccnUser user = SecurityUtils.getUser();
+            file.setCreateName(user.getName());
+            file.setCreateBy(user.getUserId());
+            file.setCreateTime(new Date());
+            int insert = fileInfoMapper.insert(file);
+            //3.1 判断是否保存成功
+            if (insert >= 1) {
+                r.setCode(1);
+                r.setMsg("保存文件成功！");
+                r.setData(file);
+            } else {
+                r.setCode(0);
+                r.setMsg("保存文件失败！");
+            }
+        } catch (Exception e) {
+            throw new BusinessException("上传文件异常");
+        }
+        return r;
+    }
+
+    /**
+     * 对输入字符串进行md5散列.
+     *
+     * @param input 加密字符串
+     */
+    String md5(String input) {
+        return md5(input, 1);
+    }
+
+    /**
+     * 对输入字符串进行md5散列.
+     *
+     * @param input      加密字符串
+     * @param iterations 迭代次数
+     */
+    String md5(String input, int iterations) {
+        try {
+            return encodeHex(digest(input.getBytes(UTF_8), MD5, null, iterations));
+        } catch (UnsupportedEncodingException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Hex编码.
+     */
+    String encodeHex(byte[] input) {
+        return new String(Hex.encodeHex(input));
+    }
+
+    /**
+     * 对字符串进行散列, 支持md5与sha1算法.
+     *
+     * @param input      需要散列的字符串
+     * @param algorithm  散列算法（"SHA-1"、"MD5"）
+     * @param salt
+     * @param iterations 迭代次数
+     * @return
+     */
+    byte[] digest(byte[] input, String algorithm, byte[] salt, int iterations) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance(algorithm);
+
+            if (salt != null) {
+                digest.update(salt);
+            }
+
+            byte[] result = digest.digest(input);
+
+            for (int i = 1; i < iterations; i++) {
+                digest.reset();
+                result = digest.digest(result);
+            }
+            return result;
+        } catch (GeneralSecurityException e) {
+            throw unchecked(e);
+        }
+    }
+
+    /**
+     * 将CheckedException转换为UncheckedException.
+     */
+    RuntimeException unchecked(Exception e) {
+        if (e instanceof RuntimeException) {
+            return (RuntimeException) e;
+        } else {
+            return new RuntimeException(e);
+        }
+    }
+}
+
+
+
+
