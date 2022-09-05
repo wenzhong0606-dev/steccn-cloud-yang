@@ -2,16 +2,14 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.qms.dto.QtCheckItemAddDTO;
+import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.service.QtCheckItemService;
-import com.steccn.qms.vo.QtCheckItemPageVO;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * @desc 检验项管理
@@ -26,13 +24,25 @@ public class QtCheckItemController {
 
     @PostMapping("/list")
     @ApiOperation(value = "检验项列表")
-    public R<Page<QtCheckItemPageVO>> pageList(@RequestBody QtCheckItemPageDTO qtCheckItemPageDTO) {
+    public R<Page<QtCheckItemListVO>> pageList(@RequestBody QtCheckItemPageDTO qtCheckItemPageDTO) {
         return R.success(qtCheckItemService.pageList(qtCheckItemPageDTO));
     }
 
     @PostMapping
     @ApiOperation(value = "新建检验项")
-    public R<Boolean> add(@RequestBody QtCheckItemAddDTO qtCheckItemAddDTO) {
-        return R.success(qtCheckItemService.add(qtCheckItemAddDTO));
+    public R<Boolean> add(@RequestBody QtCheckItemSaveDTO dto) {
+        return R.success(qtCheckItemService.add(dto));
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "检验项详情")
+    public R<QtCheckItemListVO> info(@PathVariable("id") Integer id) {
+        return R.success(qtCheckItemService.info(id));
+    }
+
+    @PutMapping
+    @ApiOperation(value = "编辑检验项")
+    public R<Boolean> edit(@RequestBody QtCheckItemSaveDTO dto) {
+        return R.success(qtCheckItemService.edit(dto));
     }
 }

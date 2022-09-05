@@ -1,9 +1,9 @@
 package com.steccn.qms.dto;
 
-import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 
 /**
@@ -11,9 +11,12 @@ import java.io.Serializable;
  */
 @Data
 @ApiModel("新建检验项dto")
-public class QtCheckItemAddDTO extends BasePageDTO implements Serializable {
+public class QtCheckItemSaveDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty("主键id")
+    private Integer id;
 
     @ApiModelProperty("检验项名称")
     private String name;

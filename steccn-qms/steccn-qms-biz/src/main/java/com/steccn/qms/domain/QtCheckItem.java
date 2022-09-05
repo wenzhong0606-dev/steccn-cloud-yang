@@ -51,12 +51,12 @@ public class QtCheckItem implements Serializable {
     /**
      * 可能值
      */
-    private Object possibleValue;
+    private String possibleValue;
 
     /**
      * 默认值
      */
-    private Object defaultValue;
+    private String defaultValue;
 
     /**
      * 检验项类别id

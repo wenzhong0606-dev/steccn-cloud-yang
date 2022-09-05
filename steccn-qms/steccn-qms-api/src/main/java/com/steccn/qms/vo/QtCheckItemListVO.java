@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @ApiModel("检验项分页vo")
 @Data
-public class QtCheckItemPageVO implements Serializable {
+public class QtCheckItemListVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -23,6 +24,18 @@ public class QtCheckItemPageVO implements Serializable {
 
     @ApiModelProperty("检验项名称")
     private String name;
+
+    @ApiModelProperty("数据类型")
+    private Integer dataType;
+
+    @ApiModelProperty("计量单位")
+    private Integer measureUnit;
+
+    @ApiModelProperty("可能值")
+    private String possibleValue;
+
+    @ApiModelProperty("默认值")
+    private String defaultValue;
 
     @ApiModelProperty("检验项类别id")
     private Integer categoryId;

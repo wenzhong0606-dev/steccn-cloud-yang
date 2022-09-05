@@ -3,11 +3,9 @@ package com.steccn.qms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckItem;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtCheckItemAddDTO;
+import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
-import com.steccn.qms.vo.QtCheckItemPageVO;
-
-import java.util.List;
+import com.steccn.qms.vo.QtCheckItemListVO;
 
 /**
 * @author yequan
@@ -21,12 +19,26 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @param dto 筛选条件，排序条件
      * @return 列表
      */
-    Page<QtCheckItemPageVO> pageList(QtCheckItemPageDTO dto);
+    Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto);
 
     /**
      * 新建检验项
      * @param dto
      * @return
      */
-    Boolean add(QtCheckItemAddDTO dto);
+    Boolean add(QtCheckItemSaveDTO dto);
+
+    /**
+     * 根据id获取详情
+     * @param id 主键id
+     * @return
+     */
+    QtCheckItemListVO info(Integer id);
+
+    /**
+     * 编辑检验项
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean edit(QtCheckItemSaveDTO dto);
 }

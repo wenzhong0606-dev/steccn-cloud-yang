@@ -11,19 +11,17 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.dto.QtCheckItemAddDTO;
+import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.service.QtItemCategoryService;
-import com.steccn.qms.vo.QtCheckItemPageVO;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,7 +39,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     private final QtItemCategoryService qtItemCategoryService;
 
     @Override
-    public Page<QtCheckItemPageVO> pageList(QtCheckItemPageDTO dto) {
+    public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtCheckItem> condition = new LambdaQueryWrapper<QtCheckItem>()
                 .eq(Objects.nonNull(dto.getName()), QtCheckItem::getName, dto.getName());
@@ -65,24 +63,21 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的信息
-        List<QtCheckItemPageVO> resRecords = BeanUtil.copyToList(resPage.getRecords(), QtCheckItemPageVO.class);
+        List<QtCheckItemListVO> resRecords = BeanUtil.copyToList(resPage.getRecords(), QtCheckItemListVO.class);
         //7.设置数据
         page.setRecords(resRecords);
         return page;
     }
 
     @Override
-    public Boolean add(QtCheckItemAddDTO dto) {
+    public Boolean add(QtCheckItemSaveDTO dto) {
         //1.校验category_id是否存在
         QtItemCategoryVO categoryInfo = qtItemCategoryService.info(dto.getCategoryId());
         if (Objects.isNull(categoryInfo) || !QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(categoryInfo.getType())) {
             throw new BusinessException("检验项类别不存在");
         }
         //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
-        int count = count(new LambdaQueryWrapper<QtCheckItem>()
-                .eq(QtCheckItem::getCategoryId, dto.getCategoryId())
-                .eq(QtCheckItem::getName, dto.getName()));
-        if(count > 0 ){
+        if (existName(dto.getCategoryId(), dto.getName(), null)) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
         //2.插入数据
@@ -102,9 +97,46 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         return save;
     }
 
+    @Override
+    public QtCheckItemListVO info(Integer id) {
+        QtCheckItemListVO resVo = null;
+        QtCheckItem byId = getById(id);
+        if (Objects.nonNull(byId)) {
+            resVo = new QtCheckItemListVO();
+            BeanUtils.copyProperties(byId, resVo);
+        }
+        return resVo;
+    }
+
+    @Override
+    public Boolean edit(QtCheckItemSaveDTO dto) {
+        //校验是否存在
+        QtCheckItem oldModel = getById(dto.getId());
+        if (Objects.isNull(oldModel)) {
+            throw new BusinessException("编辑的检验项不存在");
+        }
+        //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
+        if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
+            throw new BusinessException("同一类别下检验项名称不能重复");
+        }
+        //具体可以编辑的列
+        oldModel.setName(dto.getName());
+        oldModel.setDataType(dto.getDataType());
+        oldModel.setMeasureUnit(dto.getMeasureUnit());
+        oldModel.setPossibleValue(dto.getPossibleValue());
+        oldModel.setDefaultValue(dto.getDefaultValue());
+        oldModel.setOpDesc(dto.getOpDesc());
+        oldModel.setNote(dto.getNote());
+        oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+        oldModel.setUpdateName(SecurityUtils.getUser().getName());
+        boolean save = save(oldModel);
+        return save;
+    }
+
     /**
      * 格式：JYX#6位数字# 起始值：JYX000001
      *
+     * @param prefix 前缀
      * @return
      */
     private String getNextCode(String prefix) {
@@ -131,6 +163,23 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         }
         return prefix + finalValStr;
     }
+
+    /**
+     * 同类别下名称是否重复
+     *
+     * @param categoryId 类别id
+     * @param name       名称
+     * @param filterId   过滤的id，编辑时使用
+     * @return 是否
+     */
+    private boolean existName(Integer categoryId, String name, Integer filterId) {
+        int count = count(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getCategoryId, categoryId)
+                .eq(QtCheckItem::getName, name)
+                .ne(Objects.nonNull(filterId), QtCheckItem::getId, filterId));
+        return count > 0;
+    }
+
 }
 
 
