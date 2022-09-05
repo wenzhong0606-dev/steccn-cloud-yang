@@ -1,7 +1,12 @@
 package com.steccn.qms.service;
 
+import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtItemCategory;
 import com.baomidou.mybatisplus.extension.service.IService;
+import dto.QtItemCategorySaveDTO;
+import vo.QtItemCategoryVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +15,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtItemCategoryService extends IService<QtItemCategory> {
 
+    /**
+     * 根据类型获取检验项和缺陷项的种类集合
+     * @param type 类别 0检验项 1缺陷项
+     * @return 种类集合
+     */
+    List<QtItemCategoryVO> getCategoryList(Integer type);
+
+    /**
+     * 保存检验项和缺陷项的类别
+     * @param dto dto
+     * @return 是否成功
+     */
+    R<Boolean> saveCategory(QtItemCategorySaveDTO dto);
 }
