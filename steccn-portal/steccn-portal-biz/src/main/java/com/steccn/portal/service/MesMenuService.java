@@ -46,7 +46,7 @@ public class MesMenuService {
      * @return
      */
     public R menuRoute(String userName) throws IOException {
-        String url = "http://61.177.139.229:380/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://61.177.139.229:380/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
+        String url = "http://61.177.139.244/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://61.177.139.244/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
         HttpGet httpGet = new HttpGet(url);
         //创建HttpClient对象
         CloseableHttpClient httpClient = HttpClients.createDefault();
