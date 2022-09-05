@@ -35,10 +35,22 @@ public class SysDict implements Serializable {
      */
     private String code;
 
+
+    /**
+     * 排序
+     */
+    private Integer sort;
+
+
     /**
      * 是否有效 0否1是
      */
     private Integer useFlag;
+
+    /**
+     * 父id
+     */
+    private Integer parentId;
 
     /**
      * 创建人id

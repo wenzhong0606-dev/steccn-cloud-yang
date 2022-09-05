@@ -1,7 +1,10 @@
 package com.steccn.platform.service;
 
+import com.setccn.platfrom.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysDictService extends IService<SysDict> {
 
+    /**
+     * 根据数据字典code获取所有选项
+     * @param type 类型
+     * @return list
+     */
+    List<SysDictVO> sysList(String type);
 }
