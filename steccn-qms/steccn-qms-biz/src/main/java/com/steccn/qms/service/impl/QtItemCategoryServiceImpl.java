@@ -42,7 +42,9 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         //1.定义返回集合
         List<QtItemCategoryVO> resList = Lists.newArrayList();
         //2.从数据库获取数据
-        List<QtItemCategory> dbList = list(new LambdaQueryWrapper<QtItemCategory>().eq(QtItemCategory::getType, type));
+        List<QtItemCategory> dbList = list(new LambdaQueryWrapper<QtItemCategory>()
+                .eq(QtItemCategory::getType, type)
+                .orderByDesc(QtItemCategory::getCreateTime));
         //3.不为空，返回数据集合
         if (CollUtil.isNotEmpty(dbList)) {
             resList = BeanUtil.copyToList(dbList, QtItemCategoryVO.class);
