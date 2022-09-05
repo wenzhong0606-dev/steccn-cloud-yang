@@ -1,7 +1,10 @@
 package com.steccn.platform.service;
 
+import com.setccn.platfrom.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
 * @author W10
@@ -10,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
+    List<SpareDTO> listSpares(String name);
 }

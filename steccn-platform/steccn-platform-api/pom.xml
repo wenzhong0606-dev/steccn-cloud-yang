@@ -16,4 +16,13 @@
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+
+
 </project>
