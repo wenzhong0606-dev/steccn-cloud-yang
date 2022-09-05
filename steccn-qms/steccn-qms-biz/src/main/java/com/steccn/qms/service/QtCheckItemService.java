@@ -1,7 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckItem;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtCheckItemPageDTO;
+import com.steccn.qms.vo.QtCheckItemPageVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,5 +15,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtCheckItemService extends IService<QtCheckItem> {
 
-    String removeMy(Long id);
+    /**
+     * 检验项分页列表
+     * @param dto 筛选条件，排序条件
+     * @return 列表
+     */
+    Page<QtCheckItemPageVO> pageList(QtCheckItemPageDTO dto);
 }

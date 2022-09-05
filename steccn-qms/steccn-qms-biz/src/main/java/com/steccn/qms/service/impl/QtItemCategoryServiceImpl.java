@@ -11,11 +11,12 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.mapper.QtItemCategoryMapper;
-import constant.QtManagerConstant;
-import dto.QtItemCategorySaveDTO;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import vo.QtItemCategoryVO;
+import org.springframework.transaction.annotation.Transactional;
+import com.steccn.qms.vo.QtItemCategoryVO;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> saveCategory(QtItemCategorySaveDTO dto) {
         //1.去数据库查询是否存在[编辑传id，新增不传id]
         int count = count(new LambdaQueryWrapper<QtItemCategory>()

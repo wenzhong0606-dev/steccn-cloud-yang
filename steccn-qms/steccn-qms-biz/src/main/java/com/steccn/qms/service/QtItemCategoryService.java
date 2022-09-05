@@ -3,8 +3,8 @@ package com.steccn.qms.service;
 import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtItemCategory;
 import com.baomidou.mybatisplus.extension.service.IService;
-import dto.QtItemCategorySaveDTO;
-import vo.QtItemCategoryVO;
+import com.steccn.qms.dto.QtItemCategorySaveDTO;
+import com.steccn.qms.vo.QtItemCategoryVO;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public interface QtItemCategoryService extends IService<QtItemCategory> {
 
     /**
      * 保存检验项和缺陷项的类别
-     * @param dto dto
+     * @param dto com.steccn.qms.dto
      * @return 是否成功
      */
     R<Boolean> saveCategory(QtItemCategorySaveDTO dto);

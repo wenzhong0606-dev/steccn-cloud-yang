@@ -1,14 +1,25 @@
-package constant;
+package com.steccn.qms.constant;
 
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import java.util.Set;
 
 /**
  * @desc 质量管理的常量接口
  */
 public interface QtManagerConstant {
+
+
+    String QT_CHECK_ITEM_SORT_FIELD_NAME = "name";
+
+    String QT_CHECK_ITEM_SORT_FIELD_STATUS = "status";
+
+    String QT_CHECK_ITEM_SORT_FIELD_CREATE_TIME = "create_time";
+
+    String QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME = "update_time";
+
 
     /**
      * @desc 检验项 | 缺陷项类别枚举

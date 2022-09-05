@@ -1,11 +1,10 @@
-package vo;
+package com.steccn.qms.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @desc 检验项和缺陷项类型表

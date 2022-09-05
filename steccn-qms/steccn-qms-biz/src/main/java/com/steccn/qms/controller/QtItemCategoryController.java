@@ -5,20 +5,19 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.vo.R;
 import com.steccn.qms.service.QtItemCategoryService;
-import constant.QtManagerConstant;
-import dto.QtItemCategorySaveDTO;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import vo.QtItemCategoryVO;
-
+import com.steccn.qms.vo.QtItemCategoryVO;
 import javax.validation.Valid;
 import java.util.List;
 
 /**
- * @desc 质量管理后台配置
+ * @desc 检验项，缺陷项类别管理
  */
 @RestController
 @RequiredArgsConstructor
@@ -40,7 +39,6 @@ public class QtItemCategoryController {
     public R<Boolean> saveCategory(@Valid @RequestBody QtItemCategorySaveDTO dto) {
         //1.检验类别类型是否正常
         if (!QtManagerConstant.QtItemCategoryEnum.categoryAll().contains(dto.getType())) {
-            //获取枚举元素
             throw new BusinessException("类别参数不正确");
         }
         //2.插入数据库

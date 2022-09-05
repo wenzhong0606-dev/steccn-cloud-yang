@@ -1,4 +1,4 @@
-package dto;
+package com.steccn.qms.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -8,7 +8,6 @@ import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @desc 新增检验项|缺陷项类别
@@ -16,6 +15,8 @@ import java.time.LocalDateTime;
 @Data
 @ApiModel("新增检验项|缺陷项类别")
 public class QtItemCategorySaveDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("主键，新增时为空，编辑时存在")
     private Integer id;
