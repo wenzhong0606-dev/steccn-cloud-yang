@@ -46,4 +46,10 @@ public class SysDictController {
         return R.success(sysDictService.listByIdList(idList));
     }
 
+    @GetMapping("/exist")
+    @ApiOperation("数据字典是否存在于这个类型下的id")
+    public R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id) {
+        return R.success(sysDictService.exist(type, id));
+    }
+
 }

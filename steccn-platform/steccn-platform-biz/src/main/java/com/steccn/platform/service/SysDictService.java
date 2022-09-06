@@ -35,4 +35,12 @@ public interface SysDictService extends IService<SysDict> {
      * @return map key为主键id，value为值
      */
     Map<Long, SysDictVO> listByIdList(List<Long> idList);
+
+    /**
+     * 是否存在
+     * @param type 类型
+     * @param id 主键id
+     * @return 是否
+     */
+    Boolean exist(String type, Long id);
 }

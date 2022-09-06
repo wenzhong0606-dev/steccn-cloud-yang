@@ -66,6 +66,15 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         return resMap;
     }
 
+    @Override
+    public Boolean exist(String type, Long id) {
+        SysDict model = getById(id);
+        if (Objects.nonNull(model)) {
+            return type.equals(model.getType());
+        }
+        return Boolean.FALSE;
+    }
+
 
     /**
      * 根据list递归构造一颗树
