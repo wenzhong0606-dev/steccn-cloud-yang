@@ -25,7 +25,7 @@ public class QtItemCategorySaveDTO implements Serializable {
     @NotNull(message = "类型不能为空")
     private Integer type;
 
-    @ApiModelProperty("名称")
+    @ApiModelProperty("类别名称")
     @NotBlank(message = "名称不能为空")
     @Length(max = 30, message = "名称长度不超过30个中文")
     private String name;

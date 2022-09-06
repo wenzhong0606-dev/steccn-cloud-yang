@@ -30,7 +30,6 @@ public class QtItemCategoryController {
     @ApiOperation("获取种类列表")
     @GetMapping("/list")
     public R<List<QtItemCategoryVO>> getCategoryList(@ApiParam("类别 0检验项 1缺陷项") @RequestParam("type") Integer type) {
-        SteccnUser user = SecurityUtils.getUser();
         return R.success(qtItemCategoryService.getCategoryList(type));
     }
 

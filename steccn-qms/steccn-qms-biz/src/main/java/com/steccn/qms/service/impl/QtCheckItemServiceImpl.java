@@ -47,7 +47,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtCheckItem> condition = new LambdaQueryWrapper<QtCheckItem>()
-                .eq(Objects.nonNull(dto.getName()), QtCheckItem::getName, dto.getName());
+                .like(Objects.nonNull(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckItem::getName);
