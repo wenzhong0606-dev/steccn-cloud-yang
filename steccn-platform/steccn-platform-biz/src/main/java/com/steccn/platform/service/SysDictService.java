@@ -19,4 +19,12 @@ public interface SysDictService extends IService<SysDict> {
      * @return list
      */
     List<SysDictVO> sysList(String type);
+
+    /**
+     * 过滤数据字典版本
+     * @param type 数据字典type
+     * @param name 数据字段name
+     * @return
+     */
+    List<SysDictVO> sysListFilter(String type, String name) ;
 }

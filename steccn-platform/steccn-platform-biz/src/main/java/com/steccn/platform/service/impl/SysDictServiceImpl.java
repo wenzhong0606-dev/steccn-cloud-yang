@@ -39,6 +39,21 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         return recursiveTree(dataList);
     }
 
+    @Override
+    public List<SysDictVO> sysListFilter(String type, String name) {
+        //1.根据类型code查询出所有的数据字典数据
+        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getType, type)
+                .like(Objects.nonNull(name), SysDict::getName, name));
+        //2.如果数据为空，直接返回空集合
+        if (CollUtil.isEmpty(dataList)) {
+            return Lists.newArrayList();
+        }
+        //3.返回平铺结构
+        dataList.sort(Comparator.comparing(SysDict::getSort));
+        return BeanUtil.copyToList(dataList, SysDictVO.class);
+    }
+
 
     /**
      * 根据list递归构造一颗树
