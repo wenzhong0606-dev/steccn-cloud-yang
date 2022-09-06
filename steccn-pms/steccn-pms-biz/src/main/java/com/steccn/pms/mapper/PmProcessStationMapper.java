@@ -2,6 +2,7 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmProcessStation;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +14,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmProcessStationMapper extends BaseMapper<PmProcessStation> {
 
+    @Delete("delete from pm_process_station where process_id = #{id}")
+    int deleteByProcessId(Integer id);
 }
 
 

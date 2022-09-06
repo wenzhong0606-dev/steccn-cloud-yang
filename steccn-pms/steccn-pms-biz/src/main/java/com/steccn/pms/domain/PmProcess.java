@@ -4,13 +4,15 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 生产工序表
+ *
  * @TableName pm_process
  */
-@TableName(value ="pm_process")
+@TableName(value = "pm_process")
 @Data
 public class PmProcess implements Serializable {
     /**
@@ -53,6 +55,11 @@ public class PmProcess implements Serializable {
      * 创建人名称
      */
     private String createName;
+
+    /**
+     * 备注
+     */
+    private String node;
 
     /**
      * 创建时间
