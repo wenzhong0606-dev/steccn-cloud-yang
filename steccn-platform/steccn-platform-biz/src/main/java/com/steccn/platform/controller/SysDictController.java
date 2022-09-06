@@ -33,7 +33,7 @@ public class SysDictController {
 
     @GetMapping("/filter")
     @ApiOperation("数据字典-过滤版")
-    public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam("name") String name) {
+    public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam(value = "name",required = false) String name) {
         return R.success(sysDictService.sysListFilter(type, name));
     }
 

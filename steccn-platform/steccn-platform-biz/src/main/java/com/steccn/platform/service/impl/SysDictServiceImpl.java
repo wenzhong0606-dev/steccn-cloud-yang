@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -42,7 +43,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         //1.根据类型code查询出所有的数据字典数据
         List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getType, type)
-                .like(Objects.nonNull(name), SysDict::getName, name));
+                .like(StrUtil.isNotBlank(name), SysDict::getName, name));
         //2.如果数据为空，直接返回空集合
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
