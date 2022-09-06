@@ -18,7 +18,7 @@ public class SysDict implements Serializable {
      * 主键id
      */
     @TableId
-    private Integer id;
+    private Long id;
 
     /**
      * 类型编码
@@ -50,7 +50,7 @@ public class SysDict implements Serializable {
     /**
      * 父id
      */
-    private Integer parentId;
+    private Long parentId;
 
     /**
      * 创建人id

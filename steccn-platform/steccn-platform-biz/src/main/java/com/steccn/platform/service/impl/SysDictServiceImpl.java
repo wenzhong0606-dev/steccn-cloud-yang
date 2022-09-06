@@ -46,6 +46,12 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
      * @return
      */
     private List<SysDictVO> recursiveTree(List<SysDict> dataList) {
+        //1.判断是否存在树结构
+        long count = dataList.stream().filter(v -> v.getParentId() != 0).count();
+        if (count == 0) {
+            dataList.sort(Comparator.comparing(SysDict::getSort));
+            return BeanUtil.copyToList(dataList, SysDictVO.class);
+        }
         //定义集合
         List<SysDictVO> resList = new ArrayList<>();
         //获取所有根节点-按照sortNum排序

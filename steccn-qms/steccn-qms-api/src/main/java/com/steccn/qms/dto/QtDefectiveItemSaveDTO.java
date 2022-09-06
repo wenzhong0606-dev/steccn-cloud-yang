@@ -23,6 +23,6 @@ public class QtDefectiveItemSaveDTO implements Serializable {
     @ApiModelProperty("缺陷项备注")
     private String note;
 
-    @ApiModelProperty("检验项类别id")
+    @ApiModelProperty("缺陷项类别id")
     private Integer categoryId;
 }
