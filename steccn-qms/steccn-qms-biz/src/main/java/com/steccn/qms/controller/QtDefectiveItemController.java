@@ -3,7 +3,9 @@ package com.steccn.qms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
+import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
+import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
@@ -23,7 +25,7 @@ import java.io.Serializable;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/qms/defective")
+@RequestMapping("/qms/defective/item")
 @Slf4j
 @ApiModel("缺陷项控制器")
 public class QtDefectiveItemController implements Serializable {
@@ -36,7 +38,11 @@ public class QtDefectiveItemController implements Serializable {
         return R.success(qtDefectiveItemService.pageList(dto));
     }
 
-
+    @PostMapping
+    @ApiOperation(value = "新建缺陷项")
+    public R<Boolean> add(@RequestBody QtDefectiveItemSaveDTO dto) {
+        return R.success(qtDefectiveItemService.add(dto));
+    }
 
 
 }

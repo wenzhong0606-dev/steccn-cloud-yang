@@ -31,6 +31,11 @@ public class QtDefectiveItem implements Serializable {
     private String name;
 
     /**
+     * 缺陷项名称
+     */
+    private String nameEn;
+
+    /**
      * 缺陷项类别id
      */
     private Integer categoryId;

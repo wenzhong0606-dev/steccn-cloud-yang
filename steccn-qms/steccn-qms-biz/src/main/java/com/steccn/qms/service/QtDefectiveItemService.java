@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
+import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 
 /**
@@ -19,4 +20,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return 分页数据
      */
     Page<QtDefectiveItemVO> pageList(QtDefectiveItemPageDTO dto);
+
+    /**
+     * 新建缺陷项
+     * @param dto dto
+     * @return 是否
+     */
+    Boolean add(QtDefectiveItemSaveDTO dto);
 }

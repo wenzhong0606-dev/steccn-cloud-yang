@@ -11,12 +11,14 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.service.QtItemCategoryService;
+import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.RequiredArgsConstructor;
@@ -88,7 +90,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         QtCheckItem model = new QtCheckItem();
         BeanUtils.copyProperties(dto, model);
         //3.获取最大的自增编码
-        model.setCode(getNextCode("JYX"));
+        model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYX, CodeGenerateUtil.num_bit_6, currentMaxCode()));
         //状态：0停用  1启用
         model.setStatus(1);
         //把name转成拼音，用于排序
@@ -147,35 +149,30 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         throw new BusinessException("删除功能暂未实现");
     }
 
+
     /**
-     * 格式：JYX#6位数字# 起始值：JYX000001
+     * 当前最大的code值
      *
-     * @param prefix 前缀
-     * @return
+     * @return 数值类型，可能为null
      */
-    private String getNextCode(String prefix) {
-        QtCheckItem one = getOne(new LambdaQueryWrapper<QtCheckItem>()
-                .orderByDesc(QtCheckItem::getCode)
-                .last(MpConstant.STR_LIMIT_1));
-        if (Objects.isNull(one)) {
-            return prefix + "000001";
+    private Long currentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        QtCheckItem maxCodeModel = getOne(new LambdaQueryWrapper<QtCheckItem>().orderByDesc(QtCheckItem::getCode).last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_JYX.length());
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
         }
-        String code = one.getCode();
-        String substring = code.substring(3);
-        Long l;
-        try {
-            l = Long.parseLong(substring);
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
-            l = 1L;
-        }
-        l++;
-        String finalValStr = String.valueOf(l);
-        int length = finalValStr.length();
-        while (length++ < 6) {
-            finalValStr = 0 + finalValStr;
-        }
-        return prefix + finalValStr;
+        return currentMax;
     }
 
     /**
