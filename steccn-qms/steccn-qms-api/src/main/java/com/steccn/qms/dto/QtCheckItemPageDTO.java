@@ -18,10 +18,4 @@ public class QtCheckItemPageDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("检验项名称")
     private String name;
-
-    @ApiModelProperty("排序字段")
-    private String sortField;
-
-    @ApiModelProperty("升序降序规则: true升序 false降序")
-    private Boolean ascFlag = Boolean.TRUE;
 }
