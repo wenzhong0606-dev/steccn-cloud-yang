@@ -15,6 +15,11 @@ public class CodeGenerateUtil {
     public final static String PREFIX_QXX = "QXX";
 
     /**
+     * 前缀-检验方案
+     */
+    public final static String PREFIX_JYFA = "JYFA";
+
+    /**
      * 数字位数
      */
     public final static Integer NUM_BIT_6 = 6;

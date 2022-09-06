@@ -15,8 +15,14 @@ import java.util.List;
 public class QtCheckPlanGroupDTO {
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("主键id")
+    private Integer id;
+
     @ApiModelProperty("分组名称")
     private String groupName;
+
+    @ApiModelProperty("排序")
+    private Integer sort;
 
     @ApiModelProperty("检验项DTO")
     private List<QtCheckPlanItemsDTO> items;
