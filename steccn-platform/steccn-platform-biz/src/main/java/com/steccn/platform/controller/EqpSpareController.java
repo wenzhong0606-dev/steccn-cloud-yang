@@ -1,6 +1,6 @@
 package com.steccn.platform.controller;
 
-import com.setccn.platfrom.dto.SpareDTO;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.service.SysEqpSpareService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

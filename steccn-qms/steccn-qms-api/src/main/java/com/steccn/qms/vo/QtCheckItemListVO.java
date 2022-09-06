@@ -26,10 +26,10 @@ public class QtCheckItemListVO implements Serializable {
     private String name;
 
     @ApiModelProperty("数据类型")
-    private String dataType;
+    private Long dataType;
 
     @ApiModelProperty("计量单位")
-    private String measureUnit;
+    private Long measureUnit;
 
     @ApiModelProperty("可能值")
     private String possibleValue;

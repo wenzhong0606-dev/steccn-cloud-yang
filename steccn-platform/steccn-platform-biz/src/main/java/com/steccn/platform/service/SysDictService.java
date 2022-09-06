@@ -1,10 +1,11 @@
 package com.steccn.platform.service;
 
-import com.setccn.platfrom.vo.SysDictVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -27,4 +28,11 @@ public interface SysDictService extends IService<SysDict> {
      * @return
      */
     List<SysDictVO> sysListFilter(String type, String name) ;
+
+    /**
+     * 根据主键id查询所有的数据字典数据
+     * @param idList 主键集合
+     * @return map key为主键id，value为值
+     */
+    Map<Long, SysDictVO> listByIdList(List<Long> idList);
 }

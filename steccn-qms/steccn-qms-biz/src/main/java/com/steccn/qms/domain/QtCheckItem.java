@@ -41,12 +41,12 @@ public class QtCheckItem implements Serializable {
     /**
      * 数据类型
      */
-    private String dataType;
+    private Long dataType;
 
     /**
      * 计量单位
      */
-    private String measureUnit;
+    private Long measureUnit;
 
     /**
      * 可能值

@@ -1,19 +1,18 @@
 package com.steccn.platform.controller;
 
-import com.setccn.platfrom.vo.SysDictVO;
+import cn.hutool.core.collection.CollUtil;
+import com.google.common.collect.Maps;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysDictService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @desc 数据字典
@@ -37,4 +36,14 @@ public class SysDictController {
     public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam("name") String name) {
         return R.success(sysDictService.sysListFilter(type, name));
     }
+
+    @RequestMapping("/ids")
+    @ApiOperation("根据主键id查询数据字典的值")
+    public R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysDictService.listByIdList(idList));
+    }
+
 }

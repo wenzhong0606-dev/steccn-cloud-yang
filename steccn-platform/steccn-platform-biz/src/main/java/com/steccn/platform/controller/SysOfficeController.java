@@ -1,7 +1,7 @@
 package com.steccn.platform.controller;
 
 
-import com.setccn.platfrom.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysOfficeService;
 import io.swagger.annotations.Api;

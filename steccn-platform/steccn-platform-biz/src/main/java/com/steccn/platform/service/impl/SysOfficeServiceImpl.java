@@ -5,7 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
-import com.setccn.platfrom.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.mapper.SysOfficeMapper;
