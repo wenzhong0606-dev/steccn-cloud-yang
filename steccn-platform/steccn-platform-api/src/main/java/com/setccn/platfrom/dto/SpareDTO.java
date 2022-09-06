@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * 类说明
  *
@@ -12,7 +14,9 @@ import lombok.Data;
  */
 @Data
 @ApiModel("备件信息")
-public class SpareDTO {
+public class SpareDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("备件id")
     private Long id;

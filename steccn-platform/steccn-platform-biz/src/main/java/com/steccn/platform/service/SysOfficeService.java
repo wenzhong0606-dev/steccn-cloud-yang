@@ -1,7 +1,10 @@
 package com.steccn.platform.service;
 
+import com.setccn.platfrom.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
 * @author W10
@@ -10,4 +13,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysOfficeService extends IService<SysOffice> {
 
+    List<SysOfficeVO> sysList(String officeType);
+
+    List<SysOfficeVO> treeData();
+
+    List<SysOfficeVO> data();
 }
