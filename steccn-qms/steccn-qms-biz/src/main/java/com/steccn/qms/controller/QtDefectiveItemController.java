@@ -2,12 +2,8 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.qms.dto.QtCheckItemPageDTO;
-import com.steccn.qms.dto.QtCheckItemSaveDTO;
-import com.steccn.qms.dto.QtDefectiveItemPageDTO;
-import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
-import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -45,6 +41,18 @@ public class QtDefectiveItemController implements Serializable {
     @ApiOperation(value = "编辑缺陷项")
     public R<Boolean> edit(@RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.edit(dto));
+    }
+
+    @PutMapping("/status")
+    @ApiOperation(value = "停用启用缺陷项")
+    public R<Boolean> status(@RequestBody QtItemStatusDTO dto) {
+        return R.success(qtDefectiveItemService.status(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "删除缺陷项")
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
+        return R.success(qtDefectiveItemService.delete(id));
     }
 
 

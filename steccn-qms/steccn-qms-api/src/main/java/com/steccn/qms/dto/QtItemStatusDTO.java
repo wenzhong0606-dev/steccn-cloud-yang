@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Data
 @ApiModel("检验项停用启用dto")
-public class QtCheckItemStatusDTO implements Serializable {
+public class QtItemStatusDTO implements Serializable {
 
     @ApiModelProperty("主键id")
     private Integer id;

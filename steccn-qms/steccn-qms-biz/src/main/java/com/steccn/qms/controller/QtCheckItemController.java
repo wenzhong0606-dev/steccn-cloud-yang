@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
-import com.steccn.qms.dto.QtCheckItemStatusDTO;
+import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
 import io.swagger.annotations.ApiOperation;
@@ -49,7 +49,7 @@ public class QtCheckItemController {
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用")
-    public R<Boolean> status(@RequestBody QtCheckItemStatusDTO dto) {
+    public R<Boolean> status(@RequestBody QtItemStatusDTO dto) {
         return R.success(qtCheckItemService.status(dto));
     }
 

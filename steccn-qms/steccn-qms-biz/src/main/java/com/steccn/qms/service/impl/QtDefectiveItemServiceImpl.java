@@ -13,12 +13,12 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
+import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtDefectiveItemVO;
-import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
@@ -118,6 +118,17 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         boolean save = updateById(oldModel);
         return save;
     }
+
+    @Override
+    public Boolean status(QtItemStatusDTO dto) {
+        throw new BusinessException("停用启用功能暂未实现");
+    }
+
+    @Override
+    public Boolean delete(Integer id) {
+        throw new BusinessException("删除功能暂未实现");
+    }
+
 
     /**
      * 同类别下名称是否重复

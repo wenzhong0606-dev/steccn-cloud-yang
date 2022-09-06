@@ -5,17 +5,19 @@ import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
+import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 
 /**
-* @author yequan
-* @description 针对表【qt_defective_item(缺陷项表)】的数据库操作Service
-* @createDate 2022-09-02 08:54:09
-*/
+ * @author yequan
+ * @description 针对表【qt_defective_item(缺陷项表)】的数据库操作Service
+ * @createDate 2022-09-02 08:54:09
+ */
 public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
 
     /**
      * 缺陷项分页列表
+     *
      * @param dto dto
      * @return 分页数据
      */
@@ -23,6 +25,7 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
 
     /**
      * 新建缺陷项
+     *
      * @param dto dto
      * @return 是否
      */
@@ -30,9 +33,24 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
 
     /**
      * 编辑缺陷项
+     *
      * @param dto dto
      * @return 是否成功
      */
     Boolean edit(QtDefectiveItemSaveDTO dto);
 
+    /**
+     * 停用启用
+     *
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean status(QtItemStatusDTO dto);
+
+    /**
+     * 删除缺陷项
+     * @param id id
+     * @return 是否成功
+     */
+    Boolean delete(Integer id);
 }

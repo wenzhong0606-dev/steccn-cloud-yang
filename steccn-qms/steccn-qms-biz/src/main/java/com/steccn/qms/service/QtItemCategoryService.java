@@ -2,7 +2,6 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.domain.QtItemCategory;
-import com.steccn.qms.dto.QtCheckItemStatusDTO;
 import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 

@@ -12,14 +12,13 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
-import com.steccn.qms.dto.QtCheckItemStatusDTO;
+import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
-import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -139,7 +138,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
-    public Boolean status(QtCheckItemStatusDTO dto) {
+    public Boolean status(QtItemStatusDTO dto) {
         throw new BusinessException("停用启用功能暂未实现");
     }
 
