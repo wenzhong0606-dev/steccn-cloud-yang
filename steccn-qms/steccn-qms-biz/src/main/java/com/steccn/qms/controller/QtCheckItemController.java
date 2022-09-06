@@ -1,6 +1,8 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
@@ -10,7 +12,10 @@ import com.steccn.qms.vo.QtCheckItemListVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * @desc 检验项管理
@@ -31,7 +36,7 @@ public class QtCheckItemController {
 
     @PostMapping
     @ApiOperation(value = "新建检验项")
-    public R<Boolean> add(@RequestBody QtCheckItemSaveDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtCheckItemSaveDTO dto) {
         return R.success(qtCheckItemService.add(dto));
     }
 
@@ -43,13 +48,13 @@ public class QtCheckItemController {
 
     @PutMapping
     @ApiOperation(value = "编辑检验项")
-    public R<Boolean> edit(@RequestBody QtCheckItemSaveDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtCheckItemSaveDTO dto) {
         return R.success(qtCheckItemService.edit(dto));
     }
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用")
-    public R<Boolean> status(@RequestBody QtItemStatusDTO dto) {
+    public R<Boolean> status(@Valid @RequestBody QtItemStatusDTO dto) {
         return R.success(qtCheckItemService.status(dto));
     }
 

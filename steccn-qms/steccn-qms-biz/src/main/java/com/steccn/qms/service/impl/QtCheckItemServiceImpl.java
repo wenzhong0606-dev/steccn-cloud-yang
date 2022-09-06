@@ -6,9 +6,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
@@ -25,8 +29,11 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -42,6 +49,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
     @Autowired
     private QtItemCategoryService qtItemCategoryService;
+
+    @Autowired
+    private RemoteDictFeign remoteDictFeign;
 
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
@@ -75,19 +85,23 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtCheckItemSaveDTO dto) {
         //1.判断缺陷项类别是否存在
-        if (!qtItemCategoryService.existType(dto.getCategoryId(), QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType())) {
+        if (!qtItemCategoryService.existType(dto.getCategoryId(), QtManagerConstant.QtItemCategoryEnum.CHECK.getType())) {
             throw new BusinessException("检验项类别不存在");
         }
         //2.同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
         if (existName(dto.getCategoryId(), dto.getName(), null)) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
-        //3.插入数据
+        //3.根据数据字典id去查询数据字典信息
+        checkExistDict(dto.getMeasureUnit(), dto.getDataType());
+
+        //4.插入数据
         QtCheckItem model = new QtCheckItem();
         BeanUtils.copyProperties(dto, model);
-        //4.获取最大的自增编码
+        //5.获取最大的自增编码
         model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYX, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         //状态：0停用  1启用
         model.setStatus(MpConstant.STATUS_START);
@@ -99,6 +113,32 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         model.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(model);
         return save;
+    }
+
+    /**
+     * 检查数据字典是否存在
+     *
+     * @param measureUnit 计量单位
+     * @param dataType    数据类型
+     */
+    public void checkExistDict(Long measureUnit, Long dataType) {
+        //根据数据字典id去查询数据字典信息
+        if (Objects.nonNull(measureUnit)) {
+            R<Boolean> measureUnitFeignRes = remoteDictFeign.existTypeId("measure_unit", measureUnit);
+            if (ResultCode.SUCCESS.getCode() != measureUnitFeignRes.getCode()) {
+                throw new BusinessException("公共服务不可用");
+            }
+            if (Objects.isNull(measureUnitFeignRes.getData()) || !measureUnitFeignRes.getData()) {
+                throw new BusinessException("计量单位不存在");
+            }
+        }
+        R<Boolean> dataTypeFeignRes = remoteDictFeign.existTypeId("check_data_type", dataType);
+        if (ResultCode.SUCCESS.getCode() != dataTypeFeignRes.getCode()) {
+            throw new BusinessException("公共服务不可用");
+        }
+        if (Objects.isNull(dataTypeFeignRes.getData()) || !dataTypeFeignRes.getData()) {
+            throw new BusinessException("数据类型不存在");
+        }
     }
 
     @Override
@@ -123,6 +163,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
+        //根据数据字典id去查询数据字典信息
+        checkExistDict(dto.getMeasureUnit(), dto.getDataType());
+
         //具体可以编辑的列
         oldModel.setName(dto.getName());
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));

@@ -79,5 +79,9 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-qms-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-platform-api</artifactId>
+        </dependency>
     </dependencies>
 </project>

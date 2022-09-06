@@ -1,6 +1,6 @@
 package com.steccn.platform.service;
 
-import com.setccn.platfrom.dto.SpareDTO;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
 

@@ -2,20 +2,19 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
-import com.setccn.platfrom.vo.SysDictVO;
+import com.google.common.collect.Maps;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.mapper.SysDictMapper;
 import com.steccn.platform.service.SysDictService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +43,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         //1.根据类型code查询出所有的数据字典数据
         List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
                 .eq(SysDict::getType, type)
-                .like(Objects.nonNull(name), SysDict::getName, name));
+                .like(StrUtil.isNotBlank(name), SysDict::getName, name));
         //2.如果数据为空，直接返回空集合
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
@@ -52,6 +51,29 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         //3.返回平铺结构
         dataList.sort(Comparator.comparing(SysDict::getSort));
         return BeanUtil.copyToList(dataList, SysDictVO.class);
+    }
+
+    @Override
+    public Map<Long, SysDictVO> listByIdList(List<Long> idList) {
+        Map<Long, SysDictVO> resMap = Maps.newHashMap();
+        Collection<SysDict> sysDictList = listByIds(idList);
+        if (CollUtil.isEmpty(sysDictList)) {
+            return resMap;
+        }
+        List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+        for (SysDictVO sysDictVO : sysDictVOList) {
+            resMap.put(sysDictVO.getId(), sysDictVO);
+        }
+        return resMap;
+    }
+
+    @Override
+    public Boolean exist(String type, Long id) {
+        SysDict model = getById(id);
+        if (Objects.nonNull(model)) {
+            return type.equals(model.getType());
+        }
+        return Boolean.FALSE;
     }
 
 

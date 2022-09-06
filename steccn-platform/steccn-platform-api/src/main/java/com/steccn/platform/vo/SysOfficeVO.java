@@ -1,17 +1,21 @@
-package com.setccn.platfrom.vo;
+package com.steccn.platform.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * @desc 数据字典vo
+ * 机构类型
+ *
+ * @author Mongknife
+ * @date 2022/9/6
  */
 @Data
-@ApiModel("数据字典vo")
-public class SysDictVO implements Serializable {
+@ApiModel("机构类型vo")
+public class SysOfficeVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -19,23 +23,21 @@ public class SysDictVO implements Serializable {
     private Integer id;
 
     @ApiModelProperty("类型编码")
-    private String type;
+    private String officeType;
 
     @ApiModelProperty("名称")
-    private String name;
+    private String officeName;
 
     @ApiModelProperty("编码")
-    private String code;
+    private String officeCode;
 
     @ApiModelProperty("排序")
     private Integer sort;
 
-    @ApiModelProperty("是否有效 0否1是")
-    private Integer useFlag;
+    @ApiModelProperty("父级编码")
+    private String parentCode;
 
-    @ApiModelProperty("父id")
-    private Integer parentId;
+    @ApiModelProperty("子级节点")
+    private List<SysOfficeVO> children;
 
-    @ApiModelProperty("孩子节点")
-    private List<SysDictVO> children;
 }

@@ -22,4 +22,9 @@ public interface FeignConstant {
      * 认证服务
      */
     String STECCN_AUTH_SERVER = "auth-server";
+
+    /**
+     * 通用服务名称
+     */
+    String STECCN_PLATFORM_SERVICE_NAME = "steccn-platform";
 }

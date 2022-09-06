@@ -1,6 +1,6 @@
 package com.steccn.platform.service;
 
-import com.setccn.platfrom.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
 
