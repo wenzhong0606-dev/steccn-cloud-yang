@@ -17,7 +17,7 @@ public class CodeGenerateUtil {
     /**
      * 数字位数
      */
-    public final static Integer num_bit_6 = 6;
+    public final static Integer NUM_BIT_6 = 6;
 
 
     /**

@@ -9,10 +9,12 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import com.steccn.qms.mapper.QtItemCategoryMapper;
 import com.steccn.qms.service.QtCheckItemService;
+import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,9 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
 
     @Autowired
     private QtCheckItemService qtCheckItemService;
+
+    @Autowired
+    private QtDefectiveItemService qtDefectiveItemService;
 
     @Override
     public List<QtItemCategoryVO> getCategoryList(Integer type) {
@@ -97,10 +102,26 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
 
     @Override
     public Boolean delete(Integer id) {
-        int count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
-                .eq(QtCheckItem::getCategoryId, id));
-        if (count > 0) {
-            throw new BusinessException("该类别包含至少1个检验项，不允许删除");
+        //1.判断类别是否存在
+        QtItemCategory model = getById(id);
+        if (Objects.isNull(model)) {
+            return Boolean.TRUE;
+        }
+        //2.判断类别类型为检验项还是缺陷项
+        if (QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(model.getType())) {
+            int count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
+                    .eq(QtCheckItem::getCategoryId, id));
+            if (count > 0) {
+                throw new BusinessException("该类别包含至少1个检验项，不允许删除");
+            }
+        } else if (QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType().equals(model.getType())) {
+            int count = qtDefectiveItemService.count(new LambdaQueryWrapper<QtDefectiveItem>()
+                    .eq(QtDefectiveItem::getCategoryId, id));
+            if (count > 0) {
+                throw new BusinessException("该类别包含至少1个缺陷项，不允许删除");
+            }
+        } else {
+            throw new BusinessException("该类别类型不存在，无法删除");
         }
         Boolean delete = removeById(id);
         return delete;

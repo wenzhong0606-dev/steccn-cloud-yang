@@ -10,7 +10,6 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
@@ -21,6 +20,7 @@ import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,11 +87,11 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         QtDefectiveItem model = new QtDefectiveItem();
         BeanUtils.copyProperties(dto, model);
         //4.获取最大的自增编码
-        model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_QXX, CodeGenerateUtil.num_bit_6, currentMaxCode()));
+        model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_QXX, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         //状态：0停用  1启用
         model.setStatus(MpConstant.STATUS_START);
         //把name转成拼音，用于排序
-        model.setNameEn(PinyinUtil.getPinyin(dto.getName(), ""));
+        model.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         model.setCreateBy(SecurityUtils.getUser().getUserId());
         model.setCreateName(SecurityUtils.getUser().getName());
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
