@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
@@ -42,7 +43,7 @@ public class QtDefectiveItemController implements Serializable {
 
     @PutMapping
     @ApiOperation(value = "编辑缺陷项")
-    public R<Boolean> edit(@RequestBody QtDefectiveItemSaveDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.edit(dto));
     }
 

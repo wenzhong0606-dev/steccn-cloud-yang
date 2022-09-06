@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @desc 检验项分页vo
@@ -32,10 +33,10 @@ public class QtCheckItemListVO implements Serializable {
     private Long measureUnit;
 
     @ApiModelProperty("可能值")
-    private String possibleValue;
+    private List<String> possibleValueList;
 
     @ApiModelProperty("默认值")
-    private String defaultValue;
+    private List<String> defaultValueList;
 
     @ApiModelProperty("检验项类别id")
     private Integer categoryId;
