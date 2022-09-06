@@ -27,4 +27,12 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return 是否
      */
     Boolean add(QtDefectiveItemSaveDTO dto);
+
+    /**
+     * 编辑缺陷项
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean edit(QtDefectiveItemSaveDTO dto);
+
 }

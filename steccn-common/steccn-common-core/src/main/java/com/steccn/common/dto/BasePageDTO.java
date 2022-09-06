@@ -23,5 +23,5 @@ public class BasePageDTO implements Serializable {
     private String sortField;
 
     @ApiModelProperty("升序降序规则: true升序 false降序")
-    private Boolean ascFlag = Boolean.TRUE;
+    private Boolean ascFlag = Boolean.FALSE;
 }

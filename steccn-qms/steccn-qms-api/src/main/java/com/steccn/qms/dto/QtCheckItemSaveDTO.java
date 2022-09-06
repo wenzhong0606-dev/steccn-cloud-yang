@@ -22,10 +22,10 @@ public class QtCheckItemSaveDTO implements Serializable {
     private String name;
 
     @ApiModelProperty("数据类型")
-    private Integer dataType;
+    private String dataType;
 
     @ApiModelProperty("计量单位")
-    private Integer measureUnit;
+    private String measureUnit;
 
     @ApiModelProperty("可能值")
     private String possibleValue;

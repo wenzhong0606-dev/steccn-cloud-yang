@@ -77,19 +77,18 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
     @Override
     public Boolean add(QtCheckItemSaveDTO dto) {
-        //1.校验category_id是否存在
-        QtItemCategoryVO categoryInfo = qtItemCategoryService.info(dto.getCategoryId());
-        if (Objects.isNull(categoryInfo) || !QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(categoryInfo.getType())) {
+        //1.判断缺陷项类别是否存在
+        if (!qtItemCategoryService.existType(dto.getCategoryId(), QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType())) {
             throw new BusinessException("检验项类别不存在");
         }
-        //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
+        //2.同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
         if (existName(dto.getCategoryId(), dto.getName(), null)) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
-        //2.插入数据
+        //3.插入数据
         QtCheckItem model = new QtCheckItem();
         BeanUtils.copyProperties(dto, model);
-        //3.获取最大的自增编码
+        //4.获取最大的自增编码
         model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYX, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         //状态：0停用  1启用
         model.setStatus(MpConstant.STATUS_START);

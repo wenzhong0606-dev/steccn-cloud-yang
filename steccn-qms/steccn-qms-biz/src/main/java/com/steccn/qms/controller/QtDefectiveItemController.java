@@ -13,10 +13,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
 
@@ -42,6 +39,12 @@ public class QtDefectiveItemController implements Serializable {
     @ApiOperation(value = "新建缺陷项")
     public R<Boolean> add(@RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.add(dto));
+    }
+
+    @PutMapping
+    @ApiOperation(value = "编辑缺陷项")
+    public R<Boolean> edit(@RequestBody QtDefectiveItemSaveDTO dto) {
+        return R.success(qtDefectiveItemService.edit(dto));
     }
 
 

@@ -74,9 +74,8 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
 
     @Override
     public Boolean add(QtDefectiveItemSaveDTO dto) {
-        //1.校验category_id是否存在
-        QtItemCategoryVO categoryInfo = qtItemCategoryService.info(dto.getCategoryId());
-        if (Objects.isNull(categoryInfo) || !QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType().equals(categoryInfo.getType())) {
+        //1.判断缺陷项类别是否存在
+        if (!qtItemCategoryService.existType(dto.getCategoryId(), QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType())) {
             throw new BusinessException("缺陷项类别不存在");
         }
         //2.同一类别下缺陷项名称不可重复，否则提交时提示“同一类别下缺陷项名称不能重复”
@@ -97,6 +96,26 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(model);
+        return save;
+    }
+
+    @Override
+    public Boolean edit(QtDefectiveItemSaveDTO dto) {
+        //校验缺陷项是否存在
+        QtDefectiveItem oldModel = getById(dto.getId());
+        if (Objects.isNull(oldModel)) {
+            throw new BusinessException("编辑的缺陷项不存在");
+        }
+        //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
+        if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
+            throw new BusinessException("同一类别下缺陷项名称不能重复");
+        }
+        //具体可以编辑的列
+        oldModel.setName(dto.getName());
+        oldModel.setNote(dto.getNote());
+        oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+        oldModel.setUpdateName(SecurityUtils.getUser().getName());
+        boolean save = updateById(oldModel);
         return save;
     }
 

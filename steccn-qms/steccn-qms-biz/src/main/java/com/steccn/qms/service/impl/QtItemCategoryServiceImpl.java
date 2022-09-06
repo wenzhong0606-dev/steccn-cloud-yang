@@ -126,6 +126,21 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         Boolean delete = removeById(id);
         return delete;
     }
+
+    @Override
+    public Boolean existType(Integer id, Integer type) {
+        //1.参数异常
+        if (Objects.isNull(id) || Objects.isNull(type)) {
+            throw new BusinessException("参数异常");
+        }
+        //2.查询类别信息
+        QtItemCategory categoryInfo = getById(id);
+        //3.未查到类别，或者类型不符合则返回false
+        if (Objects.isNull(categoryInfo) || !type.equals(categoryInfo.getType())) {
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
 }
 
 
