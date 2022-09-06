@@ -1,25 +1,26 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.platform.feign.RemoteDictFeign;
-import com.steccn.platform.vo.SysDictVO;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
-import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.mapper.QtCheckItemMapper;
-import com.steccn.qms.dto.QtCheckItemPageDTO;
+import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
@@ -31,9 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -74,11 +73,23 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //4.查询分页数据
-        IPage resPage = page(page, condition);
+        IPage<QtCheckItem> resPage = page(page, condition);
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的信息
-        List<QtCheckItemListVO> resRecords = BeanUtil.copyToList(resPage.getRecords(), QtCheckItemListVO.class);
+        List<QtCheckItemListVO> resRecords = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(resPage.getRecords())) {
+            for (QtCheckItem qtCheckItem : resPage.getRecords()) {
+                QtCheckItemListVO vo = new QtCheckItemListVO();
+                BeanUtils.copyProperties(qtCheckItem, vo);
+                //转json
+                List<String> possibleList = JSONUtil.toList(qtCheckItem.getPossibleValue(), String.class);
+                List<String> defaultList = JSONUtil.toList(qtCheckItem.getDefaultValue(), String.class);
+                vo.setDefaultValueList(defaultList);
+                vo.setPossibleValueList(possibleList);
+                resRecords.add(vo);
+            }
+        }
         //7.设置数据
         page.setRecords(resRecords);
         return page;
@@ -105,6 +116,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYX, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         //状态：0停用  1启用
         model.setStatus(MpConstant.STATUS_START);
+        model.setPossibleValue(JSONUtil.toJsonStr(dto.getPossibleValueList()));
+        model.setDefaultValue(JSONUtil.toJsonStr(dto.getDefaultValueList()));
         //把name转成拼音，用于排序
         model.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         model.setCreateBy(SecurityUtils.getUser().getUserId());
@@ -148,6 +161,11 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (Objects.nonNull(byId)) {
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);
+            //转json
+            List<String> possibleList = JSONUtil.toList(byId.getPossibleValue(), String.class);
+            List<String> defaultList = JSONUtil.toList(byId.getDefaultValue(), String.class);
+            resVo.setDefaultValueList(defaultList);
+            resVo.setPossibleValueList(possibleList);
         }
         return resVo;
     }
@@ -171,8 +189,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setDataType(dto.getDataType());
         oldModel.setMeasureUnit(dto.getMeasureUnit());
-        oldModel.setPossibleValue(dto.getPossibleValue());
-        oldModel.setDefaultValue(dto.getDefaultValue());
+        oldModel.setPossibleValue(JSONUtil.toJsonStr(dto.getPossibleValueList()));
+        oldModel.setDefaultValue(JSONUtil.toJsonStr(dto.getDefaultValueList()));
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
         oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());

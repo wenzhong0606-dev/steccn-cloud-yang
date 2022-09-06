@@ -38,10 +38,10 @@ public class QtCheckItemSaveDTO implements Serializable {
     private Long measureUnit;
 
     @ApiModelProperty("可能值")
-    private String possibleValue;
+    private List<String> possibleValueList;
 
     @ApiModelProperty("默认值")
-    private String defaultValue;
+    private List<String> defaultValueList;
 
     @ApiModelProperty("检验项类别id")
     @NotNull(groups = {InsertGroup.class}, message = "检验项类别不能为空")

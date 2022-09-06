@@ -1,6 +1,8 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
@@ -9,8 +11,10 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.Serializable;
 
 /**
@@ -33,19 +37,19 @@ public class QtDefectiveItemController implements Serializable {
 
     @PostMapping
     @ApiOperation(value = "新建缺陷项")
-    public R<Boolean> add(@RequestBody QtDefectiveItemSaveDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.add(dto));
     }
 
     @PutMapping
     @ApiOperation(value = "编辑缺陷项")
-    public R<Boolean> edit(@RequestBody QtDefectiveItemSaveDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.edit(dto));
     }
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用缺陷项")
-    public R<Boolean> status(@RequestBody QtItemStatusDTO dto) {
+    public R<Boolean> status(@Valid @RequestBody QtItemStatusDTO dto) {
         return R.success(qtDefectiveItemService.status(dto));
     }
 
