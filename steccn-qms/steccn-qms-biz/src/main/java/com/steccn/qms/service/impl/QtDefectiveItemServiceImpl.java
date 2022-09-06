@@ -112,6 +112,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         }
         //具体可以编辑的列
         oldModel.setName(dto.getName());
+        oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setNote(dto.getNote());
         oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());
         oldModel.setUpdateName(SecurityUtils.getUser().getName());
