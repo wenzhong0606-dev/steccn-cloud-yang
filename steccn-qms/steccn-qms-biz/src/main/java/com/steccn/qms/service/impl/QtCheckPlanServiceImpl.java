@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtCheckPlan;
-import com.steccn.qms.domain.QtCheckPlanGroup;
-import com.steccn.qms.domain.QtItemCategory;
+import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCheckPlanDTO;
+import com.steccn.qms.service.QtCheckItemService;
+import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckPlanGroupService;
 import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
@@ -34,6 +34,13 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     implements QtCheckPlanService{
 
     private final QtCheckPlanGroupService qtCheckPlanGroupService;
+
+    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
+
+    private final QtCheckItemService qtCheckItemService;
+
+//    private final RemoteDictFeign remoteDictFeign;
+
 
     @Override
     public Boolean add(QtCheckPlanDTO dto) {
@@ -75,6 +82,52 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 groupModel.setUpdateBy(SecurityUtils.getUser().getUserId());
                 groupModel.setUpdateName(SecurityUtils.getUser().getName());
                 qtCheckPlanGroupService.save(groupModel);
+                //5、处理检验项
+                if(dto.getCheckGroup().get(i).getItems()!=null && dto.getCheckGroup().get(i).getItems().size() > 0){
+                    List<QtCheckPlanGroupItem> itemsModel = new ArrayList<>();
+                    for(int j = 0; j < dto.getCheckGroup().get(i).getItems().size(); j++){
+                        QtCheckPlanGroupItem itemModel = new QtCheckPlanGroupItem();
+                        itemModel.setCheckItemId(dto.getCheckGroup().get(i).getItems().get(j).getItemId());
+                        itemModel.setSort(dto.getCheckGroup().get(i).getItems().get(j).getSort());
+                        //平均数数组
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray()!=null && dto.getCheckGroup().get(i).getItems().get(j).getAverageArray().size() > 0){
+                            itemModel.setAverageArray(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray());
+                            //校验字典
+                            QtCheckItem qtCheckItem = qtCheckItemService.getById(dto.getCheckGroup().get(i).getItems().get(j).getItemId());
+//                            remoteDictFeign.existTypeId()
+                        }
+                        //极差数组
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getRangeArray()!=null && dto.getCheckGroup().get(i).getItems().get(j).getRangeArray().size() > 0){
+                            itemModel.setRangeArray(dto.getCheckGroup().get(i).getItems().get(j).getRangeArray());
+                        }
+                        //标准值
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getStandardValue()!=null){
+                            itemModel.setStandardValue(dto.getCheckGroup().get(i).getItems().get(j).getStandardValue());
+                        }
+                        //上偏差
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getUpperValue()!=null){
+                            itemModel.setUpperValue(dto.getCheckGroup().get(i).getItems().get(j).getUpperValue());
+                        }
+                        //下偏差
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getLowerValue()!=null){
+                            itemModel.setLowerValue(dto.getCheckGroup().get(i).getItems().get(j).getLowerValue());
+                        }
+                        //关联缺陷项
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getLinkedDefectiveItem()!=null && dto.getCheckGroup().get(i).getItems().get(j).getLinkedDefectiveItem().size() > 0){
+                            itemModel.setLinkedDefectiveItem(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray());
+                        }
+                        //关联客户
+                        if(dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode()!=null && dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode().size() > 0){
+                            itemModel.setLinkedCustomer(dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode());
+                        }
+                        itemModel.setCreateBy(SecurityUtils.getUser().getUserId());
+                        itemModel.setCreateName(SecurityUtils.getUser().getName());
+                        itemModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+                        itemModel.setUpdateName(SecurityUtils.getUser().getName());
+                        itemsModel.add(itemModel);
+                    }
+                    qtCheckPlanGroupItemService.saveBatch(itemsModel);
+                }
             }
         }
         return true;

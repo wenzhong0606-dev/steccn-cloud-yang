@@ -3,6 +3,8 @@ package com.steccn.qms.dto;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -25,13 +27,17 @@ public class QtCheckPlanItemsDTO {
     List<Integer> averageArray;
 
     @ApiModelProperty("标准值")
-    private Double standardValue;
+    private BigDecimal standardValue;
 
     @ApiModelProperty("上偏差")
-    private Double upperValue;
+    private BigDecimal upperValue;
 
     @ApiModelProperty("下偏差")
-    private Double lowerValue;
+    private BigDecimal lowerValue;
+
+    @ApiModelProperty("排序")
+    @NotNull(message = "排序不能为空")
+    private Integer sort;
 
     @ApiModelProperty("关联缺陷项")
     private List<Integer> linkedDefectiveItem;

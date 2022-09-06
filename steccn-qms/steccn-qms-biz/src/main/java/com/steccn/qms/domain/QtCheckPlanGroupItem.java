@@ -4,17 +4,19 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 检验方案分组检验项目表
  * @TableName qt_check_plan_group_item
  */
-@TableName(value ="qt_check_plan_group_item")
+@TableName(value ="qt_check_plan_group_item",autoResultMap = true)
 @Data
 public class QtCheckPlanGroupItem implements Serializable {
     /**
@@ -41,12 +43,14 @@ public class QtCheckPlanGroupItem implements Serializable {
     /**
      * 极差数组【存放检验项集合】
      */
-    private Object rangeArray;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> rangeArray;
 
     /**
      * 平均数数组【存放检验项集合】
      */
-    private Object averageArray;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> averageArray;
 
     /**
      * 标准值
@@ -66,12 +70,14 @@ public class QtCheckPlanGroupItem implements Serializable {
     /**
      * 关联缺陷项
      */
-    private Object linkedDefectiveItem;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> linkedDefectiveItem;
 
     /**
      * 关联客户
      */
-    private Object linkedCustomer;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> linkedCustomer;
 
     /**
      * 创建人id
