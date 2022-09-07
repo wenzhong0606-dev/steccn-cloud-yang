@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
@@ -60,6 +61,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtCheckItem> condition = new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getCategoryId, dto.getCategoryId())
                 .like(Objects.nonNull(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
@@ -190,7 +192,6 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         }
     }
 
-
     @Override
     public QtCheckItemListVO info(Integer id) {
         QtCheckItemListVO resVo = null;
@@ -240,6 +241,16 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         throw new BusinessException("删除功能暂未实现");
     }
 
+    @Override
+    public List<QtCheckItemListVO> selectItemList() {
+        List<QtCheckItem> dataList = list(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getStatus, 1));
+        if (CollUtil.isEmpty(dataList)) {
+            return Lists.newArrayList();
+        }
+        List<QtCheckItemListVO> resList = BeanUtil.copyToList(dataList, QtCheckItemListVO.class);
+        return resList;
+    }
 
     /**
      * 当前最大的code值

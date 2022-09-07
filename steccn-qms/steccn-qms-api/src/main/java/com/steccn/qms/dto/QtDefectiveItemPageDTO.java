@@ -16,4 +16,7 @@ public class QtDefectiveItemPageDTO extends BasePageDTO implements Serializable 
     @ApiModelProperty("缺陷项名称")
     private String name;
 
+    @ApiModelProperty("类别id")
+    private Integer categoryId;
+
 }

@@ -8,6 +8,8 @@ import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
 
+import java.util.List;
+
 /**
 * @author yequan
 * @description 针对表【qt_check_item(检验项表)】的数据库操作Service
@@ -56,4 +58,10 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @return 是否
      */
     Boolean delete(Integer id);
+
+    /**
+     * 启用状态的下拉选项
+     * @return
+     */
+    List<QtCheckItemListVO> selectItemList();
 }

@@ -29,9 +29,9 @@ public class QtDefectiveItemController implements Serializable {
 
     private final QtDefectiveItemService qtDefectiveItemService;
 
-    @PostMapping("/list")
+    @PostMapping("/page")
     @ApiOperation(value = "缺陷项列表")
-    public R<Page<QtDefectiveItemVO>> pageList(@RequestBody QtDefectiveItemPageDTO dto) {
+    public R<Page<QtDefectiveItemVO>> pageList(@Valid @RequestBody QtDefectiveItemPageDTO dto) {
         return R.success(qtDefectiveItemService.pageList(dto));
     }
 

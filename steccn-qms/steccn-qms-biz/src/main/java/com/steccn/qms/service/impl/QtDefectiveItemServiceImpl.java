@@ -45,6 +45,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     public Page<QtDefectiveItemVO> pageList(QtDefectiveItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtDefectiveItem> condition = new LambdaQueryWrapper<QtDefectiveItem>()
+                .eq(QtDefectiveItem::getCategoryId, dto.getCategoryId())
                 .like(Objects.nonNull(dto.getName()), QtDefectiveItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
