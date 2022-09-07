@@ -8,17 +8,17 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmProcess;
+import com.steccn.pms.domain.PmProcessStation;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.mapper.PmProcessMapper;
 import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.service.PmProcessStationService;
+import com.steccn.pms.vo.PmProcessStationVO;
 import com.steccn.pms.vo.PmProcessVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
-import org.springframework.util.IdGenerator;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -34,7 +34,6 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
 
     private final PmProcessStationService processStationService;
 
-    private final PmProcessMapper processMapper;
 
     @Override
     public R<Boolean> saveProcess(PmProcessDTO dto) {
@@ -67,7 +66,12 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         BeanUtils.copyProperties(resPage, page);
         //5.拷贝返回的信息
         List<PmProcessVO> res = BeanUtil.copyToList(resPage.getRecords(), PmProcessVO.class);
-        //6.设置数据
+        //6.处理数据
+        res.forEach(pmProcessVO -> {
+            LambdaQueryWrapper<PmProcessStation> wrapper = new LambdaQueryWrapper<PmProcessStation>().eq(PmProcessStation::getProcessId, pmProcessVO.getId().intValue());
+            List<PmProcessStationVO> pmProcessStationVOS = BeanUtil.copyToList(processStationService.list(wrapper), PmProcessStationVO.class);
+            pmProcessVO.setList(pmProcessStationVOS);
+        });
         return page.setRecords(res);
     }
 
@@ -82,10 +86,11 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     @Override
     public R<Boolean> edit(PmProcessDTO dto) {
         //校验是否存在
-        PmProcess model = getById(dto.getId());
-        if (Objects.isNull(model)) {
+        PmProcess pmProcess = getById(dto.getId());
+        if (Objects.isNull(pmProcess)) {
             throw new BusinessException("编辑的工序不存在");
         }
+        PmProcess model = new PmProcess();
         model.setName(dto.getName());
         model.setCode(dto.getCode());
         model.setType(dto.getType());

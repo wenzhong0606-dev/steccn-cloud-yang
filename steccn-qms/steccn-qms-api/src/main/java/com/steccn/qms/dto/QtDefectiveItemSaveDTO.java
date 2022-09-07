@@ -30,7 +30,7 @@ public class QtDefectiveItemSaveDTO implements Serializable {
     private String name;
 
     @ApiModelProperty("缺陷项备注")
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "名缺陷项备注长度不超过100个中文")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "缺陷项备注长度不超过100个中文")
     private String note;
 
     @ApiModelProperty("缺陷项类别id")

@@ -6,6 +6,7 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @desc 缺陷项类别管理
@@ -29,9 +31,9 @@ public class QtDefectiveItemController implements Serializable {
 
     private final QtDefectiveItemService qtDefectiveItemService;
 
-    @PostMapping("/list")
+    @PostMapping("/page")
     @ApiOperation(value = "缺陷项列表")
-    public R<Page<QtDefectiveItemVO>> pageList(@RequestBody QtDefectiveItemPageDTO dto) {
+    public R<Page<QtDefectiveItemVO>> pageList(@Valid @RequestBody QtDefectiveItemPageDTO dto) {
         return R.success(qtDefectiveItemService.pageList(dto));
     }
 
@@ -59,5 +61,10 @@ public class QtDefectiveItemController implements Serializable {
         return R.success(qtDefectiveItemService.delete(id));
     }
 
+    @PostMapping("/select/item")
+    @ApiOperation(value = "启用状态缺陷项列表")
+    public R<List<QtDefectiveItemVO>> selectItemList() {
+        return R.success(qtDefectiveItemService.selectItemList());
+    }
 
 }

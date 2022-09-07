@@ -6,9 +6,12 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -38,10 +41,11 @@ public class QtCheckItemSaveDTO implements Serializable {
     private Long measureUnit;
 
     @ApiModelProperty("可能值")
-    private List<String> possibleValueList;
+    @Size(max = 100, message = "可能值选项个数最多100个")
+    private List<String> possibleValue;
 
     @ApiModelProperty("默认值")
-    private List<String> defaultValueList;
+    private List<String> defaultValue;
 
     @ApiModelProperty("检验项类别id")
     @NotNull(groups = {InsertGroup.class}, message = "检验项类别不能为空")

@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @desc 检验项管理
@@ -28,9 +29,9 @@ public class QtCheckItemController {
 
     private final QtCheckItemService qtCheckItemService;
 
-    @PostMapping("/list")
+    @PostMapping("/page")
     @ApiOperation(value = "检验项列表")
-    public R<Page<QtCheckItemListVO>> pageList(@RequestBody QtCheckItemPageDTO qtCheckItemPageDTO) {
+    public R<Page<QtCheckItemListVO>> pageList(@Valid @RequestBody QtCheckItemPageDTO qtCheckItemPageDTO) {
         return R.success(qtCheckItemService.pageList(qtCheckItemPageDTO));
     }
 
@@ -62,5 +63,11 @@ public class QtCheckItemController {
     @ApiOperation(value = "删除检验项")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtCheckItemService.delete(id));
+    }
+
+    @PostMapping("/select/item")
+    @ApiOperation(value = "启用状态检验项列表")
+    public R<List<QtCheckItemListVO>> selectItemList() {
+        return R.success(qtCheckItemService.selectItemList());
     }
 }
