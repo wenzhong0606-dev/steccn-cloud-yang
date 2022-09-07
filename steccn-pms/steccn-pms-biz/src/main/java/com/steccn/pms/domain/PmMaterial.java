@@ -50,7 +50,7 @@ public class PmMaterial implements Serializable {
     /**
      * 单位ID
      */
-    private Integer unitId;
+    private Long unitId;
 
     /**
      * 是否是固定数量：1是0否

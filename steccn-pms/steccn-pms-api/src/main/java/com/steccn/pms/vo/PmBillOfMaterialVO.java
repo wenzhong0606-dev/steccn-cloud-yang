@@ -25,7 +25,7 @@ public class PmBillOfMaterialVO implements Serializable {
     private Long id;
 
     @ApiModelProperty("物料ID")
-    private Integer materialId;
+    private Long materialId;
 
     @ApiModelProperty("物料名称")
     private String materialName;
@@ -40,7 +40,10 @@ public class PmBillOfMaterialVO implements Serializable {
     private Object quantity;
 
     @ApiModelProperty("单位id")
-    private Integer unitId;
+    private Long unitId;
+
+    @ApiModelProperty("单位名称")
+    private String unit;
 
     @ApiModelProperty("版本")
     private String version;

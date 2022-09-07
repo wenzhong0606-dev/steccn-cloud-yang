@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 /**
@@ -40,6 +41,16 @@ public class PmProcess implements Serializable {
      * 工序状态
      */
     private Integer status;
+
+    /**
+     * 是否报工 0 否 1是
+     */
+    private Integer isReportingWorks;
+
+    /**
+     * 是否报检 0否 1是
+     */
+    private Integer isCustomsInspection;
 
     /**
      * 工艺指导书（文件id）

@@ -35,7 +35,7 @@ public class PmBillOfMaterialDTO extends BasePageDTO implements Serializable {
     private String materialName;
 
     @ApiModelProperty("物料id")
-    private String materialId;
+    private Long materialId;
 
     @ApiModelProperty("物料编码")
     private String materialCode;
@@ -47,7 +47,7 @@ public class PmBillOfMaterialDTO extends BasePageDTO implements Serializable {
     private Object quantity;
 
     @ApiModelProperty("单位id")
-    private Integer unitId;
+    private Long unitId;
 
     @ApiModelProperty("版本")
     private String version;

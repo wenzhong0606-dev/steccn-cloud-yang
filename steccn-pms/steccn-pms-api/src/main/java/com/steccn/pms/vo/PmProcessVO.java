@@ -53,4 +53,11 @@ public class PmProcessVO implements Serializable {
     @ApiModelProperty("工位信息")
     private List<PmProcessStationVO> list;
 
+    @ApiModelProperty("是否报工")
+    private Integer isReportingWorks;
+
+
+    @ApiModelProperty("是否报检")
+    private Integer isCustomsInspection;
+
 }

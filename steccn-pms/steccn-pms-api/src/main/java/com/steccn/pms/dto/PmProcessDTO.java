@@ -43,4 +43,13 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("执行工位列表")
     private List<PmProcessStationDTO> list;
 
+
+    @ApiModelProperty("是否报工")
+    private Integer isReportingWorks;
+
+
+    @ApiModelProperty("是否报检")
+    private Integer isCustomsInspection;
+
+
 }
