@@ -18,6 +18,7 @@ import com.steccn.platform.feign.RemoteDictFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -246,7 +247,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Override
     public List<QtCheckItemListVO> selectItemList() {
         List<QtCheckItem> dataList = list(new LambdaQueryWrapper<QtCheckItem>()
-                .eq(QtCheckItem::getStatus, 1));
+                .eq(QtCheckItem::getStatus, MpConstant.STATUS_START)
+                .orderByDesc(QtCheckItem::getCreateTime));
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
         }

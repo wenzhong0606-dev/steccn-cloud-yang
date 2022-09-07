@@ -8,6 +8,8 @@ import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 
+import java.util.List;
+
 /**
  * @author yequan
  * @description 针对表【qt_defective_item(缺陷项表)】的数据库操作Service
@@ -53,4 +55,10 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return 是否成功
      */
     Boolean delete(Integer id);
+
+    /**
+     * 启用状态缺陷项列表
+     * @return list
+     */
+    List<QtDefectiveItemVO> selectItemList();
 }

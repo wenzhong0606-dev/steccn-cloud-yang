@@ -1,15 +1,18 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
@@ -18,6 +21,7 @@ import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -129,6 +133,18 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     @Override
     public Boolean delete(Integer id) {
         throw new BusinessException("删除功能暂未实现");
+    }
+
+    @Override
+    public List<QtDefectiveItemVO> selectItemList() {
+        List<QtDefectiveItem> dataList = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                .eq(QtDefectiveItem::getStatus, MpConstant.STATUS_START)
+                .orderByDesc(QtDefectiveItem::getCreateTime));
+        if (CollUtil.isEmpty(dataList)) {
+            return Lists.newArrayList();
+        }
+        List<QtDefectiveItemVO> resList = BeanUtil.copyToList(dataList, QtDefectiveItemVO.class);
+        return resList;
     }
 
 
