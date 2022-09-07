@@ -71,6 +71,13 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
             QtManagerConstant.QtItemCategoryEnum eleByType = QtManagerConstant.QtItemCategoryEnum.getEleByType(dto.getType());
             throw new BusinessException(eleByType.getName() + "类型名称不能重复");
         }
+        //未查询到数据，视为新增
+        if(Objects.nonNull(dto.getId())){
+            QtItemCategory byId = getById(dto.getId());
+            if(Objects.isNull(byId)){
+                dto.setId(null);
+            }
+        }
         //3.不存在，则插入数据库
         QtItemCategory model = new QtItemCategory();
         BeanUtils.copyProperties(dto, model);
@@ -82,7 +89,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         }
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
-        boolean save = save(model);
+        boolean save = saveOrUpdate(model);
         return save;
     }
 
