@@ -34,4 +34,11 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @return QtCheckPlanDetailsVo
      */
     QtCheckPlanDetailsVo info(Integer id);
+
+    /**
+     * 编辑
+     * @param id
+     * @return QtCheckPlanDetailsVo
+     */
+    Boolean edit(QtCheckPlanDTO dto);
 }

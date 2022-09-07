@@ -47,4 +47,10 @@ public class QtCheckPlanController {
     public R<QtCheckPlanDetailsVo> info(@PathVariable Integer id) {
         return R.success(qtCheckPlanService.info(id));
     }
+
+    @PutMapping
+    @ApiOperation(value = "修改检验方案的值")
+    public R<Boolean> edit(@RequestBody QtCheckPlanDTO dto){
+        return R.success(qtCheckPlanService.edit(dto));
+    }
 }
