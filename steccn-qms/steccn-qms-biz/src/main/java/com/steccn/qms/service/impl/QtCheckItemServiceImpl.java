@@ -199,6 +199,16 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (Objects.nonNull(byId)) {
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);
+            //数据字典字段赋值name
+            R<Map<Long, SysDictVO>> dictFeignRes = remoteDictFeign.listById(Arrays.asList(byId.getDataType(), byId.getMeasureUnit()));
+            if (ResultCode.SUCCESS.getCode() != dictFeignRes.getCode()) {
+                throw new BusinessException("公共服务不可用");
+            }
+            Map<Long, SysDictVO> dictMap = dictFeignRes.getData();
+            SysDictVO dataTypeDictVO = dictMap.get(byId.getDataType());
+            SysDictVO measureUnitDictVO = dictMap.get(byId.getMeasureUnit());
+            resVo.setDataTypeName(Objects.nonNull(dataTypeDictVO) ? dataTypeDictVO.getName() : null);
+            resVo.setMeasureUnitName(Objects.nonNull(measureUnitDictVO) ? measureUnitDictVO.getName() : null);
         }
         return resVo;
     }
