@@ -296,7 +296,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
      * @return 是否
      */
     private boolean existName(Integer categoryId, String name, Integer filterId) {
-        int count = count(new LambdaQueryWrapper<QtCheckItem>()
+        long count = count(new LambdaQueryWrapper<QtCheckItem>()
                 .eq(QtCheckItem::getCategoryId, categoryId)
                 .eq(QtCheckItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtCheckItem::getId, filterId));

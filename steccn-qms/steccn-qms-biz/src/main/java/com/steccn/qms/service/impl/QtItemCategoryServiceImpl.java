@@ -61,7 +61,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveCategory(QtItemCategorySaveDTO dto) {
         //1.去数据库查询是否存在[编辑传id，新增不传id]
-        int count = count(new LambdaQueryWrapper<QtItemCategory>()
+        long count = count(new LambdaQueryWrapper<QtItemCategory>()
                 .ne(Objects.nonNull(dto.getId()), QtItemCategory::getId, dto.getId())
                 .eq(QtItemCategory::getName, dto.getName())
                 .eq(QtItemCategory::getType, dto.getType()));
@@ -116,13 +116,13 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         }
         //2.判断类别类型为检验项还是缺陷项
         if (QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(model.getType())) {
-            int count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
+            long count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
                     .eq(QtCheckItem::getCategoryId, id));
             if (count > 0) {
                 throw new BusinessException("该类别包含至少1个检验项，不允许删除");
             }
         } else if (QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType().equals(model.getType())) {
-            int count = qtDefectiveItemService.count(new LambdaQueryWrapper<QtDefectiveItem>()
+            long count = qtDefectiveItemService.count(new LambdaQueryWrapper<QtDefectiveItem>()
                     .eq(QtDefectiveItem::getCategoryId, id));
             if (count > 0) {
                 throw new BusinessException("该类别包含至少1个缺陷项，不允许删除");

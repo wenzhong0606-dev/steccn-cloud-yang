@@ -158,7 +158,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
      * @return 是否
      */
     private boolean existName(Integer categoryId, String name, Integer filterId) {
-        int count = count(new LambdaQueryWrapper<QtDefectiveItem>()
+        long count = count(new LambdaQueryWrapper<QtDefectiveItem>()
                 .eq(QtDefectiveItem::getCategoryId, categoryId)
                 .eq(QtDefectiveItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtDefectiveItem::getId, filterId));

@@ -20,6 +20,7 @@
         <module>steccn-oa</module>
         <module>steccn-platform</module>
         <module>steccn-minio</module>
+        <module>steccn-monitor</module>
     </modules>
 
     <properties>
