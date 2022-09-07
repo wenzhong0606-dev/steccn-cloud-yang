@@ -93,7 +93,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         if(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray()!=null && dto.getCheckGroup().get(i).getItems().get(j).getAverageArray().size() > 0){
                             itemModel.setAverageArray(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray());
                             //校验字典
-                            QtCheckItem qtCheckItem = qtCheckItemService.getById(dto.getCheckGroup().get(i).getItems().get(j).getItemId());
+//                            QtCheckItem qtCheckItem = qtCheckItemService.getById(dto.getCheckGroup().get(i).getItems().get(j).getItemId());
 //                            remoteDictFeign.existTypeId()
                         }
                         //极差数组

@@ -16,7 +16,7 @@ import java.util.List;
  * 检验方案分组检验项目表
  * @TableName qt_check_plan_group_item
  */
-@TableName(value ="qt_check_plan_group_item",autoResultMap = true)
+@TableName(value ="qt_check_plan_group_item")
 @Data
 public class QtCheckPlanGroupItem implements Serializable {
     /**
