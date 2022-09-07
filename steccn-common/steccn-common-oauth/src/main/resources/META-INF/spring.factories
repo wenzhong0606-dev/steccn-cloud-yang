@@ -3,4 +3,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.steccn.authserver.config.JwtTokenEnhancer,\
   com.steccn.authserver.config.JwtConfig,\
   com.steccn.authserver.path.IgnorenPath,\
-  com.steccn.authserver.exception.SteccnExceptionControllerAdvice
+  com.steccn.authserver.exception.SteccnExceptionControllerAdvice,\
+  com.steccn.authserver.config.FeignConfig
