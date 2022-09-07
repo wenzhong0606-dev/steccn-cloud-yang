@@ -1,6 +1,5 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
@@ -88,6 +87,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             for (QtCheckItem qtCheckItem : resPage.getRecords()) {
                 QtCheckItemListVO vo = new QtCheckItemListVO();
                 BeanUtils.copyProperties(qtCheckItem, vo);
+                dictVal(vo);
                 resRecords.add(vo);
             }
         }
@@ -200,15 +200,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);
             //数据字典字段赋值name
-            R<Map<Long, SysDictVO>> dictFeignRes = remoteDictFeign.listById(Arrays.asList(byId.getDataType(), byId.getMeasureUnit()));
-            if (ResultCode.SUCCESS.getCode() != dictFeignRes.getCode()) {
-                throw new BusinessException("公共服务不可用");
-            }
-            Map<Long, SysDictVO> dictMap = dictFeignRes.getData();
-            SysDictVO dataTypeDictVO = dictMap.get(byId.getDataType());
-            SysDictVO measureUnitDictVO = dictMap.get(byId.getMeasureUnit());
-            resVo.setDataTypeName(Objects.nonNull(dataTypeDictVO) ? dataTypeDictVO.getName() : null);
-            resVo.setMeasureUnitName(Objects.nonNull(measureUnitDictVO) ? measureUnitDictVO.getName() : null);
+            dictVal(resVo);
         }
         return resVo;
     }
@@ -258,7 +250,13 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
         }
-        List<QtCheckItemListVO> resList = BeanUtil.copyToList(dataList, QtCheckItemListVO.class);
+        List<QtCheckItemListVO> resList = Lists.newArrayList();
+        for (QtCheckItem model : dataList) {
+            QtCheckItemListVO resVo = new QtCheckItemListVO();
+            BeanUtils.copyProperties(model, resVo);
+            dictVal(resVo);
+            resList.add(resVo);
+        }
         return resList;
     }
 
@@ -301,6 +299,24 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
                 .eq(QtCheckItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtCheckItem::getId, filterId));
         return count > 0;
+    }
+
+
+    /**
+     * 数据字典的值转换
+     *
+     * @param vo vo
+     */
+    private void dictVal(QtCheckItemListVO vo) {
+        R<Map<Long, SysDictVO>> dictFeignRes = remoteDictFeign.listById(Arrays.asList(vo.getDataType(), vo.getMeasureUnit()));
+        if (ResultCode.SUCCESS.getCode() != dictFeignRes.getCode()) {
+            throw new BusinessException("公共服务不可用");
+        }
+        Map<Long, SysDictVO> dictMap = dictFeignRes.getData();
+        SysDictVO dataTypeDictVO = dictMap.get(vo.getDataType());
+        SysDictVO measureUnitDictVO = dictMap.get(vo.getMeasureUnit());
+        vo.setDataTypeName(Objects.nonNull(dataTypeDictVO) ? dataTypeDictVO.getName() : null);
+        vo.setMeasureUnitName(Objects.nonNull(measureUnitDictVO) ? measureUnitDictVO.getName() : null);
     }
 }
 
