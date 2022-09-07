@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeign;
 import com.steccn.platform.vo.SysDictVO;
@@ -32,6 +33,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +86,6 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             for (QtCheckItem qtCheckItem : resPage.getRecords()) {
                 QtCheckItemListVO vo = new QtCheckItemListVO();
                 BeanUtils.copyProperties(qtCheckItem, vo);
-//                //转json
-//                List<String> possibleList = JSONUtil.toList(qtCheckItem.getPossibleValue(), String.class);
-//                List<String> defaultList = JSONUtil.toList(qtCheckItem.getDefaultValue(), String.class);
-//                vo.setDefaultValueList(defaultList);
-//                vo.setPossibleValueList(possibleList);
                 resRecords.add(vo);
             }
         }
@@ -109,8 +106,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
         //3.根据数据字典id去查询数据字典信息
-        checkExistDict("measure_unit", dto.getMeasureUnit(), "计量单位不存在");
-        validDataTypeAndDefaultVal("check_data_type", dto.getDataType(), "数据类型不存在", null);
+        checkExistDict(SysDictConstant.TYPE_MEASURE_UNIT, dto.getMeasureUnit(), "计量单位不存在");
+        validDataTypeAndDefaultVal(SysDictConstant.TYPE_CHECK_DATA_TYPE, dto.getDataType(), "数据类型不存在", dto.getDefaultValue());
         //4.插入数据
         QtCheckItem model = new QtCheckItem();
         BeanUtils.copyProperties(dto, model);
@@ -128,7 +125,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         return save;
     }
 
-    private void validDataTypeAndDefaultVal(String type, Long dataTypeDictId, String errorMsg, List<Object> defaultValList) {
+    private void validDataTypeAndDefaultVal(String type, Long dataTypeDictId, String errorMsg, List<String> defaultValList) {
         R<Map<Long, SysDictVO>> dataTypeFeignRes = remoteDictFeign.listById(Arrays.asList(dataTypeDictId));
         if (ResultCode.SUCCESS.getCode() != dataTypeFeignRes.getCode()) {
             throw new BusinessException("公共服务不可用");
@@ -147,22 +144,31 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 //      2）数据类型为“文本”：提示“请输入默认值”，文本输入，1<=长度<=100
 //      3）数据类型为“单选”、“多选”：提示“请选择默认选项”，下拉单选/多选可能值
 //      4）数据类型为“人工判断良或次”：提示“请选择默认选项”，下拉单选“良”或“次”
-//        List<String> codeList = Arrays.asList("1", "2", "3", "4", "5", "6");
-//        if (codeList.contains(sysDictVO.getCode())) {
-//            //需要校验defaultValue
-//            if ("1".equals(sysDictVO.getCode()) || "2".equals(sysDictVO.getCode())) {
-//                for (Object s : defaultValList) {
-//                    if (s instanceof Double) {
-//                        continue;
-//                    }else{
-//                        throw new BusinessException("数据类型为数值，百分比时，数据输入类型应为数值类型");
-//                    }
-//                }
-//            }
-//
-//        }
+        List<String> codeList = Arrays.asList("1", "2", "3", "4", "5", "6");
+        List<String> qualityList = Arrays.asList("良", "次");
+        if (codeList.contains(sysDictVO.getCode())) {
+            //需要校验defaultValue
+            if ("1".equals(sysDictVO.getCode()) || "2".equals(sysDictVO.getCode())) {
+                if (CollUtil.isNotEmpty(defaultValList)) {
+                    for (String s : defaultValList) {
+                        try {
+                            Double.parseDouble(s);
+                        } catch (Exception e) {
+                            throw new BusinessException("数据类型为数值，百分比时，数据输入类型应为数值类型");
+                        }
+                    }
+                }
+            } else if ("6".equals(sysDictVO.getCode())) {
+                if (CollUtil.isNotEmpty(defaultValList)) {
+                    for (String s : defaultValList) {
+                        if (!qualityList.contains(s)) {
+                            throw new BusinessException("人工判断良或次只能选择良或次");
+                        }
+                    }
+                }
+            }
+        }
     }
-
 
     /**
      * 检查数据字典类型是否存在
@@ -208,7 +214,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
         //根据数据字典id去查询数据字典信息
-//        checkExistDict(dto.getMeasureUnit(), dto.getDataType());
+        checkExistDict(SysDictConstant.TYPE_MEASURE_UNIT, dto.getMeasureUnit(), "计量单位不存在");
+        validDataTypeAndDefaultVal(SysDictConstant.TYPE_CHECK_DATA_TYPE, dto.getDataType(), "数据类型不存在", dto.getDefaultValue());
 
         //具体可以编辑的列
         oldModel.setName(dto.getName());
