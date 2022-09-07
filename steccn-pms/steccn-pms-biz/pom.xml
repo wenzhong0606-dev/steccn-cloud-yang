@@ -88,6 +88,16 @@
             <artifactId>mybatis-plus-extension</artifactId>
             <version>3.4.3.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-platform-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-minio-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 </project>

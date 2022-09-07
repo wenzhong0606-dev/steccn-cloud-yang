@@ -52,7 +52,7 @@ public class PmMaterialDTO {
      * 单位ID
      */
     @ApiModelProperty("单位id")
-    private Integer unitId;
+    private Long unitId;
 
     /**
      * 是否是固定数量：1是0否

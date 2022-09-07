@@ -27,7 +27,7 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料名称
@@ -53,7 +53,7 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 标准数量单位ID
      */
-    private Integer unitId;
+    private Long unitId;
 
     /**
      * 版本

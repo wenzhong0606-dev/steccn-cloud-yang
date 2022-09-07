@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,7 +10,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
-import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -23,10 +22,8 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +45,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
     private final QtCheckItemService qtCheckItemService;
 
-    private final RemoteDictFeign remoteDictFeign;
+    private final RemoteDictFeignApi remoteDictFeign;
 
     private final QtDefectiveItemService qtDefectiveItemService;
 
@@ -129,9 +126,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                                 dicId.add(tmp.getDataType());
                             });
                             R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-//                            if(res.getData().size()!=1 && !res.getData().get(dicId.get(0)).getCode().equals("8")){
-//                                throw new BusinessException("平均数数组中的检验项类型错误");
-//                            }
+                            }
                         }
                         //极差数组
                         if(dto.getCheckGroup().get(i).getItems().get(j).getRangeArray()!=null && dto.getCheckGroup().get(i).getItems().get(j).getRangeArray().size() > 0){
@@ -145,9 +140,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                                 dicId.add(tmp.getDataType());
                             });
                             R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-//                            if(res.getData().size()!=1 && !res.getData().get(dicId.get(0)).getCode().equals("7")){
-//                                throw new BusinessException("极差数组中的检验项类型错误");
-//                            }
+                            }
                         }
                         //标准值
                         if(dto.getCheckGroup().get(i).getItems().get(j).getStandardValue()!=null){

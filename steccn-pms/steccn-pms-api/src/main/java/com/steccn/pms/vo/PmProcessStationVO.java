@@ -18,5 +18,5 @@ public class PmProcessStationVO {
     private String executeStationName;
 
     @ApiModelProperty("执行工位id")
-    private Integer executeStationId;
+    private String executeStationCode;
 }

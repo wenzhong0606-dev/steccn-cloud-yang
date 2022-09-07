@@ -5,9 +5,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
@@ -18,9 +21,11 @@ import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -34,6 +39,9 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         implements PmBillOfMaterialService {
 
     private final PmMaterialService pmMaterialService;
+
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeign;
 
     @Override
     public R<Boolean> add(PmBillOfMaterialDTO dto) {
@@ -71,10 +79,32 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         //5.拷贝返回的信息
         List<PmBillOfMaterialVO> res = BeanUtil.copyToList(resPage.getRecords(), PmBillOfMaterialVO.class);
         //6.处理数据
+        List<Long> ids = Lists.newArrayList();
         res.forEach(billOfMaterial -> {
+            ids.add(billOfMaterial.getUnitId());
             LambdaQueryWrapper<PmMaterial> wrapper = new LambdaQueryWrapper<PmMaterial>().eq(PmMaterial::getBomId, billOfMaterial.getId());
             List<PmMaterial> list = pmMaterialService.list(wrapper);
             billOfMaterial.setList(BeanUtil.copyToList(list, PmMaterialVO.class));
+            billOfMaterial.getList().forEach(pmMaterialVO -> {
+               ids.add(pmMaterialVO.getUnitId());
+            });
+        });
+        //获取字典数据
+        R<Map<Long, SysDictVO>> dict = remoteDictFeign.listById(ids);
+        //将字典数据处理返回
+        res.forEach( pmBillOfMaterialVO -> {
+            try {
+                pmBillOfMaterialVO.setUnit(dict.getData().get(pmBillOfMaterialVO.getUnitId()).getName());
+            } catch (Exception e) {
+                throw new BusinessException(pmBillOfMaterialVO.getMaterialName() +"的单位字典不存在");
+            }
+            pmBillOfMaterialVO.getList().forEach( pmMaterialVO ->{
+                try {
+                    pmMaterialVO.setUnit(dict.getData().get(pmMaterialVO.getUnitId()).getName());
+                } catch (Exception e) {
+                    throw  new BusinessException(pmMaterialVO.getName() +"的单位字典不存在");
+                }
+            });
         });
         //7.返回数据
         return page.setRecords(res);

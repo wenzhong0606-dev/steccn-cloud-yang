@@ -14,11 +14,10 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
-import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -55,7 +54,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     private QtItemCategoryService qtItemCategoryService;
 
     @Autowired
-    private RemoteDictFeign remoteDictFeign;
+    private RemoteDictFeignApi remoteDictFeign;
 
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
@@ -296,7 +295,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
      * @return 是否
      */
     private boolean existName(Integer categoryId, String name, Integer filterId) {
-        int count = count(new LambdaQueryWrapper<QtCheckItem>()
+        long count = count(new LambdaQueryWrapper<QtCheckItem>()
                 .eq(QtCheckItem::getCategoryId, categoryId)
                 .eq(QtCheckItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtCheckItem::getId, filterId));

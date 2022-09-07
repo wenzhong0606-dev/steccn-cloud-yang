@@ -47,7 +47,10 @@ public class PmMaterialVO {
      * 单位ID
      */
     @ApiModelProperty("单位id")
-    private Integer unitId;
+    private Long unitId;
+
+    @ApiModelProperty("单位")
+    private String unit;
 
     /**
      * 是否是固定数量：1是0否

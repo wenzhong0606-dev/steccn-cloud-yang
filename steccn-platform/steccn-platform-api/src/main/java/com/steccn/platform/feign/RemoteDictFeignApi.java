@@ -15,9 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(contextId = "remoteDictFeign", value = FeignConstant.STECCN_PLATFORM_SERVICE_NAME)
-public interface RemoteDictFeign {
-
+@FeignClient(contextId = "remoteDictFeignApi", value = FeignConstant.STECCN_PLATFORM_SERVICE_NAME)
+public interface RemoteDictFeignApi {
 
     /**
      * 根据主键id查询数据字典的值
@@ -25,7 +24,7 @@ public interface RemoteDictFeign {
      * @param idList 数据字典id集合
      * @return
      */
-    @RequestMapping("/platform/sys/dict/ids")
+    @RequestMapping("/feign/platform/sys/dict/ids")
     @ApiOperation("根据主键id查询数据字典的值")
     R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList);
 
@@ -37,7 +36,7 @@ public interface RemoteDictFeign {
      * @param id   主键
      * @return
      */
-    @GetMapping("/platform/sys/dict/exist")
+    @GetMapping("/feign/platform/sys/dict/exist")
     @ApiOperation("数据字典是否存在于这个类型下的id")
     R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id);
 }

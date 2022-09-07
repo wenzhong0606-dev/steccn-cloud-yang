@@ -38,6 +38,12 @@ public class PmProcessVO implements Serializable {
     @ApiModelProperty("文件")
     private String fileUrl;
 
+    @ApiModelProperty("文件id")
+    private Long fileId;
+
+    @ApiModelProperty("备注")
+    private String node;
+
     @ApiModelProperty("创建人名称")
     private String createName;
 
@@ -52,5 +58,12 @@ public class PmProcessVO implements Serializable {
 
     @ApiModelProperty("工位信息")
     private List<PmProcessStationVO> list;
+
+    @ApiModelProperty("是否报工")
+    private Integer isReportingWorks;
+
+
+    @ApiModelProperty("是否报检")
+    private Integer isCustomsInspection;
 
 }
