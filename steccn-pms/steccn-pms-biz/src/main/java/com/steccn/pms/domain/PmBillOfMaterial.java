@@ -16,13 +16,29 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 表主键ID
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
      * 清单编码
      */
     private String code;
+
+    /**
+     * 物料id
+     */
+    private Integer materialId;
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
+
 
     /**
      * 清单状态：1有效0无效
