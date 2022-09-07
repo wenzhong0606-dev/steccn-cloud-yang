@@ -9,7 +9,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
-import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
@@ -41,7 +41,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     private final PmMaterialService pmMaterialService;
 
     @Autowired
-    private RemoteDictFeign remoteDictFeign;
+    private RemoteDictFeignApi remoteDictFeign;
 
     @Override
     public R<Boolean> add(PmBillOfMaterialDTO dto) {

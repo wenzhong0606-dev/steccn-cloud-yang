@@ -36,20 +36,4 @@ public class SysDictController {
     public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam(value = "name",required = false) String name) {
         return R.success(sysDictService.sysListFilter(type, name));
     }
-
-    @RequestMapping("/ids")
-    @ApiOperation("根据主键id查询数据字典的值")
-    public R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList) {
-        if (CollUtil.isEmpty(idList)) {
-            return R.success(Maps.newHashMap());
-        }
-        return R.success(sysDictService.listByIdList(idList));
-    }
-
-    @GetMapping("/exist")
-    @ApiOperation("数据字典是否存在于这个类型下的id")
-    public R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id) {
-        return R.success(sysDictService.exist(type, id));
-    }
-
 }

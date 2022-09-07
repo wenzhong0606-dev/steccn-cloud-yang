@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,7 +10,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
-import com.steccn.platform.feign.RemoteDictFeign;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
@@ -24,10 +23,8 @@ import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +46,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
     private final QtCheckItemService qtCheckItemService;
 
-    private final RemoteDictFeign remoteDictFeign;
+    private final RemoteDictFeignApi remoteDictFeign;
 
     /**
      * 新增检验计划
