@@ -52,4 +52,5 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
     private Integer isCustomsInspection;
 
 
+
 }

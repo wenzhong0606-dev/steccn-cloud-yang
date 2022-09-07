@@ -17,8 +17,8 @@ import java.util.Map;
  * @author Mongknife
  * @date 2022/9/7
  */
-@FeignClient(contextId = "remoteFileFeign",value = FeignConstant.STECCN_MINIO_SERVICE_NAME)
-public interface RemoteFileFeign {
+@FeignClient(contextId = "remoteFileFeignApi",value = FeignConstant.STECCN_MINIO_SERVICE_NAME)
+public interface RemoteFileFeignApi {
 
     /**
      * 根据主键id查询文件信息
@@ -26,7 +26,7 @@ public interface RemoteFileFeign {
      * @param idList 文件id集合
      * @return
      */
-    @RequestMapping("/minio/file/ids")
+    @RequestMapping("feign/minio/file/ids")
     @ApiOperation("根据主键id查询文件信息")
     R<Map<Long, FileInfoVO>> listById(@RequestBody List<Long> idList);
 }

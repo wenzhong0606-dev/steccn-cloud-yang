@@ -8,7 +8,7 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
-import com.steccn.minio.fegin.RemoteFileFeign;
+import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmProcessStation;
@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +41,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     private final PmProcessStationService processStationService;
 
     @Autowired
-    private RemoteFileFeign remoteFileFeign;
+    private RemoteFileFeignApi remoteFileFeignApi;
 
 
     @Override
@@ -85,7 +84,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
             pmProcessVO.setList(pmProcessStationVOS);
         });
         //获取文件信息
-        R<Map<Long, FileInfoVO>> fileLists = remoteFileFeign.listById(ids);
+        R<Map<Long, FileInfoVO>> fileLists = remoteFileFeignApi.listById(ids);
         res.forEach(pmProcessVO -> {
             if (!Objects.isNull(pmProcessVO.getFileId())){
                 try {
