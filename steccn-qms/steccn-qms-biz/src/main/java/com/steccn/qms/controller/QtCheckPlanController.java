@@ -1,17 +1,20 @@
 package com.steccn.qms.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckPlanDTO;
+import com.steccn.qms.dto.QtCheckPlanPageDTO;
 import com.steccn.qms.service.QtCheckPlanService;
+import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtCheckPlanDetailsVo;
+import com.steccn.qms.vo.QtCheckPlanVo;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 类说明
@@ -24,12 +27,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/qms/check/plan")
 @Slf4j
 public class QtCheckPlanController {
-    @Autowired
-    private QtCheckPlanService qtCheckPlanService;
+
+    private final QtCheckPlanService qtCheckPlanService;
 
     @PostMapping
     @ApiOperation(value = "新建检验方案")
     public R<Boolean> add(@RequestBody QtCheckPlanDTO dto) {
         return R.success(qtCheckPlanService.add(dto));
+    }
+
+    @PostMapping("/list")
+    @ApiOperation(value = "检验方案列表")
+    public R<Page<QtCheckPlanVo>> pageList(@RequestBody QtCheckPlanPageDTO qtCheckPlanPageDTO) {
+        return R.success(qtCheckPlanService.pageList(qtCheckPlanPageDTO));
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "检验方案回显")
+    public R<QtCheckPlanDetailsVo> info(@PathVariable Integer id) {
+        return R.success(qtCheckPlanService.info(id));
     }
 }

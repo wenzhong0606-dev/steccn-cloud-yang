@@ -1,9 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtCheckItemSaveDTO;
-import com.steccn.qms.dto.QtCheckPlanDTO;
+import com.steccn.qms.dto.*;
+import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtCheckPlanDetailsVo;
+import com.steccn.qms.vo.QtCheckPlanVo;
 
 /**
 * @author yequan
@@ -17,4 +20,18 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @return
      */
     Boolean add(QtCheckPlanDTO dto);
+
+    /**
+     * 检验项分页列表
+     * @param dto 筛选条件，排序条件
+     * @return 列表
+     */
+    Page<QtCheckPlanVo> pageList(QtCheckPlanPageDTO dto);
+
+    /**
+     * 编辑时回显
+     * @param id
+     * @return QtCheckPlanDetailsVo
+     */
+    QtCheckPlanDetailsVo info(Integer id);
 }
