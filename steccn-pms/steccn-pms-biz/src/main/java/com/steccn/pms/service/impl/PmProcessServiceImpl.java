@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
+import com.steccn.minio.fegin.RemoteFileFeign;
+import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmProcessStation;
 import com.steccn.pms.service.PmProcessService;
@@ -17,9 +20,13 @@ import com.steccn.pms.vo.PmProcessStationVO;
 import com.steccn.pms.vo.PmProcessVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -33,6 +40,9 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         implements PmProcessService {
 
     private final PmProcessStationService processStationService;
+
+    @Autowired
+    private RemoteFileFeign remoteFileFeign;
 
 
     @Override
@@ -67,10 +77,23 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         //5.拷贝返回的信息
         List<PmProcessVO> res = BeanUtil.copyToList(resPage.getRecords(), PmProcessVO.class);
         //6.处理数据
+        List<Long> ids = Lists.newArrayList();
         res.forEach(pmProcessVO -> {
+            ids.add(pmProcessVO.getFileId());
             LambdaQueryWrapper<PmProcessStation> wrapper = new LambdaQueryWrapper<PmProcessStation>().eq(PmProcessStation::getProcessId, pmProcessVO.getId().intValue());
             List<PmProcessStationVO> pmProcessStationVOS = BeanUtil.copyToList(processStationService.list(wrapper), PmProcessStationVO.class);
             pmProcessVO.setList(pmProcessStationVOS);
+        });
+        //获取文件信息
+        R<Map<Long, FileInfoVO>> fileLists = remoteFileFeign.listById(ids);
+        res.forEach(pmProcessVO -> {
+            if (!Objects.isNull(pmProcessVO.getFileId())){
+                try {
+                    pmProcessVO.setFileUrl(fileLists.getData().get(pmProcessVO.getFileId()).getFileUrl());
+                } catch (Exception e) {
+                    throw new BusinessException( pmProcessVO.getName() +":文件信息不存在");
+                }
+            }
         });
         return page.setRecords(res);
     }

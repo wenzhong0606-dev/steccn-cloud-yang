@@ -1,6 +1,9 @@
 package com.steccn.file.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
@@ -9,6 +12,7 @@ import com.steccn.file.domain.FileInfo;
 import com.steccn.file.mapper.FileInfoMapper;
 import com.steccn.file.service.FileInfoService;
 import com.steccn.file.util.MinioFileUtils;
+import com.steccn.minio.vo.FileInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.BeanUtils;
@@ -18,7 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author MongKnife
@@ -74,6 +81,20 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             throw new BusinessException("上传文件异常");
         }
         return r;
+    }
+
+    @Override
+    public Map<Long, FileInfoVO> listByIdList(List<Long> idList) {
+        Map<Long, FileInfoVO> resMap = Maps.newHashMap();
+        Collection<FileInfo> fileInfoList = listByIds(idList);
+        if (CollUtil.isEmpty(fileInfoList)) {
+            return resMap;
+        }
+        List<FileInfoVO> sysDictVOList = BeanUtil.copyToList(fileInfoList, FileInfoVO.class);
+        for (FileInfoVO fileInfoVO : sysDictVOList) {
+            resMap.put(fileInfoVO.getId(), fileInfoVO);
+        }
+        return resMap;
     }
 
     /**

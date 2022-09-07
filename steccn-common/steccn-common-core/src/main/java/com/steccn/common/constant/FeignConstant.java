@@ -27,4 +27,9 @@ public interface FeignConstant {
      * 通用服务名称
      */
     String STECCN_PLATFORM_SERVICE_NAME = "steccn-platform";
+
+    /**
+     * 文件服务
+     */
+    String STECCN_MINIO_SERVICE_NAME = "steccn-minio";
 }

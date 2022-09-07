@@ -92,6 +92,12 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-platform-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-minio-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 </project>

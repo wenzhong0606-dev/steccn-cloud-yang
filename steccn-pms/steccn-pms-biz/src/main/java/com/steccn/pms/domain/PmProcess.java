@@ -55,7 +55,7 @@ public class PmProcess implements Serializable {
     /**
      * 工艺指导书（文件id）
      */
-    private Integer fileId;
+    private Long fileId;
 
     /**
      * 创建人id
