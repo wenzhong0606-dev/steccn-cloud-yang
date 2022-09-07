@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
@@ -13,7 +15,7 @@ import lombok.Data;
  *
  * @TableName qt_check_item
  */
-@TableName(value = "qt_check_item")
+@TableName(value = "qt_check_item", autoResultMap = true)
 @Data
 public class QtCheckItem implements Serializable {
     /**
@@ -51,12 +53,14 @@ public class QtCheckItem implements Serializable {
     /**
      * 可能值
      */
-    private String possibleValue;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> possibleValue;
 
     /**
      * 默认值
      */
-    private String defaultValue;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> defaultValue;
 
     /**
      * 检验项类别id
