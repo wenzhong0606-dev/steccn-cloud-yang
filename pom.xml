@@ -10,8 +10,8 @@
     <packaging>pom</packaging>
     <description>steccn-cloud</description>
     <modules>
-        <module>auth-server</module>
-        <module>gateway</module>
+        <module>steccn-auth-server</module>
+        <module>steccn-gateway</module>
         <module>steccn-common</module>
         <module>steccn-qms</module>
         <module>steccn-pms</module>
@@ -74,7 +74,7 @@
             </dependency>
             <dependency>
                 <groupId>com.steccn</groupId>
-                <artifactId>auth-server</artifactId>
+                <artifactId>steccn-auth-server</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
             <!--steccn-common-data-->

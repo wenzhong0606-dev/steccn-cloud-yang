@@ -8,10 +8,10 @@
         <version>1.0.0</version>
     </parent>
     <groupId>com.steccn</groupId>
-    <artifactId>auth-server</artifactId>
+    <artifactId>steccn-auth-server</artifactId>
     <version>1.0.0</version>
-    <name>auth-server</name>
-    <description>oauth2</description>
+    <name>steccn-auth-server</name>
+    <description>steccn-auth-server</description>
     <properties>
         <java.version>8</java.version>
     </properties>
