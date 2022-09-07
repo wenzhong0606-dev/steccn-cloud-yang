@@ -14,6 +14,9 @@ import java.io.Serializable;
  */
 @Data
 public class PmProcessStationDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @ApiModelProperty("主键")
     private Long id;
 

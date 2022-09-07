@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 工序分页
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Data
 public class PmProcessVO implements Serializable {
 
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("主键")
     private Long id;
@@ -36,7 +38,6 @@ public class PmProcessVO implements Serializable {
     @ApiModelProperty("文件")
     private String fileUrl;
 
-
     @ApiModelProperty("创建人名称")
     private String createName;
 
@@ -48,5 +49,8 @@ public class PmProcessVO implements Serializable {
 
     @ApiModelProperty("更新时间")
     private LocalDateTime updateTime;
+
+    @ApiModelProperty("工位信息")
+    private List<PmProcessStationVO> list;
 
 }

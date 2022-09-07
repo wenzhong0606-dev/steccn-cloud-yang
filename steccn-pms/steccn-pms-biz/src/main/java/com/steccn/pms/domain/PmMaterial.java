@@ -4,25 +4,33 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 物料清单-物料表
+ *
  * @TableName pm_material
  */
-@TableName(value ="pm_material")
+@TableName(value = "pm_material")
 @Data
 public class PmMaterial implements Serializable {
     /**
      * 表ID
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
      * 物料清单ID
      */
     private Long bomId;
+
+
+    /**
+     * 物料id
+     */
+    private Integer materialId;
 
     /**
      * 物料编码

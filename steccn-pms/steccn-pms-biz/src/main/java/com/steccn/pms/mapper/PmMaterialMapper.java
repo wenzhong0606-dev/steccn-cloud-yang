@@ -2,6 +2,7 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmMaterial;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +14,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmMaterialMapper extends BaseMapper<PmMaterial> {
 
+    @Delete("delete from pm_material where bom_id = #{id}")
+    void deleteByMaterialId(Long id);
 }
 
 
