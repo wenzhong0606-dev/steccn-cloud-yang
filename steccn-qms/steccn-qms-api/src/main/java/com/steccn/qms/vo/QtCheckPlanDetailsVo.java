@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,4 +20,7 @@ public class QtCheckPlanDetailsVo implements Serializable {
     private String code;
     private String name;
     private List<QtCheckPlanGroupVo> checkGroup;
+    private String createName;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }
