@@ -55,37 +55,44 @@ public class SysDict implements Serializable {
     /**
      * 创建人id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人名称
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
-      private LocalDateTime updateTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
     @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)
