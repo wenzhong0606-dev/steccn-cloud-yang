@@ -9,6 +9,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtMaterial;
@@ -39,6 +42,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
     implements QtMaterialService{
 
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     /**
      * 配置检验项和检验方案
@@ -138,6 +143,7 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
     @Override
     public QtMaterial info(Long id) {
         QtMaterial qtMaterial = getById(id);
+        R<List<SysOfficeVO>> res = remoteOfficeFeign.flatData("7");
         return qtMaterial;
     }
 }

@@ -6,10 +6,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -35,10 +32,20 @@ public interface RemoteOfficeFeign {
     /**
      * 根据officeType查询机构
      *
-     * @param officeType 机构类型
+     * @param
      * @return
      */
     @GetMapping("/platform/sys/office/data")
     @ApiOperation("平级机构数据")
     R<List<SysOfficeVO>> data();
+
+    /**
+     * 根据officeType查询机构
+     *
+     * @param type 机构类型
+     * @return
+     */
+    @GetMapping("feign/platform/sys/office")
+    @ApiOperation("平级机构数据")
+    R<List<SysOfficeVO>> flatData(@RequestParam("type") String type);
 }

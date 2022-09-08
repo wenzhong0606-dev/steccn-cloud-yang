@@ -18,4 +18,11 @@ public interface SysOfficeService extends IService<SysOffice> {
     List<SysOfficeVO> treeData();
 
     List<SysOfficeVO> data();
+
+    /**
+     * 返回数据类型下所有数据
+     * @param officeType
+     * @return
+     */
+    List<SysOfficeVO> flatData(String officeType);
 }

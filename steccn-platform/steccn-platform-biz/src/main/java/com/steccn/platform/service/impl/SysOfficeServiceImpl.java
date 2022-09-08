@@ -66,6 +66,21 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return officeVOList;
     }
 
+    @Override
+    public List<SysOfficeVO> flatData(String officeType) {
+        //根据类型查询所有的数据字典数据
+        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeType, officeType));
+        List<SysOfficeVO> vos = Lists.newArrayList();
+        if(!CollUtil.isEmpty(dataList)){
+            dataList.forEach(tmp->{
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp,sysOfficeVO);
+                vos.add(sysOfficeVO);
+            });
+        }
+        return vos;
+    }
+
 
     /**
      * 根据list递归构造一颗树
