@@ -87,5 +87,15 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <!--添加actuator依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!--spring boot admin依赖-->
+        <dependency>
+            <groupId>de.codecentric</groupId>
+            <artifactId>spring-boot-admin-starter-client</artifactId>
+        </dependency>
     </dependencies>
 </project>

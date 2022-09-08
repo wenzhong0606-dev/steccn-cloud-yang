@@ -203,6 +203,11 @@
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
             </dependency>
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-client</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>

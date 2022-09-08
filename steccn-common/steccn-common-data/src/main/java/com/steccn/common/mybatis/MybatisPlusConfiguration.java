@@ -20,30 +20,14 @@ package com.steccn.common.mybatis;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-//import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
-//import com.wenxiangcn.wxcloud.common.data.config.WxcloudMybatisProperties;
-//import com.wenxiangcn.wxcloud.common.data.datascope.DataScopeHandle;
-//import com.wenxiangcn.wxcloud.common.data.datascope.DataScopeInnerInterceptor;
-//import com.wenxiangcn.wxcloud.common.data.datascope.DataScopeSqlInjector;
-//import com.wenxiangcn.wxcloud.common.data.datascope.WxcloudDefaultDatascopeHandle;
-//import com.wenxiangcn.wxcloud.common.data.resolver.SqlFilterArgumentResolver;
-//import com.wenxiangcn.wxcloud.common.data.tenant.WxcloudTenantHandler;
-//import com.wenxiangcn.wxcloud.common.security.service.WxcloudUser;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import javax.sql.DataSource;
-import java.util.List;
 
 /**
  * @author wxcloud
@@ -55,16 +39,6 @@ import java.util.List;
 public class MybatisPlusConfiguration implements WebMvcConfigurer {
 
 	/**
-	 * 增加请求参数解析器，对请求中的参数注入SQL 检查
-	 *
-	 * @param resolverList
-	 */
-//	@Override
-//	public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolverList) {
-//		resolverList.add(new SqlFilterArgumentResolver());
-//	}
-
-	/**
 	 * mybatis plus 拦截器配置
 	 *
 	 * @return WxcloudDefaultDatascopeHandle
@@ -72,14 +46,6 @@ public class MybatisPlusConfiguration implements WebMvcConfigurer {
 	@Bean
 	public MybatisPlusInterceptor mybatisPlusInterceptor() {
 		MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-		// 多租户支持
-//		TenantLineInnerInterceptor tenantLineInnerInterceptor = new TenantLineInnerInterceptor();
-////		tenantLineInnerInterceptor.setTenantLineHandler(wxcloudTenantHandler());
-//		interceptor.addInnerInterceptor(tenantLineInnerInterceptor);
-		// 数据权限
-//		DataScopeInnerInterceptor dataScopeInnerInterceptor = new DataScopeInnerInterceptor();
-//		dataScopeInnerInterceptor.setDataScopeHandle(dataScopeHandle());
-//		interceptor.addInnerInterceptor(dataScopeInnerInterceptor);
 		// 分页支持
 		PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
 		paginationInnerInterceptor.setDbType(DbType.MYSQL);
@@ -88,48 +54,14 @@ public class MybatisPlusConfiguration implements WebMvcConfigurer {
 		return interceptor;
 	}
 
-
-
-//	/**
-//	 * 创建租户维护处理器对象
-//	 *
-//	 * @return 处理后的租户维护处理器
-//	 */
-//	@Bean
-//	@ConditionalOnMissingBean
-//	public WxcloudTenantHandler wxcloudTenantHandler() {
-//		return new WxcloudTenantHandler();
-//	}
-//
-//	/**
-//	 * 扩展 mybatis-plus baseMapper 支持数据权限
-//	 *
-//	 * @return
-//	 */
-//	@Bean
-//	@ConditionalOnBean(DataScopeHandle.class)
-//	public DataScopeSqlInjector dataScopeSqlInjector() {
-//		return new DataScopeSqlInjector();
-//	}
-//
-//	/**
-//	 * SQL 日志格式化
-//	 *
-//	 * @return DruidSqlLogFilter
-//	 */
-//	@Bean
-//	public DruidSqlLogFilter sqlLogFilter(WxcloudMybatisProperties properties) {
-//		return new DruidSqlLogFilter(properties);
-//	}
-
 	/**
 	 * 自动补充插入或更新时的值
 	 *
 	 * @return MetaObjectHandler
 	 */
-//	@Bean
-//	public MetaObjectHandler mybatisPlusMetaObjectHandler() {
-//		return new MybatisPlusMetaObjectHandler();
-//	}
+	@Bean
+	public MetaObjectHandler mybatisPlusMetaObjectHandler() {
+		return new MybatisPlusMetaObjectHandler();
+	}
 
 }

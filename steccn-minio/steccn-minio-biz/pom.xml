@@ -21,6 +21,17 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+
+        <!--添加actuator依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!--spring boot admin依赖-->
+        <dependency>
+            <groupId>de.codecentric</groupId>
+            <artifactId>spring-boot-admin-starter-client</artifactId>
+        </dependency>
     </dependencies>
 
     <properties>
