@@ -19,6 +19,7 @@ import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
+import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -45,6 +47,9 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
 
     @Autowired
     private QtItemCategoryService qtItemCategoryService;
+
+    @Autowired
+    private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     @Override
     public Page<QtDefectiveItemVO> pageList(QtDefectiveItemPageDTO dto) {
@@ -97,10 +102,6 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         model.setStatus(MpConstant.STATUS_START);
         //把name转成拼音，用于排序
         model.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
-        model.setCreateBy(SecurityUtils.getUser().getUserId());
-        model.setCreateName(SecurityUtils.getUser().getName());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(model);
         return save;
     }
@@ -120,20 +121,44 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         oldModel.setName(dto.getName());
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setNote(dto.getNote());
-        oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-        oldModel.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = updateById(oldModel);
         return save;
     }
 
     @Override
     public Boolean status(QtItemStatusDTO dto) {
-        throw new BusinessException("停用启用功能暂未实现");
+        //1.先校验id是否存在
+        QtDefectiveItem oldItem = getById(dto.getId());
+        if (Objects.isNull(oldItem)) {
+            throw new BusinessException("缺陷项不存在");
+        }
+        //2.如果是启用操作，则直接返回
+        if (MpConstant.STATUS_START.equals(dto.getStatus())) {
+            oldItem.setStatus(MpConstant.STATUS_START);
+            return updateById(oldItem);
+        }
+        //3.停用操作
+        Set<Integer> inUseDefectiveItemSet = qtCheckPlanGroupItemService.inUseDefectiveItem();
+        if (inUseDefectiveItemSet.contains(dto.getId())) {
+            throw new BusinessException("已有检验方案调用了该缺陷项，不允许停用");
+        }
+        oldItem.setStatus(MpConstant.STATUS_STOP);
+        return updateById(oldItem);
     }
 
     @Override
     public Boolean delete(Integer id) {
-        throw new BusinessException("删除功能暂未实现");
+        //1.先校验id是否存在
+        QtDefectiveItem oldItem = getById(id);
+        if (Objects.isNull(oldItem)) {
+            throw new BusinessException("缺陷项不存在");
+        }
+        //2.判断是否已有检验方案在使用
+        Set<Integer> inUseDefectiveItemSet = qtCheckPlanGroupItemService.inUseDefectiveItem();
+        if (inUseDefectiveItemSet.contains(id)) {
+            throw new BusinessException("已有检验方案调用了该缺陷项，不允许删除");
+        }
+        return removeById(id);
     }
 
     @Override
