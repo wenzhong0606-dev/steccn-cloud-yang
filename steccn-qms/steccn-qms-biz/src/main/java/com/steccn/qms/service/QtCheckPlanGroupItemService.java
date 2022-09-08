@@ -19,12 +19,12 @@ public interface QtCheckPlanGroupItemService extends IService<QtCheckPlanGroupIt
      * 正在使用的检验项
      * @return
      */
-    Set<Long> inUseCheckItem();
+    Set<Integer> inUseCheckItem();
 
     /**
      * 正在使用的缺陷项
      * @return
      */
-    Set<Long> inUseDefectiveItem();
+    Set<Integer> inUseDefectiveItem();
 
 }
