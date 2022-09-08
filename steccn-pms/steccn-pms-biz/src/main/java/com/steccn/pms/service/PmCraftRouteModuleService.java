@@ -12,4 +12,7 @@ import com.steccn.pms.dto.PmCraftRouteDTO;
 public interface PmCraftRouteModuleService extends IService<PmCraftRouteModule> {
 
     Boolean saveMaterial(PmCraftRouteDTO dto);
+
+
+    Boolean deleteByRoteId(Long id);
 }

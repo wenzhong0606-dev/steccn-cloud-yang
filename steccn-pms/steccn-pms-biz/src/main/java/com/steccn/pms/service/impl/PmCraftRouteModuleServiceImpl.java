@@ -1,6 +1,8 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
@@ -10,20 +12,25 @@ import com.steccn.pms.domain.PmProcessStation;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.service.PmCraftRouteModuleService;
 import com.steccn.pms.mapper.PmCraftRouteModuleMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
-* @author yequan
-* @description 针对表【pm_craft_route_module(工艺路线-组件)】的数据库操作Service实现
-* @createDate 2022-09-02 17:01:20
-*/
+ * @author yequan
+ * @description 针对表【pm_craft_route_module(工艺路线-组件)】的数据库操作Service实现
+ * @createDate 2022-09-02 17:01:20
+ */
 @Service
+@RequiredArgsConstructor
 public class PmCraftRouteModuleServiceImpl extends ServiceImpl<PmCraftRouteModuleMapper, PmCraftRouteModule>
-    implements PmCraftRouteModuleService{
+        implements PmCraftRouteModuleService {
+
+    private PmCraftRouteModuleMapper pmCraftRouteModuleMapper;
 
     @Override
     public Boolean saveMaterial(PmCraftRouteDTO dto) {
@@ -39,6 +46,14 @@ public class PmCraftRouteModuleServiceImpl extends ServiceImpl<PmCraftRouteModul
         });
         return saveBatch(craftRouteModuleList);
     }
+
+    @Override
+    public Boolean deleteByRoteId(Long id) {
+        LambdaQueryWrapper<PmCraftRouteModule> eq = new LambdaQueryWrapper<PmCraftRouteModule>().eq(PmCraftRouteModule::getCraftRouteId, id);
+        return remove(eq);
+    }
+
+
 }
 
 

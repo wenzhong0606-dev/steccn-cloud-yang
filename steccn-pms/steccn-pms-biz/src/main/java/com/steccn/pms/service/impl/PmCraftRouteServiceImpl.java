@@ -23,6 +23,7 @@ import com.steccn.pms.mapper.PmCraftRouteMapper;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,8 +43,6 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     private final PmCraftRouteModuleService pmCraftRouteModuleService;
 
     private final PmCraftRouteProcessService pmCraftRouteProcessService;
-
-    private final PmProcessService pmProcessService;
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
@@ -115,7 +114,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         res.forEach(craftRouteVO ->
                 craftRouteVO.getList().forEach(moduleVO -> {
                     try {
-                    moduleVO.setUnit(dict.getData().get(moduleVO.getUnitId()).getName());
+                        moduleVO.setUnit(dict.getData().get(moduleVO.getUnitId()).getName());
                     } catch (Exception e) {
                         throw new BusinessException("数据异常");
                     }
@@ -127,12 +126,30 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
 
     @Override
     public R<Boolean> edit(PmCraftRouteDTO dto) {
-        return null;
+        //校验是否存在
+        PmCraftRoute pmCraftRoute = getById(dto.getId());
+        if (Objects.isNull(pmCraftRoute)) {
+            throw new BusinessException("编辑的工艺路线不存在");
+        }
+        PmCraftRoute model = new PmCraftRoute();
+        BeanUtils.copyProperties(dto, model);
+        model.setUpdateBy(SecurityUtils.getUser().getUserId());
+        model.setUpdateName(SecurityUtils.getUser().getName());
+        pmCraftRouteModuleService.deleteByRoteId(dto.getId());
+        if (CollUtil.isNotEmpty(dto.getList())) {
+            try {
+                pmCraftRouteModuleService.saveMaterial(dto);
+            } catch (Exception e) {
+                throw new BusinessException("物料组件数据保存失败");
+            }
+        }
+        //保存数据
+        return R.success(updateById(model));
     }
 
     @Override
     public R<Boolean> delete(Integer id) {
-        return null;
+        return R.success(removeById(id));
     }
 }
 

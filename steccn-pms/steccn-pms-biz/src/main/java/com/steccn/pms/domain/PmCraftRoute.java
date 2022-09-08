@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -13,7 +16,7 @@ import lombok.Data;
 
  * @TableName pm_craft_route
  */
-@TableName(value ="pm_craft_route")
+@TableName(value ="pm_craft_route" , autoResultMap = true)
 @Data
 public class PmCraftRoute implements Serializable {
 
@@ -121,7 +124,8 @@ public class PmCraftRoute implements Serializable {
     /**
      * 工艺路线图
      */
-    private String roadmap;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> roadmap;
 
 
 }

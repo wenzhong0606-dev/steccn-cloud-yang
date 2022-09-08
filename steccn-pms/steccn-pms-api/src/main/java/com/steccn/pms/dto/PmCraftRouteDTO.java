@@ -1,6 +1,7 @@
 package com.steccn.pms.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -64,7 +65,7 @@ public class PmCraftRouteDTO extends BasePageDTO implements Serializable {
     private List<PmCraftRouteModuleDTO> list;
 
     @ApiModelProperty("工艺路线图")
-    private String roadmap;
+    private List<String> roadmap;
 
     @ApiModelProperty("工序信息")
     private List<PmCraftRouteProcessDTO> processDTOList;
