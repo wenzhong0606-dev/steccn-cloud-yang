@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
@@ -23,6 +22,7 @@ import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.service.QtCheckItemService;
+import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
@@ -34,10 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yequan
@@ -55,6 +52,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeign;
+
+    @Autowired
+    private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
@@ -229,15 +229,38 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
     @Override
     public Boolean status(QtItemStatusDTO dto) {
-        
-
-
-        throw new BusinessException("停用启用功能暂未实现");
+        //1.先校验id是否存在
+        QtCheckItem oldItem = getById(dto.getId());
+        if (Objects.isNull(oldItem)) {
+            throw new BusinessException("检验项不存在");
+        }
+        //2.如果是启用操作，则直接返回
+        if (MpConstant.STATUS_START.equals(dto.getStatus())) {
+            oldItem.setStatus(MpConstant.STATUS_START);
+            return updateById(oldItem);
+        }
+        //3.停用操作
+        Set<Integer> inUseCheckItemSet = qtCheckPlanGroupItemService.inUseCheckItem();
+        if (inUseCheckItemSet.contains(dto.getId())) {
+            throw new BusinessException("已有检验方案调用了该检验项，不允许停用");
+        }
+        oldItem.setStatus(MpConstant.STATUS_STOP);
+        return updateById(oldItem);
     }
 
     @Override
     public Boolean delete(Integer id) {
-        throw new BusinessException("删除功能暂未实现");
+        //1.先校验id是否存在
+        QtCheckItem oldItem = getById(id);
+        if (Objects.isNull(oldItem)) {
+            throw new BusinessException("检验项不存在");
+        }
+        //2.判断是否已有检验方案在使用
+        Set<Integer> inUseCheckItemSet = qtCheckPlanGroupItemService.inUseCheckItem();
+        if (inUseCheckItemSet.contains(id)) {
+            throw new BusinessException("已有检验方案调用了该检验项，不允许删除");
+        }
+        return removeById(id);
     }
 
     @Override
