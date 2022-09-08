@@ -5,20 +5,27 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.dto.QtMaterialLinkCheckPlanTypeDTO;
 import lombok.Data;
+
+import javax.validation.constraints.NotNull;
 
 /**
  * 物料表
  * @TableName qt_material
  */
-@TableName(value ="qt_material")
+@TableName(value ="qt_material" ,autoResultMap = true)
 @Data
 public class QtMaterial implements Serializable {
     /**
      * 主键
      */
     @TableId
-    private Integer id;
+    @NotNull
+    private Long id;
 
     /**
      * 物料编码
@@ -75,4 +82,8 @@ public class QtMaterial implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<QtMaterialLinkCheckPlanTypeDTO> type;
+
 }
