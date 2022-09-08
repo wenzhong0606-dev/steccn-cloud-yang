@@ -11,6 +11,11 @@ public interface MpConstant {
     String STR_LIMIT_1 = " limit 1 ";
 
     /**
+     * 删除标识  正常为0
+     */
+    Integer DELETE_FLAG_NORMAL = 0;
+
+    /**
      * 状态-停用
      */
     Integer STATUS_STOP = 0;

@@ -119,10 +119,6 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         model.setStatus(MpConstant.STATUS_START);
         //把name转成拼音，用于排序
         model.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
-        model.setCreateBy(SecurityUtils.getUser().getUserId());
-        model.setCreateName(SecurityUtils.getUser().getName());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = save(model);
         return save;
     }
@@ -227,8 +223,6 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setMeasureUnit(dto.getMeasureUnit());
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
-        oldModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-        oldModel.setUpdateName(SecurityUtils.getUser().getName());
         boolean save = updateById(oldModel);
         return save;
     }

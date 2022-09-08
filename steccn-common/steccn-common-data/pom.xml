@@ -45,5 +45,10 @@
             <version>3.4.3.4</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-oauth</artifactId>
+        </dependency>
     </dependencies>
 </project>
