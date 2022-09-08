@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -21,6 +22,7 @@ import com.steccn.pms.service.PmCraftRouteProcessService;
 import com.steccn.pms.service.PmCraftRouteService;
 import com.steccn.pms.mapper.PmCraftRouteMapper;
 import com.steccn.pms.service.PmProcessService;
+import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -114,7 +116,12 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         res.forEach(craftRouteVO ->
                 craftRouteVO.getList().forEach(moduleVO -> {
                     try {
-                        moduleVO.setUnit(dict.getData().get(moduleVO.getUnitId()).getName());
+                        SysDictVO sysDictVO = dict.getData().get(moduleVO.getUnitId());
+                        if (Objects.isNull(sysDictVO)){
+                            moduleVO.setUnit(null);
+                        }else {
+                            moduleVO.setUnit(sysDictVO.getName());
+                        }
                     } catch (Exception e) {
                         throw new BusinessException("数据异常");
                     }
@@ -135,6 +142,8 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        //生成编码
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
         pmCraftRouteModuleService.deleteByRoteId(dto.getId());
         if (CollUtil.isNotEmpty(dto.getList())) {
             try {
@@ -150,6 +159,32 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     @Override
     public R<Boolean> delete(Integer id) {
         return R.success(removeById(id));
+    }
+
+
+    /**
+     * 当前最大的code值
+     *
+     * @return 数值类型，可能为null
+     */
+    private Long currentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        PmCraftRoute maxCodeModel = getOne(new LambdaQueryWrapper<PmCraftRoute>().orderByDesc(PmCraftRoute::getCode).last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_B.length());
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
     }
 }
 

@@ -30,7 +30,6 @@ import java.util.Objects;
 public class PmCraftRouteModuleServiceImpl extends ServiceImpl<PmCraftRouteModuleMapper, PmCraftRouteModule>
         implements PmCraftRouteModuleService {
 
-    private PmCraftRouteModuleMapper pmCraftRouteModuleMapper;
 
     @Override
     public Boolean saveMaterial(PmCraftRouteDTO dto) {

@@ -91,7 +91,12 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         res.forEach(pmProcessVO -> {
             if (!Objects.isNull(pmProcessVO.getFileId())){
                 try {
-                    pmProcessVO.setFileUrl(fileLists.getData().get(pmProcessVO.getFileId()).getFileUrl());
+                    FileInfoVO fileInfoVO = fileLists.getData().get(pmProcessVO.getFileId());
+                    if (Objects.isNull(fileInfoVO)) {
+                        pmProcessVO.setFileUrl(null);
+                    }else {
+                        pmProcessVO.setFileUrl(fileInfoVO.getFileUrl());
+                    }
                 } catch (Exception e) {
                     throw new BusinessException( pmProcessVO.getName() +":文件信息不存在");
                 }
