@@ -6,6 +6,8 @@ import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.mapper.QtCheckPlanGroupItemMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 /**
 * @author yequan
 * @description 针对表【qt_check_plan_group_item(检验方案分组检验项目表)】的数据库操作Service实现
@@ -15,6 +17,15 @@ import org.springframework.stereotype.Service;
 public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGroupItemMapper, QtCheckPlanGroupItem>
     implements QtCheckPlanGroupItemService{
 
+    @Override
+    public Set<Long> inUseCheckItem() {
+        return null;
+    }
+
+    @Override
+    public Set<Long> inUseDefectiveItem() {
+        return null;
+    }
 }
 
 
