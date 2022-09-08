@@ -6,6 +6,7 @@ import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.mapper.QtCheckPlanGroupItemMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,6 +20,9 @@ public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGrou
 
     @Override
     public Set<Long> inUseCheckItem() {
+        List<QtCheckPlanGroupItem> list = list();
+
+
         return null;
     }
 
