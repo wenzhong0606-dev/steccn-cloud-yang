@@ -1,3 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-    com.steccn.common.mybatis.MybatisPlusConfiguration
+    com.steccn.common.mybatis.MybatisPlusConfiguration,\
+    com.steccn.common.config.JacksonConfig
 

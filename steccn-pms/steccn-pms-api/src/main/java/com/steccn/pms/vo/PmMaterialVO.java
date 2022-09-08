@@ -13,6 +13,9 @@ import lombok.Data;
 @ApiModel("物料清单组件VO")
 @Data
 public class PmMaterialVO {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * 表ID
      */

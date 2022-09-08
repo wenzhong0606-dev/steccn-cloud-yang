@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -17,6 +18,7 @@ import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.mapper.PmBillOfMaterialMapper;
 import com.steccn.pms.service.PmMaterialService;
+import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         model.setCreateName(SecurityUtils.getUser().getName());
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        //生产编码
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
         //保存数据
         save(model);
         if (!Objects.isNull(dto.getList())) {
@@ -62,14 +66,14 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     }
 
     @Override
-    public Page<List<PmBillOfMaterialVO>> pageList(PmBillOfMaterialDTO dto) {
+    public Page<PmBillOfMaterialVO> pageList(PmBillOfMaterialDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmBillOfMaterial> eq = new LambdaQueryWrapper<PmBillOfMaterial>()
                 .eq(Objects.nonNull(dto.getMaterialCode()), PmBillOfMaterial::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), PmBillOfMaterial::getMaterialName, dto.getMaterialName())
-                .eq(Objects.isNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
-                .eq(Objects.isNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.isNull(dto.getCode()), PmBillOfMaterial::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
+                .eq(Objects.nonNull(dto.getCode()), PmBillOfMaterial::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -121,8 +125,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        pmMaterialService.deleteByMaterialId(dto.getId());
         if (!Objects.isNull(dto.getList())) {
-            pmMaterialService.deleteByMaterialId(dto.getId());
             Boolean a = pmMaterialService.saveMaterial(dto);
             if (a == false) {
                 throw new BusinessException("物料组件数据保存失败");
@@ -136,6 +140,33 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     public Boolean delete(Integer id) {
         return removeById(id);
     }
+
+
+    /**
+     * 当前最大的code值
+     *
+     * @return 数值类型，可能为null
+     */
+    private Long currentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        PmBillOfMaterial maxCodeModel = getOne(new LambdaQueryWrapper<PmBillOfMaterial>().orderByDesc(PmBillOfMaterial::getCode).last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_B.length());
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+
 
 }
 

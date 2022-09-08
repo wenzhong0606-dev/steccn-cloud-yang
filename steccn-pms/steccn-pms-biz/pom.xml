@@ -84,6 +84,10 @@
             <artifactId>steccn-common-oauth</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-extension</artifactId>
             <version>3.4.3.4</version>

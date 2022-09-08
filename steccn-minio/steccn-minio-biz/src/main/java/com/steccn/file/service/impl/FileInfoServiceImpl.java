@@ -2,6 +2,7 @@ package com.steccn.file.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
@@ -66,7 +67,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             SteccnUser user = SecurityUtils.getUser();
             file.setCreateName(user.getName());
             file.setCreateBy(user.getUserId());
-            file.setCreateTime(new Date());
+            file.setCreateTime(LocalDateTimeUtil.now());
             int insert = fileInfoMapper.insert(file);
             //3.1 判断是否保存成功
             if (insert >= 1) {

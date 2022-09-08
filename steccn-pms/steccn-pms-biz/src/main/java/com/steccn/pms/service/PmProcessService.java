@@ -7,6 +7,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.vo.PmProcessVO;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author yequan
  * @description 针对表【pm_process(生产工序表)】的数据库操作Service
@@ -22,4 +25,6 @@ public interface PmProcessService extends IService<PmProcess> {
     Boolean delete(Integer id);
 
     R<Boolean> edit(PmProcessDTO dto);
+
+    Map<Long, PmProcessVO> listById(List<Long> processIds);
 }

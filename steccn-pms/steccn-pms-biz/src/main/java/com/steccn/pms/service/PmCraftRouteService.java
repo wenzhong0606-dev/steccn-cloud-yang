@@ -1,7 +1,11 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmCraftRoute;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmCraftRouteDTO;
+import com.steccn.pms.vo.PmCraftRouteVO;
 
 /**
 * @author yequan
@@ -11,4 +15,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmCraftRouteService extends IService<PmCraftRoute> {
 
+    R<Boolean> add(PmCraftRouteDTO dto);
+
+    Page<PmCraftRouteVO> pageList(PmCraftRouteDTO dto);
+
+    R<Boolean> edit(PmCraftRouteDTO dto);
+
+    R<Boolean> delete(Integer id);
 }

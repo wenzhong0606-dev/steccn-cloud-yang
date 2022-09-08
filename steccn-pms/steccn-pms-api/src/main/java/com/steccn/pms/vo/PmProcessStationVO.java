@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * 执行工位信息
  *
@@ -12,7 +14,9 @@ import lombok.Data;
  */
 @Data
 @ApiModel("执行工位信息")
-public class PmProcessStationVO {
+public class PmProcessStationVO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("执行工位名称")
     private String executeStationName;

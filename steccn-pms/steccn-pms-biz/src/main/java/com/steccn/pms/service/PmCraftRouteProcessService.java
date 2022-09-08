@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmCraftRouteProcess;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmCraftRouteDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmCraftRouteProcessService extends IService<PmCraftRouteProcess> {
 
+    Boolean saveProcess(PmCraftRouteDTO dto);
 }

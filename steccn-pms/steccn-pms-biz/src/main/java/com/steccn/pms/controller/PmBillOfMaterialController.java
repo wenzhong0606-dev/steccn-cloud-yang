@@ -3,17 +3,14 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
-import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 /**
  * 物料清单
@@ -37,7 +34,7 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("物料分页列表")
     @PostMapping("/list")
-    public R<Page<List<PmBillOfMaterialVO>>> pageList(@RequestBody PmBillOfMaterialDTO dto) {
+    public R<Page<PmBillOfMaterialVO>> pageList(@RequestBody PmBillOfMaterialDTO dto) {
         return R.success(pmBillOfMaterialService.pageList(dto));
     }
 
