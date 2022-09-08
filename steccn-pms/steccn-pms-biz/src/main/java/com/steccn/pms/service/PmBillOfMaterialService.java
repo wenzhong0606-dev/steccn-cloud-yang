@@ -18,7 +18,7 @@ public interface PmBillOfMaterialService extends IService<PmBillOfMaterial> {
 
     R<Boolean> add(PmBillOfMaterialDTO dto);
 
-    Page<List<PmBillOfMaterialVO>> pageList(PmBillOfMaterialDTO dto);
+    Page<PmBillOfMaterialVO> pageList(PmBillOfMaterialDTO dto);
 
     R<Boolean> edit(PmBillOfMaterialDTO dto);
 

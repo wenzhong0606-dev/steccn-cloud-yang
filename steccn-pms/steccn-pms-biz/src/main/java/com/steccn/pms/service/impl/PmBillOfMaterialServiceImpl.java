@@ -62,14 +62,14 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     }
 
     @Override
-    public Page<List<PmBillOfMaterialVO>> pageList(PmBillOfMaterialDTO dto) {
+    public Page<PmBillOfMaterialVO> pageList(PmBillOfMaterialDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmBillOfMaterial> eq = new LambdaQueryWrapper<PmBillOfMaterial>()
                 .eq(Objects.nonNull(dto.getMaterialCode()), PmBillOfMaterial::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), PmBillOfMaterial::getMaterialName, dto.getMaterialName())
-                .eq(Objects.isNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
-                .eq(Objects.isNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.isNull(dto.getCode()), PmBillOfMaterial::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
+                .eq(Objects.nonNull(dto.getCode()), PmBillOfMaterial::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -121,8 +121,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        pmMaterialService.deleteByMaterialId(dto.getId());
         if (!Objects.isNull(dto.getList())) {
-            pmMaterialService.deleteByMaterialId(dto.getId());
             Boolean a = pmMaterialService.saveMaterial(dto);
             if (a == false) {
                 throw new BusinessException("物料组件数据保存失败");

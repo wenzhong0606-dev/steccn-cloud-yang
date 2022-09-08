@@ -1,15 +1,18 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmProcessStation;
 import com.steccn.pms.service.PmProcessService;
@@ -24,9 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yequan
@@ -67,6 +68,8 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
                 .eq(Objects.nonNull(dto.getCode()), PmProcess::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType());
+        //排序按创建时间排序
+        eq.orderBy(true,false,PmProcess::getCreateTime);
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -120,8 +123,8 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         model.setFileId(dto.getFileId());
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        processStationService.deleteByProcessId(dto.getId());
         if (!Objects.isNull(dto.getList())) {
-            processStationService.deleteByProcessId(dto.getId());
             Boolean a = processStationService.saveStations(dto);
             if (a == false) {
                 throw new BusinessException("执行工位数据保存失败");
@@ -129,6 +132,20 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         }
         //保存数据
         return R.success(updateById(model));
+    }
+
+    @Override
+    public Map<Long, PmProcessVO> listById(List<Long> processIds) {
+        Map<Long, PmProcessVO> resMap = Maps.newHashMap();
+        Collection<PmProcess> processList = listByIds(processIds);
+        if (CollUtil.isEmpty(processList)) {
+            return resMap;
+        }
+        List<PmProcessVO> pmProcessVOList = BeanUtil.copyToList(processList, PmProcessVO.class);
+        for (PmProcessVO pmProcessVO : pmProcessVOList) {
+            resMap.put(pmProcessVO.getId(), pmProcessVO);
+        }
+        return resMap;
     }
 
 

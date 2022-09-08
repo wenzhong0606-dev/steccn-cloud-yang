@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -14,6 +16,7 @@ import lombok.Data;
 @TableName(value ="pm_craft_route")
 @Data
 public class PmCraftRoute implements Serializable {
+
     /**
      * 表ID
      */
@@ -28,8 +31,17 @@ public class PmCraftRoute implements Serializable {
     /**
      * 物料ID
      */
-    private Integer materialId;
+    private Long materialId;
 
+    /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
     /**
      * 工艺路线状态：1有效0无效
      */
@@ -105,4 +117,11 @@ public class PmCraftRoute implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 工艺路线图
+     */
+    private String roadmap;
+
+
 }

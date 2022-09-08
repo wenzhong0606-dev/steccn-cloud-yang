@@ -25,6 +25,11 @@ public class PmCraftRouteProcess implements Serializable {
     private Integer processId;
 
     /**
+     * 工序名称
+     */
+    private String processName;
+
+    /**
      * 是否选中（图中处理）(0:否 1：是)
      */
     private Integer ifTheSelected;
@@ -32,7 +37,7 @@ public class PmCraftRouteProcess implements Serializable {
     /**
      * 工艺路线id
      */
-    private Integer routeId;
+    private Long routeId;
 
     /**
      * 创建人id

@@ -15,6 +15,8 @@ import lombok.Data;
 @ApiModel("物料清单-物料组件DTO")
 public class PmMaterialDTO {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * 表ID
      */
