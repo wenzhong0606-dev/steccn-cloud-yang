@@ -37,8 +37,22 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
 
     /**
      * 编辑
-     * @param id
+     * @param dto
      * @return QtCheckPlanDetailsVo
      */
     Boolean edit(QtCheckPlanDTO dto);
+
+    /**
+     * 停用启用
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean status(QtCheckPlanDTO dto);
+
+    /**
+     * 删除检验方案
+     * @param id 主键id
+     * @return 是否
+     */
+    Boolean delete(Integer id);
 }

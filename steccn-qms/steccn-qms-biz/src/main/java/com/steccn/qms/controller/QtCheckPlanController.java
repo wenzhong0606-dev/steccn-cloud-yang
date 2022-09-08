@@ -2,10 +2,7 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.qms.dto.QtCheckItemPageDTO;
-import com.steccn.qms.dto.QtCheckItemSaveDTO;
-import com.steccn.qms.dto.QtCheckPlanDTO;
-import com.steccn.qms.dto.QtCheckPlanPageDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.vo.QtCheckItemListVO;
 import com.steccn.qms.vo.QtCheckPlanDetailsVo;
@@ -15,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * 类说明
@@ -52,5 +51,17 @@ public class QtCheckPlanController {
     @ApiOperation(value = "修改检验方案的值")
     public R<Boolean> edit(@RequestBody QtCheckPlanDTO dto){
         return R.success(qtCheckPlanService.edit(dto));
+    }
+
+    @PutMapping("/status")
+    @ApiOperation(value = "停用启用")
+    public R<Boolean> status(@Valid @RequestBody QtCheckPlanDTO dto) {
+        return R.success(qtCheckPlanService.status(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "删除检验项")
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
+        return R.success(qtCheckPlanService.delete(id));
     }
 }

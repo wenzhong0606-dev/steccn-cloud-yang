@@ -19,14 +19,13 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCheckPlanDTO;
 import com.steccn.qms.dto.QtCheckPlanPageDTO;
+import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -338,6 +337,16 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 .in(QtCheckPlanGroupItem::getGroupId,qtCheckGroupIds);
         qtCheckPlanGroupItemService.remove(condition);
         return add(dto);
+    }
+
+    @Override
+    public Boolean status(QtCheckPlanDTO dto) {
+        throw new BusinessException("停用启用功能暂未实现");
+    }
+
+    @Override
+    public Boolean delete(Integer id) {
+        throw new BusinessException("删除功能暂未实现");
     }
 
     /**
