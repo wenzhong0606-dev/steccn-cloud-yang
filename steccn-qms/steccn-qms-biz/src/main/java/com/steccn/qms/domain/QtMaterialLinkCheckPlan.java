@@ -25,12 +25,12 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     /**
      * 关联物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 已配检验类型
      */
-    private Integer checkType;
+    private Long checkType;
 
     /**
      * 已关联检验方案

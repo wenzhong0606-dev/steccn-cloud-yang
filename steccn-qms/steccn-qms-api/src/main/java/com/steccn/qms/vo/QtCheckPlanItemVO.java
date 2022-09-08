@@ -15,14 +15,14 @@ import java.util.List;
  * @date 2022/09/07
  */
 @Data
-public class QtCheckPlanItemVo extends QtCheckItemListVO implements Serializable{
+public class QtCheckPlanItemVO extends QtCheckItemListVO implements Serializable{
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("检验项id")
     private Integer itemId;
 
     @ApiModelProperty("极差数组")
-    List<QtRangeArrayVo> rangeArray;
+    List<QtRangeArrayVO> rangeArray;
 
     @ApiModelProperty("平均数数组")
     List<QtAverageArrayVO> averageArray;
@@ -41,8 +41,8 @@ public class QtCheckPlanItemVo extends QtCheckItemListVO implements Serializable
     private Integer sort;
 
     @ApiModelProperty("关联缺陷项")
-    private List<QtLinkedDefectiveItemVo> linkedDefectiveItem;
+    private List<QtLinkedDefectiveItemVO> linkedDefectiveItem;
 
     @ApiModelProperty("关联客户")
-    private List<QtLinkedCustomerCodeVo> linkedCustomerCode;
+    private List<QtLinkedCustomerCodeVO> linkedCustomerCode;
 }

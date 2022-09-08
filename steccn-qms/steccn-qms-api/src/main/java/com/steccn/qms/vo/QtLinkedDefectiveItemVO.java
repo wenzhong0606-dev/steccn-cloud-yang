@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @date 2022/09/07
  */
 @Data
-public class QtLinkedDefectiveItemVo implements Serializable {
+public class QtLinkedDefectiveItemVO implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;
     private String name;

@@ -3,19 +3,16 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
- * 检验方案分组vo
+ * 类说明
  *
  * @author AndrewLuo
  * @date 2022/09/07
  */
 @Data
-public class QtCheckPlanGroupVo implements Serializable {
+public class QtRangeArrayVO implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;
-    private String groupName;
-    private Integer sort;
-    private List<QtCheckPlanItemVo> items;
+    private String name;
 }

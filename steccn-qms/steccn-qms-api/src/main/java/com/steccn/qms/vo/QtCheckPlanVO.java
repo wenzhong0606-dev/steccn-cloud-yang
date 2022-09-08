@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @date 2022/09/07
  */
 @Data
-public class QtCheckPlanVo implements Serializable {
+public class QtCheckPlanVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

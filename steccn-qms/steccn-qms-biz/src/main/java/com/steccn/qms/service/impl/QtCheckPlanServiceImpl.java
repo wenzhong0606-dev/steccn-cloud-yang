@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,7 +18,6 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCheckPlanDTO;
 import com.steccn.qms.dto.QtCheckPlanPageDTO;
-import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
@@ -182,7 +180,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public Page<QtCheckPlanVo> pageList(QtCheckPlanPageDTO dto) {
+    public Page<QtCheckPlanVO> pageList(QtCheckPlanPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtCheckPlan> condition = new LambdaQueryWrapper<QtCheckPlan>()
                 .like(Objects.nonNull(dto.getName()), QtCheckPlan::getName, dto.getName());
@@ -206,10 +204,10 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的信息
-        List<QtCheckPlanVo> resRecords = Lists.newArrayList();
+        List<QtCheckPlanVO> resRecords = Lists.newArrayList();
         if (CollUtil.isNotEmpty(resPage.getRecords())) {
             for (QtCheckPlan qtCheckPlan : resPage.getRecords()) {
-                QtCheckPlanVo vo = new QtCheckPlanVo();
+                QtCheckPlanVO vo = new QtCheckPlanVO();
                 BeanUtils.copyProperties(qtCheckPlan, vo);
                 resRecords.add(vo);
             }
@@ -220,18 +218,18 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public QtCheckPlanDetailsVo info(Integer id) {
+    public QtCheckPlanDetailsVO info(Integer id) {
         //1、先拿到方案
-        QtCheckPlanDetailsVo resVo = new QtCheckPlanDetailsVo();
+        QtCheckPlanDetailsVO resVo = new QtCheckPlanDetailsVO();
         QtCheckPlan qtCheckPlan = getById(id);
         BeanUtils.copyProperties(qtCheckPlan,resVo);
         //2、拿到分组信息
         List<QtCheckPlanGroup> groups = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>()
                 .eq(QtCheckPlanGroup::getPlanId, resVo.getId())
                 .orderByAsc(QtCheckPlanGroup::getSort));
-        List<QtCheckPlanGroupVo> qtCheckPlanGroupVos = new ArrayList<>();
+        List<QtCheckPlanGroupVO> qtCheckPlanGroupVOS = new ArrayList<>();
         groups.forEach(tmp->{
-            QtCheckPlanGroupVo groupVo = new QtCheckPlanGroupVo();
+            QtCheckPlanGroupVO groupVo = new QtCheckPlanGroupVO();
             BeanUtils.copyProperties(tmp,groupVo);
             groupVo.setGroupName(tmp.getName());
             //3、处理item信息
@@ -239,9 +237,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
                     .eq(QtCheckPlanGroupItem::getGroupId, tmp.getId())
                     .orderByAsc(QtCheckPlanGroupItem::getSort));
-            List<QtCheckPlanItemVo> qtCheckPlanItemVos = new ArrayList<>();
+            List<QtCheckPlanItemVO> qtCheckPlanItemVOS = new ArrayList<>();
             qtCheckPlanGroupItems.forEach(groupItemTmp->{
-                QtCheckPlanItemVo qtCheckPlanItemVo = new QtCheckPlanItemVo();
+                QtCheckPlanItemVO qtCheckPlanItemVo = new QtCheckPlanItemVO();
                 //复制itemGroup特有的值
                 BeanUtils.copyProperties(groupItemTmp,qtCheckPlanItemVo);
                 //复制原来item的值
@@ -252,9 +250,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 //处理极差数组
                 if(groupItemTmp.getRangeArray()!=null && groupItemTmp.getRangeArray().size() > 0){
                     Collection<QtCheckItem> rangeArrayList = qtCheckItemService.listByIds(groupItemTmp.getRangeArray());
-                    List<QtRangeArrayVo> rangeArrayVos = new ArrayList<>();
+                    List<QtRangeArrayVO> rangeArrayVos = new ArrayList<>();
                     rangeArrayList.forEach(rangeArrayTmp->{
-                        QtRangeArrayVo qtRangeArrayVo = new QtRangeArrayVo();
+                        QtRangeArrayVO qtRangeArrayVo = new QtRangeArrayVO();
                         BeanUtils.copyProperties(rangeArrayTmp,qtRangeArrayVo);
                         rangeArrayVos.add(qtRangeArrayVo);
                     });
@@ -275,9 +273,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 //处理缺陷项
                 if(groupItemTmp.getLinkedDefectiveItem()!=null && groupItemTmp.getLinkedDefectiveItem().size() > 0){
                     Collection<QtDefectiveItem> defectiveArrayList = qtDefectiveItemService.listByIds(groupItemTmp.getLinkedDefectiveItem());
-                    List<QtLinkedDefectiveItemVo> defectItemVos = new ArrayList<>();
+                    List<QtLinkedDefectiveItemVO> defectItemVos = new ArrayList<>();
                     defectiveArrayList.forEach(defectiveArrayTmp->{
-                        QtLinkedDefectiveItemVo defectiveItemVo = new QtLinkedDefectiveItemVo();
+                        QtLinkedDefectiveItemVO defectiveItemVo = new QtLinkedDefectiveItemVO();
                         BeanUtils.copyProperties(defectiveArrayTmp,defectiveItemVo);
                         defectItemVos.add(defectiveItemVo);
                     });
@@ -294,27 +292,27 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                             resMap.put(officeTmp.getOfficeCode(),officeTmp.getOfficeName());
                         });
                     }
-                    List<QtLinkedCustomerCodeVo> qtLinkedCustomerCodeVos = Lists.newArrayList();
+                    List<QtLinkedCustomerCodeVO> qtLinkedCustomerCodeVOS = Lists.newArrayList();
                     groupItemTmp.getLinkedCustomer().forEach(customerTmp->{
-                        QtLinkedCustomerCodeVo qtLinkedCustomerCodeVo = new QtLinkedCustomerCodeVo();
+                        QtLinkedCustomerCodeVO qtLinkedCustomerCodeVo = new QtLinkedCustomerCodeVO();
                         if(resMap.get(customerTmp)!=null){
                             qtLinkedCustomerCodeVo.setCode(customerTmp);
                             qtLinkedCustomerCodeVo.setName(resMap.get(customerTmp));
                         }
-                        qtLinkedCustomerCodeVos.add(qtLinkedCustomerCodeVo);
+                        qtLinkedCustomerCodeVOS.add(qtLinkedCustomerCodeVo);
                     });
-                    qtCheckPlanItemVo.setLinkedCustomerCode(qtLinkedCustomerCodeVos);
+                    qtCheckPlanItemVo.setLinkedCustomerCode(qtLinkedCustomerCodeVOS);
                 }
 
                 //改变id
                 qtCheckPlanItemVo.setId(null);
                 qtCheckPlanItemVo.setItemId(groupItemTmp.getId());
-                qtCheckPlanItemVos.add(qtCheckPlanItemVo);
-                groupVo.setItems(qtCheckPlanItemVos);
+                qtCheckPlanItemVOS.add(qtCheckPlanItemVo);
+                groupVo.setItems(qtCheckPlanItemVOS);
             });
-            qtCheckPlanGroupVos.add(groupVo);
+            qtCheckPlanGroupVOS.add(groupVo);
         });
-        resVo.setCheckGroup(qtCheckPlanGroupVos);
+        resVo.setCheckGroup(qtCheckPlanGroupVOS);
         return  resVo;
     }
 

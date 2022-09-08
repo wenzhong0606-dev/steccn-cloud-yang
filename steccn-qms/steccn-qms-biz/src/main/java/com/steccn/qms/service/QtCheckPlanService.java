@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
-import com.steccn.qms.vo.QtCheckItemListVO;
-import com.steccn.qms.vo.QtCheckPlanDetailsVo;
-import com.steccn.qms.vo.QtCheckPlanVo;
+import com.steccn.qms.vo.QtCheckPlanDetailsVO;
+import com.steccn.qms.vo.QtCheckPlanVO;
 
 /**
 * @author yequan
@@ -26,14 +25,14 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @param dto 筛选条件，排序条件
      * @return 列表
      */
-    Page<QtCheckPlanVo> pageList(QtCheckPlanPageDTO dto);
+    Page<QtCheckPlanVO> pageList(QtCheckPlanPageDTO dto);
 
     /**
      * 编辑时回显
      * @param id
      * @return QtCheckPlanDetailsVo
      */
-    QtCheckPlanDetailsVo info(Integer id);
+    QtCheckPlanDetailsVO info(Integer id);
 
     /**
      * 编辑

@@ -4,13 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanService;
-import com.steccn.qms.vo.QtCheckItemListVO;
-import com.steccn.qms.vo.QtCheckPlanDetailsVo;
-import com.steccn.qms.vo.QtCheckPlanVo;
+import com.steccn.qms.vo.QtCheckPlanDetailsVO;
+import com.steccn.qms.vo.QtCheckPlanVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -37,13 +35,13 @@ public class QtCheckPlanController {
 
     @PostMapping("/list")
     @ApiOperation(value = "检验方案列表")
-    public R<Page<QtCheckPlanVo>> pageList(@RequestBody QtCheckPlanPageDTO qtCheckPlanPageDTO) {
+    public R<Page<QtCheckPlanVO>> pageList(@RequestBody QtCheckPlanPageDTO qtCheckPlanPageDTO) {
         return R.success(qtCheckPlanService.pageList(qtCheckPlanPageDTO));
     }
 
     @GetMapping("/{id}")
     @ApiOperation(value = "检验方案回显")
-    public R<QtCheckPlanDetailsVo> info(@PathVariable Integer id) {
+    public R<QtCheckPlanDetailsVO> info(@PathVariable Integer id) {
         return R.success(qtCheckPlanService.info(id));
     }
 

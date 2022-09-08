@@ -13,13 +13,13 @@ import java.util.List;
  * @date 2022/09/07
  */
 @Data
-public class QtCheckPlanDetailsVo implements Serializable {
+public class QtCheckPlanDetailsVO implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;
     private String note;
     private String code;
     private String name;
-    private List<QtCheckPlanGroupVo> checkGroup;
+    private List<QtCheckPlanGroupVO> checkGroup;
     private String createName;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
