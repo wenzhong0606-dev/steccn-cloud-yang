@@ -5,10 +5,7 @@ import com.steccn.platform.service.SysEqpSpareService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,7 +25,7 @@ public class EqpSpareController {
     private final SysEqpSpareService eqpSpareService;
 
     @ApiOperation("获取备件列表")
-    @PostMapping("/searchSpares")
+    @GetMapping("/searchSpares")
     public List<SpareDTO> searchSpares(@RequestParam("name")String name) {
         return eqpSpareService.listSpares(name);
     }
