@@ -221,6 +221,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setDataType(dto.getDataType());
         oldModel.setMeasureUnit(dto.getMeasureUnit());
+        oldModel.setDefaultValue(dto.getDefaultValue());
+        oldModel.setPossibleValue(dto.getPossibleValue());
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
         boolean save = updateById(oldModel);
