@@ -28,12 +28,8 @@ public class QtCheckTaskDetail implements Serializable {
     /**
      * 检验结果的快照json，包含id和name
      */
-    private Object checkResult;
+    private String checkResult;
 
-    /**
-     * 是否暂存状态【0否，1是】，暂存任务是不可以提交
-     */
-    private Integer checkResultStatus;
 
     /**
      * 创建人id
@@ -80,4 +76,14 @@ public class QtCheckTaskDetail implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 检验分组id
+     */
+    private Integer groupId;
+
+    /**
+     * 检验项id
+     */
+    private Integer itemId;
 }

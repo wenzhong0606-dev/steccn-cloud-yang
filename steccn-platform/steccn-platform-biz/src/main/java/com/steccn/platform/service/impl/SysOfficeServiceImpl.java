@@ -81,6 +81,16 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return vos;
     }
 
+    @Override
+    public String findNameById(Integer id) {
+        SysOffice sysOffice = getById(id);
+        if(sysOffice != null){
+            return sysOffice.getOfficeName();
+        }else {
+            return "";
+        }
+    }
+
 
     /**
      * 根据list递归构造一颗树

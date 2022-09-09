@@ -29,4 +29,9 @@ public class SysOfficeFeignController {
     public R<List<SysOfficeVO>> listFlatDataByType(@RequestParam String type) {
         return R.success(sysOfficeService.flatData(type));
     }
+
+    @GetMapping("/name")
+    public R<String> listFlatDataByType(@RequestParam Integer id) {
+        return R.success(sysOfficeService.findNameById(id));
+    }
 }

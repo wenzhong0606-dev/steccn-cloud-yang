@@ -28,7 +28,7 @@ public class QtCheckTask implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 车间

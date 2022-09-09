@@ -25,4 +25,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> flatData(String officeType);
+
+    /**
+     * 返回数据类型下所有数据
+     * @param id officeId
+     * @return
+     */
+    String findNameById(Integer id);
 }

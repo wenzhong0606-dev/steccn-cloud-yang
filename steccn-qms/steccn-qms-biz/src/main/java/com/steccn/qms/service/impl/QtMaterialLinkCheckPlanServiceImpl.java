@@ -42,6 +42,7 @@ public class QtMaterialLinkCheckPlanServiceImpl extends ServiceImpl<QtMaterialLi
                 qtMaterialLinkCheckPlan.setUpdateName(SecurityUtils.getUser().getName());
                 qtMaterialLinkCheckPlan.setCreateBy(SecurityUtils.getUser().getUserId());
                 qtMaterialLinkCheckPlan.setCreateName(SecurityUtils.getUser().getName());
+                qtMaterialLinkCheckPlan.setCheckTypeCode(typeTmp.getCheckTypeCode());
                 qtMaterialLinkCheckPlanList.add(qtMaterialLinkCheckPlan);
             });
         }

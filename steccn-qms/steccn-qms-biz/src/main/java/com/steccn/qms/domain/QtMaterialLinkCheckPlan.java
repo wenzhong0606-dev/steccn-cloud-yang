@@ -35,6 +35,11 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     private Integer checkPlanId;
 
     /**
+     * 已配检验code
+     */
+    private Integer checkTypeCode;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

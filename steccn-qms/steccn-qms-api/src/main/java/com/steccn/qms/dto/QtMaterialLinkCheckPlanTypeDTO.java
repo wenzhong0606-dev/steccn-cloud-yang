@@ -21,6 +21,10 @@ public class QtMaterialLinkCheckPlanTypeDTO implements Serializable {
      */
     private String checkType;
     /**
+     * 检验code
+     */
+    private Integer checkTypeCode;
+    /**
      *检验计划id
      */
     private Integer checkPlanId;

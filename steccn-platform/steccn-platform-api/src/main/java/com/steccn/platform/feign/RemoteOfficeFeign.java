@@ -48,4 +48,13 @@ public interface RemoteOfficeFeign {
     @GetMapping("feign/platform/sys/office")
     @ApiOperation("平级机构数据")
     R<List<SysOfficeVO>> flatData(@RequestParam("type") String type);
+
+    /**
+     * 根据id查询名字
+     * @param id 机构id
+     * @return
+     */
+    @GetMapping("feign/platform/sys/office/name")
+    @ApiOperation("通过id获取名字")
+    R<String> getNameById(@RequestParam("id") Integer id);
 }
