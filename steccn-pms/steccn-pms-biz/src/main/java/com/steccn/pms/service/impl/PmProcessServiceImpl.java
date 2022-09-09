@@ -127,8 +127,6 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         model.setType(dto.getType());
         model.setStatus(dto.getStatus());
         model.setFileId(dto.getFileId());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
         model.setNote(dto.getNote());
         processStationService.deleteByProcessId(dto.getId());
         if (!Objects.isNull(dto.getList())) {
