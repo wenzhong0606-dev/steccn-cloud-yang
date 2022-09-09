@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -61,7 +62,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //1.构建条件
         LambdaQueryWrapper<QtCheckItem> condition = new LambdaQueryWrapper<QtCheckItem>()
                 .eq(QtCheckItem::getCategoryId, dto.getCategoryId())
-                .like(Objects.nonNull(dto.getName()), QtCheckItem::getName, dto.getName());
+                .like(StrUtil.isNotBlank(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckItem::getName);
@@ -202,6 +203,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtCheckItemSaveDTO dto) {
         //校验是否存在
         QtCheckItem oldModel = getById(dto.getId());
@@ -221,6 +223,8 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setDataType(dto.getDataType());
         oldModel.setMeasureUnit(dto.getMeasureUnit());
+        oldModel.setDefaultValue(dto.getDefaultValue());
+        oldModel.setPossibleValue(dto.getPossibleValue());
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
         boolean save = updateById(oldModel);
@@ -228,6 +232,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean status(QtItemStatusDTO dto) {
         //1.先校验id是否存在
         QtCheckItem oldItem = getById(dto.getId());
@@ -249,6 +254,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         //1.先校验id是否存在
         QtCheckItem oldItem = getById(id);

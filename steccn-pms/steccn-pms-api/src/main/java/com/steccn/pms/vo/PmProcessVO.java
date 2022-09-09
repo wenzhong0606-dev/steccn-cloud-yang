@@ -42,7 +42,7 @@ public class PmProcessVO implements Serializable {
     private Long fileId;
 
     @ApiModelProperty("备注")
-    private String node;
+    private String note;
 
     @ApiModelProperty("创建人名称")
     private String createName;

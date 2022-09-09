@@ -24,4 +24,14 @@ public interface MpConstant {
      * 状态-启用
      */
     Integer STATUS_START = 1;
+
+    /**
+     * 是否当前版本 1是 0否
+     */
+    Integer CURRENT_VERSION_YES = 1;
+
+    /**
+     * 是否当前版本 1是 0否
+     */
+    Integer CURRENT_VERSION_NOT = 0;
 }

@@ -1,9 +1,11 @@
 package com.steccn.pms.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.models.auth.In;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -23,6 +25,9 @@ public class PmBillOfMaterialVO implements Serializable {
 
     @ApiModelProperty("主键id")
     private Long id;
+
+    @ApiModelProperty("清单编码")
+    private String code;
 
     @ApiModelProperty("物料ID")
     private Long materialId;
@@ -59,6 +64,18 @@ public class PmBillOfMaterialVO implements Serializable {
 
     @ApiModelProperty("备注")
     private String note;
+
+    @ApiModelProperty("创建人姓名")
+    private String createName;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createTime;
+
+    @ApiModelProperty("更新人名称")
+    private String updateName;
+
+    @ApiModelProperty("更新时间")
+    private LocalDateTime updateTime;
 
     @ApiModelProperty("物料组件")
     private List<PmMaterialVO> list;

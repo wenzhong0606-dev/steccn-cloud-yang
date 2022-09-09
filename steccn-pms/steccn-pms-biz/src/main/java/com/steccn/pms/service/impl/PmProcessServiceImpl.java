@@ -26,6 +26,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -69,7 +70,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType());
         //排序按创建时间排序
-        eq.orderBy(true,false,PmProcess::getCreateTime);
+        eq.orderBy(true, false, PmProcess::getCreateTime);
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -89,16 +90,16 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         //获取文件信息
         R<Map<Long, FileInfoVO>> fileLists = remoteFileFeignApi.listById(ids);
         res.forEach(pmProcessVO -> {
-            if (!Objects.isNull(pmProcessVO.getFileId())){
+            if (!Objects.isNull(pmProcessVO.getFileId())) {
                 try {
                     FileInfoVO fileInfoVO = fileLists.getData().get(pmProcessVO.getFileId());
                     if (Objects.isNull(fileInfoVO)) {
                         pmProcessVO.setFileUrl(null);
-                    }else {
+                    } else {
                         pmProcessVO.setFileUrl(fileInfoVO.getFileUrl());
                     }
                 } catch (Exception e) {
-                    throw new BusinessException( pmProcessVO.getName() +":文件信息不存在");
+                    throw new BusinessException(pmProcessVO.getName() + ":文件信息不存在");
                 }
             }
         });
@@ -114,20 +115,19 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> edit(PmProcessDTO dto) {
         //校验是否存在
-        PmProcess pmProcess = getById(dto.getId());
-        if (Objects.isNull(pmProcess)) {
+        PmProcess model = getById(dto.getId());
+        if (Objects.isNull(model)) {
             throw new BusinessException("编辑的工序不存在");
         }
-        PmProcess model = new PmProcess();
         model.setName(dto.getName());
         model.setCode(dto.getCode());
         model.setType(dto.getType());
         model.setStatus(dto.getStatus());
         model.setFileId(dto.getFileId());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
+        model.setNote(dto.getNote());
         processStationService.deleteByProcessId(dto.getId());
         if (!Objects.isNull(dto.getList())) {
             Boolean a = processStationService.saveStations(dto);

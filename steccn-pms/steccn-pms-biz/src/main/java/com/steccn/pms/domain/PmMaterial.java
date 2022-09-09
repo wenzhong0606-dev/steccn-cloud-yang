@@ -30,7 +30,7 @@ public class PmMaterial implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料编码

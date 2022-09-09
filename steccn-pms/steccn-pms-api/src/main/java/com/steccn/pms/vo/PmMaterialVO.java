@@ -40,6 +40,9 @@ public class PmMaterialVO {
     @ApiModelProperty("物料名称")
     private String name;
 
+    @ApiModelProperty("物料ID")
+    private Long materialId;
+
     /**
      * 物料数量
      */

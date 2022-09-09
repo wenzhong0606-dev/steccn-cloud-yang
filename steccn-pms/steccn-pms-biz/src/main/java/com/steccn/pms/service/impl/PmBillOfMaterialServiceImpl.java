@@ -1,6 +1,8 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,7 +26,9 @@ import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -46,6 +50,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     private RemoteDictFeignApi remoteDictFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> add(PmBillOfMaterialDTO dto) {
         PmBillOfMaterial model = new PmBillOfMaterial();
         //拷贝数据，设置创建人时间
@@ -55,14 +60,61 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生产编码
-        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
+
+        //物料版本是否已存在
+        if (existVersion(dto.getMaterialId(), dto.getVersion())) {
+            throw new BusinessException("物料版本已存在");
+        }
+        //是否是当前版本的限制
+        if (MpConstant.CURRENT_VERSION_YES.equals(dto.getIsCurrentVersion())) {
+            //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
+            PmBillOfMaterial currentVersion = currentVersion(dto.getMaterialId());
+            if (Objects.nonNull(currentVersion)) {
+                throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
+            }
+        }
         //保存数据
         save(model);
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty((dto.getList()))) {
             dto.setId(model.getId());
             return R.success(pmMaterialService.saveMaterial(dto));
         }
         return R.success(true);
+    }
+
+    /**
+     * 物料版本是否已存在
+     *
+     * @param materialId 物料id
+     * @param version    版本
+     * @return
+     */
+    private boolean existVersion(Long materialId, String version) {
+        if (Objects.isNull(materialId) || StrUtil.isBlank(version)) {
+            return Boolean.FALSE;
+        }
+        long count = count(new LambdaQueryWrapper<PmBillOfMaterial>()
+                .eq(PmBillOfMaterial::getMaterialId, materialId)
+                .eq(PmBillOfMaterial::getVersion, version));
+        return count > 0;
+    }
+
+    /**
+     * 物料是否存在当前版本
+     *
+     * @param materialId 物料id
+     * @return 是否
+     */
+    private PmBillOfMaterial currentVersion(Long materialId) {
+        if (Objects.isNull(materialId)) {
+            return null;
+        }
+        PmBillOfMaterial one = getOne(new LambdaQueryWrapper<PmBillOfMaterial>()
+                .eq(PmBillOfMaterial::getMaterialId, materialId)
+                .eq(PmBillOfMaterial::getIsCurrentVersion, MpConstant.CURRENT_VERSION_YES)
+                .last(MpConstant.STR_LIMIT_1));
+        return one;
     }
 
     @Override
@@ -90,23 +142,23 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
             List<PmMaterial> list = pmMaterialService.list(wrapper);
             billOfMaterial.setList(BeanUtil.copyToList(list, PmMaterialVO.class));
             billOfMaterial.getList().forEach(pmMaterialVO -> {
-               ids.add(pmMaterialVO.getUnitId());
+                ids.add(pmMaterialVO.getUnitId());
             });
         });
         //获取字典数据
         R<Map<Long, SysDictVO>> dict = remoteDictFeign.listById(ids);
         //将字典数据处理返回
-        res.forEach( pmBillOfMaterialVO -> {
+        res.forEach(pmBillOfMaterialVO -> {
             try {
                 pmBillOfMaterialVO.setUnit(dict.getData().get(pmBillOfMaterialVO.getUnitId()).getName());
             } catch (Exception e) {
-                throw new BusinessException(pmBillOfMaterialVO.getMaterialName() +"的单位字典不存在");
+//                throw new BusinessException(pmBillOfMaterialVO.getMaterialName() +"的单位字典不存在");
             }
-            pmBillOfMaterialVO.getList().forEach( pmMaterialVO ->{
+            pmBillOfMaterialVO.getList().forEach(pmMaterialVO -> {
                 try {
                     pmMaterialVO.setUnit(dict.getData().get(pmMaterialVO.getUnitId()).getName());
                 } catch (Exception e) {
-                    throw  new BusinessException(pmMaterialVO.getName() +"的单位字典不存在");
+//                    throw  new BusinessException(pmMaterialVO.getName() +"的单位字典不存在");
                 }
             });
         });
@@ -121,6 +173,19 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         if (Objects.isNull(pmBillOfMaterial)) {
             throw new BusinessException("编辑的物料清单不存在");
         }
+        //物料版本是否已存在
+        if (existVersion(dto.getMaterialId(), dto.getVersion())) {
+            throw new BusinessException("物料版本已存在");
+        }
+        //是否是当前版本的限制
+        if (MpConstant.CURRENT_VERSION_YES.equals(dto.getIsCurrentVersion())) {
+            //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
+            PmBillOfMaterial currentVersion = currentVersion(dto.getMaterialId());
+            if (Objects.nonNull(currentVersion)) {
+                throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
+            }
+        }
+
         PmBillOfMaterial model = new PmBillOfMaterial();
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
