@@ -60,7 +60,7 @@ public class PmProcess implements Serializable {
     /**
      * 备注
      */
-    private String node;
+    private String note;
 
     /**
      * 创建人id

@@ -35,7 +35,7 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
     private Integer status;
 
     @ApiModelProperty("备注")
-    private String node;
+    private String note;
 
     @ApiModelProperty("文件id")
     private Long fileId;
