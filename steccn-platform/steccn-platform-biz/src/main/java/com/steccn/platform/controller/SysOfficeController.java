@@ -37,4 +37,9 @@ public class SysOfficeController {
     public R<List<SysOfficeVO>> data(){
         return R.success(sysOfficeService.data());
     }
+
+    @GetMapping("/flat")
+    public R<List<SysOfficeVO>> listFlatDataByType(@RequestParam String type) {
+        return R.success(sysOfficeService.flatData(type));
+    }
 }
