@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -46,6 +48,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     private RemoteDictFeignApi remoteDictFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R<Boolean> add(PmBillOfMaterialDTO dto) {
         PmBillOfMaterial model = new PmBillOfMaterial();
         //拷贝数据，设置创建人时间
@@ -55,10 +58,10 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生产编码
-        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
         //保存数据
         save(model);
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty((dto.getList()))) {
             dto.setId(model.getId());
             return R.success(pmMaterialService.saveMaterial(dto));
         }
@@ -90,23 +93,23 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
             List<PmMaterial> list = pmMaterialService.list(wrapper);
             billOfMaterial.setList(BeanUtil.copyToList(list, PmMaterialVO.class));
             billOfMaterial.getList().forEach(pmMaterialVO -> {
-               ids.add(pmMaterialVO.getUnitId());
+                ids.add(pmMaterialVO.getUnitId());
             });
         });
         //获取字典数据
         R<Map<Long, SysDictVO>> dict = remoteDictFeign.listById(ids);
         //将字典数据处理返回
-        res.forEach( pmBillOfMaterialVO -> {
+        res.forEach(pmBillOfMaterialVO -> {
             try {
                 pmBillOfMaterialVO.setUnit(dict.getData().get(pmBillOfMaterialVO.getUnitId()).getName());
             } catch (Exception e) {
-                throw new BusinessException(pmBillOfMaterialVO.getMaterialName() +"的单位字典不存在");
+//                throw new BusinessException(pmBillOfMaterialVO.getMaterialName() +"的单位字典不存在");
             }
-            pmBillOfMaterialVO.getList().forEach( pmMaterialVO ->{
+            pmBillOfMaterialVO.getList().forEach(pmMaterialVO -> {
                 try {
                     pmMaterialVO.setUnit(dict.getData().get(pmMaterialVO.getUnitId()).getName());
                 } catch (Exception e) {
-                    throw  new BusinessException(pmMaterialVO.getName() +"的单位字典不存在");
+//                    throw  new BusinessException(pmMaterialVO.getName() +"的单位字典不存在");
                 }
             });
         });
