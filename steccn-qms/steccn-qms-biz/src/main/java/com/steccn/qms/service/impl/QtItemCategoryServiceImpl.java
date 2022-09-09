@@ -108,6 +108,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         //1.判断类别是否存在
         QtItemCategory model = getById(id);

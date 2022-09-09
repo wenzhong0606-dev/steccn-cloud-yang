@@ -202,6 +202,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtCheckItemSaveDTO dto) {
         //校验是否存在
         QtCheckItem oldModel = getById(dto.getId());
@@ -230,6 +231,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean status(QtItemStatusDTO dto) {
         //1.先校验id是否存在
         QtCheckItem oldItem = getById(dto.getId());
@@ -251,6 +253,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         //1.先校验id是否存在
         QtCheckItem oldItem = getById(id);

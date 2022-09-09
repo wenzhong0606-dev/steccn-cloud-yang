@@ -30,6 +30,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +85,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtDefectiveItemSaveDTO dto) {
         //1.判断缺陷项类别是否存在
         if (!qtItemCategoryService.existType(dto.getCategoryId(), QtManagerConstant.QtItemCategoryEnum.DEFECTIVE.getType())) {
@@ -107,6 +109,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtDefectiveItemSaveDTO dto) {
         //校验缺陷项是否存在
         QtDefectiveItem oldModel = getById(dto.getId());
@@ -126,6 +129,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean status(QtItemStatusDTO dto) {
         //1.先校验id是否存在
         QtDefectiveItem oldItem = getById(dto.getId());
@@ -147,6 +151,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         //1.先校验id是否存在
         QtDefectiveItem oldItem = getById(id);
