@@ -41,7 +41,7 @@ public class PmMaterialVO {
     private String name;
 
     @ApiModelProperty("物料ID")
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料数量

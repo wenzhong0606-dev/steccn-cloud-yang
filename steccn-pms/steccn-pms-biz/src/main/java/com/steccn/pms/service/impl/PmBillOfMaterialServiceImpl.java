@@ -59,6 +59,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生产编码
         model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
+        //是否是当前版本的限制
+
         //保存数据
         save(model);
         if (CollUtil.isNotEmpty((dto.getList()))) {
