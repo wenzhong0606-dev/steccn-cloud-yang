@@ -2,17 +2,20 @@ package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtRecheckTask;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.vo.QtCheckPlanDetailsVO;
 import com.steccn.qms.vo.QtCheckTaskDetailVO;
 import com.steccn.qms.vo.QtCheckTaskListVO;
+import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
 
     private final QtRecheckTaskService qtRecheckTaskService;
+
+    private final QtMaterialLinkCheckPlanMapper qtMaterialLinkCheckPlanMapper;
 
     /**
      * 新增
@@ -197,6 +202,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setRecheckId(model.getId());
         qtRecheckTaskService.save(recheckModel);
         return model.getId();
+    }
+
+    @Override
+    public List<QtCheckTaskTypeCountVO> countTaskByType() {
+        List<QtCheckTaskTypeCountVO> vos = Lists.newArrayList();
+         //检验方案编码:来料检1/首检2/在线检3/巡检4/出货检5
+        for(int i = 1; i <= 5; i++){
+            QtCheckTaskTypeCountVO vo = new QtCheckTaskTypeCountVO();
+            Long count = qtMaterialLinkCheckPlanMapper.CountTaskByTaskType(i);
+            vo.setCount(count);
+            vo.setTypeCode(i);
+            vos.add(vo);
+        }
+        return vos;
     }
 }
 

@@ -5,8 +5,11 @@ import com.steccn.qms.domain.QtCheckPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtCheckPlanDetailsVO;
+import com.steccn.qms.vo.QtCheckPlanListAllVO;
 import com.steccn.qms.vo.QtCheckPlanVO;
 import io.swagger.models.auth.In;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -56,4 +59,9 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      */
     Boolean delete(Integer id);
 
+    /**
+     * 查询所有检验项的名字和id
+     * @return
+     */
+    List<QtCheckPlanListAllVO> listAll();
 }

@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.vo.QtCheckPlanDetailsVO;
+import com.steccn.qms.vo.QtCheckPlanListAllVO;
 import com.steccn.qms.vo.QtCheckPlanVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 类说明
@@ -61,5 +63,11 @@ public class QtCheckPlanController {
     @ApiOperation(value = "删除检验方案")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtCheckPlanService.delete(id));
+    }
+
+    @GetMapping("/listAll")
+    @ApiOperation(value = "查询所有启用的检验方案")
+    public R<List<QtCheckPlanListAllVO>> pageList() {
+        return R.success(qtCheckPlanService.listAll());
     }
 }

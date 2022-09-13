@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtCheckTaskDetailVO;
 import com.steccn.qms.vo.QtCheckTaskListVO;
+import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
 import io.swagger.models.auth.In;
 
 import java.util.List;
@@ -63,4 +64,10 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     Long retask(Long id);
+
+    /**
+     * 通过类型查询任务
+     * @return
+     */
+    List<QtCheckTaskTypeCountVO> countTaskByType();
 }

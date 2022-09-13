@@ -57,6 +57,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
 
+    private final QtCheckPlanMapper qtCheckPlanMapper;
+
     /**
      * 新增检验计划
      * @param dto
@@ -166,7 +168,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         }
                         //关联缺陷项
                         if(dto.getCheckGroup().get(i).getItems().get(j).getLinkedDefectiveItem()!=null && dto.getCheckGroup().get(i).getItems().get(j).getLinkedDefectiveItem().size() > 0){
-                            itemModel.setLinkedDefectiveItem(dto.getCheckGroup().get(i).getItems().get(j).getAverageArray());
+                            itemModel.setLinkedDefectiveItem(dto.getCheckGroup().get(i).getItems().get(j).getLinkedDefectiveItem());
                         }
                         //关联客户
                         if(dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode()!=null && dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode().size() > 0){
@@ -334,6 +336,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtCheckPlanDTO dto) {
+        if(qtCheckPlanMapper.CountLindkedPlan(dto.getId())!=0){
+            throw new BusinessException("无法保存！请完成相关检验中的任务再重试");
+        }
         //查对应的groupid
         Map<String, Object> groupColumn = new HashMap<>();
         groupColumn.put("plan_id",dto.getId());
@@ -382,6 +387,20 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         }else {
             throw new BusinessException("已有物料配置调用了该检验方案，不允许删除");
         }
+    }
+
+    @Override
+    public List<QtCheckPlanListAllVO> listAll() {
+        LambdaQueryWrapper<QtCheckPlan> condition = new LambdaQueryWrapper<QtCheckPlan>()
+                .eq(QtCheckPlan::getStatus,1);
+        List<QtCheckPlan> qtCheckPlans = list(condition);
+        List<QtCheckPlanListAllVO> vos = Lists.newArrayList();
+        qtCheckPlans.forEach(tmp->{
+            QtCheckPlanListAllVO vo = new QtCheckPlanListAllVO();
+            BeanUtils.copyProperties(tmp,vo);
+            vos.add(vo);
+        });
+        return vos;
     }
 
     /**
