@@ -254,7 +254,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 //原来item的值
                 QtCheckItemListVO qtCheckItemListVO = qtCheckItemService.info(groupItemTmp.getCheckItemId());
                 BeanUtils.copyProperties(qtCheckItemListVO,qtCheckPlanItemVo);
-
+                qtCheckPlanItemVo.setId(groupItemTmp.getId());
                 //处理极差数组
                 if(groupItemTmp.getRangeArray()!=null && groupItemTmp.getRangeArray().size() > 0){
                     Collection<QtCheckItem> rangeArrayList = qtCheckItemService.listByIds(groupItemTmp.getRangeArray());

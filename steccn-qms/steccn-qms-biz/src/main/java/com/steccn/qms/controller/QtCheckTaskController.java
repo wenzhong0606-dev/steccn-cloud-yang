@@ -3,7 +3,9 @@ package com.steccn.qms.controller;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckTaskService;
+import com.steccn.qms.vo.QtCheckTaskDefectVO;
 import com.steccn.qms.vo.QtCheckTaskDetailVO;
 import com.steccn.qms.vo.QtCheckTaskListVO;
 import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
@@ -28,6 +30,8 @@ import java.util.List;
 @Slf4j
 public class QtCheckTaskController {
     private final QtCheckTaskService qtCheckTaskService;
+
+    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     @PostMapping
     @ApiOperation(value = "新建巡检任务")
@@ -75,5 +79,11 @@ public class QtCheckTaskController {
     @ApiOperation(value = "创建复检任务")
     public R<Long> finished(@PathVariable Long id){
         return R.success(qtCheckTaskService.retask(id));
+    }
+
+    @GetMapping("defect/{id}")
+    @ApiOperation(value = "缺陷项回显")
+    public R<List<QtCheckTaskDefectVO>> finished(@PathVariable Integer id){
+        return R.success(qtCheckPlanGroupItemService.findTaskDefect(id));
     }
 }

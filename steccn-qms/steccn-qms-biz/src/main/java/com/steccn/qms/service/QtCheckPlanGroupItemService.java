@@ -5,7 +5,9 @@ import com.steccn.qms.domain.QtCheckPlanGroupItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtCheckTaskDefectVO;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,5 +28,12 @@ public interface QtCheckPlanGroupItemService extends IService<QtCheckPlanGroupIt
      * @return 缺陷项id集合
      */
     Set<Integer> inUseDefectiveItem();
+
+    /**
+     * 找到任务下的缺陷项
+     * @param id
+     * @return
+     */
+    List<QtCheckTaskDefectVO> findTaskDefect(Integer id);
 
 }
