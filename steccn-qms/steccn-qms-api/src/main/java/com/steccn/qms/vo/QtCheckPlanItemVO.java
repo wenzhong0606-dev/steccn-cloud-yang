@@ -45,4 +45,7 @@ public class QtCheckPlanItemVO extends QtCheckItemListVO implements Serializable
 
     @ApiModelProperty("关联客户")
     private List<QtLinkedCustomerCodeVO> linkedCustomerCode;
+
+
+    private String checkResult;
 }

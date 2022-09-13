@@ -18,12 +18,14 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCheckPlanDTO;
 import com.steccn.qms.dto.QtCheckPlanPageDTO;
+import com.steccn.qms.dto.QtCheckPlanStausDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,10 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
+    private final QtCheckTaskDetailService qtCheckTaskDetailService;
+
+    private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
+
     /**
      * 新增检验计划
      * @param dto
@@ -68,7 +74,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         }
         //2、插入计划表
         QtCheckPlan planModel = new QtCheckPlan();
-        planModel.setStatus(0);
+        planModel.setStatus(1);
         planModel.setName(dto.getName());
         if(dto.getNote()==null){
             dto.setNote("");
@@ -218,7 +224,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public QtCheckPlanDetailsVO info(Integer id) {
+    public QtCheckPlanDetailsVO info(Integer id,Long taskId) {
         //1、先拿到方案
         QtCheckPlanDetailsVO resVo = new QtCheckPlanDetailsVO();
         QtCheckPlan qtCheckPlan = getById(id);
@@ -304,9 +310,18 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     qtCheckPlanItemVo.setLinkedCustomerCode(qtLinkedCustomerCodeVOS);
                 }
 
-                //改变id
-                qtCheckPlanItemVo.setId(null);
-                qtCheckPlanItemVo.setItemId(groupItemTmp.getId());
+                //处理检查结果
+                if(taskId!=null){
+                    List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                            .eq(QtCheckTaskDetail::getTaskId,taskId)
+                            .and((groupItemTmp.getCheckItemId() != null),wrapper->wrapper.eq(QtCheckTaskDetail::getItemId,groupItemTmp.getCheckItemId()))
+                            .and((groupItemTmp.getGroupId() != null),wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId,groupItemTmp.getGroupId())));
+                    if(taskDetails!=null && taskDetails.size() > 0){
+                        qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
+                    }
+                }
+                //设置itemId
+                qtCheckPlanItemVo.setItemId(groupItemTmp.getCheckItemId());
                 qtCheckPlanItemVOS.add(qtCheckPlanItemVo);
                 groupVo.setItems(qtCheckPlanItemVOS);
             });
@@ -338,13 +353,35 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public Boolean status(QtCheckPlanDTO dto) {
-        throw new BusinessException("停用启用功能暂未实现");
+    public Boolean status(QtCheckPlanStausDTO dto) {
+        //如果是启用则直接启用
+        if(dto.getStatus() == 1){
+            QtCheckPlan qtCheckPlan = new QtCheckPlan();
+            qtCheckPlan.setId(dto.getId());
+            qtCheckPlan.setStatus(dto.getStatus());
+            return updateById(qtCheckPlan);
+        }else {
+            //停用则查询方案是否关联了物料,没有关联则继续
+            if(!weatherBindMaterial(dto.getId())){
+                QtCheckPlan qtCheckPlan = new QtCheckPlan();
+                qtCheckPlan.setId(dto.getId());
+                qtCheckPlan.setStatus(dto.getStatus());
+                return updateById(qtCheckPlan);
+            }else {
+                throw new BusinessException("已有物料配置调用了该检验方案，不允许停用");
+            }
+        }
+
     }
 
     @Override
     public Boolean delete(Integer id) {
-        throw new BusinessException("删除功能暂未实现");
+        //查询是否绑定了物料
+        if(!weatherBindMaterial(id)){
+            return removeById(id);
+        }else {
+            throw new BusinessException("已有物料配置调用了该检验方案，不允许删除");
+        }
     }
 
     /**
@@ -370,6 +407,22 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             }
         }
         return currentMax;
+    }
+
+    /**
+     * 查询物料是否绑定了方案
+     * @param id
+     * @return 绑定返回true，没有返回false
+     */
+    private Boolean weatherBindMaterial(Integer id){
+        LambdaQueryWrapper<QtMaterialLinkCheckPlan> condition = new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
+                .eq(QtMaterialLinkCheckPlan::getCheckPlanId,id);
+        Long count = qtMaterialLinkCheckPlanService.count(condition);
+        if(count == 0){
+            return false;
+        }else {
+            return true;
+        }
     }
 }
 

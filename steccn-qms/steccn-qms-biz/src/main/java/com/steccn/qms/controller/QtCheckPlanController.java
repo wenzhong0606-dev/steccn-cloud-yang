@@ -42,7 +42,7 @@ public class QtCheckPlanController {
     @GetMapping("/{id}")
     @ApiOperation(value = "检验方案回显")
     public R<QtCheckPlanDetailsVO> info(@PathVariable Integer id) {
-        return R.success(qtCheckPlanService.info(id));
+        return R.success(qtCheckPlanService.info(id,null));
     }
 
     @PutMapping
@@ -53,12 +53,12 @@ public class QtCheckPlanController {
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用")
-    public R<Boolean> status(@Valid @RequestBody QtCheckPlanDTO dto) {
+    public R<Boolean> status(@Valid @RequestBody QtCheckPlanStausDTO dto) {
         return R.success(qtCheckPlanService.status(dto));
     }
 
     @DeleteMapping("/{id}")
-    @ApiOperation(value = "删除检验项")
+    @ApiOperation(value = "删除检验方案")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtCheckPlanService.delete(id));
     }

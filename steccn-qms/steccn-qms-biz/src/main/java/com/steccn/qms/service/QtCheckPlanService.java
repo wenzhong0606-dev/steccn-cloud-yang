@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtCheckPlanDetailsVO;
 import com.steccn.qms.vo.QtCheckPlanVO;
+import io.swagger.models.auth.In;
 
 /**
 * @author yequan
@@ -29,10 +30,10 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
 
     /**
      * 编辑时回显
-     * @param id
+     * @param id taskId
      * @return QtCheckPlanDetailsVo
      */
-    QtCheckPlanDetailsVO info(Integer id);
+    QtCheckPlanDetailsVO info(Integer id, Long taskId);
 
     /**
      * 编辑
@@ -46,7 +47,7 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @param dto dto
      * @return 是否成功
      */
-    Boolean status(QtCheckPlanDTO dto);
+    Boolean status(QtCheckPlanStausDTO dto);
 
     /**
      * 删除检验方案
@@ -54,4 +55,5 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @return 是否
      */
     Boolean delete(Integer id);
+
 }

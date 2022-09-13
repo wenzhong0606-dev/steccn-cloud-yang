@@ -95,13 +95,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         if(qtCheckTask!=null){
+            qtCheckTaskListVo.setId(qtCheckTask.getId());
             qtCheckTaskListVo.setStatus(qtCheckTask.getStatus());
             //返回名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             qtCheckTaskListVo.setWorkshopName(remoteOfficeFeign.getNameById(qtCheckTask.getWorkshopId()).getMsg());
             qtCheckTaskListVo.setProductLineName(remoteOfficeFeign.getNameById(qtCheckTask.getProductLineId()).getMsg());
         }
-        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId());
+        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(),id);
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
         qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
