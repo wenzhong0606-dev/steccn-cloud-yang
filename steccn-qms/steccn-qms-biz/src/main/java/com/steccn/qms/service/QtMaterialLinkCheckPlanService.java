@@ -4,6 +4,9 @@ import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCheckPlanDTO;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanDTO;
+import com.steccn.qms.vo.QtMaterialLinkPlanVO;
+
+import java.util.List;
 
 /**
 * @author AndrewLuo
@@ -17,5 +20,6 @@ public interface QtMaterialLinkCheckPlanService extends IService<QtMaterialLinkC
      * @return
      */
     Boolean add(QtMaterialLinkCheckPlanDTO dto);
+
 
 }

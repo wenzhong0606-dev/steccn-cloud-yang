@@ -86,4 +86,9 @@ public class QtMaterial implements Serializable {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<QtMaterialLinkCheckPlanTypeDTO> type;
 
+    /**
+     * 启用1 停用0
+     */
+    private Integer status;
+
 }

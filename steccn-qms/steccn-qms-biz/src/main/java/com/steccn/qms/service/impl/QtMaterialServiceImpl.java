@@ -14,15 +14,19 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtCheckPlan;
 import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanDTO;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanTypeDTO;
 import com.steccn.qms.dto.QtMaterialPageDTO;
+import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.service.QtMaterialLinkCheckPlanService;
 import com.steccn.qms.service.QtMaterialService;
 import com.steccn.qms.mapper.QtMaterialMapper;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtMaterialLinkPlanVO;
+import com.steccn.qms.vo.QtMaterialListAllVO;
 import com.steccn.qms.vo.QtMaterialPageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -44,6 +48,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final QtCheckPlanService qtCheckPlanService;
 
     /**
      * 配置检验项和检验方案
@@ -145,6 +151,48 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
         QtMaterial qtMaterial = getById(id);
         R<List<SysOfficeVO>> res = remoteOfficeFeign.flatData("7");
         return qtMaterial;
+    }
+
+    /**
+     * 根据名字或code查询所有物料
+     * @param nameOrCode
+     * @return
+     */
+    @Override
+    public List<QtMaterialListAllVO> listAll(String nameOrCode) {
+        LambdaQueryWrapper<QtMaterial> condition = new LambdaQueryWrapper<QtMaterial>()
+                //物料名称或者物料编码
+                .and((nameOrCode != null && !nameOrCode.equals("")),wrapper -> wrapper.like(QtMaterial::getName,nameOrCode).or().like(QtMaterial::getCode,nameOrCode))
+                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1));
+        List<QtMaterial> materialModel = list(condition);
+        List<QtMaterialListAllVO> vos = Lists.newArrayList();
+        if(materialModel != null && !materialModel.isEmpty()){
+            materialModel.forEach(tmp->{
+                QtMaterialListAllVO vo = new QtMaterialListAllVO();
+                BeanUtils.copyProperties(tmp,vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
+    @Override
+    public List<QtMaterialLinkPlanVO> listLink(Long id,Integer type) {
+        LambdaQueryWrapper<QtMaterialLinkCheckPlan> condition = new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
+                .and(wrapper->wrapper.eq(QtMaterialLinkCheckPlan::getMaterialId,id))
+                .and(wrapper->wrapper.eq(QtMaterialLinkCheckPlan::getCheckTypeCode,type));
+        List<QtMaterialLinkCheckPlan> qtMaterialLinkCheckPlans = qtMaterialLinkCheckPlanService.list(condition);
+        List<QtMaterialLinkPlanVO> vos = Lists.newArrayList();
+        if(qtMaterialLinkCheckPlans!=null && !qtMaterialLinkCheckPlans.isEmpty()){
+            qtMaterialLinkCheckPlans.forEach(tmp->{
+                QtMaterialLinkPlanVO vo = new QtMaterialLinkPlanVO();
+                vo.setId(tmp.getCheckPlanId());
+                QtCheckPlan qtCheckPlan = qtCheckPlanService.getById(tmp.getCheckPlanId());
+                vo.setName(qtCheckPlan.getName());
+                vos.add(vo);
+            });
+        }
+        return vos;
     }
 }
 

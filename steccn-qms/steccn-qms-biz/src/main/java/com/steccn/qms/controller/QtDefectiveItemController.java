@@ -7,6 +7,7 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtDefectiveItemTreeVo;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -63,7 +64,7 @@ public class QtDefectiveItemController implements Serializable {
 
     @PostMapping("/select/item")
     @ApiOperation(value = "启用状态缺陷项列表")
-    public R<List<QtDefectiveItemVO>> selectItemList() {
+    public R<List<QtDefectiveItemTreeVo>> selectItemList() {
         return R.success(qtDefectiveItemService.selectItemList());
     }
 

@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysOfficeService;
@@ -41,5 +42,10 @@ public class SysOfficeController {
     @GetMapping("/flat")
     public R<List<SysOfficeVO>> listFlatDataByType(@RequestParam String type) {
         return R.success(sysOfficeService.flatData(type));
+    }
+
+    @PostMapping("/getByPcodeAndType")
+    public R<List<SysOfficeVO>> listFlatDataByPcode(@RequestBody SysOfficeParentDTO dto) {
+        return R.success(sysOfficeService.findDataByPCodeAndType(dto));
     }
 }

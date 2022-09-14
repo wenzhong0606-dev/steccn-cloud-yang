@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -32,4 +33,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     String findNameById(Integer id);
+
+    /**
+     * 返回类型和父级节点下数据
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> findDataByPCodeAndType(SysOfficeParentDTO dto);
 }

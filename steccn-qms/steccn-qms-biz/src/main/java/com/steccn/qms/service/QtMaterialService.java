@@ -7,7 +7,11 @@ import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanDTO;
 import com.steccn.qms.dto.QtMaterialPageDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtMaterialLinkPlanVO;
+import com.steccn.qms.vo.QtMaterialListAllVO;
 import com.steccn.qms.vo.QtMaterialPageVO;
+
+import java.util.List;
 
 /**
 * @author AndrewLuo
@@ -23,7 +27,7 @@ public interface QtMaterialService extends IService<QtMaterial> {
     Boolean edit(QtMaterialLinkCheckPlanDTO dto);
 
     /**
-     * 检验项分页列表
+     * 物料分页列表
      * @param dto 筛选条件，排序条件
      * @return 列表
      */
@@ -35,4 +39,17 @@ public interface QtMaterialService extends IService<QtMaterial> {
      * @return 列表
      */
     QtMaterial info(Long id);
+
+    /**
+     * 查询所有已启用的物料
+     * @param nameOrCode
+     * @return
+     */
+    List<QtMaterialListAllVO> listAll(String nameOrCode);
+
+    /**
+     * 返回物料绑定的检验方案
+     * @return
+     */
+    List<QtMaterialLinkPlanVO> listLink(Long id,Integer type);
 }

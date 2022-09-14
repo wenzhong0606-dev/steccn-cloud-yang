@@ -27,7 +27,7 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     /**
      * 已配检验类型
      */
-    private Long checkType;
+//    private Long checkType;
 
     /**
      * 已关联检验方案

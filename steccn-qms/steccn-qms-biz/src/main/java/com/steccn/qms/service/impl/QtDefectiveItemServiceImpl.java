@@ -15,6 +15,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
+import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -23,8 +24,7 @@ import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
-import com.steccn.qms.vo.QtCheckItemListVO;
-import com.steccn.qms.vo.QtDefectiveItemVO;
+import com.steccn.qms.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
@@ -32,9 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yequan
@@ -51,6 +49,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
 
     @Autowired
     private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
+
 
     @Override
     public Page<QtDefectiveItemVO> pageList(QtDefectiveItemPageDTO dto) {
@@ -167,15 +166,35 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     }
 
     @Override
-    public List<QtDefectiveItemVO> selectItemList() {
+    public List<QtDefectiveItemTreeVo> selectItemList() {
         List<QtDefectiveItem> dataList = list(new LambdaQueryWrapper<QtDefectiveItem>()
                 .eq(QtDefectiveItem::getStatus, MpConstant.STATUS_START)
                 .orderByDesc(QtDefectiveItem::getCreateTime));
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
         }
-        List<QtDefectiveItemVO> resList = BeanUtil.copyToList(dataList, QtDefectiveItemVO.class);
-        return resList;
+        //组装成树状数据
+        Map<String,List<QtDefectiveItemVO>> mapData = new HashMap<>();
+        dataList.forEach(tmp->{
+            QtItemCategory qtItemCategory = qtItemCategoryService.getById(tmp.getCategoryId());
+            QtDefectiveItemVO vo = new QtDefectiveItemVO();
+            BeanUtils.copyProperties(tmp,vo);
+            if(mapData.get(qtItemCategory.getName())==null){
+                List<QtDefectiveItemVO> vos = Lists.newArrayList();
+                vos.add(vo);
+                mapData.put(qtItemCategory.getName(),vos);
+            }else {
+                mapData.get(qtItemCategory.getName()).add(vo);
+            }
+        });
+        List<QtDefectiveItemTreeVo> vos = Lists.newArrayList();
+        for(Map.Entry<String,List<QtDefectiveItemVO>> entry:mapData.entrySet()){
+            QtDefectiveItemTreeVo qtDefectiveItemTreeVo = new QtDefectiveItemTreeVo();
+            qtDefectiveItemTreeVo.setCategoryName(entry.getKey());
+            qtDefectiveItemTreeVo.setChildren(entry.getValue());
+            vos.add(qtDefectiveItemTreeVo);
+        }
+        return vos;
     }
 
 

@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -89,6 +90,22 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }else {
             return "";
         }
+    }
+
+    @Override
+    public List<SysOfficeVO> findDataByPCodeAndType(SysOfficeParentDTO dto) {
+        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>()
+                .and(wrapper->wrapper.eq(SysOffice::getOfficeType,dto.getOfficeType()))
+                .and(wrapper->wrapper.eq(SysOffice::getParentCode,dto.getParentCode())));
+        List<SysOfficeVO> vos = Lists.newArrayList();
+        if(!CollUtil.isEmpty(dataList)){
+            dataList.forEach(tmp->{
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp,sysOfficeVO);
+                vos.add(sysOfficeVO);
+            });
+        }
+        return vos;
     }
 
 

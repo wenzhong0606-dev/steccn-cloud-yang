@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
+import com.steccn.qms.vo.QtDefectiveItemTreeVo;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 
 import java.util.List;
@@ -60,5 +61,5 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * 启用状态缺陷项列表
      * @return list
      */
-    List<QtDefectiveItemVO> selectItemList();
+    List<QtDefectiveItemTreeVo> selectItemList();
 }
