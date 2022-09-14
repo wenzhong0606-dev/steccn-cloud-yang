@@ -66,7 +66,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     public Page<PmProcessVO> pageList(PmProcessDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmProcess> eq = new LambdaQueryWrapper<PmProcess>()
-                .eq(Objects.nonNull(dto.getCode()), PmProcess::getCode, dto.getCode())
+                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmProcess::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType());
         //排序按创建时间排序
@@ -151,6 +151,21 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
             resMap.put(pmProcessVO.getId(), pmProcessVO);
         }
         return resMap;
+    }
+
+    /**
+     * 获取所有数据
+     * @return
+     */
+    @Override
+    public List<PmProcessVO> listData() {
+        List<PmProcessVO> pmProcessVOList = Lists.newArrayList();
+        List<PmProcess> list = list();
+        if (CollUtil.isEmpty(list)){
+            return pmProcessVOList;
+        }
+        pmProcessVOList= BeanUtil.copyToList(list, PmProcessVO.class);
+        return pmProcessVOList;
     }
 
 

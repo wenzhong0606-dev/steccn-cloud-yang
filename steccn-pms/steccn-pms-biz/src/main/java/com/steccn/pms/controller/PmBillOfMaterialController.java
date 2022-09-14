@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
+import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 
 /**
  * 物料清单
@@ -50,4 +52,9 @@ public class PmBillOfMaterialController {
         return R.success(pmBillOfMaterialService.delete(id));
     }
 
+    @ApiModelProperty("Excel导入")
+    @PostMapping("/excelImportData")
+    public R<Boolean> excelImportData(PmExcelDTO dto) throws IOException {
+        return R.success(pmBillOfMaterialService.excelImportData(dto));
+    }
 }

@@ -3,6 +3,8 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.read.listener.PageReadListener;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,13 +15,18 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
+import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.mapper.PmBillOfMaterialMapper;
 import com.steccn.pms.service.PmMaterialService;
+import com.steccn.pms.util.ExcelFileUtil;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
@@ -30,6 +37,9 @@ import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,6 +58,9 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeign;
+
+    @Autowired
+    private RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -121,11 +134,11 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     public Page<PmBillOfMaterialVO> pageList(PmBillOfMaterialDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmBillOfMaterial> eq = new LambdaQueryWrapper<PmBillOfMaterial>()
-                .eq(Objects.nonNull(dto.getMaterialCode()), PmBillOfMaterial::getMaterialCode, dto.getMaterialCode())
+                .eq(Objects.nonNull(dto.getMaterialCode()) && !dto.getMaterialCode().equals(""), PmBillOfMaterial::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), PmBillOfMaterial::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.nonNull(dto.getCode()), PmBillOfMaterial::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmBillOfMaterial::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -204,6 +217,50 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     @Override
     public Boolean delete(Integer id) {
         return removeById(id);
+    }
+
+    /**
+     *  excel 导入
+     * @param dto
+     * @return
+     * @throws IOException
+     */
+    @Override
+    @Transactional(readOnly=false)
+    public Boolean excelImportData(PmExcelDTO dto)  throws IOException {
+        //读取文件
+        EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>( pmsBillExcelDTOS -> {
+                pmsBillExcelDTOS.forEach( pmsBillExcelDTO -> {
+                    //处理主数据
+                    PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
+                    BeanUtils.copyProperties(pmsBillExcelDTO,pmBillOfMaterial);
+                    pmBillOfMaterial.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
+                    //根据物料的编码查询物料的信息
+                    R<EqpSpareVO> eqpSpareVOR = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getMaterialCode());
+                    if (Objects.isNull(eqpSpareVOR.getData())){
+                        throw new BusinessException("主物料不存在,请检查编码是否正确:"+pmsBillExcelDTO.getMaterialCode());
+                    }
+                    pmBillOfMaterial.setMaterialId(eqpSpareVOR.getData().getId());
+                    pmBillOfMaterial.setMaterialName(eqpSpareVOR.getData().getName());
+                    if (!save(pmBillOfMaterial)){
+                        throw new BusinessException("编码为"+ pmBillOfMaterial.getCode()+"数据异常");
+                    }
+                    //处理从数据 根据组件编码查询组件的数据
+                    PmMaterial pmMaterial = new PmMaterial();
+                    BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
+                    pmMaterial.setBomId(pmBillOfMaterial.getId());
+                    R<EqpSpareVO> spare = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getModuleCode());
+                    if (Objects.isNull(spare)){
+                        throw new BusinessException("主物料不存在,请检查编码是否正确:"+pmsBillExcelDTO.getModuleCode());
+                    }
+                    pmMaterial.setMaterialId(spare.getData().getId());
+                    pmMaterial.setName(spare.getData().getName());
+                    if (!pmMaterialService.save(pmMaterial)){
+                        throw new BusinessException("编码为"+ pmBillOfMaterial.getCode()+"数据异常");
+                    }
+                });
+        })).sheet().doRead();
+        return  true;
     }
 
 

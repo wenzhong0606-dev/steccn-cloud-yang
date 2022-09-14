@@ -27,4 +27,6 @@ public interface PmProcessService extends IService<PmProcess> {
     R<Boolean> edit(PmProcessDTO dto);
 
     Map<Long, PmProcessVO> listById(List<Long> processIds);
+
+    List<PmProcessVO> listData();
 }
