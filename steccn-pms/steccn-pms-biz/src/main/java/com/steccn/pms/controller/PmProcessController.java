@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 工序管理相关内容
@@ -36,6 +37,12 @@ public class PmProcessController {
     @PostMapping("/list")
     public R<Page<PmProcessVO>> pageList(@RequestBody PmProcessDTO dto) {
         return R.success(processService.pageList(dto));
+    }
+
+    @ApiModelProperty("工序列表数据")
+    @GetMapping("/listData")
+    public R<List<PmProcessVO>> listData(){
+        return R.success(processService.listData());
     }
 
     @ApiModelProperty("删除工序")

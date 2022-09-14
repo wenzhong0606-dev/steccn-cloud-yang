@@ -1,14 +1,25 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
+import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
 * @author W10
@@ -22,8 +33,40 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     private  final SysEqpSpareMapper sysEqpSpareMapper;
     @Override
-    public List<SpareDTO> listSpares(String name) {
+    public List<EqpSpareVO> listSpares(String name) {
         return sysEqpSpareMapper.listSpares(name);
+    }
+
+    @Override
+    public List<EqpSpareVO> listSpares(String name, String code) {
+        //定义筛选条件
+        LambdaQueryWrapper<SysEqpSpare> like = new LambdaQueryWrapper<SysEqpSpare>().eq(Objects.nonNull(code) && !code.equals(""), SysEqpSpare::getCode, code)
+                .like(Objects.nonNull(name), SysEqpSpare::getName, name);
+        List<SysEqpSpare> list = list(like);
+        List<EqpSpareVO> eqpSpareVOS = BeanUtil.copyToList(list, EqpSpareVO.class);
+        return eqpSpareVOS;
+    }
+
+    @Override
+    public Map<Long, EqpSpareVO> searchSpares(String name, String code) {
+        Map<Long, EqpSpareVO> resMap = Maps.newHashMap();
+        List<EqpSpareVO> eqpSpareVOS = listSpares(name, code);
+        if (CollUtil.isEmpty(eqpSpareVOS)) {
+            return resMap;
+        }
+
+        for (EqpSpareVO eqpSpareVO : eqpSpareVOS) {
+            resMap.put(eqpSpareVO.getId(), eqpSpareVO);
+        }
+        return resMap;
+    }
+
+    @Override
+    public EqpSpareVO getByCode(String code) {
+        EqpSpareVO eqpSpareVO = new EqpSpareVO();
+        SysEqpSpare eqpSpare = getOne(new LambdaQueryWrapper<SysEqpSpare>().eq(Objects.nonNull(code) && !code.equals(""), SysEqpSpare::getCode, code));
+        BeanUtils.copyProperties(eqpSpare,eqpSpareVO);
+        return eqpSpareVO;
     }
 }
 

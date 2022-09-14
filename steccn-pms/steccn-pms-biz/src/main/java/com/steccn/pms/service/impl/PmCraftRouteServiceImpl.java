@@ -82,14 +82,13 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
 
     @Override
     public Page<PmCraftRouteVO> pageList(PmCraftRouteDTO dto) {
-
         //1.构建条件
         LambdaQueryWrapper<PmCraftRoute> eq = new LambdaQueryWrapper<PmCraftRoute>()
-                .eq(Objects.nonNull(dto.getMaterialCode()), PmCraftRoute::getMaterialCode, dto.getMaterialCode())
+                .eq(Objects.nonNull(dto.getMaterialCode()) && !dto.getMaterialCode().equals(""),PmCraftRoute::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), PmCraftRoute::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmCraftRoute::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmCraftRoute::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.nonNull(dto.getCode()), PmCraftRoute::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmCraftRoute::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
