@@ -19,7 +19,7 @@ public class SysEqpSpare implements Serializable {
      * 主键id
      */
     @TableId
-    private Integer id;
+    private Long id;
 
     /**
      * 编码

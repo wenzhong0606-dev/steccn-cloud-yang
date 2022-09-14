@@ -10,10 +10,7 @@ import com.steccn.platform.vo.SysDictVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +41,16 @@ public class EqpSpareFeignController {
     public R<EqpSpareVO> getByCode(@RequestParam("code")String code){
         return R.success(eqpSpareService.getByCode(code));
     }
+
+    @RequestMapping("/listByCode")
+    @ApiOperation("根据code查询备件的数据")
+    public R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList) {
+        if (CollUtil.isEmpty(codeList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(eqpSpareService.listByCode(codeList));
+    }
+
 
 
 }

@@ -225,6 +225,37 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     @Override
     @Transactional(readOnly=false)
     public Boolean excelImportData(PmExcelDTO dto)  throws IOException {
+        //定义数据集合
+        List<PmBillOfMaterial> pmBillOfMaterialList = Lists.newArrayList();
+        List<PmMaterial> pmMaterialList = Lists.newArrayList();
+        List<String> spareCodes = Lists.newArrayList();
+        List<String> dictCodes = Lists.newArrayList();
+        //读取文件信息
+        EasyExcel.read(dto.getFile().getInputStream(),PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>(pmsBillExcelDTOS -> {
+            pmsBillExcelDTOS.forEach(
+                    pmsBillExcelDTO ->{
+                        //获取主数据
+                        PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
+                        BeanUtils.copyProperties(pmsBillExcelDTO,pmBillOfMaterial);
+                        pmBillOfMaterialList.add(pmBillOfMaterial);
+                        spareCodes.add(pmsBillExcelDTO.getMaterialCode());
+                        //获取从数据
+                        PmMaterial pmMaterial = new PmMaterial();
+                        BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
+                        pmMaterial.setBomId(pmBillOfMaterial.getId());
+                        spareCodes.add(pmsBillExcelDTO.getModuleCode());
+                        pmMaterialList.add(pmMaterial);
+                        dictCodes.add(pmsBillExcelDTO.getUnit());
+                    }
+            );
+        })).sheet().doRead();
+        //处理数据
+        //根据物料编码查询物料信息
+        remoteSpareFeignApi.listByCode(spareCodes);
+
+        //根据字典编码查询字典信息
+
+
         //读取文件
         EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>( pmsBillExcelDTOS -> {
                 pmsBillExcelDTOS.forEach( pmsBillExcelDTO -> {

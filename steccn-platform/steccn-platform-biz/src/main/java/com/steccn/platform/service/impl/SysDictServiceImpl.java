@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.mapper.SysDictMapper;
@@ -29,7 +30,6 @@ import java.util.stream.Collectors;
 public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         implements SysDictService {
 
-    private final SysDictMapper sysDictMapper;
 
     @Override
     public List<SysDictVO> sysList(String type) {
@@ -90,6 +90,20 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         SysDictVO sysDictVO = new SysDictVO();
         BeanUtils.copyProperties(sysDict,sysDictVO);
         return sysDictVO;
+    }
+
+    @Override
+    public Map<String, SysDictVO> listByCode(SysDictDTO sysDictDTO) {
+        Map<String, SysDictVO> resMap = Maps.newHashMap();
+        Collection<SysDict> sysDictList = baseMapper.listByCodes(sysDictDTO);
+        if (CollUtil.isEmpty(sysDictList)) {
+            return resMap;
+        }
+        List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+        for (SysDictVO sysDictVO : sysDictVOList) {
+            resMap.put(sysDictVO.getCode(), sysDictVO);
+        }
+        return resMap;
     }
 
 

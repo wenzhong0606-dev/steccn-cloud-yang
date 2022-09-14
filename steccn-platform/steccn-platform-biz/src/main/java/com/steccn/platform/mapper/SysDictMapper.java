@@ -2,9 +2,12 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.Collection;
 
 /**
 * @author yequan
@@ -18,6 +21,9 @@ public interface SysDictMapper extends BaseMapper<SysDict> {
 
     @Select("select id,code,name,type from sys_dict where code = #{code} and type = #{type}")
     SysDictVO getByCode(String code);
+
+
+    Collection<SysDict> listByCodes(SysDictDTO sysDictDTO);
 }
 
 
