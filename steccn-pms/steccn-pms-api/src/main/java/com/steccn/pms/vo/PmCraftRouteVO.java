@@ -57,6 +57,6 @@ public class PmCraftRouteVO  implements Serializable {
     private List<PmCraftRouteModuleVO> list;
 
     @ApiModelProperty("路线图")
-    private List<String> roadmap;
+    private String roadmap;
 
 }

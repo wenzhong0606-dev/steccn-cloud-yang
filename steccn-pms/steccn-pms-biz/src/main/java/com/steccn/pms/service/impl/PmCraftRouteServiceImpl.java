@@ -112,19 +112,21 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //获取字典数据
         R<Map<Long, SysDictVO>> dict = remoteDictFeignApi.listById(ids);
         //将数据处理返回
-        res.forEach(craftRouteVO ->
-                craftRouteVO.getList().forEach(moduleVO -> {
-                    try {
-                        SysDictVO sysDictVO = dict.getData().get(moduleVO.getUnitId());
-                        if (Objects.isNull(sysDictVO)){
-                            moduleVO.setUnit(null);
-                        }else {
-                            moduleVO.setUnit(sysDictVO.getName());
+        res.forEach(craftRouteVO -> {
+                    craftRouteVO.getList().forEach(moduleVO -> {
+                        try {
+                            SysDictVO sysDictVO = dict.getData().get(moduleVO.getUnitId());
+                            if (Objects.isNull(sysDictVO)) {
+                                moduleVO.setUnit(null);
+                            } else {
+                                moduleVO.setUnit(sysDictVO.getName());
+                            }
+                        } catch (Exception e) {
+                            throw new BusinessException("数据异常");
                         }
-                    } catch (Exception e) {
-                        throw new BusinessException("数据异常");
-                    }
-                })
+                    });
+                }
+
         );
         //7.返回数据
         return page.setRecords(res);

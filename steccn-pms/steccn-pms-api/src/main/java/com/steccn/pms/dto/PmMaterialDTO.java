@@ -30,7 +30,7 @@ public class PmMaterialDTO {
     private Long bomId;
 
     @ApiModelProperty("物料id")
-    private String materialId;
+    private Long materialId;
 
     /**
      * 物料编码
@@ -91,5 +91,14 @@ public class PmMaterialDTO {
      */
     @ApiModelProperty("组件报废百分比")
     private Integer componentScrapingPercent;
+
+    /**
+     * 用于区分导入时Bom
+     */
+    @ApiModelProperty("物料清单编码")
+    private String bomCode;
+
+    @ApiModelProperty("单位信息")
+    private String unit;
 
 }

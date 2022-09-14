@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 @Data
 public class PmsBillExcelDTO implements Serializable {
 
+
+    @ExcelProperty("清单编码")
+    private String code;
+
     @ExcelProperty("物料编码")
     private String materialCode;
 

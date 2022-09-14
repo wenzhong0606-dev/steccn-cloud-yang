@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
@@ -10,10 +11,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -23,6 +26,7 @@ import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.dto.PmMaterialDTO;
 import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.mapper.PmBillOfMaterialMapper;
@@ -31,15 +35,17 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
+import nonapi.io.github.classgraph.json.Id;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.commons.util.IdUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.IdGenerator;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -217,87 +223,149 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     }
 
     /**
-     *  excel 导入
+     * excel 导入
+     *
      * @param dto
      * @return
      * @throws IOException
      */
     @Override
-    @Transactional(readOnly=false)
-    public Boolean excelImportData(PmExcelDTO dto)  throws IOException {
-        //定义数据集合
-        List<PmBillOfMaterial> pmBillOfMaterialList = Lists.newArrayList();
-        List<PmMaterial> pmMaterialList = Lists.newArrayList();
+//    @Transactional(readOnly = false)
+    public Boolean excelImportData(PmExcelDTO dto) throws IOException {
+        //1.定义数据集合
+        List<PmBillOfMaterialDTO> pmBillOfMaterialList = Lists.newArrayList();
+        List<PmMaterialDTO> pmMaterialList = Lists.newArrayList();
         List<String> spareCodes = Lists.newArrayList();
         List<String> dictCodes = Lists.newArrayList();
-        //读取文件信息
-        EasyExcel.read(dto.getFile().getInputStream(),PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>(pmsBillExcelDTOS -> {
+        List<String> bomCodes = Lists.newArrayList();
+        //2.读取文件信息
+        EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class, new PageReadListener<PmsBillExcelDTO>(pmsBillExcelDTOS -> {
             pmsBillExcelDTOS.forEach(
-                    pmsBillExcelDTO ->{
+                    pmsBillExcelDTO -> {
                         //获取主数据
-                        PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
-                        BeanUtils.copyProperties(pmsBillExcelDTO,pmBillOfMaterial);
-                        pmBillOfMaterialList.add(pmBillOfMaterial);
+                        PmBillOfMaterialDTO pmBillOfMaterialDTO = new PmBillOfMaterialDTO();
+                        BeanUtils.copyProperties(pmsBillExcelDTO, pmBillOfMaterialDTO);
+                        pmBillOfMaterialList.add(pmBillOfMaterialDTO);
                         spareCodes.add(pmsBillExcelDTO.getMaterialCode());
+                        bomCodes.add(pmBillOfMaterialDTO.getCode());
                         //获取从数据
-                        PmMaterial pmMaterial = new PmMaterial();
-                        BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
-                        pmMaterial.setBomId(pmBillOfMaterial.getId());
+                        PmMaterialDTO pmMaterialDTO = new PmMaterialDTO();
+                        BeanUtils.copyProperties(pmsBillExcelDTO, pmMaterialDTO);
+                        pmMaterialDTO.setBomCode(pmBillOfMaterialDTO.getCode());
+                        pmMaterialDTO.setCode(pmsBillExcelDTO.getModuleCode());
                         spareCodes.add(pmsBillExcelDTO.getModuleCode());
-                        pmMaterialList.add(pmMaterial);
+                        pmMaterialList.add(pmMaterialDTO);
                         dictCodes.add(pmsBillExcelDTO.getUnit());
                     }
             );
         })).sheet().doRead();
-        //处理数据
-        //根据物料编码查询物料信息
-        remoteSpareFeignApi.listByCode(spareCodes);
-
-        //根据字典编码查询字典信息
-
-
-        //读取文件
-        EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>( pmsBillExcelDTOS -> {
-                pmsBillExcelDTOS.forEach( pmsBillExcelDTO -> {
-                    //处理主数据
-                    PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
-                    BeanUtils.copyProperties(pmsBillExcelDTO,pmBillOfMaterial);
-                    pmBillOfMaterial.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
-                    //根据物料的编码查询物料的信息
-                    R<EqpSpareVO> eqpSpareVOR = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getMaterialCode());
-                    if (Objects.isNull(eqpSpareVOR.getData())){
-                        throw new BusinessException("主物料不存在,请检查编码是否正确:"+pmsBillExcelDTO.getMaterialCode());
+        //3.处理数据
+        //3.1根据物料编码查询物料信息
+        R<Map<String, EqpSpareVO>> spareMap = remoteSpareFeignApi.listByCode(spareCodes);
+        //3.2根据字典编码查询字典信息
+        SysDictDTO sysDictDTO = new SysDictDTO();
+        sysDictDTO.setCodeList(dictCodes);
+        sysDictDTO.setType(PmManagerConstant.MEASURE_UNIT);
+        R<Map<String, SysDictVO>> dictMap = remoteDictFeign.listByCode(sysDictDTO);
+        //3.3处理主数据
+        ArrayList<PmBillOfMaterialDTO> pmBillOfMaterials = pmBillOfMaterialList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(
+                () -> new TreeSet<>(
+                        Comparator.comparing(
+                                PmBillOfMaterialDTO::getMaterialCode))), ArrayList::new));
+        pmBillOfMaterials.forEach(
+                pmBillOfMaterialDTO -> {
+                    //根据物料的id获取物料的名称和id
+                    EqpSpareVO eqpSpareVO = spareMap.getData().get(pmBillOfMaterialDTO.getMaterialCode());
+                    if (Objects.isNull(eqpSpareVO)) {
+                        throw new BusinessException("主物料不存在,请检查编码是否正确:" + pmBillOfMaterialDTO.getMaterialCode());
                     }
-                    pmBillOfMaterial.setMaterialId(eqpSpareVOR.getData().getId());
-                    pmBillOfMaterial.setMaterialName(eqpSpareVOR.getData().getName());
-                    if (!save(pmBillOfMaterial)){
-                        throw new BusinessException("编码为"+ pmBillOfMaterial.getCode()+"数据异常");
-                    }
-                    //处理从数据 根据组件编码查询组件的数据
-                    PmMaterial pmMaterial = new PmMaterial();
-                    BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
-                    pmMaterial.setBomId(pmBillOfMaterial.getId());
-                    pmMaterial.setCode(pmsBillExcelDTO.getModuleCode());
-                    //查询单位数据
-                    R<SysDictVO> unit = remoteDictFeign.getByCode(pmsBillExcelDTO.getUnit(), PmManagerConstant.MEASURE_UNIT);
-                    if (Objects.nonNull(unit.getData())){
-                        pmMaterial.setUnitId(unit.getData().getId());
-                    }else {
-                        throw new BusinessException("单位数据不存在,请检查单位是否正确:从数据组件编码："+pmsBillExcelDTO.getModuleCode());
-                    }
-                    R<EqpSpareVO> spare = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getModuleCode());
-                    if (Objects.nonNull(spare.getData())){
-                        pmMaterial.setMaterialId(spare.getData().getId());
-                        pmMaterial.setName(spare.getData().getName());
-                    }else {
-                        throw new BusinessException("主物料不存在,请检查编码是否正确:"+pmsBillExcelDTO.getModuleCode());
-                    }
-                    if (!pmMaterialService.save(pmMaterial)){
-                        throw new BusinessException("编码为"+ pmBillOfMaterial.getCode()+"数据异常");
-                    }
+                    pmBillOfMaterialDTO.setMaterialName(eqpSpareVO.getName());
+                    pmBillOfMaterialDTO.setMaterialId(eqpSpareVO.getId());
                 });
-        })).sheet().doRead();
-        return  true;
+        //保存主数据
+        List<PmBillOfMaterial> billOfMaterials = BeanUtil.copyToList(pmBillOfMaterials, PmBillOfMaterial.class);
+        saveBatch(billOfMaterials);
+        //3.3处理从数据
+        //根据code查询主数据的id
+        Map<String, Long> ids = listByCodes(bomCodes);
+        pmMaterialList.forEach(
+                pmMaterialDTO -> {
+                    pmMaterialDTO.setBomId(ids.get(pmMaterialDTO.getBomCode()));
+                    pmMaterialDTO.setUnitId(dictMap.getData().get(pmMaterialDTO.getUnit()).getId());
+                    if (Objects.isNull(spareMap.getData().get(pmMaterialDTO.getCode()))) {
+                        throw new BusinessException("组件物料不存在,请检查编码是否正确:" + pmMaterialDTO.getCode());
+                    }
+                    pmMaterialDTO.setMaterialId(spareMap.getData().get(pmMaterialDTO.getCode()).getId());
+                    pmMaterialDTO.setName(spareMap.getData().get(pmMaterialDTO.getCode()).getName());
+                }
+        );
+        //保存从数据
+        List<PmMaterial> pmMaterials = BeanUtil.copyToList(pmMaterialList, PmMaterial.class);
+        pmMaterialService.saveBatch(pmMaterials);
+        return true;
+        /**
+         *
+         //读取文件
+         EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class, new PageReadListener<PmsBillExcelDTO>(pmsBillExcelDTOS -> {
+         pmsBillExcelDTOS.forEach(pmsBillExcelDTO -> {
+         //处理主数据
+         PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
+         BeanUtils.copyProperties(pmsBillExcelDTO, pmBillOfMaterial);
+         pmBillOfMaterial.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_B, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
+         //根据物料的编码查询物料的信息
+         R<EqpSpareVO> eqpSpareVOR = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getMaterialCode());
+         if (Objects.isNull(eqpSpareVOR.getData())) {
+         throw new BusinessException("主物料不存在,请检查编码是否正确:" + pmsBillExcelDTO.getMaterialCode());
+         }
+         pmBillOfMaterial.setMaterialId(eqpSpareVOR.getData().getId());
+         pmBillOfMaterial.setMaterialName(eqpSpareVOR.getData().getName());
+         if (!save(pmBillOfMaterial)) {
+         throw new BusinessException("编码为" + pmBillOfMaterial.getCode() + "数据异常");
+         }
+         //处理从数据 根据组件编码查询组件的数据
+         PmMaterial pmMaterial = new PmMaterial();
+         BeanUtils.copyProperties(pmsBillExcelDTO, pmMaterial);
+         pmMaterial.setBomId(pmBillOfMaterial.getId());
+         pmMaterial.setCode(pmsBillExcelDTO.getModuleCode());
+         //查询单位数据
+         R<SysDictVO> unit = remoteDictFeign.getByCode(pmsBillExcelDTO.getUnit(), PmManagerConstant.MEASURE_UNIT);
+         if (Objects.nonNull(unit.getData())) {
+         pmMaterial.setUnitId(unit.getData().getId());
+         } else {
+         throw new BusinessException("单位数据不存在,请检查单位是否正确:从数据组件编码：" + pmsBillExcelDTO.getModuleCode());
+         }
+         R<EqpSpareVO> spare = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getModuleCode());
+         if (Objects.nonNull(spare.getData())) {
+         pmMaterial.setMaterialId(spare.getData().getId());
+         pmMaterial.setName(spare.getData().getName());
+         } else {
+         throw new BusinessException("主物料不存在,请检查编码是否正确:" + pmsBillExcelDTO.getModuleCode());
+         }
+         if (!pmMaterialService.save(pmMaterial)) {
+         throw new BusinessException("编码为" + pmBillOfMaterial.getCode() + "数据异常");
+         }
+         });
+         })).sheet().doRead();
+         return true;
+         */
+    }
+
+    /**
+     * 根据code查询id
+     *
+     * @param codeList
+     * @return
+     */
+    private Map<String, Long> listByCodes(List<String> codeList) {
+        Map<String, Long> map = new HashMap<>();
+        List<PmBillOfMaterial> pmBillOfMaterials= baseMapper.listByCodes(codeList);
+        if (CollUtil.isEmpty(pmBillOfMaterials)) {
+            return map;
+        }
+        for (PmBillOfMaterial pmBillOfMaterial : pmBillOfMaterials) {
+            map.put(pmBillOfMaterial.getCode(),pmBillOfMaterial.getId());
+        }
+        return map;
     }
 
 

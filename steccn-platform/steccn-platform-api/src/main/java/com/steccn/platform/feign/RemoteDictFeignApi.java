@@ -1,6 +1,7 @@
 package com.steccn.platform.feign;
 
 
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
@@ -46,4 +47,8 @@ public interface RemoteDictFeignApi {
     @GetMapping("/feign/platform/sys/dict/exist")
     @ApiOperation("数据字典是否存在于这个类型下的id")
     R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id);
+
+    @RequestMapping("/feign/platform/sys/dict/listByCode")
+    @ApiOperation("根据code查询数据字典的值")
+    R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO);
 }
