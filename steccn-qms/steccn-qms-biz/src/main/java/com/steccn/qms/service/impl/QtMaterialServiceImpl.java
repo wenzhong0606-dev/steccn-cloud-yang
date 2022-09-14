@@ -13,14 +13,13 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtCheckPlan;
-import com.steccn.qms.domain.QtMaterial;
-import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanDTO;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanTypeDTO;
 import com.steccn.qms.dto.QtMaterialPageDTO;
+import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.QtCheckPlanService;
+import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.service.QtMaterialLinkCheckPlanService;
 import com.steccn.qms.service.QtMaterialService;
 import com.steccn.qms.mapper.QtMaterialMapper;
@@ -51,6 +50,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
 
     private final QtCheckPlanService qtCheckPlanService;
 
+    private final QtCheckTaskMapper qtCheckTaskMapper;
+
     /**
      * 配置检验项和检验方案
      * @param dto
@@ -64,6 +65,14 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
             throw new BusinessException("type为空");
         }
         qtMaterial.setType(dto.getType());
+        //查看是否有执行中的任务存在该物料
+        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getMaterialId,dto.getMaterialId())
+                .eq(QtCheckTask::getStatus,1);
+        List<QtCheckTask> tasks = qtCheckTaskMapper.selectList(condition);
+        if(tasks!=null && tasks.size() > 0){
+            throw new BusinessException("无法保存！请完成相关检验中的任务再重试");
+        }
         //插入
         //1、先删除之前的配置数据
         Map<String, Object> materialColumn = new HashMap<>();
