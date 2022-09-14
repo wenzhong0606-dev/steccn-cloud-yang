@@ -2,6 +2,7 @@ package com.steccn.platform.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysDictService;
@@ -33,7 +34,19 @@ public class SysDictController {
 
     @GetMapping("/filter")
     @ApiOperation("数据字典-过滤版")
-    public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam(value = "name",required = false) String name) {
+    public R<List<SysDictVO>> listFilter(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("名称过滤") @RequestParam(value = "name", required = false) String name) {
         return R.success(sysDictService.sysListFilter(type, name));
+    }
+
+    @GetMapping("/getByCode")
+    @ApiOperation("根据编码查询数据字典的值")
+    public R<SysDictVO> getByCode(@ApiParam("编码") @RequestParam("code") String code,@ApiParam("类型") @RequestParam("type") String type) {
+        return R.success(sysDictService.getByCode(code, type));
+    }
+
+    @RequestMapping("/listByCode")
+    @ApiOperation("根据code查询数据字典的值")
+    public R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO){
+        return R.success(sysDictService.listByCode(sysDictDTO));
     }
 }

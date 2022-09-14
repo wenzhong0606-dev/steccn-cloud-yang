@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -43,4 +44,19 @@ public interface SysDictService extends IService<SysDict> {
      * @return 是否
      */
     Boolean exist(String type, Long id);
+
+    /**
+     * 根据类型编码查询字典数据
+     * @param code
+     * @param type
+     * @return
+     */
+    SysDictVO getByCode(String code,String type);
+
+    /**
+     * 查询字典数据列表
+     * @param sysDictDTO
+     * @return
+     */
+    Map<String, SysDictVO> listByCode(SysDictDTO sysDictDTO);
 }

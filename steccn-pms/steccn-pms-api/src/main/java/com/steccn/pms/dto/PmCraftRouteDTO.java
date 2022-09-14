@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.util.Json;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -65,7 +66,7 @@ public class PmCraftRouteDTO extends BasePageDTO implements Serializable {
     private List<PmCraftRouteModuleDTO> list;
 
     @ApiModelProperty("工艺路线图")
-    private List<String> roadmap;
+    private String roadmap;
 
     @ApiModelProperty("工序信息")
     private List<PmCraftRouteProcessDTO> processDTOList;

@@ -28,6 +28,13 @@ public interface RemoteDictFeignApi {
     @ApiOperation("根据主键id查询数据字典的值")
     R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList);
 
+    /**
+     * 根据编码类型查询数据字典的值
+     */
+    @GetMapping("/feign/platform/sys/dict/getByCode")
+    @ApiOperation("根据编码类型查询数据字典的值")
+    R<SysDictVO> getByCode(@ApiParam("字典编码")@RequestParam("code") String code,@ApiParam("类型")@RequestParam("type") String type);
+
 
     /**
      * 数据字典是否存在于这个类型下的id

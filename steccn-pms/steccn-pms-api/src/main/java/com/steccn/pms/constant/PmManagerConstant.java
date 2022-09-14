@@ -14,5 +14,7 @@ public interface PmManagerConstant {
 
     String QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME = "update_time";
 
+    String MEASURE_UNIT = "measure_unit";
+
 
 }

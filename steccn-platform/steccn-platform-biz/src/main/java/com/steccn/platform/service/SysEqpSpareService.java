@@ -5,6 +5,7 @@ import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import io.swagger.models.auth.In;
 
 import java.util.List;
 import java.util.Map;
@@ -23,4 +24,6 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
     Map<Long, EqpSpareVO> searchSpares(String name, String code);
 
     EqpSpareVO getByCode(String code);
+
+    Map<String,EqpSpareVO> listByCode(List<String> codeList);
 }

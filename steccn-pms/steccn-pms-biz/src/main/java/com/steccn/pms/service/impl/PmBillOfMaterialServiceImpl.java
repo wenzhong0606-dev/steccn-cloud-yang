@@ -18,6 +18,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
@@ -26,20 +27,16 @@ import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.mapper.PmBillOfMaterialMapper;
 import com.steccn.pms.service.PmMaterialService;
-import com.steccn.pms.util.ExcelFileUtil;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -228,6 +225,37 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     @Override
     @Transactional(readOnly=false)
     public Boolean excelImportData(PmExcelDTO dto)  throws IOException {
+        //定义数据集合
+        List<PmBillOfMaterial> pmBillOfMaterialList = Lists.newArrayList();
+        List<PmMaterial> pmMaterialList = Lists.newArrayList();
+        List<String> spareCodes = Lists.newArrayList();
+        List<String> dictCodes = Lists.newArrayList();
+        //读取文件信息
+        EasyExcel.read(dto.getFile().getInputStream(),PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>(pmsBillExcelDTOS -> {
+            pmsBillExcelDTOS.forEach(
+                    pmsBillExcelDTO ->{
+                        //获取主数据
+                        PmBillOfMaterial pmBillOfMaterial = new PmBillOfMaterial();
+                        BeanUtils.copyProperties(pmsBillExcelDTO,pmBillOfMaterial);
+                        pmBillOfMaterialList.add(pmBillOfMaterial);
+                        spareCodes.add(pmsBillExcelDTO.getMaterialCode());
+                        //获取从数据
+                        PmMaterial pmMaterial = new PmMaterial();
+                        BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
+                        pmMaterial.setBomId(pmBillOfMaterial.getId());
+                        spareCodes.add(pmsBillExcelDTO.getModuleCode());
+                        pmMaterialList.add(pmMaterial);
+                        dictCodes.add(pmsBillExcelDTO.getUnit());
+                    }
+            );
+        })).sheet().doRead();
+        //处理数据
+        //根据物料编码查询物料信息
+        remoteSpareFeignApi.listByCode(spareCodes);
+
+        //根据字典编码查询字典信息
+
+
         //读取文件
         EasyExcel.read(dto.getFile().getInputStream(), PmsBillExcelDTO.class,new PageReadListener<PmsBillExcelDTO>( pmsBillExcelDTOS -> {
                 pmsBillExcelDTOS.forEach( pmsBillExcelDTO -> {
@@ -249,12 +277,21 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                     PmMaterial pmMaterial = new PmMaterial();
                     BeanUtils.copyProperties(pmsBillExcelDTO,pmMaterial);
                     pmMaterial.setBomId(pmBillOfMaterial.getId());
+                    pmMaterial.setCode(pmsBillExcelDTO.getModuleCode());
+                    //查询单位数据
+                    R<SysDictVO> unit = remoteDictFeign.getByCode(pmsBillExcelDTO.getUnit(), PmManagerConstant.MEASURE_UNIT);
+                    if (Objects.nonNull(unit.getData())){
+                        pmMaterial.setUnitId(unit.getData().getId());
+                    }else {
+                        throw new BusinessException("单位数据不存在,请检查单位是否正确:从数据组件编码："+pmsBillExcelDTO.getModuleCode());
+                    }
                     R<EqpSpareVO> spare = remoteSpareFeignApi.getByCode(pmsBillExcelDTO.getModuleCode());
-                    if (Objects.isNull(spare)){
+                    if (Objects.nonNull(spare.getData())){
+                        pmMaterial.setMaterialId(spare.getData().getId());
+                        pmMaterial.setName(spare.getData().getName());
+                    }else {
                         throw new BusinessException("主物料不存在,请检查编码是否正确:"+pmsBillExcelDTO.getModuleCode());
                     }
-                    pmMaterial.setMaterialId(spare.getData().getId());
-                    pmMaterial.setName(spare.getData().getName());
                     if (!pmMaterialService.save(pmMaterial)){
                         throw new BusinessException("编码为"+ pmBillOfMaterial.getCode()+"数据异常");
                     }
