@@ -17,6 +17,14 @@ public class QtCheckTaskDefectVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    Map<Integer, QtTaskDefectVO> defects;
+    /**
+     * 类型
+     */
+    private String categoryName;
+
+    /**
+     * 缺项
+     */
+    List<QtTaskDefectVO> defects;
 
 }

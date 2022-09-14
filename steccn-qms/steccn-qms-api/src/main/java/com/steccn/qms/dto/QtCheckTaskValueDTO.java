@@ -33,4 +33,9 @@ public class QtCheckTaskValueDTO implements Serializable {
      */
     @NotNull(message = "检验结果不能为空")
     private String checkResult;
+
+    /**
+     * 缺陷项id
+     */
+    private Integer defectId;
 }

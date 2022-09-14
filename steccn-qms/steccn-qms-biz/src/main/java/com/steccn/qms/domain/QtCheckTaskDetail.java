@@ -30,6 +30,10 @@ public class QtCheckTaskDetail implements Serializable {
      */
     private String checkResult;
 
+    /**
+     *缺陷项id
+     */
+    private Integer defectId;
 
     /**
      * 创建人id

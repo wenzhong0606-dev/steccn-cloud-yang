@@ -320,6 +320,14 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                             .and((groupItemTmp.getGroupId() != null),wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId,groupItemTmp.getGroupId())));
                     if(taskDetails!=null && taskDetails.size() > 0){
                         qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
+                        //如果缺陷项存在，返回缺陷项
+                        if(taskDetails.get(0).getDefectId() != null){
+                            QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(taskDetails.get(0).getDefectId());
+                            if(defectiveItem!=null){
+                                qtCheckPlanItemVo.setDefectId(defectiveItem.getId());
+                                qtCheckPlanItemVo.setDefectName(defectiveItem.getName());
+                            }
+                        }
                     }
                 }
                 //设置itemId

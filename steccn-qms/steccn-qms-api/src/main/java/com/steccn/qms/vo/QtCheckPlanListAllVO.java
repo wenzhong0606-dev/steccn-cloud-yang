@@ -24,4 +24,8 @@ public class QtCheckPlanListAllVO implements Serializable {
      */
     private String name;
 
+    /**
+     * 检验code
+     */
+    private String code;
 }

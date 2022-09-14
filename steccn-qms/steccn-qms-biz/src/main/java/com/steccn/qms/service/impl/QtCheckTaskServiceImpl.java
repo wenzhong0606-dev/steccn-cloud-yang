@@ -142,6 +142,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 Map<String, Object> condition = new HashMap<>();
                 QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
                 qtCheckTaskDetail.setCheckResult(tmp.getCheckResult());
+                if(tmp.getDefectId()!=null){
+                    qtCheckTaskDetail.setDefectId(tmp.getDefectId());
+                }
                 qtCheckTaskDetail.setTaskId(dto.getId());
                 condition.put("task_id",dto.getId());
                 qtCheckTaskDetail.setItemId(tmp.getItemId());

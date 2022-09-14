@@ -83,7 +83,7 @@ public class QtCheckTaskController {
 
     @GetMapping("defect/{id}")
     @ApiOperation(value = "缺陷项回显")
-    public R<List<QtCheckTaskDefectVO>> finished(@PathVariable Integer id){
+    public R<List<QtCheckTaskDefectVO>> defects(@PathVariable Integer id){
         return R.success(qtCheckPlanGroupItemService.findTaskDefect(id));
     }
 }
