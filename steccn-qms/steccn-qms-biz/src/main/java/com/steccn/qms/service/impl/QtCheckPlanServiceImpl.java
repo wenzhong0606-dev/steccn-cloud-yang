@@ -425,7 +425,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_JYX.length());
+                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_JYFA.length());
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
