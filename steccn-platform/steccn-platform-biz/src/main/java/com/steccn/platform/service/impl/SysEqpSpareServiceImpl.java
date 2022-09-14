@@ -63,10 +63,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     @Override
     public EqpSpareVO getByCode(String code) {
-        EqpSpareVO eqpSpareVO = new EqpSpareVO();
-        SysEqpSpare eqpSpare = getOne(new LambdaQueryWrapper<SysEqpSpare>().eq(Objects.nonNull(code) && !code.equals(""), SysEqpSpare::getCode, code));
-        BeanUtils.copyProperties(eqpSpare,eqpSpareVO);
-        return eqpSpareVO;
+        return sysEqpSpareMapper.getByCode(code);
     }
 }
 

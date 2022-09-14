@@ -20,6 +20,9 @@ public interface SysEqpSpareMapper extends BaseMapper<SysEqpSpare> {
 
     @Select("select id,code,name from sys_eqp_spare where name like concat(concat('%',#{name}),'%')")
     List<EqpSpareVO> listSpares(String name);
+
+    @Select("select id,code,name from sys_eqp_spare where code = #{code}")
+    EqpSpareVO getByCode(String code);
 }
 
 
