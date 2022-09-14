@@ -2,7 +2,9 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.SysDict;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.vo.SysDictVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
 * @author yequan
@@ -13,6 +15,9 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SysDictMapper extends BaseMapper<SysDict> {
 
+
+    @Select("select id,code,name,type from sys_dict where code = #{code} and type = #{type}")
+    SysDictVO getByCode(String code);
 }
 
 

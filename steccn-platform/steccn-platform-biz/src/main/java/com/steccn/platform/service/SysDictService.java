@@ -43,4 +43,6 @@ public interface SysDictService extends IService<SysDict> {
      * @return 是否
      */
     Boolean exist(String type, Long id);
+
+    SysDictVO getByCode(String code,String type);
 }

@@ -31,6 +31,13 @@ public class SysDictFeignController {
         return R.success(sysDictService.listByIdList(idList));
     }
 
+    @GetMapping("/getByCode")
+    @ApiOperation("根据编码类型查询数据字典的值")
+    public R<SysDictVO> getByCode(@ApiParam("字典编码")@RequestParam("code") String code,@ApiParam("类型")@RequestParam("type") String type){
+        return R.success(sysDictService.getByCode(code,type));
+    }
+
+
     @GetMapping("/exist")
     @ApiOperation("数据字典是否存在于这个类型下的id")
     public R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id) {

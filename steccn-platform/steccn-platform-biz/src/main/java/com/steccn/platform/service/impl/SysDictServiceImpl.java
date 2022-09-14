@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -11,6 +12,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.mapper.SysDictMapper;
 import com.steccn.platform.service.SysDictService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +25,11 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-02 08:54:09
  */
 @Service
+@RequiredArgsConstructor
 public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         implements SysDictService {
+
+    private final SysDictMapper sysDictMapper;
 
     @Override
     public List<SysDictVO> sysList(String type) {
@@ -74,6 +79,17 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
             return type.equals(model.getType());
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public SysDictVO getByCode(String code,String type) {
+        SysDict sysDict = baseMapper.selectOne(new LambdaQueryWrapper<SysDict>().eq( SysDict::getCode, code).eq(SysDict::getType, type));
+        if (Objects.isNull(sysDict)) {
+            return null;
+        }
+        SysDictVO sysDictVO = new SysDictVO();
+        BeanUtils.copyProperties(sysDict,sysDictVO);
+        return sysDictVO;
     }
 
 
