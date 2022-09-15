@@ -24,4 +24,6 @@ public interface PmCraftRouteService extends IService<PmCraftRoute> {
     R<Boolean> edit(PmCraftRouteDTO dto);
 
     R<Boolean> delete(Long id);
+
+    R<Boolean> verifyVersion(Long id, String version);
 }

@@ -2,12 +2,8 @@ package com.steccn.pms.dto;
 
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Value;
 
 import java.io.Serializable;
 
@@ -19,16 +15,14 @@ import java.io.Serializable;
  * @date 2022/9/8
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @ApiOperation("工序Excel导入")
 public class PmProcessExcelDTO implements Serializable {
 
     @ExcelProperty(value = "工序编码")
     private String code;
 
-    @ExcelProperty(value = "物料编码")
-    private String materialCode;
+    @ExcelProperty(value = "工序名称")
+    private String name;
 
     @ExcelProperty(value = "类型")
     private Integer type;

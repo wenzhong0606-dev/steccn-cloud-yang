@@ -1,6 +1,8 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.read.listener.PageReadListener;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,8 +15,11 @@ import com.steccn.common.vo.R;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmProcessStation;
+import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.dto.PmProcessExcelDTO;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.mapper.PmProcessMapper;
 import com.steccn.pms.dto.PmProcessDTO;
@@ -28,6 +33,7 @@ import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -97,6 +103,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
                         pmProcessVO.setFileUrl(null);
                     } else {
                         pmProcessVO.setFileUrl(fileInfoVO.getFileUrl());
+                        pmProcessVO.setFileName(fileInfoVO.getFileName());
                     }
                 } catch (Exception e) {
                     throw new BusinessException(pmProcessVO.getName() + ":文件信息不存在");
@@ -166,6 +173,34 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         }
         pmProcessVOList= BeanUtil.copyToList(list, PmProcessVO.class);
         return pmProcessVOList;
+    }
+
+    @Override
+    public Boolean excelImportData(PmExcelDTO dto) throws IOException {
+        //文件类型校验
+        if (Objects.isNull(dto.getFile())) {
+            //获取文件拓展名
+            String fileExtension = dto.getFile().getOriginalFilename().substring(dto.getFile().getOriginalFilename().lastIndexOf("."));
+            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)) {
+                throw new BusinessException("文件类型不支持,请使用模板进行导入");
+            }
+        }
+        //定义数据集合
+        List<PmProcess> processList = Lists.newArrayList();
+        //读取文件信息
+        EasyExcel.read(dto.getFile().getInputStream(), PmProcessExcelDTO.class,new PageReadListener<PmProcessExcelDTO>(pmProcessExcelDTOS -> {
+                    pmProcessExcelDTOS.forEach( pmProcessExcelDTO -> {
+                        PmProcess pmProcess = new PmProcess();
+                        BeanUtils.copyProperties(pmProcessExcelDTO,pmProcess);
+                        processList.add(pmProcess);
+                    });
+                }
+        )).sheet().doRead();
+        //保存数据
+        if (CollUtil.isNotEmpty(processList)){
+            saveBatch(processList);
+        }
+        return true;
     }
 
 

@@ -1,6 +1,8 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.service.PmCraftRouteService;
@@ -8,6 +10,7 @@ import com.steccn.pms.vo.PmCraftRouteVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -29,7 +32,7 @@ public class PmCraftRouteController {
 
     @ApiModelProperty("新增工艺路线")
     @PostMapping
-    public R<Boolean> add(@Valid @RequestBody PmCraftRouteDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody PmCraftRouteDTO dto) {
         return pmCraftRouteService.add(dto);
     }
 
@@ -41,7 +44,7 @@ public class PmCraftRouteController {
 
     @ApiModelProperty("编辑工艺路线")
     @PutMapping
-    public R<Boolean> edit(@Valid @RequestBody PmCraftRouteDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class)@Valid @RequestBody PmCraftRouteDTO dto) {
         return pmCraftRouteService.edit(dto);
     }
 
@@ -49,6 +52,12 @@ public class PmCraftRouteController {
     @DeleteMapping("/{id}")
     public R<Boolean> delete(@PathVariable("id") Long id) {
         return pmCraftRouteService.delete(id);
+    }
+
+    @ApiModelProperty("校验当前物料下的工艺版本")
+    @GetMapping("/verifyVersion")
+    public R<Boolean> verifyVersion(@RequestParam("id")Long id,@RequestParam("version")String version){
+        return pmCraftRouteService.verifyVersion(id,version);
     }
 
 }
