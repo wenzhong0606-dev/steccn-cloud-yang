@@ -66,6 +66,12 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
 
+
+    /**
+     * 新增物料清单信息
+     * @param dto
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public R<Boolean> add(PmBillOfMaterialDTO dto) {
@@ -137,6 +143,11 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         return one;
     }
 
+    /**
+     * 获取物料清单分页列表
+     * @param dto
+     * @return
+     */
     @Override
     public Page<PmBillOfMaterialVO> pageList(PmBillOfMaterialDTO dto) {
         //1.构建条件
@@ -187,6 +198,11 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         return page.setRecords(res);
     }
 
+    /**
+     * 编辑物料清单
+     * @param dto
+     * @return
+     */
     @Override
     public R<Boolean> edit(PmBillOfMaterialDTO dto) {
         //校验是否存在

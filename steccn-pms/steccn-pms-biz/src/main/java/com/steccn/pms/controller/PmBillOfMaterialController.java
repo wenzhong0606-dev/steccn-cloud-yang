@@ -2,6 +2,8 @@ package com.steccn.pms.controller;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.dto.PmExcelDTO;
@@ -11,6 +13,7 @@ import com.steccn.pms.vo.PmBillOfMaterialVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +38,7 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("新增物料清单")
     @PostMapping
-    public R<Boolean> add(@Valid @RequestBody PmBillOfMaterialDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @Valid @RequestBody PmBillOfMaterialDTO dto) {
         return pmBillOfMaterialService.add(dto);
     }
 
@@ -47,7 +50,7 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("编辑物料清单")
     @PutMapping
-    public R<Boolean> edit(@Valid @RequestBody PmBillOfMaterialDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @Valid @RequestBody PmBillOfMaterialDTO dto) {
         return pmBillOfMaterialService.edit(dto);
     }
 
@@ -59,7 +62,7 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("Excel导入")
     @PostMapping("/excelImportData")
-    public R<Boolean> excelImportData(@RequestBody PmExcelDTO dto) throws IOException {
+    public R<Boolean> excelImportData(@Validated(InsertGroup.class) @RequestBody PmExcelDTO dto) throws IOException {
         return R.success(pmBillOfMaterialService.excelImportData(dto));
     }
 
