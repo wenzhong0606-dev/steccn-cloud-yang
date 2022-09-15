@@ -62,7 +62,7 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("Excel导入")
     @PostMapping("/excelImportData")
-    public R<Boolean> excelImportData(@Validated(InsertGroup.class) @RequestBody PmExcelDTO dto) throws IOException {
+    public R<Boolean> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
         return R.success(pmBillOfMaterialService.excelImportData(dto));
     }
 

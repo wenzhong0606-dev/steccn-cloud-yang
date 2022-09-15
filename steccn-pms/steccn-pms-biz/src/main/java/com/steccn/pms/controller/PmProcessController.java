@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.vo.PmProcessVO;
@@ -14,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -58,6 +60,12 @@ public class PmProcessController {
     @PutMapping
     public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody PmProcessDTO dto) {
         return processService.edit(dto);
+    }
+
+    @ApiModelProperty("Excel导入")
+    @PostMapping("/excelImportData")
+    public R<Boolean> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
+        return R.success(processService.excelImportData(dto));
     }
 
 }

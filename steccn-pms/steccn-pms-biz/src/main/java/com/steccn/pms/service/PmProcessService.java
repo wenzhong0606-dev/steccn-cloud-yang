@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmProcess;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.vo.PmProcessVO;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -29,4 +31,6 @@ public interface PmProcessService extends IService<PmProcess> {
     Map<Long, PmProcessVO> listById(List<Long> processIds);
 
     List<PmProcessVO> listData();
+
+    Boolean excelImportData(PmExcelDTO dto) throws IOException;
 }

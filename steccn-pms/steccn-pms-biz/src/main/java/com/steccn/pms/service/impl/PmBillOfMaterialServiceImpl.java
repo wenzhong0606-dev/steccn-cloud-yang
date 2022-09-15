@@ -230,7 +230,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         pmMaterialService.deleteByMaterialId(dto.getId());
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty(dto.getList())) {
             Boolean a = pmMaterialService.saveMaterial(dto);
             if (a == false) {
                 throw new BusinessException("物料组件数据保存失败");
@@ -344,7 +344,9 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         );
         //保存从数据
         List<PmMaterial> pmMaterials = BeanUtil.copyToList(pmMaterialList, PmMaterial.class);
-        pmMaterialService.saveBatch(pmMaterials);
+        if (CollUtil.isNotEmpty(pmMaterials)) {
+            pmMaterialService.saveBatch(pmMaterials);
+        }
         return true;
         /**
          *
