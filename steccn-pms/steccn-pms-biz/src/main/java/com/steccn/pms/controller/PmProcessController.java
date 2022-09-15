@@ -1,6 +1,8 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.dto.PmProcessDTO;
@@ -8,6 +10,7 @@ import com.steccn.pms.vo.PmProcessVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -29,7 +32,7 @@ public class PmProcessController {
 
     @ApiModelProperty("新增工序")
     @PostMapping
-    public R<Boolean> add(@Valid @RequestBody PmProcessDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody PmProcessDTO dto) {
         return processService.saveProcess(dto);
     }
 
@@ -41,7 +44,7 @@ public class PmProcessController {
 
     @ApiModelProperty("工序列表数据")
     @GetMapping("/listData")
-    public R<List<PmProcessVO>> listData(){
+    public R<List<PmProcessVO>> listData() {
         return R.success(processService.listData());
     }
 
@@ -53,7 +56,7 @@ public class PmProcessController {
 
     @ApiModelProperty("修改工序")
     @PutMapping
-    public R<Boolean> edit (@Valid @RequestBody PmProcessDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody PmProcessDTO dto) {
         return processService.edit(dto);
     }
 

@@ -67,5 +67,4 @@ public class QtDefectiveItemController implements Serializable {
     public R<List<QtDefectiveItemTreeVo>> selectItemList() {
         return R.success(qtDefectiveItemService.selectItemList());
     }
-
 }
