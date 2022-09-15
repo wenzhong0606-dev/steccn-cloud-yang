@@ -103,6 +103,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
                         pmProcessVO.setFileUrl(null);
                     } else {
                         pmProcessVO.setFileUrl(fileInfoVO.getFileUrl());
+                        pmProcessVO.setFileName(fileInfoVO.getFileName());
                     }
                 } catch (Exception e) {
                     throw new BusinessException(pmProcessVO.getName() + ":文件信息不存在");

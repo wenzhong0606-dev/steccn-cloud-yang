@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.steccn.common.valid.InsertGroup;
 import lombok.Data;
@@ -27,11 +28,11 @@ public class PmsBillExcelDTO implements Serializable {
 
     @NotNull(groups = InsertGroup.class,message = "状态不能为空")
     @ExcelProperty("状态")
-    private String status;
+    private Integer status;
 
     @NotNull(groups = InsertGroup.class,message = "标准数量不能为空")
     @ExcelProperty("标准数量")
-    private String quantity;
+    private Integer quantity;
 
     @NotNull(groups = InsertGroup.class,message = "版本不能为空")
     @ExcelProperty("版本")
@@ -39,7 +40,7 @@ public class PmsBillExcelDTO implements Serializable {
 
     @NotNull(groups = InsertGroup.class,message = "是否当前版本不能为空")
     @ExcelProperty("是否当前版本")
-    private String isCurrentVersion;
+    private Integer isCurrentVersion;
 
     @NotNull(groups = InsertGroup.class,message = "有效期开始时间不能为空")
     @ExcelProperty("有效期开始时间")
@@ -68,6 +69,7 @@ public class PmsBillExcelDTO implements Serializable {
     /**
      * 用于查找单位数据
      */
+    @ExcelIgnore
     private Long unitId;
 
     @NotNull(groups = InsertGroup.class,message = "是否固定数量不能为空")

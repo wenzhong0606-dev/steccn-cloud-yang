@@ -35,8 +35,11 @@ public class PmProcessVO implements Serializable {
     @ApiModelProperty("状态")
     private Integer status;
 
-    @ApiModelProperty("文件")
+    @ApiModelProperty("文件url")
     private String fileUrl;
+
+    @ApiModelProperty("文件名称")
+    private String fileName;
 
     @ApiModelProperty("文件id")
     private Long fileId;
