@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -23,6 +24,7 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmBillOfMaterial;
+import com.steccn.pms.domain.PmCraftRoute;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.dto.PmExcelDTO;
@@ -35,13 +37,10 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.PmMaterialVO;
 import lombok.RequiredArgsConstructor;
-import nonapi.io.github.classgraph.json.Id;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.commons.util.IdUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.IdGenerator;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -86,10 +85,13 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         }
         //是否是当前版本的限制
         if (MpConstant.CURRENT_VERSION_YES.equals(dto.getIsCurrentVersion())) {
-            //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
+            //是当前版本，判断物料是否存在是当前版本标识
             PmBillOfMaterial currentVersion = currentVersion(dto.getMaterialId());
             if (Objects.nonNull(currentVersion)) {
-                throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
+                //修改新增数据为当前版本，更改之前数据当前版本标识
+                currentVersion.setIsCurrentVersion(MpConstant.CURRENT_VERSION_NOT);
+                updateById(currentVersion);
+//                throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
             }
         }
         //保存数据
@@ -108,7 +110,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
      * @param version    版本
      * @return
      */
-    private boolean existVersion(Long materialId, String version) {
+    public Boolean existVersion(Long materialId, String version) {
         if (Objects.isNull(materialId) || StrUtil.isBlank(version)) {
             return Boolean.FALSE;
         }
@@ -144,7 +146,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                 .eq(Objects.nonNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmBillOfMaterial::getCode, dto.getCode())
-                .eq(Objects.nonNull(dto.getVersion())&& !dto.getVersion().equals(""),PmBillOfMaterial::getVersion,dto.getVersion());
+                .eq(Objects.nonNull(dto.getVersion()) && !dto.getVersion().equals(""), PmBillOfMaterial::getVersion, dto.getVersion());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -200,12 +202,13 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         if (MpConstant.CURRENT_VERSION_YES.equals(dto.getIsCurrentVersion())) {
             //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
             PmBillOfMaterial currentVersion = currentVersion(dto.getMaterialId());
-                if (Objects.nonNull(currentVersion)) {
-                    if (!currentVersion.getId().equals(dto.getId())) {
-                        throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
-                    }
+            if (Objects.nonNull(currentVersion)) {
+                if (!currentVersion.getId().equals(dto.getId())) {
+                    currentVersion.setIsCurrentVersion(MpConstant.CURRENT_VERSION_NOT);
+                    updateById(currentVersion);
                 }
             }
+        }
         PmBillOfMaterial model = new PmBillOfMaterial();
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
@@ -236,6 +239,14 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     @Override
 //    @Transactional(readOnly = false)
     public Boolean excelImportData(PmExcelDTO dto) throws IOException {
+        //文件类型校验
+        if (Objects.nonNull(dto.getFile())) {
+            //获取文件拓展名
+            String fileExtension = dto.getFile().getOriginalFilename().substring(dto.getFile().getOriginalFilename().lastIndexOf("."));
+            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)){
+                throw new BusinessException("文件类型不支持,请使用模板进行导入");
+            }
+        }
         //1.定义数据集合
         List<PmBillOfMaterialDTO> pmBillOfMaterialList = Lists.newArrayList();
         List<PmMaterialDTO> pmMaterialList = Lists.newArrayList();
@@ -252,6 +263,18 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                         pmBillOfMaterialList.add(pmBillOfMaterialDTO);
                         spareCodes.add(pmsBillExcelDTO.getMaterialCode());
                         bomCodes.add(pmBillOfMaterialDTO.getCode());
+                        //物料版本是否已存在
+                        if (existVersion(pmBillOfMaterialDTO.getMaterialId(), pmBillOfMaterialDTO.getVersion())) {
+                            throw new BusinessException(pmBillOfMaterialDTO.getCode() + "的物料版本已存在,请检查修改");
+                        }
+                        //是否是当前版本的限制
+                        if (MpConstant.CURRENT_VERSION_YES.equals(pmBillOfMaterialDTO.getIsCurrentVersion())) {
+                            //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
+                            PmBillOfMaterial currentVersion = currentVersion(pmBillOfMaterialDTO.getMaterialId());
+                            if (Objects.nonNull(currentVersion)) {
+                                throw new BusinessException(pmBillOfMaterialDTO.getMaterialCode() + "的当前版本有存在版本,请检查修改");
+                            }
+                        }
                         //获取从数据
                         PmMaterialDTO pmMaterialDTO = new PmMaterialDTO();
                         BeanUtils.copyProperties(pmsBillExcelDTO, pmMaterialDTO);
@@ -354,13 +377,56 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
          */
     }
 
+    /**
+     * excel数据导出
+     *
+     * @param response
+     * @throws IOException
+     */
     @Override
-    public void excelExportData(HttpServletResponse response) {
-//        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-//        response.setCharacterEncoding("utf-8");
-//        String fileName = URLEncoder.encode("测试", "UTF-8").replaceAll("\\+", "%20");
-//        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-//        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(data());
+    public void excelExportData(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("物料清单", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(getExcelData());
+    }
+
+    /**
+     * 获取excel数据
+     *
+     * @return
+     */
+    private List<PmsBillExcelDTO> getExcelData() {
+        //定义返回数据集合
+        List<PmsBillExcelDTO> excelDTOList = Lists.newArrayList();
+        //获取数据
+        List<PmBillOfMaterial> pmBillOfMaterialList = list();
+        List<PmMaterial> pmMaterialList = pmMaterialService.list();
+        List<Long> dictIds = Lists.newArrayList();
+        //处理数据
+        pmBillOfMaterialList.forEach(pmBillOfMaterial -> {
+                    pmMaterialList.forEach(
+                            pmMaterial -> {
+                                if (pmMaterial.getBomId().equals(pmBillOfMaterial.getId())) {
+                                    PmsBillExcelDTO pmsBillExcelDTO = new PmsBillExcelDTO();
+                                    BeanUtils.copyProperties(pmBillOfMaterial, pmsBillExcelDTO);
+                                    BeanUtils.copyProperties(pmMaterial, pmsBillExcelDTO);
+                                    pmsBillExcelDTO.setModuleCode(pmMaterial.getCode());
+                                    pmsBillExcelDTO.setModuleQuantity(pmMaterial.getQuantity());
+                                    dictIds.add(pmMaterial.getUnitId());
+                                    pmsBillExcelDTO.setUnitId(pmMaterial.getUnitId());
+                                    excelDTOList.add(pmsBillExcelDTO);
+                                }
+                            }
+                    );
+                }
+        );
+        //获取字典数据
+        R<Map<Long, SysDictVO>> mapR = remoteDictFeign.listById(dictIds);
+        excelDTOList.forEach(pmsBillExcelDTO -> pmsBillExcelDTO.setUnit(mapR.getData().get(pmsBillExcelDTO.getUnitId()).getName()));
+        return excelDTOList;
     }
 
 
@@ -383,6 +449,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         }
         return R.success(versions);
     }
+
 
     /**
      * 根据code查询id
@@ -427,8 +494,6 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         }
         return currentMax;
     }
-
-
 }
 
 

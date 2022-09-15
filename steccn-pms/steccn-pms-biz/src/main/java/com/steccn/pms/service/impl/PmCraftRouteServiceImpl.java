@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -59,7 +60,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生成编码
-        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
         //保存数据
         save(model);
         if (!Objects.isNull(dto.getList())) {
@@ -86,7 +87,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     public Page<PmCraftRouteVO> pageList(PmCraftRouteDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmCraftRoute> eq = new LambdaQueryWrapper<PmCraftRoute>()
-                .eq(Objects.nonNull(dto.getMaterialCode()) && !dto.getMaterialCode().equals(""),PmCraftRoute::getMaterialCode, dto.getMaterialCode())
+                .eq(Objects.nonNull(dto.getMaterialCode()) && !dto.getMaterialCode().equals(""), PmCraftRoute::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), PmCraftRoute::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmCraftRoute::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmCraftRoute::getIsCurrentVersion, dto.getIsCurrentVersion())
@@ -162,6 +163,22 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     @Override
     public R<Boolean> delete(Long id) {
         return R.success(removeById(id));
+    }
+
+    /**
+     * 查询版本是否已存在
+     * @param id
+     * @param version
+     * @return
+     */
+    @Override
+    public R<Boolean> verifyVersion(Long id, String version) {
+        if (Objects.isNull(id) || StrUtil.isBlank(version)) {
+            return R.success(Boolean.FALSE);
+        }
+        LambdaQueryWrapper<PmCraftRoute> eq = new LambdaQueryWrapper<PmCraftRoute>().eq(PmCraftRoute::getMaterialId, id).eq(PmCraftRoute::getVersion, version);
+        long count = count(eq);
+        return R.success(count > 0);
     }
 
 

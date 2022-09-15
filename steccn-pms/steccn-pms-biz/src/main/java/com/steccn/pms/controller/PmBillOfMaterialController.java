@@ -75,4 +75,11 @@ public class PmBillOfMaterialController {
         return pmBillOfMaterialService.getVersion(code);
     }
 
+
+    @ApiModelProperty("校验当前物料下的工艺版本")
+    @GetMapping("/verifyVersion")
+    public R<Boolean> verifyVersion(@RequestParam("id")Long id,@RequestParam("version")String version){
+        return R.success(pmBillOfMaterialService.existVersion(id,version));
+    }
+
 }

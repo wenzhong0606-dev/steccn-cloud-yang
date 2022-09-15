@@ -51,4 +51,10 @@ public class PmCraftRouteController {
         return pmCraftRouteService.delete(id);
     }
 
+    @ApiModelProperty("校验当前物料下的工艺版本")
+    @GetMapping("/verifyVersion")
+    public R<Boolean> verifyVersion(@RequestParam("id")Long id,@RequestParam("version")String version){
+        return pmCraftRouteService.verifyVersion(id,version);
+    }
+
 }

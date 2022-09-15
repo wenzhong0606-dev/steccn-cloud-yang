@@ -29,7 +29,9 @@ public interface PmBillOfMaterialService extends IService<PmBillOfMaterial> {
 
     Boolean excelImportData(PmExcelDTO dto) throws IOException;
 
-    void excelExportData(HttpServletResponse response);
+    void excelExportData(HttpServletResponse response) throws IOException;
 
     R<List<String>> getVersion(String code);
+
+    Boolean existVersion(Long id, String version);
 }
