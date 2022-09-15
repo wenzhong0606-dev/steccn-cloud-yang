@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 工艺路线
@@ -46,7 +47,8 @@ public class PmCraftRouteController {
 
     @ApiModelProperty("删除工艺路线")
     @DeleteMapping("/{id}")
-    public R<Boolean> delete(@PathVariable("id") Integer id) {
+    public R<Boolean> delete(@PathVariable("id") Long id) {
         return pmCraftRouteService.delete(id);
     }
+
 }

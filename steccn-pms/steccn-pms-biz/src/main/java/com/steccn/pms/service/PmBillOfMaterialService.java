@@ -8,6 +8,7 @@ import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -27,4 +28,8 @@ public interface PmBillOfMaterialService extends IService<PmBillOfMaterial> {
     Boolean delete(Integer id);
 
     Boolean excelImportData(PmExcelDTO dto) throws IOException;
+
+    void excelExportData(HttpServletResponse response);
+
+    R<List<String>> getVersion(String code);
 }

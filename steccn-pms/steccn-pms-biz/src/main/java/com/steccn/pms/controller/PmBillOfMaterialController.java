@@ -1,9 +1,11 @@
 package com.steccn.pms.controller;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.service.PmBillOfMaterialService;
 import com.steccn.pms.vo.PmBillOfMaterialVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -11,8 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * 物料清单
@@ -54,7 +59,20 @@ public class PmBillOfMaterialController {
 
     @ApiModelProperty("Excel导入")
     @PostMapping("/excelImportData")
-    public R<Boolean> excelImportData(PmExcelDTO dto) throws IOException {
+    public R<Boolean> excelImportData(@RequestBody PmExcelDTO dto) throws IOException {
         return R.success(pmBillOfMaterialService.excelImportData(dto));
     }
+
+    @ApiModelProperty("Excel导出")
+    @GetMapping("/excelExportData")
+    public void excelExportData(HttpServletResponse response) throws IOException {
+        pmBillOfMaterialService.excelExportData(response);
+    }
+
+    @ApiModelProperty("获取当前物料下的版本号")
+    @GetMapping("/getVersion")
+    public R<List<String>>  getVersion(@RequestParam("code") String code){
+        return pmBillOfMaterialService.getVersion(code);
+    }
+
 }

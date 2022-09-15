@@ -43,7 +43,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.IdGenerator;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -141,7 +143,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                 .like(Objects.nonNull(dto.getMaterialName()), PmBillOfMaterial::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmBillOfMaterial::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmBillOfMaterial::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmBillOfMaterial::getCode, dto.getCode())
+                .eq(Objects.nonNull(dto.getVersion())&& !dto.getVersion().equals(""),PmBillOfMaterial::getVersion,dto.getVersion());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -197,11 +200,12 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         if (MpConstant.CURRENT_VERSION_YES.equals(dto.getIsCurrentVersion())) {
             //是当前版本，判断物料是否存在是当前版本标识，如果存在则抛异常
             PmBillOfMaterial currentVersion = currentVersion(dto.getMaterialId());
-            if (Objects.nonNull(currentVersion)) {
-                throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
+                if (Objects.nonNull(currentVersion)) {
+                    if (!currentVersion.getId().equals(dto.getId())) {
+                        throw new BusinessException("版本" + currentVersion.getVersion() + "为当前版本");
+                    }
+                }
             }
-        }
-
         PmBillOfMaterial model = new PmBillOfMaterial();
         BeanUtils.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
@@ -350,6 +354,36 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
          */
     }
 
+    @Override
+    public void excelExportData(HttpServletResponse response) {
+//        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+//        response.setCharacterEncoding("utf-8");
+//        String fileName = URLEncoder.encode("测试", "UTF-8").replaceAll("\\+", "%20");
+//        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+//        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(data());
+    }
+
+
+    /**
+     * 根据物料code获取当前物料下的物料清单版本
+     *
+     * @param code
+     * @return
+     */
+    @Override
+    public R<List<String>> getVersion(String code) {
+        LambdaQueryWrapper<PmBillOfMaterial> eq = new LambdaQueryWrapper<PmBillOfMaterial>().eq(PmBillOfMaterial::getMaterialCode, code);
+        List<PmBillOfMaterial> list = list(eq);
+        List<String> versions = Lists.newArrayList();
+        if (CollUtil.isEmpty(list)) {
+            return R.success(versions);
+        }
+        for (PmBillOfMaterial pmBillOfMaterial : list) {
+            versions.add(pmBillOfMaterial.getVersion());
+        }
+        return R.success(versions);
+    }
+
     /**
      * 根据code查询id
      *
@@ -358,12 +392,12 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
      */
     private Map<String, Long> listByCodes(List<String> codeList) {
         Map<String, Long> map = new HashMap<>();
-        List<PmBillOfMaterial> pmBillOfMaterials= baseMapper.listByCodes(codeList);
+        List<PmBillOfMaterial> pmBillOfMaterials = baseMapper.listByCodes(codeList);
         if (CollUtil.isEmpty(pmBillOfMaterials)) {
             return map;
         }
         for (PmBillOfMaterial pmBillOfMaterial : pmBillOfMaterials) {
-            map.put(pmBillOfMaterial.getCode(),pmBillOfMaterial.getId());
+            map.put(pmBillOfMaterial.getCode(), pmBillOfMaterial.getId());
         }
         return map;
     }

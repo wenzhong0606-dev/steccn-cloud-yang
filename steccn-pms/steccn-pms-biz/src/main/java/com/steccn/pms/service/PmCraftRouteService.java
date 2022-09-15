@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 
+import java.util.List;
+
 /**
 * @author yequan
 * @description 针对表【pm_craft_route(生产工艺路线
@@ -21,5 +23,5 @@ public interface PmCraftRouteService extends IService<PmCraftRoute> {
 
     R<Boolean> edit(PmCraftRouteDTO dto);
 
-    R<Boolean> delete(Integer id);
+    R<Boolean> delete(Long id);
 }

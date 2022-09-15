@@ -58,6 +58,8 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         model.setCreateName(SecurityUtils.getUser().getName());
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
+        //生成编码
+        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
         //保存数据
         save(model);
         if (!Objects.isNull(dto.getList())) {
@@ -144,7 +146,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生成编码
-        model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
+        // model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R,PmsCodeUtil.NUM_BIT_8,currentMaxCode()));
         pmCraftRouteModuleService.deleteByRoteId(dto.getId());
         if (CollUtil.isNotEmpty(dto.getList())) {
             try {
@@ -158,7 +160,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     }
 
     @Override
-    public R<Boolean> delete(Integer id) {
+    public R<Boolean> delete(Long id) {
         return R.success(removeById(id));
     }
 
