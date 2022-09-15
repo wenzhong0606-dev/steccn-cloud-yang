@@ -105,9 +105,9 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
                 //物料名称或者物料编码
                 .and((dto.getNameOrCode() != null && !dto.getNameOrCode().equals("")),wrapper -> wrapper.like(QtMaterial::getName,dto.getNameOrCode()).or().like(QtMaterial::getCode,dto.getNameOrCode()))
                 //检验类型
-                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.like(QtMaterial::getType,"\"checkType\":" +dto.getCheckType()+"\""))
+                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkType') like" + "'%"+dto.getCheckType()+"%'"))
                 //检验方案
-                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.like(QtMaterial::getType,"\"checkPlanName\":" +dto.getLinkedPlan()+"\""));
+                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkPlanName') like" + "'%"+dto.getLinkedPlan()+"%'"));
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtMaterial::getName);
@@ -168,11 +168,12 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
      * @return
      */
     @Override
-    public List<QtMaterialListAllVO> listAll(String nameOrCode) {
+    public List<QtMaterialListAllVO> listAll(String nameOrCode,Integer checkTypeCode) {
         LambdaQueryWrapper<QtMaterial> condition = new LambdaQueryWrapper<QtMaterial>()
                 //物料名称或者物料编码
                 .and((nameOrCode != null && !nameOrCode.equals("")),wrapper -> wrapper.like(QtMaterial::getName,nameOrCode).or().like(QtMaterial::getCode,nameOrCode))
-                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1));
+                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1))
+                .and(wrapper -> wrapper.apply("JSON_CONTAINS(type, JSON_OBJECT('checkTypeCode',{0}))",checkTypeCode));
         List<QtMaterial> materialModel = list(condition);
         List<QtMaterialListAllVO> vos = Lists.newArrayList();
         if(materialModel != null && !materialModel.isEmpty()){
