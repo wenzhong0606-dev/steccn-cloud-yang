@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
@@ -12,10 +13,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
-import com.steccn.qms.vo.QtCheckPlanDetailsVO;
-import com.steccn.qms.vo.QtCheckTaskDetailVO;
-import com.steccn.qms.vo.QtCheckTaskListVO;
-import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
+import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -107,9 +105,27 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setWorkshopName(remoteOfficeFeign.getNameById(qtCheckTask.getWorkshopId()).getMsg());
             qtCheckTaskListVo.setProductLineName(remoteOfficeFeign.getNameById(qtCheckTask.getProductLineId()).getMsg());
         }
-        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(),id);
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
+
+        //处理样本数
+        //选择任务详情
+        QueryWrapper<QtCheckTaskDetail> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("DISTINCT copy").eq("task_id",id).orderByAsc("copy");
+        List<QtCheckTaskDetail> qtCheckTaskDetails = qtCheckTaskDetailService.list(queryWrapper);
+        List<QtCheckTaskDetailCopyVO> copy = Lists.newArrayList();
+        if(!qtCheckTaskDetails.isEmpty()){
+            //包装好group和copy
+            qtCheckTaskDetails.forEach(tmp->{
+                QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(),id,tmp.getCopy());
+                QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
+                qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
+                qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
+                copy.add(qtCheckTaskDetailCopyVO);
+            });
+        }
+        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
+        qtCheckPlanDetailsVO.setCopy(copy);
         qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
         return qtCheckTaskDetailVo;
     }

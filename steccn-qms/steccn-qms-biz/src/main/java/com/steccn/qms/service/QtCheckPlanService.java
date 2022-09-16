@@ -33,10 +33,10 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
 
     /**
      * 编辑时回显
-     * @param id taskId
+     * @param id taskId copy
      * @return QtCheckPlanDetailsVo
      */
-    QtCheckPlanDetailsVO info(Integer id, Long taskId);
+    QtCheckPlanDetailsVO info(Integer id, Long taskId,Integer copy);
 
     /**
      * 编辑

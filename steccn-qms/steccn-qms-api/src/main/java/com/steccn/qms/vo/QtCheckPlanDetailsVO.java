@@ -23,4 +23,8 @@ public class QtCheckPlanDetailsVO implements Serializable {
     private String createName;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    /**
+     * 任务详情专用vo
+     */
+    private List<QtCheckTaskDetailCopyVO> copy;
 }

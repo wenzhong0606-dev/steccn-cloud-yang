@@ -44,7 +44,7 @@ public class QtCheckPlanController {
     @GetMapping("/{id}")
     @ApiOperation(value = "检验方案回显")
     public R<QtCheckPlanDetailsVO> info(@PathVariable Integer id) {
-        return R.success(qtCheckPlanService.info(id,null));
+        return R.success(qtCheckPlanService.info(id,null,null));
     }
 
     @PutMapping

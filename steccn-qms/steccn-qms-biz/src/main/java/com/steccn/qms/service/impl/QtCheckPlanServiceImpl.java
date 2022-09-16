@@ -235,7 +235,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public QtCheckPlanDetailsVO info(Integer id,Long taskId) {
+    public QtCheckPlanDetailsVO info(Integer id,Long taskId,Integer copy) {
         //1、先拿到方案
         QtCheckPlanDetailsVO resVo = new QtCheckPlanDetailsVO();
         QtCheckPlan qtCheckPlan = getById(id);
@@ -322,11 +322,12 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 }
 
                 //处理检查结果
-                if(taskId!=null){
+                if(taskId!=null && copy!=null){
                     List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                             .eq(QtCheckTaskDetail::getTaskId,taskId)
                             .and((groupItemTmp.getCheckItemId() != null),wrapper->wrapper.eq(QtCheckTaskDetail::getItemId,groupItemTmp.getCheckItemId()))
-                            .and((groupItemTmp.getGroupId() != null),wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId,groupItemTmp.getGroupId())));
+                            .and((groupItemTmp.getGroupId() != null),wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId,groupItemTmp.getGroupId()))
+                            .and((copy != null),wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy,copy)));
                     if(taskDetails!=null && taskDetails.size() > 0){
                         qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
                         //如果缺陷项存在，返回缺陷项
