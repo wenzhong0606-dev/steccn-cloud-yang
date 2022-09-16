@@ -61,10 +61,6 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     public R<Boolean> saveProcess(PmProcessDTO dto) {
         PmProcess model = new PmProcess();
         BeanUtil.copyProperties(dto, model);
-        model.setCreateBy(SecurityUtils.getUser().getUserId());
-        model.setCreateName(SecurityUtils.getUser().getName());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
         save(model);
         if (CollUtil.isNotEmpty(dto.getList())) {
             dto.setId(Math.toIntExact(model.getId()));
