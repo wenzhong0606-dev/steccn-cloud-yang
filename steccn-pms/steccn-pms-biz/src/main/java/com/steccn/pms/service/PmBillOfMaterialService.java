@@ -10,6 +10,7 @@ import com.steccn.pms.vo.PmBillOfMaterialVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
@@ -34,4 +35,6 @@ public interface PmBillOfMaterialService extends IService<PmBillOfMaterial> {
     R<List<String>> getVersion(String code);
 
     Boolean existVersion(Long id, String version);
+
+    void download(HttpServletResponse response) throws IOException;
 }

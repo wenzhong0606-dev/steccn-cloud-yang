@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,6 +70,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
 
     /**
      * 新增物料清单信息
+     *
      * @param dto
      * @return
      */
@@ -126,6 +128,17 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         return count > 0;
     }
 
+    @Override
+    public void download(HttpServletResponse response) throws IOException{
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("物料清单模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        List<PmsBillExcelDTO> dtoList = new ArrayList<>();
+        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(dtoList);
+    }
+
     /**
      * 物料是否存在当前版本
      *
@@ -145,6 +158,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
 
     /**
      * 获取物料清单分页列表
+     *
      * @param dto
      * @return
      */
@@ -200,6 +214,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
 
     /**
      * 编辑物料清单
+     *
      * @param dto
      * @return
      */
@@ -259,7 +274,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         if (Objects.nonNull(dto.getFile())) {
             //获取文件拓展名
             String fileExtension = dto.getFile().getOriginalFilename().substring(dto.getFile().getOriginalFilename().lastIndexOf("."));
-            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)){
+            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)) {
                 throw new BusinessException("文件类型不支持,请使用模板进行导入");
             }
         }
@@ -425,25 +440,32 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         List<Long> dictIds = Lists.newArrayList();
         //处理数据
         pmBillOfMaterialList.forEach(pmBillOfMaterial -> {
+                    PmsBillExcelDTO pmsBillExcelDTO = new PmsBillExcelDTO();
+                    BeanUtils.copyProperties(pmBillOfMaterial, pmsBillExcelDTO);
                     pmMaterialList.forEach(
                             pmMaterial -> {
                                 if (pmMaterial.getBomId().equals(pmBillOfMaterial.getId())) {
-                                    PmsBillExcelDTO pmsBillExcelDTO = new PmsBillExcelDTO();
-                                    BeanUtils.copyProperties(pmBillOfMaterial, pmsBillExcelDTO);
                                     BeanUtils.copyProperties(pmMaterial, pmsBillExcelDTO);
                                     pmsBillExcelDTO.setModuleCode(pmMaterial.getCode());
                                     pmsBillExcelDTO.setModuleQuantity(pmMaterial.getQuantity());
                                     dictIds.add(pmMaterial.getUnitId());
                                     pmsBillExcelDTO.setUnitId(pmMaterial.getUnitId());
-                                    excelDTOList.add(pmsBillExcelDTO);
                                 }
                             }
                     );
+                    excelDTOList.add(pmsBillExcelDTO);
                 }
         );
         //获取字典数据
         R<Map<Long, SysDictVO>> mapR = remoteDictFeign.listById(dictIds);
-        excelDTOList.forEach(pmsBillExcelDTO -> pmsBillExcelDTO.setUnit(mapR.getData().get(pmsBillExcelDTO.getUnitId()).getName()));
+
+        excelDTOList.forEach(pmsBillExcelDTO -> {
+            if (Objects.nonNull(mapR.getData().get(pmsBillExcelDTO.getUnitId()))) {
+                pmsBillExcelDTO.setUnit(mapR.getData().get(pmsBillExcelDTO.getUnitId()).getName());
+            }else {
+                pmsBillExcelDTO.setUnit(null);
+            }
+        });
         return excelDTOList;
     }
 

@@ -85,4 +85,12 @@ public class PmBillOfMaterialController {
         return R.success(pmBillOfMaterialService.existVersion(id,version));
     }
 
+    /**
+     * 下载物料清单模板
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) throws IOException {
+        pmBillOfMaterialService.download(response);
+    }
 }
