@@ -52,7 +52,7 @@ public class PmsBillExcelDTO implements Serializable {
 
     @NotNull(groups = InsertGroup.class,message = "备注不能为空")
     @ExcelProperty("备注")
-    private String node;
+    private String note;
 
     @NotNull(groups = InsertGroup.class,message = "组件编码不能为空")
     @ExcelProperty("组件编码")

@@ -37,5 +37,5 @@ public class PmProcessExcelDTO implements Serializable {
     private Integer isCustomsInspection;
 
     @ExcelProperty(value = "备注")
-    private String node;
+    private String note;
 }
