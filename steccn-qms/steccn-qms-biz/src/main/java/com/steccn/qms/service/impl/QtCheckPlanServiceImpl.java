@@ -71,8 +71,17 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         Map<String,Object> name = new HashMap<>(1);
         name.put("name",dto.getName());
         Collection<QtCheckPlan> checkNames = listByMap(name);
-        if(!checkNames.isEmpty()){
+        //新增校验
+        if(dto.getId()==null&&!checkNames.isEmpty()){
             throw new BusinessException("与已有的检验方案名称重复");
+        }
+        //修改校验
+        if(dto.getId()!=null&&!checkNames.isEmpty()){
+            checkNames.forEach(tmp->{
+                if(!tmp.getId().equals(dto.getId())){
+                    throw new BusinessException("与已有的检验方案名称重复");
+                }
+            });
         }
         //2、插入计划表
         QtCheckPlan planModel = new QtCheckPlan();

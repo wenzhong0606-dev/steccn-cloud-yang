@@ -105,9 +105,9 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
                 //物料名称或者物料编码
                 .and((dto.getNameOrCode() != null && !dto.getNameOrCode().equals("")),wrapper -> wrapper.like(QtMaterial::getName,dto.getNameOrCode()).or().like(QtMaterial::getCode,dto.getNameOrCode()))
                 //检验类型
-                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkType') like" + "'%"+dto.getCheckType()+"%'"))
+                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkType') like {0}", "%"+dto.getCheckType()+"%"))
                 //检验方案
-                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkPlanName') like" + "'%"+dto.getLinkedPlan()+"%'"));
+                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkPlanName') like {0}" , "%"+dto.getLinkedPlan()+"%"));
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtMaterial::getName);
