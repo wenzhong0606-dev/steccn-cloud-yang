@@ -4,9 +4,10 @@ import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
- * 类说明
+ * 巡检结果第二层dto
  *
  * @author AndrewLuo
  * @date 2022/09/09
@@ -18,24 +19,8 @@ public class QtCheckTaskValueDTO implements Serializable {
     /**
      * 检验分组id
      */
-    @NotNull(message = "分组信息不能为空")
-    private Integer groupId;
+    @NotNull(message = "样本")
+    private Integer copy;
 
-    /**
-     * 检验项id
-     */
-    @NotNull(message = "检验项id信息不能为空")
-    private Integer itemId;
-
-
-    /**
-     * 检验结果的快照json，包含id和name
-     */
-    @NotNull(message = "检验结果不能为空")
-    private String checkResult;
-
-    /**
-     * 缺陷项id
-     */
-    private Integer defectId;
+    private List<QtCheckTaskValueListDTO> list;
 }

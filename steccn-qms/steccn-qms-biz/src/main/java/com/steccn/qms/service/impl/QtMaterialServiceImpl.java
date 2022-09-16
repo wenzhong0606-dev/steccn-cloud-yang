@@ -84,6 +84,7 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
                 QtMaterialLinkCheckPlan qtMaterialLinkCheckPlan = new QtMaterialLinkCheckPlan();
                 qtMaterialLinkCheckPlan.setMaterialId(Long.parseLong(dto.getMaterialId()));
                 qtMaterialLinkCheckPlan.setCheckPlanId(typeTmp.getCheckPlanId());
+                qtMaterialLinkCheckPlan.setCheckTypeCode(typeTmp.getCheckTypeCode());
                 qtMaterialLinkCheckPlanList.add(qtMaterialLinkCheckPlan);
             });
         }

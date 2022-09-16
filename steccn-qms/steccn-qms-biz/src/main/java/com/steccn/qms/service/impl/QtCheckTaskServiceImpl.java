@@ -138,22 +138,35 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         //插入值
         if(dto.getValues()!=null && dto.getValues().size() > 0){
-            dto.getValues().forEach(tmp->{
-                Map<String, Object> condition = new HashMap<>();
-                QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-                qtCheckTaskDetail.setCheckResult(tmp.getCheckResult());
-                if(tmp.getDefectId()!=null){
-                    qtCheckTaskDetail.setDefectId(tmp.getDefectId());
+            dto.getValues().forEach(valueTmp->{
+                //value下的list
+                if(valueTmp.getList()!=null && valueTmp.getList().size() > 0){
+                    valueTmp.getList().forEach(listTmp -> {
+                        //list下checkGroup
+                        if(listTmp.getCheckGroup()!=null && listTmp.getCheckGroup().size() > 0){
+                            listTmp.getCheckGroup().forEach(checkGroupTmp->{
+                                Map<String, Object> condition = new HashMap<>();
+                                QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+                                qtCheckTaskDetail.setCopy(valueTmp.getCopy());
+                                condition.put("copy",valueTmp.getCopy());
+                                qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
+                                if(checkGroupTmp.getDefectId()!=null){
+                                    qtCheckTaskDetail.setDefectId(checkGroupTmp.getDefectId());
+                                }
+                                qtCheckTaskDetail.setTaskId(dto.getId());
+                                condition.put("task_id",dto.getId());
+                                qtCheckTaskDetail.setItemId(checkGroupTmp.getItemId());
+                                condition.put("item_id",checkGroupTmp.getItemId());
+                                qtCheckTaskDetail.setGroupId(listTmp.getGroupId());
+                                condition.put("group_id",listTmp.getGroupId());
+                                //需要先删除之前保存的值
+                                qtCheckTaskDetailService.removeByMap(condition);
+                                valueModels.add(qtCheckTaskDetail);
+                            });
+                        }
+                    });
                 }
-                qtCheckTaskDetail.setTaskId(dto.getId());
-                condition.put("task_id",dto.getId());
-                qtCheckTaskDetail.setItemId(tmp.getItemId());
-                condition.put("item_id",tmp.getItemId());
-                qtCheckTaskDetail.setGroupId(tmp.getGroupId());
-                condition.put("group_id",tmp.getGroupId());
-                //需要先删除之前保存的值
-                qtCheckTaskDetailService.removeByMap(condition);
-                valueModels.add(qtCheckTaskDetail);
+
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
         }

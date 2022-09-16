@@ -90,4 +90,9 @@ public class QtCheckTaskDetail implements Serializable {
      * 检验项id
      */
     private Integer itemId;
+
+    /**
+     * 样本
+     */
+    private Integer copy;
 }
