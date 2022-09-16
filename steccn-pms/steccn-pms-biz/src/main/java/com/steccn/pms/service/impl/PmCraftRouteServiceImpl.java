@@ -63,7 +63,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         model.setCode(PmsCodeUtil.getNextCode(PmsCodeUtil.PREFIX_R, PmsCodeUtil.NUM_BIT_8, currentMaxCode()));
         //保存数据
         save(model);
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty(dto.getList())) {
             //保存物料组件信息
             try {
                 dto.setId(model.getId());
@@ -72,7 +72,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 throw new BusinessException("保存物料组件信息失败");
             }
         }
-        if (!Objects.isNull(dto.getProcessDTOList())) {
+        if (CollUtil.isNotEmpty(dto.getProcessDTOList())) {
             //保存工序信息
             try {
                 pmCraftRouteProcessService.saveProcess(dto);

@@ -16,10 +16,13 @@ import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.domain.PmBillOfMaterial;
+import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmProcessStation;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmProcessExcelDTO;
+import com.steccn.pms.dto.PmsBillExcelDTO;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.mapper.PmProcessMapper;
 import com.steccn.pms.dto.PmProcessDTO;
@@ -33,7 +36,9 @@ import org.springframework.stereotype.Service;
 import cn.hutool.core.bean.BeanUtil;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -61,9 +66,9 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         save(model);
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty(dto.getList())) {
             dto.setId(Math.toIntExact(model.getId()));
-            return R.success(processStationService.saveStations(dto));
+            processStationService.saveStations(dto);
         }
         return R.success(true);
     }
@@ -136,7 +141,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         model.setFileId(dto.getFileId());
         model.setNote(dto.getNote());
         processStationService.deleteByProcessId(dto.getId());
-        if (!Objects.isNull(dto.getList())) {
+        if (CollUtil.isNotEmpty(dto.getList())) {
             Boolean a = processStationService.saveStations(dto);
             if (a == false) {
                 throw new BusinessException("执行工位数据保存失败");
@@ -162,16 +167,17 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
 
     /**
      * 获取所有数据
+     *
      * @return
      */
     @Override
     public List<PmProcessVO> listData() {
         List<PmProcessVO> pmProcessVOList = Lists.newArrayList();
         List<PmProcess> list = list();
-        if (CollUtil.isEmpty(list)){
+        if (CollUtil.isEmpty(list)) {
             return pmProcessVOList;
         }
-        pmProcessVOList= BeanUtil.copyToList(list, PmProcessVO.class);
+        pmProcessVOList = BeanUtil.copyToList(list, PmProcessVO.class);
         return pmProcessVOList;
     }
 
@@ -188,19 +194,71 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         //定义数据集合
         List<PmProcess> processList = Lists.newArrayList();
         //读取文件信息
-        EasyExcel.read(dto.getFile().getInputStream(), PmProcessExcelDTO.class,new PageReadListener<PmProcessExcelDTO>(pmProcessExcelDTOS -> {
-                    pmProcessExcelDTOS.forEach( pmProcessExcelDTO -> {
-                        PmProcess pmProcess = new PmProcess();
-                        BeanUtils.copyProperties(pmProcessExcelDTO,pmProcess);
-                        processList.add(pmProcess);
-                    });
-                }
+        EasyExcel.read(dto.getFile().getInputStream(), PmProcessExcelDTO.class, new PageReadListener<PmProcessExcelDTO>(pmProcessExcelDTOS -> {
+            pmProcessExcelDTOS.forEach(pmProcessExcelDTO -> {
+                PmProcess pmProcess = new PmProcess();
+                BeanUtils.copyProperties(pmProcessExcelDTO, pmProcess);
+                processList.add(pmProcess);
+            });
+        }
         )).sheet().doRead();
         //保存数据
-        if (CollUtil.isNotEmpty(processList)){
+        if (CollUtil.isNotEmpty(processList)) {
             saveBatch(processList);
         }
         return true;
+    }
+
+
+    /**
+     * 下载模板
+     *
+     * @param response
+     */
+    @Override
+    public void download(HttpServletResponse response) throws IOException {
+        downloadExcel(response, new ArrayList<>());
+    }
+
+
+    /**
+     * 下载物料清单excel
+     *
+     * @param response
+     * @param list
+     * @throws IOException
+     */
+    private void downloadExcel(HttpServletResponse response, List<PmProcessExcelDTO> list) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("工序信息", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), PmProcessExcelDTO.class).sheet("模板").doWrite(list);
+    }
+
+    /**
+     * 导出数据
+     *
+     * @param response
+     */
+    @Override
+    public void excelExportData(HttpServletResponse response) throws IOException {
+        downloadExcel(response, getExcelData());
+    }
+
+
+    /**
+     * 获取要导出的数据
+     * @return
+     */
+    private List<PmProcessExcelDTO> getExcelData() {
+        List<PmProcess> list = list();
+        List<PmProcessExcelDTO> pmProcessExcelDTOS = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            pmProcessExcelDTOS = BeanUtil.copyToList(list, PmProcessExcelDTO.class);
+        }
+        return pmProcessExcelDTOS;
     }
 
 

@@ -8,6 +8,7 @@ import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.vo.PmProcessVO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -33,4 +34,8 @@ public interface PmProcessService extends IService<PmProcess> {
     List<PmProcessVO> listData();
 
     Boolean excelImportData(PmExcelDTO dto) throws IOException;
+
+    void download(HttpServletResponse response) throws IOException;
+
+    void excelExportData(HttpServletResponse response) throws IOException;
 }

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
@@ -66,6 +67,21 @@ public class PmProcessController {
     @PostMapping("/excelImportData")
     public R<Boolean> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
         return R.success(processService.excelImportData(dto));
+    }
+
+    /**
+     * 下载物料清单模板
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) throws IOException {
+        processService.download(response);
+    }
+
+    @ApiModelProperty("Excel导出")
+    @GetMapping("/excelExportData")
+    public void excelExportData(HttpServletResponse response) throws IOException {
+        processService.excelExportData(response);
     }
 
 }

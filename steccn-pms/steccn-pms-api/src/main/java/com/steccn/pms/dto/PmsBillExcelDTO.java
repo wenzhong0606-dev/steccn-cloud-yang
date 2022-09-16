@@ -27,7 +27,7 @@ public class PmsBillExcelDTO implements Serializable {
     private String materialCode;
 
     @NotNull(groups = InsertGroup.class,message = "状态不能为空")
-    @ExcelProperty("状态")
+    @ExcelProperty("状态(0:无效 1:有效)")
     private Integer status;
 
     @NotNull(groups = InsertGroup.class,message = "标准数量不能为空")
@@ -39,7 +39,7 @@ public class PmsBillExcelDTO implements Serializable {
     private String version;
 
     @NotNull(groups = InsertGroup.class,message = "是否当前版本不能为空")
-    @ExcelProperty("是否当前版本")
+    @ExcelProperty("是否当前版本(0:否 1:是)")
     private Integer isCurrentVersion;
 
     @NotNull(groups = InsertGroup.class,message = "有效期开始时间不能为空")
@@ -63,7 +63,7 @@ public class PmsBillExcelDTO implements Serializable {
     private Integer moduleQuantity;
 
     @NotNull(groups = InsertGroup.class,message = "单位不能为空")
-    @ExcelProperty("单位")
+    @ExcelProperty("单位(编码)")
     private String unit;
 
     /**
@@ -73,19 +73,19 @@ public class PmsBillExcelDTO implements Serializable {
     private Long unitId;
 
     @NotNull(groups = InsertGroup.class,message = "是否固定数量不能为空")
-    @ExcelProperty("是否固定数量")
+    @ExcelProperty("是否固定数量(0:否 1:是)")
     private Integer isFixedQuantity;
 
     @NotNull(groups = InsertGroup.class,message = "是否副产品不能为空")
-    @ExcelProperty("是否副产品")
+    @ExcelProperty("是否副产品(0:否 1:是)")
     private Integer isCopruduct;
 
     @NotNull(groups = InsertGroup.class,message = "是否联产品不能为空")
-    @ExcelProperty("是否联产品")
+    @ExcelProperty("是否联产品(0:否 1:是)")
     private Integer isJointProduct;
 
     @NotNull(groups = InsertGroup.class,message = "是否反冲不能为空")
-    @ExcelProperty("是否反冲")
+    @ExcelProperty("是否反冲(0:否 1:是)")
     private Integer isBackCalculation;
 
     @NotNull(groups = InsertGroup.class,message = "工序报废%不能为空")
