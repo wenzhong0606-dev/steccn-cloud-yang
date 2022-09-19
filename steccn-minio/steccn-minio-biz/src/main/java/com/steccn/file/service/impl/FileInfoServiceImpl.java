@@ -13,6 +13,7 @@ import com.steccn.file.domain.FileInfo;
 import com.steccn.file.mapper.FileInfoMapper;
 import com.steccn.file.service.FileInfoService;
 import com.steccn.file.util.MinioFileUtils;
+import com.steccn.minio.dto.FileInfoDto;
 import com.steccn.minio.vo.FileInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
@@ -46,34 +47,36 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
 
 
     @Override
-    public R<FileInfo> uploadFile(MultipartFile multipartFile) {
+    public R<FileInfo> uploadFile(FileInfoDto fileInfoDto) {
         //1.定义返回数据信息
         R<FileInfo> r = new R<FileInfo>();
         //2.获取文件拓展名,文件名称
-        String fileExtension = multipartFile.getOriginalFilename().substring(multipartFile.getOriginalFilename().lastIndexOf("."));
-        String fileName = "file/" + md5(multipartFile.getOriginalFilename() + System.currentTimeMillis()) + fileExtension;
+        MultipartFile file = fileInfoDto.getFile();
+        String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        String fileName = "file/" + md5(file.getOriginalFilename() + System.currentTimeMillis()) + fileExtension;
         String url;
         //3.上传文件并保存文件信息
         try {
-            url = minioFileUtils.uploadFile(fileName, multipartFile);
-            FileInfo file = new FileInfo();
-            BeanUtils.copyProperties(multipartFile, file);
-            file.setFileName(multipartFile.getOriginalFilename());
-            file.setFileUrl(url);
-            file.setBucketName(bucketName);
-            file.setFileExtension(fileExtension);
-            file.setFileSize((double) multipartFile.getSize());
+            url = minioFileUtils.uploadFile(fileName, file);
+            FileInfo fileInfo= new FileInfo();
+            BeanUtils.copyProperties(file, fileInfo);
+            fileInfo.setFileName(file.getOriginalFilename());
+            fileInfo.setFileUrl(url);
+            fileInfo.setBucketName(bucketName);
+            fileInfo.setFileExtension(fileExtension);
+            fileInfo.setFileAlias(fileInfoDto.getFileName());
+            fileInfo.setFileSize((double) file.getSize());
             //3.1获取当前登录用户信息并保存
             SteccnUser user = SecurityUtils.getUser();
-            file.setCreateName(user.getName());
-            file.setCreateBy(user.getUserId());
-            file.setCreateTime(LocalDateTimeUtil.now());
-            int insert = fileInfoMapper.insert(file);
+            fileInfo.setCreateName(user.getName());
+            fileInfo.setCreateBy(user.getUserId());
+            fileInfo.setCreateTime(LocalDateTimeUtil.now());
+            int insert = fileInfoMapper.insert(fileInfo);
             //3.1 判断是否保存成功
             if (insert >= 1) {
                 r.setCode(1);
                 r.setMsg("保存文件成功！");
-                r.setData(file);
+                r.setData(fileInfo);
             } else {
                 r.setCode(0);
                 r.setMsg("保存文件失败！");
