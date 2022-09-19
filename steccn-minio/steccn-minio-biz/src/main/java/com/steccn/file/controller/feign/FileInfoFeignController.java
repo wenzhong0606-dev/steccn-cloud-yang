@@ -27,13 +27,6 @@ public class FileInfoFeignController {
 
     private final FileInfoService fileInfoService;
 
-
-    @RequestMapping(value = "/upload",method = RequestMethod.POST)
-    @ResponseBody
-    public R<FileInfo> uploadFile(@RequestParam("file") MultipartFile multipartFile){
-      return  fileInfoService.uploadFile(multipartFile);
-    }
-
     @RequestMapping("/ids")
     @ApiOperation("根据主键id查询文件信息")
     public R<Map<Long, FileInfoVO>> listById(@RequestBody List<Long> idList) {

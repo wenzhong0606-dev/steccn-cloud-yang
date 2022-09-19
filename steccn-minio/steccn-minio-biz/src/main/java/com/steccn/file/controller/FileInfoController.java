@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.file.domain.FileInfo;
 import com.steccn.file.service.FileInfoService;
+import com.steccn.minio.dto.FileInfoDto;
 import com.steccn.minio.vo.FileInfoVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,10 @@ public class FileInfoController {
     private final FileInfoService fileInfoService;
 
 
-    @RequestMapping(value = "/upload",method = RequestMethod.POST)
+    @PostMapping("/upload")
     @ResponseBody
-    public R<FileInfo> uploadFile(@RequestParam("file") MultipartFile multipartFile){
-      return  fileInfoService.uploadFile(multipartFile);
+    public R<FileInfo> uploadFile(FileInfoDto fileInfoDto){
+      return  fileInfoService.uploadFile(fileInfoDto);
     }
 
     @RequestMapping("/ids")
