@@ -94,11 +94,11 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //3、获取最大编码
         planModel.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYFA, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         if (Objects.isNull(dto.getId())) {
-            planModel.setCreateBy(SecurityUtils.getUser().getUserId());
-            planModel.setCreateName(SecurityUtils.getUser().getName());
+//            planModel.setCreateBy(SecurityUtils.getUser().getUserId());
+//            planModel.setCreateName(SecurityUtils.getUser().getName());
         }
-        planModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-        planModel.setUpdateName(SecurityUtils.getUser().getName());
+//        planModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+//        planModel.setUpdateName(SecurityUtils.getUser().getName());
         //修改和新增为一个方法,若有id则是修改，若无则是新增
         if(dto.getId()==null){
             save(planModel);
@@ -117,11 +117,11 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 groupModel.setName(dto.getCheckGroup().get(i).getGroupName());
                 groupModel.setSort(dto.getCheckGroup().get(i).getSort());
                 if (Objects.isNull(dto.getCheckGroup().get(i).getId())) {
-                    groupModel.setCreateBy(SecurityUtils.getUser().getUserId());
-                    groupModel.setCreateName(SecurityUtils.getUser().getName());
+//                    groupModel.setCreateBy(SecurityUtils.getUser().getUserId());
+//                    groupModel.setCreateName(SecurityUtils.getUser().getName());
                 }
-                groupModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-                groupModel.setUpdateName(SecurityUtils.getUser().getName());
+//                groupModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+//                groupModel.setUpdateName(SecurityUtils.getUser().getName());
                 qtCheckPlanGroupService.save(groupModel);
                 //5、处理检验项
                 if(dto.getCheckGroup().get(i).getItems()!=null && dto.getCheckGroup().get(i).getItems().size() > 0){
@@ -183,10 +183,10 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         if(dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode()!=null && dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode().size() > 0){
                             itemModel.setLinkedCustomer(dto.getCheckGroup().get(i).getItems().get(j).getLinkedCustomerCode());
                         }
-                        itemModel.setCreateBy(SecurityUtils.getUser().getUserId());
-                        itemModel.setCreateName(SecurityUtils.getUser().getName());
-                        itemModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-                        itemModel.setUpdateName(SecurityUtils.getUser().getName());
+//                        itemModel.setCreateBy(SecurityUtils.getUser().getUserId());
+//                        itemModel.setCreateName(SecurityUtils.getUser().getName());
+//                        itemModel.setUpdateBy(SecurityUtils.getUser().getUserId());
+//                        itemModel.setUpdateName(SecurityUtils.getUser().getName());
                         itemsModel.add(itemModel);
                     }
                     qtCheckPlanGroupItemService.saveBatch(itemsModel);
