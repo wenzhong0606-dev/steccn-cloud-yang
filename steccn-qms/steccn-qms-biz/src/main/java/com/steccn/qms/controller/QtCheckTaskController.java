@@ -77,7 +77,7 @@ public class QtCheckTaskController {
 
     @GetMapping("retask/{id}")
     @ApiOperation(value = "创建复检任务")
-    public R<Long> finished(@PathVariable Long id){
+    public R<Long> retask(@PathVariable Long id){
         return R.success(qtCheckTaskService.retask(id));
     }
 

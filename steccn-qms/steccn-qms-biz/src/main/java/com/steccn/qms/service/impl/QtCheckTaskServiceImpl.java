@@ -124,6 +124,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 copy.add(qtCheckTaskDetailCopyVO);
             });
         }
+        //details没有值说明没有输入详细值
+        else {
+            QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(),id,null);
+            QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
+            qtCheckTaskDetailCopyVO.setNum(1);
+            qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
+            copy.add(qtCheckTaskDetailCopyVO);
+        }
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
         qtCheckPlanDetailsVO.setCopy(copy);
         qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
