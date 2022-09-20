@@ -19,7 +19,7 @@ public interface QtMaterialLinkCheckPlanMapper extends BaseMapper<QtMaterialLink
      * @param typeCode 来料检1/首检2/在线检3/巡检4/出货检5
      * @return
      */
-    @Select("SELECT COUNT(*) FROM qt_material_link_check_plan a LEFT JOIN qt_check_task b on a.check_plan_id = b.check_plan_id WHERE a.check_type_code = #{typeCode} AND a.del_flag = 0 AND b.del_flag = 0 AND b.status = 0")
+    @Select("SELECT COUNT(DISTINCT(b.id)) FROM qt_material_link_check_plan a LEFT JOIN qt_check_task b on a.check_plan_id = b.check_plan_id WHERE a.check_type_code = #{typeCode} AND a.del_flag = 0 AND b.del_flag = 0 AND b.status = 0")
     Long  CountTaskByTaskType(@Param("typeCode") Integer typeCode);
 }
 
