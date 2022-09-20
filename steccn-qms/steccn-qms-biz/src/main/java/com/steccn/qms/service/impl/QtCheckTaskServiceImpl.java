@@ -176,9 +176,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean itemValue(QtCheckTaskSubmitDTO dto) {
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
+
         //插入值
         if(dto.getValues()!=null && dto.getValues().size() > 0){
             dto.getValues().forEach(valueTmp->{
+                //先删除可能暂存的值
+                Map<String,Object> valueCondition = new HashMap<>();
+                valueCondition.put("task_id",dto.getId());
+                valueCondition.put("copy",valueTmp.getCopy());
+                qtCheckTaskDetailService.removeByMap(valueCondition);
                 //value下的list
                 if(valueTmp.getList()!=null && valueTmp.getList().size() > 0){
                     valueTmp.getList().forEach(listTmp -> {
