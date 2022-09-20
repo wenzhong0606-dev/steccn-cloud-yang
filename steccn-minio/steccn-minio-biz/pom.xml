@@ -22,8 +22,6 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-minio-api</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
         </dependency>
 
         <!--添加actuator依赖-->
@@ -99,6 +97,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
         </dependency>
     </dependencies>
     <build>

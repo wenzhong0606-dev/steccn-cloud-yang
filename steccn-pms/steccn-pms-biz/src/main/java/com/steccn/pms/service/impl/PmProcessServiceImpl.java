@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.read.listener.PageReadListener;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.vo.R;
 import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
@@ -30,6 +32,7 @@ import com.steccn.pms.service.PmProcessStationService;
 import com.steccn.pms.vo.PmProcessStationVO;
 import com.steccn.pms.vo.PmProcessVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,10 +64,13 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     public R<Boolean> saveProcess(PmProcessDTO dto) {
         PmProcess model = new PmProcess();
         BeanUtil.copyProperties(dto, model);
-        model.setCreateBy(SecurityUtils.getUser().getUserId());
-        model.setCreateName(SecurityUtils.getUser().getName());
-        model.setUpdateBy(SecurityUtils.getUser().getUserId());
-        model.setUpdateName(SecurityUtils.getUser().getName());
+        SteccnUser user = SecurityUtils.getUser();
+        long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
+        String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
+        model.setCreateBy(userId);
+        model.setCreateName(name);
+        model.setUpdateBy(userId);
+        model.setUpdateName(name);
         save(model);
         if (CollUtil.isNotEmpty(dto.getList())) {
             dto.setId(Math.toIntExact(model.getId()));
@@ -134,6 +140,11 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         if (Objects.isNull(model)) {
             throw new BusinessException("编辑的工序不存在");
         }
+        SteccnUser user = SecurityUtils.getUser();
+        long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
+        String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
+        model.setUpdateName(name);
+        model.setUpdateBy(userId);
         model.setName(dto.getName());
         model.setCode(dto.getCode());
         model.setType(dto.getType());

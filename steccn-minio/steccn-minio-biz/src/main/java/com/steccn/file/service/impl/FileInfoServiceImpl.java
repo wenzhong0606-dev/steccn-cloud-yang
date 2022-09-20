@@ -3,6 +3,7 @@ package com.steccn.file.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
@@ -17,6 +18,7 @@ import com.steccn.minio.dto.FileInfoDto;
 import com.steccn.minio.vo.FileInfoVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,13 +68,14 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             fileInfo.setFileExtension(fileExtension);
             fileInfo.setFileAlias(fileInfoDto.getFileName());
             fileInfo.setFileSize((double) file.getSize());
-            //3.1获取当前登录用户信息并保存
-            SteccnUser user = SecurityUtils.getUser();
-            fileInfo.setCreateName(user.getName());
-            fileInfo.setCreateBy(user.getUserId());
-            fileInfo.setCreateTime(LocalDateTimeUtil.now());
             int insert = fileInfoMapper.insert(fileInfo);
             //3.1 判断是否保存成功
+            //保存人员信息
+            SteccnUser user = SecurityUtils.getUser();
+            long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
+            String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
+            fileInfo.setCreateBy(userId);
+            fileInfo.setCreateName(name);
             if (insert >= 1) {
                 r.setCode(1);
                 r.setMsg("保存文件成功！");
@@ -82,7 +85,6 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
                 r.setMsg("保存文件失败！");
             }
         } catch (Exception e) {
-            throw new BusinessException("上传文件异常");
         }
         return r;
     }

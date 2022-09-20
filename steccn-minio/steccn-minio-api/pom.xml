@@ -33,7 +33,10 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
-            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-data</artifactId>
         </dependency>
     </dependencies>
 
