@@ -34,4 +34,29 @@ public class QtCheckTaskListVO {
      * 状态
      */
     private Integer status;
+
+    /**
+     * 检验数量
+     */
+    private Integer checkNum;
+
+    /**
+     * 合格数量
+     */
+    private Integer goodNum;
+
+    /**
+     * 不合格数量
+     */
+    private Integer badNum;
+
+    /**
+     * 结果判定
+     */
+    private String result;
+
+    /**
+     * 备注
+     */
+    private String note;
 }

@@ -100,6 +100,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(qtCheckTask!=null){
             qtCheckTaskListVo.setId(qtCheckTask.getId());
             qtCheckTaskListVo.setStatus(qtCheckTask.getStatus());
+            //可能有结果
+            if(qtCheckTask.getCheckNum()!=null){
+                qtCheckTaskListVo.setCheckNum(qtCheckTask.getCheckNum());
+            }
+            if(qtCheckTask.getGoodNum()!=null){
+                qtCheckTaskListVo.setGoodNum(qtCheckTask.getGoodNum());
+            }
+            if(qtCheckTask.getBadNum()!=null){
+                qtCheckTaskListVo.setBadNum(qtCheckTask.getBadNum());
+            }
+            if(qtCheckTask.getResult()!=null){
+                qtCheckTaskListVo.setResult(qtCheckTask.getResult());
+            }
+            if(qtCheckTask.getNote()!=null){
+                qtCheckTaskListVo.setNote(qtCheckTask.getNote());
+            }
             //返回名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             qtCheckTaskListVo.setWorkshopName(remoteOfficeFeign.getNameById(qtCheckTask.getWorkshopId()).getMsg());
