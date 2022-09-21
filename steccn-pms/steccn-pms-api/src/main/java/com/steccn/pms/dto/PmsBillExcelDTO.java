@@ -34,6 +34,15 @@ public class PmsBillExcelDTO implements Serializable {
     @ExcelProperty("标准数量")
     private Integer quantity;
 
+    @ExcelProperty("标准单位（编码）")
+    private String unitCode;
+
+    /**
+     * 用于查找标准单位数据
+     */
+    @ExcelIgnore
+    private Long standardUnitId;
+
     @NotNull(groups = InsertGroup.class,message = "版本不能为空")
     @ExcelProperty("版本")
     private String version;

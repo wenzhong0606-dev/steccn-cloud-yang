@@ -292,6 +292,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                         PmBillOfMaterialDTO pmBillOfMaterialDTO = new PmBillOfMaterialDTO();
                         BeanUtils.copyProperties(pmsBillExcelDTO, pmBillOfMaterialDTO);
                         pmBillOfMaterialList.add(pmBillOfMaterialDTO);
+                        dictCodes.add(pmBillOfMaterialDTO.getUnitCode());
                         spareCodes.add(pmsBillExcelDTO.getMaterialCode());
                         bomCodes.add(pmBillOfMaterialDTO.getCode());
                         //物料版本是否已存在
@@ -337,6 +338,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                     if (Objects.isNull(eqpSpareVO)) {
                         throw new BusinessException("主物料不存在,请检查编码是否正确:" + pmBillOfMaterialDTO.getMaterialCode());
                     }
+                    pmBillOfMaterialDTO.setUnitId(dictMap.getData().get(pmBillOfMaterialDTO.getUnitCode()).getId());
                     pmBillOfMaterialDTO.setMaterialName(eqpSpareVO.getName());
                     pmBillOfMaterialDTO.setMaterialId(eqpSpareVO.getId());
                 });
@@ -442,6 +444,8 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         pmBillOfMaterialList.forEach(pmBillOfMaterial -> {
                     PmsBillExcelDTO pmsBillExcelDTO = new PmsBillExcelDTO();
                     BeanUtils.copyProperties(pmBillOfMaterial, pmsBillExcelDTO);
+                    pmsBillExcelDTO.setStandardUnitId(pmBillOfMaterial.getUnitId());
+                    dictIds.add(pmBillOfMaterial.getUnitId());
                     pmMaterialList.forEach(
                             pmMaterial -> {
                                 if (pmMaterial.getBomId().equals(pmBillOfMaterial.getId())) {
@@ -458,8 +462,13 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
         );
         //获取字典数据
         R<Map<Long, SysDictVO>> mapR = remoteDictFeign.listById(dictIds);
-
         excelDTOList.forEach(pmsBillExcelDTO -> {
+            //处理字典数据
+            if (Objects.nonNull(mapR.getData().get(pmsBillExcelDTO.getStandardUnitId()))) {
+                pmsBillExcelDTO.setUnitCode(mapR.getData().get(pmsBillExcelDTO.getStandardUnitId()).getName());
+            }else {
+                pmsBillExcelDTO.setUnitCode(null);
+            }
             if (Objects.nonNull(mapR.getData().get(pmsBillExcelDTO.getUnitId()))) {
                 pmsBillExcelDTO.setUnit(mapR.getData().get(pmsBillExcelDTO.getUnitId()).getName());
             }else {

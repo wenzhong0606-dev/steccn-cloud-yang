@@ -57,6 +57,9 @@ public class PmBillOfMaterialDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("标准数量")
     private Integer quantity;
 
+    @ApiModelProperty("单位code")
+    private String unitCode;
+
     @ApiModelProperty("单位id")
     @NotNull(groups ={ UpdateGroup.class, InsertGroup.class}, message = "单位不能为空")
     private Long unitId;
