@@ -155,10 +155,15 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             if ("1".equals(sysDictVO.getCode()) || "2".equals(sysDictVO.getCode())) {
                 if (CollUtil.isNotEmpty(defaultValList)) {
                     for (String s : defaultValList) {
-                        try {
-                            Double.parseDouble(s);
-                        } catch (Exception e) {
-                            throw new BusinessException("数据类型为数值，百分比时，数据输入类型应为数值类型");
+                        //空串则移除
+                        if(s.equals("")){
+                            defaultValList.remove(s);
+                        }else {
+                            try {
+                                Double.parseDouble(s);
+                            } catch (Exception e) {
+                                throw new BusinessException("数据类型为数值，百分比时，数据输入类型应为数值类型");
+                            }
                         }
                     }
                 }
