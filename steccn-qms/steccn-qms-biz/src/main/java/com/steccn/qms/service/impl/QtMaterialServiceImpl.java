@@ -61,8 +61,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
     public Boolean edit(QtMaterialLinkCheckPlanDTO dto) {
         QtMaterial qtMaterial = new QtMaterial();
         qtMaterial.setId(Long.parseLong(dto.getMaterialId()));
-        if(dto.getType() == null || dto.getType().size() == 0){
-            throw new BusinessException("type为空");
+        if(dto.getType() == null){
+            throw new BusinessException("type为null");
         }
         qtMaterial.setType(dto.getType());
         //查看是否有执行中的任务存在该物料
@@ -106,17 +106,23 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
                 //物料名称或者物料编码
                 .and((dto.getNameOrCode() != null && !dto.getNameOrCode().equals("")),wrapper -> wrapper.like(QtMaterial::getName,dto.getNameOrCode()).or().like(QtMaterial::getCode,dto.getNameOrCode()))
                 //检验类型
-                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkType') like {0}", "%"+dto.getCheckType()+"%"))
+                .and((dto.getCheckType() != null && !dto.getCheckType().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkType') LIKE {0}", "%"+dto.getCheckType()+"%"))
                 //检验方案
-                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkPlanName') like {0}" , "%"+dto.getLinkedPlan()+"%"));
+                .and((dto.getLinkedPlan() != null && !dto.getLinkedPlan().equals("")),wrapper -> wrapper.apply("JSON_EXTRACT(type,'$[*].checkPlanName') LIKE {0} OR JSON_EXTRACT(type,'$[*].checkPlanCode') LIKE {0}" , "%"+dto.getLinkedPlan()+"%"));
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtMaterial::getName);
+            if(dto.getAscFlag()){
+                condition.last("ORDER BY CONVERT(name using gbk) ASC");
+            }else {
+                condition.last("ORDER BY CONVERT(name using gbk) DESC");
+            }
+        } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_CODE.equals(dto.getSortField())) {
+            condition.orderBy(true, dto.getAscFlag(), QtMaterial::getCode);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtMaterial::getUpdateTime);
         } else {
-            //默认按创建时间降序排列
-            condition.orderBy(true, false, QtMaterial::getCreateTime);
+            //默认按绑定和最后修改时间排序
+            condition.orderBy(true,false,QtMaterial::getType).orderBy(true, false, QtMaterial::getUpdateTime);
         }
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());

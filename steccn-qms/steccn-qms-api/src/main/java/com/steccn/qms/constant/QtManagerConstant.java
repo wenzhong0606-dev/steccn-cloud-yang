@@ -20,6 +20,8 @@ public interface QtManagerConstant {
 
     String QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME = "update_time";
 
+    String QT_CHECK_ITEM_SORT_FIELD_CODE = "code";
+
 
     /**
      * @desc 检验项 | 缺陷项类别枚举

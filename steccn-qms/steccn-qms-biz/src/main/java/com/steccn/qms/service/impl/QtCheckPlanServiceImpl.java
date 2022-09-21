@@ -205,7 +205,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckPlan::getName);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckPlan::getStatus);
+            condition.orderBy(true, !dto.getAscFlag(), QtCheckPlan::getStatus);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckPlan::getUpdateTime);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
