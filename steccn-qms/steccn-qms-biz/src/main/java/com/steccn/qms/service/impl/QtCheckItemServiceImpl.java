@@ -18,6 +18,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
+import com.steccn.qms.domain.QtCheckPlanGroupItem;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -65,9 +66,13 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
                 .like(StrUtil.isNotBlank(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckItem::getName);
+            if(dto.getAscFlag()){
+                condition.last("ORDER BY CONVERT(name using gbk) ASC");
+            }else {
+                condition.last("ORDER BY CONVERT(name using gbk) DESC");
+            }
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckItem::getStatus);
+            condition.orderBy(true, !dto.getAscFlag(), QtCheckItem::getStatus);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckItem::getUpdateTime);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
@@ -144,7 +149,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 //      3）数据类型为“单选”、“多选”：提示“请选择默认选项”，下拉单选/多选可能值
 //      4）数据类型为“人工判断良或次”：提示“请选择默认选项”，下拉单选“良”或“次”
         List<String> codeList = Arrays.asList("1", "2", "3", "4", "5", "6");
-        List<String> qualityList = Arrays.asList("良", "次");
+        List<String> qualityList = Arrays.asList("良", "次","");
         if (codeList.contains(sysDictVO.getCode())) {
             //需要校验defaultValue
             if ("1".equals(sysDictVO.getCode()) || "2".equals(sysDictVO.getCode())) {
@@ -214,6 +219,23 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
+        //如果检验方案中的极差数组中绑定了该检验项，则无法编辑
+        LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionRangeArray = new LambdaQueryWrapper<>();
+        itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))",dto.getId());
+        if(qtCheckPlanGroupItemService.count(itemConditionRangeArray)!=0){
+            if(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())){
+                throw new BusinessException("该检验项在极差数组中,无法修改数据类型，计量单位");
+            }
+        }
+        //如果检验方案中的平均数组中绑定了该检验项，则无法编辑
+        LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionAverageArray = new LambdaQueryWrapper<>();
+        itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))",dto.getId());
+        if(qtCheckPlanGroupItemService.count(itemConditionAverageArray)!=0){
+            if(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())){
+                throw new BusinessException("该检验项在平均数组中,无法修改数据类型，计量单位");
+            }
+        }
+
         //根据数据字典id去查询数据字典信息
         checkExistDict(SysDictConstant.TYPE_MEASURE_UNIT, dto.getMeasureUnit(), "计量单位不存在");
         validDataTypeAndDefaultVal(SysDictConstant.TYPE_CHECK_DATA_TYPE, dto.getDataType(), "数据类型不存在", dto.getDefaultValue());
