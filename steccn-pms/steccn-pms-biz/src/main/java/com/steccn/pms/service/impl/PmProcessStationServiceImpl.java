@@ -30,7 +30,7 @@ public class PmProcessStationServiceImpl extends ServiceImpl<PmProcessStationMap
     private final PmProcessStationMapper processStationMapper;
 
     @Override
-    public int deleteByProcessId(Integer id) {
+    public int deleteByProcessId(Long id) {
         return processStationMapper.deleteByProcessId(id);
     }
 

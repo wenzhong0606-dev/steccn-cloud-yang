@@ -28,7 +28,7 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("主键，新增时为空，编辑时存在")
     @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
-    private Integer id;
+    private Long id;
 
     @ApiModelProperty("工序名称")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序名称不能为空")

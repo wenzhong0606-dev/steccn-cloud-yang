@@ -32,7 +32,7 @@ public class PmProcessStation implements Serializable {
     /**
      * 工序id
      */
-    private Integer processId;
+    private Long processId;
 
     /**
      * 创建人id

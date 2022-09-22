@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Mapper;
 public interface PmProcessStationMapper extends BaseMapper<PmProcessStation> {
 
     @Delete("delete from pm_process_station where process_id = #{id}")
-    int deleteByProcessId(Integer id);
+    int deleteByProcessId(Long id);
 }
 
 

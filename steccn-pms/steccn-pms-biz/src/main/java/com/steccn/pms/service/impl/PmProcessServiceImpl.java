@@ -73,7 +73,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         model.setUpdateName(name);
         save(model);
         if (CollUtil.isNotEmpty(dto.getList())) {
-            dto.setId(Math.toIntExact(model.getId()));
+            dto.setId(model.getId());
             processStationService.saveStations(dto);
         }
         return R.success(true);
@@ -143,14 +143,10 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         SteccnUser user = SecurityUtils.getUser();
         long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
         String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
-        model.setUpdateName(name);
-        model.setUpdateBy(userId);
-        model.setName(dto.getName());
-        model.setCode(dto.getCode());
-        model.setType(dto.getType());
-        model.setStatus(dto.getStatus());
-        model.setFileId(dto.getFileId());
-        model.setNote(dto.getNote());
+        PmProcess pmProcess = new PmProcess();
+        BeanUtils.copyProperties(dto,pmProcess);
+        pmProcess.setUpdateName(name);
+        pmProcess.setUpdateBy(userId);
         processStationService.deleteByProcessId(dto.getId());
         if (CollUtil.isNotEmpty(dto.getList())) {
             Boolean a = processStationService.saveStations(dto);
@@ -159,7 +155,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
             }
         }
         //保存数据
-        return R.success(updateById(model));
+        return R.success(updateById(pmProcess));
     }
 
     @Override

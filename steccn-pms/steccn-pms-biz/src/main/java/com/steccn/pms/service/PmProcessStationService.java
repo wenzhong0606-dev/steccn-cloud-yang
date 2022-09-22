@@ -14,7 +14,7 @@ import java.util.List;
 */
 public interface PmProcessStationService extends IService<PmProcessStation> {
 
-    int deleteByProcessId(Integer id);
+    int deleteByProcessId(Long id);
 
     Boolean saveStations(PmProcessDTO dto);
 }
