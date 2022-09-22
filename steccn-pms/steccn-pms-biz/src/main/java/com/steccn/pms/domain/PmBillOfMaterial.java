@@ -68,11 +68,13 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 有效开始时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime validBeginTime;
 
     /**
      * 有效结止时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime validEndTime;
 
     /**

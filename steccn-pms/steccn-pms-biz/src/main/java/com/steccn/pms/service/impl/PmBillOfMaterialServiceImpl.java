@@ -129,7 +129,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
     }
 
     @Override
-    public void download(HttpServletResponse response) throws IOException{
+    public void download(HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         //防止中文乱码
@@ -268,7 +268,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
      * @throws IOException
      */
     @Override
-//    @Transactional(readOnly = false)
+    @Transactional(readOnly = false)
     public Boolean excelImportData(PmExcelDTO dto) throws IOException {
         //文件类型校验
         if (Objects.nonNull(dto.getFile())) {
@@ -307,11 +307,20 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                                 throw new BusinessException(pmBillOfMaterialDTO.getMaterialCode() + "的当前版本有存在版本,请检查修改");
                             }
                         }
+
                         //获取从数据
                         PmMaterialDTO pmMaterialDTO = new PmMaterialDTO();
                         BeanUtils.copyProperties(pmsBillExcelDTO, pmMaterialDTO);
+                        pmMaterialDTO.setQuantity(pmsBillExcelDTO.getModuleQuantity());
+                        if (pmMaterialDTO.getComponentScrapingPercent() < 0 && pmMaterialDTO.getComponentScrapingPercent() > 100) {
+                            throw new BusinessException(pmBillOfMaterialDTO.getMaterialCode() + "的组件报废百分比的数据不正确，请检查修改");
+                        }
+                        if (pmMaterialDTO.getProcessScrapingPercent() < 0 && pmMaterialDTO.getProcessScrapingPercent() > 100) {
+                            throw new BusinessException(pmBillOfMaterialDTO.getMaterialCode() + "的工序报废百分比的数据不正确，请检查修改");
+                        }
                         pmMaterialDTO.setBomCode(pmBillOfMaterialDTO.getCode());
                         pmMaterialDTO.setCode(pmsBillExcelDTO.getModuleCode());
+                        //检查工序组件报废的数据是否正常
                         spareCodes.add(pmsBillExcelDTO.getModuleCode());
                         pmMaterialList.add(pmMaterialDTO);
                         dictCodes.add(pmsBillExcelDTO.getUnit());
@@ -457,6 +466,7 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                                 }
                             }
                     );
+                    pmsBillExcelDTO.setCode(pmBillOfMaterial.getCode());
                     excelDTOList.add(pmsBillExcelDTO);
                 }
         );
@@ -466,12 +476,12 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
             //处理字典数据
             if (Objects.nonNull(mapR.getData().get(pmsBillExcelDTO.getStandardUnitId()))) {
                 pmsBillExcelDTO.setUnitCode(mapR.getData().get(pmsBillExcelDTO.getStandardUnitId()).getName());
-            }else {
+            } else {
                 pmsBillExcelDTO.setUnitCode(null);
             }
             if (Objects.nonNull(mapR.getData().get(pmsBillExcelDTO.getUnitId()))) {
                 pmsBillExcelDTO.setUnit(mapR.getData().get(pmsBillExcelDTO.getUnitId()).getName());
-            }else {
+            } else {
                 pmsBillExcelDTO.setUnit(null);
             }
         });
