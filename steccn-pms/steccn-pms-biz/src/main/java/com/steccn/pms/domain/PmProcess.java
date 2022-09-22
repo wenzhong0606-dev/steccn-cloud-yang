@@ -55,6 +55,7 @@ public class PmProcess implements Serializable {
     /**
      * 工艺指导书（文件id）
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long fileId;
 
     /**
