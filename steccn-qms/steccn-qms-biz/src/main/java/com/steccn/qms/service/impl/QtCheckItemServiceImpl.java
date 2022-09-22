@@ -113,6 +113,15 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (existName(dto.getCategoryId(), dto.getName(), null)) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
+        //若有可能值，则不能重复
+        if(dto.getPossibleValue()!=null && !dto.getPossibleValue().isEmpty()){
+            Set<String> repeat = new HashSet<>();
+            dto.getPossibleValue().forEach(tmp->{
+                if(!repeat.add(tmp)){
+                    throw new BusinessException("可能值不能重复");
+                }
+            });
+        }
         //3.根据数据字典id去查询数据字典信息
         checkExistDict(SysDictConstant.TYPE_MEASURE_UNIT, dto.getMeasureUnit(), "计量单位不存在");
         validDataTypeAndDefaultVal(SysDictConstant.TYPE_CHECK_DATA_TYPE, dto.getDataType(), "数据类型不存在", dto.getDefaultValue());
@@ -224,6 +233,15 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
+        if(dto.getPossibleValue()!=null && !dto.getPossibleValue().isEmpty()){
+            Set<String> repeat = new HashSet<>();
+            dto.getPossibleValue().forEach(tmp->{
+                if(!repeat.add(tmp)){
+                    throw new BusinessException("可能值不能重复");
+                }
+            });
+        }
+
         //如果检验方案中的极差数组中绑定了该检验项，则无法编辑
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionRangeArray = new LambdaQueryWrapper<>();
         itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))",dto.getId());
