@@ -172,6 +172,9 @@ public class PmBillOfMaterialServiceImpl extends ServiceImpl<PmBillOfMaterialMap
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmBillOfMaterial::getIsCurrentVersion, dto.getIsCurrentVersion())
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmBillOfMaterial::getCode, dto.getCode())
                 .eq(Objects.nonNull(dto.getVersion()) && !dto.getVersion().equals(""), PmBillOfMaterial::getVersion, dto.getVersion());
+        //配置排序规则
+        eq.orderBy(true,false,PmBillOfMaterial::getMaterialCode);
+        eq.orderBy(true,false,PmBillOfMaterial::getIsCurrentVersion);
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
