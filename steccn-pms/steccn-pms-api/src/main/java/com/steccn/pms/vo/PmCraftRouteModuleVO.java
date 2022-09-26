@@ -55,10 +55,10 @@ public class PmCraftRouteModuleVO implements Serializable {
     private Integer isBackCalculation;
 
     @ApiModelProperty("工序报废百分比")
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     @ApiModelProperty("组件报废百分比")
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 
     @ApiModelProperty("工序信息Id")
     private Long processId;

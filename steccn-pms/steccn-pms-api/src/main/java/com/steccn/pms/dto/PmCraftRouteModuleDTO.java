@@ -83,13 +83,13 @@ public class PmCraftRouteModuleDTO implements Serializable {
     @ApiModelProperty("工序报废百分比")
     @Max(value = 100, message = "百分比不能大于100")
     @Min(value = 0, message = "百分比不能小于0")
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件报废不能为空")
     @Max(value = 100, message = "百分比不能大于100")
     @Min(value = 0, message = "百分比不能小于0")
     @ApiModelProperty("组件报废百分比")
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 
     @ApiModelProperty("工序信息Id")
     private Long processId;

@@ -131,11 +131,11 @@ public class PmCraftRouteModule implements Serializable {
     /**
      * 工序报废百分比
      */
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     /**
      * 组件报废百分比
      */
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 
 }

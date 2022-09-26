@@ -86,11 +86,11 @@ public class PmMaterialVO {
      * 工序报废百分比
      */
     @ApiModelProperty("工序报废百分比")
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     /**
      * 组件报废百分比
      */
     @ApiModelProperty("组件报废百分比")
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 }

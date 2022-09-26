@@ -110,14 +110,14 @@ public class PmMaterialDTO {
      */
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序报废百分比不能为空")
     @ApiModelProperty("工序报废百分比")
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     /**
      * 组件报废百分比
      */
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "组件报废百分比不能为空")
     @ApiModelProperty("组件报废百分比")
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 
     /**
      * 用于区分导入时Bom
