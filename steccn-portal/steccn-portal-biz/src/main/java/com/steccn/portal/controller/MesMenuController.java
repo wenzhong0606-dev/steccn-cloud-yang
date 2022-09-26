@@ -35,8 +35,8 @@ public class MesMenuController {
     }
 
     @ApiOperation(value = "获取mes跳过登录的token")
-    @GetMapping("/mesToken/{userName}")
-    public R getMesToken(@PathVariable("userName") String userName) {
+    @GetMapping("/mesToken")
+    public R getMesToken(@RequestParam("userName") String userName) {
         R<Object> r = new R<>();
         String mesToken = mesMenuService.getMesToken(userName);
         if (Objects.isNull(mesToken)){
