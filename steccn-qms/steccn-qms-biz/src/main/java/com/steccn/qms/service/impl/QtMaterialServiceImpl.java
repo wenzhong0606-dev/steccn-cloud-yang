@@ -122,7 +122,7 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
             condition.orderBy(true, dto.getAscFlag(), QtMaterial::getUpdateTime);
         } else {
             //默认按绑定和最后修改时间排序
-            condition.orderBy(true,false,QtMaterial::getType).orderBy(true, false, QtMaterial::getUpdateTime);
+            condition.last("ORDER BY JSON_DEPTH(type) DESC,update_time DESC");
         }
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
