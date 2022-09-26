@@ -69,7 +69,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //1、校验名字不能为空
         Map<String, Object> name = new HashMap<>(1);
         name.put("name", dto.getName());
-        name.put("show", MpConstant.YES);
+        name.put("show_flag", MpConstant.YES);
         Collection<QtCheckPlan> checkNames = listByMap(name);
         //新增校验
         if (dto.getId() == null && !checkNames.isEmpty()) {
