@@ -34,4 +34,10 @@ public interface MpConstant {
      * 是否当前版本 1是 0否
      */
     Integer CURRENT_VERSION_NOT = 0;
+
+    /**
+     * 是否
+     */
+    Integer YES = 1;
+    Integer NO = 0;
 }
