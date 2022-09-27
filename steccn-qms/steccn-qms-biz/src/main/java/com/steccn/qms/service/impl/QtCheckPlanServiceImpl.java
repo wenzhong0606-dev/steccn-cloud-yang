@@ -206,7 +206,11 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 .like(Objects.nonNull(dto.getName()), QtCheckPlan::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckPlan::getName);
+            if(dto.getAscFlag()){
+                condition.last("ORDER BY CONVERT(name using gbk) ASC");
+            }else {
+                condition.last("ORDER BY CONVERT(name using gbk) DESC");
+            }
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
             condition.orderBy(true, !dto.getAscFlag(), QtCheckPlan::getStatus);
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_UPDATE_TIME.equals(dto.getSortField())) {
