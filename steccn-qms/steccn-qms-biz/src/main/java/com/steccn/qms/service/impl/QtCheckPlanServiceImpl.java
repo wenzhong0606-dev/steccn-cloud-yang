@@ -2,10 +2,12 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author AndrewLuo
@@ -448,6 +451,40 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             });
         }
         return newPlan;
+    }
+
+    @Override
+    public Set<Integer> linkedPlan(Integer itemId, Integer type) {
+        Set<Integer> resPlanList = Sets.newHashSet();
+        List<QtCheckPlanGroupItem> itemList;
+        if (0 == type) {
+            itemList = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                    .apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))", itemId)
+                    .or()
+                    .apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))", itemId)
+                    .or()
+                    .eq(QtCheckPlanGroupItem::getCheckItemId, itemId));
+        } else {
+            itemList = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                    .apply("JSON_CONTAINS(linked_defective_item, JSON_ARRAY({0}))", itemId));
+        }
+        if (CollUtil.isNotEmpty(itemList)) {
+            List<Integer> groupIdList = itemList.stream().map(QtCheckPlanGroupItem::getGroupId).collect(Collectors.toList());
+            List<QtCheckPlanGroup> planGroupList = qtCheckPlanGroupService.listByIds(groupIdList);
+            if (CollUtil.isNotEmpty(planGroupList)) {
+                return planGroupList.stream().map(QtCheckPlanGroup::getPlanId).collect(Collectors.toSet());
+            }
+        }
+        return resPlanList;
+    }
+
+    @Override
+    public void upVersion(Set<Integer> planIdList) {
+        if(CollUtil.isNotEmpty(planIdList)){
+            update(null, new LambdaUpdateWrapper<QtCheckPlan>().setSql("version = version + 1")
+                    .eq(QtCheckPlan::getShowFlag, MpConstant.YES)
+                    .in(QtCheckPlan::getId, planIdList));
+        }
     }
 
     /**

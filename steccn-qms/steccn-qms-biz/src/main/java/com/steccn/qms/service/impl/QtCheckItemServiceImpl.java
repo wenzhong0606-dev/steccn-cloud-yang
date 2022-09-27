@@ -26,6 +26,7 @@ import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.mapper.QtCheckItemMapper;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.service.QtCheckPlanGroupItemService;
+import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
@@ -34,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,10 +60,14 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Autowired
     private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
+    @Autowired
+    private QtCheckPlanService qtCheckPlanService;
+
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtCheckItem> condition = new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getShowFlag, MpConstant.YES)
                 .eq(QtCheckItem::getCategoryId, dto.getCategoryId())
                 .like(StrUtil.isNotBlank(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
@@ -136,6 +140,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         model.setStatus(MpConstant.STATUS_START);
         //把name转成拼音，用于排序
         model.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
+        model.setShowFlag(MpConstant.YES);
         boolean save = save(model);
         return save;
     }
@@ -231,6 +236,10 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (Objects.isNull(oldModel)) {
             throw new BusinessException("编辑的检验项不存在");
         }
+        //快照不允许被编辑
+        if (MpConstant.NO.equals(oldModel.getShowFlag())) {
+            throw new BusinessException("检验项快照不允许被编辑");
+        }
         //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下检验项名称不能重复");
@@ -275,6 +284,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
         boolean save = updateById(oldModel);
+        //判断是否关联检验方案，如果关联则需要升检验方案的版本
+        Set<Integer> planIdList = qtCheckPlanService.linkedPlan(oldModel.getId(), 0);
+        qtCheckPlanService.upVersion(planIdList);
         return save;
     }
 
@@ -291,7 +303,11 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             oldItem.setStatus(MpConstant.STATUS_START);
             return updateById(oldItem);
         }
-        //3.停用操作
+        //3.快照不允许被停用
+        if (MpConstant.NO.equals(oldItem.getShowFlag())) {
+            throw new BusinessException("检验项快照不允许被停用");
+        }
+        //4.停用操作
         Set<Integer> inUseCheckItemSet = qtCheckPlanGroupItemService.inUseCheckItem();
         if (inUseCheckItemSet.contains(dto.getId())) {
             throw new BusinessException("已有检验方案调用了该检验项，不允许停用");
@@ -308,7 +324,11 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (Objects.isNull(oldItem)) {
             throw new BusinessException("检验项不存在");
         }
-        //2.判断是否已有检验方案在使用
+        //2.快照不允许被删除
+        if (MpConstant.NO.equals(oldItem.getShowFlag())) {
+            throw new BusinessException("检验项快照不允许被删除");
+        }
+        //3.判断是否已有检验方案在使用
         Set<Integer> inUseCheckItemSet = qtCheckPlanGroupItemService.inUseCheckItem();
         if (inUseCheckItemSet.contains(id)) {
             throw new BusinessException("已有检验方案调用了该检验项，不允许删除");
@@ -319,6 +339,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Override
     public List<QtCheckItemListVO> selectItemList() {
         List<QtCheckItem> dataList = list(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getShowFlag, MpConstant.YES)
                 .eq(QtCheckItem::getStatus, MpConstant.STATUS_START)
                 .orderByDesc(QtCheckItem::getCreateTime));
         if (CollUtil.isEmpty(dataList)) {

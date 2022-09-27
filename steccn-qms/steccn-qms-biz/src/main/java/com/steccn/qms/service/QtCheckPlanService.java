@@ -10,6 +10,7 @@ import com.steccn.qms.vo.QtCheckPlanVO;
 import io.swagger.models.auth.In;
 
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -74,4 +75,18 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @return 新的快照计划信息
      */
     QtCheckPlan planSnapshot(Integer planId);
+
+    /**
+     * 检验项，缺陷项关联的计划id
+     * @param itemId 检验项或者缺陷项id
+     * @param type 0表示检验项 1表示缺陷项
+     * @return 计划的集合，可能为[]
+     */
+    Set<Integer> linkedPlan(Integer itemId , Integer type);
+
+    /**
+     * 给检验方案升级版本
+     * @param planIdList 检验方案id的集合
+     */
+    void upVersion(Set<Integer> planIdList);
 }

@@ -11,10 +11,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
@@ -22,10 +20,12 @@ import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.QtCheckPlanGroupItemService;
+import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.service.QtDefectiveItemService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
-import com.steccn.qms.vo.*;
+import com.steccn.qms.vo.QtDefectiveItemTreeVo;
+import com.steccn.qms.vo.QtDefectiveItemVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
@@ -51,11 +51,14 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     @Autowired
     private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
+    @Autowired
+    private QtCheckPlanService qtCheckPlanService;
 
     @Override
     public Page<QtDefectiveItemVO> pageList(QtDefectiveItemPageDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<QtDefectiveItem> condition = new LambdaQueryWrapper<QtDefectiveItem>()
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
                 .eq(QtDefectiveItem::getCategoryId, dto.getCategoryId())
                 .like(StrUtil.isNotBlank(dto.getName()), QtDefectiveItem::getName, dto.getName());
         //2.解析排序规则
@@ -120,6 +123,10 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (Objects.isNull(oldModel)) {
             throw new BusinessException("编辑的缺陷项不存在");
         }
+        //快照不允许被编辑
+        if (MpConstant.NO.equals(oldModel.getShowFlag())) {
+            throw new BusinessException("检验项快照不允许被编辑");
+        }
         //同一类别下检验项名称不可重复，否则提交时提示“同一类别下检验项名称不能重复”
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下缺陷项名称不能重复");
@@ -129,6 +136,9 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setNote(dto.getNote());
         boolean save = updateById(oldModel);
+        //判断是否关联检验方案，如果关联则需要升检验方案的版本
+        Set<Integer> planIdList = qtCheckPlanService.linkedPlan(oldModel.getId(), 1);
+        qtCheckPlanService.upVersion(planIdList);
         return save;
     }
 
@@ -144,6 +154,10 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (MpConstant.STATUS_START.equals(dto.getStatus())) {
             oldItem.setStatus(MpConstant.STATUS_START);
             return updateById(oldItem);
+        }
+        //2.快照不允许被删除
+        if(MpConstant.NO.equals(oldItem.getShowFlag())){
+            throw new BusinessException("缺陷项快照不允许被停用");
         }
         //3.停用操作
         Set<Integer> inUseDefectiveItemSet = qtCheckPlanGroupItemService.inUseDefectiveItem();
@@ -162,7 +176,11 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (Objects.isNull(oldItem)) {
             throw new BusinessException("缺陷项不存在");
         }
-        //2.判断是否已有检验方案在使用
+        //2.快照不允许被删除
+        if(MpConstant.NO.equals(oldItem.getShowFlag())){
+            throw new BusinessException("缺陷项快照不允许被删除");
+        }
+        //3.判断是否已有检验方案在使用
         Set<Integer> inUseDefectiveItemSet = qtCheckPlanGroupItemService.inUseDefectiveItem();
         if (inUseDefectiveItemSet.contains(id)) {
             throw new BusinessException("已有检验方案调用了该缺陷项，不允许删除");
@@ -173,6 +191,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
     @Override
     public List<QtDefectiveItemTreeVo> selectItemList() {
         List<QtDefectiveItem> dataList = list(new LambdaQueryWrapper<QtDefectiveItem>()
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
                 .eq(QtDefectiveItem::getStatus, MpConstant.STATUS_START)
                 .orderByDesc(QtDefectiveItem::getCreateTime));
         if (CollUtil.isEmpty(dataList)) {
