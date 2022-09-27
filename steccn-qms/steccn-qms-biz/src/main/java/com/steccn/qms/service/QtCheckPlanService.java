@@ -64,4 +64,14 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * @return
      */
     List<QtCheckPlanListAllVO> listAll();
+
+    /**
+     *  给检验计划做快照
+     *  1.将当前检验计划全部复克并且将旧的检验计划标识为用户不可见
+     *  2.将物料的检验计划绑定成当前新的检验计划
+     *  3.考虑检验项和缺陷项的快照问题
+     * @param planId 计划id
+     * @return 新的快照计划信息
+     */
+    QtCheckPlan planSnapshot(Integer planId);
 }

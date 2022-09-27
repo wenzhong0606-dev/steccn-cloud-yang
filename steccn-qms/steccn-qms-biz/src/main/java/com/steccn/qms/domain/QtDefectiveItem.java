@@ -51,6 +51,11 @@ public class QtDefectiveItem implements Serializable {
     private String note;
 
     /**
+     * 是否可见：0否 1是 0表示是快照
+     */
+    private Integer showFlag;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

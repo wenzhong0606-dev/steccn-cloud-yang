@@ -69,7 +69,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         if (count > 0) {
             //获取枚举元素
             QtManagerConstant.QtItemCategoryEnum eleByType = QtManagerConstant.QtItemCategoryEnum.getEleByType(dto.getType());
-            throw new BusinessException(eleByType.getName() + "类型名称不能重复");
+            throw new BusinessException(eleByType.getName() + "类别名称不能重复");
         }
         //未查询到数据，视为新增
         if(Objects.nonNull(dto.getId())){

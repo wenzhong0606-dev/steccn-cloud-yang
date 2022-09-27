@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
@@ -199,6 +200,28 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             vos.add(qtDefectiveItemTreeVo);
         }
         return vos;
+    }
+
+    @Override
+    public Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList) {
+        //如果缺陷项id集合为空，则直接返回空的map
+        if (CollUtil.isEmpty(defectiveItemIdList)) {
+            return Maps.newHashMap();
+        }
+        //根据检验项主键查询所有的集合数据
+        List<QtDefectiveItem> qtDefectiveItemList = listByIds(defectiveItemIdList);
+        //定义返回map
+        Map<Integer, Integer> resMap = Maps.newHashMap();
+        //保存新的快照，快照对用户不可见
+        qtDefectiveItemList.forEach(v -> {
+            QtDefectiveItem qtDefectiveItem = new QtDefectiveItem();
+            BeanUtils.copyProperties(v, qtDefectiveItem);
+            qtDefectiveItem.setId(null);
+            qtDefectiveItem.setShowFlag(MpConstant.NO);
+            save(qtDefectiveItem);
+            resMap.put(v.getId(), qtDefectiveItem.getId());
+        });
+        return resMap;
     }
 
 

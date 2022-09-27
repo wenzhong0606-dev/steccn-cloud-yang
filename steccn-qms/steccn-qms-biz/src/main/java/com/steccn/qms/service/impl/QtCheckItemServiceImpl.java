@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,9 +68,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
                 .like(StrUtil.isNotBlank(dto.getName()), QtCheckItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(name using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(name using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
@@ -114,10 +116,10 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
         //若有可能值，则不能重复
-        if(dto.getPossibleValue()!=null && !dto.getPossibleValue().isEmpty()){
+        if (dto.getPossibleValue() != null && !dto.getPossibleValue().isEmpty()) {
             Set<String> repeat = new HashSet<>();
-            dto.getPossibleValue().forEach(tmp->{
-                if(!repeat.add(tmp)){
+            dto.getPossibleValue().forEach(tmp -> {
+                if (!repeat.add(tmp)) {
                     throw new BusinessException("可能值不能重复");
                 }
             });
@@ -158,16 +160,16 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 //      3）数据类型为“单选”、“多选”：提示“请选择默认选项”，下拉单选/多选可能值
 //      4）数据类型为“人工判断良或次”：提示“请选择默认选项”，下拉单选“良”或“次”
         List<String> codeList = Arrays.asList("1", "2", "3", "4", "5", "6");
-        List<String> qualityList = Arrays.asList("良", "次","");
+        List<String> qualityList = Arrays.asList("良", "次", "");
         if (codeList.contains(sysDictVO.getCode())) {
             //需要校验defaultValue
             if ("1".equals(sysDictVO.getCode()) || "2".equals(sysDictVO.getCode())) {
                 if (CollUtil.isNotEmpty(defaultValList)) {
                     for (String s : defaultValList) {
                         //空串则移除
-                        if(s.equals("")){
+                        if (s.equals("")) {
                             defaultValList.remove(s);
-                        }else {
+                        } else {
                             try {
                                 Double.parseDouble(s);
                             } catch (Exception e) {
@@ -233,10 +235,10 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (existName(dto.getCategoryId(), dto.getName(), dto.getId())) {
             throw new BusinessException("同一类别下检验项名称不能重复");
         }
-        if(dto.getPossibleValue()!=null && !dto.getPossibleValue().isEmpty()){
+        if (dto.getPossibleValue() != null && !dto.getPossibleValue().isEmpty()) {
             Set<String> repeat = new HashSet<>();
-            dto.getPossibleValue().forEach(tmp->{
-                if(!repeat.add(tmp)){
+            dto.getPossibleValue().forEach(tmp -> {
+                if (!repeat.add(tmp)) {
                     throw new BusinessException("可能值不能重复");
                 }
             });
@@ -244,17 +246,17 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
         //如果检验方案中的极差数组中绑定了该检验项，则无法编辑
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionRangeArray = new LambdaQueryWrapper<>();
-        itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))",dto.getId());
-        if(qtCheckPlanGroupItemService.count(itemConditionRangeArray)!=0){
-            if(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())){
+        itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))", dto.getId());
+        if (qtCheckPlanGroupItemService.count(itemConditionRangeArray) != 0) {
+            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
                 throw new BusinessException("该检验项在极差数组中,无法修改数据类型，计量单位");
             }
         }
         //如果检验方案中的平均数组中绑定了该检验项，则无法编辑
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionAverageArray = new LambdaQueryWrapper<>();
-        itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))",dto.getId());
-        if(qtCheckPlanGroupItemService.count(itemConditionAverageArray)!=0){
-            if(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())){
+        itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))", dto.getId());
+        if (qtCheckPlanGroupItemService.count(itemConditionAverageArray) != 0) {
+            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
                 throw new BusinessException("该检验项在平均数组中,无法修改数据类型，计量单位");
             }
         }
@@ -330,6 +332,28 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             resList.add(resVo);
         }
         return resList;
+    }
+
+    @Override
+    public Map<Integer, Integer> checkItemSnapshot(List<Integer> checkIdList) {
+        //如果检验项id集合为空，则直接返回空的map
+        if (CollUtil.isEmpty(checkIdList)) {
+            return Maps.newHashMap();
+        }
+        //根据检验项主键查询所有的集合数据
+        List<QtCheckItem> qtCheckItems = listByIds(checkIdList);
+        //定义返回map
+        Map<Integer, Integer> resMap = Maps.newHashMap();
+        //保存新的快照，快照对用户不可见
+        qtCheckItems.forEach(v -> {
+            QtCheckItem newCheckItem = new QtCheckItem();
+            BeanUtils.copyProperties(v, newCheckItem);
+            newCheckItem.setId(null);
+            newCheckItem.setShowFlag(MpConstant.NO);
+            save(newCheckItem);
+            resMap.put(v.getId(), newCheckItem.getId());
+        });
+        return resMap;
     }
 
     /**

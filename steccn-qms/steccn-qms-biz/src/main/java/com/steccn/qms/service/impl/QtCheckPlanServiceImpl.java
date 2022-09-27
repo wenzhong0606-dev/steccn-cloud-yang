@@ -94,20 +94,20 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         planModel.setNote(dto.getNote());
         //3、获取最大编码
         planModel.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYFA, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
-        if (Objects.isNull(dto.getId())) {
-//            planModel.setCreateBy(SecurityUtils.getUser().getUserId());
-//            planModel.setCreateName(SecurityUtils.getUser().getName());
-        }
-//        planModel.setUpdateBy(SecurityUtils.getUser().getUserId());
-//        planModel.setUpdateName(SecurityUtils.getUser().getName());
         //修改和新增为一个方法,若有id则是修改，若无则是新增
         if (dto.getId() == null) {
+            planModel.setVersion(1L);
             save(planModel);
         } else {
             planModel.setCode(null);
             planModel.setCreateBy(null);
             planModel.setCreateName(null);
             planModel.setId(dto.getId());
+            if (Objects.nonNull(planModel.getVersion())) {
+                planModel.setVersion(planModel.getVersion() + 1);
+            } else {
+                planModel.setVersion(1L);
+            }
             updateById(planModel);
         }
         //4、处理检验分组
@@ -206,9 +206,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 .like(Objects.nonNull(dto.getName()), QtCheckPlan::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(name using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(name using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
@@ -361,43 +361,111 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtCheckPlanDTO dto) {
-        //1.将当前检验计划全部复克并且将旧的检验计划标识为用户不可见
-        //2.将物料的检验计划绑定成当前新的检验计划
-
-        //获取计划的主键id
-        Integer planId = dto.getId();
-
-        //新计划名称校验
-        long count = count(new LambdaQueryWrapper<QtCheckPlan>()
-                .eq(QtCheckPlan::getShowFlag, MpConstant.YES)
-                .ne(QtCheckPlan::getId, planId)
-                .eq(QtCheckPlan::getName, dto.getName()));
-        if (count != 0) {
-            throw new BusinessException("与已有的检验方案名称重复");
+        if (qtCheckPlanMapper.CountLindkedPlan(dto.getId()) != 0) {
+            throw new BusinessException("无法保存！请完成相关检验中的任务再重试");
         }
-        //将计划复制一份
+        //查对应的groupid
+        Map<String, Object> groupColumn = new HashMap<>();
+        groupColumn.put("plan_id", dto.getId());
+        Collection<QtCheckPlanGroup> qtCheckPlanGroups = qtCheckPlanGroupService.listByMap(groupColumn);
+        List<Integer> qtCheckGroupIds = Lists.newArrayList();
+        qtCheckPlanGroups.forEach(groupTmp -> {
+            qtCheckGroupIds.add(groupTmp.getId());
+        });
+        //通过id删除数据
+        qtCheckPlanGroupService.removeByIds(qtCheckGroupIds);
+        //删除对应的检验项
+        //构建条件,groupId
+        LambdaQueryWrapper<QtCheckPlanGroupItem> condition = new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                .in(QtCheckPlanGroupItem::getGroupId, qtCheckGroupIds);
+        qtCheckPlanGroupItemService.remove(condition);
+        return add(dto);
+    }
+
+    @Override
+    public QtCheckPlan planSnapshot(Integer planId) {
         QtCheckPlan oldPlan = getById(planId);
         QtCheckPlan newPlan = new QtCheckPlan();
-        BeanUtils.copyProperties(dto, newPlan);
-        //保存新编码
+        BeanUtils.copyProperties(oldPlan, newPlan);
+        //保存新检验计划
         newPlan.setId(null);
-        newPlan.setShowFlag(MpConstant.YES);
+        newPlan.setShowFlag(MpConstant.NO);
         newPlan.setStatus(MpConstant.YES);
         newPlan.setCode(oldPlan.getCode());
+        newPlan.setOriginalId(oldPlan.getId());
+        //版本+1
+        newPlan.setVersion(oldPlan.getVersion() + 1);
         save(newPlan);
-        //保存物料绑定的检验方案为新的编码
-        List<QtMaterialLinkCheckPlan> qtMaterialLinkCheckPlanList = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
-                .eq(QtMaterialLinkCheckPlan::getCheckPlanId, oldPlan.getId()));
-        qtMaterialLinkCheckPlanList.forEach(m -> m.setCheckPlanId(newPlan.getId()));
-        qtMaterialLinkCheckPlanService.updateBatchById(qtMaterialLinkCheckPlanList);
-
         //旧编码设置为用户不可见
-        oldPlan.setShowFlag(MpConstant.NO);
+        oldPlan.setShowFlag(MpConstant.YES);
+        oldPlan.setVersion(oldPlan.getVersion() + 1);
         updateById(oldPlan);
+        List<QtCheckPlanGroup> planGroup = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>().eq(QtCheckPlanGroup::getPlanId, oldPlan.getId()));
+        //定义校验项id集合
+        List<Integer> checkItemIdList = Lists.newArrayList();
+        //定义缺陷项id集合
+        List<Integer> defectiveItemIdList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(planGroup)) {
+            planGroup.forEach(v -> {
+                v.setPlanId(newPlan.getId());
+                Integer oldGroupId = v.getId();
+                v.setId(null);
+                qtCheckPlanGroupService.save(v);
+                //获取所有的分组详细信息
+                List<QtCheckPlanGroupItem> groupItemList = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>().eq(QtCheckPlanGroupItem::getGroupId, oldGroupId));
+                if (CollUtil.isNotEmpty(groupItemList)) {
+                    groupItemList.forEach(q -> {
+                        if (Objects.nonNull(q.getCheckItemId())) {
+                            checkItemIdList.add(q.getCheckItemId());
+                        }
+                        if (CollUtil.isNotEmpty(q.getRangeArray())) {
+                            checkItemIdList.addAll(q.getRangeArray());
+                        }
+                        if (CollUtil.isNotEmpty(q.getAverageArray())) {
+                            checkItemIdList.addAll(q.getAverageArray());
+                        }
+                        if (CollUtil.isNotEmpty(q.getLinkedDefectiveItem())) {
+                            defectiveItemIdList.addAll(q.getLinkedDefectiveItem());
+                        }
+                    });
+                    //缺陷项和检查项需要备份
+                    //缺陷项和检查项的快照映射关系
+                    Map<Integer, Integer> checkItemIdMap = qtCheckItemService.checkItemSnapshot(checkItemIdList);
+                    Map<Integer, Integer> defectiveItemIdMap = qtDefectiveItemService.defectiveItemSnapshot(defectiveItemIdList);
+                    List<QtCheckPlanGroupItem> batchItem = Lists.newArrayList();
+                    groupItemList.forEach(q -> {
+                        q.setGroupId(v.getId());
+                        q.setId(null);
+                        q.setCheckItemId(checkItemIdMap.get(q.getCheckItemId()));
+                        //赋值数组
+                        q.setRangeArray(snapshotArray(q.getRangeArray(), checkItemIdMap));
+                        q.setAverageArray(snapshotArray(q.getAverageArray(), checkItemIdMap));
+                        q.setLinkedDefectiveItem(snapshotArray(q.getLinkedDefectiveItem(), defectiveItemIdMap));
+                        batchItem.add(q);
+                    });
+                    qtCheckPlanGroupItemService.saveBatch(batchItem);
+                }
+            });
+        }
+        return newPlan;
+    }
 
-        //4、处理检验分组
-        saveGroupAndItem(newPlan.getId(), dto);
-        return Boolean.TRUE;
+    /**
+     * 快照数组
+     *
+     * @param oldList 旧数据
+     * @param map     map
+     * @return list
+     */
+    private List<Integer> snapshotArray(List<Integer> oldList, Map<Integer, Integer> map) {
+        List<Integer> resList = Lists.newArrayList();
+        if (CollUtil.isEmpty(oldList)) {
+            return resList;
+        }
+        for (Integer data : oldList) {
+            resList.add(map.get(data));
+        }
+        return resList;
     }
 
     @Override

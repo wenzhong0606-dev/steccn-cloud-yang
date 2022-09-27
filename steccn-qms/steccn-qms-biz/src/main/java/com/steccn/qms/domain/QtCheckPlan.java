@@ -48,6 +48,16 @@ public class QtCheckPlan implements Serializable {
     private Integer showFlag;
 
     /**
+     * 版本号-每次调整都需要+1
+     */
+    private Long version;
+
+    /**
+     * 快照数据存放原始主键id
+     */
+    private Integer originalId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

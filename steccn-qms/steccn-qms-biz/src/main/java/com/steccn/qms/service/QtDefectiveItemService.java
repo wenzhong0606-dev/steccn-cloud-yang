@@ -10,6 +10,7 @@ import com.steccn.qms.vo.QtDefectiveItemTreeVo;
 import com.steccn.qms.vo.QtDefectiveItemVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -52,6 +53,7 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
 
     /**
      * 删除缺陷项
+     *
      * @param id id
      * @return 是否成功
      */
@@ -59,7 +61,16 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
 
     /**
      * 启用状态缺陷项列表
+     *
      * @return list
      */
     List<QtDefectiveItemTreeVo> selectItemList();
+
+    /**
+     * 缺陷项快照
+     *
+     * @param defectiveItemIdList 检验项id集合
+     * @return map key为旧检验项id value为新检验项id
+     */
+    Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList);
 }
