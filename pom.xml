@@ -10,8 +10,8 @@
     <packaging>pom</packaging>
     <description>steccn-cloud</description>
     <modules>
-        <module>auth-server</module>
-        <module>gateway</module>
+        <module>steccn-auth-server</module>
+        <module>steccn-gateway</module>
         <module>steccn-common</module>
         <module>steccn-qms</module>
         <module>steccn-pms</module>
@@ -19,6 +19,8 @@
         <module>steccn-user-center</module>
         <module>steccn-oa</module>
         <module>steccn-platform</module>
+        <module>steccn-minio</module>
+        <module>steccn-monitor</module>
     </modules>
 
     <properties>
@@ -72,7 +74,7 @@
             </dependency>
             <dependency>
                 <groupId>com.steccn</groupId>
-                <artifactId>auth-server</artifactId>
+                <artifactId>steccn-auth-server</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
             <!--steccn-common-data-->
@@ -200,6 +202,11 @@
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-client</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
 
         </dependencies>

@@ -1,10 +1,14 @@
 package com.steccn.platform.service;
 
-import com.setccn.platfrom.dto.SpareDTO;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
+import io.swagger.models.auth.In;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author W10
@@ -13,5 +17,13 @@ import java.util.List;
 */
 public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
-    List<SpareDTO> listSpares(String name);
+    List<EqpSpareVO> listSpares(String name);
+
+    List<EqpSpareVO> listSpares(String name,String code);
+
+    Map<Long, EqpSpareVO> searchSpares(String name, String code);
+
+    EqpSpareVO getByCode(String code);
+
+    Map<String,EqpSpareVO> listByCode(List<String> codeList);
 }

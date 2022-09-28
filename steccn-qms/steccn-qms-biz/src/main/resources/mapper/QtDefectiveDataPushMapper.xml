@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.qms.mapper.QtDefectiveDataPushMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtDefectiveDataPush">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="msgType" column="msg_type" jdbcType="VARCHAR"/>
+            <result property="extField" column="ext_field" jdbcType="VARCHAR"/>
+            <result property="errorCode" column="error_code" jdbcType="VARCHAR"/>
+            <result property="productTime" column="product_time" jdbcType="VARCHAR"/>
+            <result property="line" column="line" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,msg_type,ext_field,
+        error_code,product_time,line,
+        create_time
+    </sql>
+</mapper>

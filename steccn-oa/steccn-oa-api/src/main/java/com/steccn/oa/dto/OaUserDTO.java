@@ -11,6 +11,12 @@ import java.util.List;
 @ApiModel("OA用户dto")
 public class OaUserDTO implements Serializable {
 
+    @ApiModelProperty("用户id")
+    private Long userId;
+
+    @ApiModelProperty("真实名称")
+    private String name;
+
     @ApiModelProperty("用户名")
     private String username;
 

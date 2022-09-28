@@ -1,7 +1,11 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
 * @author W10
@@ -10,4 +14,30 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysOfficeService extends IService<SysOffice> {
 
+    List<SysOfficeVO> sysList(String officeType);
+
+    List<SysOfficeVO> treeData();
+
+    List<SysOfficeVO> data();
+
+    /**
+     * 返回数据类型下所有数据
+     * @param officeType
+     * @return
+     */
+    List<SysOfficeVO> flatData(String officeType);
+
+    /**
+     * 返回数据类型下所有数据
+     * @param id officeId
+     * @return
+     */
+    String findNameById(Integer id);
+
+    /**
+     * 返回类型和父级节点下数据
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> findDataByPCodeAndType(SysOfficeParentDTO dto);
 }

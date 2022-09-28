@@ -1,11 +1,14 @@
 package com.steccn.platform.mapper;
 
-import com.setccn.platfrom.dto.SpareDTO;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.vo.EqpSpareVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,7 +21,12 @@ import java.util.List;
 public interface SysEqpSpareMapper extends BaseMapper<SysEqpSpare> {
 
     @Select("select id,code,name from sys_eqp_spare where name like concat(concat('%',#{name}),'%')")
-    List<SpareDTO> listSpares(String name);
+    List<EqpSpareVO> listSpares(String name);
+
+    @Select("select id,code,name from sys_eqp_spare where code = #{code}")
+    EqpSpareVO getByCode(String code);
+
+    Collection<SysEqpSpare> listByCode(@Param("codeList") List<String> codeList);
 }
 
 

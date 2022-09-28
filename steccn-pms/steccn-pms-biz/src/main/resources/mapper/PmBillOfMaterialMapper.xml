@@ -32,4 +32,16 @@
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+    <select id="listByCodes" resultType="com.steccn.pms.domain.PmBillOfMaterial">
+        select id,code from  pm_bill_of_material
+        <where>
+            <if test="codeList !=null and codeList.size > 0">
+               code in
+                <foreach collection="codeList" item="code" open="(" close=")" separator=",">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 </mapper>

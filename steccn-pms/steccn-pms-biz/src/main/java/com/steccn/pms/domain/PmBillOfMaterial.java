@@ -16,13 +16,29 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 表主键ID
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
      * 清单编码
      */
     private String code;
+
+    /**
+     * 物料id
+     */
+    private Long materialId;
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
+
 
     /**
      * 清单状态：1有效0无效
@@ -37,7 +53,7 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 标准数量单位ID
      */
-    private Integer unitId;
+    private Long unitId;
 
     /**
      * 版本
@@ -52,11 +68,13 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 有效开始时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime validBeginTime;
 
     /**
      * 有效结止时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime validEndTime;
 
     /**
@@ -67,37 +85,44 @@ public class PmBillOfMaterial implements Serializable {
     /**
      * 创建人id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人名称
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
     @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)

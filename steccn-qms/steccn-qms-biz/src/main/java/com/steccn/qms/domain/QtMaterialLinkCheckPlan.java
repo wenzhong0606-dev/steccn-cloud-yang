@@ -1,9 +1,6 @@
 package com.steccn.qms.domain;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -25,12 +22,12 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     /**
      * 关联物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 已配检验类型
      */
-    private Integer checkType;
+//    private Long checkType;
 
     /**
      * 已关联检验方案
@@ -38,39 +35,51 @@ public class QtMaterialLinkCheckPlan implements Serializable {
     private Integer checkPlanId;
 
     /**
+     * 已配检验code
+     */
+    private Integer checkTypeCode;
+
+    /**
      * 创建人id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人名称
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
-      private LocalDateTime updateTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
     @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)

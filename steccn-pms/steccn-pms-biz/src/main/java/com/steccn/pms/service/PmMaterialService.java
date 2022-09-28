@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmMaterial;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmBillOfMaterialDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmMaterialService extends IService<PmMaterial> {
 
+    Boolean saveMaterial(PmBillOfMaterialDTO dto);
+
+    void deleteByMaterialId(Long id);
 }

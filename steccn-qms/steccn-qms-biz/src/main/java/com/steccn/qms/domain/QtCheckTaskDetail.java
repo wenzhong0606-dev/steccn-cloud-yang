@@ -28,49 +28,71 @@ public class QtCheckTaskDetail implements Serializable {
     /**
      * 检验结果的快照json，包含id和name
      */
-    private Object checkResult;
+    private String checkResult;
 
     /**
-     * 是否暂存状态【0否，1是】，暂存任务是不可以提交
+     *缺陷项id
      */
-    private Integer checkResultStatus;
+    private Integer defectId;
 
     /**
      * 创建人id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人名称
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
-      private LocalDateTime updateTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
     @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 检验分组id
+     */
+    private Integer groupId;
+
+    /**
+     * 检验项id
+     */
+    private Integer itemId;
+
+    /**
+     * 样本
+     */
+    private Integer copy;
 }

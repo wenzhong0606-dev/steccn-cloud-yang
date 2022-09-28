@@ -12,6 +12,6 @@ spring:
         server-addr: 10.1.103.235:8848
         file-extension: yaml
         shared-configs:
-          - data-id: bootstrap.yaml
+          - data-id: application.yaml
             refresh: true
         namespace: steccn_dev

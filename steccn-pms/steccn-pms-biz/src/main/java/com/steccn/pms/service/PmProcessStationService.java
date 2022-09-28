@@ -2,6 +2,10 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmProcessStation;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmProcessDTO;
+import com.steccn.pms.dto.PmProcessStationDTO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmProcessStationService extends IService<PmProcessStation> {
 
+    int deleteByProcessId(Long id);
+
+    Boolean saveStations(PmProcessDTO dto);
 }

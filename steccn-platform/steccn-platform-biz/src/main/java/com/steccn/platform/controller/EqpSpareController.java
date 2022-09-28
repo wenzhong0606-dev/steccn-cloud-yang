@@ -1,16 +1,18 @@
 package com.steccn.platform.controller;
 
-import com.setccn.platfrom.dto.SpareDTO;
+import cn.hutool.core.collection.CollUtil;
+import com.google.common.collect.Maps;
+import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.service.SysEqpSpareService;
+import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -28,8 +30,23 @@ public class EqpSpareController {
     private final SysEqpSpareService eqpSpareService;
 
     @ApiOperation("获取备件列表")
-    @PostMapping("/searchSpares")
-    public List<SpareDTO> searchSpares(@RequestParam("name")String name) {
+    @GetMapping("/searchSpares")
+    public List<EqpSpareVO> searchSpares(@RequestParam("name") String name) {
         return eqpSpareService.listSpares(name);
+    }
+
+    @ApiOperation("根据编码获取备件")
+    @GetMapping("/getByCode")
+    public R<EqpSpareVO> getByCode(@RequestParam("code") String code) {
+        return R.success(eqpSpareService.getByCode(code));
+    }
+
+    @RequestMapping("/listByCode")
+    @ApiOperation("根据code查询备件的数据")
+    public R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList) {
+        if (CollUtil.isEmpty(codeList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(eqpSpareService.listByCode(codeList));
     }
 }

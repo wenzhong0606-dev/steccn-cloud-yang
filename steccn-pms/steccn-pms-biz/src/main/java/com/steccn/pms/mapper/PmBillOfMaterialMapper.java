@@ -2,7 +2,12 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.PmBillOfMaterialDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -12,6 +17,9 @@ import org.apache.ibatis.annotations.Mapper;
 */
 @Mapper
 public interface PmBillOfMaterialMapper extends BaseMapper<PmBillOfMaterial> {
+
+
+    List<PmBillOfMaterial> listByCodes(@Param("codeList") List<String> codeList);
 
 }
 

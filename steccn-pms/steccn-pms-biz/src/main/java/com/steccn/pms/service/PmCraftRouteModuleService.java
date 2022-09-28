@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmCraftRouteModule;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmCraftRouteDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmCraftRouteModuleService extends IService<PmCraftRouteModule> {
 
+    Boolean saveMaterial(PmCraftRouteDTO dto);
+
+
+    Boolean deleteByRoteId(Long id);
 }

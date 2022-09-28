@@ -1,10 +1,7 @@
 package com.steccn.portal.controller;
 
-import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.steccn.common.vo.R;
-import com.steccn.portal.service.MesApi;
 import com.steccn.portal.service.MesMenuService;
-import com.steccn.portal.util.MesToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -35,17 +32,9 @@ public class MesMenuController {
     }
 
     @ApiOperation(value = "获取mes跳过登录的token")
-    @GetMapping("/mesToken/{userName}")
-    public R getMesToken(@PathVariable("userName") String userName) {
-        R<Object> r = new R<>();
-        String mesToken = mesMenuService.getMesToken(userName);
-        if (Objects.isNull(mesToken)){
-            r.setMsg("生成token失败");
-        }else {
-            r.setMsg("生成token成功");
-            r.setData(mesToken);
-        }
-        return r;
+    @GetMapping("/mesToken")
+    public R getMesToken(@RequestParam("userName") String userName) {
+        return R.success(mesMenuService.getMesToken(userName));
     }
 
 }

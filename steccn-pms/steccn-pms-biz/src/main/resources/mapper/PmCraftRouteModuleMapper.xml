@@ -6,14 +6,14 @@
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmCraftRouteModule">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="moduleId" column="module_id" jdbcType="INTEGER"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
             <result property="quantity" column="quantity" jdbcType="INTEGER"/>
-            <result property="unit" column="unit" jdbcType="VARCHAR"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
             <result property="processId" column="process_id" jdbcType="INTEGER"/>
-            <result property="ifFixedDosage" column="if_fixed_dosage" jdbcType="TINYINT"/>
-            <result property="ifSpinoff" column="if_spinoff" jdbcType="TINYINT"/>
-            <result property="ifJoinProducts" column="if_join_products" jdbcType="TINYINT"/>
-            <result property="ifRecoil" column="if_recoil" jdbcType="TINYINT"/>
+            <result property="isFixedQuantity" column="if_fixed_quantity" jdbcType="TINYINT"/>
+            <result property="isCopruduct" column="is_copruduct" jdbcType="TINYINT"/>
+            <result property="isJointProduct" column="is_joint_product" jdbcType="TINYINT"/>
+            <result property="isBackCalculation" column="is_back_calculation" jdbcType="TINYINT"/>
             <result property="createBy" column="create_by" jdbcType="BIGINT"/>
             <result property="createName" column="create_name" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
@@ -21,14 +21,16 @@
             <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
             <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,module_id,quantity,
-        unit,process_id,if_fixed_dosage,
-        if_spinoff,if_join_products,if_recoil,
+        id,material_id,craft_route_id,quantity,
+        unit_id,process_id,isFixedQuantity,
+        isCopruduct,isJointProduct,isBackCalculation,
         create_by,create_name,create_time,
         update_by,update_name,update_time,
-        del_flag
+        del_flag,material_name,material_code
     </sql>
 </mapper>

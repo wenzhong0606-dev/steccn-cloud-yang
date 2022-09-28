@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
@@ -13,7 +15,7 @@ import lombok.Data;
  *
  * @TableName qt_check_item
  */
-@TableName(value = "qt_check_item")
+@TableName(value = "qt_check_item", autoResultMap = true)
 @Data
 public class QtCheckItem implements Serializable {
     /**
@@ -32,25 +34,33 @@ public class QtCheckItem implements Serializable {
      */
     private String name;
 
+
+    /**
+     * 检验项名称全拼
+     */
+    private String nameEn;
+
     /**
      * 数据类型
      */
-    private Integer dataType;
+    private Long dataType;
 
     /**
      * 计量单位
      */
-    private Integer measureUnit;
+    private Long measureUnit;
 
     /**
      * 可能值
      */
-    private Object possibleValue;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> possibleValue;
 
     /**
      * 默认值
      */
-    private Object defaultValue;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> defaultValue;
 
     /**
      * 检验项类别id
@@ -73,39 +83,51 @@ public class QtCheckItem implements Serializable {
     private String note;
 
     /**
+     * 是否可见：0否 1是 0表示是快照
+     */
+    private Integer showFlag;
+
+    /**
      * 创建人id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人名称
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
      * 更新人id
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
     @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)
