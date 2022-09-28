@@ -33,7 +33,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 开始时间
      */
-    private String startIme;
+    private String startTime;
 
     /**
      * 结束时间

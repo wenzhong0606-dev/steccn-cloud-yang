@@ -8,7 +8,7 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="code" column="code" jdbcType="VARCHAR"/>
             <result property="processId" column="process_id" jdbcType="BIGINT"/>
-            <result property="startIme" column="start_ime" jdbcType="VARCHAR"/>
+            <result property="startTime" column="start_ime" jdbcType="VARCHAR"/>
             <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
             <result property="processQuantity" column="process_quantity" jdbcType="DECIMAL"/>
             <result property="badnessQuantity" column="badness_quantity" jdbcType="DECIMAL"/>
@@ -29,7 +29,7 @@
 
     <sql id="Base_Column_List">
         id,code,process_id,
-        start_ime,end_time,process_quantity,
+        start_time,end_time,process_quantity,
         badness_quantity,batch,classes_id,
         produce_line_id,station_id,class_group_id,
         produce_order_id,create_by,create_name,
