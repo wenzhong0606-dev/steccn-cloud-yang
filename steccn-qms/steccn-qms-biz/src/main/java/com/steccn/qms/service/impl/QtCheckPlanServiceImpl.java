@@ -107,12 +107,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             planModel.setCreateBy(null);
             planModel.setCreateName(null);
             planModel.setId(dto.getId());
-            if (Objects.nonNull(planModel.getVersion())) {
-                planModel.setVersion(planModel.getVersion() + 1);
-            } else {
-                planModel.setVersion(1L);
-            }
             updateById(planModel);
+            //升级版本
+            upVersion(Sets.newHashSet(dto.getId()));
         }
         //4、处理检验分组
         saveGroupAndItem(planModel.getId(), dto);
