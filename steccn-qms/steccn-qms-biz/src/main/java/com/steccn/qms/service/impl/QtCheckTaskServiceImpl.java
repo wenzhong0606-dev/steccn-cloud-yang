@@ -86,6 +86,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (Objects.isNull(maxSnapshot) || maxSnapshot.getVersion() < qtCheckPlan.getVersion()) {
             QtCheckPlan planSnapshot = qtCheckPlanService.planSnapshot(checkPlanId);
             qtCheckTask.setCheckPlanId(planSnapshot.getId());
+        }else {
+            qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
         return save(qtCheckTask);
     }
