@@ -19,6 +19,10 @@ public class QtCheckPlanDetailsVO implements Serializable {
     private String note;
     private String code;
     private String name;
+    /**
+     * 检验方式：0计量检验  1计数检验
+     */
+    private Integer checkMethod;
     private List<QtCheckPlanGroupVO> checkGroup;
     private String createName;
     private LocalDateTime createTime;

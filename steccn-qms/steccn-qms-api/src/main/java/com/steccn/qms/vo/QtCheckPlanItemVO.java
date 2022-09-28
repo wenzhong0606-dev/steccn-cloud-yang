@@ -27,6 +27,12 @@ public class QtCheckPlanItemVO extends QtCheckItemListVO implements Serializable
     @ApiModelProperty("平均数数组")
     List<QtAverageArrayVO> averageArray;
 
+    @ApiModelProperty("方差数组")
+    List<QtMeanArrayVO> meanArray;
+
+    @ApiModelProperty("截尾平均数数组")
+    List<QtEndAverageArrayVO> endAverageArray;
+
     @ApiModelProperty("标准值")
     private BigDecimal standardValue;
 

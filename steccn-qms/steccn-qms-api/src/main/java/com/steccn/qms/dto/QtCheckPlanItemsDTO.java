@@ -26,6 +26,12 @@ public class QtCheckPlanItemsDTO {
     @ApiModelProperty("平均数数组")
     List<Integer> averageArray;
 
+    @ApiModelProperty("方差数组")
+    List<Integer> meanArray;
+
+    @ApiModelProperty("截尾平均数数组")
+    List<Integer> endAverageArray;
+
     @ApiModelProperty("标准值")
     private BigDecimal standardValue;
 

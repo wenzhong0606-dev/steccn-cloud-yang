@@ -58,6 +58,12 @@ public class QtCheckPlan implements Serializable {
     private Integer originalId;
 
     /**
+     * 检验方式
+     * 检验方式：0计量检验  1计数检验
+     */
+    private Integer checkMethod;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

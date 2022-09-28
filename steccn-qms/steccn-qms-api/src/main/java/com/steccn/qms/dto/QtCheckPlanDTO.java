@@ -30,6 +30,12 @@ public class QtCheckPlanDTO {
     @ApiModelProperty("备注")
     private String note;
 
+    @ApiModelProperty("检验方式")
+    private Integer checkMethod;
+
     @ApiModelProperty("检验分组")
     private List<QtCheckPlanGroupDTO> checkGroup;
+
+    @ApiModelProperty("检验项DTO")
+    private List<QtCheckPlanItemsDTO> items;
 }

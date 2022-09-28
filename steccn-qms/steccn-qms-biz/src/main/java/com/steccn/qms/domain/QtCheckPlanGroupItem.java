@@ -50,6 +50,18 @@ public class QtCheckPlanGroupItem implements Serializable {
     private List<Integer> averageArray;
 
     /**
+     * 方差数组【存放检验项集合】
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> meanArray;
+
+    /**
+     * 截尾平均数数组【存放检验项集合】
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> endAverageArray;
+
+    /**
      * 标准值
      */
     private BigDecimal standardValue;
