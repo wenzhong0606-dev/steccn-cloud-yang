@@ -3,8 +3,10 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
 import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,4 +36,11 @@ public class ProcessReportWorkController {
     public R<Boolean> submitReportWork(@RequestBody ProcessReportWorkSubmitDTO dto) {
         return R.success(Boolean.TRUE);
     }
+
+    @ApiOperation("报工记录")
+    @PostMapping("/record/page")
+    public R<Page<ProcessReportWorkRecordVO>> recordList(@RequestBody ProcessReportWorkRecordDTO dto) {
+        return R.success();
+    }
+
 }
