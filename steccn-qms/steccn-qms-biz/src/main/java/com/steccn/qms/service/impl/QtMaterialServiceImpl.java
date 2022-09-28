@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -195,19 +196,28 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
 
     @Override
     public List<QtMaterialLinkPlanVO> listLink(Long id,Integer type) {
-        LambdaQueryWrapper<QtMaterialLinkCheckPlan> condition = new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
-                .and(wrapper->wrapper.eq(QtMaterialLinkCheckPlan::getMaterialId,id))
-                .and(wrapper->wrapper.eq(QtMaterialLinkCheckPlan::getCheckTypeCode,type));
+        LambdaQueryWrapper<QtMaterialLinkCheckPlan> condition = new QueryWrapper<QtMaterialLinkCheckPlan>()
+                .select("DISTINCT check_plan_id").lambda()
+                .eq(QtMaterialLinkCheckPlan::getMaterialId,id)
+                .eq(QtMaterialLinkCheckPlan::getCheckTypeCode,type);
         List<QtMaterialLinkCheckPlan> qtMaterialLinkCheckPlans = qtMaterialLinkCheckPlanService.list(condition);
         List<QtMaterialLinkPlanVO> vos = Lists.newArrayList();
         if(qtMaterialLinkCheckPlans!=null && !qtMaterialLinkCheckPlans.isEmpty()){
             qtMaterialLinkCheckPlans.forEach(tmp->{
                 QtMaterialLinkPlanVO vo = new QtMaterialLinkPlanVO();
-                vo.setId(tmp.getCheckPlanId());
                 QtCheckPlan qtCheckPlan = qtCheckPlanService.getById(tmp.getCheckPlanId());
-                vo.setName(qtCheckPlan.getName());
-                vos.add(vo);
+                //启用且可见
+                if(qtCheckPlan.getShowFlag() == 1 && qtCheckPlan.getStatus() == 1){
+                    vo.setId(tmp.getCheckPlanId());
+                    vo.setName(qtCheckPlan.getName());
+                    vos.add(vo);
+                }
             });
+        }else {
+            throw new BusinessException("请先在物料配置中关联检验方案");
+        }
+        if(vos.isEmpty()){
+            throw new BusinessException("请先在物料配置中关联检验方案");
         }
         return vos;
     }
