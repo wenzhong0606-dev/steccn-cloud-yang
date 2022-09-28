@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
@@ -386,6 +387,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public QtCheckPlan planSnapshot(Integer planId) {
         QtCheckPlan oldPlan = getById(planId);
         QtCheckPlan newPlan = new QtCheckPlan();
@@ -409,13 +411,12 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //定义缺陷项id集合
         List<Integer> defectiveItemIdList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(planGroup)) {
-            planGroup.forEach(v -> {
-                v.setPlanId(newPlan.getId());
-                Integer oldGroupId = v.getId();
-                v.setId(null);
-                qtCheckPlanGroupService.save(v);
-                //获取所有的分组详细信息
-                List<QtCheckPlanGroupItem> groupItemList = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>().eq(QtCheckPlanGroupItem::getGroupId, oldGroupId));
+            //性能优化：①检验项缺陷项重复做快照 ②避免重复查询分组明细信息
+            //分组明细map，key->分组id value->分组对应的明细列表
+            Map<Integer,List<QtCheckPlanGroupItem>> groupItemMap = Maps.newHashMap();
+            planGroup.forEach(p ->{
+                List<QtCheckPlanGroupItem> groupItemList = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>().eq(QtCheckPlanGroupItem::getGroupId, p.getId()));
+                groupItemMap.put(p.getId(),groupItemList);
                 if (CollUtil.isNotEmpty(groupItemList)) {
                     groupItemList.forEach(q -> {
                         if (Objects.nonNull(q.getCheckItemId())) {
@@ -431,10 +432,20 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                             defectiveItemIdList.addAll(q.getLinkedDefectiveItem());
                         }
                     });
-                    //缺陷项和检查项需要备份
-                    //缺陷项和检查项的快照映射关系
-                    Map<Integer, Integer> checkItemIdMap = qtCheckItemService.checkItemSnapshot(checkItemIdList);
-                    Map<Integer, Integer> defectiveItemIdMap = qtDefectiveItemService.defectiveItemSnapshot(defectiveItemIdList);
+                }
+            });
+            //缺陷项和检查项需要备份
+            //缺陷项和检查项的快照映射关系
+            Map<Integer, Integer> checkItemIdMap = qtCheckItemService.checkItemSnapshot(checkItemIdList);
+            Map<Integer, Integer> defectiveItemIdMap = qtDefectiveItemService.defectiveItemSnapshot(defectiveItemIdList);
+            planGroup.forEach(v -> {
+                v.setPlanId(newPlan.getId());
+                Integer oldGroupId = v.getId();
+                v.setId(null);
+                qtCheckPlanGroupService.save(v);
+                //获取所有的分组详细信息
+                List<QtCheckPlanGroupItem> groupItemList = groupItemMap.get(oldGroupId);
+                if (CollUtil.isNotEmpty(groupItemList)) {
                     List<QtCheckPlanGroupItem> batchItem = Lists.newArrayList();
                     groupItemList.forEach(q -> {
                         q.setGroupId(v.getId());
