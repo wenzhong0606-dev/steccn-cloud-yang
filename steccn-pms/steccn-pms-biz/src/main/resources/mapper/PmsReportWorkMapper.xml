@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsReportWorkMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsReportWork">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="processId" column="process_id" jdbcType="BIGINT"/>
+            <result property="startIme" column="start_ime" jdbcType="VARCHAR"/>
+            <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+            <result property="processQuantity" column="process_quantity" jdbcType="DECIMAL"/>
+            <result property="badnessQuantity" column="badness_quantity" jdbcType="DECIMAL"/>
+            <result property="batch" column="batch" jdbcType="VARCHAR"/>
+            <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
+            <result property="produceLineId" column="produce_line_id" jdbcType="INTEGER"/>
+            <result property="stationId" column="station_id" jdbcType="INTEGER"/>
+            <result property="classGroupId" column="class_group_id" jdbcType="INTEGER"/>
+            <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,code,process_id,
+        start_ime,end_time,process_quantity,
+        badness_quantity,batch,classes_id,
+        produce_line_id,station_id,class_group_id,
+        produce_order_id,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>

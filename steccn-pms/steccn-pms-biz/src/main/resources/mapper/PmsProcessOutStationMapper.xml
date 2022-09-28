@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsProcessOutStationMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsProcessOutStation">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="outStationTime" column="out_station_time" jdbcType="TIMESTAMP"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <result property="batchId" column="batch_id" jdbcType="BIGINT"/>
+            <result property="stationId" column="station_id" jdbcType="INTEGER"/>
+            <result property="processId" column="process_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,out_station_time,quantity,
+        unit_id,batch_id,station_id,
+        process_id,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>

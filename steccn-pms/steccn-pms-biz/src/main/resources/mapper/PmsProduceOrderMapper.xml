@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsProduceOrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsProduceOrder">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="typeId" column="type_id" jdbcType="BIGINT"/>
+            <result property="state" column="state" jdbcType="TINYINT"/>
+            <result property="materialId" column="material_id" jdbcType="INTEGER"/>
+            <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+            <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+            <result property="productionLineId" column="production_line_id" jdbcType="INTEGER"/>
+            <result property="craftId" column="craft_id" jdbcType="BIGINT"/>
+            <result property="planStartTime" column="plan_start_time" jdbcType="TIMESTAMP"/>
+            <result property="planEndTime" column="plan_end_time" jdbcType="TIMESTAMP"/>
+            <result property="actualStartTime" column="actual_start_time" jdbcType="TIMESTAMP"/>
+            <result property="actualEndTime" column="actual_end_time" jdbcType="TIMESTAMP"/>
+            <result property="defaultWarehouseId" column="default_warehouse_id" jdbcType="INTEGER"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,code,type_id,
+        state,material_id,material_code,
+        material_name,quantity,unit_id,
+        production_line_id,craft_id,plan_start_time,
+        plan_end_time,actual_start_time,actual_end_time,
+        default_warehouse_id,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>
