@@ -176,12 +176,12 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
      * @return
      */
     @Override
-    public List<QtMaterialListAllVO> listAll(String nameOrCode,Integer checkTypeCode) {
+    public List<QtMaterialListAllVO> listAll(String nameOrCode) {
         LambdaQueryWrapper<QtMaterial> condition = new LambdaQueryWrapper<QtMaterial>()
                 //物料名称或者物料编码
                 .and((nameOrCode != null && !nameOrCode.equals("")),wrapper -> wrapper.like(QtMaterial::getName,nameOrCode).or().like(QtMaterial::getCode,nameOrCode))
-                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1))
-                .and(wrapper -> wrapper.apply("JSON_CONTAINS(type, JSON_OBJECT('checkTypeCode',{0}))",checkTypeCode));
+                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1));
+//                .and(wrapper -> wrapper.apply("JSON_CONTAINS(type, JSON_OBJECT('checkTypeCode',{0}))",checkTypeCode));
         List<QtMaterial> materialModel = list(condition);
         List<QtMaterialListAllVO> vos = Lists.newArrayList();
         if(materialModel != null && !materialModel.isEmpty()){
