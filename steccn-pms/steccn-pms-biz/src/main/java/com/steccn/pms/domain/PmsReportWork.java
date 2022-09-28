@@ -51,6 +51,11 @@ public class PmsReportWork implements Serializable {
     private BigDecimal badnessQuantity;
 
     /**
+     * 数量单位
+     */
+    private Long unitId;
+
+    /**
      * 批次
      */
     private String batch;
