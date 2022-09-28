@@ -89,6 +89,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }else {
             qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
+
         return save(qtCheckTask);
     }
 
