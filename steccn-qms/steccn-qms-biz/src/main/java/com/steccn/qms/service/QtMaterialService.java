@@ -45,7 +45,7 @@ public interface QtMaterialService extends IService<QtMaterial> {
      * @param nameOrCode
      * @return
      */
-    List<QtMaterialListAllVO> listAll(String nameOrCode,Integer checkTypeCode);
+    List<QtMaterialListAllVO> listAll(String nameOrCode);
 
     /**
      * 返回物料绑定的检验方案
