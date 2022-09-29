@@ -36,7 +36,7 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
     private String name;
 
     @ApiModelProperty("工序编码")
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 10, message = "备注长度不超过10个字符")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 10, message = "编码长度不超过10个字符")
     @NotNull(groups = {UpdateGroup.class,InsertGroup.class}, message = "编辑数据时工序编码不能为空")
     private String code;
 
