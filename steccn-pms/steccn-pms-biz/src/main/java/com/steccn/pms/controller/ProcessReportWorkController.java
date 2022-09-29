@@ -8,12 +8,12 @@ import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author Adolph.Ye
@@ -40,6 +40,13 @@ public class ProcessReportWorkController {
     @ApiOperation("报工记录")
     @PostMapping("/record/page")
     public R<Page<ProcessReportWorkRecordVO>> recordList(@RequestBody ProcessReportWorkRecordDTO dto) {
+        return R.success();
+    }
+
+    @ApiOperation("物料消耗")
+    @GetMapping("/material/consume")
+    public R<List<Object>> materialConsume(@ApiParam("生产订单主键") @RequestParam("produceOrderId") Long produceOrderId,
+                                           @ApiParam("工序主键") @RequestParam("processId") Integer processId) {
         return R.success();
     }
 
