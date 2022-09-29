@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -35,7 +36,8 @@ public class PmProcessDTO extends BasePageDTO implements Serializable {
     private String name;
 
     @ApiModelProperty("工序编码")
-    @NotNull(groups = {UpdateGroup.class}, message = "编辑数据时工序编码不能为空")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 10, message = "备注长度不超过10个字符")
+    @NotNull(groups = {UpdateGroup.class,InsertGroup.class}, message = "编辑数据时工序编码不能为空")
     private String code;
 
     @ApiModelProperty("工序类型")
