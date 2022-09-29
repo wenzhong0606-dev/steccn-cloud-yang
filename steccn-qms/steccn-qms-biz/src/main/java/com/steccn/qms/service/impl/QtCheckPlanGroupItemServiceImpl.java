@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.qms.domain.QtCheckPlanGroupItem;
@@ -20,10 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -89,10 +87,12 @@ public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGrou
         List<QtDefectiveItem> defectiveItems =  qtDefectiveItemService.list(condition);
         //处理items
         Map<String,List<QtTaskDefectVO>> defects = new HashMap<>();
+        Map<String,QtItemCategory> sourceCategoryMap = Maps.newHashMap();
         defectiveItems.forEach(tmp->{
             QtTaskDefectVO vo = new QtTaskDefectVO();
             vo.setId(tmp.getId());
             vo.setName(tmp.getName());
+            vo.setCreateTime(tmp.getCreateTime());
             QtItemCategory qtItemCategory = qtItemCategoryService.getById(tmp.getCategoryId());
             if(defects.get(qtItemCategory.getName())==null){
                 List<QtTaskDefectVO> vos = Lists.newArrayList();
@@ -101,14 +101,21 @@ public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGrou
             }else {
                 defects.get(qtItemCategory.getName()).add(vo);
             }
+            sourceCategoryMap.put(qtItemCategory.getName(),qtItemCategory);
         });
         List<QtCheckTaskDefectVO> vos = Lists.newArrayList();
         for(Map.Entry<String,List<QtTaskDefectVO>> entry:defects.entrySet()){
             QtCheckTaskDefectVO qtCheckTaskDefectVo = new QtCheckTaskDefectVO();
             qtCheckTaskDefectVo.setCategoryName(entry.getKey());
-            qtCheckTaskDefectVo.setDefects(entry.getValue());
+            List<QtTaskDefectVO> value = entry.getValue();
+            //缺陷项类型下的缺陷项创建时间升序排序
+            value.sort(Comparator.comparing(QtTaskDefectVO::getCreateTime));
+            qtCheckTaskDefectVo.setDefects(value);
+            qtCheckTaskDefectVo.setCreateTime(sourceCategoryMap.get(entry.getKey()).getCreateTime());
             vos.add(qtCheckTaskDefectVo);
         }
+        //缺陷项类型按照创建时间升序排列
+        vos.sort(Comparator.comparing(QtCheckTaskDefectVO::getCreateTime));
         return vos;
     }
 }
