@@ -3,14 +3,17 @@ package com.steccn.pms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 生产工艺路线-工序信息
+ *
  * @TableName pm_craft_route_process
  */
-@TableName(value ="pm_craft_route_process")
+@TableName(value = "pm_craft_route_process")
 @Data
 public class PmCraftRouteProcess implements Serializable {
     /**
@@ -38,6 +41,51 @@ public class PmCraftRouteProcess implements Serializable {
      * 工艺路线id
      */
     private Long routeId;
+
+    /**
+     * 数量
+     */
+    private BigDecimal quantity;
+
+    /**
+     * 单位
+     */
+    private Long unitId;
+
+    /**
+     * 标准数量
+     */
+    private BigDecimal standardQuantity;
+
+    /**
+     * 标准单位id
+     */
+    private Long standardUnitId;
+
+    /**
+     * 是否报工
+     */
+    private Integer reportWorkFlag;
+
+    /**
+     * 是否报检
+     */
+    private Integer reportCheckFlag;
+
+    /**
+     * 是否进站
+     */
+    private Integer inStationFlag;
+    /**
+
+     * 是否出站
+     */
+    private Integer outStationFlag;
+
+    /**
+     * 工序报废百分比
+     */
+    private BigDecimal processScrap;
 
     /**
      * 创建人id
@@ -84,4 +132,6 @@ public class PmCraftRouteProcess implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+
 }

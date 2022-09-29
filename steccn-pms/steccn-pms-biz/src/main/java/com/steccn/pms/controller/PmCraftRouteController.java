@@ -5,7 +5,9 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmCraftRouteDTO;
+import com.steccn.pms.dto.PmCraftRouteProcessDTO;
 import com.steccn.pms.service.PmCraftRouteService;
+import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +46,7 @@ public class PmCraftRouteController {
 
     @ApiModelProperty("编辑工艺路线")
     @PutMapping
-    public R<Boolean> edit(@Validated(UpdateGroup.class)@Valid @RequestBody PmCraftRouteDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @Valid @RequestBody PmCraftRouteDTO dto) {
         return pmCraftRouteService.edit(dto);
     }
 
@@ -56,8 +58,14 @@ public class PmCraftRouteController {
 
     @ApiModelProperty("校验当前物料下的工艺版本")
     @GetMapping("/verifyVersion")
-    public R<Boolean> verifyVersion(@RequestParam("id")Long id,@RequestParam("version")String version){
-        return pmCraftRouteService.verifyVersion(id,version);
+    public R<Boolean> verifyVersion(@RequestParam("id") Long id, @RequestParam("version") String version) {
+        return pmCraftRouteService.verifyVersion(id, version);
     }
 
+
+    @ApiModelProperty("获取工艺路线下工序信息")
+    @GetMapping("/getProcessInfo")
+    public R<PmCraftRouteProcessVO> getProcessInfo(@RequestParam("processId") Long processId, @RequestParam("craftRouteId") String craftRouteId) {
+        return pmCraftRouteService.getProcessInfo(processId, craftRouteId);
+    }
 }

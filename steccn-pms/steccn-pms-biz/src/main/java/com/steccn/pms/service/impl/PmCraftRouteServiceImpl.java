@@ -167,6 +167,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
 
     /**
      * 查询版本是否已存在
+     *
      * @param id
      * @param version
      * @return
@@ -179,6 +180,31 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         LambdaQueryWrapper<PmCraftRoute> eq = new LambdaQueryWrapper<PmCraftRoute>().eq(PmCraftRoute::getMaterialId, id).eq(PmCraftRoute::getVersion, version);
         long count = count(eq);
         return R.success(count > 0);
+    }
+
+    /**
+     * 获取工艺路线中工序详情
+     *
+     * @param processId
+     * @param craftRouteId
+     * @return
+     */
+    @Override
+    public R<PmCraftRouteProcessVO> getProcessInfo(Long processId, String craftRouteId) {
+        if (Objects.isNull(processId) || Objects.isNull(craftRouteId)) {
+            return null;
+        }
+        LambdaQueryWrapper<PmCraftRouteProcess> eq = new LambdaQueryWrapper<PmCraftRouteProcess>().eq(PmCraftRouteProcess::getProcessId, processId).eq(PmCraftRouteProcess::getRouteId, craftRouteId);
+        PmCraftRouteProcess one = pmCraftRouteProcessService.getOne(eq);
+        PmCraftRouteProcessVO pmCraftRouteProcessVO = new PmCraftRouteProcessVO();
+        BeanUtils.copyProperties(one, pmCraftRouteProcessVO);
+        List<Long> ids = Lists.newArrayList();
+        ids.add(one.getUnitId());
+        ids.add(one.getStandardUnitId());
+        R<Map<Long, SysDictVO>> dict = remoteDictFeignApi.listById(ids);
+        pmCraftRouteProcessVO.setUnit(dict.getData().get(one.getUnitId()).getName());
+        pmCraftRouteProcessVO.setStandardUnit(dict.getData().get(one.getStandardUnitId()).getName());
+        return R.success(pmCraftRouteProcessVO);
     }
 
 

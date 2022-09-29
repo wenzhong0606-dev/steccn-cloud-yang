@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmCraftRoute;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmCraftRouteDTO;
+import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 
 import java.util.List;
@@ -26,4 +27,6 @@ public interface PmCraftRouteService extends IService<PmCraftRoute> {
     R<Boolean> delete(Long id);
 
     R<Boolean> verifyVersion(Long id, String version);
+
+    R<PmCraftRouteProcessVO> getProcessInfo(Long processId, String craftRouteId);
 }
