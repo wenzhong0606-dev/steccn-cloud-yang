@@ -9,6 +9,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * @author yequan
+ * @desc 工序报工-提交报工
+ */
 @Data
 @ApiModel("工序报工-提交报工")
 public class ProcessReportWorkSubmitDTO implements Serializable {
@@ -51,6 +55,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
 
     @ApiModelProperty("加工时间")
     private List<ProcessReportWorkHourDTO> hourDtoList;
+
+    @ApiModelProperty("物料消耗")
+    private List<ProcessReportWorkMaterialListDTO> materialConsumeList;
 
     private static final long serialVersionUID = 1L;
 }

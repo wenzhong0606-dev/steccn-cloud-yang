@@ -1,4 +1,4 @@
-package com.steccn.pms.vo;
+package com.steccn.pms.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -12,7 +12,7 @@ import java.io.Serializable;
  */
 @Data
 @ApiModel("工序报工-物料消耗vo")
-public class ProcessReportWorkMaterialConsumeVO implements Serializable {
+public class ProcessReportWorkMaterialListDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -21,6 +21,9 @@ public class ProcessReportWorkMaterialConsumeVO implements Serializable {
 
     @ApiModelProperty("组件id")
     private Integer moduleId;
+
+    @ApiModelProperty("组件编码")
+    private String moduleCode;
 
     @ApiModelProperty("组件名称")
     private String moduleName;
