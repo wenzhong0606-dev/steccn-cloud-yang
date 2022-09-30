@@ -7,10 +7,7 @@ import com.steccn.pms.vo.BarcodePrintRecordVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
@@ -33,5 +30,11 @@ public class BarcodePrintController {
     @PostMapping("/print/record")
     public R<List<BarcodePrintRecordVO>> printRecord(@RequestBody BarcodePrintRecordDTO dto) {
         return R.success();
+    }
+
+    @DeleteMapping("/print/record/{id}")
+    @ApiOperation("打印记录删除")
+    public R<Boolean> remove(@PathVariable("id") Long id) {
+        return R.success(Boolean.TRUE);
     }
 }
