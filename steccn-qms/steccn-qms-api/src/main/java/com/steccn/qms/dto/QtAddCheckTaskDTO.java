@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 新增巡检任务DTO
@@ -52,4 +53,60 @@ public class QtAddCheckTaskDTO implements Serializable {
      */
     @NotNull(groups = {InsertGroup.class}, message = "检验方案不能为空")
     private Integer checkPlanId;
+
+    /**
+     * 任务开始时间
+     */
+    private LocalDateTime startTime;
+
+    /**
+     * 任务完成时间
+     */
+    private LocalDateTime finishedTime;
+
+    /**
+     * 到货时间
+     */
+    private LocalDateTime arrivalTime;
+
+    /**
+     * 发货时间
+     */
+    private LocalDateTime deliverTime;
+
+    /**
+     * 供应商id
+     */
+    private Integer supplierId;
+
+    /**
+     * 客户id
+     */
+    private Integer customerId;
+
+    /**
+     * 缺陷记录开始时间
+     */
+    private LocalDateTime defectStartTime;
+
+    /**
+     * 缺陷记录结束时间
+     */
+    private LocalDateTime defectEndTime;
+
+    /**
+     * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     */
+    @NotNull(groups = {InsertGroup.class}, message = "任务类型不能为空")
+    private Integer taskType;
+
+    /**
+     * 发货单号
+     */
+    private String deliverOrder;
+
+    /**
+     * 发货数量
+     */
+    private Integer deliverNum;
 }

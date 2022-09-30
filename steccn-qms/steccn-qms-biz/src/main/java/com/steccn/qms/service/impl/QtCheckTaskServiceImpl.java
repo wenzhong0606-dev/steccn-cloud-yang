@@ -7,14 +7,12 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.qms.domain.QtCheckPlan;
-import com.steccn.qms.domain.QtCheckTask;
-import com.steccn.qms.domain.QtCheckTaskDetail;
-import com.steccn.qms.domain.QtRecheckTask;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
+import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -61,7 +59,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setType(0);
         //状态待检验
         qtCheckTask.setStatus(0);
-
+        //获取最大的自增编码
+        qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
         /**
          * 判断是否需要创建检验方案快照【方案+分组+检验项+缺陷项】
          *      plan1 v1 -> T1 需要创建快照，plan1' v1
@@ -313,6 +312,26 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             vos.add(vo);
         }
         return vos;
+    }
+
+    private Long currentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        QtCheckTask maxCodeModel = getOne(new LambdaQueryWrapper<QtCheckTask>().orderByDesc(QtCheckTask::getCode).last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_JYRW.length());
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
     }
 }
 

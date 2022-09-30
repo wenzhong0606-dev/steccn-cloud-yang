@@ -4,37 +4,37 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.qms.mapper.QtCheckTaskMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTask">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="type" column="type" jdbcType="TINYINT"/>
-            <result property="materialId" column="material_id" jdbcType="INTEGER"/>
-            <result property="workshopId" column="workshop_id" jdbcType="INTEGER"/>
-            <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
-            <result property="productOrder" column="product_order" jdbcType="VARCHAR"/>
-            <result property="productBatch" column="product_batch" jdbcType="VARCHAR"/>
-            <result property="checkPlanId" column="check_plan_id" jdbcType="INTEGER"/>
-            <result property="status" column="status" jdbcType="TINYINT"/>
-            <result property="checkNum" column="check_num" jdbcType="INTEGER"/>
-            <result property="goodNum" column="good_num" jdbcType="INTEGER"/>
-            <result property="badNum" column="bad_num" jdbcType="INTEGER"/>
-            <result property="result" column="result" jdbcType="VARCHAR"/>
-            <result property="note" column="note" jdbcType="VARCHAR"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
-    </resultMap>
+<!--    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTask">-->
+<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
+<!--            <result property="type" column="type" jdbcType="TINYINT"/>-->
+<!--            <result property="materialId" column="material_id" jdbcType="INTEGER"/>-->
+<!--            <result property="workshopId" column="workshop_id" jdbcType="INTEGER"/>-->
+<!--            <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>-->
+<!--            <result property="productOrder" column="product_order" jdbcType="VARCHAR"/>-->
+<!--            <result property="productBatch" column="product_batch" jdbcType="VARCHAR"/>-->
+<!--            <result property="checkPlanId" column="check_plan_id" jdbcType="INTEGER"/>-->
+<!--            <result property="status" column="status" jdbcType="TINYINT"/>-->
+<!--            <result property="checkNum" column="check_num" jdbcType="INTEGER"/>-->
+<!--            <result property="goodNum" column="good_num" jdbcType="INTEGER"/>-->
+<!--            <result property="badNum" column="bad_num" jdbcType="INTEGER"/>-->
+<!--            <result property="result" column="result" jdbcType="VARCHAR"/>-->
+<!--            <result property="note" column="note" jdbcType="VARCHAR"/>-->
+<!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
+<!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
+<!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
+<!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
+<!--    </resultMap>-->
 
-    <sql id="Base_Column_List">
-        id,type,material_id,
-        workshop_id,product_line_id,product_order,
-        product_batch,check_plan_id,status,
-        check_num,good_num,bad_num,
-        result,note,create_by,
-        create_name,create_time,update_by,
-        update_name,update_time,del_flag
-    </sql>
+<!--    <sql id="Base_Column_List">-->
+<!--        id,type,material_id,-->
+<!--        workshop_id,product_line_id,product_order,-->
+<!--        product_batch,check_plan_id,status,-->
+<!--        check_num,good_num,bad_num,-->
+<!--        result,note,create_by,-->
+<!--        create_name,create_time,update_by,-->
+<!--        update_name,update_time,del_flag-->
+<!--    </sql>-->
 </mapper>

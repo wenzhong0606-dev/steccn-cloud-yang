@@ -20,10 +20,19 @@ public class CodeGenerateUtil {
     public final static String PREFIX_JYFA = "JYFA";
 
     /**
+     * 前缀-检验任务
+     */
+    public final static String PREFIX_JYRW = "JYRW";
+
+    /**
      * 数字位数
      */
     public final static Integer NUM_BIT_6 = 6;
 
+    /**
+     * 数字位数
+     */
+    public final static Integer NUM_BIT_8 = 8;
 
     /**
      * @param prefix 前缀
