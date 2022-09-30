@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -54,6 +56,11 @@ public class PmsCompleteStorageInfo implements Serializable {
      * 完工入库单id
      */
     private Long completeStorageId;
+
+    /**
+     * 生产订单id
+     */
+    private Long produceOrderId;
 
     /**
      * 创建人id
