@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * @author yequan
+ * @desc 工序报工分页vo
  */
 @Data
 @ApiModel("工序报工分页vo")
