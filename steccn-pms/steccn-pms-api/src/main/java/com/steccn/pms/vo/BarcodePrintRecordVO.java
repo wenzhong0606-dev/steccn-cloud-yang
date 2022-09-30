@@ -1,0 +1,37 @@
+package com.steccn.pms.vo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * @author yequan
+ * @desc 打印记录明细信息
+ */
+@Data
+@ApiModel("打印记录明细信息")
+public class BarcodePrintRecordVO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty("主键id")
+    private Long id;
+
+    @ApiModelProperty("箱号")
+    private String caseNumber;
+
+    @ApiModelProperty("批次号")
+    private String batchNumber;
+
+    @ApiModelProperty("时间")
+    private LocalDateTime createTime;
+
+    @ApiModelProperty("数量")
+    private BigDecimal quantity;
+
+    @ApiModelProperty("箱子状态")
+    private Integer caseStatus;
+}

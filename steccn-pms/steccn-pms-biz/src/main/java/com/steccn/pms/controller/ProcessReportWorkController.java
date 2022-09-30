@@ -45,9 +45,8 @@ public class ProcessReportWorkController {
     }
 
     @ApiOperation("物料消耗")
-    @GetMapping("/material/consume")
+    @PostMapping("/material/consume")
     public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
         return R.success();
     }
-
 }
