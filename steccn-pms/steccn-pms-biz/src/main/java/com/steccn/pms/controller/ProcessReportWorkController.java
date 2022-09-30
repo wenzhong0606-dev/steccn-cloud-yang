@@ -2,9 +2,11 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.ProcessReportWorkMaterialConsumeDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
 import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
+import com.steccn.pms.vo.ProcessReportWorkMaterialConsumeVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import io.swagger.annotations.ApiOperation;
@@ -45,8 +47,7 @@ public class ProcessReportWorkController {
 
     @ApiOperation("物料消耗")
     @GetMapping("/material/consume")
-    public R<List<Object>> materialConsume(@ApiParam("生产订单主键") @RequestParam("produceOrderId") Long produceOrderId,
-                                           @ApiParam("工序主键") @RequestParam("processId") Integer processId) {
+    public R<List<ProcessReportWorkMaterialConsumeVO>> materialConsume(@RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
         return R.success();
     }
 

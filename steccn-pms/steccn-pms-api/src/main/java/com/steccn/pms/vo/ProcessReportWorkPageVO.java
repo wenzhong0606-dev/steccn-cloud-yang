@@ -4,12 +4,18 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * @author yequan
+ */
 @Data
 @ApiModel("工序报工分页vo")
-public class ProcessReportWorkPageVO {
+public class ProcessReportWorkPageVO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("报工号")
     private String code;
