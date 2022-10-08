@@ -2,15 +2,22 @@ package com.steccn.pms.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yequan
@@ -18,8 +25,11 @@ import java.util.Objects;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@RequiredArgsConstructor
 public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, PmsReportWork>
         implements PmsReportWorkService {
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -53,7 +63,17 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Page<ProcessReportWorkPageVO> page = this.baseMapper.processReportPage(new Page(dto.getCurrent(), dto.getSize()), dto);
 
         //3.将id映射成name
-
+        List<ProcessReportWorkPageVO> records = page.getRecords();
+        List<Long> unitList = new ArrayList<>(records.size());
+        records.forEach(ele -> {
+            if (Objects.nonNull(ele.getUnitId())) {
+                unitList.add(ele.getUnitId());
+            }
+        });
+        Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitList)).get();
+        records.forEach(ele -> {
+            ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), new SysDictVO()).getName());
+        });
         return page;
     }
 }
