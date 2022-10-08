@@ -48,7 +48,7 @@ public class PmsWorkOrderBom implements Serializable {
     /**
      * 是否副产品：（0:否 1：是）
      */
-    private Integer copruductFlag;
+    private Integer coproductFlag;
 
     /**
      * 是否反冲：（0：否  1：是）

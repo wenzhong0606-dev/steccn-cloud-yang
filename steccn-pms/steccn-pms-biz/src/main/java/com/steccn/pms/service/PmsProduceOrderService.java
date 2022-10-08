@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsProduceOrderDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
+    Boolean add(PmsProduceOrderDTO dto);
 }
