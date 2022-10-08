@@ -3,11 +3,13 @@ package com.steccn.pms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
 
 /**
  * 报工工时信息
+ * @author yequan
  * @TableName pms_report_work_hour
  */
 @TableName(value ="pms_report_work_hour")
@@ -16,7 +18,7 @@ public class PmsReportWorkHour implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -27,7 +29,7 @@ public class PmsReportWorkHour implements Serializable {
     /**
      * 工时
      */
-    private Double manHour;
+    private BigDecimal manHour;
 
     /**
      * 工时单位（字典时间单位）

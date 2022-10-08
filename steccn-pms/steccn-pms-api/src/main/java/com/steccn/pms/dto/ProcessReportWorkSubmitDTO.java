@@ -3,7 +3,6 @@ package com.steccn.pms.dto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,8 +34,8 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @ApiModelProperty("单位id")
     private Long unitId;
 
-    @ApiModelProperty("批次编码")
-    private String batch;
+    @ApiModelProperty("批次主键")
+    private Long batch;
 
     @ApiModelProperty("产线id")
     private Integer produceLineId;
@@ -48,13 +47,13 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     private Integer classGroupId;
 
     @ApiModelProperty("开始时间")
-    private String startTime;
+    private LocalDateTime startTime;
 
     @ApiModelProperty("结束时间")
     private LocalDateTime endTime;
 
     @ApiModelProperty("加工时间")
-    private List<ProcessReportWorkHourDTO> hourDtoList;
+    private List<ProcessReportWorkHourDTO> hourDTOList;
 
     @ApiModelProperty("物料消耗")
     private List<ProcessReportWorkMaterialListDTO> materialConsumeList;

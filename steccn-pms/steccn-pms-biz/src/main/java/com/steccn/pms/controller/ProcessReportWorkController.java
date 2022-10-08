@@ -38,7 +38,7 @@ public class ProcessReportWorkController {
     @ApiOperation("提交报工")
     @PostMapping("/add")
     public R<Boolean> submitReportWork(@RequestBody ProcessReportWorkSubmitDTO dto) {
-        return R.success(Boolean.TRUE);
+        return R.success(pmsReportWorkService.submitReportWork(dto));
     }
 
     @ApiOperation("报工记录")

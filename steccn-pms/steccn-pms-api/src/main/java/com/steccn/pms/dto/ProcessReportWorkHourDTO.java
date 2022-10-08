@@ -6,6 +6,10 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+/**
+ * @author yequan
+ * @desc 工序报工-加工时间
+ */
 @Data
 @ApiModel("工序报工-加工时间")
 public class ProcessReportWorkHourDTO implements Serializable {

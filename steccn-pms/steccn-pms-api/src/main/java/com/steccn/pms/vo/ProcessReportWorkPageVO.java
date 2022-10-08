@@ -60,9 +60,6 @@ public class ProcessReportWorkPageVO implements Serializable {
     @ApiModelProperty("单位")
     private String unitName;
 
-    @ApiModelProperty("批次号id")
-    private Long batch;
-
     @ApiModelProperty("批次号")
     private String batchNo;
 

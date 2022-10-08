@@ -34,7 +34,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 开始时间
      */
-    private String startTime;
+    private LocalDateTime startTime;
 
     /**
      * 结束时间
@@ -59,7 +59,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 批次
      */
-    private String batch;
+    private String batchNo;
 
     /**
      * 班次id
