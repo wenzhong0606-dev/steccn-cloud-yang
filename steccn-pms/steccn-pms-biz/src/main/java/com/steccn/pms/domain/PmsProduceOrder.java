@@ -38,7 +38,7 @@ public class PmsProduceOrder implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料编码
@@ -63,7 +63,7 @@ public class PmsProduceOrder implements Serializable {
     /**
      * 产线id
      */
-    private Integer productionLineId;
+    private Long productionLineId;
 
     /**
      * 工艺id（用做关联工艺路线信息的 工艺版本）
@@ -93,7 +93,7 @@ public class PmsProduceOrder implements Serializable {
     /**
      * 默认仓库id（完工信息）
      */
-    private Integer defaultWarehouseId;
+    private Long defaultWarehouseId;
 
     /**
      * 创建人id

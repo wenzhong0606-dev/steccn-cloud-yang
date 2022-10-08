@@ -18,5 +18,5 @@ public class PmsWorkOrderCraftStationDTO {
     private String executeStationName;
 
     @ApiModelProperty("工位Id")
-    private Integer executeStationId;
+    private Long executeStationId;
 }

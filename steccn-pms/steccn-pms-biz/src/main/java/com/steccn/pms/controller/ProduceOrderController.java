@@ -26,7 +26,7 @@ public class ProduceOrderController {
     private final PmsProduceOrderService pmsProduceOrderService;
 
     @ApiOperation("生产订单新增")
-    @PostMapping("/add")
+    @PostMapping()
     public R<Boolean> add(@RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.add(dto));
     }

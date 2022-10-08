@@ -24,7 +24,7 @@ public class PmsProduceOrderCraftDTO {
     private String name;
 
     @ApiModelProperty("类型id")
-    private String typeId;
+    private Long typeId;
 
     @ApiModelProperty("排序")
     private Integer sort;

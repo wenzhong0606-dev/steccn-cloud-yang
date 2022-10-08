@@ -2,6 +2,9 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
 
+    void saveMaterial(List<PmsWorkOrderBomDTO> materialList, Long id);
 }

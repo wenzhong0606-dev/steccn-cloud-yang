@@ -1,47 +1,73 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.domain.PmsProduceOrderCraft;
+import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.service.PmsProduceOrderCraftService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
+import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.util.PmsCodeUtil;
+import javafx.scene.paint.Material;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
-* @author yequan
-* @description 针对表【pms_produce_order(生产订单)】的数据库操作Service实现
-* @createDate 2022-09-28 15:18:51
-*/
+ * @author yequan
+ * @description 针对表【pms_produce_order(生产订单)】的数据库操作Service实现
+ * @createDate 2022-09-28 15:18:51
+ */
 @Service
+@RequiredArgsConstructor
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder>
-    implements PmsProduceOrderService{
+        implements PmsProduceOrderService {
 
+    private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
+
+    private final PmsWorkOrderBomService pmsWorkOrderBomService;
     /**
      * 新增生产订单信息
+     *
      * @param dto
      * @return
      */
     @Override
     @Transactional(readOnly = false)
     public Boolean add(PmsProduceOrderDTO dto) {
-        if (Objects.isNull(dto)){
+        //1.校验数据是否存在
+        if (Objects.isNull(dto)) {
             throw new BusinessException("订单信息为空");
         }
+        //2.定义数据模型
         PmsProduceOrder model = new PmsProduceOrder();
-        BeanUtil.copyProperties(dto,model);
-        //给当前订单生成编码
-        model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER,PmsCodeUtil.NUM_BIT_4,currentMaxCode()));
-        return null;
+        BeanUtil.copyProperties(dto, model);
+        //3.给当前订单生成编码
+        model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+        //4.保存订单信息
+        //4.1.保存基础信息
+        save(model);
+        //4.2保存工序信息
+        if (CollUtil.isNotEmpty(dto.getProcessList())){
+            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(),model.getId());
+        }
+        //4.3保存物料信息
+        if (CollUtil.isNotEmpty(dto.getMaterialList())){
+            pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(),model.getId());
+        }
+        return true;
     }
 
     /**
@@ -58,7 +84,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length()+PmsCodeUtil.NUM_BIT_8);
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
