@@ -8,14 +8,14 @@ import com.steccn.common.vo.R;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author yequan
+ */
 @FeignClient(contextId = "remoteDictFeignApi", value = FeignConstant.STECCN_PLATFORM_SERVICE_NAME)
 public interface RemoteDictFeignApi {
 
@@ -25,7 +25,7 @@ public interface RemoteDictFeignApi {
      * @param idList 数据字典id集合
      * @return
      */
-    @RequestMapping("/feign/platform/sys/dict/ids")
+    @PostMapping("/feign/platform/sys/dict/ids")
     @ApiOperation("根据主键id查询数据字典的值")
     R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList);
 
@@ -48,7 +48,7 @@ public interface RemoteDictFeignApi {
     @ApiOperation("数据字典是否存在于这个类型下的id")
     R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id);
 
-    @RequestMapping("/feign/platform/sys/dict/listByCode")
+    @PostMapping("/feign/platform/sys/dict/listByCode")
     @ApiOperation("根据code查询数据字典的值")
     R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO);
 }

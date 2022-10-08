@@ -6,6 +6,8 @@ import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -40,4 +42,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> findDataByPCodeAndType(SysOfficeParentDTO dto);
+
+    /**
+     * 根据主键id查询机构的信息
+     * @param idList 主键id集合
+     * @return map
+     */
+    Map<Integer, SysOfficeVO> listById(Set<Integer> idList);
 }

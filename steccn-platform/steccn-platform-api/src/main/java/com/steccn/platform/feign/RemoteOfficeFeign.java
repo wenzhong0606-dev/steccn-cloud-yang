@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -57,4 +58,15 @@ public interface RemoteOfficeFeign {
     @GetMapping("feign/platform/sys/office/name")
     @ApiOperation("通过id获取名字")
     R<String> getNameById(@RequestParam("id") Integer id);
+
+
+    /**
+     * 根据主键id查询机构的信息
+     *
+     * @param idList 机构id集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/ids")
+    @ApiOperation("根据主键id查询机构的信息")
+    R<Map<Integer, SysOfficeVO>> listById(@RequestBody Set<Integer> idList);
 }

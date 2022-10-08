@@ -5,7 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -13,10 +16,7 @@ import com.steccn.platform.mapper.SysOfficeMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -106,6 +106,20 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             });
         }
         return vos;
+    }
+
+    @Override
+    public Map<Integer, SysOfficeVO> listById(Set<Integer> idList) {
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
+        Collection<SysOffice> sysOfficeList = listByIds(idList);
+        if (CollUtil.isNotEmpty(sysOfficeList)) {
+            for (SysOffice sysOffice : sysOfficeList) {
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(sysOffice, sysOfficeVO);
+                resMap.put(sysOfficeVO.getId(), sysOfficeVO);
+            }
+        }
+        return resMap;
     }
 
 

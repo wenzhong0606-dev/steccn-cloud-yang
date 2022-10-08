@@ -6,7 +6,9 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
@@ -30,6 +32,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         implements PmsReportWorkService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -65,14 +68,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //3.将id映射成name
         List<ProcessReportWorkPageVO> records = page.getRecords();
         List<Long> unitList = new ArrayList<>(records.size());
+        Set<Integer> organIdSet = Sets.newHashSet();
         records.forEach(ele -> {
             if (Objects.nonNull(ele.getUnitId())) {
                 unitList.add(ele.getUnitId());
             }
+            if (Objects.nonNull(ele.getStationId())) {
+                organIdSet.add(ele.getStationId());
+            }
         });
         Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitList)).get();
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
         records.forEach(ele -> {
             ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), new SysDictVO()).getName());
+            ele.setStationName(sysOfficeVOMap.getOrDefault(ele.getStationId(), new SysOfficeVO()).getOfficeName());
         });
         return page;
     }

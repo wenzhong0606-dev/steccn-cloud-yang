@@ -31,10 +31,10 @@ public class ProcessReportWorkPageVO implements Serializable {
     private String processName;
 
     @ApiModelProperty("工位")
-    private Long stationId;
+    private Integer stationId;
 
     @ApiModelProperty("工位")
-    private String stationNo;
+    private String stationName;
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;

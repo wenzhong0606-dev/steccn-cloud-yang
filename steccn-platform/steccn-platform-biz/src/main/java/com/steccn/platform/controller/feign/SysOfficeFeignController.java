@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 机构feign控制器
@@ -33,5 +34,13 @@ public class SysOfficeFeignController {
     @GetMapping("/name")
     public R<String> listFlatDataByType(@RequestParam Integer id) {
         return R.success(sysOfficeService.findNameById(id));
+    }
+
+    @PostMapping("/ids")
+    R<Map<Integer, SysOfficeVO>> listById(@RequestBody Set<Integer> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysOfficeService.listById(idList));
     }
 }

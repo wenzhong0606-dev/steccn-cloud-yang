@@ -23,7 +23,7 @@ public class SysDictFeignController {
 
     private final SysDictService sysDictService;
 
-    @RequestMapping("/ids")
+    @PostMapping("/ids")
     @ApiOperation("根据主键id查询数据字典的值")
     public R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList) {
         if (CollUtil.isEmpty(idList)) {
@@ -45,7 +45,7 @@ public class SysDictFeignController {
         return R.success(sysDictService.exist(type, id));
     }
 
-    @RequestMapping("/listByCode")
+    @PostMapping("/listByCode")
     @ApiOperation("根据code查询数据字典的值")
     public R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO){
         return R.success(sysDictService.listByCode(sysDictDTO));
