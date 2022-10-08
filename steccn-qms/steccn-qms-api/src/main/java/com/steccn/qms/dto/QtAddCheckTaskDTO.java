@@ -27,16 +27,21 @@ public class QtAddCheckTaskDTO implements Serializable {
     private Long materialId;
 
     /**
-     * 车间
+     * 物料车间
      */
     @NotNull(groups = {InsertGroup.class}, message = "车间id不能为空")
-    private Integer workshopId;
+    private QtBaseIdNameDTO materialWorkshop;
+
+    /**
+     * 生产车间
+     */
+    private QtBaseIdNameDTO productWorkshop;
 
     /**
      * 产线
      */
     @NotNull(groups = {InsertGroup.class}, message = "产线id不能为空")
-    private Integer productLineId;
+    private QtBaseIdNameDTO productLine;
 
     /**
      * 生产批次
@@ -77,12 +82,12 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 供应商id
      */
-    private Integer supplierId;
+    private QtBaseIdNameDTO supplier;
 
     /**
      * 客户id
      */
-    private Integer customerId;
+    private QtBaseIdNameDTO customer;
 
     /**
      * 缺陷记录开始时间

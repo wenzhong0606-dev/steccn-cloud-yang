@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 /**
@@ -31,14 +34,41 @@ public class QtCheckTask implements Serializable {
     private Long materialId;
 
     /**
-     * 车间
+     * 物料车间
      */
-    private Integer workshopId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO materialWorkshop;
+
+    @TableField(value = "material_workshop ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String materialWorkshopName;
+
+    /**
+     * 生产车间
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO productWorkshop;
+
+    @TableField(value = "product_workshop ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productWorkshopName;
 
     /**
      * 产线
      */
-    private Integer productLineId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO productLine;
+
+    @TableField(value = "product_line ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productLineName;
+
 
     /**
      * 生产工单
@@ -108,12 +138,26 @@ public class QtCheckTask implements Serializable {
     /**
      * 供应商id
      */
-    private Integer supplierId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO supplier;
+
+    @TableField(value = "supplier ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String supplierName;
 
     /**
      * 客户id
      */
-    private Integer customerId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO customer;
+
+    @TableField(value = "customer ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String customerName;
 
     /**
      * 缺陷记录开始时间

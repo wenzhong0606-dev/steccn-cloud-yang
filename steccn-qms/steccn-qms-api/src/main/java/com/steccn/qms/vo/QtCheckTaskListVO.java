@@ -2,6 +2,8 @@ package com.steccn.qms.vo;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
  * 巡检任务列表vo
  *
@@ -16,19 +18,85 @@ public class QtCheckTaskListVO {
     private Long id;
 
     /**
+     * 任务Code
+     */
+    private String code;
+
+    /**
      * 物料名称
      */
     private String materialName;
 
     /**
-     * 车间名称
+     * 到货时间
      */
-    private String workshopName;
+    private LocalDateTime arrivalTime;
 
     /**
-     * 产线名称
+     * 供应商名
+     */
+    private String supplierName;
+
+    /**
+     * 物料使用车间名称
+     */
+    private String materialWorkshopName;
+
+
+    /**
+     * 生产订单
+     */
+    private String productOrder;
+
+    /**
+     * 生产车间
+     */
+    private String productWorkshopName;
+
+    /**
+     * 产线
      */
     private String productLineName;
+
+    /**
+     * 生产批次
+     */
+    private String productBatch;
+
+    /**
+     * 缺陷记录开始时间
+     */
+    private LocalDateTime defectStartTime;
+
+    /**
+     * 缺陷记录结束时间
+     */
+    private LocalDateTime defectEndTime;
+
+    /**
+     * 原始任务单号
+     */
+    private String originalTaskCode;
+
+    /**
+     * 发货单号
+     */
+    private String deliverOrder;
+
+    /**
+     * 发货时间
+     */
+    private LocalDateTime deliverTime;
+
+    /**
+     * 客户名字
+     */
+    private String customerName;
+
+    /**
+     * 发货数量
+     */
+    private Integer deliverNum;
 
     /**
      * 状态

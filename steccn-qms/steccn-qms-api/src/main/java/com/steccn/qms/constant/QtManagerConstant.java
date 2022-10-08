@@ -22,6 +22,44 @@ public interface QtManagerConstant {
 
     String QT_CHECK_ITEM_SORT_FIELD_CODE = "code";
 
+    String QT_CHECK_TASK_SORT_FIELD_CODE = "code";
+
+    String QT_CHECK_TASK_SORT_FIELD_STATUS = "status";
+
+    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME = "material_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME = "arrival_time";
+
+    String QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME = "supplier_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME = "material_workShop_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER = "product_order";
+
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_WORKSHOP_NAME = "product_workshop_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_LINE_NAME = "product_line_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH = "product_batch";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME = "defect_start_time";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE = "original_code";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_ORDER = "deliver_order";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_TIME = "deliver_time";
+
+    String QT_CHECK_TASK_SORT_FIELD_CUSTOMER_NAME = "customer_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_NUM = "deliver_num";
+
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_RESULT = "result";
+
+    String QT_CHECK_TASK_SORT_FIELD_CREATE_NAME = "create_name";
+
+    String QT_CHECK_TASK_SORT_FIELD_CREATE_TIME = "create_time";
+
 
     /**
      * @desc 检验项 | 缺陷项类别枚举

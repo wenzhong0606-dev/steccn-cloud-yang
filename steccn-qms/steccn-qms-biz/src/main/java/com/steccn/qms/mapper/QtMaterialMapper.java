@@ -1,5 +1,6 @@
 package com.steccn.qms.mapper;
 
+import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtMaterial;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.qms.domain.QtMaterial
 */
 @Mapper
-public interface QtMaterialMapper extends BaseMapper<QtMaterial> {
+public interface QtMaterialMapper extends MPJBaseMapper<QtMaterial> {
 
 }
 
