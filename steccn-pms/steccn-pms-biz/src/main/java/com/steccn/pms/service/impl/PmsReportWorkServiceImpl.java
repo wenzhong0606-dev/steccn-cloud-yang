@@ -13,7 +13,9 @@ import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.WorkOrderBatchVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -69,6 +72,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkPageVO> records = page.getRecords();
         List<Long> unitList = new ArrayList<>(records.size());
         Set<Integer> organIdSet = Sets.newHashSet();
+        Set<Long> batchSet = Sets.newHashSet();
         records.forEach(ele -> {
             if (Objects.nonNull(ele.getUnitId())) {
                 unitList.add(ele.getUnitId());
@@ -76,12 +80,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             if (Objects.nonNull(ele.getStationId())) {
                 organIdSet.add(ele.getStationId());
             }
+            if (Objects.nonNull(ele.getBatch())) {
+                batchSet.add(ele.getBatch());
+            }
         });
         Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitList)).get();
-        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
+        Map<Long, WorkOrderBatchVO> batchMap = pmsWorkOrderBatchService.listById(batchSet);
+
         records.forEach(ele -> {
             ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), new SysDictVO()).getName());
-            ele.setStationName(sysOfficeVOMap.getOrDefault(ele.getStationId(), new SysOfficeVO()).getOfficeName());
+            ele.setStationName(sysOfficeMap.getOrDefault(ele.getStationId(), new SysOfficeVO()).getOfficeName());
+            ele.setBatchNo(batchMap.getOrDefault(ele.getBatch(), new WorkOrderBatchVO()).getCode());
         });
         return page;
     }
