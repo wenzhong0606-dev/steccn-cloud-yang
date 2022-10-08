@@ -1,8 +1,11 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.PmsProduceOrderPageDTO;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 
 /**
 * @author yequan
@@ -12,4 +15,6 @@ import com.steccn.pms.dto.PmsProduceOrderDTO;
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     Boolean add(PmsProduceOrderDTO dto);
+
+    Page<PmsProduceOrderVO> pageList(PmsProduceOrderPageDTO dto);
 }

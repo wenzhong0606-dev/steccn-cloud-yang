@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
@@ -11,17 +12,22 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.service.PmsProduceOrderCraftService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import javafx.scene.paint.Material;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,6 +44,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
 
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
+
     /**
      * 新增生产订单信息
      *
@@ -60,14 +67,63 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.1.保存基础信息
         save(model);
         //4.2保存工序信息
-        if (CollUtil.isNotEmpty(dto.getProcessList())){
-            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(),model.getId());
+        if (CollUtil.isNotEmpty(dto.getProcessList())) {
+            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId());
         }
         //4.3保存物料信息
-        if (CollUtil.isNotEmpty(dto.getMaterialList())){
-            pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(),model.getId());
+        if (CollUtil.isNotEmpty(dto.getMaterialList())) {
+            pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
         }
         return true;
+    }
+
+    @Override
+    public Page<PmsProduceOrderVO> pageList(PmsProduceOrderPageDTO dto) {
+        //1.将日期拼接最大时间和最小时间
+        //计划开始时间-开始
+        if (Objects.nonNull(dto.getPlanStartDateStart())) {
+            dto.setPlanStartTimeStart(LocalDateTime.of(dto.getPlanStartDateStart(), LocalTime.MIN));
+        }
+        //计划开始时间-结束
+        if (Objects.nonNull(dto.getPlanStartDateEnd())) {
+            dto.setPlanStartTimeEnd(LocalDateTime.of(dto.getPlanStartDateEnd(), LocalTime.MAX));
+        }
+        //计划结束时间-开始
+        if (Objects.nonNull(dto.getPlanEndDateStart())) {
+            dto.setPlanEndTimeStart(LocalDateTime.of(dto.getPlanEndDateStart(), LocalTime.MIN));
+        }
+        //计划结束时间-结束
+        if (Objects.nonNull(dto.getPlanEndDateEnd())) {
+            dto.setPlanEndTimeEnd(LocalDateTime.of(dto.getPlanEndDateEnd(), LocalTime.MAX));
+        }
+        //实际开始时间-开始
+        if (Objects.nonNull(dto.getActualStartDateStart())) {
+            dto.setActualStartTimeStart(LocalDateTime.of(dto.getActualStartDateStart(), LocalTime.MIN));
+        }
+        //实际开始时间-结束
+        if (Objects.nonNull(dto.getActualStartDateEnd())) {
+            dto.setActualStartTimeEnd(LocalDateTime.of(dto.getActualStartDateEnd(), LocalTime.MAX));
+        }
+        //实际结束时间-开始
+        if (Objects.nonNull(dto.getActualEndDateStart())) {
+            dto.setActualEndTimeStart(LocalDateTime.of(dto.getActualEndDateStart(), LocalTime.MIN));
+        }
+        //实际结束时间-结束
+        if (Objects.nonNull(dto.getActualEndDateEnd())) {
+            dto.setActualEndTimeEnd(LocalDateTime.of(dto.getActualEndDateEnd(), LocalTime.MAX));
+        }
+        //2.自定义sql查询订单信息列表
+        Page<PmsProduceOrderVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
+        //3.处理数据
+        page.getRecords().forEach(
+                pmsProduceOrderVO -> {
+                    //获取工序信息
+                    pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
+                    //获取物料信息
+                    pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
+                }
+        );
+        return page;
     }
 
     /**

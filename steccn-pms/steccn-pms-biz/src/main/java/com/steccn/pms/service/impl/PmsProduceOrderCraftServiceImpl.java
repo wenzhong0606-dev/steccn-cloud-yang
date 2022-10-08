@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderCraftStation;
@@ -10,7 +11,10 @@ import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.service.PmsProduceOrderCraftService;
 import com.steccn.pms.mapper.PmsProduceOrderCraftMapper;
 import com.steccn.pms.service.PmsWorkOrderCraftStationService;
+import com.steccn.pms.vo.PmsProduceOrderCraftVO;
+import com.steccn.pms.vo.PmsWorkOrderCraftStationVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -54,6 +58,37 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
             }
         });
     }
+
+    /**
+     * 根据生产订单id查询工序信息
+     * @param id  生产订单id
+     */
+    @Override
+    public List<PmsProduceOrderCraftVO> getCrafts(Long id) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsProduceOrderCraft> eq = new LambdaQueryWrapper<PmsProduceOrderCraft>().eq(PmsProduceOrderCraft::getProduceOrderId, id);
+        //2.获取数据
+        List<PmsProduceOrderCraft> list = list(eq);
+        if (CollUtil.isEmpty(list)){
+            return null;
+        }
+        //3.处理数据
+        List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
+        list.forEach( pmsProduceOrderCraft -> {
+            //查询工位信息
+            PmsProduceOrderCraftVO pmsProduceOrderCraftVO = new PmsProduceOrderCraftVO();
+            BeanUtil.copyProperties(pmsProduceOrderCraft,pmsProduceOrderCraftVO);
+            List<PmsWorkOrderCraftStation> stations = pmsWorkOrderCraftStationService.list(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
+                    .eq(PmsWorkOrderCraftStation::getProduceOrderCraftId, pmsProduceOrderCraft.getId()));
+            if (CollUtil.isNotEmpty(stations)){
+                pmsProduceOrderCraftVO.setStationList(BeanUtil.copyToList(stations, PmsWorkOrderCraftStationVO.class));
+            }
+            craftVOList.add(pmsProduceOrderCraftVO);
+        });
+        return craftVOList;
+    }
+
+
 }
 
 

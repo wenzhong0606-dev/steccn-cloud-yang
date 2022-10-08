@@ -26,6 +26,9 @@ public class PmsProduceOrderDTO {
     @ApiModelProperty("类型id")
     private Long typeId;
 
+    @ApiModelProperty("编码")
+    private String code;
+
     @ApiModelProperty("物料id")
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料id不能为空")
     private Long materialId;

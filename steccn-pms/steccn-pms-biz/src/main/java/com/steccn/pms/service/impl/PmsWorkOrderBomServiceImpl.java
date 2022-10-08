@@ -1,16 +1,27 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.mapper.PmsWorkOrderBomMapper;
+import com.steccn.pms.vo.PmsWorkOrderBomVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -18,27 +29,70 @@ import java.util.List;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@RequiredArgsConstructor
 public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMapper, PmsWorkOrderBom>
         implements PmsWorkOrderBomService {
 
+    private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
     /**
      * 保存物料信息
+     *
      * @param materialList
      * @param id
      */
     @Override
     public void saveMaterial(List<PmsWorkOrderBomDTO> materialList, Long id) {
-        //定义数据集合
+        //1.定义数据集合
         List<PmsWorkOrderBom> bomList = Lists.newArrayList();
-        //处理数据
+        //2.处理数据
         materialList.forEach(material -> {
             PmsWorkOrderBom pmsWorkOrderBom = new PmsWorkOrderBom();
             BeanUtil.copyProperties(material, pmsWorkOrderBom);
             pmsWorkOrderBom.setWorkProduceId(id);
             bomList.add(pmsWorkOrderBom);
         });
-        //批量保存
+        //3.批量保存
         saveBatch(bomList);
+    }
+
+    /**
+     * 根据生产订单id查询物料信息
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public List<PmsWorkOrderBomVO> getMaterialList(Long id) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsWorkOrderBom> eq = new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, id);
+        //2.获取数据
+        List<PmsWorkOrderBom> list = list(eq);
+        if (CollUtil.isEmpty(list)) {
+            return null;
+        }
+        //3.处理数据
+        List<Long> ids = Lists.newArrayList();
+        List<Long> materialIds = Lists.newArrayList();
+        list.forEach(pmsWorkOrderBom -> {
+            ids.add(pmsWorkOrderBom.getUnitId());
+            materialIds.add(pmsWorkOrderBom.getModuleId());
+        });
+        //3.1.获取字典数据
+        R<Map<Long, SysDictVO>> dict = remoteDictFeignApi.listById(ids);
+        //3.2 获取物料数据
+        R<Map<Long, EqpSpareVO>> spare = remoteSpareFeignApi.listById(materialIds);
+        List<PmsWorkOrderBomVO> pmsWorkOrderBomVOList = Lists.newArrayList();
+        list.forEach( pmsWorkOrderBom -> {
+            PmsWorkOrderBomVO pmsWorkOrderBomVO = new PmsWorkOrderBomVO();
+            BeanUtil.copyProperties(pmsWorkOrderBom,pmsWorkOrderBomVO);
+            pmsWorkOrderBomVO.setName(spare.getData().get(pmsWorkOrderBomVO.getModuleId()).getName());
+            pmsWorkOrderBomVO.setCode(spare.getData().get(pmsWorkOrderBomVO.getModuleId()).getCode());
+            pmsWorkOrderBomVO.setUnit(dict.getData().get(pmsWorkOrderBomVO.getUnitId()).getName());
+            pmsWorkOrderBomVOList.add(pmsWorkOrderBomVO);
+        });
+        return pmsWorkOrderBomVOList;
     }
 }
 

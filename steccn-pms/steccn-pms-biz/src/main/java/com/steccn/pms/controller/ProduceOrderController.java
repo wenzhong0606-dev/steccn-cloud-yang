@@ -1,8 +1,11 @@
 package com.steccn.pms.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
+import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +32,12 @@ public class ProduceOrderController {
     @PostMapping()
     public R<Boolean> add(@RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.add(dto));
+    }
+
+    @ApiOperation("生产订单分页列表")
+    @PostMapping("/list")
+    public R<Page<PmsProduceOrderVO>> pageList(@RequestBody PmsProduceOrderPageDTO dto){
+        return R.success(pmsProduceOrderService.pageList(dto));
     }
 
 }

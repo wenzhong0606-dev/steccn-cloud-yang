@@ -23,7 +23,7 @@ public class PmsWorkOrderBom implements Serializable {
     /**
      * 组件id
      */
-    private Object moduleId;
+    private Long moduleId;
 
     /**
      * 数量

@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsProduceOrderCraftDTO;
+import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ import java.util.List;
 public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCraft> {
 
     void saveCrafts(List<PmsProduceOrderCraftDTO> processList,Long id);
+
+    List<PmsProduceOrderCraftVO> getCrafts(Long id);
 }
