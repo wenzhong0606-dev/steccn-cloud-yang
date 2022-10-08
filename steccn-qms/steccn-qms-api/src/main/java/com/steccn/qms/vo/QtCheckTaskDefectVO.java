@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,5 +27,10 @@ public class QtCheckTaskDefectVO implements Serializable {
      * 缺项
      */
     List<QtTaskDefectVO> defects;
+
+    /**
+     * 创建时间
+     */
+    LocalDateTime createTime;
 
 }

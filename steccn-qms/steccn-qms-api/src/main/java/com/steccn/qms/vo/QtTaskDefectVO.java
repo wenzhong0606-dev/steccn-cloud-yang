@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 任务-分类-缺陷项
@@ -21,5 +22,11 @@ public class QtTaskDefectVO implements Serializable {
      * 缺陷项名字
      */
     private String name;
+
+    /**
+     * 创建时间
+     */
+    LocalDateTime createTime;
+
 
 }

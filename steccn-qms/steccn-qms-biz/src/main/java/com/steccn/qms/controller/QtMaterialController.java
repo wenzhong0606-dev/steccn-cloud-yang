@@ -53,8 +53,8 @@ public class QtMaterialController {
 
     @GetMapping("/listAll")
     @ApiOperation(value = "查询所有已启用的物料")
-    public R<List<QtMaterialListAllVO>> listAll(@RequestParam("nameOrCode") String nameOrCode, @RequestParam("checkTypeCode") Integer checkTypeCode) {
-        return R.success(qtMaterialService.listAll(nameOrCode,checkTypeCode));
+    public R<List<QtMaterialListAllVO>> listAll(@RequestParam("nameOrCode") String nameOrCode) {
+        return R.success(qtMaterialService.listAll(nameOrCode));
     }
 
     @GetMapping("/linkedPlan")
