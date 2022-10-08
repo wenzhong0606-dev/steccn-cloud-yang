@@ -22,16 +22,17 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
-* @author W10
-* @description 针对表【sys_eqp_spare(Mes备品备件表)】的数据库操作Service实现
-* @createDate 2022-09-02 16:22:51
-*/
+ * @author W10
+ * @description 针对表【sys_eqp_spare(Mes备品备件表)】的数据库操作Service实现
+ * @createDate 2022-09-02 16:22:51
+ */
 @Service
 @RequiredArgsConstructor
 public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEqpSpare>
-    implements SysEqpSpareService{
+        implements SysEqpSpareService {
 
-    private  final SysEqpSpareMapper sysEqpSpareMapper;
+    private final SysEqpSpareMapper sysEqpSpareMapper;
+
     @Override
     public List<EqpSpareVO> listSpares(String name) {
         return sysEqpSpareMapper.listSpares(name);
@@ -68,7 +69,6 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     @Override
     public Map<String, EqpSpareVO> listByCode(List<String> codeList) {
-
         Map<String, EqpSpareVO> resMap = Maps.newHashMap();
         Collection<SysEqpSpare> spareList = baseMapper.listByCode(codeList);
         if (CollUtil.isEmpty(spareList)) {
@@ -77,6 +77,20 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<EqpSpareVO> spareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
         for (EqpSpareVO spareVO : spareVOList) {
             resMap.put(spareVO.getCode(), spareVO);
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, EqpSpareVO> listById(List<String> materialIds) {
+        Map<Long, EqpSpareVO> resMap = Maps.newHashMap();
+        Collection<SysEqpSpare> spareList = listByIds(materialIds);
+        if (CollUtil.isEmpty(spareList)) {
+            return resMap;
+        }
+        List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
+        for (EqpSpareVO eqpSpareVO : eqpSpareVOList) {
+            resMap.put(eqpSpareVO.getId(), eqpSpareVO);
         }
         return resMap;
     }

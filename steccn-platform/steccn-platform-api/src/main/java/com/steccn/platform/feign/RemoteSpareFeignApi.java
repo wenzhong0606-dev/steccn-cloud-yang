@@ -4,9 +4,7 @@ package com.steccn.platform.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +36,7 @@ public interface RemoteSpareFeignApi {
     R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList);
 
 
-
-
+    @RequestMapping("/feign/platform/eqpSpare/listById")
+    @ApiOperation("根据id查询备件的信息")
+    R<Map<Long, EqpSpareVO>> listById(@RequestBody List<Long> materialIds);
 }
