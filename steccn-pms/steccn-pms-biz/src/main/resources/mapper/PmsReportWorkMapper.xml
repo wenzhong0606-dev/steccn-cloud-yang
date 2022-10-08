@@ -34,7 +34,6 @@
         prw.produce_order_id,
         pp.CODE AS process_no,
         pp.name AS processName,
-        pp.NAME,
         prw.station_id,
         prw.create_time,
         prw.start_time,
@@ -44,9 +43,10 @@
         prw.badness_quantity,
         prw.unit_id,
         prw.batch_no,
-        prw.classes_id
+        prw.classes_id,
+        prw.class_group_id
         FROM pms_report_work prw
-        JOIN pm_process pp ON pp.id = prw.process_id
+        JOIN pms_produce_order_craft pp ON pp.id = prw.process_id
         WHERE
         prw.del_flag = 0 AND pp.del_flag = 0
         <if test="dto.processName != null and dto.processName != ''">

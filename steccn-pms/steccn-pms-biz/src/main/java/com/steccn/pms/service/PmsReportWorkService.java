@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
 import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 
 /**
 * @author yequan
@@ -27,4 +29,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 是否成功
      */
     Boolean submitReportWork(ProcessReportWorkSubmitDTO dto);
+
+    /**
+     * 报工记录
+     * @param dto 筛选条件
+     * @return 分页报工记录
+     */
+    Page<ProcessReportWorkPageVO> recordPage(ProcessReportWorkRecordDTO dto);
 }

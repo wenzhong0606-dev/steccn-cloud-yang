@@ -68,4 +68,11 @@ public class ProcessReportWorkPageVO implements Serializable {
 
     @ApiModelProperty("班次名称")
     private String classesName;
+
+    @ApiModelProperty("班组id")
+    private Long classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
+
 }

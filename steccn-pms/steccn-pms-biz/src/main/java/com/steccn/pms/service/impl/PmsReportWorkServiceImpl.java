@@ -18,11 +18,13 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.ProcessReportWorkHourDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
 import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -84,7 +86,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkPageVO> records = page.getRecords();
         List<Long> unitList = new ArrayList<>(records.size());
         Set<Integer> organIdSet = Sets.newHashSet();
-        Set<Long> batchSet = Sets.newHashSet();
         records.forEach(ele -> {
             if (Objects.nonNull(ele.getUnitId())) {
                 unitList.add(ele.getUnitId());
@@ -142,6 +143,13 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         }
         //生成出库单
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Page<ProcessReportWorkPageVO> recordPage(ProcessReportWorkRecordDTO dto) {
+        ProcessReportWorkPageDTO pageDTO = new ProcessReportWorkPageDTO();
+        BeanUtils.copyProperties(dto, pageDTO);
+        return pageList(pageDTO);
     }
 
     /**

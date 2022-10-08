@@ -14,5 +14,5 @@ import lombok.Data;
 public class ProcessReportWorkRecordDTO extends BasePageDTO {
 
     @ApiModelProperty("工位id")
-    private Long stationId;
+    private Integer stationId;
 }

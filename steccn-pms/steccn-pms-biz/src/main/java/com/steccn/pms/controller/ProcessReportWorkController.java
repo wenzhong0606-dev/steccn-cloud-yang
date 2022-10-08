@@ -43,8 +43,8 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工记录")
     @PostMapping("/record/page")
-    public R<Page<ProcessReportWorkRecordVO>> recordList(@RequestBody ProcessReportWorkRecordDTO dto) {
-        return R.success();
+    public R<Page<ProcessReportWorkPageVO>> recordPage(@RequestBody ProcessReportWorkRecordDTO dto) {
+        return R.success(pmsReportWorkService.recordPage(dto));
     }
 
     @ApiOperation("物料消耗")
