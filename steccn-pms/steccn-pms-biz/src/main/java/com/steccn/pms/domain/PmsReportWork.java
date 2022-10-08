@@ -9,6 +9,7 @@ import lombok.Data;
 
 /**
  * 工单报工
+ * @author yequan
  * @TableName pms_report_work
  */
 @TableName(value ="pms_report_work")
@@ -79,6 +80,11 @@ public class PmsReportWork implements Serializable {
      * 班组id
      */
     private Integer classGroupId;
+
+    /**
+     * 生产订单编码
+     */
+    private String produceOrderNo;
 
     /**
      * 生产订单id

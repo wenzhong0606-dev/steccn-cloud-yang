@@ -1,5 +1,7 @@
 package com.steccn.pms.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -8,6 +10,10 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * @author yequan
+ * @desc 工序报工分页dto
+ */
 @Data
 @ApiModel("工序报工分页dto")
 public class ProcessReportWorkPageDTO extends BasePageDTO {
@@ -28,20 +34,38 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
     private Integer classesId;
 
     @ApiModelProperty("创建时间-开始")
-    private LocalDate createTimeStart;
+    private LocalDate createDtStart;
 
     @ApiModelProperty("创建时间-结束")
-    private LocalDate createTimeEnd;
+    private LocalDate createDtEnd;
 
     @ApiModelProperty("开始时间-开始")
-    private LocalDate startTimeStart;
+    private LocalDate startDtStart;
 
     @ApiModelProperty("开始时间-结束")
-    private LocalDate startTimeEnd;
+    private LocalDate startDtEnd;
 
     @ApiModelProperty("结束时间-开始")
-    private LocalDate endTimeStart;
+    private LocalDate endDtStart;
 
     @ApiModelProperty("结束时间-结束")
-    private LocalDate endTimeEnd;
+    private LocalDate endDtEnd;
+
+    @ApiModelProperty(value = "创建时间-开始", hidden = true)
+    private LocalDateTime createTimeStart;
+
+    @ApiModelProperty(value = "创建时间-结束", hidden = true)
+    private LocalDateTime createTimeEnd;
+
+    @ApiModelProperty(value = "开始时间-开始", hidden = true)
+    private LocalDateTime startTimeStart;
+
+    @ApiModelProperty(value = "开始时间-结束", hidden = true)
+    private LocalDateTime startTimeEnd;
+
+    @ApiModelProperty(value = "结束时间-开始", hidden = true)
+    private LocalDateTime endTimeStart;
+
+    @ApiModelProperty(value = "结束时间-结束", hidden = true)
+    private LocalDateTime endTimeEnd;
 }

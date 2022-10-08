@@ -7,6 +7,7 @@ import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
 import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
 import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
+import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import io.swagger.annotations.ApiOperation;
@@ -26,10 +27,12 @@ import java.util.List;
 @Slf4j
 public class ProcessReportWorkController {
 
+    private final PmsReportWorkService pmsReportWorkService;
+
     @ApiOperation("工序分页列表")
     @PostMapping("/page")
     public R<Page<ProcessReportWorkPageVO>> pageList(@RequestBody ProcessReportWorkPageDTO dto) {
-        return R.success();
+        return R.success(pmsReportWorkService.pageList(dto));
     }
 
     @ApiOperation("提交报工")

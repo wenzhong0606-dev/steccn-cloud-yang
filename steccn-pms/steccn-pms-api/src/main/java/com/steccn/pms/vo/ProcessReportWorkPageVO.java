@@ -31,6 +31,9 @@ public class ProcessReportWorkPageVO implements Serializable {
     private String processName;
 
     @ApiModelProperty("工位")
+    private Long stationId;
+
+    @ApiModelProperty("工位")
     private String stationNo;
 
     @ApiModelProperty("创建时间")
@@ -52,10 +55,19 @@ public class ProcessReportWorkPageVO implements Serializable {
     private BigDecimal badnessQuantity;
 
     @ApiModelProperty("单位")
+    private Long unitId;
+
+    @ApiModelProperty("单位")
     private String unitName;
+
+    @ApiModelProperty("批次号id")
+    private Long batch;
 
     @ApiModelProperty("批次号")
     private String batchNo;
+
+    @ApiModelProperty("班次id")
+    private Long classesId;
 
     @ApiModelProperty("班次名称")
     private String classesName;
