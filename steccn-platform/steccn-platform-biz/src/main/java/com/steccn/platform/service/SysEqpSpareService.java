@@ -27,5 +27,5 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
     Map<String,EqpSpareVO> listByCode(List<String> codeList);
 
-    Map<Long,EqpSpareVO>  listById(List<String> materialIds);
+    Map<Long,EqpSpareVO>  listById(List<Long> materialIds);
 }

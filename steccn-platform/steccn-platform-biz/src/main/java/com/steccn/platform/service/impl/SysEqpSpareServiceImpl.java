@@ -82,7 +82,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     }
 
     @Override
-    public Map<Long, EqpSpareVO> listById(List<String> materialIds) {
+    public Map<Long, EqpSpareVO> listById(List<Long> materialIds) {
         Map<Long, EqpSpareVO> resMap = Maps.newHashMap();
         Collection<SysEqpSpare> spareList = listByIds(materialIds);
         if (CollUtil.isEmpty(spareList)) {

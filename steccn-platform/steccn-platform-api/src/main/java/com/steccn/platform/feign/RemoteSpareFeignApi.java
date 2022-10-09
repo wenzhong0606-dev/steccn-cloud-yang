@@ -6,10 +6,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +33,12 @@ public interface RemoteSpareFeignApi {
     R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList);
 
 
-    @RequestMapping("/feign/platform/eqpSpare/listById")
+    /**
+     * 根据id查询备件的信息
+     * @param materialIds 物料id
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/listById")
     @ApiOperation("根据id查询备件的信息")
     R<Map<Long, EqpSpareVO>> listById(@RequestBody List<Long> materialIds);
 }

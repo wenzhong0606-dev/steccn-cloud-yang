@@ -13,6 +13,8 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
@@ -50,6 +52,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private final PmsProduceOrderCraftService produceOrderCraftService;
     private final PmsWorkOrderBatchService workOrderBatchService;
     private final PmsWorkOrderBomService workOrderBomService;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -177,14 +180,25 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
         if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
             SysDictVO defaultSysDictVO = new SysDictVO();
-            List<Long> unitIdList = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getUnitId).collect(Collectors.toList());
+            EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+            List<Long> unitIdList = Lists.newArrayList();
+            List<Long> idList = Lists.newArrayList();
+            for (PmsWorkOrderBom pmsWorkOrderBom : pmsWorkOrderBomList) {
+                unitIdList.add(pmsWorkOrderBom.getUnitId());
+                idList.add(pmsWorkOrderBom.getModuleId());
+            }
             Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitIdList)).get();
+            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
+
             pmsWorkOrderBomList.forEach(ele -> {
                 ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
                 BeanUtils.copyProperties(ele, resDTO);
                 resDTO.setProduceOrderId(pmsProduceOrder.getId());
                 resDTO.setProcessName(pmsProduceOrderCraft.getName());
                 resDTO.setUnitName(sysDictMap.getOrDefault(resDTO.getUnitId(), defaultSysDictVO).getName());
+                EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(ele.getModuleId(), defaultEqpSpareVO);
+                resDTO.setModuleName(eqpSpareVO.getName());
+                resDTO.setModuleCode(eqpSpareVO.getCode());
                 BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 4, RoundingMode.HALF_UP);
                 resDTO.setQuantity(divide);
                 resList.add(resDTO);
