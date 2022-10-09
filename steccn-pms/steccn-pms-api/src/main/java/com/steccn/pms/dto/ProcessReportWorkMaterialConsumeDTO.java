@@ -2,7 +2,9 @@ package com.steccn.pms.dto;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author yequan
@@ -16,12 +18,12 @@ public class ProcessReportWorkMaterialConsumeDTO implements Serializable {
     @ApiModelProperty("生产订单主键")
     private Long produceOrderId;
 
+    @ApiModelProperty("工位")
+    private Integer stationId;
+
     @ApiModelProperty("工序主键")
     private Integer processId;
 
     @ApiModelProperty("加工数量")
-    private Integer processQuantity;
-
-    @ApiModelProperty("批次号信息")
-    private String batchNo;
+    private BigDecimal processQuantity;
 }

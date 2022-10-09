@@ -37,6 +37,8 @@ public class PmsCodeUtil {
      */
     public final static Integer NUM_BIT_4 = 4;
 
+    public final static Integer DEFAULT_PADDING = 0 ;
+
 
     /**
      * @param prefix     前缀

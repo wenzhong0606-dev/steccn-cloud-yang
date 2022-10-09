@@ -16,23 +16,22 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
-import com.steccn.pms.dto.ProcessReportWorkHourDTO;
-import com.steccn.pms.dto.ProcessReportWorkPageDTO;
-import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
-import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -50,6 +49,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private final PmsProduceOrderService produceOrderService;
     private final PmsProduceOrderCraftService produceOrderCraftService;
     private final PmsWorkOrderBatchService workOrderBatchService;
+    private final PmsWorkOrderBomService workOrderBomService;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -96,9 +96,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitList)).get();
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
+        SysDictVO defaultSysDictVO = new SysDictVO();
+        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
         records.forEach(ele -> {
-            ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), new SysDictVO()).getName());
-            ele.setStationName(sysOfficeMap.getOrDefault(ele.getStationId(), new SysOfficeVO()).getOfficeName());
+            ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), defaultSysDictVO).getName());
+            ele.setStationName(sysOfficeMap.getOrDefault(ele.getStationId(), defaultSysOfficeVO).getOfficeName());
         });
         return page;
     }
@@ -152,6 +154,45 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return pageList(pageDTO);
     }
 
+    @Override
+    public List<ProcessReportWorkMaterialListDTO> materialConsume(ProcessReportWorkMaterialConsumeDTO dto) {
+        //检验生产订单是否存在
+        PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
+
+        //校验工序是否存在
+        PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
+        Assert.notNull(pmsProduceOrderCraft, "工序不存在");
+
+        //工位是否存在
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(Sets.newHashSet(dto.getStationId()))).get();
+        Assert.checkBetween(sysOfficeMap.size(), 1, 1, "工位不存在");
+
+        //根据生产订单id和工序
+        List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                .eq(PmsWorkOrderBom::getWorkProduceId, pmsProduceOrder.getId())
+                .eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getId()));
+        //定义返回集合
+        List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
+
+        if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
+            SysDictVO defaultSysDictVO = new SysDictVO();
+            List<Long> unitIdList = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getUnitId).collect(Collectors.toList());
+            Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitIdList)).get();
+            pmsWorkOrderBomList.forEach(ele -> {
+                ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
+                BeanUtils.copyProperties(ele, resDTO);
+                resDTO.setProduceOrderId(pmsProduceOrder.getId());
+                resDTO.setProcessName(pmsProduceOrderCraft.getName());
+                resDTO.setUnitName(sysDictMap.getOrDefault(resDTO.getUnitId(), defaultSysDictVO).getName());
+                BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 4, RoundingMode.HALF_UP);
+                resDTO.setQuantity(divide);
+                resList.add(resDTO);
+            });
+        }
+        return resList;
+    }
+
     /**
      * 获取报工编码
      *
@@ -165,9 +206,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 .like(PmsReportWork::getCode, prefix)
                 .orderByDesc(PmsReportWork::getCode)
                 .last(MpConstant.STR_LIMIT_1));
-        long currentMax = 0L;
+        long currentMax = PmsCodeUtil.DEFAULT_PADDING;
         if (Objects.nonNull(one)) {
-            String substring = one.getCode().substring(one.getCode().length() - 4);
+            String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);
             try {
                 currentMax = Long.parseLong(substring);
             } catch (Exception e) {

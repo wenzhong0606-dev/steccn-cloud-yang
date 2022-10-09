@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author yequan
@@ -17,10 +18,10 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("生产订单id")
-    private Long workProduceId;
+    private Long produceOrderId;
 
     @ApiModelProperty("组件id")
-    private Integer moduleId;
+    private Long moduleId;
 
     @ApiModelProperty("组件编码")
     private String moduleCode;
@@ -34,8 +35,8 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     @ApiModelProperty("工序名称")
     private String processName;
 
-    @ApiModelProperty("数量 = 订单BOM组件数量 / 订单数量 * 加工数量")
-    private Integer quantity;
+    @ApiModelProperty("数量 = 订单BOM组件数量 / 订单数量 * 加工数量 可修改")
+    private BigDecimal quantity;
 
     @ApiModelProperty("单位id")
     private Long unitId;

@@ -2,18 +2,16 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.ProcessReportWorkMaterialConsumeDTO;
-import com.steccn.pms.dto.ProcessReportWorkPageDTO;
-import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
-import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
-import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -50,6 +48,6 @@ public class ProcessReportWorkController {
     @ApiOperation("物料消耗")
     @PostMapping("/material/consume")
     public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
-        return R.success();
+        return R.success(pmsReportWorkService.materialConsume(dto));
     }
 }

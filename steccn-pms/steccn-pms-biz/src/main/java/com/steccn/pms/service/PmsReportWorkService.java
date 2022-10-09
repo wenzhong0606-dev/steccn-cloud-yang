@@ -3,11 +3,11 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.ProcessReportWorkPageDTO;
-import com.steccn.pms.dto.ProcessReportWorkRecordDTO;
-import com.steccn.pms.dto.ProcessReportWorkSubmitDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ProcessReportWorkRecordVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -36,4 +36,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 分页报工记录
      */
     Page<ProcessReportWorkPageVO> recordPage(ProcessReportWorkRecordDTO dto);
+
+    /**
+     * 物料消耗
+     * @param dto dto
+     * @return 物料消耗列表，不分页
+     */
+    List<ProcessReportWorkMaterialListDTO> materialConsume(ProcessReportWorkMaterialConsumeDTO dto);
 }
