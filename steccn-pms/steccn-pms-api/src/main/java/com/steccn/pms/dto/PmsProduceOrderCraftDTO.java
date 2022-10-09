@@ -17,6 +17,9 @@ import java.util.List;
 @Data
 public class PmsProduceOrderCraftDTO {
 
+    @ApiModelProperty("主键")
+    private Long id;
+
     @ApiModelProperty("工序编码")
     private String code;
 

@@ -17,6 +17,9 @@ import java.math.BigDecimal;
 @ApiModel("生产订单-物料清单")
 public class PmsWorkOrderBomDTO {
 
+    @ApiModelProperty("id")
+    private Long id;
+
     @ApiModelProperty("物料id")
     private Long moduleId;
 

@@ -9,10 +9,7 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 生产订单相关内容
@@ -38,6 +35,12 @@ public class ProduceOrderController {
     @PostMapping("/list")
     public R<Page<PmsProduceOrderVO>> pageList(@RequestBody PmsProduceOrderPageDTO dto){
         return R.success(pmsProduceOrderService.pageList(dto));
+    }
+
+    @ApiOperation("生产订单编辑")
+    @PutMapping
+    public R<Boolean> edit(@RequestBody PmsProduceOrderDTO dto){
+        return R.success(pmsProduceOrderService.edit(dto));
     }
 
 }

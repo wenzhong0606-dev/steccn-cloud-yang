@@ -23,6 +23,9 @@ import java.util.List;
 @ApiModel("生产订单")
 public class PmsProduceOrderDTO {
 
+    @ApiModelProperty("主键id")
+    private Long id;
+
     @ApiModelProperty("类型id")
     private Long typeId;
 

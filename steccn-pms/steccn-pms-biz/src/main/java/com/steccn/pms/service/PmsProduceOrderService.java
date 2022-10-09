@@ -17,4 +17,6 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Boolean add(PmsProduceOrderDTO dto);
 
     Page<PmsProduceOrderVO> pageList(PmsProduceOrderPageDTO dto);
+
+    Boolean edit(PmsProduceOrderDTO dto);
 }

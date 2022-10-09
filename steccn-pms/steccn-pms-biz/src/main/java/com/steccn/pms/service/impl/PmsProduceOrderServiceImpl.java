@@ -5,26 +5,26 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.pms.domain.PmBillOfMaterial;
-import com.steccn.pms.domain.PmsProduceOrder;
-import com.steccn.pms.domain.PmsProduceOrderCraft;
-import com.steccn.pms.domain.PmsWorkOrderBom;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.dto.PmsProduceOrderPageDTO;
+import com.steccn.pms.dto.PmsWorkOrderBomDTO;
 import com.steccn.pms.service.PmsProduceOrderCraftService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.service.PmsWorkOrderBomService;
+import com.steccn.pms.service.PmsWorkOrderCraftStationService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import javafx.scene.paint.Material;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
+import org.apache.poi.util.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -44,6 +44,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
 
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
+
+    private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
 
     /**
      * 新增生产订单信息
@@ -124,6 +126,79 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 }
         );
         return page;
+    }
+
+    /**
+     * 编辑物料清单
+     *
+     * @return
+     */
+    @Override
+    public Boolean edit(PmsProduceOrderDTO dto) {
+        if (Objects.nonNull(dto)) {
+            PmsProduceOrder pmsProduceOrder = new PmsProduceOrder();
+            BeanUtil.copyProperties(dto, pmsProduceOrder);
+            updateById(pmsProduceOrder);
+            // 获取工序信息
+            if (CollUtil.isNotEmpty(dto.getProcessList())) {
+                dto.getProcessList().forEach(
+                        pmsProduceOrderCraftDTO -> {
+                            PmsProduceOrderCraft craft = new PmsProduceOrderCraft();
+                            BeanUtil.copyProperties(pmsProduceOrderCraftDTO, craft);
+                            craft.setProduceOrderId(dto.getId());
+                            if (Objects.nonNull(craft.getId())) {
+                                //修改工序信息
+                                pmsProduceOrderCraftService.updateById(craft);
+                                //处理工位数据
+                                if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
+                                    pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
+                                        PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
+                                        BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
+                                        pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
+                                        if (Objects.nonNull(pmsWorkOrderCraftStation.getId())) {
+                                            pmsWorkOrderCraftStationService.updateById(pmsWorkOrderCraftStation);
+                                        } else {
+                                            pmsWorkOrderCraftStationService.save(pmsWorkOrderCraftStation);
+                                        }
+                                    });
+                                }
+                            } else {
+                                //新增工序信息
+                                craft.setProduceOrderId(dto.getId());
+                                pmsProduceOrderCraftService.save(craft);
+                                //处理工位数据
+                                if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
+                                    List<PmsWorkOrderCraftStation> stations = Lists.newArrayList();
+                                    pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
+                                        PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
+                                        pmsWorkOrderCraftStation.setId(craft.getId());
+                                        BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
+                                        stations.add(pmsWorkOrderCraftStation);
+                                    });
+                                    //保存工位数据
+                                    pmsWorkOrderCraftStationService.saveBatch(stations);
+                                }
+                            }
+                        }
+                );
+            }
+            //获取物料信息
+            List<PmsWorkOrderBom> bomList = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(dto.getMaterialList())) {
+                dto.getMaterialList().forEach( material ->{
+                    PmsWorkOrderBom pmsWorkOrderBom = new PmsWorkOrderBom();
+                    BeanUtil.copyProperties(material,pmsWorkOrderBom);
+                    pmsWorkOrderBom.setWorkProduceId(dto.getId());
+                    if (Objects.nonNull(material.getId())){
+                        pmsWorkOrderBomService.updateById(pmsWorkOrderBom);
+                    }else {
+                        bomList.add(pmsWorkOrderBom);
+                    }
+                });
+            }
+            pmsWorkOrderBomService.saveBatch(bomList);
+        }
+        return true;
     }
 
     /**

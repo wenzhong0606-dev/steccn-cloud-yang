@@ -14,6 +14,9 @@ import lombok.Data;
 @ApiModel("生产订单-工艺信息-工位")
 public class PmsWorkOrderCraftStationDTO {
 
+    @ApiModelProperty("主键")
+    private Long id;
+
     @ApiModelProperty("工位名称")
     private String executeStationName;
 
