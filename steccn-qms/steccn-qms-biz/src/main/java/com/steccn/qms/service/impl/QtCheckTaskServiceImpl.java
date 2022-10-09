@@ -11,6 +11,7 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.nimbusds.jose.util.IntegerUtils;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -26,6 +27,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -202,6 +204,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTask qtCheckTask = new QtCheckTask();
         qtCheckTask.setId(dto.getId());
         qtCheckTask.setStatus(dto.getStatus());
+        //开始任务
+        if(dto.getStatus() == 1){
+            qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
+            qtCheckTask.setStartName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setStartTime(LocalDateTime.now());
+        }
+        //取消任务
+        if(dto.getStatus() == 3){
+            qtCheckTask.setCancelBy(SecurityUtils.getUser().getUserId());
+            qtCheckTask.setCancelName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setCancelTime(LocalDateTime.now());
+        }
         return updateById(qtCheckTask);
     }
 
@@ -435,12 +449,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDeliverNum);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_RESULT.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getResult);
-        }  else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_NAME.equals(dto.getSortField())) {
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(create_name using gbk) ASC");
             } else {
                 condition.last("ORDER BY CONVERT(create_name using gbk) DESC");
             }
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
+            condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
         }
         else {
             //默认按照创建时间降序

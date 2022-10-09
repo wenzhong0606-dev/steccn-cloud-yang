@@ -127,4 +127,9 @@ public class QtCheckTaskListVO {
      * 备注
      */
     private String note;
+
+    /**
+     * 创建人
+     */
+    private String createName;
 }

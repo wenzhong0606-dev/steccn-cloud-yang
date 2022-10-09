@@ -234,4 +234,39 @@ public class QtCheckTask implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 开始任务人id
+     */
+    private Long startBy;
+
+    /**
+     * 开始任务人姓名
+     */
+    private String startName;
+
+    /**
+     * 完成任务人id
+     */
+    private Long finishedBy;
+
+    /**
+     * 完成任务人姓名
+     */
+    private String finishedName;
+
+    /**
+     * 取消人
+     */
+    private Long cancelBy;
+
+    /**
+     * 取消人姓名
+     */
+    private String cancelName;
+
+    /**
+     * 取消时间
+     */
+    private LocalDateTime cancelTime;
 }
