@@ -1,8 +1,11 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.BarcodePrintDTO;
+import com.steccn.pms.dto.BarcodePrintRecordDTO;
+import com.steccn.pms.vo.BarcodePrintRecordVO;
 
 /**
 * @author yequan
@@ -17,4 +20,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return 是否成功
      */
     Boolean print(BarcodePrintDTO dto);
+
+    /**
+     * 打印记录
+     * @param dto dto
+     * @return 分页数据
+     */
+    Page<BarcodePrintRecordVO> printRecord(BarcodePrintRecordDTO dto);
 }

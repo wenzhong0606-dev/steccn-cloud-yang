@@ -35,7 +35,7 @@ public class PmsBarcodePrint implements Serializable {
     /**
      * 批次号
      */
-    private String batchNumber;
+    private String batchNo;
 
     /**
      * 数量
@@ -65,7 +65,7 @@ public class PmsBarcodePrint implements Serializable {
     /**
      * 箱号
      */
-    private String caseNumber;
+    private String caseNo;
 
     /**
      * 生产订单id

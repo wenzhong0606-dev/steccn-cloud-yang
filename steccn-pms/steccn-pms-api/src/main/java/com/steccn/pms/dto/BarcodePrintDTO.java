@@ -3,6 +3,7 @@ package com.steccn.pms.dto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -27,7 +28,7 @@ public class BarcodePrintDTO implements Serializable {
     private Long materialId;
 
     @ApiModelProperty("批次号")
-    private String batchNumber;
+    private String batchNo;
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;

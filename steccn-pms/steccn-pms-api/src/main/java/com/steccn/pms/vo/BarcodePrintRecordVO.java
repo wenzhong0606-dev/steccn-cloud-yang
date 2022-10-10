@@ -21,10 +21,10 @@ public class BarcodePrintRecordVO implements Serializable {
     private Long id;
 
     @ApiModelProperty("箱号")
-    private String caseNumber;
+    private String caseNo;
 
     @ApiModelProperty("批次号")
-    private String batchNumber;
+    private String batchNo;
 
     @ApiModelProperty("时间")
     private LocalDateTime createTime;
