@@ -65,6 +65,11 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         return resPage;
     }
 
+    @Override
+    public Boolean delete(Long id) {
+        return removeById(id);
+    }
+
     /**
      * 生产订单最大箱号
      *

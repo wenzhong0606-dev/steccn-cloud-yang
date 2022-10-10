@@ -38,7 +38,7 @@ public class BarcodePrintController {
 
     @DeleteMapping("/print/record/{id}")
     @ApiOperation("打印记录删除")
-    public R<Boolean> remove(@PathVariable("id") Long id) {
-        return R.success(Boolean.TRUE);
+    public R<Boolean> delete(@PathVariable("id") Long id) {
+        return R.success(pmsBarcodePrintService.delete(id));
     }
 }

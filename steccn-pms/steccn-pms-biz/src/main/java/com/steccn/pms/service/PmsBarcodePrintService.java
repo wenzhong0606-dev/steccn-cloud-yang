@@ -27,4 +27,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return 分页数据
      */
     Page<BarcodePrintRecordVO> printRecord(BarcodePrintRecordDTO dto);
+
+    /**
+     * 删除箱号
+     * @param id 主键id
+     * @return 删除
+     */
+    Boolean delete(Long id);
 }
