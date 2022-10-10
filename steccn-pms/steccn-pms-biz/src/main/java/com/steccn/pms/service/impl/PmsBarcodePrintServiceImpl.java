@@ -92,7 +92,6 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         }
         return currentMax;
     }
-
 }
 
 

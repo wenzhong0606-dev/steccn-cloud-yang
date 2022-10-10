@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.CompleteStorageScanDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> {
 
+    /**
+     * 摄像头扫描箱号
+     * @param caseNo 箱号
+     * @return 完工入库扫描vo
+     */
+    CompleteStorageScanDTO scan(String caseNo);
 }

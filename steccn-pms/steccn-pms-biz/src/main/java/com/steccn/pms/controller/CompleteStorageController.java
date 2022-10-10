@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 /**
@@ -22,11 +24,13 @@ import java.util.List;
 @Slf4j
 public class CompleteStorageController {
 
+    private final PmsCompleteStorageService pmsCompleteStorageService;
+
     @GetMapping("/scan")
     @ApiOperation("摄像头扫描箱号")
-    public R<CompleteStorageScanDTO> scan(@ApiParam("箱号") @RequestParam("caseNumber") String caseNumber) {
+    public R<CompleteStorageScanDTO> scan(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
 //        是否已生成入库单，如果生成则抛异常
-        return null;
+        return R.success(pmsCompleteStorageService.scan(caseNo));
     }
 
     @PostMapping("/generate")
