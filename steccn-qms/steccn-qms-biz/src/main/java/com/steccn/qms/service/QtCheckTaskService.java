@@ -54,6 +54,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     Boolean itemValue(QtCheckTaskSubmitDTO dto);
 
     /**
+     * pc加入值
+     * @param dto
+     * @return
+     */
+    Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto);
+
+    /**
      * 完成
      * @param dto
      * @return

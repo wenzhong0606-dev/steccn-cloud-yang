@@ -25,5 +25,43 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      */
     private Integer status;
 
+    /**
+     * 样本数量
+     */
     private Integer copyNum;
+
+    /**
+     * 合格数量
+     */
+    private Integer goodNum;
+
+    /**
+     * 不合格数量
+     */
+    private Integer badNum;
+
+    /**
+     * 结果
+     */
+    private String result;
+
+    /**
+     * 备注
+     */
+    private String note;
+
+    /**
+     * 缺陷数量
+     */
+    private Integer defectNum;
+
+    /**
+     * 分组
+     */
+    private List<QtPcCheckTaskCheckGroupDTO> checkGroup;
+
+    /**
+     * 可能直接传items
+     */
+    private List<QtPcCheckTaskCheckGroupItemDTO> items;
 }

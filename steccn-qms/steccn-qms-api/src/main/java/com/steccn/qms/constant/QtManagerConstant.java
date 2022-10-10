@@ -108,4 +108,23 @@ public interface QtManagerConstant {
             return null;
         }
     }
+
+    /**
+     * 检验类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtCheckTaskTypeEnum{
+        //任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+        INCOMING(1, "来料检"),
+        FIRST(2,"首检"),
+        ONLINE(3,"在线检"),
+        PATROL(4,"巡检"),
+        DELIVER(5,"出货检"),
+        CHEMICAL(6,"化验抽检"),
+        MIXED(7,"配料抽检");
+
+        private Integer code;
+        private String name;
+    }
 }

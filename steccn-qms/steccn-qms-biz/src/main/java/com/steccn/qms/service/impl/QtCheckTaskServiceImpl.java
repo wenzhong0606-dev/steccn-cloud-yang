@@ -234,10 +234,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (dto.getValues() != null && dto.getValues().size() > 0) {
             dto.getValues().forEach(valueTmp -> {
                 //先删除可能暂存的值
-                Map<String, Object> valueCondition = new HashMap<>();
-                valueCondition.put("task_id", dto.getId());
-                valueCondition.put("copy", valueTmp.getCopy());
-                qtCheckTaskDetailService.removeByMap(valueCondition);
+//                Map<String, Object> valueCondition = new HashMap<>();
+//                valueCondition.put("task_id", dto.getId());
+//                valueCondition.put("copy", valueTmp.getCopy());
+//                qtCheckTaskDetailService.removeByMap(valueCondition);
                 //value下的list
                 if (valueTmp.getList() != null && valueTmp.getList().size() > 0) {
                     valueTmp.getList().forEach(listTmp -> {
@@ -269,6 +269,82 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
         }
+        QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
+        statusDTO.setId(dto.getId());
+        statusDTO.setStatus(dto.getStatus());
+        return updateStatus(statusDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto) {
+        List<QtCheckTaskDetail> valueModels = new ArrayList<>();
+        QtCheckTask tasKDetail = new QtCheckTask();
+        if(CollUtil.isNotEmpty(dto.getCheckGroup())){
+            dto.getCheckGroup().forEach(group -> {
+                if(CollUtil.isNotEmpty(group.getItems())){
+                    group.getItems().forEach(item->{
+                        Map<String, Object> condition = new HashMap<>();
+                        QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+                        //在线检需要设置copy为0
+                        if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                            qtCheckTaskDetail.setCopy(0);
+                            condition.put("copy",0);
+                        }else {
+
+                        }
+
+//                        qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
+//                        if (checkGroupTmp.getDefectId() != null) {
+//                            qtCheckTaskDetail.setDefectId(checkGroupTmp.getDefectId());
+//                        }
+                        qtCheckTaskDetail.setTaskId(dto.getId());
+                        condition.put("task_id", dto.getId());
+                        qtCheckTaskDetail.setItemId(item.getId());
+                        condition.put("item_id", item.getId());
+                        qtCheckTaskDetail.setGroupId(group.getId());
+                        condition.put("group_id", group.getId());
+                        //需要先删除之前保存的值
+                        qtCheckTaskDetailService.removeByMap(condition);
+                        valueModels.add(qtCheckTaskDetail);
+                    });
+                }
+            });
+        }
+        //插入值
+//        if (dto.getValues() != null && dto.getValues().size() > 0) {
+//            dto.getValues().forEach(valueTmp -> {
+//                //value下的list
+//                if (valueTmp.getList() != null && valueTmp.getList().size() > 0) {
+//                    valueTmp.getList().forEach(listTmp -> {
+//                        //list下checkGroup
+//                        if (listTmp.getCheckGroup() != null && listTmp.getCheckGroup().size() > 0) {
+//                            listTmp.getCheckGroup().forEach(checkGroupTmp -> {
+//                                Map<String, Object> condition = new HashMap<>();
+//                                QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+//                                qtCheckTaskDetail.setCopy(valueTmp.getCopy());
+//                                condition.put("copy", valueTmp.getCopy());
+//                                qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
+//                                if (checkGroupTmp.getDefectId() != null) {
+//                                    qtCheckTaskDetail.setDefectId(checkGroupTmp.getDefectId());
+//                                }
+//                                qtCheckTaskDetail.setTaskId(dto.getId());
+//                                condition.put("task_id", dto.getId());
+//                                qtCheckTaskDetail.setItemId(checkGroupTmp.getItemId());
+//                                condition.put("item_id", checkGroupTmp.getItemId());
+//                                qtCheckTaskDetail.setGroupId(listTmp.getGroupId());
+//                                condition.put("group_id", listTmp.getGroupId());
+//                                //需要先删除之前保存的值
+//                                qtCheckTaskDetailService.removeByMap(condition);
+//                                valueModels.add(qtCheckTaskDetail);
+//                            });
+//                        }
+//                    });
+//                }
+//
+//            });
+//            qtCheckTaskDetailService.saveBatch(valueModels);
+//        }
         QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
         statusDTO.setId(dto.getId());
         statusDTO.setStatus(dto.getStatus());

@@ -74,7 +74,6 @@ public class QtCheckTaskDetail implements Serializable {
     /**
      * 是否删除标识：0否 1是
      */
-    @TableLogic
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
