@@ -91,6 +91,11 @@ public class PmsProduceOrder implements Serializable {
     private LocalDateTime actualEndTime;
 
     /**
+     * 默认货架id(完工信息)
+     */
+    private Long defaultShelfId;
+
+    /**
      * 默认仓库id（完工信息）
      */
     private Long defaultWarehouseId;

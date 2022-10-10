@@ -29,6 +29,9 @@ public class PmsCompleteDeliveryVO {
     @ApiModelProperty("状态")
     private Integer state;
 
+    @ApiModelProperty("物料id")
+    private Long materialId;
+
     @ApiModelProperty("物料编码")
     private String materialCode;
 
@@ -37,6 +40,9 @@ public class PmsCompleteDeliveryVO {
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;
+
+    @ApiModelProperty("单位id")
+    private Long unitId;
 
     @ApiModelProperty("单位")
     private String unit;
@@ -47,11 +53,20 @@ public class PmsCompleteDeliveryVO {
     @ApiModelProperty("批次")
     private String batchNo;
 
+    @ApiModelProperty("仓库id")
+    private Long  warehouseId;
+
     @ApiModelProperty("仓库")
     private String warehouseName;
 
+    @ApiModelProperty("货架Id")
+    private Long shelfId;
+
     @ApiModelProperty("货架")
     private String shelfName;
+
+    @ApiModelProperty("工序id")
+    private Long processId;
 
     @ApiModelProperty("工序")
     private String processName;

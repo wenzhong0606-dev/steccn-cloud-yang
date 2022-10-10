@@ -21,6 +21,11 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     private Long id;
 
     /**
+     * 物料id
+     */
+    private Long materialId;
+
+    /**
      * 箱号
      */
     private String caseNo;
@@ -34,11 +39,6 @@ public class PmsCompleteDeliveryInfo implements Serializable {
      * 装箱时间
      */
     private LocalDateTime packTime;
-
-    /**
-     * 状态
-     */
-    private Integer state;
 
     /**
      * 装箱数量
@@ -59,6 +59,17 @@ public class PmsCompleteDeliveryInfo implements Serializable {
      * 工序id
      */
     private Long processId;
+
+
+    /**
+     * 仓库id
+     */
+    private Long warehouseId;
+
+    /**
+     * 货架id
+     */
+    private Long shelfId;
 
     /**
      * 创建人id
