@@ -286,13 +286,31 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     group.getItems().forEach(item->{
                         Map<String, Object> condition = new HashMap<>();
                         QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-                        //在线检需要设置copy为0
-                        if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
-                            qtCheckTaskDetail.setCopy(0);
-                            condition.put("copy",0);
-                        }else {
-
+                        //遍历Map
+                        for(Map.Entry<String,String> entry:item.getResult().entrySet()){
+                            String key = entry.getKey();
+                            //如果map值等于checkResult
+                            if(key.substring(0,key.length() - 1).equals(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)){
+                                //detail设置Result
+                                qtCheckTaskDetail.setCheckResult(item.getResult().get(key));
+                                //如果是在线检则设置copy为0
+                                if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                                    qtCheckTaskDetail.setCopy(0);
+                                    condition.put("copy",0);
+                                }else {
+                                    //否则设置copy的值为末尾
+                                    Integer copy = Integer.valueOf(key.substring(key.length() - 1));
+                                    qtCheckTaskDetail.setCopy(copy);
+                                    condition.put("copy",copy);
+                                }
+                                //处理defect
+                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT + key.substring(key.length()-1);
+                                if(item.getResult().get(defectId)!=null){
+                                    qtCheckTaskDetail.setDefectId(Integer.valueOf(defectId));
+                                }
+                            }
                         }
+
 
 //                        qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
 //                        if (checkGroupTmp.getDefectId() != null) {
