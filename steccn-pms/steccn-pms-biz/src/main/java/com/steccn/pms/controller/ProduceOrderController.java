@@ -2,9 +2,13 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
-import com.steccn.pms.dto.PmsProduceOrderPageDTO;
+import com.steccn.pms.domain.PmsCompleteDelivery;
+import com.steccn.pms.domain.PmsProcessInStation;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.vo.PmsCompleteDeliveryVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.PmsProcessInStationVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +37,33 @@ public class ProduceOrderController {
 
     @ApiOperation("生产订单分页列表")
     @PostMapping("/list")
-    public R<Page<PmsProduceOrderVO>> pageList(@RequestBody PmsProduceOrderPageDTO dto){
+    public R<Page<PmsProduceOrderVO>> pageList(@RequestBody PmsProduceOrderPageDTO dto) {
         return R.success(pmsProduceOrderService.pageList(dto));
     }
 
     @ApiOperation("生产订单编辑")
     @PutMapping
-    public R<Boolean> edit(@RequestBody PmsProduceOrderDTO dto){
+    public R<Boolean> edit(@RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.edit(dto));
     }
+
+    @ApiOperation("获取订单完工入库信息")
+    @PostMapping("/getCompleteStorageInfo")
+    public R<Page<PmsCompleteStorageVO>> getCompleteStorageInfo(@RequestBody PmsCompleteStorageDTO dto) {
+        return R.success(pmsProduceOrderService.getCompleteStorageInfo(dto));
+    }
+
+    @ApiOperation("获取订单投料信息")
+    @PostMapping("/getCompleteDeliveryInfo")
+    public R<Page<PmsCompleteDeliveryVO>> getCompleteDeliveryInfo(@RequestBody PmsCompleteDeliveryDTO dto) {
+        return R.success(pmsProduceOrderService.getCompleteDeliveryInfo(dto));
+    }
+
+    @ApiOperation("获取工艺信息-进站信息")
+    @PostMapping("/getInStation")
+    public R<Page<PmsProcessInStationVO>> getInStation(@RequestBody PmsProcessInStationDTO dto) {
+        return R.success(pmsProduceOrderService.getInStation(dto));
+    }
+
 
 }

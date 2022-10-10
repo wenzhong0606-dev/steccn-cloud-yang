@@ -69,4 +69,6 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/ids")
     @ApiOperation("根据主键id查询机构的信息")
     R<Map<Integer, SysOfficeVO>> listById(@RequestBody Set<Integer> idList);
+
+
 }

@@ -99,10 +99,10 @@ public class PmsBillExcelDTO implements Serializable {
 
     @NotNull(groups = InsertGroup.class,message = "工序报废%不能为空")
     @ExcelProperty("工序报废%")
-    private Integer processScrapingPercent;
+    private Float processScrapingPercent;
 
     @NotNull(groups = InsertGroup.class,message = "组件报废%不能为空")
     @ExcelProperty("组件报废%")
-    private Integer componentScrapingPercent;
+    private Float componentScrapingPercent;
 
 }

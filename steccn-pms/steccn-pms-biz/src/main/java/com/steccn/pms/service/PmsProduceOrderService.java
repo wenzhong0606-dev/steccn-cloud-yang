@@ -3,8 +3,10 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
-import com.steccn.pms.dto.PmsProduceOrderPageDTO;
+import com.steccn.pms.dto.*;
+import com.steccn.pms.vo.PmsCompleteDeliveryVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.PmsProcessInStationVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 
 /**
@@ -14,9 +16,45 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 */
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
+    /**
+     * 新增接口
+     * @param dto
+     * @return
+     */
     Boolean add(PmsProduceOrderDTO dto);
 
+    /**
+     * 获取分页列表
+     * @param dto
+     * @return
+     */
     Page<PmsProduceOrderVO> pageList(PmsProduceOrderPageDTO dto);
 
+    /**
+     * 编辑
+     * @param dto
+     * @return
+     */
     Boolean edit(PmsProduceOrderDTO dto);
+
+    /**
+     * 根据订单id获取入库信息
+     * @param produceOrderId
+     * @return
+     */
+    Page<PmsCompleteStorageVO> getCompleteStorageInfo(PmsCompleteStorageDTO produceOrderId);
+
+    /**
+     * 根据订单id获取出库信息
+     * @param dto
+     * @return
+     */
+    Page<PmsCompleteDeliveryVO> getCompleteDeliveryInfo(PmsCompleteDeliveryDTO dto);
+
+    /**
+     * 根据订单获取进站信息
+     * @param dto
+     * @return
+     */
+    Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto);
 }

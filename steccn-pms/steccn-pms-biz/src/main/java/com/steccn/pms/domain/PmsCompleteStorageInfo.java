@@ -38,11 +38,6 @@ public class PmsCompleteStorageInfo implements Serializable {
     private LocalDateTime packTime;
 
     /**
-     * 状态
-     */
-    private Integer state;
-
-    /**
      * 装箱数量
      */
     private BigDecimal quantity;

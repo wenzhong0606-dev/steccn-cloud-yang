@@ -14,7 +14,17 @@ import java.util.List;
 */
 public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCraft> {
 
+    /**
+     * 根据生产订单id保存工序信息
+     * @param processList
+     * @param id
+     */
     void saveCrafts(List<PmsProduceOrderCraftDTO> processList,Long id);
 
+    /**
+     * 根据生产订单id获取工序信息
+     * @param id
+     * @return
+     */
     List<PmsProduceOrderCraftVO> getCrafts(Long id);
 }
