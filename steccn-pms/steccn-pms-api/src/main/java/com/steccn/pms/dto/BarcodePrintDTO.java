@@ -17,11 +17,14 @@ public class BarcodePrintDTO implements Serializable {
     @ApiModelProperty("生产订单id")
     private Long produceOrderId;
 
+    @ApiModelProperty("生产订单no")
+    private String produceOrderNo;
+
     @ApiModelProperty("产线id")
     private Integer productionLine;
 
     @ApiModelProperty("物料id")
-    private Integer materialId;
+    private Long materialId;
 
     @ApiModelProperty("批次号")
     private String batchNumber;

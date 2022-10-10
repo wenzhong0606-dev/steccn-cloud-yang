@@ -5,19 +5,21 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 条码打印
+ *
  * @TableName pms_barcode_print
  */
-@TableName(value ="pms_barcode_print")
+@TableName(value = "pms_barcode_print")
 @Data
 public class PmsBarcodePrint implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -28,7 +30,7 @@ public class PmsBarcodePrint implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 批次号
@@ -64,6 +66,11 @@ public class PmsBarcodePrint implements Serializable {
      * 箱号
      */
     private String caseNumber;
+
+    /**
+     * 生产订单id
+     */
+    private Long produceOrderId;
 
     /**
      * 创建人id

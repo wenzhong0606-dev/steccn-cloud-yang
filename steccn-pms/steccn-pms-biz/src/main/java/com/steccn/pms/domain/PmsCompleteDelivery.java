@@ -33,7 +33,7 @@ public class PmsCompleteDelivery implements Serializable {
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 数量

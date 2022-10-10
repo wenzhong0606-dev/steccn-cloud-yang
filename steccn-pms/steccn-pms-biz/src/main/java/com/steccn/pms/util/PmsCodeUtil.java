@@ -22,6 +22,11 @@ public class PmsCodeUtil {
      * 前缀-工艺路线
      */
     public final static String PREFIX_R = "R-";
+
+    /**
+     * 短线
+     */
+    public final static String SHORT_LINE = "-";
     /**
      * 数字位数
      */
@@ -37,7 +42,7 @@ public class PmsCodeUtil {
      */
     public final static Integer NUM_BIT_4 = 4;
 
-    public final static Integer DEFAULT_PADDING = 0 ;
+    public final static Integer DEFAULT_PADDING = 0;
 
 
     /**
