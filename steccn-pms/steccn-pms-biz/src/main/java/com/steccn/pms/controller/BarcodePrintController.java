@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
+import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,12 @@ import java.util.List;
 @Slf4j
 public class BarcodePrintController {
 
+    private final PmsBarcodePrintService pmsBarcodePrintService;
+
     @ApiOperation("打印")
     @PostMapping("/print")
     public R<Boolean> print(@RequestBody BarcodePrintDTO dto) {
-        return R.success();
+        return R.success(pmsBarcodePrintService.print(dto));
     }
 
     @ApiOperation("打印记录")
