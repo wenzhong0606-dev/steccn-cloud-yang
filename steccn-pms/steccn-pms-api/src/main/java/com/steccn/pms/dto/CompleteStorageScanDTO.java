@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -36,7 +37,7 @@ public class CompleteStorageScanDTO implements Serializable {
     private String produceOrderNo;
 
     @ApiModelProperty("数量")
-    private Integer quantity;
+    private BigDecimal quantity;
 
     @ApiModelProperty("单位")
     private Long unitId;

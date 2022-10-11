@@ -1,13 +1,13 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsBarcodePrint;
@@ -15,20 +15,21 @@ import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
-import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsProduceOrderService;
-import lombok.RequiredArgsConstructor;
+import com.steccn.pms.util.PmsCodeUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
 
 /**
  * @author yequan
@@ -81,11 +82,56 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
-    public String generate(List<CompleteStorageScanDTO> list) {
-
-
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public String generate(List<CompleteStorageScanDTO> dtoList) {
+        Assert.notEmpty(dtoList, "请选择箱子");
+        //校验箱子不能重复出现在不同的入库单
+        List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
+        //创建主表
+        BigDecimal sumQuantity = BigDecimal.ZERO;
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        pmsCompleteStorage.setId(IdUtil.getSnowflake().nextId());
+        pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
+        pmsCompleteStorage.setProduceOrderId(dtoList.get(0).getProduceOrderId());
+        for (CompleteStorageScanDTO caseInfo : dtoList) {
+            PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
+            BeanUtils.copyProperties(caseInfo, modelInfo);
+            modelInfo.setCompleteStorageId(pmsCompleteStorage.getId());
+            modelInfo.setPackTime(caseInfo.getCreateTime());
+            sumQuantity = sumQuantity.add(caseInfo.getQuantity());
+            modelInfoList.add(modelInfo);
+        }
+        completeStorageInfoService.saveBatch(modelInfoList);
+        //生成code 规则：SI-20220905-0001
+        pmsCompleteStorage.setCode(maxCompleteCode());
+        pmsCompleteStorage.setQuantity(sumQuantity);
+        save(pmsCompleteStorage);
+        return pmsCompleteStorage.getCode();
     }
+
+    /**
+     * 最大完工code
+     *
+     * @return
+     */
+    private String maxCompleteCode() {
+        String prefix = PmsCodeUtil.PREFIX_SI + LocalDate.now().toString().replaceAll(PmsCodeUtil.SHORT_LINE, Strings.EMPTY) + PmsCodeUtil.SHORT_LINE;
+        PmsCompleteStorage one = getOne(new LambdaQueryWrapper<PmsCompleteStorage>()
+                .likeRight(PmsCompleteStorage::getCode, prefix)
+                .orderByDesc(PmsCompleteStorage::getCode)
+                .last(MpConstant.STR_LIMIT_1));
+        long currentMax = PmsCodeUtil.DEFAULT_PADDING;
+        if (Objects.nonNull(one)) {
+            String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);
+            try {
+                currentMax = Long.parseLong(substring);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return PmsCodeUtil.getNextCode(prefix, PmsCodeUtil.NUM_BIT_4, currentMax);
+    }
+
 }
 
 

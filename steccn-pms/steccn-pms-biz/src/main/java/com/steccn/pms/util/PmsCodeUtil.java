@@ -24,6 +24,11 @@ public class PmsCodeUtil {
     public final static String PREFIX_R = "R-";
 
     /**
+     * 前缀-入库单
+     */
+    public final static String PREFIX_SI = "SI-";
+
+    /**
      * 短线
      */
     public final static String SHORT_LINE = "-";

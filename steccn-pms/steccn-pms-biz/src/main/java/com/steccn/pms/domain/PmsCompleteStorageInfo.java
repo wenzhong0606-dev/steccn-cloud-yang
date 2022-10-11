@@ -11,15 +11,17 @@ import lombok.Data;
 
 /**
  * 完工入库-详情
+ *
+ * @author yequan
  * @TableName pms_complete_storage_info
  */
-@TableName(value ="pms_complete_storage_info")
+@TableName(value = "pms_complete_storage_info")
 @Data
 public class PmsCompleteStorageInfo implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
