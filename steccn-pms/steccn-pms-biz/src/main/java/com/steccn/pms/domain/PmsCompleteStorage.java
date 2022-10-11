@@ -11,6 +11,7 @@ import lombok.Data;
 /**
  * 生产订单-完工入库
  *
+ * @author yequan
  * @TableName pms_complete_storage
  */
 @TableName(value = "pms_complete_storage")

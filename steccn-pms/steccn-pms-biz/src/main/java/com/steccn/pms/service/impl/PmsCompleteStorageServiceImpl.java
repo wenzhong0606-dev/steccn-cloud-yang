@@ -1,8 +1,11 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
@@ -14,6 +17,7 @@ import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
@@ -21,6 +25,7 @@ import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.CompleteStoragePageVO;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -112,6 +119,26 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setQuantity(sumQuantity);
         save(pmsCompleteStorage);
         return pmsCompleteStorage.getCode();
+    }
+
+    @Override
+    public Page<CompleteStoragePageVO> pageList(CompleteStoragePageDTO dto) {
+        //定义返回page对象
+        Page<CompleteStoragePageVO> resPage = new Page<>();
+        //根据条件获取筛选数据
+        Page<PmsCompleteStorage> pageList = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsCompleteStorage>()
+                .eq(PmsCompleteStorage::getProductLineId, dto.getProductLineId())
+                .ge(Objects.nonNull(dto.getStart()), PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getStart(), LocalTime.MIN))
+                .le(Objects.nonNull(dto.getEnd()), PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getEnd(), LocalTime.MAX)));
+        //拷贝分页对象
+        BeanUtils.copyProperties(pageList, resPage);
+        //如果查询结果不为空，拷贝返回的数据
+        if (CollUtil.isNotEmpty(pageList.getRecords())) {
+            List<PmsCompleteStorage> modelList = pageList.getRecords();
+            List<CompleteStoragePageVO> voList = BeanUtil.copyToList(modelList, CompleteStoragePageVO.class);
+            resPage.setRecords(voList);
+        }
+        return resPage;
     }
 
     /**

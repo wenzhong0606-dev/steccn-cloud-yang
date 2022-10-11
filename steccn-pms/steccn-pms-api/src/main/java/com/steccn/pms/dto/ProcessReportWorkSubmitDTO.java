@@ -38,7 +38,7 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     private Long batch;
 
     @ApiModelProperty("产线id")
-    private Integer produceLineId;
+    private Integer productLineId;
 
     @ApiModelProperty("班次id")
     private Integer classesId;

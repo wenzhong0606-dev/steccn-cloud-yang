@@ -69,7 +69,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 产线id
      */
-    private Integer produceLineId;
+    private Integer productLineId;
 
     /**
      * 工位id

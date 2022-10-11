@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("完工入库详细信息vo")
-public class CompleteStorageInfoVO implements Serializable {
+public class CompleteStoragePageVO implements Serializable {
 
     @ApiModelProperty("入库单id")
     private Long id;

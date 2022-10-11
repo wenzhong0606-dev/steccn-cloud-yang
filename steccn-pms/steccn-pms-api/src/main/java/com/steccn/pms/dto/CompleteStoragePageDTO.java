@@ -15,7 +15,7 @@ import java.time.LocalDate;
 public class CompleteStoragePageDTO extends BasePageDTO {
 
     @ApiModelProperty("产线id")
-    private Integer produceLineId;
+    private Integer productLineId;
 
     @ApiModelProperty("开始时间")
     private LocalDate start;
