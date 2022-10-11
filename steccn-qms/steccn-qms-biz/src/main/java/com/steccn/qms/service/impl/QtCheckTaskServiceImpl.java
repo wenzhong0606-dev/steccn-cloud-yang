@@ -205,16 +205,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setId(dto.getId());
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
-        if(dto.getStatus() == 1){
+        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())){
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setStartName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setStartTime(LocalDateTime.now());
         }
         //取消任务
-        if(dto.getStatus() == 3){
+        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CANCELED.getCode())){
             qtCheckTask.setCancelBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setCancelName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setCancelTime(LocalDateTime.now());
+        }
+        //完成任务
+        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
+            qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
+            qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setFinishedTime(LocalDateTime.now());
         }
         return updateById(qtCheckTask);
     }
@@ -304,18 +310,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     condition.put("copy",copy);
                                 }
                                 //处理defect
-                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT + key.substring(key.length()-1);
+                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECT + key.substring(key.length()-1);
                                 if(item.getResult().get(defectId)!=null){
                                     qtCheckTaskDetail.setDefectId(Integer.valueOf(defectId));
                                 }
                             }
                         }
-
-
-//                        qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
-//                        if (checkGroupTmp.getDefectId() != null) {
-//                            qtCheckTaskDetail.setDefectId(checkGroupTmp.getDefectId());
-//                        }
                         qtCheckTaskDetail.setTaskId(dto.getId());
                         condition.put("task_id", dto.getId());
                         qtCheckTaskDetail.setItemId(item.getId());
@@ -326,43 +326,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         qtCheckTaskDetailService.removeByMap(condition);
                         valueModels.add(qtCheckTaskDetail);
                     });
+
+                }else {
+                    throw new BusinessException("检验项数据为空");
                 }
             });
+            qtCheckTaskDetailService.saveBatch(valueModels);
+        } else {
+            throw new BusinessException("分组数据为空");
         }
-        //插入值
-//        if (dto.getValues() != null && dto.getValues().size() > 0) {
-//            dto.getValues().forEach(valueTmp -> {
-//                //value下的list
-//                if (valueTmp.getList() != null && valueTmp.getList().size() > 0) {
-//                    valueTmp.getList().forEach(listTmp -> {
-//                        //list下checkGroup
-//                        if (listTmp.getCheckGroup() != null && listTmp.getCheckGroup().size() > 0) {
-//                            listTmp.getCheckGroup().forEach(checkGroupTmp -> {
-//                                Map<String, Object> condition = new HashMap<>();
-//                                QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-//                                qtCheckTaskDetail.setCopy(valueTmp.getCopy());
-//                                condition.put("copy", valueTmp.getCopy());
-//                                qtCheckTaskDetail.setCheckResult(checkGroupTmp.getCheckResult());
-//                                if (checkGroupTmp.getDefectId() != null) {
-//                                    qtCheckTaskDetail.setDefectId(checkGroupTmp.getDefectId());
-//                                }
-//                                qtCheckTaskDetail.setTaskId(dto.getId());
-//                                condition.put("task_id", dto.getId());
-//                                qtCheckTaskDetail.setItemId(checkGroupTmp.getItemId());
-//                                condition.put("item_id", checkGroupTmp.getItemId());
-//                                qtCheckTaskDetail.setGroupId(listTmp.getGroupId());
-//                                condition.put("group_id", listTmp.getGroupId());
-//                                //需要先删除之前保存的值
-//                                qtCheckTaskDetailService.removeByMap(condition);
-//                                valueModels.add(qtCheckTaskDetail);
-//                            });
-//                        }
-//                    });
-//                }
-//
-//            });
-//            qtCheckTaskDetailService.saveBatch(valueModels);
-//        }
         QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
         statusDTO.setId(dto.getId());
         statusDTO.setStatus(dto.getStatus());

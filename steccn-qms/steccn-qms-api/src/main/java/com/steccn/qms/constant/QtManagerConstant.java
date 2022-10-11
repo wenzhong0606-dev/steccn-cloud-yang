@@ -129,4 +129,21 @@ public interface QtManagerConstant {
         private Integer code;
         private String name;
     }
+
+    /**
+     * 检验类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtCheckTaskStatusEnum{
+        //任务类型 任务状态 0待检验 1检验中 2已检验 3已取消 4暂存
+        WAITED(0,"待检验"),
+        CHECKING(1,"检验中"),
+        FINISHED(2,"已检验"),
+        CANCELED(3,"已取消"),
+        TEMPORARY(4,"暂存");
+
+        private Integer code;
+        private String name;
+    }
 }
