@@ -390,6 +390,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (res == null) {
             throw new BusinessException("任务信息不存在");
         }
+        if(!res.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
+            throw new BusinessException("任务状态不为完成");
+        }
         BeanUtils.copyProperties(res, model);
         //复制值后置空
         model.setBadNum(null);
