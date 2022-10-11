@@ -240,10 +240,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (dto.getValues() != null && dto.getValues().size() > 0) {
             dto.getValues().forEach(valueTmp -> {
                 //先删除可能暂存的值
-//                Map<String, Object> valueCondition = new HashMap<>();
-//                valueCondition.put("task_id", dto.getId());
-//                valueCondition.put("copy", valueTmp.getCopy());
-//                qtCheckTaskDetailService.removeByMap(valueCondition);
+                Map<String, Object> valueCondition = new HashMap<>();
+                valueCondition.put("task_id", dto.getId());
+                valueCondition.put("copy", valueTmp.getCopy());
+                qtCheckTaskDetailService.removeByMap(valueCondition);
                 //value下的list
                 if (valueTmp.getList() != null && valueTmp.getList().size() > 0) {
                     valueTmp.getList().forEach(listTmp -> {
@@ -285,12 +285,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto) {
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
-        QtCheckTask tasKDetail = new QtCheckTask();
+        QtCheckTask tasKDetail = getById(dto.getId());
+        //先删除可能暂存的值
+        Map<String, Object> valueCondition = new HashMap<>();
+        valueCondition.put("task_id", dto.getId());
+        qtCheckTaskDetailService.removeByMap(valueCondition);
+        //处理数据
         if(CollUtil.isNotEmpty(dto.getCheckGroup())){
             dto.getCheckGroup().forEach(group -> {
                 if(CollUtil.isNotEmpty(group.getItems())){
                     group.getItems().forEach(item->{
-                        Map<String, Object> condition = new HashMap<>();
+//                        Map<String, Object> condition = new HashMap<>();
                         QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
                         //遍历Map
                         for(Map.Entry<String,String> entry:item.getResult().entrySet()){
@@ -302,28 +307,29 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 //如果是在线检则设置copy为0
                                 if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
                                     qtCheckTaskDetail.setCopy(0);
-                                    condition.put("copy",0);
+//                                    condition.put("copy",0);
                                 }else {
                                     //否则设置copy的值为末尾
                                     Integer copy = Integer.valueOf(key.substring(key.length() - 1));
                                     qtCheckTaskDetail.setCopy(copy);
-                                    condition.put("copy",copy);
+//                                    condition.put("copy",copy);
                                 }
                                 //处理defect
                                 String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECT + key.substring(key.length()-1);
                                 if(item.getResult().get(defectId)!=null){
-                                    qtCheckTaskDetail.setDefectId(Integer.valueOf(defectId));
+                                    qtCheckTaskDetail.setDefectId(Integer.valueOf(item.getResult().get(defectId)));
                                 }
                             }
                         }
                         qtCheckTaskDetail.setTaskId(dto.getId());
-                        condition.put("task_id", dto.getId());
+//                        condition.put("task_id", dto.getId());
                         qtCheckTaskDetail.setItemId(item.getId());
-                        condition.put("item_id", item.getId());
+//                        condition.put("item_id", item.getId());
                         qtCheckTaskDetail.setGroupId(group.getId());
-                        condition.put("group_id", group.getId());
-                        //需要先删除之前保存的值
-                        qtCheckTaskDetailService.removeByMap(condition);
+//                        condition.put("group_id", group.getId());
+//                        //需要先删除之前保存的值
+//                        qtCheckTaskDetailService.removeByMap(condition);
+                        qtCheckTaskDetail.setIsQualified(item.getIsQualified());
                         valueModels.add(qtCheckTaskDetail);
                     });
 

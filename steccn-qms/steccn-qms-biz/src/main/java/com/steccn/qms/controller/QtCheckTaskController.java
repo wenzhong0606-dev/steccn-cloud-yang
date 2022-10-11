@@ -61,6 +61,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.itemValue(dto));
     }
 
+    @PutMapping("/pc/values")
+    @ApiOperation(value = "给任务设置值")
+    public R<Boolean> pcItemValue(@RequestBody QtPcCheckTaskSubmitDTO dto){
+        return R.success(qtCheckTaskService.pcItemValue(dto));
+    }
+
     @GetMapping("/count")
     @ApiOperation(value = "获取待检任务数量")
     public R<List<QtCheckTaskTypeCountVO>> countUndoTask(){

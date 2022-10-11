@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * pcItem类上次
+ * pcItem类
  *
  * @author AndrewLuo
  * @date 2022/10/10
@@ -24,4 +24,10 @@ public class QtPcCheckTaskCheckGroupItemDTO implements Serializable {
      * 结果
      */
     private Map<String, String> result;
+
+    /**
+     * 是否合格
+     * 1合格 0不合格
+     */
+    private Integer isQualified;
 }

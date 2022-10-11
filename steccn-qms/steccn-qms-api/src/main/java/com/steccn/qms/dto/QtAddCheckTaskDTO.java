@@ -114,4 +114,9 @@ public class QtAddCheckTaskDTO implements Serializable {
      * 发货数量
      */
     private Integer deliverNum;
+
+    /**
+     * 送货单号
+     */
+    private String sendOrder;
 }

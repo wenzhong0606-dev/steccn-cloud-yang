@@ -60,8 +60,4 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      */
     private List<QtPcCheckTaskCheckGroupDTO> checkGroup;
 
-    /**
-     * 可能直接传items
-     */
-    private List<QtPcCheckTaskCheckGroupItemDTO> items;
 }

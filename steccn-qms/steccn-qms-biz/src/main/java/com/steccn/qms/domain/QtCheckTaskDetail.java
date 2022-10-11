@@ -94,4 +94,10 @@ public class QtCheckTaskDetail implements Serializable {
      * 样本
      */
     private Integer copy;
+
+    /**
+     * 是否合格
+     * 1合格 0不合格
+     */
+    private Integer isQualified;
 }

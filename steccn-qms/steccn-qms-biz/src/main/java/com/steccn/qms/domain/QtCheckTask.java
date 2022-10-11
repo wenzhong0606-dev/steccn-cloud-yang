@@ -269,4 +269,10 @@ public class QtCheckTask implements Serializable {
      * 取消时间
      */
     private LocalDateTime cancelTime;
+
+    /**
+     * 送货单号
+     */
+    private String sendOrder;
+
 }
