@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -25,10 +25,8 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.util.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -69,6 +67,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsProcessInStationService pmsProcessInStationService;
 
     private final PmsProcessOutStationService pmsProcessOutStationService;
+
+    private final PmsReportWorkService pmsReportWorkService;
 
 
     /**
@@ -267,8 +267,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         storageVOList.add(pmsCompleteStorageVO);
                         pmsCompleteStorageVO.setWarehouseId(Math.toIntExact(order.getDefaultWarehouseId()));
                         pmsCompleteStorageVO.setShelfId(Math.toIntExact(order.getDefaultShelfId()));
-                        warehouseIds.add(Math.toIntExact(order.getDefaultShelfId()));
-                        warehouseIds.add(Math.toIntExact(order.getDefaultWarehouseId()));
+                        warehouseIds.add(order.getDefaultShelfId());
+                        warehouseIds.add(order.getDefaultWarehouseId());
                     });
                 }
             });
@@ -290,7 +290,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto) {
         //1.定义查询条件
-        LambdaQueryWrapper<PmsCompleteDelivery> eq = new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getProduceOrderId, dto.getProduceOrderId());
+        LambdaQueryWrapper<PmsCompleteDelivery> eq = new LambdaQueryWrapper<PmsCompleteDelivery>().
+                eq(PmsCompleteDelivery::getProduceOrderId, dto.getProduceOrderId());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -427,11 +428,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 获取工艺信息出站信息
+     *
      * @param dto
      * @return
      */
     @Override
-    public Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationDTO dto) {
+    public Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationPageDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsProcessOutStation> eq = new LambdaQueryWrapper<PmsProcessOutStation>()
                 .eq(PmsProcessOutStation::getProcessId, dto.getProcessId())
@@ -464,6 +466,48 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         });
         return page.setRecords(res);
     }
+
+    @Override
+    public Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>()
+                .eq(PmsReportWork::getProcessId, dto.getProcessId())
+                .eq(PmsReportWork::getBatchNo, dto.getBatchNo())
+                .eq(PmsReportWork::getStationId, dto.getStationId())
+                .ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime())
+                .le(Objects.nonNull(dto.getEndTime()), PmsReportWork::getCreateTime, dto.getStartTime());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = pmsReportWorkService.page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsReportWorkVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsReportWorkVO.class);
+        //6.处理数据
+        List<Long> dictIds = Lists.newArrayList();
+        Set<Integer> stationIds = Sets.newHashSet();
+        res.forEach(pmsReportWorkVO -> {
+            dictIds.add(pmsReportWorkVO.getUnitId());
+            stationIds.add(pmsReportWorkVO.getStationId());
+        });
+        //获取字典数据
+        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
+        //获取工位数据
+        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        res.forEach(pmsReportWorkVO -> {
+            pmsReportWorkVO.setStation(stationMap.getData().get(pmsReportWorkVO.getStationId()).getOfficeName());
+            pmsReportWorkVO.setUnit(dictMap.getData().get(pmsReportWorkVO.getUnitId()).getName());
+        });
+        //todo 班次数据待定(OA获取)
+        return page.setRecords(res);
+    }
+
+    @Override
+    public Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto) {
+        return null;
+    }
+
 
     /**
      * 当前最大的code值

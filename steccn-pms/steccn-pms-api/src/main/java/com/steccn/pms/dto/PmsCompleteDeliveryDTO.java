@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
  * 类说明
  *
@@ -18,4 +20,16 @@ public class PmsCompleteDeliveryDTO extends BasePageDTO {
     @ApiModelProperty("订单id")
     private Long produceOrderId;
 
+
+    @ApiModelProperty("工序id")
+    private Long processId;
+
+    @ApiModelProperty("开始时间")
+    private LocalDateTime startTime;
+
+    @ApiModelProperty("结束时间")
+    private LocalDateTime endTime;
+
+    @ApiModelProperty("物料")
+    private String material;
 }

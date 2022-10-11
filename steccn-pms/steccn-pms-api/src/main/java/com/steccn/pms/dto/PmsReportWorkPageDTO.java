@@ -8,17 +8,16 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 类说明
+ * 报工信息分页DTO
  *
  * @author Mongknife
  * @date 2022/10/11
  */
-
 @Data
-@ApiModel("工序出站信息DTO")
-public class PmsProcessOutStationDTO  extends BasePageDTO {
+@ApiModel("生产订单工艺-报工信息分页DTO")
+public class PmsReportWorkPageDTO extends BasePageDTO {
 
-    @ApiModelProperty("工序ID")
+    @ApiModelProperty("工序id")
     private Long processId;
 
     @ApiModelProperty("开始时间")
@@ -32,4 +31,5 @@ public class PmsProcessOutStationDTO  extends BasePageDTO {
 
     @ApiModelProperty("工位id")
     private Integer stationId;
+
 }

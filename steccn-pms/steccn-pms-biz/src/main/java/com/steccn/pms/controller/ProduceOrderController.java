@@ -3,9 +3,9 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.service.PmsProcessOutStationService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.*;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ public class ProduceOrderController {
     }
 
 
-    @ApiOperation("获取生产订单分页列表")
+    @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto){
         return R.success(pmsProduceOrderService.batchPageList(dto));
@@ -71,8 +71,20 @@ public class ProduceOrderController {
 
     @ApiOperation("工艺信息-出站分页列表")
     @PostMapping("/out/station")
-    public R<Page<PmsProcessOutStationVO>> outStationPageList(@RequestBody PmsProcessOutStationDTO dto){
+    public R<Page<PmsProcessOutStationVO>> outStationPageList(@RequestBody PmsProcessOutStationPageDTO dto){
         return R.success(pmsProduceOrderService.outStationPageList(dto));
+    }
+
+    @ApiOperation("工艺信息-报工分页列表")
+    @PostMapping("/report/work")
+    public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){
+        return R.success(pmsProduceOrderService.reportWorkPageList(dto));
+    }
+
+    @ApiOperation("工艺信息-投料信息")
+    @PostMapping("/feed")
+    public R<Page<PmsCompleteDeliveryVO>> feedPageList(@RequestBody PmsCompleteDeliveryDTO dto){
+        return R.success(pmsProduceOrderService.feedPageList(dto));
     }
 
 

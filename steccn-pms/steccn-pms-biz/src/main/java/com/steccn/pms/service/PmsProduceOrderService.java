@@ -67,5 +67,19 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @param dto
      * @return
      */
-    Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationDTO dto);
+    Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationPageDTO dto);
+
+    /**
+     * 工序报工分页列表信息
+     * @param dto
+     * @return
+     */
+    Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto);
+
+    /**
+     * 工序投料信息分页列表
+     * @param dto
+     * @return
+     */
+    Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto);
 }
