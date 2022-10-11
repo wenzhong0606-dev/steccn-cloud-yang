@@ -33,5 +33,5 @@ public class BarcodePrintRecordVO implements Serializable {
     private BigDecimal quantity;
 
     @ApiModelProperty("箱子状态")
-    private Integer caseStatus;
+    private Integer caseState;
 }

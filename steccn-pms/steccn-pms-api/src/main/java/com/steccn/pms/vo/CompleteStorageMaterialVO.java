@@ -33,7 +33,7 @@ public class CompleteStorageMaterialVO implements Serializable {
     private String batchNo;
 
     @ApiModelProperty("箱号")
-    private String caseNumber;
+    private String caseNo;
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;

@@ -27,7 +27,7 @@ public class CompleteStorageScanDTO implements Serializable {
     private LocalDateTime createTime;
 
     @ApiModelProperty("箱状态")
-    private String caseStatus;
+    private Integer caseState;
 
     @ApiModelProperty("生产订单id")
     private Long produceOrderId;
