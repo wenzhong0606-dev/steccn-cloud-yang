@@ -2,14 +2,9 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
-import com.steccn.pms.domain.PmsCompleteDelivery;
-import com.steccn.pms.domain.PmsProcessInStation;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProduceOrderService;
-import com.steccn.pms.vo.PmsCompleteDeliveryVO;
-import com.steccn.pms.vo.PmsCompleteStorageVO;
-import com.steccn.pms.vo.PmsProcessInStationVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +53,14 @@ public class ProduceOrderController {
     public R<Page<PmsCompleteDeliveryVO>> getCompleteDeliveryInfo(@RequestBody PmsCompleteDeliveryDTO dto) {
         return R.success(pmsProduceOrderService.getCompleteDeliveryInfo(dto));
     }
+
+
+    @ApiOperation("获取生产订单批次信息")
+    @PostMapping("/getBatchInfo")
+    public R<Page<PmsWorkOrderBatchVO>> getBatchInfo(@RequestBody PmsProduceOrderBatchDTO dto){
+        return R.success(pmsProduceOrderService.getBatchInfo(dto));
+    }
+
 
     @ApiOperation("获取工艺信息-进站信息")
     @PostMapping("/getInStation")

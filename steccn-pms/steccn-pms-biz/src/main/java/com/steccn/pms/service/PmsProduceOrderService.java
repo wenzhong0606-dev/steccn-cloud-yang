@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.vo.PmsCompleteDeliveryVO;
-import com.steccn.pms.vo.PmsCompleteStorageVO;
-import com.steccn.pms.vo.PmsProcessInStationVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.*;
 
 /**
 * @author yequan
@@ -57,4 +54,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto);
+
+    /**
+     * 根据订单获取批次信息
+     * @param dto
+     * @return
+     */
+    Page<PmsWorkOrderBatchVO> getBatchInfo(PmsProduceOrderBatchDTO dto);
 }

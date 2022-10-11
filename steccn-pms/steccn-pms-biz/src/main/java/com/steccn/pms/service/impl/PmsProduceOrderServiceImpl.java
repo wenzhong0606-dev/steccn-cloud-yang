@@ -64,6 +64,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+
 
     /**
      * 新增生产订单信息
@@ -349,9 +351,42 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return page.setRecords(pmsCompleteDeliveryVOList);
     }
 
+    /**
+     * 获取工艺信息进站信息
+     * @param dto
+     * @return
+     */
     @Override
     public Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto) {
         return null;
+    }
+
+    /**
+     * 获取订单批次信息
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<PmsWorkOrderBatchVO> getBatchInfo(PmsProduceOrderBatchDTO dto) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsWorkOrderBatch> eq = new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, dto.getProduceOrderId());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = pmsWorkOrderBatchService.page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsWorkOrderBatchVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsWorkOrderBatchVO.class);
+        //6.处理数据
+        List<Long> dictIds = Lists.newArrayList();
+        res.forEach( pmsWorkOrderBatchVO -> {
+            dictIds.add(pmsWorkOrderBatchVO.getUnitId());
+        });
+        //获取字典数据
+        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
+        res.forEach( pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.getData().get(pmsWorkOrderBatchVO.getUnitId()).getName()));
+        return page.setRecords(res);
     }
 
     /**
