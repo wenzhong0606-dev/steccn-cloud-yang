@@ -7,6 +7,9 @@ import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
 * @author yequan
 * @description 针对表【pms_barcode_print(条码打印)】的数据库操作Service
@@ -34,4 +37,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return 删除
      */
     Boolean delete(Long id);
+
+    /**
+     * 箱号set
+     * @param caseNoSet 箱号set
+     * @return map
+     */
+    Map<String,PmsBarcodePrint> caseMap(Set<String> caseNoSet);
 }

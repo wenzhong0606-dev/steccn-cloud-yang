@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.dto.BarcodePrintDTO;
@@ -18,9 +19,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yequan
@@ -68,6 +67,20 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     @Override
     public Boolean delete(Long id) {
         return removeById(id);
+    }
+
+    @Override
+    public Map<String, PmsBarcodePrint> caseMap(Set<String> caseNoSet) {
+        Map<String, PmsBarcodePrint> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(caseNoSet)) {
+            List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getCaseNo, caseNoSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    resMap.put(ele.getCaseNo(), ele);
+                });
+            }
+        }
+        return resMap;
     }
 
     /**

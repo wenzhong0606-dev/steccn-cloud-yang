@@ -1,12 +1,12 @@
 package com.steccn.pms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -27,6 +27,8 @@ import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.CompleteStorageListVO;
+import com.steccn.pms.vo.CompleteStorageMaterialVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
@@ -159,6 +161,64 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             resPage.setRecords(voList);
         }
         return resPage;
+    }
+
+    @Override
+    public CompleteStorageListVO info(Long id) {
+        //查询入库单信息
+        PmsCompleteStorage pmsCompleteStorage = getById(id);
+        Assert.notNull(pmsCompleteStorage, "未查询到入库单");
+        CompleteStorageListVO completeStorageListVO = new CompleteStorageListVO();
+        BeanUtils.copyProperties(pmsCompleteStorage, completeStorageListVO);
+        //查询所有的箱信息
+        List<PmsCompleteStorageInfo> infoList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().eq(PmsCompleteStorageInfo::getCompleteStorageId, id));
+        //查询订单信息
+        Long produceOrderId = pmsCompleteStorage.getProduceOrderId();
+        PmsProduceOrder produceOrder = pmsProduceOrderService.getById(produceOrderId);
+        Assert.notNull(produceOrder, "生产订单不存在");
+
+        //定义字典集合和箱号集合
+        List<Long> dictList = Lists.newArrayList();
+        Set<String> caseNoList = Sets.newHashSet();
+        for (PmsCompleteStorageInfo info : infoList) {
+            dictList.add(info.getUnitId());
+            caseNoList.add(info.getCaseNo());
+        }
+
+        dictList.add(pmsCompleteStorage.getUnitId());
+        SysDictVO defaultSysDictVO = new SysDictVO();
+        Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(dictList)).get();
+
+        Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
+        PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
+        Set<Integer> storageSet = Sets.newHashSet();
+        for (Map.Entry<String, PmsBarcodePrint> entry : barcodePrintMap.entrySet()) {
+            PmsBarcodePrint pbp = entry.getValue();
+            storageSet.add(pbp.getWarehouseId());
+            storageSet.add(pbp.getShelfId());
+        }
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
+        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+
+        List<CompleteStorageMaterialVO> materialVOList = new ArrayList<>(infoList.size());
+        for (PmsCompleteStorageInfo info : infoList) {
+            CompleteStorageMaterialVO materialVO = new CompleteStorageMaterialVO();
+            BeanUtils.copyProperties(info, materialVO);
+            materialVO.setProduceOrderId(produceOrderId);
+            materialVO.setProduceOrderNo(produceOrder.getCode());
+            materialVO.setMaterialId(produceOrder.getMaterialId());
+            materialVO.setMaterialCode(produceOrder.getMaterialCode());
+            materialVO.setMaterialName(produceOrder.getMaterialName());
+            materialVO.setUnitName(sysDictMap.getOrDefault(materialVO.getUnitId(), defaultSysDictVO).getName());
+            materialVO.setWarehouseId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getWarehouseId());
+            materialVO.setWarehouseName(sysOfficeMap.getOrDefault(materialVO.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
+            materialVO.setShelfId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getShelfId());
+            materialVO.setShelfName(sysOfficeMap.getOrDefault(materialVO.getShelfId(), defaultSysOfficeVO).getOfficeName());
+            materialVOList.add(materialVO);
+        }
+        completeStorageListVO.setList(materialVOList);
+        completeStorageListVO.setUnitName(sysDictMap.getOrDefault(completeStorageListVO.getUnitId(), defaultSysDictVO).getName());
+        return completeStorageListVO;
     }
 
     /**

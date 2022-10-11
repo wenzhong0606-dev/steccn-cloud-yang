@@ -1,5 +1,6 @@
 package com.steccn.pms.vo;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -18,16 +19,19 @@ public class CompleteStorageMaterialVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("生产订单id")
-    private Long workProduceId;
+    private Long produceOrderId;
 
-    @ApiModelProperty("组件id")
-    private Integer moduleId;
+    @ApiModelProperty("生产订单no")
+    private String produceOrderNo;
 
-    @ApiModelProperty("组件编码")
-    private String moduleCode;
+    @ApiModelProperty("物料id")
+    private Long materialId;
 
-    @ApiModelProperty("组件名称")
-    private String moduleName;
+    @ApiModelProperty("物料编码")
+    private String materialCode;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
 
     @ApiModelProperty("批次号")
     private String batchNo;

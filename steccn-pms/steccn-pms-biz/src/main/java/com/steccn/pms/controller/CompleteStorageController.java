@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -46,7 +47,7 @@ public class CompleteStorageController {
 
     @GetMapping("/{id}")
     @ApiOperation("入库单明细")
-    public R<CompleteStoragePageVO> info(@PathVariable("id") Long id) {
-        return R.success();
+    public R<CompleteStorageListVO> info(@PathVariable("id") Long id) {
+        return R.success(pmsCompleteStorageService.info(id));
     }
 }

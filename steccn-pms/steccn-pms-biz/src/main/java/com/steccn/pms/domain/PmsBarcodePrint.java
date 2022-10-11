@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -81,6 +82,16 @@ public class PmsBarcodePrint implements Serializable {
      * 生产订单id
      */
     private Long produceOrderId;
+
+    /**
+     * 仓库id
+     */
+    private Integer warehouseId;
+
+    /**
+     * 货架Id
+     */
+    private Integer shelfId;
 
     /**
      * 创建人id

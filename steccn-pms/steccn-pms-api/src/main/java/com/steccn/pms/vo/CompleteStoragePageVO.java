@@ -45,8 +45,4 @@ public class CompleteStoragePageVO implements Serializable {
 
     @ApiModelProperty("类型")
     private Integer type;
-
-    @ApiModelProperty("物料信息")
-    private List<CompleteStorageMaterialVO> list;
-
 }
