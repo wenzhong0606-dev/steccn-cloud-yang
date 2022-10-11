@@ -56,7 +56,7 @@ public class QtCheckTaskController {
     }
 
     @PutMapping("/values")
-    @ApiOperation(value = "给任务设置值")
+    @ApiOperation(value = "手机端给任务设置值")
     public R<Boolean> itemValue(@RequestBody QtCheckTaskSubmitDTO dto){
         return R.success(qtCheckTaskService.itemValue(dto));
     }

@@ -17,6 +17,7 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.mapper.QtCheckTaskCopyMapper;
 import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
@@ -53,6 +54,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtRecheckTaskService qtRecheckTaskService;
 
     private final QtMaterialLinkCheckPlanMapper qtMaterialLinkCheckPlanMapper;
+
+    private final QtCheckTaskCopyMapper qtCheckTaskCopyMapper;
 
     /**
      * 新增
@@ -235,15 +238,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean itemValue(QtCheckTaskSubmitDTO dto) {
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
-
+        QtCheckTask task = getById(dto.getId());
+        //先删除可能暂存的值
+        Map<String, Object> valueCondition = new HashMap<>();
+        valueCondition.put("task_id", dto.getId());
+        qtCheckTaskDetailService.removeByMap(valueCondition);
         //插入值
         if (dto.getValues() != null && dto.getValues().size() > 0) {
             dto.getValues().forEach(valueTmp -> {
-                //先删除可能暂存的值
-                Map<String, Object> valueCondition = new HashMap<>();
-                valueCondition.put("task_id", dto.getId());
-                valueCondition.put("copy", valueTmp.getCopy());
-                qtCheckTaskDetailService.removeByMap(valueCondition);
                 //value下的list
                 if (valueTmp.getList() != null && valueTmp.getList().size() > 0) {
                     valueTmp.getList().forEach(listTmp -> {
@@ -266,10 +268,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 condition.put("group_id", listTmp.getGroupId());
                                 //需要先删除之前保存的值
                                 qtCheckTaskDetailService.removeByMap(condition);
+                                qtCheckTaskDetail.setIsQualified(checkGroupTmp.getIsQualified());
                                 valueModels.add(qtCheckTaskDetail);
                             });
                         }
                     });
+                }
+                //操作样本详情 当样本类型为来料检、化验抽检、配料抽检时，有样本模块
+                if((task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()))&&!Objects.isNull(valueTmp.getCopyDetails())){
+                    QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
+                    copyDetailModel.setCopy(valueTmp.getCopy());
+                    copyDetailModel.setTaskId(dto.getId());
+                    BeanUtils.copyProperties(valueTmp.getCopyDetails(),copyDetailModel);
+                    qtCheckTaskCopyMapper.insert(copyDetailModel);
                 }
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
@@ -280,6 +291,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return updateStatus(statusDTO);
     }
 
+    /**
+     * pc端添加值
+     * @param dto
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto) {
