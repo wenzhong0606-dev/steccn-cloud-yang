@@ -43,6 +43,11 @@ public class PmsBarcodePrint implements Serializable {
     private BigDecimal quantity;
 
     /**
+     * 数量单位
+     */
+    private Long unitId;
+
+    /**
      * 打印条数
      */
     private Integer printStrip;

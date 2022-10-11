@@ -4,6 +4,8 @@ import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 
+import java.util.List;
+
 /**
 * @author yequan
 * @description 针对表【pms_complete_storage(生产订单-完工入库)】的数据库操作Service
@@ -17,4 +19,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return 完工入库扫描vo
      */
     CompleteStorageScanDTO scan(String caseNo);
+
+    /**
+     * 生成入库单
+     * @param list 入库单
+     * @return 入库单号
+     */
+    String generate(List<CompleteStorageScanDTO> list);
 }

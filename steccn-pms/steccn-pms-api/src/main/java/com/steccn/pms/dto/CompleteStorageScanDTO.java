@@ -35,6 +35,15 @@ public class CompleteStorageScanDTO implements Serializable {
     @ApiModelProperty("生产订单编号")
     private String produceOrderNo;
 
+    @ApiModelProperty("数量")
+    private Integer quantity;
+
+    @ApiModelProperty("单位")
+    private Long unitId;
+
+    @ApiModelProperty("单位名称")
+    private String unitName;
+
     @ApiModelProperty("仓库id")
     private Integer warehouseId;
 

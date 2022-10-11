@@ -29,14 +29,13 @@ public class CompleteStorageController {
     @GetMapping("/scan")
     @ApiOperation("摄像头扫描箱号")
     public R<CompleteStorageScanDTO> scan(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
-//        是否已生成入库单，如果生成则抛异常
         return R.success(pmsCompleteStorageService.scan(caseNo));
     }
 
     @PostMapping("/generate")
     @ApiOperation("生成入库单")
     public R<String> generate(@RequestBody List<CompleteStorageScanDTO> list) {
-        return R.success();
+        return R.success(pmsCompleteStorageService.generate(list));
     }
 
     @PostMapping("/page")

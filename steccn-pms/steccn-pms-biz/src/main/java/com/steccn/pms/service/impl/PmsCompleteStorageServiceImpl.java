@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -74,7 +75,16 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
         resDTO.setWarehouseName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultWarehouseId(), new SysOfficeVO()).getOfficeName());
         resDTO.setShelfName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultShelfId(), new SysOfficeVO()).getOfficeName());
+        //5.箱状态
+        resDTO.setCaseState(pmsBarcodePrint.getCaseState());
         return resDTO;
+    }
+
+    @Override
+    public String generate(List<CompleteStorageScanDTO> list) {
+
+
+        return null;
     }
 }
 
