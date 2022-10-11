@@ -63,9 +63,9 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
                 .like(StrUtil.isNotBlank(dto.getName()), QtDefectiveItem::getName, dto.getName());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(name using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(name using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_STATUS.equals(dto.getSortField())) {
@@ -156,7 +156,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             return updateById(oldItem);
         }
         //2.快照不允许被删除
-        if(MpConstant.NO.equals(oldItem.getShowFlag())){
+        if (MpConstant.NO.equals(oldItem.getShowFlag())) {
             throw new BusinessException("缺陷项快照不允许被停用");
         }
         //3.停用操作
@@ -177,7 +177,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             throw new BusinessException("缺陷项不存在");
         }
         //2.快照不允许被删除
-        if(MpConstant.NO.equals(oldItem.getShowFlag())){
+        if (MpConstant.NO.equals(oldItem.getShowFlag())) {
             throw new BusinessException("缺陷项快照不允许被删除");
         }
         //3.判断是否已有检验方案在使用
@@ -198,21 +198,21 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             return Lists.newArrayList();
         }
         //组装成树状数据
-        Map<String,List<QtDefectiveItemVO>> mapData = new HashMap<>();
-        dataList.forEach(tmp->{
+        Map<String, List<QtDefectiveItemVO>> mapData = new HashMap<>();
+        dataList.forEach(tmp -> {
             QtItemCategory qtItemCategory = qtItemCategoryService.getById(tmp.getCategoryId());
             QtDefectiveItemVO vo = new QtDefectiveItemVO();
-            BeanUtils.copyProperties(tmp,vo);
-            if(mapData.get(qtItemCategory.getName())==null){
+            BeanUtils.copyProperties(tmp, vo);
+            if (mapData.get(qtItemCategory.getName()) == null) {
                 List<QtDefectiveItemVO> vos = Lists.newArrayList();
                 vos.add(vo);
-                mapData.put(qtItemCategory.getName(),vos);
-            }else {
+                mapData.put(qtItemCategory.getName(), vos);
+            } else {
                 mapData.get(qtItemCategory.getName()).add(vo);
             }
         });
         List<QtDefectiveItemTreeVo> vos = Lists.newArrayList();
-        for(Map.Entry<String,List<QtDefectiveItemVO>> entry:mapData.entrySet()){
+        for (Map.Entry<String, List<QtDefectiveItemVO>> entry : mapData.entrySet()) {
             QtDefectiveItemTreeVo qtDefectiveItemTreeVo = new QtDefectiveItemTreeVo();
             qtDefectiveItemTreeVo.setCategoryName(entry.getKey());
             qtDefectiveItemTreeVo.setChildren(entry.getValue());
@@ -254,6 +254,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
      */
     private boolean existName(Integer categoryId, String name, Integer filterId) {
         long count = count(new LambdaQueryWrapper<QtDefectiveItem>()
+                .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
                 .eq(QtDefectiveItem::getCategoryId, categoryId)
                 .eq(QtDefectiveItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtDefectiveItem::getId, filterId));
