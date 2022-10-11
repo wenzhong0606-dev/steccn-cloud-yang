@@ -36,9 +36,9 @@ public class PmsProcessInStation implements Serializable {
     private Long unitId;
 
     /**
-     * 批次id
+     * 批次号
      */
-    private Long batchId;
+    private String batchNo;
 
     /**
      * 工位id

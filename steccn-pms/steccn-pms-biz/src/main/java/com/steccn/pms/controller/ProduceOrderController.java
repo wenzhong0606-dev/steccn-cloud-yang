@@ -43,30 +43,31 @@ public class ProduceOrderController {
     }
 
     @ApiOperation("获取订单完工入库信息")
-    @PostMapping("/getCompleteStorageInfo")
+    @PostMapping("/complete/storage")
     public R<Page<PmsCompleteStorageVO>> getCompleteStorageInfo(@RequestBody PmsCompleteStorageDTO dto) {
         return R.success(pmsProduceOrderService.getCompleteStorageInfo(dto));
     }
 
     @ApiOperation("获取订单投料信息")
-    @PostMapping("/getCompleteDeliveryInfo")
+    @PostMapping("/complete/delivery")
     public R<Page<PmsCompleteDeliveryVO>> getCompleteDeliveryInfo(@RequestBody PmsCompleteDeliveryDTO dto) {
         return R.success(pmsProduceOrderService.getCompleteDeliveryInfo(dto));
     }
 
 
     @ApiOperation("获取生产订单批次信息")
-    @PostMapping("/getBatchInfo")
+    @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> getBatchInfo(@RequestBody PmsProduceOrderBatchDTO dto){
         return R.success(pmsProduceOrderService.getBatchInfo(dto));
     }
 
 
     @ApiOperation("获取工艺信息-进站信息")
-    @PostMapping("/getInStation")
+    @PostMapping("/in/station")
     public R<Page<PmsProcessInStationVO>> getInStation(@RequestBody PmsProcessInStationDTO dto) {
         return R.success(pmsProduceOrderService.getInStation(dto));
     }
+
 
 
 }

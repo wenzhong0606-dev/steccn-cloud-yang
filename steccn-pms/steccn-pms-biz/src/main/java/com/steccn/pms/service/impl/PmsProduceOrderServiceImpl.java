@@ -66,6 +66,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
 
+    private final PmsProcessInStationService pmsProcessInStationService;
+
 
     /**
      * 新增生产订单信息
@@ -358,7 +360,37 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     @Override
     public Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto) {
-        return null;
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsProcessInStation> eq = new LambdaQueryWrapper<PmsProcessInStation>()
+                .eq(PmsProcessInStation::getProcessId, dto.getProcessId())
+                .eq(PmsProcessInStation::getBatchNo,dto.getBatchNo())
+                .eq(PmsProcessInStation::getStationId,dto.getStationId())
+                .ge(Objects.nonNull(dto.getStartTime()),PmsProcessInStation::getInStationTime,dto.getStartTime())
+                .le(Objects.nonNull(dto.getEndTime()),PmsProcessInStation::getInStationTime,dto.getStartTime());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = pmsProcessInStationService.page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsProcessInStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessInStationVO.class);
+        //6.处理数据
+        List<Long> dictIds = Lists.newArrayList();
+        Set<Integer> stationIds = Sets.newHashSet();
+        res.forEach(pmsProcessInStationVO -> {
+            dictIds.add(pmsProcessInStationVO.getUnitId());
+            stationIds.add(pmsProcessInStationVO.getStationId());
+        });
+        //获取字典数据
+        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
+        //获取工位数据
+        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        res.forEach(pmsProcessInStationVO -> {
+            pmsProcessInStationVO.setStation(stationMap.getData().get(pmsProcessInStationVO.getStationId()).getOfficeName());
+            pmsProcessInStationVO.setUnit(dictMap.getData().get(pmsProcessInStationVO.getUnitId()).getName());
+        });
+        return page.setRecords(res);
     }
 
     /**
