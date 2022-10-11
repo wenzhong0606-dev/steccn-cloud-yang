@@ -61,7 +61,7 @@ public class PmsProduceOrderVO {
     private String unit;
 
     @ApiModelProperty("产线id")
-    private Long productionLineId;
+    private Integer productionLineId;
 
     @ApiModelProperty("产线名称")
     private String productionLineName;

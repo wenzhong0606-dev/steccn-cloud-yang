@@ -92,7 +92,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
         pmsCompleteStorage.setId(IdUtil.getSnowflake().nextId());
         pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
-        pmsCompleteStorage.setProduceOrderId(dtoList.get(0).getProduceOrderId());
+
+        Long produceOrderId = dtoList.get(0).getProduceOrderId();
+        pmsCompleteStorage.setProduceOrderId(produceOrderId);
+        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
+        pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
         for (CompleteStorageScanDTO caseInfo : dtoList) {
             PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
             BeanUtils.copyProperties(caseInfo, modelInfo);
@@ -133,7 +138,3 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
 }
-
-
-
-

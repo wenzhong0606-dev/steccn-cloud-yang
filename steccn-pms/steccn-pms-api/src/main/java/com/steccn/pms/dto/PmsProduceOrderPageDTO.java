@@ -30,7 +30,7 @@ public class PmsProduceOrderPageDTO  extends BasePageDTO {
     private String materialCode;
 
     @ApiModelProperty("产线id")
-    private Long productionLineId;
+    private Integer productionLineId;
 
     @ApiModelProperty("订单类型")
     private Long typeId;

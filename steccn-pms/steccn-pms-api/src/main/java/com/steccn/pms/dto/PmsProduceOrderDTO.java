@@ -64,7 +64,7 @@ public class PmsProduceOrderDTO {
     private Long unitId;
 
     @ApiModelProperty("产线id")
-    private Long productionLineId;
+    private Integer productionLineId;
 
     @ApiModelProperty("状态")
     private Integer state;

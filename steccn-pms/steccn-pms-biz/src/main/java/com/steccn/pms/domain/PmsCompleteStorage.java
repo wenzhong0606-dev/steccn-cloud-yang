@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 生产订单-完工入库
+ *
  * @TableName pms_complete_storage
  */
-@TableName(value ="pms_complete_storage")
+@TableName(value = "pms_complete_storage")
 @Data
 public class PmsCompleteStorage implements Serializable {
     /**
@@ -59,6 +61,11 @@ public class PmsCompleteStorage implements Serializable {
      * 生产订单id
      */
     private Long produceOrderId;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
 
     /**
      * 创建人id

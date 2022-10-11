@@ -13,8 +13,8 @@ import java.util.List;
  * @desc 完工入库分页vo
  */
 @Data
-@ApiModel("完工入库分页vo")
-public class CompleteStoragePageVO implements Serializable {
+@ApiModel("完工入库详细信息vo")
+public class CompleteStorageInfoVO implements Serializable {
 
     @ApiModelProperty("入库单id")
     private Long id;

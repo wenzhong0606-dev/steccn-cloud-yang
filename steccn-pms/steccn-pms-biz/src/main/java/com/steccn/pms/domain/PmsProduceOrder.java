@@ -63,7 +63,7 @@ public class PmsProduceOrder implements Serializable {
     /**
      * 产线id
      */
-    private Long productionLineId;
+    private Integer productionLineId;
 
     /**
      * 工艺id（用做关联工艺路线信息的 工艺版本）
