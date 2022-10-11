@@ -265,7 +265,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionAverageArray = new LambdaQueryWrapper<>();
         itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))", dto.getId());
         if (qtCheckPlanGroupItemService.count(itemConditionAverageArray) != 0) {
-            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
+            if (dto.getMeasureUnit() == null || !dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
                 throw new BusinessException("该检验项在平均数组中,无法修改数据类型，计量单位");
             }
         }
