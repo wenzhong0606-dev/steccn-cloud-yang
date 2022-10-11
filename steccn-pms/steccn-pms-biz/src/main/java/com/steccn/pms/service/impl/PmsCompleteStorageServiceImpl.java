@@ -38,13 +38,13 @@ import java.util.Objects;
 public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorageMapper, PmsCompleteStorage>
         implements PmsCompleteStorageService {
     @Autowired
-    private  PmsCompleteStorageInfoService completeStorageInfoService;
+    private PmsCompleteStorageInfoService completeStorageInfoService;
     @Autowired
-    private  PmsBarcodePrintService pmsBarcodePrintService;
+    private PmsBarcodePrintService pmsBarcodePrintService;
     @Autowired
-    private  PmsProduceOrderService pmsProduceOrderService;
+    private PmsProduceOrderService pmsProduceOrderService;
     @Autowired
-    private  RemoteOfficeFeign remoteOfficeFeign;
+    private RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public CompleteStorageScanDTO scan(String caseNo) {
@@ -70,8 +70,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         resDTO.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
         resDTO.setShelfId(pmsProduceOrder.getDefaultShelfId());
         //4.仓库和货架信息
-        HashSet<Integer> set = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
-        FeignOptional<Map<Integer, SysOfficeVO>> of = FeignOptional.of(remoteOfficeFeign.listById(set));
+        HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
+        resDTO.setWarehouseName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultWarehouseId(), new SysOfficeVO()).getOfficeName());
+        resDTO.setShelfName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultShelfId(), new SysOfficeVO()).getOfficeName());
         return resDTO;
     }
 }
