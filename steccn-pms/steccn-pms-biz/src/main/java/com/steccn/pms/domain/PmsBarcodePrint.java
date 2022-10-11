@@ -68,6 +68,11 @@ public class PmsBarcodePrint implements Serializable {
     private String caseNo;
 
     /**
+     * 箱状态（0:已完工 1:待入库 2：已入库）
+     */
+    private Integer caseState;
+
+    /**
      * 生产订单id
      */
     private Long produceOrderId;
