@@ -22,8 +22,14 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter {
         if (userAuthentication != null) {
             try {
                 String username = (String) authentication.getPrincipal();
-                String name = (String) map.get(JwtAdditionConstant.JWT_ADDITION_NAME);
-                Long userId = Long.parseLong(String.valueOf(map.get(JwtAdditionConstant.JWT_ADDITION_USERID)));
+                String name = null;
+                Long userId = null;
+                try {
+                    userId = Long.parseLong(String.valueOf(map.get(JwtAdditionConstant.JWT_ADDITION_USERID)));
+                    name = (String) map.get(JwtAdditionConstant.JWT_ADDITION_NAME);
+                } catch (Exception ee) {
+                    log.error(ee.getLocalizedMessage());
+                }
                 Collection<? extends GrantedAuthority> authorities = userAuthentication.getAuthorities();
                 SteccnUser steccnUser = new SteccnUser(userId, name, username, "N/A", AuthorityUtils.createAuthorityList("admin"));
                 userAuthentication = new UsernamePasswordAuthenticationToken(steccnUser,
