@@ -11,7 +11,9 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
@@ -37,6 +39,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -54,6 +57,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private PmsProduceOrderService pmsProduceOrderService;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public CompleteStorageScanDTO scan(String caseNo) {
@@ -126,16 +131,31 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         //定义返回page对象
         Page<CompleteStoragePageVO> resPage = new Page<>();
         //根据条件获取筛选数据
-        Page<PmsCompleteStorage> pageList = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsCompleteStorage>()
-                .eq(PmsCompleteStorage::getProductLineId, dto.getProductLineId())
-                .ge(Objects.nonNull(dto.getStart()), PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getStart(), LocalTime.MIN))
-                .le(Objects.nonNull(dto.getEnd()), PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getEnd(), LocalTime.MAX)));
+        LambdaQueryWrapper<PmsCompleteStorage> lqw = new LambdaQueryWrapper<PmsCompleteStorage>()
+                .eq(PmsCompleteStorage::getProductLineId, dto.getProductLineId());
+        if (Objects.nonNull(dto.getStart())) {
+            lqw.ge(PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getStart(), LocalTime.MIN));
+        }
+        if (Objects.nonNull(dto.getEnd())) {
+            lqw.le(PmsCompleteStorage::getCreateTime, LocalDateTime.of(dto.getEnd(), LocalTime.MAX));
+        }
+        Page<PmsCompleteStorage> pageList = page(new Page<>(dto.getCurrent(), dto.getSize()), lqw);
+
         //拷贝分页对象
         BeanUtils.copyProperties(pageList, resPage);
         //如果查询结果不为空，拷贝返回的数据
         if (CollUtil.isNotEmpty(pageList.getRecords())) {
             List<PmsCompleteStorage> modelList = pageList.getRecords();
-            List<CompleteStoragePageVO> voList = BeanUtil.copyToList(modelList, CompleteStoragePageVO.class);
+            List<Long> dictList = modelList.stream().map(PmsCompleteStorage::getUnitId).distinct().collect(Collectors.toList());
+            Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(dictList)).get();
+            SysDictVO defaultSysDictVO = new SysDictVO();
+            List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
+            for (PmsCompleteStorage model : modelList) {
+                CompleteStoragePageVO vo = new CompleteStoragePageVO();
+                BeanUtils.copyProperties(model, vo);
+                vo.setUnitName(sysDictMap.getOrDefault(vo.getUnitId(), defaultSysDictVO).getName());
+                voList.add(vo);
+            }
             resPage.setRecords(voList);
         }
         return resPage;
