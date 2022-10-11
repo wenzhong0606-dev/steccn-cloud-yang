@@ -68,6 +68,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     private final PmsProcessInStationService pmsProcessInStationService;
 
+    private final PmsProcessOutStationService pmsProcessOutStationService;
+
 
     /**
      * 新增生产订单信息
@@ -230,7 +232,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      * @return
      */
     @Override
-    public Page<PmsCompleteStorageVO> getCompleteStorageInfo(PmsCompleteStorageDTO dto) {
+    public Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsCompleteStorage> eq = new LambdaQueryWrapper<PmsCompleteStorage>()
                 .eq(PmsCompleteStorage::getProduceOrderId, dto.getProduceOrderId());
@@ -286,7 +288,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public Page<PmsCompleteDeliveryVO> getCompleteDeliveryInfo(PmsCompleteDeliveryDTO dto) {
+    public Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsCompleteDelivery> eq = new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getProduceOrderId, dto.getProduceOrderId());
         //2.定义分页对象
@@ -355,18 +357,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 获取工艺信息进站信息
+     *
      * @param dto
      * @return
      */
     @Override
-    public Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto) {
+    public Page<PmsProcessInStationVO> inStationPageList(PmsProcessInStationDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsProcessInStation> eq = new LambdaQueryWrapper<PmsProcessInStation>()
                 .eq(PmsProcessInStation::getProcessId, dto.getProcessId())
-                .eq(PmsProcessInStation::getBatchNo,dto.getBatchNo())
-                .eq(PmsProcessInStation::getStationId,dto.getStationId())
-                .ge(Objects.nonNull(dto.getStartTime()),PmsProcessInStation::getInStationTime,dto.getStartTime())
-                .le(Objects.nonNull(dto.getEndTime()),PmsProcessInStation::getInStationTime,dto.getStartTime());
+                .eq(PmsProcessInStation::getBatchNo, dto.getBatchNo())
+                .eq(PmsProcessInStation::getStationId, dto.getStationId())
+                .ge(Objects.nonNull(dto.getStartTime()), PmsProcessInStation::getInStationTime, dto.getStartTime())
+                .le(Objects.nonNull(dto.getEndTime()), PmsProcessInStation::getInStationTime, dto.getStartTime());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -395,11 +398,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 获取订单批次信息
+     *
      * @param dto
      * @return
      */
     @Override
-    public Page<PmsWorkOrderBatchVO> getBatchInfo(PmsProduceOrderBatchDTO dto) {
+    public Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsWorkOrderBatch> eq = new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, dto.getProduceOrderId());
         //2.定义分页对象
@@ -412,12 +416,52 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsWorkOrderBatchVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsWorkOrderBatchVO.class);
         //6.处理数据
         List<Long> dictIds = Lists.newArrayList();
-        res.forEach( pmsWorkOrderBatchVO -> {
+        res.forEach(pmsWorkOrderBatchVO -> {
             dictIds.add(pmsWorkOrderBatchVO.getUnitId());
         });
         //获取字典数据
         R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
-        res.forEach( pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.getData().get(pmsWorkOrderBatchVO.getUnitId()).getName()));
+        res.forEach(pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.getData().get(pmsWorkOrderBatchVO.getUnitId()).getName()));
+        return page.setRecords(res);
+    }
+
+    /**
+     * 获取工艺信息出站信息
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationDTO dto) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsProcessOutStation> eq = new LambdaQueryWrapper<PmsProcessOutStation>()
+                .eq(PmsProcessOutStation::getProcessId, dto.getProcessId())
+                .eq(PmsProcessOutStation::getBatchNo, dto.getBatchNo())
+                .eq(PmsProcessOutStation::getStationId, dto.getStationId())
+                .ge(Objects.nonNull(dto.getStartTime()), PmsProcessOutStation::getOutStationTime, dto.getStartTime())
+                .le(Objects.nonNull(dto.getEndTime()), PmsProcessOutStation::getOutStationTime, dto.getStartTime());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = pmsProcessOutStationService.page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsProcessOutStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessOutStationVO.class);
+        //6.处理数据
+        List<Long> dictIds = Lists.newArrayList();
+        Set<Integer> stationIds = Sets.newHashSet();
+        res.forEach(pmsProcessOutStationVO -> {
+            dictIds.add(pmsProcessOutStationVO.getUnitId());
+            stationIds.add(pmsProcessOutStationVO.getStationId());
+        });
+        //获取字典数据
+        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
+        //获取工位数据
+        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        res.forEach(pmsProcessOutStationVO -> {
+            pmsProcessOutStationVO.setStation(stationMap.getData().get(pmsProcessOutStationVO.getStationId()).getOfficeName());
+            pmsProcessOutStationVO.setUnit(dictMap.getData().get(pmsProcessOutStationVO.getUnitId()).getName());
+        });
         return page.setRecords(res);
     }
 

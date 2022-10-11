@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.service.PmsProcessOutStationService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
@@ -42,32 +43,37 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
-    @ApiOperation("获取订单完工入库信息")
+    @ApiOperation("获取订单完工入库分页列表")
     @PostMapping("/complete/storage")
-    public R<Page<PmsCompleteStorageVO>> getCompleteStorageInfo(@RequestBody PmsCompleteStorageDTO dto) {
-        return R.success(pmsProduceOrderService.getCompleteStorageInfo(dto));
+    public R<Page<PmsCompleteStorageVO>> completeStoragePageList(@RequestBody PmsCompleteStorageDTO dto) {
+        return R.success(pmsProduceOrderService.completeStoragePageList(dto));
     }
 
-    @ApiOperation("获取订单投料信息")
+    @ApiOperation("获取订单投料分页列表")
     @PostMapping("/complete/delivery")
-    public R<Page<PmsCompleteDeliveryVO>> getCompleteDeliveryInfo(@RequestBody PmsCompleteDeliveryDTO dto) {
-        return R.success(pmsProduceOrderService.getCompleteDeliveryInfo(dto));
+    public R<Page<PmsCompleteDeliveryVO>> completeDeliveryPageList(@RequestBody PmsCompleteDeliveryDTO dto) {
+        return R.success(pmsProduceOrderService.completeDeliveryPageList(dto));
     }
 
 
-    @ApiOperation("获取生产订单批次信息")
+    @ApiOperation("获取生产订单分页列表")
     @PostMapping("/batch/info")
-    public R<Page<PmsWorkOrderBatchVO>> getBatchInfo(@RequestBody PmsProduceOrderBatchDTO dto){
-        return R.success(pmsProduceOrderService.getBatchInfo(dto));
+    public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto){
+        return R.success(pmsProduceOrderService.batchPageList(dto));
     }
 
 
-    @ApiOperation("获取工艺信息-进站信息")
+    @ApiOperation("工艺信息-进站分页列表")
     @PostMapping("/in/station")
-    public R<Page<PmsProcessInStationVO>> getInStation(@RequestBody PmsProcessInStationDTO dto) {
-        return R.success(pmsProduceOrderService.getInStation(dto));
+    public R<Page<PmsProcessInStationVO>> inStationPageList(@RequestBody PmsProcessInStationDTO dto) {
+        return R.success(pmsProduceOrderService.inStationPageList(dto));
     }
 
+    @ApiOperation("工艺信息-出站分页列表")
+    @PostMapping("/out/station")
+    public R<Page<PmsProcessOutStationVO>> outStationPageList(@RequestBody PmsProcessOutStationDTO dto){
+        return R.success(pmsProduceOrderService.outStationPageList(dto));
+    }
 
 
 }

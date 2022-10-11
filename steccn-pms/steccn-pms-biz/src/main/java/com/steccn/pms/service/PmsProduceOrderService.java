@@ -39,26 +39,33 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @param produceOrderId
      * @return
      */
-    Page<PmsCompleteStorageVO> getCompleteStorageInfo(PmsCompleteStorageDTO produceOrderId);
+    Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO produceOrderId);
 
     /**
      * 根据订单id获取出库信息
      * @param dto
      * @return
      */
-    Page<PmsCompleteDeliveryVO> getCompleteDeliveryInfo(PmsCompleteDeliveryDTO dto);
+    Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto);
 
     /**
-     * 根据订单获取进站信息
+     * 根据工序获取进站的信息
      * @param dto
      * @return
      */
-    Page<PmsProcessInStationVO> getInStation(PmsProcessInStationDTO dto);
+    Page<PmsProcessInStationVO> inStationPageList(PmsProcessInStationDTO dto);
 
     /**
-     * 根据订单获取批次信息
+     * 根据订单获取批次分页列表
      * @param dto
      * @return
      */
-    Page<PmsWorkOrderBatchVO> getBatchInfo(PmsProduceOrderBatchDTO dto);
+    Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
+
+    /**
+     * 根据工序获取出站的信息
+     * @param dto
+     * @return
+     */
+    Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationDTO dto);
 }

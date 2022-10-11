@@ -1,0 +1,35 @@
+package com.steccn.pms.dto;
+
+import com.steccn.common.dto.BasePageDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * 类说明
+ *
+ * @author Mongknife
+ * @date 2022/10/11
+ */
+
+@Data
+@ApiModel("工序出站信息DTO")
+public class PmsProcessOutStationDTO  extends BasePageDTO {
+
+    @ApiModelProperty("工序ID")
+    private Long processId;
+
+    @ApiModelProperty("开始时间")
+    private LocalDateTime startTime;
+
+    @ApiModelProperty("结束时间")
+    private LocalDateTime endTime;
+
+    @ApiModelProperty("批次号")
+    private String batchNo;
+
+    @ApiModelProperty("工位id")
+    private Integer stationId;
+}
