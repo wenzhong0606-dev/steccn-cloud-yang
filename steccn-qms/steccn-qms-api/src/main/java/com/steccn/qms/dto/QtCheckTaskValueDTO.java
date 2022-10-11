@@ -23,4 +23,6 @@ public class QtCheckTaskValueDTO implements Serializable {
     private Integer copy;
 
     private List<QtCheckTaskValueListDTO> list;
+
+    private QtCheckTaskCopyDetailsDTO copyDetails;
 }

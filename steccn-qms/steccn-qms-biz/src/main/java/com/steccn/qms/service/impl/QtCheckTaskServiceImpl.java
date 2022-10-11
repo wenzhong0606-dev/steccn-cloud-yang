@@ -271,7 +271,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         }
                     });
                 }
-
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
         }
