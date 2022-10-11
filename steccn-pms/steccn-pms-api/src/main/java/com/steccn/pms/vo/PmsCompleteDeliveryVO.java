@@ -54,13 +54,13 @@ public class PmsCompleteDeliveryVO {
     private String batchNo;
 
     @ApiModelProperty("仓库id")
-    private Long  warehouseId;
+    private Integer  warehouseId;
 
     @ApiModelProperty("仓库")
     private String warehouseName;
 
     @ApiModelProperty("货架Id")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架")
     private String shelfName;

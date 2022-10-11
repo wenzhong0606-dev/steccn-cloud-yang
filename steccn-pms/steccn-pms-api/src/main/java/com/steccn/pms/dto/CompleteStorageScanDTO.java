@@ -18,10 +18,10 @@ public class CompleteStorageScanDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("箱号")
-    private String caseNumber;
+    private String caseNo;
 
     @ApiModelProperty("批次号")
-    private String batchNumber;
+    private String batchNo;
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
@@ -36,13 +36,13 @@ public class CompleteStorageScanDTO implements Serializable {
     private String produceOrderNo;
 
     @ApiModelProperty("仓库id")
-    private Long warehouseId;
+    private Integer warehouseId;
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 
     @ApiModelProperty("货架id")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架名称")
     private String shelfName;

@@ -48,13 +48,13 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private String batchNo;
 
     @ApiModelProperty("仓库id")
-    private Long warehouseId;
+    private Integer warehouseId;
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 
     @ApiModelProperty("货架id")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架名称")
     private String shelfName;

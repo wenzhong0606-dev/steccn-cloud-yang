@@ -73,7 +73,7 @@ public class PmsProduceOrderDTO {
     private Long craftId;
 
     @ApiModelProperty("默认仓库id")
-    private Long defaultWarehouseId;
+    private Integer defaultWarehouseId;
 
     @ApiModelProperty("工序信息")
     private List<PmsProduceOrderCraftDTO> processList;

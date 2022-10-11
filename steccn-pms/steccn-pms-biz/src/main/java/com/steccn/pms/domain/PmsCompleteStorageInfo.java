@@ -53,11 +53,6 @@ public class PmsCompleteStorageInfo implements Serializable {
     private Long completeStorageId;
 
     /**
-     * 生产订单id
-     */
-    private Long produceOrderId;
-
-    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

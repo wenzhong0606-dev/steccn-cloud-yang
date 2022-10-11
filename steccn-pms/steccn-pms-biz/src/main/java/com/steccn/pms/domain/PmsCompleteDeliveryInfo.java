@@ -64,12 +64,12 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     /**
      * 仓库id
      */
-    private Long warehouseId;
+    private Integer warehouseId;
 
     /**
      * 货架id
      */
-    private Long shelfId;
+    private Integer shelfId;
 
     /**
      * 创建人id

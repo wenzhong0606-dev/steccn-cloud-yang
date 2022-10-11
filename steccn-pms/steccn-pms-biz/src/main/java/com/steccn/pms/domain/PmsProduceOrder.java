@@ -93,12 +93,12 @@ public class PmsProduceOrder implements Serializable {
     /**
      * 默认货架id(完工信息)
      */
-    private Long defaultShelfId;
+    private Integer defaultShelfId;
 
     /**
      * 默认仓库id（完工信息）
      */
-    private Long defaultWarehouseId;
+    private Integer defaultWarehouseId;
 
     /**
      * 创建人id

@@ -79,9 +79,9 @@ public class PmsProduceOrderVO {
     private List<PmsWorkOrderBomVO> materialList;
 
     @ApiModelProperty("默认货架id(完工信息)")
-    private Long defaultShelfId;
+    private Integer defaultShelfId;
 
     @ApiModelProperty("默认仓库id(完工信息)")
-    private Long defaultWarehouseId;
+    private Integer defaultWarehouseId;
 
 }
