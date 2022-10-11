@@ -6,6 +6,7 @@ import com.steccn.pms.dto.PmsProduceOrderCraftDTO;
 import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -27,4 +28,6 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      * @return
      */
     List<PmsProduceOrderCraftVO> getCrafts(Long id);
+
+    Map<Long,PmsProduceOrderCraftVO> listById(List<Long> processIds);
 }

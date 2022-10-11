@@ -64,6 +64,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
+
     /**
      * 新增生产订单信息
      *
@@ -296,6 +297,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<Long> materialIds = Lists.newArrayList();
         Set<Integer> office = Sets.newHashSet();
         List<Long> ids = Lists.newArrayList();
+        List<Long> processIds = Lists.newArrayList();
         List<PmsCompleteDeliveryVO> pmsCompleteDeliveryVOList = Lists.newArrayList();
         res.forEach(pmsCompleteDelivery -> {
             //查询投料信息的详情内容
@@ -316,6 +318,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 pmsCompleteDeliveryVO.setWarehouseId(pmsCompleteDeliveryInfo.getWarehouseId());
                 pmsCompleteDeliveryVO.setShelfId(pmsCompleteDeliveryInfo.getShelfId());
                 pmsCompleteDeliveryVO.setProcessId(pmsCompleteDeliveryInfo.getProcessId());
+                processIds.add(pmsCompleteDeliveryInfo.getProcessId());
                 pmsCompleteDeliveryVOList.add(pmsCompleteDeliveryVO);
             });
         });
@@ -325,6 +328,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         R<Map<Long, EqpSpareVO>> materialData = remoteSpareFeignApi.listById(materialIds);
         //获取仓库货架信息
         R<Map<Integer, SysOfficeVO>> officeMapData = remoteOfficeFeign.listById(office);
+        //获取工序信息
+        pmsProduceOrderCraftService.listById(processIds);
         if (CollUtil.isNotEmpty(pmsCompleteDeliveryVOList)) {
             pmsCompleteDeliveryVOList.forEach(
                     pmsCompleteDeliveryVO -> {

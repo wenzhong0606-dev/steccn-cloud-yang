@@ -18,6 +18,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -86,6 +87,11 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
             craftVOList.add(pmsProduceOrderCraftVO);
         });
         return craftVOList;
+    }
+
+    @Override
+    public Map<Long, PmsProduceOrderCraftVO> listById(List<Long> processIds) {
+        return null;
     }
 
 
