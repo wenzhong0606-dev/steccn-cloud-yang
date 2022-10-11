@@ -29,5 +29,10 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      */
     List<PmsProduceOrderCraftVO> getCrafts(Long id);
 
+    /**
+     * 批量查询工序信息
+     * @param processIds
+     * @return
+     */
     Map<Long,PmsProduceOrderCraftVO> listById(List<Long> processIds);
 }

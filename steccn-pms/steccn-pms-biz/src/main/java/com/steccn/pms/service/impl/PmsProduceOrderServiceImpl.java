@@ -329,21 +329,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //获取仓库货架信息
         R<Map<Integer, SysOfficeVO>> officeMapData = remoteOfficeFeign.listById(office);
         //获取工序信息
-        pmsProduceOrderCraftService.listById(processIds);
+        Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
         if (CollUtil.isNotEmpty(pmsCompleteDeliveryVOList)) {
             pmsCompleteDeliveryVOList.forEach(
                     pmsCompleteDeliveryVO -> {
                         //处理单位数据
                         pmsCompleteDeliveryVO.setUnit(dictData.getData().get(pmsCompleteDeliveryVO.getUnitId()).getName());
                         //处理工序数据
-//                        pmsCompleteDeliveryVO.setProcessName();
+                        pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
                         //处理仓库货架信息
                         pmsCompleteDeliveryVO.setWarehouseName(officeMapData.getData().get(pmsCompleteDeliveryVO.getWarehouseId()).getOfficeName());
                         pmsCompleteDeliveryVO.setShelfName(officeMapData.getData().get(pmsCompleteDeliveryVO.getShelfId()).getOfficeName());
                         //处理物料数据
                         pmsCompleteDeliveryVO.setMaterialName(materialData.getData().get(pmsCompleteDeliveryVO.getMaterialName()).getName());
                         pmsCompleteDeliveryVO.setMaterialCode(materialData.getData().get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
-
                     }
             );
         }

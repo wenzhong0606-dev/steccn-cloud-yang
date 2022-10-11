@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
+import com.steccn.common.vo.R;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderCraftStation;
 import com.steccn.pms.dto.PmsProduceOrderCraftDTO;
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +66,8 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
 
     /**
      * 根据生产订单id查询工序信息
-     * @param id  生产订单id
+     *
+     * @param id 生产订单id
      */
     @Override
     public List<PmsProduceOrderCraftVO> getCrafts(Long id) {
@@ -70,18 +75,18 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         LambdaQueryWrapper<PmsProduceOrderCraft> eq = new LambdaQueryWrapper<PmsProduceOrderCraft>().eq(PmsProduceOrderCraft::getProduceOrderId, id);
         //2.获取数据
         List<PmsProduceOrderCraft> list = list(eq);
-        if (CollUtil.isEmpty(list)){
+        if (CollUtil.isEmpty(list)) {
             return null;
         }
         //3.处理数据
         List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
-        list.forEach( pmsProduceOrderCraft -> {
+        list.forEach(pmsProduceOrderCraft -> {
             //查询工位信息
             PmsProduceOrderCraftVO pmsProduceOrderCraftVO = new PmsProduceOrderCraftVO();
-            BeanUtil.copyProperties(pmsProduceOrderCraft,pmsProduceOrderCraftVO);
+            BeanUtil.copyProperties(pmsProduceOrderCraft, pmsProduceOrderCraftVO);
             List<PmsWorkOrderCraftStation> stations = pmsWorkOrderCraftStationService.list(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
                     .eq(PmsWorkOrderCraftStation::getProduceOrderCraftId, pmsProduceOrderCraft.getId()));
-            if (CollUtil.isNotEmpty(stations)){
+            if (CollUtil.isNotEmpty(stations)) {
                 pmsProduceOrderCraftVO.setStationList(BeanUtil.copyToList(stations, PmsWorkOrderCraftStationVO.class));
             }
             craftVOList.add(pmsProduceOrderCraftVO);
@@ -89,9 +94,25 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         return craftVOList;
     }
 
+    /**
+     * 查询工序信息
+     *
+     * @param processIds
+     * @return
+     */
     @Override
     public Map<Long, PmsProduceOrderCraftVO> listById(List<Long> processIds) {
-        return null;
+        Map<Long, PmsProduceOrderCraftVO> resMap = Maps.newHashMap();
+        List<PmsProduceOrderCraft> pmsProduceOrderCrafts = listByIds(processIds);
+        if (CollUtil.isEmpty(pmsProduceOrderCrafts)) {
+            return resMap;
+        }
+        List<PmsProduceOrderCraftVO> craftVOList = BeanUtil.copyToList(pmsProduceOrderCrafts, PmsProduceOrderCraftVO.class);
+        craftVOList.forEach(pmsProduceOrderCraft -> {
+            resMap.put(pmsProduceOrderCraft.getId(), pmsProduceOrderCraft);
+        });
+        return resMap;
+
     }
 
 
