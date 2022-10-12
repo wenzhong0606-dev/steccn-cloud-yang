@@ -1,9 +1,11 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -22,6 +24,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
+import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -206,6 +209,42 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             });
         }
         return resList;
+    }
+
+    @Override
+    public Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>()
+                .eq(Objects.nonNull(dto.getBatchNo()),PmsReportWork::getProcessId, dto.getProcessId())
+                .eq(Objects.nonNull(dto.getBatchNo()),PmsReportWork::getBatchNo, dto.getBatchNo())
+                .eq(Objects.nonNull(dto.getStationId()),PmsReportWork::getStationId, dto.getStationId())
+                .ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime())
+                .le(Objects.nonNull(dto.getEndTime()), PmsReportWork::getCreateTime, dto.getStartTime());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsReportWorkVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsReportWorkVO.class);
+        //6.处理数据
+        Set<Long> dictIds = Sets.newHashSet();
+        Set<Integer> stationIds = Sets.newHashSet();
+        res.forEach(pmsReportWorkVO -> {
+            dictIds.add(pmsReportWorkVO.getUnitId());
+            stationIds.add(pmsReportWorkVO.getStationId());
+        });
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
+        res.forEach(pmsReportWorkVO -> {
+            pmsReportWorkVO.setStation(officeMap.get(pmsReportWorkVO.getStationId()));
+            pmsReportWorkVO.setUnit(dictMap.get(pmsReportWorkVO.getUnitId()));
+        });
+        //todo 班次数据待定(OA获取)
+        return page.setRecords(res);
     }
 
     /**

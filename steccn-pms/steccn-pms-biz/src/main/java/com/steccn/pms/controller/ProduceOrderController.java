@@ -43,7 +43,6 @@ public class ProduceOrderController {
     }
 
 
-
     @ApiOperation("获取订单投料分页列表")
     @PostMapping("/complete/delivery")
     public R<Page<PmsCompleteDeliveryVO>> completeDeliveryPageList(@RequestBody PmsCompleteDeliveryDTO dto) {
@@ -70,11 +69,7 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.outStationPageList(dto));
     }
 
-    @ApiOperation("工艺信息-报工分页列表")
-    @PostMapping("/report/work")
-    public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){
-        return R.success(pmsProduceOrderService.reportWorkPageList(dto));
-    }
+
 
     @ApiOperation("工艺信息-投料信息")
     @PostMapping("/feed")

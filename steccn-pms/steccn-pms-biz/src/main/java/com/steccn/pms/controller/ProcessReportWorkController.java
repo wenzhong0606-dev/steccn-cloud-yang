@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -50,4 +51,10 @@ public class ProcessReportWorkController {
     public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
         return R.success(pmsReportWorkService.materialConsume(dto));
     }
+    @ApiOperation("工艺信息-报工分页列表")
+    @PostMapping("/craft/page")
+    public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){
+        return R.success(pmsReportWorkService.reportWorkPageList(dto));
+    }
+
 }

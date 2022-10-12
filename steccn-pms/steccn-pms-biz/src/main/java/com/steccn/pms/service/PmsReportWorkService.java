@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 
@@ -43,4 +44,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 物料消耗列表，不分页
      */
     List<ProcessReportWorkMaterialListDTO> materialConsume(ProcessReportWorkMaterialConsumeDTO dto);
+
+    /**
+     * 生产订单-工艺信息-报工信息
+     * @param dto
+     * @return 分页报工信息
+     */
+    Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto);
 }
