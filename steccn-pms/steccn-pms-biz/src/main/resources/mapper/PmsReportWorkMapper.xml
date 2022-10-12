@@ -14,7 +14,7 @@
         <result property="badnessQuantity" column="badness_quantity" jdbcType="DECIMAL"/>
         <result property="batchNo" column="batch_no" jdbcType="VARCHAR"/>
         <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
-        <result property="produceLineId" column="produce_line_id" jdbcType="INTEGER"/>
+        <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
         <result property="stationId" column="station_id" jdbcType="INTEGER"/>
         <result property="classGroupId" column="class_group_id" jdbcType="INTEGER"/>
         <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
@@ -82,5 +82,6 @@
         <if test="dto.endTimeEnd != null">
             AND prw.end_time &lt;= #{dto.endTimeEnd}
         </if>
+        order by prw.create_time desc
     </select>
 </mapper>

@@ -46,7 +46,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         implements PmsReportWorkService {
 
     @Autowired
-    private  RemoteDictFeignApi remoteDictFeignApi;
+    private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
@@ -98,12 +98,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Set<Long> unitList = Sets.newHashSet();
         Set<Integer> organIdSet = Sets.newHashSet();
         records.forEach(ele -> {
-            if (Objects.nonNull(ele.getUnitId())) {
-                unitList.add(ele.getUnitId());
-            }
-            if (Objects.nonNull(ele.getStationId())) {
-                organIdSet.add(ele.getStationId());
-            }
+            unitList.add(ele.getUnitId());
+            organIdSet.add(ele.getStationId());
         });
         Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
         Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
