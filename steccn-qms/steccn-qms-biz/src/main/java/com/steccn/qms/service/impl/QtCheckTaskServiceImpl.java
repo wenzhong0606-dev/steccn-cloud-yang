@@ -140,28 +140,47 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         if (qtCheckTask != null) {
-            qtCheckTaskListVo.setId(qtCheckTask.getId());
-            qtCheckTaskListVo.setStatus(qtCheckTask.getStatus());
-            //可能有结果
-            if (qtCheckTask.getCheckNum() != null) {
-                qtCheckTaskListVo.setCheckNum(qtCheckTask.getCheckNum());
-            }
-            if (qtCheckTask.getGoodNum() != null) {
-                qtCheckTaskListVo.setGoodNum(qtCheckTask.getGoodNum());
-            }
-            if (qtCheckTask.getBadNum() != null) {
-                qtCheckTaskListVo.setBadNum(qtCheckTask.getBadNum());
-            }
-            if (qtCheckTask.getResult() != null) {
-                qtCheckTaskListVo.setResult(qtCheckTask.getResult());
-            }
-            if (qtCheckTask.getNote() != null) {
-                qtCheckTaskListVo.setNote(qtCheckTask.getNote());
-            }
-            //返回名字
+//            qtCheckTaskListVo.setId(qtCheckTask.getId());
+//            qtCheckTaskListVo.setStatus(qtCheckTask.getStatus());
+//            //可能有结果
+//            if (qtCheckTask.getCheckNum() != null) {
+//                qtCheckTaskListVo.setCheckNum(qtCheckTask.getCheckNum());
+//            }
+//            if (qtCheckTask.getGoodNum() != null) {
+//                qtCheckTaskListVo.setGoodNum(qtCheckTask.getGoodNum());
+//            }
+//            if (qtCheckTask.getBadNum() != null) {
+//                qtCheckTaskListVo.setBadNum(qtCheckTask.getBadNum());
+//            }
+//            if (qtCheckTask.getResult() != null) {
+//                qtCheckTaskListVo.setResult(qtCheckTask.getResult());
+//            }
+//            if (qtCheckTask.getNote() != null) {
+//                qtCheckTaskListVo.setNote(qtCheckTask.getNote());
+//            }
+            //json名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
-            qtCheckTaskListVo.setProductWorkshopName(remoteOfficeFeign.getNameById(qtCheckTask.getProductWorkshop().getId()).getMsg());
-            qtCheckTaskListVo.setProductLineName(remoteOfficeFeign.getNameById(qtCheckTask.getProductLine().getId()).getMsg());
+            if(qtCheckTask.getMaterialWorkshop()!=null) {
+                qtCheckTask.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
+            }
+            if(qtCheckTask.getSupplier()!=null) {
+                qtCheckTask.setSupplierName(qtCheckTask.getSupplier().getName());
+            }
+            if(qtCheckTask.getCustomer()!=null) {
+                qtCheckTask.setCustomerName(qtCheckTask.getCustomer().getName());
+            }
+            if(qtCheckTask.getProductWorkshop()!=null) {
+                qtCheckTask.setProductWorkshopName(qtCheckTask.getProductWorkshop().getName());
+            }
+            if(qtCheckTask.getProductLine()!=null) {
+                qtCheckTask.setProductLineName(qtCheckTask.getProductLine().getName());
+            }
+            BeanUtils.copyProperties(qtCheckTask,qtCheckTaskListVo);
+            //如果为复检任务则查询复检任务
+            if(qtCheckTask.getType() == 1){
+                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId,id));
+                qtCheckTaskListVo.setOriginalTaskCode(recheckTask.getOriginalCode());
+            }
         }
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
@@ -176,9 +195,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //包装好group和copy
             qtCheckTaskDetails.forEach(tmp -> {
                 QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, tmp.getCopy());
+                //查看是否有details
+                QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
+                        .eq(QtCheckTaskCopy::getTaskId,id)
+                        .eq(QtCheckTaskCopy::getCopy,tmp.getCopy()));
                 QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
                 qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
                 qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
+                //放入copyDetails
+                QtCheckTaskCopyDetailsDTO copyDetailsVO = new QtCheckTaskCopyDetailsDTO();
+                BeanUtils.copyProperties(qtCheckTaskCopy,copyDetailsVO);
+                qtCheckTaskDetailCopyVO.setCopyDetails(copyDetailsVO);
                 copy.add(qtCheckTaskDetailCopyVO);
             });
         }
@@ -277,9 +304,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //操作样本详情 当样本类型为来料检、化验抽检、配料抽检时，有样本模块
                 if((task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()))&&!Objects.isNull(valueTmp.getCopyDetails())){
                     QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
+                    Map<String, Object> deleteCondition = new HashMap<>();
+                    deleteCondition.put("copy",valueTmp.getCopy());
                     copyDetailModel.setCopy(valueTmp.getCopy());
+                    deleteCondition.put("task_id",dto.getId());
                     copyDetailModel.setTaskId(dto.getId());
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(),copyDetailModel);
+                    //先删除冗余数据
+                    qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
                 }
             });

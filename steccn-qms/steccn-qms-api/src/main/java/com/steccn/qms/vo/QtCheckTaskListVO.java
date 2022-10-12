@@ -132,4 +132,20 @@ public class QtCheckTaskListVO {
      * 创建人
      */
     private String createName;
+
+    /**
+     * 任务创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 任务开始时间
+     */
+    private LocalDateTime startTime;
+
+    /**
+     * 任务完成时间
+     */
+    private LocalDateTime finishedTime;
+
 }
