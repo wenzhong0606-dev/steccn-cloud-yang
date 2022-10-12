@@ -1,23 +1,30 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
@@ -27,6 +34,7 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStorageMaterialVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +66,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
+
 
     @Override
     public CompleteStorageScanDTO scan(String caseNo) {
@@ -221,6 +230,62 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         completeStorageListVO.setList(materialVOList);
         completeStorageListVO.setUnitName(sysDictMap.get(completeStorageListVO.getUnitId()));
         return completeStorageListVO;
+    }
+
+    @Override
+    public Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto) {
+        //1.定义查询条件
+        LambdaQueryWrapper<PmsCompleteStorage> eq = new LambdaQueryWrapper<PmsCompleteStorage>()
+                .eq(PmsCompleteStorage::getProduceOrderId, dto.getProduceOrderId());
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //3.查询分页数据
+        IPage resPage = page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<PmsCompleteStorage> res = BeanUtil.copyToList(resPage.getRecords(), PmsCompleteStorage.class);
+        //6.处理数据
+        List<Long> ids = Lists.newArrayList();
+        Set<Integer> warehouseIds = Sets.newHashSet();
+        List<PmsCompleteStorageVO> storageVOList = Lists.newArrayList();
+        //获取订单的仓库信息
+        PmsProduceOrder order = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, dto.getProduceOrderId()));
+        if (CollUtil.isNotEmpty(res)) {
+            res.forEach(pmsCompleteStorage -> {
+                //查询完工信息的详情内容
+                List<PmsCompleteStorageInfo> list = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
+                        .eq(PmsCompleteStorageInfo::getCompleteStorageId, pmsCompleteStorage.getId()));
+                if (CollUtil.isNotEmpty(list)) {
+                    list.forEach(pmsCompleteStorageInfo -> {
+                        PmsCompleteStorageVO pmsCompleteStorageVO = new PmsCompleteStorageVO();
+                        BeanUtil.copyProperties(pmsCompleteStorage, pmsCompleteStorageVO);
+                        pmsCompleteStorageVO.setQuantity(pmsCompleteStorageInfo.getQuantity());
+                        ids.add(pmsCompleteStorageInfo.getUnitId());
+                        pmsCompleteStorageVO.setCaseNo(pmsCompleteStorageInfo.getCaseNo());
+                        pmsCompleteStorageVO.setBatch(pmsCompleteStorageInfo.getBatchNo());
+                        pmsCompleteStorageVO.setUnitId(pmsCompleteStorageInfo.getUnitId());
+                        storageVOList.add(pmsCompleteStorageVO);
+                        pmsCompleteStorageVO.setWarehouseId(Math.toIntExact(order.getDefaultWarehouseId()));
+                        pmsCompleteStorageVO.setShelfId(Math.toIntExact(order.getDefaultShelfId()));
+                        warehouseIds.add(order.getDefaultShelfId());
+                        warehouseIds.add(order.getDefaultWarehouseId());
+                    });
+                }
+            });
+        }
+        //获取单位信息
+        R<Map<Long, SysDictVO>> mapR = remoteDictFeignApi.listById(ids);
+        //获取仓库以及货架信息
+        R<Map<Integer, SysOfficeVO>> warehouses = remoteOfficeFeign.listById(warehouseIds);
+        if (CollUtil.isNotEmpty(storageVOList)) {
+            storageVOList.forEach(pmsCompleteStorageVO -> {
+                pmsCompleteStorageVO.setUnit(mapR.getData().get(pmsCompleteStorageVO.getUnitId()).getName());
+                pmsCompleteStorageVO.setWarehouseName(warehouses.getData().get(pmsCompleteStorageVO.getWarehouseId()).getOfficeName());
+                pmsCompleteStorageVO.setShelfName(warehouses.getData().get(pmsCompleteStorageVO.getShelfId()).getOfficeName());
+            });
+        }
+        return page.setRecords(storageVOList);
     }
 
     /**

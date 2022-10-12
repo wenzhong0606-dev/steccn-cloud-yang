@@ -228,68 +228,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return true;
     }
 
-    /**
-     * 获取生产订单下的完工信息
-     *
-     * @param dto
-     * @return
-     */
-    @Override
-    public Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto) {
-        //1.定义查询条件
-        LambdaQueryWrapper<PmsCompleteStorage> eq = new LambdaQueryWrapper<PmsCompleteStorage>()
-                .eq(PmsCompleteStorage::getProduceOrderId, dto.getProduceOrderId());
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //3.查询分页数据
-        IPage resPage = pmsCompleteStorageService.page(page, eq);
-        //4.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //5.拷贝返回的信息
-        List<PmsCompleteStorage> res = BeanUtil.copyToList(resPage.getRecords(), PmsCompleteStorage.class);
-        //6.处理数据
-        List<Long> ids = Lists.newArrayList();
-        Set<Integer> warehouseIds = Sets.newHashSet();
-        List<PmsCompleteStorageVO> storageVOList = Lists.newArrayList();
-        //获取订单的仓库信息
-        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, dto.getProduceOrderId()));
-        if (CollUtil.isNotEmpty(res)) {
-            res.forEach(pmsCompleteStorage -> {
-                //查询完工信息的详情内容
-                List<PmsCompleteStorageInfo> list = pmsCompleteStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
-                        .eq(PmsCompleteStorageInfo::getCompleteStorageId, pmsCompleteStorage.getId()));
-                if (CollUtil.isNotEmpty(list)) {
-                    list.forEach(pmsCompleteStorageInfo -> {
-                        PmsCompleteStorageVO pmsCompleteStorageVO = new PmsCompleteStorageVO();
-                        BeanUtil.copyProperties(pmsCompleteStorage, pmsCompleteStorageVO);
-                        pmsCompleteStorageVO.setQuantity(pmsCompleteStorageInfo.getQuantity());
-                        ids.add(pmsCompleteStorageInfo.getUnitId());
-                        pmsCompleteStorageVO.setCaseNo(pmsCompleteStorageInfo.getCaseNo());
-                        pmsCompleteStorageVO.setBatch(pmsCompleteStorageInfo.getBatchNo());
-                        pmsCompleteStorageVO.setUnitId(pmsCompleteStorageInfo.getUnitId());
-                        storageVOList.add(pmsCompleteStorageVO);
-                        pmsCompleteStorageVO.setWarehouseId(Math.toIntExact(order.getDefaultWarehouseId()));
-                        pmsCompleteStorageVO.setShelfId(Math.toIntExact(order.getDefaultShelfId()));
-                        warehouseIds.add(order.getDefaultShelfId());
-                        warehouseIds.add(order.getDefaultWarehouseId());
-                    });
-                }
-            });
-        }
-        //获取单位信息
-        R<Map<Long, SysDictVO>> mapR = remoteDictFeignApi.listById(ids);
-        //获取仓库以及货架信息
-        R<Map<Integer, SysOfficeVO>> warehouses = remoteOfficeFeign.listById(warehouseIds);
-        if (CollUtil.isNotEmpty(storageVOList)) {
-            storageVOList.forEach(pmsCompleteStorageVO -> {
-                pmsCompleteStorageVO.setUnit(mapR.getData().get(pmsCompleteStorageVO.getUnitId()).getName());
-                pmsCompleteStorageVO.setWarehouseName(warehouses.getData().get(pmsCompleteStorageVO.getWarehouseId()).getOfficeName());
-                pmsCompleteStorageVO.setShelfName(warehouses.getData().get(pmsCompleteStorageVO.getShelfId()).getOfficeName());
-            });
-        }
-        return page.setRecords(storageVOList);
-    }
-
     @Override
     public Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto) {
         //1.定义查询条件

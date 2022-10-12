@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -49,5 +51,11 @@ public class CompleteStorageController {
     @ApiOperation("入库单明细")
     public R<CompleteStorageListVO> info(@PathVariable("id") Long id) {
         return R.success(pmsCompleteStorageService.info(id));
+    }
+
+    @ApiOperation("获取订单的完工入库分页列表")
+    @PostMapping("/order/page")
+    public R<Page<PmsCompleteStorageVO>> completeStoragePageList(@RequestBody PmsCompleteStorageDTO dto) {
+        return R.success(pmsCompleteStorageService.completeStoragePageList(dto));
     }
 }

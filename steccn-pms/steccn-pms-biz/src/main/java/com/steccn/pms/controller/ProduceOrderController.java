@@ -42,11 +42,7 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
-    @ApiOperation("获取订单完工入库分页列表")
-    @PostMapping("/complete/storage")
-    public R<Page<PmsCompleteStorageVO>> completeStoragePageList(@RequestBody PmsCompleteStorageDTO dto) {
-        return R.success(pmsProduceOrderService.completeStoragePageList(dto));
-    }
+
 
     @ApiOperation("获取订单投料分页列表")
     @PostMapping("/complete/delivery")

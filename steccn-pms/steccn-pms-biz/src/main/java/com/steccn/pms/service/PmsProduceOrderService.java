@@ -34,12 +34,6 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     Boolean edit(PmsProduceOrderDTO dto);
 
-    /**
-     * 根据订单id获取入库信息
-     * @param produceOrderId
-     * @return
-     */
-    Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO produceOrderId);
 
     /**
      * 根据订单id获取出库信息

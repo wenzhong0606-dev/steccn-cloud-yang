@@ -5,8 +5,10 @@ import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
+import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.util.List;
 
@@ -47,4 +49,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return vo
      */
     CompleteStorageListVO info(Long id);
+
+    /**
+     * 根据订单id 获取完工入库信息
+     * @param dto
+     * @return
+     */
+    Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto);
 }
