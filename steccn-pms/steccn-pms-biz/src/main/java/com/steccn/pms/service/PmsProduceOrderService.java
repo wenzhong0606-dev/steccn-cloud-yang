@@ -7,10 +7,10 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 
 /**
- * @author yequan
- * @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
- * @createDate 2022-09-28 15:18:51
- */
+* @author yequan
+* @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
+* @createDate 2022-09-28 15:18:51
+*/
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
@@ -44,5 +44,14 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
+
+    /**
+     *
+     * 报工订单批次详细信息
+     * @param productLineId 产线id
+     * @param stationId 工位id
+     * @return
+     */
+    ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId) ;
 
 }

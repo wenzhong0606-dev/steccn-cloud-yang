@@ -6,6 +6,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -48,9 +49,9 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.batchPageList(dto));
     }
 
-
-
-
-
-
+    @ApiOperation("工序报工-订单批次的信息")
+    @GetMapping("/report/work/order")
+    public R<ReportWorkOrderVO> reportWorkOrder(@ApiParam("产线id") Integer productLineId, @ApiParam("工位id") Integer stationId) {
+        return R.success(pmsProduceOrderService.reportWorkOrder(productLineId, stationId));
+    }
 }
