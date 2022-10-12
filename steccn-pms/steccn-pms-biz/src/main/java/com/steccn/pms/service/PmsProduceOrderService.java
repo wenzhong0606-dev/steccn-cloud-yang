@@ -54,4 +54,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId) ;
 
+    /**
+     * 报工订单批次详细信息
+     * @param orderId 订单id
+     * @param stationId 工位id
+     * @return
+     */
+    ReportWorkOrderVO reportWorkOrderId(Long orderId,Integer stationId);
 }

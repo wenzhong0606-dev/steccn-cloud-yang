@@ -51,7 +51,15 @@ public class ProduceOrderController {
 
     @ApiOperation("工序报工-订单批次的信息")
     @GetMapping("/report/work/order")
-    public R<ReportWorkOrderVO> reportWorkOrder(@ApiParam("产线id") Integer productLineId, @ApiParam("工位id") Integer stationId) {
+    public R<ReportWorkOrderVO> reportWorkOrder(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId,
+                                                @ApiParam("工位id") @RequestParam("stationId") Integer stationId) {
         return R.success(pmsProduceOrderService.reportWorkOrder(productLineId, stationId));
+    }
+
+    @ApiOperation("工序报工-订单批次的信息")
+    @GetMapping("/report/work/order/id")
+    public R<ReportWorkOrderVO> reportWorkOrderId(@ApiParam("订单id") @RequestParam("orderId") Long orderId,
+                                                  @ApiParam("工位id") @RequestParam("stationId") Integer stationId) {
+        return R.success(pmsProduceOrderService.reportWorkOrderId(orderId,stationId));
     }
 }

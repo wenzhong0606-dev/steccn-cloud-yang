@@ -207,6 +207,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }
         return true;
     }
+
     /**
      * 获取订单批次信息
      *
@@ -244,23 +245,40 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 .orderByDesc(PmsProduceOrder::getCreateTime)
                 .last(MpConstant.STR_LIMIT_1));
         Assert.notNull(order, "该产线暂无订单");
-        //2.根据订单查询当前批次
+        return reportWorkOrder(order, stationId);
+    }
+
+    @Override
+    public ReportWorkOrderVO reportWorkOrderId(Long orderId, Integer stationId) {
+        PmsProduceOrder order = getById(orderId);
+        Assert.notNull(order, "该产线暂无订单");
+        return reportWorkOrder(order, stationId);
+    }
+
+    /**
+     * 报工订单批次详情
+     *
+     * @param order     订单信息
+     * @param stationId 工位id
+     * @return 批次详情
+     */
+    private ReportWorkOrderVO reportWorkOrder(PmsProduceOrder order, Integer stationId) {
+        //1.根据订单查询当前批次
         PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
                 .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
                 .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES));
         Assert.notNull(currentBatch, "订单" + order.getCode() + "无当前批次");
-        //3.查询工位
+        //2.查询工位
         PmsWorkOrderCraftStation station = pmsWorkOrderCraftStationService.getOne(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
                 .eq(PmsWorkOrderCraftStation::getExecuteStationId, stationId)
                 .last(MpConstant.STR_LIMIT_1));
-        Assert.notNull(station,"该工位暂无工序配置");
-        //4.查询工序
+        Assert.notNull(station, "该工位暂无工序配置");
+        //3.查询工序
         PmsProduceOrderCraft craft = pmsProduceOrderCraftService.getById(station.getProduceOrderCraftId());
-        Assert.notNull(craft,"工序不存在");
-
-        //5.定义返回数据
+        Assert.notNull(craft, "工序不存在");
+        //4.定义返回数据
         ReportWorkOrderVO vo = new ReportWorkOrderVO();
-        BeanUtils.copyProperties(order,vo);
+        BeanUtils.copyProperties(order, vo);
         vo.setProduceOrderId(order.getId());
         vo.setProduceOrderCode(order.getCode());
         vo.setBatch(currentBatch.getId());
