@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -305,7 +306,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //6.处理数据
         List<Long> materialIds = Lists.newArrayList();
         Set<Integer> office = Sets.newHashSet();
-        List<Long> ids = Lists.newArrayList();
+        Set<Long> ids = Sets.newHashSet();
         List<Long> processIds = Lists.newArrayList();
         List<PmsCompleteDeliveryVO> pmsCompleteDeliveryVOList = Lists.newArrayList();
         res.forEach(pmsCompleteDelivery -> {
@@ -332,26 +333,26 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             });
         });
         //获取单位数据
-        R<Map<Long, SysDictVO>> dictData = remoteDictFeignApi.listById(ids);
+        Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
         //获取物料信息
-        R<Map<Long, EqpSpareVO>> materialData = remoteSpareFeignApi.listById(materialIds);
+        Map<Long, EqpSpareVO> materialData = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
         //获取仓库货架信息
-        R<Map<Integer, SysOfficeVO>> officeMapData = remoteOfficeFeign.listById(office);
+        Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
         //获取工序信息
         Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
         if (CollUtil.isNotEmpty(pmsCompleteDeliveryVOList)) {
             pmsCompleteDeliveryVOList.forEach(
                     pmsCompleteDeliveryVO -> {
                         //处理单位数据
-                        pmsCompleteDeliveryVO.setUnit(dictData.getData().get(pmsCompleteDeliveryVO.getUnitId()).getName());
+                        pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
                         //处理工序数据
                         pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
                         //处理仓库货架信息
-                        pmsCompleteDeliveryVO.setWarehouseName(officeMapData.getData().get(pmsCompleteDeliveryVO.getWarehouseId()).getOfficeName());
-                        pmsCompleteDeliveryVO.setShelfName(officeMapData.getData().get(pmsCompleteDeliveryVO.getShelfId()).getOfficeName());
+                        pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
+                        pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
                         //处理物料数据
-                        pmsCompleteDeliveryVO.setMaterialName(materialData.getData().get(pmsCompleteDeliveryVO.getMaterialName()).getName());
-                        pmsCompleteDeliveryVO.setMaterialCode(materialData.getData().get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
+                        pmsCompleteDeliveryVO.setMaterialName(materialData.get(pmsCompleteDeliveryVO.getMaterialName()).getName());
+                        pmsCompleteDeliveryVO.setMaterialCode(materialData.get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
                     }
             );
         }
@@ -382,19 +383,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //5.拷贝返回的信息
         List<PmsProcessInStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessInStationVO.class);
         //6.处理数据
-        List<Long> dictIds = Lists.newArrayList();
+        Set<Long> dictIds = Sets.newHashSet();
         Set<Integer> stationIds = Sets.newHashSet();
         res.forEach(pmsProcessInStationVO -> {
             dictIds.add(pmsProcessInStationVO.getUnitId());
             stationIds.add(pmsProcessInStationVO.getStationId());
         });
-        //获取字典数据
-        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
-        //获取工位数据
-        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //查询机构数据
+        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
         res.forEach(pmsProcessInStationVO -> {
-            pmsProcessInStationVO.setStation(stationMap.getData().get(pmsProcessInStationVO.getStationId()).getOfficeName());
-            pmsProcessInStationVO.setUnit(dictMap.getData().get(pmsProcessInStationVO.getUnitId()).getName());
+            pmsProcessInStationVO.setStation(stationMap.get(pmsProcessInStationVO.getStationId()));
+            pmsProcessInStationVO.setUnit(dictMap.get(pmsProcessInStationVO.getUnitId()));
         });
         return page.setRecords(res);
     }
@@ -418,13 +419,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //5.拷贝返回的信息
         List<PmsWorkOrderBatchVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsWorkOrderBatchVO.class);
         //6.处理数据
-        List<Long> dictIds = Lists.newArrayList();
+        Set<Long> dictIds = Sets.newHashSet();
         res.forEach(pmsWorkOrderBatchVO -> {
             dictIds.add(pmsWorkOrderBatchVO.getUnitId());
         });
-        //获取字典数据
-        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
-        res.forEach(pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.getData().get(pmsWorkOrderBatchVO.getUnitId()).getName()));
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        res.forEach(pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId())));
         return page.setRecords(res);
     }
 
@@ -452,19 +453,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //5.拷贝返回的信息
         List<PmsProcessOutStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessOutStationVO.class);
         //6.处理数据
-        List<Long> dictIds = Lists.newArrayList();
+        Set<Long> dictIds = Sets.newHashSet();
         Set<Integer> stationIds = Sets.newHashSet();
         res.forEach(pmsProcessOutStationVO -> {
             dictIds.add(pmsProcessOutStationVO.getUnitId());
             stationIds.add(pmsProcessOutStationVO.getStationId());
         });
-        //获取字典数据
-        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
-        //获取工位数据
-        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //查询机构数据
+        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
         res.forEach(pmsProcessOutStationVO -> {
-            pmsProcessOutStationVO.setStation(stationMap.getData().get(pmsProcessOutStationVO.getStationId()).getOfficeName());
-            pmsProcessOutStationVO.setUnit(dictMap.getData().get(pmsProcessOutStationVO.getUnitId()).getName());
+            pmsProcessOutStationVO.setStation(stationMap.get(pmsProcessOutStationVO.getStationId()));
+            pmsProcessOutStationVO.setUnit(dictMap.get(pmsProcessOutStationVO.getUnitId()));
         });
         return page.setRecords(res);
     }
@@ -487,19 +488,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //5.拷贝返回的信息
         List<PmsReportWorkVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsReportWorkVO.class);
         //6.处理数据
-        List<Long> dictIds = Lists.newArrayList();
+        Set<Long> dictIds = Sets.newHashSet();
         Set<Integer> stationIds = Sets.newHashSet();
         res.forEach(pmsReportWorkVO -> {
             dictIds.add(pmsReportWorkVO.getUnitId());
             stationIds.add(pmsReportWorkVO.getStationId());
         });
-        //获取字典数据
-        R<Map<Long, SysDictVO>> dictMap = remoteDictFeignApi.listById(dictIds);
-        //获取工位数据
-        R<Map<Integer, SysOfficeVO>> stationMap = remoteOfficeFeign.listById(stationIds);
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
         res.forEach(pmsReportWorkVO -> {
-            pmsReportWorkVO.setStation(stationMap.getData().get(pmsReportWorkVO.getStationId()).getOfficeName());
-            pmsReportWorkVO.setUnit(dictMap.getData().get(pmsReportWorkVO.getUnitId()).getName());
+            pmsReportWorkVO.setStation(officeMap.get(pmsReportWorkVO.getStationId()));
+            pmsReportWorkVO.setUnit(dictMap.get(pmsReportWorkVO.getUnitId()));
         });
         //todo 班次数据待定(OA获取)
         return page.setRecords(res);
@@ -507,7 +508,25 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto) {
-        return null;
+        //1.查询投料信息
+        Page<PmsCompleteDeliveryVO> page = pmsCompleteDeliveryService.pageList(dto);
+        //2.处理数据
+        Set<Long> unitIds = Sets.newHashSet();
+        Set<Integer> officeIds = Sets.newHashSet();
+        page.getRecords().forEach(pmsCompleteDeliveryVO -> {
+            unitIds.add(pmsCompleteDeliveryVO.getUnitId());
+            officeIds.add(pmsCompleteDeliveryVO.getShelfId());
+            officeIds.add(pmsCompleteDeliveryVO.getWarehouseId());
+        });
+        //查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIds)).get();
+        //查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        page.getRecords().forEach(pmsCompleteDeliveryVO -> {
+            pmsCompleteDeliveryVO.setUnit(dictMap.get(pmsCompleteDeliveryVO.getUnitId()));
+            pmsCompleteDeliveryVO.setWarehouseName(officeMap.get(pmsCompleteDeliveryVO.getWarehouseId()));
+        });
+        return page;
     }
 
 

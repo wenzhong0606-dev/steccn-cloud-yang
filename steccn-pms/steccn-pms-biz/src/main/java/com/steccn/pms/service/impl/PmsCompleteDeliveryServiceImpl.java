@@ -1,9 +1,12 @@
 package com.steccn.pms.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.pms.domain.PmsCompleteDelivery;
+import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.service.PmsCompleteDeliveryService;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
+import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +18,12 @@ import org.springframework.stereotype.Service;
 public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliveryMapper, PmsCompleteDelivery>
     implements PmsCompleteDeliveryService{
 
+    @Override
+    public Page<PmsCompleteDeliveryVO> pageList(PmsCompleteDeliveryDTO dto) {
+        //1.自定义Mapper查询投料信息
+       Page<PmsCompleteDeliveryVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
+        return null;
+    }
 }
 
 

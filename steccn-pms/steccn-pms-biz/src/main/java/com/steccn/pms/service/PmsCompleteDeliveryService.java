@@ -1,7 +1,10 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
+import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 
 /**
 * @author yequan
@@ -10,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsCompleteDeliveryService extends IService<PmsCompleteDelivery> {
 
+    /**
+     * 查询投料信息
+     * @param dto
+     * @return
+     */
+    Page<PmsCompleteDeliveryVO> pageList(PmsCompleteDeliveryDTO dto);
 }

@@ -5,30 +5,61 @@
 <mapper namespace="com.steccn.pms.mapper.PmsCompleteDeliveryMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsCompleteDelivery">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="code" column="code" jdbcType="VARCHAR"/>
-            <result property="deliveryTime" column="delivery_time" jdbcType="TIMESTAMP"/>
-            <result property="materialId" column="material_id" jdbcType="INTEGER"/>
-            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
-            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
-            <result property="state" column="state" jdbcType="VARCHAR"/>
-            <result property="outStorageVoucher" column="out_storage_voucher" jdbcType="VARCHAR"/>
-            <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="code" column="code" jdbcType="VARCHAR"/>
+        <result property="deliveryTime" column="delivery_time" jdbcType="TIMESTAMP"/>
+        <result property="materialId" column="material_id" jdbcType="INTEGER"/>
+        <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+        <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+        <result property="state" column="state" jdbcType="VARCHAR"/>
+        <result property="outStorageVoucher" column="out_storage_voucher" jdbcType="VARCHAR"/>
+        <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,code,delivery_time,
+        id
+        ,code,delivery_time,
         material_id,quantity,unit_id,
         state,out_storage_voucher,produce_order_id,
         create_by,create_name,create_time,
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="pageList" resultType="com.steccn.pms.vo.PmsCompleteDeliveryVO">
+        SELECT
+        b.id,
+        a.CODE,
+        a.delivery_time,
+        b.material_id,
+        b.material_name,
+        b.material_code
+        b.quantity,
+        b.unit_id,
+        b.batch_no,
+        b.warehouse_id,
+        b.shelf_id
+        FROM
+        pms_complete_delivery a
+        JOIN pms_complete_delivery_info b ON a.id = b.complete_delivery_id
+        <where>
+            del_flag = 0
+            <if test="dto.startTime !=null and dto.startTime !=null">
+                and a.delivery_time &gt;= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != null">
+                and a.delivery_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.material != null and dto.material != null">
+                and (material_name LIKE CONCAT(CONCAT('%',#{dto.material}),'%') or material_code LIKE
+                CONCAT(CONCAT('%',#{dto.material}),'%'))
+            </if>
+        </where>
+    </select>
 </mapper>

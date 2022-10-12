@@ -26,6 +26,17 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     private Long materialId;
 
     /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
+
+
+    /**
      * 箱号
      */
     private String caseNo;

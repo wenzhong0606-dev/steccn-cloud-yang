@@ -1,8 +1,12 @@
 package com.steccn.pms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
+import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author yequan
@@ -13,6 +17,14 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsCompleteDeliveryMapper extends BaseMapper<PmsCompleteDelivery> {
 
+
+    /**
+     * 根据时间 物料 工序id查询投料信息
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<PmsCompleteDeliveryVO> pageList(Page page,@Param("dto") PmsCompleteDeliveryDTO dto);
 }
 
 

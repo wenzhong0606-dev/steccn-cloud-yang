@@ -17,6 +17,12 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
 
+    /**
+     * 根据条件筛选订单信息
+     * @param page
+     * @param dto
+     * @return
+     */
     Page<PmsProduceOrderVO> pageList(Page page, @Param("dto") PmsProduceOrderPageDTO dto);
 }
 

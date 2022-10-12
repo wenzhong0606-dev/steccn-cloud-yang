@@ -20,7 +20,6 @@ public class PmsCompleteDeliveryDTO extends BasePageDTO {
     @ApiModelProperty("订单id")
     private Long produceOrderId;
 
-
     @ApiModelProperty("工序id")
     private Long processId;
 
