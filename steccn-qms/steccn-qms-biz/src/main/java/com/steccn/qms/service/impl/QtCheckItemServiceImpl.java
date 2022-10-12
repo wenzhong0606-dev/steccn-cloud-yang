@@ -256,8 +256,11 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //如果检验方案中的极差数组中绑定了该检验项，则无法编辑
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionRangeArray = new LambdaQueryWrapper<>();
         itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))", dto.getId());
+        //measureUnit非必填，所以需要进行null判断
+        //1、dto中的measureUnit  oldModel中的measureUnit 任意一个不为null
+        Boolean flag = ((dto.getMeasureUnit()==null&&oldModel.getMeasureUnit()!=null) || (dto.getMeasureUnit()!=null&&oldModel.getMeasureUnit()==null))||(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit())) || (!dto.getDataType().equals(oldModel.getDataType()));
         if (qtCheckPlanGroupItemService.count(itemConditionRangeArray) != 0) {
-            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
+            if (flag) {
                 throw new BusinessException("该检验项在极差数组中,无法修改数据类型，计量单位");
             }
         }
@@ -265,7 +268,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionAverageArray = new LambdaQueryWrapper<>();
         itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))", dto.getId());
         if (qtCheckPlanGroupItemService.count(itemConditionAverageArray) != 0) {
-            if (dto.getMeasureUnit() == null || !dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
+            if (flag) {
                 throw new BusinessException("该检验项在平均数组中,无法修改数据类型，计量单位");
             }
         }
