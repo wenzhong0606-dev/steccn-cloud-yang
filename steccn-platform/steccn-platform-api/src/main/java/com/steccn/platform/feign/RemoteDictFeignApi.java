@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -28,6 +29,17 @@ public interface RemoteDictFeignApi {
     @PostMapping("/feign/platform/sys/dict/ids")
     @ApiOperation("根据主键id查询数据字典的值")
     R<Map<Long, SysDictVO>> listById(@RequestBody List<Long> idList);
+
+
+    /**
+     * 根据主键id查询数据字典的值
+     *
+     * @param idList 数据字典id集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/dict/ch")
+    @ApiOperation("根据主键id查询数据字典的名称")
+    R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> idList);
 
     /**
      * 根据编码类型查询数据字典的值

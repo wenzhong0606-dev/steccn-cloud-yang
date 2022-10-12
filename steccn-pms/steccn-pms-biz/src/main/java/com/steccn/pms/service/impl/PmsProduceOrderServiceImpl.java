@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -20,17 +19,20 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
+import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -38,37 +40,37 @@ import java.util.*;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
-@RequiredArgsConstructor
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder>
         implements PmsProduceOrderService {
 
-    private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
-
-    private final PmsWorkOrderBomService pmsWorkOrderBomService;
-
-    private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
-
-    private final PmsCompleteStorageService pmsCompleteStorageService;
-
-    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
-
-    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
-
-    private final PmsCompleteDeliveryInfoService pmsCompleteDeliveryInfoService;
-
-    private final RemoteDictFeignApi remoteDictFeignApi;
-
-    private final RemoteOfficeFeign remoteOfficeFeign;
-
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
-
-    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
-
-    private final PmsProcessInStationService pmsProcessInStationService;
-
-    private final PmsProcessOutStationService pmsProcessOutStationService;
-
-    private final PmsReportWorkService pmsReportWorkService;
+    @Autowired
+    private PmsProduceOrderCraftService pmsProduceOrderCraftService;
+    @Autowired
+    private PmsWorkOrderBomService pmsWorkOrderBomService;
+    @Autowired
+    private PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
+    @Autowired
+    private PmsCompleteStorageService pmsCompleteStorageService;
+    @Autowired
+    private PmsCompleteDeliveryService pmsCompleteDeliveryService;
+    @Autowired
+    private PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    @Autowired
+    private PmsCompleteDeliveryInfoService pmsCompleteDeliveryInfoService;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    @Autowired
+    private PmsProcessInStationService pmsProcessInStationService;
+    @Autowired
+    private PmsProcessOutStationService pmsProcessOutStationService;
+    @Autowired
+    private PmsReportWorkService pmsReportWorkService;
 
 
     /**

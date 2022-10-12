@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -59,4 +60,11 @@ public interface SysDictService extends IService<SysDict> {
      * @return
      */
     Map<String, SysDictVO> listByCode(SysDictDTO sysDictDTO);
+
+    /**
+     * 根据主键id查询数据字典的中文
+     * @param idList 集合
+     * @return 是否
+     */
+    Map<Long, String> listByIdCh(Set<Long> idList);
 }

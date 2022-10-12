@@ -14,7 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * @author yequan
+ */
 @Api("数据字典控制器")
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +35,16 @@ public class SysDictFeignController {
         }
         return R.success(sysDictService.listByIdList(idList));
     }
+
+    @PostMapping("/ch")
+    @ApiOperation("根据主键id查询数据字典的中文")
+    public R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysDictService.listByIdCh(idList));
+    }
+
 
     @GetMapping("/getByCode")
     @ApiOperation("根据编码类型查询数据字典的值")

@@ -82,13 +82,13 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     }
 
     @Override
-    public SysDictVO getByCode(String code,String type) {
-        SysDict sysDict = baseMapper.selectOne(new LambdaQueryWrapper<SysDict>().eq( SysDict::getCode, code).eq(SysDict::getType, type));
+    public SysDictVO getByCode(String code, String type) {
+        SysDict sysDict = baseMapper.selectOne(new LambdaQueryWrapper<SysDict>().eq(SysDict::getCode, code).eq(SysDict::getType, type));
         if (Objects.isNull(sysDict)) {
             return null;
         }
         SysDictVO sysDictVO = new SysDictVO();
-        BeanUtils.copyProperties(sysDict,sysDictVO);
+        BeanUtils.copyProperties(sysDict, sysDictVO);
         return sysDictVO;
     }
 
@@ -102,6 +102,19 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
         for (SysDictVO sysDictVO : sysDictVOList) {
             resMap.put(sysDictVO.getCode(), sysDictVO);
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, String> listByIdCh(Set<Long> idList) {
+        Map<Long, String> resMap = Maps.newHashMap();
+        List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getId, idList).select(SysDict::getId, SysDict::getName));
+        if (CollUtil.isNotEmpty(sysDictList)) {
+            List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                resMap.put(sysDictVO.getId(), sysDictVO.getName());
+            }
         }
         return resMap;
     }

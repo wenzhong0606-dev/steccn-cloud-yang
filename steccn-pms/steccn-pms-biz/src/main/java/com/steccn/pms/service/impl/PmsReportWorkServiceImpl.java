@@ -25,6 +25,7 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,18 +42,25 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
-@RequiredArgsConstructor
 public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, PmsReportWork>
         implements PmsReportWorkService {
 
-    private final RemoteDictFeignApi remoteDictFeignApi;
-    private final RemoteOfficeFeign remoteOfficeFeign;
-    private final PmsReportWorkHourService reportWorkHourService;
-    private final PmsProduceOrderService produceOrderService;
-    private final PmsProduceOrderCraftService produceOrderCraftService;
-    private final PmsWorkOrderBatchService workOrderBatchService;
-    private final PmsWorkOrderBomService workOrderBomService;
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private  RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private PmsReportWorkHourService reportWorkHourService;
+    @Autowired
+    private PmsProduceOrderService produceOrderService;
+    @Autowired
+    private PmsProduceOrderCraftService produceOrderCraftService;
+    @Autowired
+    private PmsWorkOrderBatchService workOrderBatchService;
+    @Autowired
+    private PmsWorkOrderBomService workOrderBomService;
+    @Autowired
+    private RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -87,7 +95,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
         //3.将id映射成name
         List<ProcessReportWorkPageVO> records = page.getRecords();
-        List<Long> unitList = new ArrayList<>(records.size());
+        Set<Long> unitList = Sets.newHashSet();
         Set<Integer> organIdSet = Sets.newHashSet();
         records.forEach(ele -> {
             if (Objects.nonNull(ele.getUnitId())) {
@@ -97,12 +105,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 organIdSet.add(ele.getStationId());
             }
         });
-        Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitList)).get();
+        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
         Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
-        SysDictVO defaultSysDictVO = new SysDictVO();
         SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
         records.forEach(ele -> {
-            ele.setUnitName(sysDictMap.getOrDefault(ele.getUnitId(), defaultSysDictVO).getName());
+            ele.setUnitName(sysDictMap.get(ele.getUnitId()));
             ele.setStationName(sysOfficeMap.getOrDefault(ele.getStationId(), defaultSysOfficeVO).getOfficeName());
         });
         return page;
