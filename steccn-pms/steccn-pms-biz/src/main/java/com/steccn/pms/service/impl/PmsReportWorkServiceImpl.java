@@ -182,7 +182,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 .eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getId()));
         //定义返回集合
         List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
-
         if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
             Set<Long> unitIdList = Sets.newHashSet();

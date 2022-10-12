@@ -1,7 +1,10 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProcessOutStation;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsProcessOutStationPageDTO;
+import com.steccn.pms.vo.PmsProcessOutStationVO;
 
 /**
 * @author yequan
@@ -10,4 +13,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsProcessOutStationService extends IService<PmsProcessOutStation> {
 
+
+    /**
+     * 生产订单出站分页列表
+     * @param dto
+     * @return
+     */
+    Page<PmsProcessOutStationVO> outPage(PmsProcessOutStationPageDTO dto);
 }

@@ -57,25 +57,12 @@ public class ProduceOrderController {
     }
 
 
-    @ApiOperation("工艺信息-进站分页列表")
-    @PostMapping("/in/station")
-    public R<Page<PmsProcessInStationVO>> inStationPageList(@RequestBody PmsProcessInStationDTO dto) {
-        return R.success(pmsProduceOrderService.inStationPageList(dto));
-    }
-
-    @ApiOperation("工艺信息-出站分页列表")
-    @PostMapping("/out/station")
-    public R<Page<PmsProcessOutStationVO>> outStationPageList(@RequestBody PmsProcessOutStationPageDTO dto){
-        return R.success(pmsProduceOrderService.outStationPageList(dto));
-    }
-
-
-
     @ApiOperation("工艺信息-投料信息")
     @PostMapping("/feed")
     public R<Page<PmsCompleteDeliveryVO>> feedPageList(@RequestBody PmsCompleteDeliveryDTO dto){
         return R.success(pmsProduceOrderService.feedPageList(dto));
     }
+
 
 
 }

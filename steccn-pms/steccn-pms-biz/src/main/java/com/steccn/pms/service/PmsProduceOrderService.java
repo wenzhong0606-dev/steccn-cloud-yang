@@ -7,14 +7,15 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 
 /**
-* @author yequan
-* @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
-* @createDate 2022-09-28 15:18:51
-*/
+ * @author yequan
+ * @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
+ * @createDate 2022-09-28 15:18:51
+ */
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 新增接口
+     *
      * @param dto
      * @return
      */
@@ -22,6 +23,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 获取分页列表
+     *
      * @param dto
      * @return
      */
@@ -29,6 +31,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 编辑
+     *
      * @param dto
      * @return
      */
@@ -37,35 +40,23 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 根据订单id获取出库信息
+     *
      * @param dto
      * @return
      */
     Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto);
 
     /**
-     * 根据工序获取进站的信息
-     * @param dto
-     * @return
-     */
-    Page<PmsProcessInStationVO> inStationPageList(PmsProcessInStationDTO dto);
-
-    /**
      * 根据订单获取批次分页列表
+     *
      * @param dto
      * @return
      */
     Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
 
     /**
-     * 根据工序获取出站的信息
-     * @param dto
-     * @return
-     */
-    Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationPageDTO dto);
-
-
-    /**
      * 工序投料信息分页列表
+     *
      * @param dto
      * @return
      */

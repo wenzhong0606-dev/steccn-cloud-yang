@@ -297,46 +297,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return page.setRecords(pmsCompleteDeliveryVOList);
     }
 
-    /**
-     * 获取工艺信息进站信息
-     *
-     * @param dto
-     * @return
-     */
-    @Override
-    public Page<PmsProcessInStationVO> inStationPageList(PmsProcessInStationDTO dto) {
-        //1.定义查询条件
-        LambdaQueryWrapper<PmsProcessInStation> eq = new LambdaQueryWrapper<PmsProcessInStation>()
-                .eq(PmsProcessInStation::getProcessId, dto.getProcessId())
-                .eq(PmsProcessInStation::getBatchNo, dto.getBatchNo())
-                .eq(PmsProcessInStation::getStationId, dto.getStationId())
-                .ge(Objects.nonNull(dto.getStartTime()), PmsProcessInStation::getInStationTime, dto.getStartTime())
-                .le(Objects.nonNull(dto.getEndTime()), PmsProcessInStation::getInStationTime, dto.getStartTime());
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //3.查询分页数据
-        IPage resPage = pmsProcessInStationService.page(page, eq);
-        //4.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //5.拷贝返回的信息
-        List<PmsProcessInStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessInStationVO.class);
-        //6.处理数据
-        Set<Long> dictIds = Sets.newHashSet();
-        Set<Integer> stationIds = Sets.newHashSet();
-        res.forEach(pmsProcessInStationVO -> {
-            dictIds.add(pmsProcessInStationVO.getUnitId());
-            stationIds.add(pmsProcessInStationVO.getStationId());
-        });
-        //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
-        //查询机构数据
-        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
-        res.forEach(pmsProcessInStationVO -> {
-            pmsProcessInStationVO.setStation(stationMap.get(pmsProcessInStationVO.getStationId()));
-            pmsProcessInStationVO.setUnit(dictMap.get(pmsProcessInStationVO.getUnitId()));
-        });
-        return page.setRecords(res);
-    }
 
     /**
      * 获取订单批次信息
@@ -366,48 +326,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         res.forEach(pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId())));
         return page.setRecords(res);
     }
-
-    /**
-     * 获取工艺信息出站信息
-     *
-     * @param dto
-     * @return
-     */
-    @Override
-    public Page<PmsProcessOutStationVO> outStationPageList(PmsProcessOutStationPageDTO dto) {
-        //1.定义查询条件
-        LambdaQueryWrapper<PmsProcessOutStation> eq = new LambdaQueryWrapper<PmsProcessOutStation>()
-                .eq(PmsProcessOutStation::getProcessId, dto.getProcessId())
-                .eq(PmsProcessOutStation::getBatchNo, dto.getBatchNo())
-                .eq(PmsProcessOutStation::getStationId, dto.getStationId())
-                .ge(Objects.nonNull(dto.getStartTime()), PmsProcessOutStation::getOutStationTime, dto.getStartTime())
-                .le(Objects.nonNull(dto.getEndTime()), PmsProcessOutStation::getOutStationTime, dto.getStartTime());
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //3.查询分页数据
-        IPage resPage = pmsProcessOutStationService.page(page, eq);
-        //4.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //5.拷贝返回的信息
-        List<PmsProcessOutStationVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsProcessOutStationVO.class);
-        //6.处理数据
-        Set<Long> dictIds = Sets.newHashSet();
-        Set<Integer> stationIds = Sets.newHashSet();
-        res.forEach(pmsProcessOutStationVO -> {
-            dictIds.add(pmsProcessOutStationVO.getUnitId());
-            stationIds.add(pmsProcessOutStationVO.getStationId());
-        });
-        //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
-        //查询机构数据
-        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
-        res.forEach(pmsProcessOutStationVO -> {
-            pmsProcessOutStationVO.setStation(stationMap.get(pmsProcessOutStationVO.getStationId()));
-            pmsProcessOutStationVO.setUnit(dictMap.get(pmsProcessOutStationVO.getUnitId()));
-        });
-        return page.setRecords(res);
-    }
-
 
     @Override
     public Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto) {
