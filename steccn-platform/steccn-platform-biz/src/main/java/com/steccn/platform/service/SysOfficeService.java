@@ -49,4 +49,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return map
      */
     Map<Integer, SysOfficeVO> listById(Set<Integer> idList);
+
+    /**
+     * 根据主键id查询机构的名称
+     * @param idList id主键集合
+     * @return map
+     */
+    Map<Integer, String> listByCh(Set<Integer> idList);
 }

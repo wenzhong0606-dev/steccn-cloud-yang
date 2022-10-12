@@ -71,4 +71,13 @@ public interface RemoteOfficeFeign {
     R<Map<Integer, SysOfficeVO>> listById(@RequestBody Set<Integer> idList);
 
 
+    /**
+     * 根据主键id查询机构的中文
+     *
+     * @param idList 机构id集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/ch")
+    @ApiOperation("根据主键id查询机构的信息")
+    R<Map<Integer, String>> listByIdCh(@RequestBody Set<Integer> idList);
 }

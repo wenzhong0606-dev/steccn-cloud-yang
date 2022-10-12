@@ -37,10 +37,20 @@ public class SysOfficeFeignController {
     }
 
     @PostMapping("/ids")
+    @ApiOperation("根据主键id查询机构的信息")
     R<Map<Integer, SysOfficeVO>> listById(@RequestBody Set<Integer> idList) {
         if (CollUtil.isEmpty(idList)) {
             return R.success(Maps.newHashMap());
         }
         return R.success(sysOfficeService.listById(idList));
+    }
+
+    @PostMapping("/ch")
+    @ApiOperation("根据主键id查询机构的中文")
+    R<Map<Integer, String>> listByCh(@RequestBody Set<Integer> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysOfficeService.listByCh(idList));
     }
 }

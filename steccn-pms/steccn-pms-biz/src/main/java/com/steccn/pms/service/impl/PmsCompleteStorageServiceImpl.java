@@ -6,15 +6,12 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
@@ -79,6 +76,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notNull(pmsBarcodePrint, "箱号不存在");
         CompleteStorageScanDTO resDTO = new CompleteStorageScanDTO();
         BeanUtils.copyProperties(pmsBarcodePrint, resDTO);
+        //数据字典
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(resDTO.getUnitId()))).get();
+        resDTO.setUnitName(dictMap.get(resDTO.getUnitId()));
+
         //3.存放生产订单中
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(pmsBarcodePrint.getProduceOrderId());
         Assert.notNull(pmsProduceOrder, "生产订单不能为空");
@@ -87,9 +88,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         resDTO.setShelfId(pmsProduceOrder.getDefaultShelfId());
         //4.仓库和货架信息
         HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
-        resDTO.setWarehouseName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultWarehouseId(), new SysOfficeVO()).getOfficeName());
-        resDTO.setShelfName(sysOfficeMap.getOrDefault(pmsProduceOrder.getDefaultShelfId(), new SysOfficeVO()).getOfficeName());
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+        resDTO.setWarehouseName(sysOfficeMap.get(pmsProduceOrder.getDefaultWarehouseId()));
+        resDTO.setShelfName(sysOfficeMap.get(pmsProduceOrder.getDefaultShelfId()));
         //5.箱状态
         resDTO.setCaseState(pmsBarcodePrint.getCaseState());
         return resDTO;
@@ -177,7 +178,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notNull(produceOrder, "生产订单不存在");
 
         //定义字典集合和箱号集合
-        List<Long> dictList = Lists.newArrayList();
+        Set<Long> dictList = Sets.newHashSet();
         Set<String> caseNoList = Sets.newHashSet();
         for (PmsCompleteStorageInfo info : infoList) {
             dictList.add(info.getUnitId());
@@ -185,8 +186,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
 
         dictList.add(pmsCompleteStorage.getUnitId());
-        SysDictVO defaultSysDictVO = new SysDictVO();
-        Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(dictList)).get();
+        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
         PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
@@ -196,8 +196,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             storageSet.add(pbp.getWarehouseId());
             storageSet.add(pbp.getShelfId());
         }
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
-        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
 
         List<CompleteStorageMaterialVO> materialVOList = new ArrayList<>(infoList.size());
         for (PmsCompleteStorageInfo info : infoList) {
@@ -208,15 +207,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             materialVO.setMaterialId(produceOrder.getMaterialId());
             materialVO.setMaterialCode(produceOrder.getMaterialCode());
             materialVO.setMaterialName(produceOrder.getMaterialName());
-            materialVO.setUnitName(sysDictMap.getOrDefault(materialVO.getUnitId(), defaultSysDictVO).getName());
+            materialVO.setUnitName(sysDictMap.get(materialVO.getUnitId()));
             materialVO.setWarehouseId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getWarehouseId());
-            materialVO.setWarehouseName(sysOfficeMap.getOrDefault(materialVO.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
+            materialVO.setWarehouseName(sysOfficeMap.get(materialVO.getWarehouseId()));
             materialVO.setShelfId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getShelfId());
-            materialVO.setShelfName(sysOfficeMap.getOrDefault(materialVO.getShelfId(), defaultSysOfficeVO).getOfficeName());
+            materialVO.setShelfName(sysOfficeMap.get(materialVO.getShelfId()));
             materialVOList.add(materialVO);
         }
         completeStorageListVO.setList(materialVOList);
-        completeStorageListVO.setUnitName(sysDictMap.getOrDefault(completeStorageListVO.getUnitId(), defaultSysDictVO).getName());
+        completeStorageListVO.setUnitName(sysDictMap.get(completeStorageListVO.getUnitId()));
         return completeStorageListVO;
     }
 
