@@ -106,11 +106,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         });
         Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(organIdSet)).get();
-        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
         records.forEach(ele -> {
             ele.setUnitName(sysDictMap.get(ele.getUnitId()));
-            ele.setStationName(sysOfficeMap.getOrDefault(ele.getStationId(), defaultSysOfficeVO).getOfficeName());
+            ele.setStationName(sysOfficeMap.get(ele.getStationId()));
         });
         return page;
     }
@@ -186,15 +185,14 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
 
         if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
-            SysDictVO defaultSysDictVO = new SysDictVO();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
-            List<Long> unitIdList = Lists.newArrayList();
+            Set<Long> unitIdList = Sets.newHashSet();
             List<Long> idList = Lists.newArrayList();
             for (PmsWorkOrderBom pmsWorkOrderBom : pmsWorkOrderBomList) {
                 unitIdList.add(pmsWorkOrderBom.getUnitId());
                 idList.add(pmsWorkOrderBom.getModuleId());
             }
-            Map<Long, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listById(unitIdList)).get();
+            Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
             pmsWorkOrderBomList.forEach(ele -> {
@@ -202,7 +200,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 BeanUtils.copyProperties(ele, resDTO);
                 resDTO.setProduceOrderId(pmsProduceOrder.getId());
                 resDTO.setProcessName(pmsProduceOrderCraft.getName());
-                resDTO.setUnitName(sysDictMap.getOrDefault(resDTO.getUnitId(), defaultSysDictVO).getName());
+                resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
                 EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(ele.getModuleId(), defaultEqpSpareVO);
                 resDTO.setModuleName(eqpSpareVO.getName());
                 resDTO.setModuleCode(eqpSpareVO.getCode());

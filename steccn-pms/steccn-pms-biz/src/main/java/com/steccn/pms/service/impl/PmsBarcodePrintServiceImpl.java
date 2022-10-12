@@ -52,7 +52,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     @Override
     public Page<BarcodePrintRecordVO> printRecord(BarcodePrintRecordDTO dto) {
         Page<BarcodePrintRecordVO> resPage = new Page<>();
-        Page<PmsBarcodePrint> page = page(new Page<PmsBarcodePrint>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsBarcodePrint>()
+        Page<PmsBarcodePrint> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
                 .orderByDesc(PmsBarcodePrint::getCreateTime));
