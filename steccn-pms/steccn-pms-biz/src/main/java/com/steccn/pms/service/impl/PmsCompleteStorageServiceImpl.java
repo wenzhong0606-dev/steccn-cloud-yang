@@ -100,6 +100,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Transactional(rollbackFor = Exception.class)
     public String generate(List<CompleteStorageScanDTO> dtoList) {
         Assert.notEmpty(dtoList, "请选择箱子");
+        //校验一箱货只能存在于一个入库单中
+        Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
+        Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
+
         //校验箱子不能重复出现在不同的入库单
         List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
         //创建主表
