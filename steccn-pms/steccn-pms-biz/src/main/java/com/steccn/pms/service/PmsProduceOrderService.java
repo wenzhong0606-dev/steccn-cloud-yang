@@ -37,15 +37,6 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     Boolean edit(PmsProduceOrderDTO dto);
 
-
-    /**
-     * 根据订单id获取出库信息
-     *
-     * @param dto
-     * @return
-     */
-    Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto);
-
     /**
      * 根据订单获取批次分页列表
      *
@@ -54,11 +45,4 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
 
-    /**
-     * 工序投料信息分页列表
-     *
-     * @param dto
-     * @return
-     */
-    Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto);
 }

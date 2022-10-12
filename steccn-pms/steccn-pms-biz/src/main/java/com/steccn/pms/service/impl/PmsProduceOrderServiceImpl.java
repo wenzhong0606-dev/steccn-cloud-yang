@@ -15,9 +15,6 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
@@ -51,28 +48,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Autowired
     private PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
     @Autowired
-    private PmsCompleteStorageService pmsCompleteStorageService;
-    @Autowired
-    private PmsCompleteDeliveryService pmsCompleteDeliveryService;
-    @Autowired
-    private PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
-    @Autowired
-    private PmsCompleteDeliveryInfoService pmsCompleteDeliveryInfoService;
-    @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
-    private RemoteOfficeFeign remoteOfficeFeign;
-    @Autowired
-    private RemoteSpareFeignApi remoteSpareFeignApi;
-    @Autowired
     private PmsWorkOrderBatchService pmsWorkOrderBatchService;
-    @Autowired
-    private PmsProcessInStationService pmsProcessInStationService;
-    @Autowired
-    private PmsProcessOutStationService pmsProcessOutStationService;
-    @Autowired
-    private PmsReportWorkService pmsReportWorkService;
-
 
     /**
      * 新增生产订单信息
@@ -228,75 +206,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return true;
     }
 
-    @Override
-    public Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto) {
-        //1.定义查询条件
-        LambdaQueryWrapper<PmsCompleteDelivery> eq = new LambdaQueryWrapper<PmsCompleteDelivery>().
-                eq(PmsCompleteDelivery::getProduceOrderId, dto.getProduceOrderId());
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //3.查询分页数据
-        IPage resPage = pmsCompleteDeliveryService.page(page, eq);
-        //4.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //5.拷贝返回的信息
-        List<PmsCompleteDelivery> res = BeanUtil.copyToList(resPage.getRecords(), PmsCompleteDelivery.class);
-        //6.处理数据
-        List<Long> materialIds = Lists.newArrayList();
-        Set<Integer> office = Sets.newHashSet();
-        Set<Long> ids = Sets.newHashSet();
-        List<Long> processIds = Lists.newArrayList();
-        List<PmsCompleteDeliveryVO> pmsCompleteDeliveryVOList = Lists.newArrayList();
-        res.forEach(pmsCompleteDelivery -> {
-            //查询投料信息的详情内容
-            List<PmsCompleteDeliveryInfo> list = pmsCompleteDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>()
-                    .eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
-            list.forEach(pmsCompleteDeliveryInfo -> {
-                //处理返回数据
-                PmsCompleteDeliveryVO pmsCompleteDeliveryVO = new PmsCompleteDeliveryVO();
-                BeanUtil.copyProperties(pmsCompleteDelivery, pmsCompleteDeliveryVO);
-                materialIds.add(pmsCompleteDeliveryInfo.getMaterialId());
-                pmsCompleteDeliveryVO.setQuantity(pmsCompleteDeliveryInfo.getQuantity());
-                ids.add(pmsCompleteDeliveryInfo.getUnitId());
-                pmsCompleteDeliveryVO.setUnitId(pmsCompleteDeliveryInfo.getUnitId());
-                pmsCompleteDeliveryVO.setCaseNo(pmsCompleteDeliveryInfo.getCaseNo());
-                pmsCompleteDeliveryVO.setBatchNo(pmsCompleteDeliveryInfo.getBatchNo());
-                office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getWarehouseId()));
-                office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getShelfId()));
-                pmsCompleteDeliveryVO.setWarehouseId(pmsCompleteDeliveryInfo.getWarehouseId());
-                pmsCompleteDeliveryVO.setShelfId(pmsCompleteDeliveryInfo.getShelfId());
-                pmsCompleteDeliveryVO.setProcessId(pmsCompleteDeliveryInfo.getProcessId());
-                processIds.add(pmsCompleteDeliveryInfo.getProcessId());
-                pmsCompleteDeliveryVOList.add(pmsCompleteDeliveryVO);
-            });
-        });
-        //获取单位数据
-        Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
-        //获取物料信息
-        Map<Long, EqpSpareVO> materialData = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
-        //获取仓库货架信息
-        Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
-        //获取工序信息
-        Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
-        if (CollUtil.isNotEmpty(pmsCompleteDeliveryVOList)) {
-            pmsCompleteDeliveryVOList.forEach(
-                    pmsCompleteDeliveryVO -> {
-                        //处理单位数据
-                        pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
-                        //处理工序数据
-                        pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
-                        //处理仓库货架信息
-                        pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
-                        pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
-                        //处理物料数据
-                        pmsCompleteDeliveryVO.setMaterialName(materialData.get(pmsCompleteDeliveryVO.getMaterialName()).getName());
-                        pmsCompleteDeliveryVO.setMaterialCode(materialData.get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
-                    }
-            );
-        }
-        return page.setRecords(pmsCompleteDeliveryVOList);
-    }
-
 
     /**
      * 获取订单批次信息
@@ -325,29 +234,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
         res.forEach(pmsWorkOrderBatchVO -> pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId())));
         return page.setRecords(res);
-    }
-
-    @Override
-    public Page<PmsCompleteDeliveryVO> feedPageList(PmsCompleteDeliveryDTO dto) {
-        //1.查询投料信息
-        Page<PmsCompleteDeliveryVO> page = pmsCompleteDeliveryService.pageList(dto);
-        //2.处理数据
-        Set<Long> unitIds = Sets.newHashSet();
-        Set<Integer> officeIds = Sets.newHashSet();
-        page.getRecords().forEach(pmsCompleteDeliveryVO -> {
-            unitIds.add(pmsCompleteDeliveryVO.getUnitId());
-            officeIds.add(pmsCompleteDeliveryVO.getShelfId());
-            officeIds.add(pmsCompleteDeliveryVO.getWarehouseId());
-        });
-        //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIds)).get();
-        //查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
-        page.getRecords().forEach(pmsCompleteDeliveryVO -> {
-            pmsCompleteDeliveryVO.setUnit(dictMap.get(pmsCompleteDeliveryVO.getUnitId()));
-            pmsCompleteDeliveryVO.setWarehouseName(officeMap.get(pmsCompleteDeliveryVO.getWarehouseId()));
-        });
-        return page;
     }
 
 

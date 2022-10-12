@@ -42,14 +42,6 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
-
-    @ApiOperation("获取订单投料分页列表")
-    @PostMapping("/complete/delivery")
-    public R<Page<PmsCompleteDeliveryVO>> completeDeliveryPageList(@RequestBody PmsCompleteDeliveryDTO dto) {
-        return R.success(pmsProduceOrderService.completeDeliveryPageList(dto));
-    }
-
-
     @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto){
@@ -57,11 +49,7 @@ public class ProduceOrderController {
     }
 
 
-    @ApiOperation("工艺信息-投料信息")
-    @PostMapping("/feed")
-    public R<Page<PmsCompleteDeliveryVO>> feedPageList(@RequestBody PmsCompleteDeliveryDTO dto){
-        return R.success(pmsProduceOrderService.feedPageList(dto));
-    }
+
 
 
 
