@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.db.sql.Order;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -313,7 +314,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         materialList.forEach(material -> {
             Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
         });
-        //4.修改订单状态为已下达
+        //4.校验订单状态
+        if (PmManagerConstant.STATE_ZERO.equals(order.getState())){
+            new BackingStoreException("仅已创建订单可下达");
+        }
+        //5.修改订单状态为已下达
         order.setState(PmManagerConstant.STATE_ONE);
         updateById(order);
         return Boolean.TRUE;
@@ -351,8 +356,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return page;
     }
 
+    /**
+     * 订单关闭
+     * @param orderId
+     * @return
+     */
     @Override
     public Boolean close(Long orderId) {
+        //1.查询订单
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
+        Assert.notNull(order,"该订单不存在");
+        //2.校验状态
+        if (PmManagerConstant.STATE_ZERO.equals(order.getState())){
+            new BackingStoreException("仅已创建状态订单可关闭");
+        }
         return removeById(orderId);
     }
 

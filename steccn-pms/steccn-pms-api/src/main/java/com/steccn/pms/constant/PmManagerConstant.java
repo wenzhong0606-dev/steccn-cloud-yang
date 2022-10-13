@@ -7,12 +7,13 @@ package com.steccn.pms.constant;
 public interface PmManagerConstant {
 
 
-
     String MEASURE_UNIT = "measure_unit";
 
     String FILE_EXTENSION_XLSX = ".xlsx";
 
     Integer STATE_ONE = 1;
+
+    Integer STATE_ZERO = 0;
 
 
 }
