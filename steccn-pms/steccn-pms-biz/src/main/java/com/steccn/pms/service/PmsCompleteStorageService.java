@@ -6,11 +6,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -56,4 +59,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto);
+
+    /**
+     * 订单的完工数量
+     * @param orderSet 订单的id
+     * @return map
+     */
+    Map<Long, PmsCompleteStorageNumDTO> orderCompleteNum(Set<Long> orderSet);
 }

@@ -116,4 +116,39 @@
             </if>
         </where>
     </select>
+    <select id="reportWorkOrderPage" resultType="com.steccn.pms.vo.PmsProduceOrderVO">
+        select
+        po.id,
+        po.type_id,
+        po.code,
+        po.material_id,
+        po.material_name,
+        po.material_code,
+        po.plan_start_time,
+        po.plan_end_time,
+        po.actual_start_time,
+        po.actual_end_time,
+        po.quantity,
+        po.unit_id,
+        po.production_line_id,
+        po.state,
+        po.craft_id
+        from pms_produce_order po
+        JOIN pms_produce_order_craft oc ON oc.produce_order_id = po.id
+        JOIN pms_work_order_craft_station cs ON cs.produce_order_craft_id = oc.id
+        <where>
+            po.del_flag = 0 and oc.del_flag = 0 and cs.del_flag = 0
+            <if test="dto.state != null and dto.state !='' ">
+                and po.state = #{dto.state}
+            </if>
+            <if test="dto.createDtStart !=null and dto.createDtStart !=null">
+                and po.create_time &gt;= #{dto.createDtStart}
+            </if>
+            <if test="dto.createDtEnd !=null and dto.createDtEnd !=null">
+                and po.create_time &lt;= #{dto.createDtEnd}
+            </if>
+            and cs.execute_station_id = #{dto.stationId}
+        </where>
+        GROUP BY po.id
+    </select>
 </mapper>

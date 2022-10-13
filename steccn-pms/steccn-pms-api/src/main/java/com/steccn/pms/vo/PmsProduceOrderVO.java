@@ -60,6 +60,15 @@ public class PmsProduceOrderVO {
     @ApiModelProperty("单位")
     private String unit;
 
+    @ApiModelProperty("完工数量")
+    private BigDecimal completeQuantity;
+
+    @ApiModelProperty("完工单位id")
+    private Long completeUnitId;
+
+    @ApiModelProperty("完工单位")
+    private String completeUnitName;
+
     @ApiModelProperty("产线id")
     private Integer productionLineId;
 

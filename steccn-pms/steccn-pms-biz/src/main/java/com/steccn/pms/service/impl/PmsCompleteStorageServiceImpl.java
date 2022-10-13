@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -25,6 +26,7 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
@@ -286,6 +288,29 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             });
         }
         return page.setRecords(storageVOList);
+    }
+
+    @Override
+    public Map<Long, PmsCompleteStorageNumDTO> orderCompleteNum(Set<Long> orderSet) {
+        Map<Long, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orderSet)) {
+            List<PmsCompleteStorage> dbList = list(new LambdaQueryWrapper<PmsCompleteStorage>().in(PmsCompleteStorage::getProduceOrderId, orderSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<Long, List<PmsCompleteStorage>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsCompleteStorage::getProduceOrderId));
+                for (Map.Entry<Long, List<PmsCompleteStorage>> entry : dbMap.entrySet()) {
+                    BigDecimal sum = BigDecimal.ZERO;
+                    for (PmsCompleteStorage storage : entry.getValue()) {
+                        sum = sum.add(storage.getQuantity());
+                    }
+                    PmsCompleteStorageNumDTO numDTO = new PmsCompleteStorageNumDTO();
+                    numDTO.setQuantity(sum);
+                    numDTO.setProduceOrderId(entry.getKey());
+                    numDTO.setUnitId(entry.getValue().get(0).getUnitId());
+                    resMap.put(entry.getKey(), numDTO);
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

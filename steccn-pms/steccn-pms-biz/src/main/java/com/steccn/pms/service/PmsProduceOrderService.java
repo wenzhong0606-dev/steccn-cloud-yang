@@ -75,4 +75,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Boolean placeAnOrder(Long orderId);
+
+    /**
+     * 工序报工-订单列表
+     * @param dto dto
+     * @return 分页数据
+     */
+    Page<PmsProduceOrderVO> reportWorkOrderPage(ReportWorkOrderPageDTO dto);
 }

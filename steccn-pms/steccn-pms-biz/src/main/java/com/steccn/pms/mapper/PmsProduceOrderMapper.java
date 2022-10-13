@@ -5,6 +5,7 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.dto.ProduceOrderAcceptPageDTO;
+import com.steccn.pms.dto.ReportWorkOrderPageDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,7 +21,6 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
 
     /**
      * 根据条件筛选订单信息
-     *
      * @param page
      * @param dto
      * @return
@@ -35,6 +35,14 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @return
      */
     Page<PmsProduceOrderVO> acceptPage(Page page, @Param("dto") ProduceOrderAcceptPageDTO dto);
+
+    /**
+     * 订单报工-根据条件筛选订单信息
+     * @param page 分页信息
+     * @param dto dto
+     * @return 报工信息
+     */
+    Page<PmsProduceOrderVO> reportWorkOrderPage(Page page, @Param("dto") ReportWorkOrderPageDTO dto);
 }
 
 

@@ -74,4 +74,10 @@ public class ProduceOrderController {
     public R<Boolean> placeAnOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
         return R.success(pmsProduceOrderService.placeAnOrder(orderId));
     }
+
+    @ApiOperation("工序报工-订单列表")
+    @PostMapping("/report/work/order/page")
+    public R<Page<PmsProduceOrderVO>> reportWorkOrderPage(@RequestBody ReportWorkOrderPageDTO dto) {
+        return R.success(pmsProduceOrderService.reportWorkOrderPage(dto));
+    }
 }

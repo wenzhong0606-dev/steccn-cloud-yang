@@ -23,6 +23,7 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.prefs.BackingStoreException;
 
 /**
@@ -42,19 +44,16 @@ import java.util.prefs.BackingStoreException;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@RequiredArgsConstructor
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder>
         implements PmsProduceOrderService {
 
-    @Autowired
-    private PmsProduceOrderCraftService pmsProduceOrderCraftService;
-    @Autowired
-    private PmsWorkOrderBomService pmsWorkOrderBomService;
-    @Autowired
-    private PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
-    @Autowired
-    private RemoteDictFeignApi remoteDictFeignApi;
-    @Autowired
-    private PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
+    private final PmsWorkOrderBomService pmsWorkOrderBomService;
+    private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    private final PmsCompleteStorageService pmsCompleteStorageService;
 
     /**
      * 新增生产订单信息
@@ -318,6 +317,38 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         order.setState(PmManagerConstant.STATE_ONE);
         updateById(order);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Page<PmsProduceOrderVO> reportWorkOrderPage(ReportWorkOrderPageDTO dto) {
+        Page<PmsProduceOrderVO> page = this.baseMapper.reportWorkOrderPage(new Page<>(dto.getCurrent(), dto.getSize()), dto);
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            List<PmsProduceOrderVO> records = page.getRecords();
+            Set<Long> orderSet = Sets.newHashSet();
+            Set<Long> dictSet = Sets.newHashSet();
+            for(PmsProduceOrderVO produceOrderVO : records){
+                orderSet.add(produceOrderVO.getId());
+                dictSet.add(produceOrderVO.getUnitId());
+            }
+            orderSet = records.stream().map(PmsProduceOrderVO::getId).collect(Collectors.toSet());
+            Map<Long, PmsCompleteStorageNumDTO> orderMap = pmsCompleteStorageService.orderCompleteNum(orderSet);
+            if(CollUtil.isNotEmpty(orderMap)){
+                Set<Long> orderDictSet = orderMap.values().stream().map(PmsCompleteStorageNumDTO::getUnitId).collect(Collectors.toSet());
+                dictSet.addAll(orderDictSet);
+            }
+            //获取数据字典数据
+            Map<Long, String> dictChMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+
+            PmsCompleteStorageNumDTO defaultPmsCompleteStorageNumDTO = new PmsCompleteStorageNumDTO();
+            for (PmsProduceOrderVO order : records) {
+                PmsCompleteStorageNumDTO numDto = orderMap.getOrDefault(order.getId(), defaultPmsCompleteStorageNumDTO);
+                order.setCompleteQuantity(numDto.getQuantity());
+                order.setCompleteUnitId(numDto.getUnitId());
+                order.setCompleteUnitName(dictChMap.get(numDto.getUnitId()));
+                order.setUnit(dictChMap.get(order.getUnitId()));
+            }
+        }
+        return page;
     }
 
     /**
