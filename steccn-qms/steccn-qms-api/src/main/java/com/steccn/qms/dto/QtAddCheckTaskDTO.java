@@ -1,10 +1,12 @@
 package com.steccn.qms.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.steccn.common.valid.InsertGroup;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -72,12 +74,12 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 到货时间
      */
-    private LocalDateTime arrivalTime;
+    private LocalDate arrivalTime;
 
     /**
      * 发货时间
      */
-    private LocalDateTime deliverTime;
+    private LocalDate deliverTime;
 
     /**
      * 供应商id

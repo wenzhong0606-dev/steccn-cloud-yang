@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -35,12 +36,12 @@ public class QtCheckTaskListVO {
     /**
      * 供应商名
      */
-    private String supplierName;
+    private QtBaseIdNameDTO supplier;
 
     /**
      * 物料使用车间名称
      */
-    private String materialWorkshopName;
+    private QtBaseIdNameDTO materialWorkshop;
 
 
     /**
@@ -51,12 +52,12 @@ public class QtCheckTaskListVO {
     /**
      * 生产车间
      */
-    private String productWorkshopName;
+    private QtBaseIdNameDTO productWorkshop;
 
     /**
      * 产线
      */
-    private String productLineName;
+    private QtBaseIdNameDTO productLine;
 
     /**
      * 生产批次
@@ -91,6 +92,16 @@ public class QtCheckTaskListVO {
     /**
      * 客户名字
      */
+    private QtBaseIdNameDTO customer;
+
+    private String productWorkshopName;
+
+    private String productLineName;
+
+    private String materialWorkshopName;
+
+    private String supplierName;
+
     private String customerName;
 
     /**
