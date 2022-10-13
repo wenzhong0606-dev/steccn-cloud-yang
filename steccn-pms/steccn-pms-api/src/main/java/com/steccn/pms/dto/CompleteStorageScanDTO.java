@@ -1,9 +1,13 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,5 +60,14 @@ public class CompleteStorageScanDTO implements Serializable {
 
     @ApiModelProperty("货架名称")
     private String shelfName;
+
+    @ApiModelProperty("物料id")
+    private Long materialId;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
+
+    @ApiModelProperty("物料编码")
+    private String materialCode;
 
 }

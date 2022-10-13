@@ -13,20 +13,20 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
-import com.steccn.pms.dto.CompleteStoragePageDTO;
-import com.steccn.pms.dto.CompleteStorageScanDTO;
-import com.steccn.pms.dto.PmsCompleteStorageDTO;
-import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
@@ -68,6 +68,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemoteSpareFeignApi remoteSpareFeignApi;
 
 
     @Override
@@ -128,6 +130,19 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
         Assert.notNull(pmsProduceOrder, "生产订单不存在");
         pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
+        List<MessInStorageVoucherListDTO> materialList = Lists.newArrayList();
+
+        Set<Integer> storageSet = Sets.newHashSet();
+        List<Long> eqpList = Lists.newArrayList();
+        for (CompleteStorageScanDTO caseInfo : dtoList) {
+            storageSet.add(caseInfo.getWarehouseId());
+            storageSet.add(caseInfo.getShelfId());
+        }
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
+        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+
+        Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(eqpList)).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
         for (CompleteStorageScanDTO caseInfo : dtoList) {
             PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
             BeanUtils.copyProperties(caseInfo, modelInfo);
@@ -135,12 +150,28 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             modelInfo.setPackTime(caseInfo.getCreateTime());
             sumQuantity = sumQuantity.add(caseInfo.getQuantity());
             modelInfoList.add(modelInfo);
+
+            MessInStorageVoucherListDTO mess = new MessInStorageVoucherListDTO();
+            BeanUtils.copyProperties(caseInfo, mess);
+            mess.setQuantity(sumQuantity);
+            mess.setUnit(caseInfo.getUnitName());
+            mess.setSpecifications(eqpSpareVOMap.getOrDefault(caseInfo.getMaterialId(), defaultEqpSpareVO).getName());
+            mess.setWarehouse(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeCode());
+            mess.setShelf(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
+            materialList.add(mess);
         }
         completeStorageInfoService.saveBatch(modelInfoList);
         //生成code 规则：SI-20220905-0001
         pmsCompleteStorage.setCode(maxCompleteCode());
         pmsCompleteStorage.setQuantity(sumQuantity);
         save(pmsCompleteStorage);
+
+        //生成入库单
+        MessInStorageVoucherDTO messDto = new MessInStorageVoucherDTO();
+        messDto.setCreateBy(SecurityUtils.getUser().getName());
+        messDto.setCode(pmsCompleteStorage.getCode());
+        messDto.setType("xxxx");
+        messDto.setMaterialList(materialList);
         return pmsCompleteStorage.getCode();
     }
 
