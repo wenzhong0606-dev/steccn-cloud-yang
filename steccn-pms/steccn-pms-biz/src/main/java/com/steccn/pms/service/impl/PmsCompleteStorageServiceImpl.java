@@ -164,6 +164,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         //生成code 规则：SI-20220905-0001
         pmsCompleteStorage.setCode(maxCompleteCode());
         pmsCompleteStorage.setQuantity(sumQuantity);
+        pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
         save(pmsCompleteStorage);
 
         //生成入库单
