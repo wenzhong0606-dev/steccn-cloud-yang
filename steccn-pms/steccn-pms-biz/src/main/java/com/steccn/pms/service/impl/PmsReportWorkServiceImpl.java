@@ -4,15 +4,19 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -21,17 +25,26 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -45,6 +58,7 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@Slf4j
 public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, PmsReportWork>
         implements PmsReportWorkService {
 
@@ -64,6 +78,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsWorkOrderBomService workOrderBomService;
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private RemoteMessFeignApi remoteMessFeignApi;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -193,19 +209,47 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
+            List<MessMaterialStorageDTO> messMaterialStorageList = Lists.newArrayList();
+            Map<Long,Long> unitMaterialMap = Maps.newHashMap();
             pmsWorkOrderBomList.forEach(ele -> {
-                ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
-                BeanUtils.copyProperties(ele, resDTO);
-                resDTO.setProduceOrderId(pmsProduceOrder.getId());
-                resDTO.setProcessName(pmsProduceOrderCraft.getName());
-                resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
-                EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(ele.getModuleId(), defaultEqpSpareVO);
-                resDTO.setModuleName(eqpSpareVO.getName());
-                resDTO.setModuleCode(eqpSpareVO.getCode());
                 BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 4, RoundingMode.HALF_UP);
-                resDTO.setQuantity(divide);
-                resList.add(resDTO);
+                MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
+                storageDTO.setMaterialId(ele.getModuleId());
+                storageDTO.setQuantity(divide);
+                messMaterialStorageList.add(storageDTO);
+                unitMaterialMap.put(ele.getModuleId(),ele.getUnitId());
             });
+            List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
+            if(CollUtil.isNotEmpty(messList)){
+                Set<String> storageSet = Sets.newHashSet();
+                for(MessMaterialConsumeDTO messDto : messList){
+                    storageSet.add(messDto.getWarehouseCode());
+                    storageSet.add(messDto.getShelfCode());
+                }
+                Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
+                SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+                for(MessMaterialConsumeDTO messDto : messList){
+                    ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
+                    resDTO.setProduceOrderId(pmsProduceOrder.getId());
+                    resDTO.setProcessName(pmsProduceOrderCraft.getName());
+                    resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
+                    resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
+                    resDTO.setModuleId(messDto.getMaterialId());
+                    EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
+                    resDTO.setModuleName(eqpSpareVO.getName());
+                    resDTO.setModuleCode(eqpSpareVO.getCode());
+                    resDTO.setQuantity(messDto.getAvailableQuantity());
+                    resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
+                    resDTO.setBatchNo(messDto.getBatchNo());
+                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
+                    resDTO.setWarehouseId(warehouse.getId());
+                    resDTO.setWarehouseName(warehouse.getOfficeName());
+                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
+                    resDTO.setShelfId(shelf.getId());
+                    resDTO.setShelfName(shelf.getOfficeName());
+                    resList.add(resDTO);
+                }
+            }
         }
         return resList;
     }

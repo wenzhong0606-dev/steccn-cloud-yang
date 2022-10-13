@@ -56,4 +56,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return map
      */
     Map<Integer, String> listByCh(Set<Integer> idList);
+
+    /**
+     * 根据code查询中文
+     * @param codeSet code集合
+     * @return 中文
+     */
+    Map<String, SysOfficeVO> listByCodeSet(Set<String> codeSet);
 }

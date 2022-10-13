@@ -53,4 +53,13 @@ public class SysOfficeFeignController {
         }
         return R.success(sysOfficeService.listByCh(idList));
     }
+
+    @PostMapping("/code")
+    @ApiOperation("根据code查询中文")
+    R<Map<String, SysOfficeVO>> listByCodeSet(@RequestBody Set<String> codeSet) {
+        if (CollUtil.isEmpty(codeSet)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysOfficeService.listByCodeSet(codeSet));
+    }
 }

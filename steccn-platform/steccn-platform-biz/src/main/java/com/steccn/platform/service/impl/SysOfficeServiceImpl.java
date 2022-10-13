@@ -134,6 +134,21 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return resMap;
     }
 
+    @Override
+    public Map<String, SysOfficeVO> listByCodeSet(Set<String> codeSet) {
+        Map<String, SysOfficeVO> resMap = Maps.newHashMap();
+        List<SysOffice> sysOfficeList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeCode, codeSet));
+        if (CollUtil.isNotEmpty(sysOfficeList)) {
+            for (SysOffice sysOffice : sysOfficeList) {
+                SysOfficeVO sysOfficeVO =new SysOfficeVO();
+                BeanUtils.copyProperties(sysOffice, sysOfficeVO);
+                resMap.put(sysOffice.getOfficeCode(), sysOfficeVO);
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 根据list递归构造一颗树
      *

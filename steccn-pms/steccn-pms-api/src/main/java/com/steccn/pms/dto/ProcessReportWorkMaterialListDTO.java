@@ -38,6 +38,9 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     @ApiModelProperty("数量 = 订单BOM组件数量 / 订单数量 * 加工数量 可修改")
     private BigDecimal quantity;
 
+    @ApiModelProperty("可用")
+    private BigDecimal availableQuantity;
+
     @ApiModelProperty("单位id")
     private Long unitId;
 
