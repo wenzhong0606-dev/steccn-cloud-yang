@@ -62,4 +62,10 @@ public class ProduceOrderController {
                                                   @ApiParam("工位id") @RequestParam("stationId") Integer stationId) {
         return R.success(pmsProduceOrderService.reportWorkOrderId(orderId,stationId));
     }
+
+    @ApiOperation("订单接收")
+    @PostMapping("/accept/page")
+    public R<Page<PmsProduceOrderVO>> acceptPage (@RequestBody ProduceOrderAcceptPageDTO dto) {
+        return R.success(pmsProduceOrderService.acceptPage(dto));
+    }
 }

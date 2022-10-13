@@ -61,4 +61,12 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     ReportWorkOrderVO reportWorkOrderId(Long orderId,Integer stationId);
+
+    /**
+     * 订单接收分页列表
+     * @param dto
+     * @return
+     */
+    Page<PmsProduceOrderVO> acceptPage(ProduceOrderAcceptPageDTO dto);
+
 }

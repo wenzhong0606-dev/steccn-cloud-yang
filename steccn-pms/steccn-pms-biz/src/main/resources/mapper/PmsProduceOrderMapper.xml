@@ -89,4 +89,31 @@
             </if>
         </where>
     </select>
+    <select id="acceptPage" resultType="com.steccn.pms.vo.PmsProduceOrderVO">
+        select id,
+        type_id,
+        code,
+        material_id,
+        material_name,
+        material_code,
+        plan_start_time,
+        plan_end_time,
+        actual_start_time,
+        actual_end_time,
+        quantity,
+        unit_id,
+        production_line_id,
+        state
+        from pms_produce_order
+        <where>
+            del_flag = 0
+            AND state = 1
+            <if test="dto.productionLineId != null and dto.productionLineId != ''">
+                and production_line_id = #{dto.productionLineId}
+            </if>
+            <if test="dto.startTime !=null and dto.endTime != null">
+                and actual_start_time between #{dto.startTime} and #{dto.endTime}
+            </if>
+        </where>
+    </select>
 </mapper>

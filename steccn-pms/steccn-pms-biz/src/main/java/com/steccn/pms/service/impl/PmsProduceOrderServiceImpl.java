@@ -256,6 +256,32 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     /**
+     * 订单接收
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<PmsProduceOrderVO> acceptPage(ProduceOrderAcceptPageDTO dto) {
+        //1.自定义sql查询订单接收数据
+        Page<PmsProduceOrderVO> page = this.baseMapper.acceptPage(new Page(dto.getCurrent(), dto.getSize()), dto);
+        //2.处理订单数据
+        Set<Long> dictIds = Sets.newHashSet();
+        page.getRecords().forEach( pmsProduceOrderVO -> {
+            dictIds.add(pmsProduceOrderVO.getUnitId());
+            dictIds.add(pmsProduceOrderVO.getTypeId());
+        });
+        //3.查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //4.处理返回数据
+        page.getRecords().forEach(pmsProduceOrderVO -> {
+            pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+            pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
+        });
+        return page;
+    }
+
+    /**
      * 报工订单批次详情
      *
      * @param order     订单信息
