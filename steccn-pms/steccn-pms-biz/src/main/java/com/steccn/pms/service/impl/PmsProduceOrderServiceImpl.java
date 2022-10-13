@@ -351,6 +351,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return page;
     }
 
+    @Override
+    public Boolean close(Long orderId) {
+        return removeById(orderId);
+    }
+
     /**
      * 报工订单批次详情
      *

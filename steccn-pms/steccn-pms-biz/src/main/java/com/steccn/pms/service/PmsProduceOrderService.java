@@ -82,4 +82,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return 分页数据
      */
     Page<PmsProduceOrderVO> reportWorkOrderPage(ReportWorkOrderPageDTO dto);
+
+    /**
+     * 订单关闭
+     * @param orderId
+     * @return
+     */
+    Boolean close(Long orderId);
 }

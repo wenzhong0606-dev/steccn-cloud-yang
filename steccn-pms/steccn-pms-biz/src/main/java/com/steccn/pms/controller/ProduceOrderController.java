@@ -80,4 +80,12 @@ public class ProduceOrderController {
     public R<Page<PmsProduceOrderVO>> reportWorkOrderPage(@RequestBody ReportWorkOrderPageDTO dto) {
         return R.success(pmsProduceOrderService.reportWorkOrderPage(dto));
     }
+
+    @ApiOperation("订单关闭")
+    @DeleteMapping("/close")
+    public R<Boolean> close(@ApiParam("订单关闭") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.close(orderId));
+    }
+
+
 }
