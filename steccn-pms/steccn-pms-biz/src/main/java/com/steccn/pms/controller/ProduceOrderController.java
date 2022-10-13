@@ -45,7 +45,7 @@ public class ProduceOrderController {
 
     @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
-    public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto){
+    public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto) {
         return R.success(pmsProduceOrderService.batchPageList(dto));
     }
 
@@ -60,12 +60,18 @@ public class ProduceOrderController {
     @GetMapping("/report/work/order/id")
     public R<ReportWorkOrderVO> reportWorkOrderId(@ApiParam("订单id") @RequestParam("orderId") Long orderId,
                                                   @ApiParam("工位id") @RequestParam("stationId") Integer stationId) {
-        return R.success(pmsProduceOrderService.reportWorkOrderId(orderId,stationId));
+        return R.success(pmsProduceOrderService.reportWorkOrderId(orderId, stationId));
     }
 
     @ApiOperation("订单接收")
     @PostMapping("/accept/page")
-    public R<Page<PmsProduceOrderVO>> acceptPage (@RequestBody ProduceOrderAcceptPageDTO dto) {
+    public R<Page<PmsProduceOrderVO>> acceptPage(@RequestBody ProduceOrderAcceptPageDTO dto) {
         return R.success(pmsProduceOrderService.acceptPage(dto));
+    }
+
+    @ApiOperation("订单下达")
+    @PutMapping("place/an/order")
+    public R<Boolean> placeAnOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.placeAnOrder(orderId));
     }
 }

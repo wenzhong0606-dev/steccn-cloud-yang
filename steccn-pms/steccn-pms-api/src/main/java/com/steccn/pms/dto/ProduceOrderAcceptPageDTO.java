@@ -3,6 +3,7 @@ package com.steccn.pms.dto;
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,4 +26,7 @@ public class ProduceOrderAcceptPageDTO extends BasePageDTO {
 
     @ApiModelProperty("产线id")
     private Integer productionLineId;
+
+    @ApiModelProperty("状态")
+    private Integer state;
 }

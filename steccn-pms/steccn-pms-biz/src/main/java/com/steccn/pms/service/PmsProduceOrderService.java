@@ -69,4 +69,10 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     Page<PmsProduceOrderVO> acceptPage(ProduceOrderAcceptPageDTO dto);
 
+    /**
+     * 订单下达
+     * @param orderId
+     * @return
+     */
+    Boolean placeAnOrder(Long orderId);
 }

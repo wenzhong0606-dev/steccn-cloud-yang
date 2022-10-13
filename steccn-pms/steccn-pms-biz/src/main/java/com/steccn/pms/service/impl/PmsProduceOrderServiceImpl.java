@@ -16,6 +16,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.prefs.BackingStoreException;
 
 /**
  * @author yequan
@@ -267,7 +269,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Page<PmsProduceOrderVO> page = this.baseMapper.acceptPage(new Page(dto.getCurrent(), dto.getSize()), dto);
         //2.处理订单数据
         Set<Long> dictIds = Sets.newHashSet();
-        page.getRecords().forEach( pmsProduceOrderVO -> {
+        page.getRecords().forEach(pmsProduceOrderVO -> {
             dictIds.add(pmsProduceOrderVO.getUnitId());
             dictIds.add(pmsProduceOrderVO.getTypeId());
         });
@@ -279,6 +281,43 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
         });
         return page;
+    }
+
+    /**
+     * 订单下达
+     *
+     * @param orderId
+     * @return
+     */
+    @Override
+    public Boolean placeAnOrder(Long orderId) {
+        //1.根据订单id查询订单
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
+        Assert.notNull(order, "该订单不存在");
+        //2.校验所有工序是否已分配工位
+        //2.1 获取订单工序数据
+        List<PmsProduceOrderCraftVO> crafts = pmsProduceOrderCraftService.getCrafts(orderId);
+        if (CollUtil.isEmpty(crafts)) {
+            new BackingStoreException("该订单不存在工序数据，请检查");
+        }
+        crafts.forEach(craft -> {
+            if (CollUtil.isEmpty(craft.getStationList())) {
+                new BackingStoreException("工序未分配工位，请分配工位");
+            }
+        });
+        //3.校验所有组件是否已分配工序
+        //3.1 获取组件数据
+        List<PmsWorkOrderBomVO> materialList = pmsWorkOrderBomService.getMaterialList(orderId);
+        if (CollUtil.isEmpty(materialList)) {
+            new BackingStoreException("该订单不存在组件,请检查");
+        }
+        materialList.forEach(material -> {
+            Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
+        });
+        //4.修改订单状态为已下达
+        order.setState(PmManagerConstant.STATE_ONE);
+        updateById(order);
+        return Boolean.TRUE;
     }
 
     /**
