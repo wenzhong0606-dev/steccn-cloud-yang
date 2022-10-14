@@ -291,9 +291,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     @Override
     public Boolean placeAnOrder(Long orderId) {
-        //1.根据订单id查询订单
-        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
-        Assert.notNull(order, "该订单不存在");
+        //1.查询订单
+        PmsProduceOrder order = selectOrder(orderId);
         //2.校验所有工序是否已分配工位
         //2.1 获取订单工序数据
         List<PmsProduceOrderCraftVO> crafts = pmsProduceOrderCraftService.getCrafts(orderId);
@@ -315,13 +314,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
         });
         //4.校验订单状态
-        if (PmManagerConstant.STATE_ZERO.equals(order.getState())){
+        if (PmManagerConstant.STATE_ZERO.equals(order.getState())) {
             new BackingStoreException("仅已创建订单可下达");
         }
         //5.修改订单状态为已下达
         order.setState(PmManagerConstant.STATE_ONE);
-        updateById(order);
-        return Boolean.TRUE;
+        return updateById(order);
     }
 
     @Override
@@ -331,13 +329,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             List<PmsProduceOrderVO> records = page.getRecords();
             Set<Long> orderSet = Sets.newHashSet();
             Set<Long> dictSet = Sets.newHashSet();
-            for(PmsProduceOrderVO produceOrderVO : records){
+            for (PmsProduceOrderVO produceOrderVO : records) {
                 orderSet.add(produceOrderVO.getId());
                 dictSet.add(produceOrderVO.getUnitId());
             }
             orderSet = records.stream().map(PmsProduceOrderVO::getId).collect(Collectors.toSet());
             Map<Long, PmsCompleteStorageNumDTO> orderMap = pmsCompleteStorageService.orderCompleteNum(orderSet);
-            if(CollUtil.isNotEmpty(orderMap)){
+            if (CollUtil.isNotEmpty(orderMap)) {
                 Set<Long> orderDictSet = orderMap.values().stream().map(PmsCompleteStorageNumDTO::getUnitId).collect(Collectors.toSet());
                 dictSet.addAll(orderDictSet);
             }
@@ -358,19 +356,53 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 订单关闭
+     *
      * @param orderId
      * @return
      */
     @Override
     public Boolean close(Long orderId) {
         //1.查询订单
-        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
-        Assert.notNull(order,"该订单不存在");
+        PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
-        if (PmManagerConstant.STATE_ZERO.equals(order.getState())){
+        if (PmManagerConstant.STATE_ZERO.equals(order.getState())) {
             new BackingStoreException("仅已创建状态订单可关闭");
         }
         return removeById(orderId);
+    }
+
+    /**
+     * 取消下达
+     * @param orderId
+     * @return
+     */
+    @Override
+    public Boolean cancelTheOrder(Long orderId) {
+        //1.查询订单
+        PmsProduceOrder order = selectOrder(orderId);
+        //2.校验状态
+        if (PmManagerConstant.STATE_ONE.equals(order.getState())) {
+            new BackingStoreException("仅已下达状态订单可取消下达");
+        }
+        //3.修改状态为已创建
+        order.setState(PmManagerConstant.STATE_ZERO);
+        return updateById(order);
+    }
+
+    @Override
+    public Boolean affirm(Long orderId) {
+        return null;
+    }
+
+    /**
+     * 查询订单
+     */
+    PmsProduceOrder selectOrder(Long orderId) {
+        //1.查询订单
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
+        //2.校验数据
+        Assert.notNull(order, "该订单不存在");
+        return order;
     }
 
     /**

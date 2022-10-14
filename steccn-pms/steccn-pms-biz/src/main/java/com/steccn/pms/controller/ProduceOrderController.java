@@ -74,6 +74,11 @@ public class ProduceOrderController {
     public R<Boolean> placeAnOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
         return R.success(pmsProduceOrderService.placeAnOrder(orderId));
     }
+    @ApiOperation("取消订单下达")
+    @PutMapping("cancel/the/order")
+    public R<Boolean> cancelTheOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.cancelTheOrder(orderId));
+    }
 
     @ApiOperation("工序报工-订单列表")
     @PostMapping("/report/work/order/page")
@@ -83,9 +88,16 @@ public class ProduceOrderController {
 
     @ApiOperation("订单关闭")
     @DeleteMapping("/close")
-    public R<Boolean> close(@ApiParam("订单关闭") @RequestParam("orderId") Long orderId){
+    public R<Boolean> close(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
         return R.success(pmsProduceOrderService.close(orderId));
     }
+
+    @ApiOperation("订单确认")
+    @PutMapping("/affirm")
+    public R<Boolean> affirm(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.affirm(orderId));
+    }
+
 
 
 }
