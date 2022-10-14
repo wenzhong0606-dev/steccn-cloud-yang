@@ -37,7 +37,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param id
      * @return
      */
-    QtCheckTaskDetailVO taskDetail(Long id);
+    QtCheckTaskDetailVO taskDetail(Long id,Boolean isPc);
 
     /**
      * 修改任务状态

@@ -45,8 +45,14 @@ public class QtCheckTaskController {
 
     @GetMapping("{id}")
     @ApiOperation(value = "获取任务详细")
-    public R<QtCheckTaskDetailVO> getTaskList(@PathVariable Long id){
-        return R.success(qtCheckTaskService.taskDetail(id));
+    public R<QtCheckTaskDetailVO> getTaskDetail(@PathVariable Long id){
+        return R.success(qtCheckTaskService.taskDetail(id,false));
+    }
+
+    @GetMapping("/pc/{id}")
+    @ApiOperation(value = "pc获取任务详细")
+    public R<QtCheckTaskDetailVO> getPcTaskDetail(@PathVariable Long id){
+        return R.success(qtCheckTaskService.taskDetail(id,true));
     }
 
     @PutMapping("/status")

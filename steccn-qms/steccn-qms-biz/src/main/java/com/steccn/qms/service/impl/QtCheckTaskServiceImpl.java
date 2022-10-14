@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,6 +19,7 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.QtCheckTaskCopyMapper;
+import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
@@ -25,6 +27,7 @@ import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +59,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtMaterialLinkCheckPlanMapper qtMaterialLinkCheckPlanMapper;
 
     private final QtCheckTaskCopyMapper qtCheckTaskCopyMapper;
+
+    private final QtDefectiveItemMapper qtDefectiveItemMapper;
 
     /**
      * 新增
@@ -97,7 +102,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (Objects.isNull(maxSnapshot) || maxSnapshot.getVersion() < qtCheckPlan.getVersion()) {
             QtCheckPlan planSnapshot = qtCheckPlanService.planSnapshot(checkPlanId);
             qtCheckTask.setCheckPlanId(planSnapshot.getId());
-        }else {
+        } else {
             //取旧的快照
             qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
@@ -136,31 +141,31 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public QtCheckTaskDetailVO taskDetail(Long id) {
+    public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         if (qtCheckTask != null) {
             //json名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
-            if(qtCheckTask.getMaterialWorkshop()!=null) {
+            if (qtCheckTask.getMaterialWorkshop() != null) {
                 qtCheckTask.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             }
-            if(qtCheckTask.getSupplier()!=null) {
+            if (qtCheckTask.getSupplier() != null) {
                 qtCheckTask.setSupplierName(qtCheckTask.getSupplier().getName());
             }
-            if(qtCheckTask.getCustomer()!=null) {
+            if (qtCheckTask.getCustomer() != null) {
                 qtCheckTask.setCustomerName(qtCheckTask.getCustomer().getName());
             }
-            if(qtCheckTask.getProductWorkshop()!=null) {
+            if (qtCheckTask.getProductWorkshop() != null) {
                 qtCheckTask.setProductWorkshopName(qtCheckTask.getProductWorkshop().getName());
             }
-            if(qtCheckTask.getProductLine()!=null) {
+            if (qtCheckTask.getProductLine() != null) {
                 qtCheckTask.setProductLineName(qtCheckTask.getProductLine().getName());
             }
-            BeanUtils.copyProperties(qtCheckTask,qtCheckTaskListVo);
+            BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
             //如果为复检任务则查询复检任务
-            if(qtCheckTask.getType() == 1){
-                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId,id));
+            if (qtCheckTask.getType() == 1) {
+                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id));
                 qtCheckTaskListVo.setOriginalTaskCode(recheckTask.getOriginalCode());
             }
         }
@@ -172,6 +177,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QueryWrapper<QtCheckTaskDetail> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("DISTINCT copy").eq("task_id", id).orderByAsc("copy");
         List<QtCheckTaskDetail> qtCheckTaskDetails = qtCheckTaskDetailService.list(queryWrapper);
+        //手机端copy
         List<QtCheckTaskDetailCopyVO> copy = Lists.newArrayList();
         if (!qtCheckTaskDetails.isEmpty()) {
             //包装好group和copy
@@ -179,17 +185,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, tmp.getCopy());
                 //查看是否有details
                 QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
-                        .eq(QtCheckTaskCopy::getTaskId,id)
-                        .eq(QtCheckTaskCopy::getCopy,tmp.getCopy()));
+                        .eq(QtCheckTaskCopy::getTaskId, id)
+                        .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()));
                 QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
                 qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
                 qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
                 //放入copyDetails
                 QtCheckTaskCopyDetailsDTO copyDetailsVO = new QtCheckTaskCopyDetailsDTO();
-                BeanUtils.copyProperties(qtCheckTaskCopy,copyDetailsVO);
+                BeanUtils.copyProperties(qtCheckTaskCopy, copyDetailsVO);
                 qtCheckTaskDetailCopyVO.setCopyDetails(copyDetailsVO);
                 copy.add(qtCheckTaskDetailCopyVO);
             });
+
         }
         //details没有值说明没有输入详细值
         else {
@@ -200,8 +207,41 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             copy.add(qtCheckTaskDetailCopyVO);
         }
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
-        qtCheckPlanDetailsVO.setCopy(copy);
-        qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
+        //pc端对数据进行处理
+        if(isPc){
+            List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
+            //对每个item进行赋值
+            checkGroup.forEach(groupTmp->{
+                groupTmp.getItems().forEach(itemTmp -> {
+                    Map<String,String> result = new HashMap<>();
+                    //对每一层copy进行遍历
+                    for(QtCheckTaskDetailCopyVO copyTmp:copy){
+                        String num = String.valueOf(copyTmp.getNum());
+                        //需要对每一个copy下的分组和项进行校验，匹配则放入值
+                        copyTmp.getCheckGroup().forEach(copyGroupTmp->{
+                           if(copyGroupTmp.getId().equals(groupTmp.getId())){
+                               copyGroupTmp.getItems().forEach(itemGroupTmp->{
+                                   if(itemGroupTmp.getItemId().equals(itemTmp.getItemId())){
+                                       if(StringUtils.isNotBlank(itemGroupTmp.getCheckResult())){
+                                           result.put("checkResult"+num,itemGroupTmp.getCheckResult());
+                                       }
+                                       if(itemGroupTmp.getDefectId()!=null){
+                                           result.put("defectId"+num,itemGroupTmp.getCheckResult());
+                                           result.put("defectName"+num,itemGroupTmp.getDefectName());
+                                       }
+                                   }
+                               });
+                           }
+                        });
+                    }
+                    itemTmp.setResult(result);
+                });
+            });
+            qtCheckTaskDetailVo.setCheckGroup(checkGroup);
+        }else {
+            qtCheckPlanDetailsVO.setCopy(copy);
+            qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
+        }
         return qtCheckTaskDetailVo;
     }
 
@@ -217,19 +257,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setId(dto.getId());
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
-        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())){
+        if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setStartName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setStartTime(LocalDateTime.now());
         }
         //取消任务
-        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CANCELED.getCode())){
+        if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CANCELED.getCode())) {
             qtCheckTask.setCancelBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setCancelName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setCancelTime(LocalDateTime.now());
         }
         //完成任务
-        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
+        if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
             qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setFinishedTime(LocalDateTime.now());
@@ -284,14 +324,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     });
                 }
                 //操作样本详情 当样本类型为来料检、化验抽检、配料抽检时，有样本模块
-                if((task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()))&&!Objects.isNull(valueTmp.getCopyDetails())){
+                if ((task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()) || task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) && !Objects.isNull(valueTmp.getCopyDetails())) {
                     QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
                     Map<String, Object> deleteCondition = new HashMap<>();
-                    deleteCondition.put("copy",valueTmp.getCopy());
+                    deleteCondition.put("copy", valueTmp.getCopy());
                     copyDetailModel.setCopy(valueTmp.getCopy());
-                    deleteCondition.put("task_id",dto.getId());
+                    deleteCondition.put("task_id", dto.getId());
                     copyDetailModel.setTaskId(dto.getId());
-                    BeanUtils.copyProperties(valueTmp.getCopyDetails(),copyDetailModel);
+                    BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
@@ -307,6 +347,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     /**
      * pc端添加值
+     *
      * @param dto
      * @return
      */
@@ -320,32 +361,32 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         valueCondition.put("task_id", dto.getId());
         qtCheckTaskDetailService.removeByMap(valueCondition);
         //处理数据
-        if(CollUtil.isNotEmpty(dto.getCheckGroup())){
+        if (CollUtil.isNotEmpty(dto.getCheckGroup())) {
             dto.getCheckGroup().forEach(group -> {
-                if(CollUtil.isNotEmpty(group.getItems())){
-                    group.getItems().forEach(item->{
+                if (CollUtil.isNotEmpty(group.getItems())) {
+                    group.getItems().forEach(item -> {
 //                        Map<String, Object> condition = new HashMap<>();
                         QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
                         //遍历Map
-                        for(Map.Entry<String,String> entry:item.getResult().entrySet()){
+                        for (Map.Entry<String, String> entry : item.getResult().entrySet()) {
                             String key = entry.getKey();
                             //如果map值等于checkResult
-                            if(key.substring(0,key.length() - 1).equals(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)){
+                            if (key.substring(0, key.length() - 1).equals(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)) {
                                 //detail设置Result
                                 qtCheckTaskDetail.setCheckResult(item.getResult().get(key));
                                 //如果是在线检则设置copy为0
-                                if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                                if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())) {
                                     qtCheckTaskDetail.setCopy(0);
 //                                    condition.put("copy",0);
-                                }else {
+                                } else {
                                     //否则设置copy的值为末尾
                                     Integer copy = Integer.valueOf(key.substring(key.length() - 1));
                                     qtCheckTaskDetail.setCopy(copy);
 //                                    condition.put("copy",copy);
                                 }
                                 //处理defect
-                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECT + key.substring(key.length()-1);
-                                if(item.getResult().get(defectId)!=null){
+                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECT + key.substring(key.length() - 1);
+                                if (item.getResult().get(defectId) != null) {
                                     qtCheckTaskDetail.setDefectId(Integer.valueOf(item.getResult().get(defectId)));
                                 }
                             }
@@ -362,7 +403,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         valueModels.add(qtCheckTaskDetail);
                     });
 
-                }else {
+                } else {
                     throw new BusinessException("检验项数据为空");
                 }
             });
@@ -404,7 +445,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (res == null) {
             throw new BusinessException("任务信息不存在");
         }
-        if(!res.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
+        if (!res.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
             throw new BusinessException("任务状态不为完成");
         }
         BeanUtils.copyProperties(res, model);
@@ -446,93 +487,93 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
                 .selectAll(QtCheckTask.class)
                 //关联表映射
-                .selectAs(QtMaterial::getName,QtCheckTaskListVO::getMaterialName)
-                .selectAs(QtRecheckTask::getOriginalCode,QtCheckTaskListVO::getOriginalTaskCode)
+                .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
+                .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
                 //json映射
-                .selectAs(QtCheckTask::getMaterialWorkshopName,QtCheckTaskListVO::getMaterialWorkshopName)
-                .selectAs(QtCheckTask::getProductWorkshopName,QtCheckTaskListVO::getProductWorkshopName)
-                .selectAs(QtCheckTask::getProductLineName,QtCheckTaskListVO::getProductLineName)
-                .selectAs(QtCheckTask::getSupplierName,QtCheckTaskListVO::getSupplierName)
-                .selectAs(QtCheckTask::getCustomerName,QtCheckTaskListVO::getCustomerName)
+                .selectAs(QtCheckTask::getMaterialWorkshopName, QtCheckTaskListVO::getMaterialWorkshopName)
+                .selectAs(QtCheckTask::getProductWorkshopName, QtCheckTaskListVO::getProductWorkshopName)
+                .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
+                .selectAs(QtCheckTask::getSupplierName, QtCheckTaskListVO::getSupplierName)
+                .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
                 //关联
-                .leftJoin(QtMaterial.class,QtMaterial::getId,QtCheckTask::getMaterialId)
-                .leftJoin(QtRecheckTask.class,QtRecheckTask::getOriginalId,QtCheckTask::getId)
+                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
+                .leftJoin(QtRecheckTask.class, QtRecheckTask::getOriginalId, QtCheckTask::getId)
                 //查询
                 //物料名称或者编码
-                .and((dto.getMaterialNameOrCode() != null && !dto.getMaterialNameOrCode().equals("")),wrapper -> wrapper.like(QtMaterial::getName,dto.getMaterialNameOrCode()).or().like(QtMaterial::getCode,dto.getMaterialNameOrCode()))
+                .and((dto.getMaterialNameOrCode() != null && !dto.getMaterialNameOrCode().equals("")), wrapper -> wrapper.like(QtMaterial::getName, dto.getMaterialNameOrCode()).or().like(QtMaterial::getCode, dto.getMaterialNameOrCode()))
                 //供应商
-                .apply(dto.getSupplierId()!=null,"JSON_CONTAINS(supplier, JSON_OBJECT('id', {0}))",dto.getSupplierId())
+                .apply(dto.getSupplierId() != null, "JSON_CONTAINS(supplier, JSON_OBJECT('id', {0}))", dto.getSupplierId())
                 //到货时间大于等于
-                .between(dto.getArrivalTimeStart()!=null && dto.getArrivalTimeEnd()!=null,QtCheckTask::getArrivalTime,dto.getArrivalTimeStart(),dto.getArrivalTimeEnd())
+                .between(dto.getArrivalTimeStart() != null && dto.getArrivalTimeEnd() != null, QtCheckTask::getArrivalTime, dto.getArrivalTimeStart(), dto.getArrivalTimeEnd())
                 //物料使用车间
-                .apply(dto.getMaterialWorkshopId()!=null,"JSON_CONTAINS(material_workshop, JSON_OBJECT('id', {0}))",dto.getMaterialWorkshopId())
+                .apply(dto.getMaterialWorkshopId() != null, "JSON_CONTAINS(material_workshop, JSON_OBJECT('id', {0}))", dto.getMaterialWorkshopId())
                 //检验结果
-                .eq(StringUtils.isNotBlank(dto.getResult()),QtCheckTask::getResult,dto.getResult())
+                .eq(StringUtils.isNotBlank(dto.getResult()), QtCheckTask::getResult, dto.getResult())
                 //生产订单号
-                .like(StringUtils.isNotBlank(dto.getProductOrder()),QtCheckTask::getProductOrder,dto.getProductOrder())
+                .like(StringUtils.isNotBlank(dto.getProductOrder()), QtCheckTask::getProductOrder, dto.getProductOrder())
                 //生产车间
-                .apply(dto.getProductWorkshopId()!=null,"JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))",dto.getProductWorkshopId())
+                .apply(dto.getProductWorkshopId() != null, "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkshopId())
                 //产线
-                .apply(dto.getProductLineId()!=null,"JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))",dto.getProductLineId())
+                .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
                 //生产批次
-                .like(StringUtils.isNotBlank(dto.getProductBatch()),QtCheckTask::getProductBatch,dto.getProductBatch())
+                .like(StringUtils.isNotBlank(dto.getProductBatch()), QtCheckTask::getProductBatch, dto.getProductBatch())
                 //原始任务单号
-                .like(StringUtils.isNotBlank(dto.getOriginalTaskCode()),QtRecheckTask::getOriginalCode,dto.getOriginalTaskCode())
+                .like(StringUtils.isNotBlank(dto.getOriginalTaskCode()), QtRecheckTask::getOriginalCode, dto.getOriginalTaskCode())
                 //发货日期
-                .between(dto.getDeliverTimeStart()!=null && dto.getArrivalTimeEnd()!=null,QtCheckTask::getDeliverTime,dto.getDeliverTimeStart(),dto.getArrivalTimeEnd())
+                .between(dto.getDeliverTimeStart() != null && dto.getArrivalTimeEnd() != null, QtCheckTask::getDeliverTime, dto.getDeliverTimeStart(), dto.getArrivalTimeEnd())
                 //客户
-                .apply(dto.getCustomerId()!=null,"JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))",dto.getCustomerId())
+                .apply(dto.getCustomerId() != null, "JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))", dto.getCustomerId())
                 //创建时间
-                .between(dto.getCreateTimeStart() != null && dto.getCreateTimeEnd()!=null, QtCheckTask::getCreateTime,dto.getCreateTimeStart(),dto.getCreateTimeEnd())
+                .between(dto.getCreateTimeStart() != null && dto.getCreateTimeEnd() != null, QtCheckTask::getCreateTime, dto.getCreateTimeStart(), dto.getCreateTimeEnd())
                 //创建人
-                .eq(dto.getCreateBy()!=null,QtCheckTask::getCreateBy,dto.getCreateBy())
+                .eq(dto.getCreateBy() != null, QtCheckTask::getCreateBy, dto.getCreateBy())
                 //状态
-                .eq(dto.getStatus()!=null,QtCheckTask::getStatus,dto.getStatus())
+                .eq(dto.getStatus() != null, QtCheckTask::getStatus, dto.getStatus())
                 //检验类型
-                .eq(dto.getCheckTypeCode()!=null,QtCheckTask::getTaskType,dto.getCheckTypeCode());
+                .eq(dto.getCheckTypeCode() != null, QtCheckTask::getTaskType, dto.getCheckTypeCode());
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getStatus);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(materialName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(materialName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getArrivalTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(supplierName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(supplierName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(materialWorkshopName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(materialWorkshopName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getProductOrder);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_WORKSHOP_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(productWorkshopName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(productWorkshopName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_LINE_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(productLineName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(productLineName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(product_batch using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(product_batch using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME.equals(dto.getSortField())) {
@@ -544,9 +585,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDeliverTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CUSTOMER_NAME.equals(dto.getSortField())) {
-            if(dto.getAscFlag()){
+            if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(customerName using gbk) ASC");
-            }else {
+            } else {
                 condition.last("ORDER BY CONVERT(customerName using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_NUM.equals(dto.getSortField())) {
@@ -561,23 +602,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
-        }
-        else {
+        } else {
             //默认按照创建时间降序
-            condition.orderByDesc(true,QtCheckTask::getCreateTime);
+            condition.orderByDesc(true, QtCheckTask::getCreateTime);
         }
-        IPage<QtCheckTaskListVO> iPage = qtCheckTaskMapper.selectJoinPage(new Page<>(dto.getCurrent(),dto.getSize()),QtCheckTaskListVO.class, condition);
+        IPage<QtCheckTaskListVO> iPage = qtCheckTaskMapper.selectJoinPage(new Page<>(dto.getCurrent(), dto.getSize()), QtCheckTaskListVO.class, condition);
         //3、处理返回数据
-        if(CollUtil.isNotEmpty(iPage.getRecords())){
-            for(QtCheckTaskListVO vo:iPage.getRecords()){
+        if (CollUtil.isNotEmpty(iPage.getRecords())) {
+            for (QtCheckTaskListVO vo : iPage.getRecords()) {
                 //若为暂存状态，则是检验中
-                if(vo.getStatus() == 4) {
+                if (vo.getStatus() == 4) {
                     vo.setStatus(1);
                 }
             }
         }
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        BeanUtils.copyProperties(iPage,page);
+        BeanUtils.copyProperties(iPage, page);
         return page;
     }
 

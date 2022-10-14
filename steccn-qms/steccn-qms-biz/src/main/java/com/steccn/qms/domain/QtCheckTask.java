@@ -129,12 +129,12 @@ public class QtCheckTask implements Serializable {
     /**
      * 到货时间
      */
-    private LocalDate arrivalTime;
+    private LocalDateTime arrivalTime;
 
     /**
      * 发货时间
      */
-    private LocalDate deliverTime;
+    private LocalDateTime deliverTime;
 
     /**
      * 供应商id
