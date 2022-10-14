@@ -18,7 +18,7 @@ public class QtPcCheckTaskCheckGroupItemDTO implements Serializable {
     /**
      * 检验项id
      */
-    private Integer id;
+    private Integer itemId;
 
     /**
      * 结果

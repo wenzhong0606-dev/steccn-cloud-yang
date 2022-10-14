@@ -339,6 +339,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
         }
+        //插入在线检数据
+        else if (task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem()!=null){
+            QtCheckTaskDetail detail = new QtCheckTaskDetail();
+            List<QtCheckTaskDetail> model = Lists.newArrayList();
+            dto.getOnlineItem().forEach(tmp->{
+                detail.setTaskId(dto.getId());
+                detail.setItemId(tmp.getItemId());
+                detail.setGroupId(tmp.getGroupId());
+                detail.setCopy(0);
+                detail.setDefectNum(tmp.getDefect());
+                model.add(detail);
+            });
+            qtCheckTaskDetailService.saveBatch(model);
+        }
         QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
         statusDTO.setId(dto.getId());
         statusDTO.setStatus(dto.getStatus());
@@ -393,7 +407,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         }
                         qtCheckTaskDetail.setTaskId(dto.getId());
 //                        condition.put("task_id", dto.getId());
-                        qtCheckTaskDetail.setItemId(item.getId());
+                        qtCheckTaskDetail.setItemId(item.getItemId());
 //                        condition.put("item_id", item.getId());
                         qtCheckTaskDetail.setGroupId(group.getId());
 //                        condition.put("group_id", group.getId());
@@ -410,6 +424,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskDetailService.saveBatch(valueModels);
         } else {
             throw new BusinessException("分组数据为空");
+        }
+        //插入在线检数据
+        if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem()!=null){
+            QtCheckTaskDetail detail = new QtCheckTaskDetail();
+            List<QtCheckTaskDetail> model = Lists.newArrayList();
+            dto.getOnlineItem().forEach(tmp->{
+                detail.setTaskId(dto.getId());
+                detail.setItemId(tmp.getItemId());
+                detail.setGroupId(tmp.getGroupId());
+                detail.setCopy(0);
+                detail.setDefectNum(tmp.getDefect());
+                model.add(detail);
+            });
+            qtCheckTaskDetailService.saveBatch(model);
         }
         QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
         statusDTO.setId(dto.getId());

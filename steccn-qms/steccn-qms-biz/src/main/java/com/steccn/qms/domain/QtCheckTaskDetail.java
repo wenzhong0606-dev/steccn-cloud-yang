@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.dto.QtOnlineCheckDefect;
 import lombok.Data;
 
 /**
  * 巡检任务详细信息表
  * @TableName qt_check_task_detail
  */
-@TableName(value ="qt_check_task_detail")
+@TableName(value ="qt_check_task_detail",autoResultMap = true)
 @Data
 public class QtCheckTaskDetail implements Serializable {
     /**
@@ -100,4 +104,7 @@ public class QtCheckTaskDetail implements Serializable {
      * 1合格 0不合格
      */
     private Integer isQualified;
+
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<QtOnlineCheckDefect> defectNum;
 }
