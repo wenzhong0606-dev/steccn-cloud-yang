@@ -53,6 +53,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
     private final PmsCompleteStorageService pmsCompleteStorageService;
+    private final PmsBarcodePrintService pmsBarcodePrintService;
 
     /**
      * 新增生产订单信息
@@ -275,7 +276,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         });
         //3.查询数据
         //3.1查询完工数据
-        Map<Long, PmsCompleteStorageNumDTO> map = pmsCompleteStorageService.orderCompleteNum(orderIds);
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsBarcodePrintService.orderSum(orderIds);
         //3.2获取完工数据单位
         map.forEach((key, pmsCompleteStorageNum) -> {
             dictIds.add(pmsCompleteStorageNum.getUnitId());
@@ -347,7 +348,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 dictSet.add(produceOrderVO.getUnitId());
             }
             orderSet = records.stream().map(PmsProduceOrderVO::getId).collect(Collectors.toSet());
-            Map<Long, PmsCompleteStorageNumDTO> orderMap = pmsCompleteStorageService.orderCompleteNum(orderSet);
+            Map<Long, PmsCompleteStorageNumDTO> orderMap = pmsBarcodePrintService.orderSum(orderSet);
             if (CollUtil.isNotEmpty(orderMap)) {
                 Set<Long> orderDictSet = orderMap.values().stream().map(PmsCompleteStorageNumDTO::getUnitId).collect(Collectors.toSet());
                 dictSet.addAll(orderDictSet);

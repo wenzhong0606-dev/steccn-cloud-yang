@@ -11,8 +11,10 @@ import com.google.common.collect.Maps;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
+import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.mapper.PmsBarcodePrintMapper;
 import com.steccn.pms.util.PmsCodeUtil;
@@ -21,7 +23,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -93,6 +97,49 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         BarcodePrintRecordVO vo = new BarcodePrintRecordVO();
         BeanUtils.copyProperties(model,vo);
         return vo;
+    }
+
+    @Override
+    public Map<String, PmsCompleteStorageNumDTO> batchSum(Set<String> batchNoSet) {
+        Map<String, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
+        List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getBatchNo,batchNoSet));
+        if(CollUtil.isNotEmpty(dbList)){
+            Map<String, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getBatchNo));
+            for (Map.Entry<String, List<PmsBarcodePrint>> entry : dbMap.entrySet()) {
+                BigDecimal sum = BigDecimal.ZERO;
+                for (PmsBarcodePrint print : entry.getValue()) {
+                    sum = sum.add(print.getQuantity());
+                }
+                PmsCompleteStorageNumDTO numDTO = new PmsCompleteStorageNumDTO();
+                numDTO.setQuantity(sum);
+                numDTO.setUnitId(entry.getValue().get(0).getUnitId());
+                resMap.put(entry.getKey(), numDTO);
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, PmsCompleteStorageNumDTO> orderSum(Set<Long> orderSet) {
+        Map<Long, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orderSet)) {
+            List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getProduceOrderId, orderSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<Long, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getProduceOrderId));
+                for (Map.Entry<Long, List<PmsBarcodePrint>> entry : dbMap.entrySet()) {
+                    BigDecimal sum = BigDecimal.ZERO;
+                    for (PmsBarcodePrint print : entry.getValue()) {
+                        sum = sum.add(print.getQuantity());
+                    }
+                    PmsCompleteStorageNumDTO numDTO = new PmsCompleteStorageNumDTO();
+                    numDTO.setQuantity(sum);
+                    numDTO.setProduceOrderId(entry.getKey());
+                    numDTO.setUnitId(entry.getValue().get(0).getUnitId());
+                    resMap.put(entry.getKey(), numDTO);
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

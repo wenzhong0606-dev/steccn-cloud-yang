@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 import io.swagger.annotations.ApiOperation;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -46,5 +49,17 @@ public class BarcodePrintController {
     @ApiOperation("打印记录详细")
     public R<BarcodePrintRecordVO> info(@PathVariable("id") Long id) {
         return R.success(pmsBarcodePrintService.info(id));
+    }
+
+    @PostMapping("/print/order/batch/sum")
+    @ApiOperation("订单批次总数")
+    R<Map<String, PmsCompleteStorageNumDTO>> batchSum(@RequestBody Set<String> batchNoSet){
+        return R.success(pmsBarcodePrintService.batchSum(batchNoSet));
+    }
+
+    @PostMapping("/print/order/sum")
+    @ApiOperation("订单总数")
+    R<Map<Long, PmsCompleteStorageNumDTO>> orderSum(@RequestBody Set<Long> orderSet){
+        return R.success(pmsBarcodePrintService.orderSum(orderSet));
     }
 }

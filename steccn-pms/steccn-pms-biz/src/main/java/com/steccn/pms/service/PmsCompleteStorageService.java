@@ -59,11 +59,4 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto);
-
-    /**
-     * 订单的完工数量
-     * @param orderSet 订单的id
-     * @return map
-     */
-    Map<Long, PmsCompleteStorageNumDTO> orderCompleteNum(Set<Long> orderSet);
 }

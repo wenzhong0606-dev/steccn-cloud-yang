@@ -5,6 +5,7 @@ import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 
 import java.util.Map;
@@ -51,4 +52,18 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return vo
      */
     BarcodePrintRecordVO info(Long id);
+
+    /**
+     * 批次生产总数量
+     * @param batchNoSet 批次set
+     * @return map
+     */
+    Map<String, PmsCompleteStorageNumDTO> batchSum(Set<String> batchNoSet);
+
+    /**
+     * 订单总数量
+     * @param orderSet 订单set
+     * @return map
+     */
+    Map<Long, PmsCompleteStorageNumDTO> orderSum(Set<Long> orderSet);
 }
