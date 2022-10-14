@@ -101,6 +101,11 @@ public class PmsProduceOrder implements Serializable {
     private Integer defaultWarehouseId;
 
     /**
+     * 最小包装数量
+     */
+    private BigDecimal minPackageQuantity;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
