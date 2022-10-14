@@ -444,13 +444,25 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public PmsProduceOrderVO listByProduceLineId(Integer produceLineId) {
         //定义返回对象
-        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
+        PmsProduceOrderVO pmsProduceOrderVO = null;
         //查询产线正在执行的订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, produceLineId)
                 .eq(PmsProduceOrder::getState, PmManagerConstant.STATE_TWO)
         );
-        BeanUtil.copyProperties(order, pmsProduceOrderVO);
+        if(Objects.nonNull(order)){
+            pmsProduceOrderVO = new PmsProduceOrderVO();
+            BeanUtil.copyProperties(order, pmsProduceOrderVO);
+            PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
+                    .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
+                    .eq(PmsWorkOrderBatch::getCurrentBatchFlag,MpConstant.YES)
+                    .last(MpConstant.STR_LIMIT_1));
+            if(Objects.nonNull(pmsWorkOrderBatch)){
+                pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
+                pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
+            }
+
+        }
         return pmsProduceOrderVO;
     }
 

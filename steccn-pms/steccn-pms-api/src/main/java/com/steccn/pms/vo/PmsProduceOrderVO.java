@@ -93,4 +93,13 @@ public class PmsProduceOrderVO {
     @ApiModelProperty("默认仓库id(完工信息)")
     private Integer defaultWarehouseId;
 
+    @ApiModelProperty("批次信息")
+    private Long batch;
+
+    @ApiModelProperty("批次vo")
+    private String batchNo;
+
+    @ApiModelProperty("最小包装数量")
+    private BigDecimal minPackagQuantity;
+
 }

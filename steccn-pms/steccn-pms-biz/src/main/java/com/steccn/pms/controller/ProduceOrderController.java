@@ -104,6 +104,10 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.execute(orderId));
     }
 
-
+    @ApiOperation("根据产线id查询订单当前正在执行订单")
+    @GetMapping("/line")
+    public R<PmsProduceOrderVO> listByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId) {
+        return R.success(pmsProduceOrderService.listByProduceLineId(productLineId));
+    }
 
 }
