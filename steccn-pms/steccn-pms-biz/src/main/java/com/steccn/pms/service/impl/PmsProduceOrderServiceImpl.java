@@ -427,12 +427,18 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.1查询当前产线的执行订单数量
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
         if (Objects.nonNull(pmsProduceOrderVO)) {
-            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode()+")正在执行中");
+            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
         }
         //3.生成新的批次，并翻转订单状态为执行中
-//        pmsWorkOrderBatchService.
+        ProduceOrderBatchDto produceOrderBatchDto = new ProduceOrderBatchDto();
+        produceOrderBatchDto.setStartTime(LocalDateTime.now());
+        produceOrderBatchDto.setProduceOrderId(orderId);
+        produceOrderBatchDto.setMinPackQuantity(order.getMinPackageQuantity());
+        produceOrderBatchDto.setUnitId(order.getUnitId());
+        pmsWorkOrderBatchService.add(produceOrderBatchDto);
         order.setState(PmManagerConstant.STATE_TWO);
-        return null;
+        //4.修改状态
+        return updateById(order);
     }
 
     /**

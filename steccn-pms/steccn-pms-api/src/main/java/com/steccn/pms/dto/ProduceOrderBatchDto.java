@@ -36,7 +36,7 @@ public class ProduceOrderBatchDto {
     private Integer currentBatchFlag;
 
     @ApiModelProperty("最小包装数量")
-    private Integer minPackQuantity;
+    private BigDecimal minPackQuantity;
 
     @ApiModelProperty("生产订单id")
     private Long produceOrderId;
