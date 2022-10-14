@@ -17,6 +17,9 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("库存id")
+    private Long inventoryId;
+
     @ApiModelProperty("生产订单id")
     private Long produceOrderId;
 
@@ -38,7 +41,7 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     @ApiModelProperty("数量 = 订单BOM组件数量 / 订单数量 * 加工数量 可修改")
     private BigDecimal quantity;
 
-    @ApiModelProperty("可用")
+    @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("单位id")

@@ -223,6 +223,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
                     resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
                     resDTO.setModuleId(messDto.getMaterialId());
+                    resDTO.setInventoryId(messDto.getInventoryId());
                     EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
                     resDTO.setModuleName(eqpSpareVO.getName());
                     resDTO.setModuleCode(eqpSpareVO.getCode());
