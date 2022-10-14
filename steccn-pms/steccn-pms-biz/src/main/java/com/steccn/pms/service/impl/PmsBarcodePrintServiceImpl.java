@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
@@ -42,6 +43,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         for (int count = 0; count < printStrip; count++) {
             PmsBarcodePrint printModel = new PmsBarcodePrint();
             BeanUtils.copyProperties(dto, printModel);
+            printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
             printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
             modelList.add(printModel);
         }
