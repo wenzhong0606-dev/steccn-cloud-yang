@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.ProcessReportWorkRecordVO;
 
 import java.util.List;
 
@@ -51,4 +51,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 分页报工信息
      */
     Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto);
+
+    /**
+     * 工序报工-确定工位
+     * @param id id
+     * @return baseSelectVo
+     */
+    BaseSelectVO<Integer> stationScan(Integer id);
 }

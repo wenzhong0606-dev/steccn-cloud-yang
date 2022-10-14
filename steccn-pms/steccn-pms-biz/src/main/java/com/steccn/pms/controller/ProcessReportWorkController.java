@@ -4,15 +4,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -57,4 +55,9 @@ public class ProcessReportWorkController {
         return R.success(pmsReportWorkService.reportWorkPageList(dto));
     }
 
+    @ApiOperation("工序报工-确定工位")
+    @GetMapping("/station/scan/{id}")
+    public R<BaseSelectVO<Integer>> stationScan(@PathVariable("id") Integer id){
+        return R.success(pmsReportWorkService.stationScan(id));
+    }
 }
