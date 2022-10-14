@@ -327,11 +327,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
         });
         //4.校验订单状态
-        if (PmManagerConstant.STATE_ZERO.equals(order.getState())) {
+        if (PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState())) {
             new BackingStoreException("仅已创建订单可下达");
         }
         //5.修改订单状态为已下达
-        order.setState(PmManagerConstant.STATE_ONE);
+        order.setState(PmManagerConstant.OrderStateEnum.ONE.getCode());
         return updateById(order);
     }
 
@@ -378,7 +378,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
-        if (PmManagerConstant.STATE_ZERO.equals(order.getState())) {
+        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getState())) {
             new BackingStoreException("仅已创建状态订单可关闭");
         }
         return removeById(orderId);
@@ -395,11 +395,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
-        if (PmManagerConstant.STATE_ONE.equals(order.getState())) {
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(order.getState())) {
             new BackingStoreException("仅已下达状态订单可取消下达");
         }
         //3.修改状态为已创建
-        order.setState(PmManagerConstant.STATE_ZERO);
+        order.setState(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         return updateById(order);
     }
 
@@ -414,7 +414,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断订单状态
-        if (!order.getState().equals(PmManagerConstant.STATE_THREE) || !order.getState().equals(PmManagerConstant.STATE_FIVE)) {
+        if (!order.getState().equals(PmManagerConstant.OrderStateEnum.FIVE.getCode()) || !order.getState().equals(PmManagerConstant.OrderStateEnum.THREE.getCode())) {
             new BackingStoreException("当前订单状态不可确认");
         }
         //3.记录批次时间
@@ -425,11 +425,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         batch.setEndTime(LocalDateTime.now());
         pmsWorkOrderBatchService.updateById(batch);
         //4.修改订单状态
-        if (order.getState().equals(PmManagerConstant.STATE_THREE)) {
-            order.setState(PmManagerConstant.STATE_FOUR);
+        if (order.getState().equals(PmManagerConstant.OrderStateEnum.THREE.getCode())) {
+            order.setState(PmManagerConstant.OrderStateEnum.FOUR.getCode());
         }
-        if (order.getState().equals(PmManagerConstant.STATE_FIVE)) {
-            order.setState(PmManagerConstant.STATE_SIX);
+        if (order.getState().equals(PmManagerConstant.OrderStateEnum.FIVE.getCode())) {
+            order.setState(PmManagerConstant.OrderStateEnum.SIX.getCode());
+            //确认状态时修改订单完成时间
+            order.setActualEndTime(LocalDateTime.now());
         }
         return updateById(order);
     }
@@ -451,8 +453,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         produceOrderBatchDto.setMinPackQuantity(order.getMinPackageQuantity());
         produceOrderBatchDto.setUnitId(order.getUnitId());
         pmsWorkOrderBatchService.add(produceOrderBatchDto);
-        order.setState(PmManagerConstant.STATE_TWO);
         //4.修改状态
+        order.setState(PmManagerConstant.OrderStateEnum.TWO.getCode());
+        //5.修改执行时间
+        order.setActualStartTime(LocalDateTime.now());
         return updateById(order);
     }
 
@@ -469,7 +473,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //查询产线正在执行的订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, produceLineId)
-                .eq(PmsProduceOrder::getState, PmManagerConstant.STATE_TWO)
+                .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
         );
         if (Objects.nonNull(order)) {
             pmsProduceOrderVO = new PmsProduceOrderVO();
@@ -482,7 +486,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
             }
-
         }
         return pmsProduceOrderVO;
     }
