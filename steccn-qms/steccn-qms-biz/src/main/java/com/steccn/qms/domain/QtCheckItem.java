@@ -132,4 +132,9 @@ public class QtCheckItem implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 检查方法
+     */
+    private String checkMethod;
 }

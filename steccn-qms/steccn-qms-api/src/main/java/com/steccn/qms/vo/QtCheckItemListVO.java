@@ -63,4 +63,8 @@ public class QtCheckItemListVO implements Serializable {
 
     @ApiModelProperty("更新时间")
     private LocalDateTime updateTime;
+
+    @ApiModelProperty("检验方法")
+    private String checkMethod;
+
 }
