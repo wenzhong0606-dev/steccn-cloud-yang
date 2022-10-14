@@ -104,10 +104,21 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.execute(orderId));
     }
 
+    @ApiOperation("订单暂停")
+    @PutMapping("/stop")
+    public R<Boolean> stop(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.stop(orderId));
+    }
+
     @ApiOperation("根据产线id查询订单当前正在执行订单")
     @GetMapping("/line")
     public R<PmsProduceOrderVO> listByProduceLineId(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId) {
         return R.success(pmsProduceOrderService.listByProduceLineId(productLineId));
     }
 
+    @ApiOperation("订单完成")
+    @PutMapping("/complete")
+    public R<Boolean> complete(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.complete(orderId));
+    }
 }

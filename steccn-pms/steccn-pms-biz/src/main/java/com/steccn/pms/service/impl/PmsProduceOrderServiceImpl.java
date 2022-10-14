@@ -65,9 +65,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Transactional(readOnly = false)
     public Boolean add(PmsProduceOrderDTO dto) {
         //1.校验数据是否存在
-        if (Objects.isNull(dto)) {
-            throw new BusinessException("订单信息为空");
-        }
+        Assert.isTrue(Objects.nonNull(dto), "订单信息为空");
         //2.定义数据模型
         PmsProduceOrder model = new PmsProduceOrder();
         BeanUtil.copyProperties(dto, model);
@@ -320,27 +318,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.校验所有工序是否已分配工位
         //2.1 获取订单工序数据
         List<PmsProduceOrderCraftVO> crafts = pmsProduceOrderCraftService.getCrafts(orderId);
-        if (CollUtil.isEmpty(crafts)) {
-            new BackingStoreException("该订单不存在工序数据，请检查");
-        }
+        Assert.isFalse(CollUtil.isEmpty(crafts), "该订单不存在工序数据，请检查");
         crafts.forEach(craft -> {
-            if (CollUtil.isEmpty(craft.getStationList())) {
-                new BackingStoreException("工序未分配工位，请分配工位");
-            }
+            Assert.isFalse(CollUtil.isEmpty(craft.getStationList()), "该订单不存在工序数据，请检查");
         });
         //3.校验所有组件是否已分配工序
         //3.1 获取组件数据
         List<PmsWorkOrderBomVO> materialList = pmsWorkOrderBomService.getMaterialList(orderId);
-        if (CollUtil.isEmpty(materialList)) {
-            new BackingStoreException("该订单不存在组件,请检查");
-        }
+
+        Assert.isFalse(CollUtil.isEmpty(materialList), "该订单不存在组件,请检查");
         materialList.forEach(material -> {
             Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
         });
         //4.校验订单状态
-        if (PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState())) {
-            new BackingStoreException("仅已创建订单可下达");
-        }
+        Assert.checkBetween(order.getState(), 0, 0, "仅已创建订单可下达");
         //5.修改订单状态为已下达
         order.setState(PmManagerConstant.OrderStateEnum.ONE.getCode());
         return updateById(order);
@@ -389,9 +380,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
-        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getState())) {
-            new BackingStoreException("仅已创建状态订单可关闭");
-        }
+        Assert.checkBetween(order.getState(), 0, 0, "仅已创建状态订单可关闭");
         return removeById(orderId);
     }
 
@@ -406,9 +395,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
-        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(order.getState())) {
-            new BackingStoreException("仅已下达状态订单可取消下达");
-        }
+        Assert.checkBetween(order.getState(), 1, 1, "仅已下达状态订单可取消下达");
         //3.修改状态为已创建
         order.setState(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         return updateById(order);
@@ -425,9 +412,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断订单状态
-        if (!order.getState().equals(PmManagerConstant.OrderStateEnum.FIVE.getCode()) || !order.getState().equals(PmManagerConstant.OrderStateEnum.THREE.getCode())) {
-            new BackingStoreException("当前订单状态不可确认");
-        }
+        Assert.isTrue(PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())
+                || PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState()), "当前订单状态不可确认");
         //3.记录批次时间
         //3.1 获取批次信息
         PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
@@ -436,10 +422,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         batch.setEndTime(LocalDateTime.now());
         pmsWorkOrderBatchService.updateById(batch);
         //4.修改订单状态
-        if (order.getState().equals(PmManagerConstant.OrderStateEnum.THREE.getCode())) {
+        if (PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())) {
             order.setState(PmManagerConstant.OrderStateEnum.FOUR.getCode());
         }
-        if (order.getState().equals(PmManagerConstant.OrderStateEnum.FIVE.getCode())) {
+        if (PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState())) {
             order.setState(PmManagerConstant.OrderStateEnum.SIX.getCode());
             //确认状态时修改订单完成时间
             order.setActualEndTime(LocalDateTime.now());
@@ -454,9 +440,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.校验当前产线是否在其他执行中的订单
         //2.1查询当前产线的执行订单数量
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
-        if (Objects.nonNull(pmsProduceOrderVO)) {
-            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
-        }
+        Assert.isNull(pmsProduceOrderVO, "其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
         //3.生成新的批次，并翻转订单状态为执行中
         ProduceOrderBatchDto produceOrderBatchDto = new ProduceOrderBatchDto();
         produceOrderBatchDto.setStartTime(LocalDateTime.now());
@@ -499,6 +483,33 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             }
         }
         return pmsProduceOrderVO;
+    }
+
+    /**
+     * 订单暂停
+     * @param orderId
+     * @return
+     */
+    @Override
+    public Boolean stop(Long orderId) {
+        //1.查询订单
+        PmsProduceOrder order = selectOrder(orderId);
+        //2.判断状态
+        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()),"当前状态不可暂停");
+        //3.修改状态
+        order.setState(PmManagerConstant.OrderStateEnum.THREE.getCode());
+        return updateById(order);
+    }
+
+    @Override
+    public Boolean complete(Long orderId) {
+        //1.查询订单
+        PmsProduceOrder order = selectOrder(orderId);
+        //2.判断状态
+        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()),"当前状态不可完成");
+        //3.状态完成
+        order.setState(PmManagerConstant.OrderStateEnum.FIVE.getCode());
+        return updateById(order);
     }
 
 

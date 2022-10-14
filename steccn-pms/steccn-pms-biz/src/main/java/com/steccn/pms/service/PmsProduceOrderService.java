@@ -128,4 +128,18 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     PmsProduceOrderVO listByProduceLineId(Integer produceLineId);
+
+    /**
+     * 订单暂停
+     * @param orderId
+     * @return
+     */
+    Boolean stop(Long orderId);
+
+    /**
+     * 订单完成
+     * @param orderId
+     * @return
+     */
+    Boolean complete(Long orderId);
 }

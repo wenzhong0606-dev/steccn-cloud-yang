@@ -88,8 +88,11 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         list.forEach(pmsWorkOrderBom -> {
             PmsWorkOrderBomVO pmsWorkOrderBomVO = new PmsWorkOrderBomVO();
             BeanUtil.copyProperties(pmsWorkOrderBom, pmsWorkOrderBomVO);
-            pmsWorkOrderBomVO.setName(spareVOMap.get(pmsWorkOrderBomVO.getModuleId()).getName());
-            pmsWorkOrderBomVO.setCode(spareVOMap.get(pmsWorkOrderBomVO.getModuleId()).getCode());
+            EqpSpareVO eqpSpareVO = spareVOMap.get(pmsWorkOrderBomVO.getModuleId());
+            if (Objects.nonNull(eqpSpareVO)) {
+                pmsWorkOrderBomVO.setName(eqpSpareVO.getName());
+                pmsWorkOrderBomVO.setCode(eqpSpareVO.getCode());
+            }
             pmsWorkOrderBomVO.setUnit(dictMap.get(pmsWorkOrderBomVO.getUnitId()));
             pmsWorkOrderBomVOList.add(pmsWorkOrderBomVO);
         });
