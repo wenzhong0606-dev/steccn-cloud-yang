@@ -267,14 +267,29 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Page<PmsProduceOrderVO> page = this.baseMapper.acceptPage(new Page(dto.getCurrent(), dto.getSize()), dto);
         //2.处理订单数据
         Set<Long> dictIds = Sets.newHashSet();
+        Set<Long> orderIds = Sets.newHashSet();
         page.getRecords().forEach(pmsProduceOrderVO -> {
             dictIds.add(pmsProduceOrderVO.getUnitId());
             dictIds.add(pmsProduceOrderVO.getTypeId());
+            orderIds.add(pmsProduceOrderVO.getId());
         });
-        //3.查询字典数据
+        //3.查询数据
+        //3.1查询完工数据
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsCompleteStorageService.orderCompleteNum(orderIds);
+        //3.2获取完工数据单位
+        map.forEach((key, pmsCompleteStorageNum) -> {
+            dictIds.add(pmsCompleteStorageNum.getUnitId());
+        });
+        //3.3查询字典数据
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
         //4.处理返回数据
         page.getRecords().forEach(pmsProduceOrderVO -> {
+            PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
+            if (Objects.nonNull(storageNumDTO)) {
+                pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
+                pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
+                pmsProduceOrderVO.setCompleteUnitName(dictMap.get(storageNumDTO.getUnitId()));
+            }
             pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
             pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
         });
@@ -456,14 +471,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 .eq(PmsProduceOrder::getProductionLineId, produceLineId)
                 .eq(PmsProduceOrder::getState, PmManagerConstant.STATE_TWO)
         );
-        if(Objects.nonNull(order)){
+        if (Objects.nonNull(order)) {
             pmsProduceOrderVO = new PmsProduceOrderVO();
             BeanUtil.copyProperties(order, pmsProduceOrderVO);
             PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
                     .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
-                    .eq(PmsWorkOrderBatch::getCurrentBatchFlag,MpConstant.YES)
+                    .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
-            if(Objects.nonNull(pmsWorkOrderBatch)){
+            if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
             }
