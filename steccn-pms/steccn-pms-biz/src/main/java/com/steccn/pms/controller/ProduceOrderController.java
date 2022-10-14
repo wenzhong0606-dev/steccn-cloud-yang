@@ -98,6 +98,12 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.affirm(orderId));
     }
 
+    @ApiOperation("订单执行")
+    @PutMapping("/execute")
+    public R<Boolean> execute(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+        return R.success(pmsProduceOrderService.execute(orderId));
+    }
+
 
 
 }

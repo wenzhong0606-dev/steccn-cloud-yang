@@ -75,6 +75,9 @@ public class PmsProduceOrderDTO {
     @ApiModelProperty("默认仓库id")
     private Integer defaultWarehouseId;
 
+    @ApiModelProperty("最小包装数量")
+    private BigDecimal minPackageQuantity;
+
     @ApiModelProperty("工序信息")
     private List<PmsProduceOrderCraftDTO> processList;
 

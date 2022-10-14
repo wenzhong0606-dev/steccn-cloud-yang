@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 
+import java.util.List;
+
 /**
-* @author yequan
-* @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
-* @createDate 2022-09-28 15:18:51
-*/
+ * @author yequan
+ * @description 针对表【pms_produce_order(生产订单)】的数据库操作Service
+ * @createDate 2022-09-28 15:18:51
+ */
 public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
@@ -46,24 +48,26 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto);
 
     /**
-     *
      * 报工订单批次详细信息
+     *
      * @param productLineId 产线id
-     * @param stationId 工位id
+     * @param stationId     工位id
      * @return
      */
-    ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId) ;
+    ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId);
 
     /**
      * 报工订单批次详细信息
-     * @param orderId 订单id
+     *
+     * @param orderId   订单id
      * @param stationId 工位id
      * @return
      */
-    ReportWorkOrderVO reportWorkOrderId(Long orderId,Integer stationId);
+    ReportWorkOrderVO reportWorkOrderId(Long orderId, Integer stationId);
 
     /**
      * 订单接收分页列表
+     *
      * @param dto
      * @return
      */
@@ -71,6 +75,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 订单下达
+     *
      * @param orderId
      * @return
      */
@@ -78,6 +83,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 工序报工-订单列表
+     *
      * @param dto dto
      * @return 分页数据
      */
@@ -85,6 +91,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 订单关闭
+     *
      * @param orderId
      * @return
      */
@@ -92,6 +99,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 取消订单下达
+     *
      * @param orderId
      * @return
      */
@@ -99,8 +107,25 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
 
     /**
      * 订单确认
+     *
      * @param orderId
      * @return
      */
     Boolean affirm(Long orderId);
+
+    /**
+     * 订单执行
+     *
+     * @param orderId
+     * @return
+     */
+    Boolean execute(Long orderId);
+
+    /**
+     * 根据产线id查询订单当前正在执行订单
+     *
+     * @param produceLineId
+     * @return
+     */
+    PmsProduceOrderVO listByProduceLineId(Integer produceLineId);
 }

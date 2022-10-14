@@ -419,10 +419,46 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return updateById(order);
     }
 
+    @Override
+    public Boolean execute(Long orderId) {
+        //1.查询订单信息
+        PmsProduceOrder order = selectOrder(orderId);
+        //2.校验当前产线是否在其他执行中的订单
+        //2.1查询当前产线的执行订单数量
+        PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
+        if (Objects.nonNull(pmsProduceOrderVO)) {
+            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode()+")正在执行中");
+        }
+        //3.生成新的批次，并翻转订单状态为执行中
+//        pmsWorkOrderBatchService.
+        order.setState(PmManagerConstant.STATE_TWO);
+        return null;
+    }
+
+    /**
+     * 根据产线id查询当前正在执行订单
+     *
+     * @param produceLineId
+     * @return
+     */
+    @Override
+    public PmsProduceOrderVO listByProduceLineId(Integer produceLineId) {
+        //定义返回对象
+        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
+        //查询产线正在执行的订单
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                .eq(PmsProduceOrder::getProductionLineId, produceLineId)
+                .eq(PmsProduceOrder::getState, PmManagerConstant.STATE_TWO)
+        );
+        BeanUtil.copyProperties(order, pmsProduceOrderVO);
+        return pmsProduceOrderVO;
+    }
+
+
     /**
      * 查询订单
      */
-    PmsProduceOrder selectOrder(Long orderId) {
+    private PmsProduceOrder selectOrder(Long orderId) {
         //1.查询订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, orderId));
         //2.校验数据
@@ -490,6 +526,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }
         return currentMax;
     }
+
+
 }
 
 

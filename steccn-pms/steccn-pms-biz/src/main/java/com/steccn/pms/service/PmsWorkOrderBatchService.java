@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.vo.WorkOrderBatchVO;
 
 import java.util.Map;
@@ -24,9 +25,16 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
     Map<Long, WorkOrderBatchVO> listById(Set<Long> idList);
 
     /**
-     * 根据订单
+     * 根据订单id查询批次信息
      * @param orderId
      * @return
      */
     PmsWorkOrderBatch getByOrderId(Long orderId);
+
+    /**
+     * 批次新增
+     * @param dto
+     * @return
+     */
+    Boolean add(ProduceOrderBatchDto dto);
 }

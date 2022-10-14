@@ -9,6 +9,7 @@ import lombok.Data;
 
 /**
  * 生产工单-批次信息
+ * @author mengle
  * @TableName pms_work_order_batch
  */
 @TableName(value ="pms_work_order_batch")

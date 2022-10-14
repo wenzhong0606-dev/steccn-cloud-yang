@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.mapper.PmsWorkOrderBatchMapper;
 import com.steccn.pms.vo.WorkOrderBatchVO;
@@ -45,6 +46,11 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
     public PmsWorkOrderBatch getByOrderId(Long orderId) {
         PmsWorkOrderBatch orderBatch = getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, orderId).eq(PmsWorkOrderBatch::getCurrentBatchFlag, 1));
         return orderBatch;
+    }
+
+    @Override
+    public Boolean add(ProduceOrderBatchDto dto) {
+        return null;
     }
 }
 
