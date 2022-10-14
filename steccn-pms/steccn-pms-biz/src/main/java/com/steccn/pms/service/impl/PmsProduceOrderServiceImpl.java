@@ -24,6 +24,7 @@ import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.prefs.BackingStoreException;
 
@@ -373,6 +371,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 取消下达
+     *
      * @param orderId
      * @return
      */
@@ -389,9 +388,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return updateById(order);
     }
 
+    /**
+     * 确认
+     *
+     * @param orderId
+     * @return
+     */
     @Override
     public Boolean affirm(Long orderId) {
-        return null;
+        //1.查询订单
+        PmsProduceOrder order = selectOrder(orderId);
+        //2.判断订单状态
+        if (!order.getState().equals(PmManagerConstant.STATE_THREE) || !order.getState().equals(PmManagerConstant.STATE_FIVE)) {
+            new BackingStoreException("当前订单状态不可确认");
+        }
+        //3.记录批次时间
+        //3.1 获取批次信息
+        PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
+        Assert.notNull(batch, "当前订单不存在批次信息，请检查");
+        //3.2批次结束时间
+        batch.setEndTime(LocalDateTime.now());
+        pmsWorkOrderBatchService.updateById(batch);
+        //4.修改订单状态
+        if (order.getState().equals(PmManagerConstant.STATE_THREE)) {
+            order.setState(PmManagerConstant.STATE_FOUR);
+        }
+        if (order.getState().equals(PmManagerConstant.STATE_FIVE)) {
+            order.setState(PmManagerConstant.STATE_SIX);
+        }
+        return updateById(order);
     }
 
     /**

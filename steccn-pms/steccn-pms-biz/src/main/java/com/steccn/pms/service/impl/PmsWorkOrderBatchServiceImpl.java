@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -38,6 +39,12 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
             }
         }
         return resMap;
+    }
+
+    @Override
+    public PmsWorkOrderBatch getByOrderId(Long orderId) {
+        PmsWorkOrderBatch orderBatch = getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, orderId).eq(PmsWorkOrderBatch::getCurrentBatchFlag, 1));
+        return orderBatch;
     }
 }
 

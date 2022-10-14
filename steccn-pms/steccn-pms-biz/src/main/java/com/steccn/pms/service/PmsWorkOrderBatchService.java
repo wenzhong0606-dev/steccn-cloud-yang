@@ -23,4 +23,10 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
      */
     Map<Long, WorkOrderBatchVO> listById(Set<Long> idList);
 
+    /**
+     * 根据订单
+     * @param orderId
+     * @return
+     */
+    PmsWorkOrderBatch getByOrderId(Long orderId);
 }

@@ -98,7 +98,7 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
     Boolean cancelTheOrder(Long orderId);
 
     /**
-     * 订单暂停
+     * 订单确认
      * @param orderId
      * @return
      */
