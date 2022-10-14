@@ -64,4 +64,14 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String getOaUserInfo(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaUserParam oaUserParam);
+
+    /**
+     * 调用oa
+     * @param oaUserParam MultiValueMap
+     * @return
+     */
+    @PostMapping(value = "/api/public/browser/complete/1",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getAllOaUser(@RequestHeader MultiValueMap<String,String> headers);
 }

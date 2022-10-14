@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -80,6 +81,16 @@ public class OaController {
         OaUserInfo oaUserInfo = oaService.getOaUserInfo(loginId);
         if(oaUserInfo.getStatus()){
             return R.success(oaUserInfo);
+        }else {
+            return R.failure("userInfo为空");
+        }
+    }
+
+    @GetMapping("/allUser")
+    R getAllUser(){
+        List<OaUserIdAndName> userIdAndNames = oaService.getAll();
+        if(!userIdAndNames.isEmpty()){
+            return R.success(userIdAndNames);
         }else {
             return R.failure("userInfo为空");
         }
