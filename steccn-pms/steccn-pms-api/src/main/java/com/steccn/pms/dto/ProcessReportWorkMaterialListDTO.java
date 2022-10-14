@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -64,4 +65,10 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
 
     @ApiModelProperty("货架名称")
     private String shelfName;
+
+    @ApiModelProperty("箱号")
+    private String caseNo;
+
+    @ApiModelProperty("打包时间")
+    private LocalDateTime packTime;
 }

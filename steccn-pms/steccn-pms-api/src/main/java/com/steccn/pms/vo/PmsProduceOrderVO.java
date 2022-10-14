@@ -100,6 +100,6 @@ public class PmsProduceOrderVO {
     private String batchNo;
 
     @ApiModelProperty("最小包装数量")
-    private BigDecimal minPackagQuantity;
+    private BigDecimal minPackageQuantity;
 
 }

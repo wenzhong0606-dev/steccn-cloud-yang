@@ -44,4 +44,11 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @return map
      */
     Map<String,PmsBarcodePrint> caseMap(Set<String> caseNoSet);
+
+    /**
+     * 根据主键获取详细信息
+     * @param id 主键id
+     * @return vo
+     */
+    BarcodePrintRecordVO info(Long id);
 }

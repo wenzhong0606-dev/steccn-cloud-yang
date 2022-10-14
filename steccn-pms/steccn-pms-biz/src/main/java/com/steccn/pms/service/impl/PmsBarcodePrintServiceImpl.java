@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -83,6 +84,15 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             }
         }
         return resMap;
+    }
+
+    @Override
+    public BarcodePrintRecordVO info(Long id) {
+        PmsBarcodePrint model = getById(id);
+        Assert.notNull(model,"打印详细信息不存在");
+        BarcodePrintRecordVO vo = new BarcodePrintRecordVO();
+        BeanUtils.copyProperties(model,vo);
+        return vo;
     }
 
     /**
