@@ -81,6 +81,9 @@ public class PmsProduceOrderVO {
     @ApiModelProperty("工艺id")
     private Long craftId;
 
+    @ApiModelProperty("工艺版本")
+    private String craftVersion;
+
     @ApiModelProperty("工序信息")
     private List<PmsProduceOrderCraftVO> processList;
 

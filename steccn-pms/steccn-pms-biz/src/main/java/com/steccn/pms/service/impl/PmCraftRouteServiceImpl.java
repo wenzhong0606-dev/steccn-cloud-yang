@@ -207,6 +207,16 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         return R.success(pmCraftRouteProcessVO);
     }
 
+    @Override
+    public Map<Long, String> versionById(Set<Long> craftIds) {
+        Map<Long, String> resMap = Maps.newHashMap();
+        List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>().in(PmCraftRoute::getId, craftIds).select(PmCraftRoute::getVersion,PmCraftRoute::getId));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(pmCraftRoute ->{ resMap.put(pmCraftRoute.getId(), pmCraftRoute.getVersion());});
+        }
+        return resMap;
+    }
+
 
     /**
      * 当前最大的code值

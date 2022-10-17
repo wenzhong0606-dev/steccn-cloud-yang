@@ -54,6 +54,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
     private final PmsCompleteStorageService pmsCompleteStorageService;
     private final PmsBarcodePrintService pmsBarcodePrintService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final PmCraftRouteService pmCraftRouteService;
 
     /**
      * 新增生产订单信息
@@ -123,12 +125,39 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.自定义sql查询订单信息列表
         Page<PmsProduceOrderVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
         //3.处理数据
+        Set<Long> dictIds = Sets.newHashSet();
+        Set<Integer> officeIds = Sets.newHashSet();
+        Set<Long> craftIds = Sets.newHashSet();
         page.getRecords().forEach(
                 pmsProduceOrderVO -> {
                     //获取工序信息
                     pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
                     //获取物料信息
                     pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
+                    //获取工艺id
+                    craftIds.add(pmsProduceOrderVO.getCraftId());
+                    dictIds.add(pmsProduceOrderVO.getTypeId());
+                    dictIds.add(pmsProduceOrderVO.getUnitId());
+                    officeIds.add(pmsProduceOrderVO.getProductionLineId());
+                }
+        );
+        //3.1查询字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        //3.2查询机构数据
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        //3.3查询工艺信息
+        Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
+        //4.处理列表单位以及产线数据
+        page.getRecords().forEach(
+                pmsProduceOrderVO -> {
+                    //4.1 处理类型数据
+                    pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
+                    //4.2 处理产线数据
+                    pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
+                    //4.3 处理单位数据
+                    pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+                    //4.4 处理工艺版本数据
+                    pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
                 }
         );
         return page;
@@ -487,6 +516,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 订单暂停
+     *
      * @param orderId
      * @return
      */
@@ -495,7 +525,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()),"当前状态不可暂停");
+        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()), "当前状态不可暂停");
         //3.修改状态
         order.setState(PmManagerConstant.OrderStateEnum.THREE.getCode());
         return updateById(order);
@@ -506,7 +536,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()),"当前状态不可完成");
+        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.equals(order.getState()), "当前状态不可完成");
         //3.状态完成
         order.setState(PmManagerConstant.OrderStateEnum.FIVE.getCode());
         return updateById(order);

@@ -56,7 +56,8 @@
         unit_id,
         production_line_id,
         state,
-        craft_id
+        craft_id,
+        min_package_quantity
         from pms_produce_order
         <where>
             del_flag = 0

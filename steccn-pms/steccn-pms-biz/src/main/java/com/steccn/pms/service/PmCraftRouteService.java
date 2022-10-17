@@ -9,6 +9,8 @@ import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -18,15 +20,55 @@ import java.util.List;
 */
 public interface PmCraftRouteService extends IService<PmCraftRoute> {
 
+    /**
+     * 新增
+     * @param dto
+     * @return
+     */
     R<Boolean> add(PmCraftRouteDTO dto);
 
+    /**
+     * 分页列表
+     * @param dto
+     * @return
+     */
     Page<PmCraftRouteVO> pageList(PmCraftRouteDTO dto);
 
+    /**
+     * 编辑
+     * @param dto
+     * @return
+     */
     R<Boolean> edit(PmCraftRouteDTO dto);
 
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
     R<Boolean> delete(Long id);
 
+    /**
+     * 校验当前物料下的版本
+     * @param id
+     * @param version
+     * @return
+     */
     R<Boolean> verifyVersion(Long id, String version);
 
+    /**
+     * 获取工艺路线下的工艺信息
+     * @param processId
+     * @param craftRouteId
+     * @return
+     */
     R<PmCraftRouteProcessVO> getProcessInfo(Long processId, String craftRouteId);
+
+    /**
+     * 根据工艺id获取版本信息
+     * @param craftIds
+     * @return
+     */
+    Map<Long,String> versionById(Set<Long> craftIds);
 }

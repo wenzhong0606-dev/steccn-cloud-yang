@@ -62,7 +62,6 @@ public class PmCraftRouteController {
         return pmCraftRouteService.verifyVersion(id, version);
     }
 
-
     @ApiModelProperty("获取工艺路线下工序信息")
     @GetMapping("/getProcessInfo")
     public R<PmCraftRouteProcessVO> getProcessInfo(@RequestParam("processId") Long processId, @RequestParam("craftRouteId") String craftRouteId) {
