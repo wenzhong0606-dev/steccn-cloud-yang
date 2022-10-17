@@ -17,15 +17,47 @@ import java.util.Map;
 */
 public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
+    /**
+     * 根据名称获取备件列表
+     * @param name
+     * @return
+     */
     List<EqpSpareVO> listSpares(String name);
 
+    /**
+     * 根据名称编码 筛选返回List
+     * @param name
+     * @param code
+     * @return
+     */
     List<EqpSpareVO> listSpares(String name,String code);
 
+    /**
+     * 根据名称编码条件筛选返回Map
+     * @param name
+     * @param code
+     * @return
+     */
     Map<Long, EqpSpareVO> searchSpares(String name, String code);
 
+    /**
+     * 根据编码获取备件
+     * @param code
+     * @return
+     */
     EqpSpareVO getByCode(String code);
 
+    /**
+     * 根据编码批量查询
+     * @param codeList
+     * @return
+     */
     Map<String,EqpSpareVO> listByCode(List<String> codeList);
 
+    /**
+     * 根据物料id批量查询
+     * @param materialIds
+     * @return
+     */
     Map<Long,EqpSpareVO>  listById(List<Long> materialIds);
 }
