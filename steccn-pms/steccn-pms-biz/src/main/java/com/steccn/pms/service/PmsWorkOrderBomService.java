@@ -14,7 +14,24 @@ import java.util.List;
 */
 public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
 
+    /**
+     * 保存物料列表
+     * @param materialList
+     * @param id
+     */
     void saveMaterial(List<PmsWorkOrderBomDTO> materialList, Long id);
 
+    /**
+     * 获取物料列表
+     * @param id
+     * @return
+     */
     List<PmsWorkOrderBomVO> getMaterialList(Long id);
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    Boolean delete(Integer id);
 }

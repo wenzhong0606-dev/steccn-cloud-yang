@@ -115,6 +115,11 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
 
     }
 
+    @Override
+    public Boolean delete(Integer id) {
+        return removeById(id);
+    }
+
 
 }
 

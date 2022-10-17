@@ -98,6 +98,11 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         });
         return pmsWorkOrderBomVOList;
     }
+
+    @Override
+    public Boolean delete(Integer id) {
+        return removeById(id);
+    }
 }
 
 

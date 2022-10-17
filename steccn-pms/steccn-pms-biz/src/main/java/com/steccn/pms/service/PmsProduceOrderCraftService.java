@@ -1,5 +1,6 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsProduceOrderCraftDTO;
@@ -35,4 +36,11 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      * @return
      */
     Map<Long,PmsProduceOrderCraftVO> listById(List<Long> processIds);
+
+    /**
+     * 删除工艺信息
+     * @param id
+     * @return
+     */
+    Boolean delete(Integer id);
 }
