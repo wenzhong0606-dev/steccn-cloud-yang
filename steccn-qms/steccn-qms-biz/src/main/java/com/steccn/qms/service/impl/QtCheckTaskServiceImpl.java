@@ -348,7 +348,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 detail.setItemId(tmp.getItemId());
                 detail.setGroupId(tmp.getGroupId());
                 detail.setCopy(0);
-                detail.setDefectNum(tmp.getDefect());
+                List<QtOnlineCheckDefectDTO> defectList = new ArrayList<>();
+                if(CollUtil.isNotEmpty(tmp.getCategory())){
+                    tmp.getCategory().forEach(category -> {
+                        category.getDefect().forEach(categoryTmp -> {
+                            defectList.add(categoryTmp);
+                        });
+                    });
+                }
+                detail.setDefectNum(defectList);
                 model.add(detail);
             });
             qtCheckTaskDetailService.saveBatch(model);
@@ -434,7 +442,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 detail.setItemId(tmp.getItemId());
                 detail.setGroupId(tmp.getGroupId());
                 detail.setCopy(0);
-                detail.setDefectNum(tmp.getDefect());
+                List<QtOnlineCheckDefectDTO> defectList = new ArrayList<>();
+                if(CollUtil.isNotEmpty(tmp.getCategory())){
+                    tmp.getCategory().forEach(category -> {
+                        category.getDefect().forEach(categoryTmp -> {
+                            defectList.add(categoryTmp);
+                        });
+                    });
+                }
+                detail.setDefectNum(defectList);
                 model.add(detail);
             });
             qtCheckTaskDetailService.saveBatch(model);

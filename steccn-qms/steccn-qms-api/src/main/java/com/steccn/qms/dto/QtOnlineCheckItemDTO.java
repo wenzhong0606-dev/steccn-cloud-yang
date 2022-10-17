@@ -23,8 +23,5 @@ public class QtOnlineCheckItemDTO implements Serializable {
      */
     private Integer groupId;
 
-    /**
-     * 缺陷数量
-     */
-    private List<QtOnlineCheckDefect> defect;
+    private List<QtOnlineCheckCategoryDTO> category;
 }

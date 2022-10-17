@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -91,7 +92,7 @@ public class QtCheckTaskListVO {
     /**
      * 发货时间
      */
-    private LocalDateTime deliverTime;
+    private LocalDate deliverTime;
 
     /**
      * 客户名字

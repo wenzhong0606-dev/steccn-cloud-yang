@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.steccn.qms.dto.QtOnlineCheckDefect;
+import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import lombok.Data;
 
 /**
@@ -106,5 +105,5 @@ public class QtCheckTaskDetail implements Serializable {
     private Integer isQualified;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<QtOnlineCheckDefect> defectNum;
+    private List<QtOnlineCheckDefectDTO> defectNum;
 }

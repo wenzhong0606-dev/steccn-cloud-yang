@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,12 +24,14 @@ import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +61,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
 
     private final QtCheckPlanMapper qtCheckPlanMapper;
+
+    private final QtItemCategoryService qtItemCategoryService;
 
     /**
      * 新增检验计划
@@ -312,6 +317,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 .eq(QtCheckPlanGroup::getPlanId, resVo.getId())
                 .orderByAsc(QtCheckPlanGroup::getSort));
         List<QtCheckPlanGroupVO> qtCheckPlanGroupVOS = new ArrayList<>();
+        //在线检的结果list
+        List<QtOnlineCheckItemDTO> onlineCheckResult = new ArrayList<>();
         groups.forEach(tmp -> {
             QtCheckPlanGroupVO groupVo = new QtCheckPlanGroupVO();
             BeanUtils.copyProperties(tmp, groupVo);
@@ -323,6 +330,11 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     .orderByAsc(QtCheckPlanGroupItem::getSort));
             List<QtCheckPlanItemVO> qtCheckPlanItemVOS = new ArrayList<>();
             qtCheckPlanGroupItems.forEach(groupItemTmp -> {
+                LambdaQueryWrapper detailCondition =  new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, taskId)
+                        .and((groupItemTmp.getCheckItemId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getItemId, groupItemTmp.getCheckItemId()))
+                        .and((groupItemTmp.getGroupId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId, groupItemTmp.getGroupId()))
+                        .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy));
                 QtCheckPlanItemVO qtCheckPlanItemVo = new QtCheckPlanItemVO();
                 //复制itemGroup特有的值
                 BeanUtils.copyProperties(groupItemTmp, qtCheckPlanItemVo);
@@ -386,7 +398,57 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         defectItemVos.add(defectiveItemVo);
                     });
                     qtCheckPlanItemVo.setLinkedDefectiveItem(defectItemVos);
+                    //如果检验方案是在线检,那么需要特殊处理缺陷项
+                    //先拿到该检验方案的检验类型
+                    List<QtMaterialLinkCheckPlan> linkCheckPlanModel = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>().eq(QtMaterialLinkCheckPlan::getCheckPlanId,id));
+                    if(CollUtil.isNotEmpty(linkCheckPlanModel)){
+                        Boolean flag = false;
+                        //如果绑定了在线检，则返回不同类型
+                        for(QtMaterialLinkCheckPlan linkPlanTmp:linkCheckPlanModel){
+                            if(linkPlanTmp.getCheckPlanId().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                                flag = true;
+                            }
+                        }
+                        if(flag){
+                            QtOnlineCheckItemDTO resultTmp = new QtOnlineCheckItemDTO();
+                            //把相同category的数据组合
+                            Map<Integer,List<QtDefectiveItem>> resultMap = defectiveArrayList.stream().collect(Collectors.groupingBy(QtDefectiveItem::getCategoryId));
+                            resultTmp.setGroupId(tmp.getId());
+                            resultTmp.setItemId(groupItemTmp.getCheckItemId());
+                            //组装category数据
+                            List<QtOnlineCheckCategoryDTO> categoryResultList = new ArrayList<>();
+                            for(Map.Entry<Integer,List<QtDefectiveItem>> entry:resultMap.entrySet()){
+                                QtOnlineCheckCategoryDTO categoryResult = new QtOnlineCheckCategoryDTO();
+                                QtItemCategory qtItemCategory = qtItemCategoryService.getById(entry.getKey());
+                                if(qtItemCategory!=null){
+                                    categoryResult.setName(qtItemCategory.getName());
+                                }
+                                List<QtOnlineCheckDefectDTO> qtDefectListDTOResult = new ArrayList<>();
+                                entry.getValue().forEach(defectListTmp->{
+                                    QtOnlineCheckDefectDTO defectResultDTO = new QtOnlineCheckDefectDTO();
+                                    defectResultDTO.setDefectId(defectListTmp.getId());
+                                    defectResultDTO.setDefectName(defectListTmp.getName());
+                                    QtCheckTaskDetail taskDetail = qtCheckTaskDetailService.getOne(detailCondition);
+                                    //处理数量
+                                    if(taskDetail!=null && taskDetail.getDefectNum()!=null){
+                                        Map<Integer,QtOnlineCheckDefectDTO> defectMap = taskDetail.getDefectNum().stream().collect(Collectors.toMap(QtOnlineCheckDefectDTO::getDefectId,Function.identity()));
+                                        if(defectMap.get(defectListTmp.getId())!=null){
+                                            defectResultDTO.setDefectNumber(defectMap.get(defectListTmp.getId()).getDefectNumber());
+                                        }
+                                    }
+                                    qtDefectListDTOResult.add(defectResultDTO);
+                                });
+                                categoryResult.setDefect(qtDefectListDTOResult);
+                                categoryResultList.add(categoryResult);
+                            }
+                            resultTmp.setCategory(categoryResultList);
+                            onlineCheckResult.add(resultTmp);
+                        }
+                    }
+
                 }
+
+
 
                 //处理关联客户
                 if (groupItemTmp.getLinkedCustomer() != null && groupItemTmp.getLinkedCustomer().size() > 0) {
@@ -412,11 +474,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
                 //处理检查结果
                 if (taskId != null && copy != null) {
-                    List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                            .eq(QtCheckTaskDetail::getTaskId, taskId)
-                            .and((groupItemTmp.getCheckItemId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getItemId, groupItemTmp.getCheckItemId()))
-                            .and((groupItemTmp.getGroupId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId, groupItemTmp.getGroupId()))
-                            .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy)));
+                    List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(detailCondition);
                     if (taskDetails != null && taskDetails.size() > 0) {
                         qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
                         //如果缺陷项存在，返回缺陷项
@@ -428,6 +486,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                             }
                         }
                     }
+
                 }
                 //设置itemId
                 qtCheckPlanItemVo.setItemId(groupItemTmp.getCheckItemId());
@@ -437,6 +496,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             qtCheckPlanGroupVOS.add(groupVo);
         });
         resVo.setCheckGroup(qtCheckPlanGroupVOS);
+        resVo.setOnlineItem(onlineCheckResult);
         //如果是method是1，则只返回items给前端
         if(resVo.getCheckMethod() == 1 && resVo.getCheckGroup()!=null && resVo.getCheckGroup().get(0).getItems()!=null){
             List<QtCheckPlanItemVO> items  = resVo.getCheckGroup().get(0).getItems();

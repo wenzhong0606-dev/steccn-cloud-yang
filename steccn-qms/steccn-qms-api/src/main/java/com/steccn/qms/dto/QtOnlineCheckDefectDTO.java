@@ -11,11 +11,13 @@ import java.io.Serializable;
  * @date 2022/10/14
  */
 @Data
-public class QtOnlineCheckDefect implements Serializable {
+public class QtOnlineCheckDefectDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Integer defectId;
 
     private Integer defectNumber;
+
+    private String defectName;
 }
