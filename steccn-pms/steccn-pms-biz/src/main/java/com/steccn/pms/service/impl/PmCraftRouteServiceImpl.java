@@ -91,6 +91,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 .like(Objects.nonNull(dto.getMaterialName()), PmCraftRoute::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmCraftRoute::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmCraftRoute::getIsCurrentVersion, dto.getIsCurrentVersion())
+                .eq(Objects.nonNull(dto.getVersion()),PmCraftRoute::getVersion,dto.getVersion())
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmCraftRoute::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -104,6 +105,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         List<Long> ids = Lists.newArrayList();
         List<Long> processIds = Lists.newArrayList();
         res.forEach(craftRouteVO -> {
+            //6.1 处理物料组件数据
             LambdaQueryWrapper<PmCraftRouteModule> wrapper = new LambdaQueryWrapper<PmCraftRouteModule>().eq(PmCraftRouteModule::getCraftRouteId, craftRouteVO.getId());
             List<PmCraftRouteModule> list = pmCraftRouteModuleService.list(wrapper);
             craftRouteVO.setList(BeanUtil.copyToList(list, PmCraftRouteModuleVO.class));
@@ -111,6 +113,8 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 ids.add(craftRouteModuleVO.getUnitId());
                 processIds.add(craftRouteModuleVO.getProcessId());
             });
+            //6.2 处理工序数据
+            craftRouteVO.setProcessList(pmCraftRouteProcessService.list(craftRouteVO.getId()));
         });
         //获取字典数据
         R<Map<Long, SysDictVO>> dict = remoteDictFeignApi.listById(ids);

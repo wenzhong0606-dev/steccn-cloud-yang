@@ -35,11 +35,19 @@ public class PmCraftRouteProcessVO implements Serializable {
     @ApiModelProperty("数量单位")
     private String unit;
 
+    @ApiModelProperty("数量单位id")
+    private Long unitId;
+
     @ApiModelProperty("标准数量")
     private BigDecimal standardQuantity;
 
     @ApiModelProperty("标准数量单位")
     private String standardUnit;
+
+    @ApiModelProperty("标准数量单位id")
+    private Long standardUnitId;
+
+
 
     @ApiModelProperty("是否报工")
     private Integer reportWorkFlag;
