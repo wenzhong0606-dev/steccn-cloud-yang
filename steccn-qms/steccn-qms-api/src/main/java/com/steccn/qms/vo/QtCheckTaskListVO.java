@@ -43,6 +43,10 @@ public class QtCheckTaskListVO {
      */
     private QtBaseIdNameDTO materialWorkshop;
 
+    /**
+     * 任务类型
+     */
+    private Integer taskType;
 
     /**
      * 生产订单

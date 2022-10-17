@@ -71,12 +71,12 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 到货时间
      */
-    private LocalDateTime arrivalTime;
+    private LocalDate arrivalTime;
 
     /**
      * 发货时间
      */
-    private LocalDateTime deliverTime;
+    private LocalDate deliverTime;
 
     /**
      * 供应商id
