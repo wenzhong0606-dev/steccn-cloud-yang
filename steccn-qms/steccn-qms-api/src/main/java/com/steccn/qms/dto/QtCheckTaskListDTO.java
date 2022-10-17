@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 类说明
@@ -27,6 +28,11 @@ public class QtCheckTaskListDTO extends BasePageDTO implements Serializable {
      * 任务状态 0待检验 1检验中 2已检验 3已取消 4暂存
      */
     private Integer status;
+
+    /**
+     * 状态可传多个
+     */
+    private List<Integer> statusList;
 
     /**
      * 物料名称或者编码

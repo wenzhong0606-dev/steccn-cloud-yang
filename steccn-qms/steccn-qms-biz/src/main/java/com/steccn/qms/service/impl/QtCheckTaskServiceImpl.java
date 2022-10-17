@@ -545,6 +545,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //查询
                 //物料名称或者编码
                 .and((dto.getMaterialNameOrCode() != null && !dto.getMaterialNameOrCode().equals("")), wrapper -> wrapper.like(QtMaterial::getName, dto.getMaterialNameOrCode()).or().like(QtMaterial::getCode, dto.getMaterialNameOrCode()))
+                //状态
+                .in(CollUtil.isNotEmpty(dto.getStatusList()),QtCheckTask::getStatus,dto.getStatusList())
                 //供应商
                 .apply(dto.getSupplierId() != null, "JSON_CONTAINS(supplier, JSON_OBJECT('id', {0}))", dto.getSupplierId())
                 //到货时间大于等于
@@ -571,8 +573,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .between(dto.getCreateTimeStart() != null && dto.getCreateTimeEnd() != null, QtCheckTask::getCreateTime, dto.getCreateTimeStart(), dto.getCreateTimeEnd())
                 //创建人
                 .eq(dto.getCreateBy() != null, QtCheckTask::getCreateBy, dto.getCreateBy())
-                //状态
-                .eq(dto.getStatus() != null, QtCheckTask::getStatus, dto.getStatus())
                 //检验类型
                 .eq(dto.getCheckTypeCode() != null, QtCheckTask::getTaskType, dto.getCheckTypeCode());
         //2.解析排序规则
