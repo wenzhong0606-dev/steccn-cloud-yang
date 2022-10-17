@@ -39,7 +39,7 @@
         a.delivery_time,
         b.material_id,
         b.material_name,
-        b.material_code
+        b.material_code,
         b.quantity,
         b.unit_id,
         b.batch_no,
@@ -49,7 +49,7 @@
         pms_complete_delivery a
         JOIN pms_complete_delivery_info b ON a.id = b.complete_delivery_id
         <where>
-            del_flag = 0
+            a.del_flag = 0
             <if test="dto.startTime !=null and dto.startTime !=null">
                 and a.delivery_time &gt;= #{dto.startTime}
             </if>

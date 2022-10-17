@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 类说明
+ * 完工出库控制器
  *
  * @author Mongknife
  * @date 2022/10/12
@@ -30,7 +30,7 @@ public class CompleteDeliveryController {
     private PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
     @ApiOperation("获取订单投料分页列表")
-    @PostMapping("/complete/delivery")
+    @PostMapping("/page")
     public R<Page<PmsCompleteDeliveryVO>> completeDeliveryPageList(@RequestBody PmsCompleteDeliveryDTO dto) {
         return R.success(pmsCompleteDeliveryService.completeDeliveryPageList(dto));
     }
