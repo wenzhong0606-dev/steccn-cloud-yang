@@ -514,10 +514,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public List<QtCheckTaskTypeCountVO> countTaskByType() {
         List<QtCheckTaskTypeCountVO> vos = Lists.newArrayList();
-        //检验方案编码:来料检1/首检2/在线检3/巡检4/出货检5
-        for (int i = 1; i <= 5; i++) {
+        //检验方案编码:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+        for (int i = 1; i <= 7; i++) {
             QtCheckTaskTypeCountVO vo = new QtCheckTaskTypeCountVO();
-            Long count = qtMaterialLinkCheckPlanMapper.CountTaskByTaskType(i);
+            Long count = count(new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getStatus,0).eq(QtCheckTask::getTaskType,i));
             vo.setCount(count);
             vo.setTypeCode(i);
             vos.add(vo);
