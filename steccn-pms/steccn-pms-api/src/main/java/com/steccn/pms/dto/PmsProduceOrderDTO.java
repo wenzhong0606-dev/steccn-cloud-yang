@@ -24,9 +24,11 @@ import java.util.List;
 public class PmsProduceOrderDTO {
 
     @ApiModelProperty("主键id")
+    @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
     @ApiModelProperty("类型id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "类型不能为空")
     private Long typeId;
 
     @ApiModelProperty("编码")
@@ -58,24 +60,29 @@ public class PmsProduceOrderDTO {
     private LocalDateTime planEndTime;
 
     @ApiModelProperty("数量")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "单位不能为空")
     private Long unitId;
 
     @ApiModelProperty("产线id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "产线不能为空")
     private Integer productionLineId;
 
     @ApiModelProperty("状态")
     private Integer state;
 
     @ApiModelProperty("工艺id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工艺不能为空")
     private Long craftId;
 
     @ApiModelProperty("默认仓库id")
     private Integer defaultWarehouseId;
 
     @ApiModelProperty("最小包装数量")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量不能为空")
     private BigDecimal minPackageQuantity;
 
     @ApiModelProperty("工序信息")

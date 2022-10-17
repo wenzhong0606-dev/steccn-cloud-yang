@@ -1,10 +1,15 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.models.auth.In;
 import lombok.Data;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
@@ -18,36 +23,57 @@ import java.math.BigDecimal;
 public class PmsWorkOrderBomDTO {
 
     @ApiModelProperty("id")
+    @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
     @ApiModelProperty("物料id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料不能为空")
     private Long moduleId;
 
     @ApiModelProperty("数量")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位Id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "单位不能为空")
     private Long unitId;
 
     @ApiModelProperty("工序Id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序不能为空")
     private Long processId;
 
     @ApiModelProperty("固定数量")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "固定数量不能为空")
     private Integer fixedQuantityFlag;
 
     @ApiModelProperty("副产品")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "副产品不能为空")
+    @Max(value = 1, message = "状态只能是 0否  1是")
+    @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer coproductFlag;
 
     @ApiModelProperty("联产品")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "联产品不能为空")
+    @Max(value = 1, message = "状态只能是 0否  1是")
+    @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer jointProductFlag;
 
     @ApiModelProperty("反冲")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "反冲不能为空")
+    @Max(value = 1, message = "状态只能是 0否  1是")
+    @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer backCalculateFlag;
 
     @ApiModelProperty("工序报废百分比")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序报废百分比不能为空")
+    @Max(value = 100, message = "百分比不能大于100")
+    @Min(value = 0, message = "百分比不能小于0")
     private Float processScrapingPercent;
 
     @ApiModelProperty("组件报废百分比")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "组件报废百分比不能为空")
+    @Max(value = 100, message = "百分比不能大于100")
+    @Min(value = 0, message = "百分比不能小于0")
     private Float componentScrapingPercent;
 
 

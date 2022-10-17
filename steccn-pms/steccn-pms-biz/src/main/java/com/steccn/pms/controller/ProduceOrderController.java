@@ -1,6 +1,8 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsProduceOrderService;
@@ -9,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Update;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -27,7 +31,7 @@ public class ProduceOrderController {
 
     @ApiOperation("生产订单新增")
     @PostMapping()
-    public R<Boolean> add(@RequestBody PmsProduceOrderDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.add(dto));
     }
 
@@ -39,7 +43,7 @@ public class ProduceOrderController {
 
     @ApiOperation("生产订单编辑")
     @PutMapping
-    public R<Boolean> edit(@RequestBody PmsProduceOrderDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class)@RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.edit(dto));
     }
 
@@ -71,12 +75,13 @@ public class ProduceOrderController {
 
     @ApiOperation("订单下达")
     @PutMapping("place/an/order")
-    public R<Boolean> placeAnOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> placeAnOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.placeAnOrder(orderId));
     }
+
     @ApiOperation("取消订单下达")
     @PutMapping("cancel/the/order")
-    public R<Boolean> cancelTheOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> cancelTheOrder(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.cancelTheOrder(orderId));
     }
 
@@ -88,25 +93,25 @@ public class ProduceOrderController {
 
     @ApiOperation("订单关闭")
     @DeleteMapping("/close")
-    public R<Boolean> close(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> close(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.close(orderId));
     }
 
     @ApiOperation("订单确认")
     @PutMapping("/affirm")
-    public R<Boolean> affirm(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> affirm(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.affirm(orderId));
     }
 
     @ApiOperation("订单执行")
     @PutMapping("/execute")
-    public R<Boolean> execute(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> execute(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.execute(orderId));
     }
 
     @ApiOperation("订单暂停")
     @PutMapping("/stop")
-    public R<Boolean> stop(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> stop(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.stop(orderId));
     }
 
@@ -118,7 +123,7 @@ public class ProduceOrderController {
 
     @ApiOperation("订单完成")
     @PutMapping("/complete")
-    public R<Boolean> complete(@ApiParam("订单id") @RequestParam("orderId") Long orderId){
+    public R<Boolean> complete(@ApiParam("订单id") @RequestParam("orderId") Long orderId) {
         return R.success(pmsProduceOrderService.complete(orderId));
     }
 }
