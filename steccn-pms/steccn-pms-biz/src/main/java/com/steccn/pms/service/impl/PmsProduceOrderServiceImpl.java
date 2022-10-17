@@ -349,7 +349,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsProduceOrderCraftVO> crafts = pmsProduceOrderCraftService.getCrafts(orderId);
         Assert.isFalse(CollUtil.isEmpty(crafts), "该订单不存在工序数据，请检查");
         crafts.forEach(craft -> {
-            Assert.isFalse(CollUtil.isEmpty(craft.getStationList()), "该订单不存在工序数据，请检查");
+            Assert.isFalse(CollUtil.isEmpty(craft.getStationList()), "工序未分配工位，请检查");
         });
         //3.校验所有组件是否已分配工序
         //3.1 获取组件数据
