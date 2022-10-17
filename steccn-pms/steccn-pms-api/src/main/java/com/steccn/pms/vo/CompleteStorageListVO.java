@@ -43,7 +43,10 @@ public class CompleteStorageListVO implements Serializable {
     private String confirmName;
 
     @ApiModelProperty("类型")
-    private Integer type;
+    private Long typeId;
+
+    @ApiModelProperty("类型名称")
+    private String typeName;
 
     @ApiModelProperty("物料信息")
     private List<CompleteStorageMaterialVO> list;
