@@ -15,6 +15,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -22,21 +23,21 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
+import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
-import com.steccn.pms.vo.CompleteStorageListVO;
-import com.steccn.pms.vo.CompleteStorageMaterialVO;
-import com.steccn.pms.vo.CompleteStoragePageVO;
-import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.pms.vo.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,7 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
+@Slf4j
 public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorageMapper, PmsCompleteStorage>
         implements PmsCompleteStorageService {
     @Autowired
@@ -70,6 +72,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private RemoteMessFeignApi remoteMessFeignApi;
 
 
     @Override
@@ -165,14 +169,22 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setCode(maxCompleteCode());
         pmsCompleteStorage.setQuantity(sumQuantity);
         pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
-        save(pmsCompleteStorage);
 
+        SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE)).get();
+        pmsCompleteStorage.setTypeId(sysDictVO.getId());
+        pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+        save(pmsCompleteStorage);
         //生成入库单
         MessInStorageVoucherDTO messDto = new MessInStorageVoucherDTO();
         messDto.setCreateBy(SecurityUtils.getUser().getName());
         messDto.setCode(pmsCompleteStorage.getCode());
-        messDto.setType("xxxx");
+        messDto.setType(sysDictVO.getCode());
         messDto.setMaterialList(materialList);
+        MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
+        //入库必定要成功
+        if(Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()){
+            log.info("入库单生成成功"+messInStorageVoucherVO.getMessage());
+        }
         return pmsCompleteStorage.getCode();
     }
 

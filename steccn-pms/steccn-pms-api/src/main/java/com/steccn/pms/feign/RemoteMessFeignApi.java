@@ -1,5 +1,6 @@
 package com.steccn.pms.feign;
 
+import com.steccn.pms.dto.MessInStorageVoucherDTO;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.dto.MessMaterialConsumeDTO;
 import com.steccn.pms.dto.MessMaterialStorageDTO;
@@ -37,5 +38,5 @@ public interface RemoteMessFeignApi {
     @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockIn")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody List<MessMaterialStorageDTO> list);
+    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
 }

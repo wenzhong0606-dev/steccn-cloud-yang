@@ -17,6 +17,22 @@ public interface PmManagerConstant {
 
     String FILE_EXTENSION_XLSX = ".xlsx";
 
+
+
+    /**
+     * 入库凭证状态
+     */
+    @Getter
+    @AllArgsConstructor
+    enum InVouchEnum {
+        CREATE(0, "已创建"), FINISH(1, "已完成");
+
+        private final Integer code;
+
+        private final String name;
+    }
+
+
     /**
      * 箱状态0:已完工 1:待入库 2：已入库
      */
