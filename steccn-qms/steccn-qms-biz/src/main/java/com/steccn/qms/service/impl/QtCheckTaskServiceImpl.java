@@ -144,6 +144,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
+        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
         if (qtCheckTask != null) {
             //json名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
@@ -182,14 +183,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (!qtCheckTaskDetails.isEmpty()) {
             //包装好group和copy
             qtCheckTaskDetails.forEach(tmp -> {
-                QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, tmp.getCopy());
+                QtCheckPlanDetailsVO qtCheckPlanDetailsVOTmp = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, tmp.getCopy());
                 //查看是否有details
                 QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
                         .eq(QtCheckTaskCopy::getTaskId, id)
                         .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()));
                 QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
                 qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
-                qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
+                qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVOTmp.getCheckGroup());
                 //放入copyDetails
                 QtCheckTaskCopyDetailsDTO copyDetailsVO = new QtCheckTaskCopyDetailsDTO();
                 BeanUtils.copyProperties(qtCheckTaskCopy, copyDetailsVO);
@@ -200,13 +201,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //details没有值说明没有输入详细值
         else {
-            QtCheckPlanDetailsVO qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, null);
+            qtCheckPlanDetailsVO = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, null);
             QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
             qtCheckTaskDetailCopyVO.setNum(1);
             qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVO.getCheckGroup());
             copy.add(qtCheckTaskDetailCopyVO);
         }
-        QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
+
         //pc端对数据进行处理
         if(isPc){
             List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
@@ -254,6 +255,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public Boolean updateStatus(QtCheckTaskStatusDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
+        QtCheckTask oldModel = getById(dto.getId());
         qtCheckTask.setId(dto.getId());
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
@@ -264,6 +266,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //取消任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CANCELED.getCode())) {
+            //不是待检验状态则无法修改
+            if(!oldModel.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.WAITED.getCode())){
+                throw new BusinessException("只有待检验状态才能取消");
+            }
             qtCheckTask.setCancelBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setCancelName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setCancelTime(LocalDateTime.now());

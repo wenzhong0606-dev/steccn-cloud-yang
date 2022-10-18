@@ -400,12 +400,19 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     qtCheckPlanItemVo.setLinkedDefectiveItem(defectItemVos);
                     //如果检验方案是在线检,那么需要特殊处理缺陷项
                     //先拿到该检验方案的检验类型
-                    List<QtMaterialLinkCheckPlan> linkCheckPlanModel = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>().eq(QtMaterialLinkCheckPlan::getCheckPlanId,id));
+                    //如果taskID不为null则是巡检任务下的数据
+                    Integer planId;
+                    if(qtCheckPlan.getOriginalId()!=null){
+                        planId = qtCheckPlan.getOriginalId();
+                    }else {
+                        planId = id;
+                    }
+                    List<QtMaterialLinkCheckPlan> linkCheckPlanModel = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>().eq(QtMaterialLinkCheckPlan::getCheckPlanId,planId));
                     if(CollUtil.isNotEmpty(linkCheckPlanModel)){
                         Boolean flag = false;
                         //如果绑定了在线检，则返回不同类型
                         for(QtMaterialLinkCheckPlan linkPlanTmp:linkCheckPlanModel){
-                            if(linkPlanTmp.getCheckPlanId().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                            if(linkPlanTmp.getCheckTypeCode().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
                                 flag = true;
                             }
                         }
