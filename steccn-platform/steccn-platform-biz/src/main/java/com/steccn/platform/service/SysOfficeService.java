@@ -63,4 +63,10 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return 中文
      */
     Map<String, SysOfficeVO> listByCodeSet(Set<String> codeSet);
+
+    /**
+     * 仓库和货架
+     * @return 集合
+     */
+    List<SysOfficeVO> warehouseAndShelf();
 }

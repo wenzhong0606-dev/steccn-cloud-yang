@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.common.vo.R;
@@ -47,5 +48,10 @@ public class SysOfficeController {
     @PostMapping("/getByPcodeAndType")
     public R<List<SysOfficeVO>> listFlatDataByPcode(@RequestBody SysOfficeParentDTO dto) {
         return R.success(sysOfficeService.findDataByPCodeAndType(dto));
+    }
+
+    @GetMapping("/warehouse")
+    public R<List<SysOfficeVO>> warehouseAndShelf() {
+        return R.success(sysOfficeService.warehouseAndShelf());
     }
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysDictVO;
@@ -147,6 +148,16 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<SysOfficeVO> warehouseAndShelf() {
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, Lists.newArrayList(SysOfficeConstant.WAREHOUSE_TYPE, SysOfficeConstant.SHELF_TYPE)));
+        if(CollUtil.isNotEmpty(dbList)){
+            //从下往上递归查询
+
+        }
+        return Lists.newArrayList();
     }
 
     /**

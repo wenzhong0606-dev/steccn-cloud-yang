@@ -36,6 +36,9 @@ public class CompleteStorageListVO implements Serializable {
     @ApiModelProperty("入库时间")
     private LocalDateTime inStorageTime;
 
+    @ApiModelProperty("状态，与mess同步")
+    private Integer state;
+
     @ApiModelProperty("创建人")
     private String createName;
 
