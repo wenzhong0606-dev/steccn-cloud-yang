@@ -183,7 +183,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
         //入库必定要成功
         if(Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()){
-            log.info("入库单生成成功"+messInStorageVoucherVO.getMessage());
+            log.info("入库单 -> "+messInStorageVoucherVO.getMessage());
         }
         return pmsCompleteStorage.getCode();
     }
