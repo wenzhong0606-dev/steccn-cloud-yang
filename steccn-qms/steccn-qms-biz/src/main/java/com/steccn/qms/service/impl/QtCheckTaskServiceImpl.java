@@ -575,7 +575,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .eq(dto.getCreateBy() != null, QtCheckTask::getCreateBy, dto.getCreateBy())
                 //检验类型
                 .eq(dto.getCheckTypeCode() != null, QtCheckTask::getTaskType, dto.getCheckTypeCode());
-        //2.解析排序规则
+        //2.解析排序规则F
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
@@ -590,35 +590,35 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getArrivalTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(supplierName using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(supplierName using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(materialWorkshopName using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.material_workshop ->> '$.name' using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(materialWorkshopName using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.material_workshop ->> '$.name' using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getProductOrder);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_WORKSHOP_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(productWorkshopName using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.product_workshop ->> '$.name' using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(productWorkshopName using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.product_workshop ->> '$.name' using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_LINE_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(productLineName using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.product_line ->> '$.name' using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(productLineName using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.product_line ->> '$.name' using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(product_batch using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.product_batch using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(product_batch using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.product_batch using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDefectStartTime);
@@ -630,9 +630,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDeliverTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CUSTOMER_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(customerName using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.customer ->> '$.name' using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(customerName using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.customer ->> '$.name' using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_NUM.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDeliverNum);
@@ -640,9 +640,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getResult);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(create_name using gbk) ASC");
+                condition.last("ORDER BY CONVERT(t.create_name using gbk) ASC");
             } else {
-                condition.last("ORDER BY CONVERT(create_name using gbk) DESC");
+                condition.last("ORDER BY CONVERT(t.create_name using gbk) DESC");
             }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);

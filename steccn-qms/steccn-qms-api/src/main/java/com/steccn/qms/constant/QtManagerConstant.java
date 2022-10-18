@@ -26,39 +26,39 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_STATUS = "status";
 
-    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME = "material_name";
+    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME = "materialName";
 
-    String QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME = "arrival_time";
+    String QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME = "arrivalTime";
 
-    String QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME = "supplier_name";
+    String QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME = "supplierName";
 
-    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME = "material_workShop_name";
+    String QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME = "materialWorkshopName";
 
-    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER = "product_order";
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER = "productOrder";
 
-    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_WORKSHOP_NAME = "product_workshop_name";
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_WORKSHOP_NAME = "productWorkshopName";
 
-    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_LINE_NAME = "product_line_name";
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_LINE_NAME = "productLineName";
 
-    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH = "product_batch";
+    String QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH = "productBatch";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME = "defect_start_time";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME = "defectStartTime";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE = "original_code";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE = "originalCode";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_ORDER = "deliver_order";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_ORDER = "deliverOrder";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_TIME = "deliver_time";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_TIME = "deliverTime";
 
-    String QT_CHECK_TASK_SORT_FIELD_CUSTOMER_NAME = "customer_name";
+    String QT_CHECK_TASK_SORT_FIELD_CUSTOMER_NAME = "customerName";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_NUM = "deliver_num";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_NUM = "deliverNum";
 
     String QT_CHECK_TASK_SORT_FIELD_DEFECT_RESULT = "result";
 
-    String QT_CHECK_TASK_SORT_FIELD_CREATE_NAME = "create_name";
+    String QT_CHECK_TASK_SORT_FIELD_CREATE_NAME = "createName";
 
-    String QT_CHECK_TASK_SORT_FIELD_CREATE_TIME = "create_time";
+    String QT_CHECK_TASK_SORT_FIELD_CREATE_TIME = "createTime";
 
     String QT_CHECK_TASK_FIELD_CHECK_RESULT = "checkResult";
 

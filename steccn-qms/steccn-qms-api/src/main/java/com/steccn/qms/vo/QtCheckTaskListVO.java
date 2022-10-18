@@ -164,4 +164,9 @@ public class QtCheckTaskListVO {
      */
     private LocalDateTime finishedTime;
 
+    /**
+     * 创建人姓名
+     */
+    private String startName;
+
 }
