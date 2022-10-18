@@ -258,7 +258,33 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))", dto.getId());
         //measureUnit非必填，所以需要进行null判断
         //1、dto中的measureUnit  oldModel中的measureUnit 任意一个不为null
-        Boolean flag = ((dto.getMeasureUnit()==null&&oldModel.getMeasureUnit()!=null) || (dto.getMeasureUnit()!=null&&oldModel.getMeasureUnit()==null))||(!dto.getMeasureUnit().equals(oldModel.getMeasureUnit())) || (!dto.getDataType().equals(oldModel.getDataType()));
+        Boolean flag;
+        //measureUnit
+        if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()!=null){
+            if(dto.getMeasureUnit().equals(oldModel.getMeasureUnit())){
+                flag = false;
+            }
+        }else {
+            //两个都为null则表示没有改变
+            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()==null){
+                flag = false;
+            }
+            //一个为null另一个不为null
+            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()!=null){
+                flag = true;
+            }
+            //一个为null另一个不为null
+            if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()==null){
+                flag = true;
+            }
+
+        }
+        //数据类型
+        if(dto.getDataType().equals(oldModel.getDataType())){
+            flag = false;
+        }else {
+            flag = true;
+        }
         if (qtCheckPlanGroupItemService.count(itemConditionRangeArray) != 0) {
             if (flag) {
                 throw new BusinessException("该检验项在极差数组中,无法修改数据类型，计量单位");
