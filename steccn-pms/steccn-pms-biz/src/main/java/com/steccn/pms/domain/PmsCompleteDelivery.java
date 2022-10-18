@@ -48,7 +48,12 @@ public class PmsCompleteDelivery implements Serializable {
     /**
      * 状态
      */
-    private String state;
+    private Integer state;
+
+    /**
+     * 类型信息
+     */
+    private Long typeId;
 
     /**
      * 出库凭证

@@ -18,7 +18,9 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteMessFeignApi;
@@ -68,6 +70,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
     private RemoteMessFeignApi remoteMessFeignApi;
+    @Autowired
+    private PmsCompleteDeliveryService completeDeliveryService;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -136,6 +140,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //校验单位是否存在
         Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
         Assert.isTrue(unitBoolean, "单位不存在");
+
         //生成报工记录
         PmsReportWork pmsReportWork = new PmsReportWork();
         BeanUtils.copyProperties(dto, pmsReportWork);
@@ -154,6 +159,31 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 hourModelList.add(hourModel);
             }
             reportWorkHourService.saveBatch(hourModelList);
+        }
+        //插入数据库中pms_complete_delivery，pms_complete_delivery_info
+        List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
+        if (CollUtil.isNotEmpty(materialConsumeList)) {
+            PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
+            completeDelivery.setId(IdUtil.getSnowflake().nextId());
+            List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
+            BigDecimal sum = BigDecimal.ZERO;
+            for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
+                sum = sum.add(materialDTO.getQuantity());
+                PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
+                BeanUtils.copyProperties(materialDTO, info);
+
+                info.setCompleteDeliveryId(completeDelivery.getId());
+                modelList.add(info);
+            }
+            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE)).get();
+            completeDelivery.setOutStorageVoucher("xxxa");
+            completeDelivery.setDeliveryTime(LocalDateTime.now());
+            completeDelivery.setQuantity(sum);
+            completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
+            completeDelivery.setTypeId(sysDictVO.getId());
+            completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
+            completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+            completeDeliveryService.save(completeDelivery);
         }
         //生成出库单
         return Boolean.TRUE;

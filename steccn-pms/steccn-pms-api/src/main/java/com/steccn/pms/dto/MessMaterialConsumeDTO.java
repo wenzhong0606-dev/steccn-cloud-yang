@@ -1,8 +1,10 @@
 package com.steccn.pms.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -20,6 +22,9 @@ public class MessMaterialConsumeDTO implements Serializable {
 
     @ApiModelProperty("批次号")
     private String batchNo;
+
+    @ApiModelProperty("箱号")
+    private String caseNo;
 
     @ApiModelProperty("物料id")
     private Long materialId;

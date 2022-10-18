@@ -20,7 +20,7 @@ public interface PmManagerConstant {
 
 
     /**
-     * 入库凭证状态
+     * 入库出库凭证状态
      */
     @Getter
     @AllArgsConstructor
