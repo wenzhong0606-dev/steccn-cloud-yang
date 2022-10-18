@@ -50,6 +50,10 @@ public class SysOfficeController {
         return R.success(sysOfficeService.findDataByPCodeAndType(dto));
     }
 
+    /**
+     * 仓库和货架
+     * @return
+     */
     @GetMapping("/warehouse")
     public R<List<SysOfficeVO>> warehouseAndShelf() {
         return R.success(sysOfficeService.warehouseAndShelf());

@@ -7,9 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -19,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author MongKnife
@@ -152,12 +151,44 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public List<SysOfficeVO> warehouseAndShelf() {
+        //查询机构类型为5和12的
         List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, Lists.newArrayList(SysOfficeConstant.WAREHOUSE_TYPE, SysOfficeConstant.SHELF_TYPE)));
-        if(CollUtil.isNotEmpty(dbList)){
+        List<SysOfficeVO> rootVOList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dbList)) {
+            //复制查询结果到新的集合
+            List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
             //从下往上递归查询
-
+            //过滤出层次级别为1的根节点集合
+            rootVOList = sysOfficeVOS.stream().filter(v -> SysOfficeConstant.ROOT_LEVEL.equals(v.getTreeLevel())).collect(Collectors.toList());
+            for (SysOfficeVO sysOffice : rootVOList) {
+                List<SysOfficeVO> children = getChildren(sysOfficeVOS, sysOffice.getOfficeCode());
+                sysOffice.setChildren(children);
+            }
         }
-        return Lists.newArrayList();
+        return rootVOList;
+    }
+
+    /**
+     * 获取子节点
+     */
+    /**
+     *
+     * @param childrenList
+     * @param parentCode
+     * @return
+     */
+    public List<SysOfficeVO> getChildren(List<SysOfficeVO> childrenList, String parentCode) {
+        ArrayList<SysOfficeVO> result = new ArrayList<>();
+        //遍历集合设置子节点
+        for (SysOfficeVO sysOfficeVO : childrenList) {
+            if ( sysOfficeVO.getParentCode().equals(parentCode)){
+                //递归方法找到子节点
+                List<SysOfficeVO> children = getChildren(childrenList, sysOfficeVO.getOfficeCode());
+                sysOfficeVO.setChildren(children);
+                result.add(sysOfficeVO);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -169,7 +200,6 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }
         return null;
     }
-
     /**
      * 父节点
      * @param sysOffice 结构信息

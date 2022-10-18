@@ -31,8 +31,11 @@ public class SysOfficeVO implements Serializable {
     @ApiModelProperty("编码")
     private String officeCode;
 
+    @ApiModelProperty("判断是否为最末级,0就是最末级")
+    private String treeLeaf;
+
     @ApiModelProperty("排序")
-    private Integer sort;
+    private Integer treeLevel;
 
     @ApiModelProperty("父级编码")
     private String parentCode;
