@@ -69,4 +69,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return 集合
      */
     List<SysOfficeVO> warehouseAndShelf();
+
+    /**
+     * 查询货架的仓库id，如果无仓库，则返回null
+     * @param id 货架id
+     * @return
+     */
+    SysOfficeVO shelfWarehouse(Integer id);
 }

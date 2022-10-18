@@ -54,4 +54,10 @@ public class SysOfficeController {
     public R<List<SysOfficeVO>> warehouseAndShelf() {
         return R.success(sysOfficeService.warehouseAndShelf());
     }
+
+    @ApiOperation("货架的仓库")
+    @GetMapping("/shelf/warehouse/{id}")
+    public R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id) {
+        return R.success(sysOfficeService.shelfWarehouse(id));
+    }
 }

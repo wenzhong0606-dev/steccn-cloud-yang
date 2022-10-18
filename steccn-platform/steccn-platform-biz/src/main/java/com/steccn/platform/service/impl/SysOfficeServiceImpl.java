@@ -160,6 +160,35 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return Lists.newArrayList();
     }
 
+    @Override
+    public SysOfficeVO shelfWarehouse(Integer id) {
+        SysOffice shelf = getById(id);
+        SysOffice sysOffice = parentSysOffice(shelf);
+        if(Objects.nonNull(sysOffice)){
+            return BeanUtil.copyProperties(sysOffice,SysOfficeVO.class);
+        }
+        return null;
+    }
+
+    /**
+     * 父节点
+     * @param sysOffice 结构信息
+     * @return
+     */
+    private SysOffice parentSysOffice(SysOffice sysOffice){
+        //如果对象不为空，且对象的类型是货架，进入递归查询
+        if(Objects.nonNull(sysOffice) &&  SysOfficeConstant.SHELF_TYPE.equals(sysOffice.getOfficeType())){
+            SysOffice model =  getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, sysOffice.getParentCode()));
+            return parentSysOffice(model);
+        }
+        //①对象为空 ②对象的类型不是货架，可能是仓库，也可能是别的
+        if(Objects.isNull(sysOffice) || !SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOffice.getOfficeType())){
+            return null;
+        }
+        return sysOffice;
+    }
+
+
     /**
      * 根据list递归构造一颗树
      *

@@ -1,7 +1,6 @@
 package com.steccn.platform.constant;
 
 import io.swagger.annotations.ApiModel;
-import lombok.Data;
 
 /**
  * @author yequan
@@ -12,6 +11,6 @@ public interface SysOfficeConstant {
     /**
      * 仓库货架的类型
      */
-    Integer WAREHOUSE_TYPE = 12;
-    Integer SHELF_TYPE = 5;
+    String WAREHOUSE_TYPE = "12";
+    String SHELF_TYPE = "5";
 }
