@@ -52,4 +52,10 @@ public class PmsWorkOrderBomVO {
     @ApiModelProperty("反冲")
     private Integer backCalculateFlag;
 
+    @ApiModelProperty("工序报废百分比")
+    private Float processScrapingPercent;
+
+    @ApiModelProperty("组件报废百分比")
+    private Float componentScrapingPercent;
+
 }

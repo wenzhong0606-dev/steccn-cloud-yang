@@ -91,7 +91,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 .like(Objects.nonNull(dto.getMaterialName()), PmCraftRoute::getMaterialName, dto.getMaterialName())
                 .eq(Objects.nonNull(dto.getStatus()), PmCraftRoute::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmCraftRoute::getIsCurrentVersion, dto.getIsCurrentVersion())
-                .eq(Objects.nonNull(dto.getVersion()),PmCraftRoute::getVersion,dto.getVersion())
+                .eq(Objects.nonNull(dto.getVersion()), PmCraftRoute::getVersion, dto.getVersion())
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmCraftRoute::getCode, dto.getCode());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -213,11 +213,19 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
 
     @Override
     public Map<Long, String> versionById(Set<Long> craftIds) {
+        //1.定义返回数据集合
         Map<Long, String> resMap = Maps.newHashMap();
-        List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>().in(PmCraftRoute::getId, craftIds).select(PmCraftRoute::getVersion,PmCraftRoute::getId));
-        if (CollUtil.isNotEmpty(list)) {
-            list.forEach(pmCraftRoute ->{ resMap.put(pmCraftRoute.getId(), pmCraftRoute.getVersion());});
+        if (CollUtil.isNotEmpty(craftIds)) {
+            //2.定义条件查询数据
+            List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>().in(PmCraftRoute::getId, craftIds).select(PmCraftRoute::getVersion, PmCraftRoute::getId));
+            //3.处理数据
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(pmCraftRoute -> {
+                    resMap.put(pmCraftRoute.getId(), pmCraftRoute.getVersion());
+                });
+            }
         }
+        //4.返回数据
         return resMap;
     }
 
