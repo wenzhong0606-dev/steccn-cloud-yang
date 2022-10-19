@@ -103,9 +103,9 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
     @Override
     public Map<Long, PmsProduceOrderCraftVO> listById(List<Long> processIds) {
         Map<Long, PmsProduceOrderCraftVO> resMap = Maps.newHashMap();
-        List<PmsProduceOrderCraft> pmsProduceOrderCrafts = listByIds(processIds);
-        if (CollUtil.isEmpty(pmsProduceOrderCrafts)) {
-            return resMap;
+        List<PmsProduceOrderCraft> pmsProduceOrderCrafts = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(processIds)) {
+            pmsProduceOrderCrafts = listByIds(processIds);
         }
         List<PmsProduceOrderCraftVO> craftVOList = BeanUtil.copyToList(pmsProduceOrderCrafts, PmsProduceOrderCraftVO.class);
         craftVOList.forEach(pmsProduceOrderCraft -> {

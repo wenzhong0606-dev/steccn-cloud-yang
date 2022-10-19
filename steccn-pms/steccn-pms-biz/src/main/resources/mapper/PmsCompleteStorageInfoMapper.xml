@@ -9,7 +9,6 @@
             <result property="caseNo" column="case_no" jdbcType="VARCHAR"/>
             <result property="batchNo" column="batch_no" jdbcType="VARCHAR"/>
             <result property="packTime" column="pack_time" jdbcType="TIMESTAMP"/>
-            <result property="state" column="state" jdbcType="TINYINT"/>
             <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
             <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
             <result property="completeStorageId" column="complete_storage_id" jdbcType="BIGINT"/>
@@ -29,4 +28,20 @@
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+    <select id="pageByOrderId" resultType="com.steccn.pms.vo.PmsCompleteStorageVO">
+        SELECT
+            a.id,
+            b.code,
+            b.in_storage_time,
+            b.state,
+            a.quantity,
+            a.unit_id,
+            a.case_no,
+            a.batch_no
+        FROM
+            pms_complete_storage_info a
+                JOIN pms_complete_storage b ON a.complete_storage_id = b.id
+        WHERE
+            b.produce_order_id = #{orderId}
+    </select>
 </mapper>

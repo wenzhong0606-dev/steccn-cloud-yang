@@ -9,6 +9,7 @@ import lombok.Data;
 
 /**
  * 出库详情
+ * @author mengle
  * @TableName pms_complete_delivery_info
  */
 @TableName(value ="pms_complete_delivery_info")

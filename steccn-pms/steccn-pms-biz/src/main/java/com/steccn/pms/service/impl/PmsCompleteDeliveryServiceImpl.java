@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -58,47 +59,24 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
 
     @Override
     public Page<PmsCompleteDeliveryVO> completeDeliveryPageList(PmsCompleteDeliveryDTO dto) {
-        //1.定义查询条件
-        LambdaQueryWrapper<PmsCompleteDelivery> eq = new LambdaQueryWrapper<PmsCompleteDelivery>().
-                eq(PmsCompleteDelivery::getProduceOrderId, dto.getProduceOrderId());
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //3.查询分页数据
-        IPage resPage = page(page, eq);
-        //4.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //5.拷贝返回的信息
-        List<PmsCompleteDelivery> res = BeanUtil.copyToList(resPage.getRecords(), PmsCompleteDelivery.class);
-        //6.处理数据
+        //1.查询详情信息
+        Page<PmsCompleteDeliveryVO> page = pmsCompleteDeliveryInfoService.listByOrderId(dto);
+        //2.处理数据
         List<Long> materialIds = Lists.newArrayList();
         Set<Integer> office = Sets.newHashSet();
         Set<Long> ids = Sets.newHashSet();
         List<Long> processIds = Lists.newArrayList();
-        List<PmsCompleteDeliveryVO> pmsCompleteDeliveryVOList = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(res)) {
-            res.forEach(pmsCompleteDelivery -> {
-                //查询投料信息的详情内容
-                List<PmsCompleteDeliveryInfo> list = pmsCompleteDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>()
-                        .eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
-                list.forEach(pmsCompleteDeliveryInfo -> {
-                    //处理返回数据
-                    PmsCompleteDeliveryVO pmsCompleteDeliveryVO = new PmsCompleteDeliveryVO();
-                    BeanUtil.copyProperties(pmsCompleteDelivery, pmsCompleteDeliveryVO);
-                    materialIds.add(pmsCompleteDeliveryInfo.getMaterialId());
-                    pmsCompleteDeliveryVO.setQuantity(pmsCompleteDeliveryInfo.getQuantity());
-                    ids.add(pmsCompleteDeliveryInfo.getUnitId());
-                    pmsCompleteDeliveryVO.setUnitId(pmsCompleteDeliveryInfo.getUnitId());
-                    pmsCompleteDeliveryVO.setCaseNo(pmsCompleteDeliveryInfo.getCaseNo());
-                    pmsCompleteDeliveryVO.setBatchNo(pmsCompleteDeliveryInfo.getBatchNo());
-                    pmsCompleteDeliveryVO.setMaterialId(pmsCompleteDeliveryInfo.getMaterialId());
-                    office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getWarehouseId()));
-                    office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getShelfId()));
-                    pmsCompleteDeliveryVO.setWarehouseId(pmsCompleteDeliveryInfo.getWarehouseId());
-                    pmsCompleteDeliveryVO.setShelfId(pmsCompleteDeliveryInfo.getShelfId());
-                    pmsCompleteDeliveryVO.setProcessId(pmsCompleteDeliveryInfo.getProcessId());
-                    processIds.add(pmsCompleteDeliveryInfo.getProcessId());
-                    pmsCompleteDeliveryVOList.add(pmsCompleteDeliveryVO);
-                });
+        List<PmsCompleteDeliveryVO> records = page.getRecords();
+        if (CollUtil.isNotEmpty(records)) {
+            records.forEach(pmsCompleteDeliveryVO -> {
+                materialIds.add(pmsCompleteDeliveryVO.getMaterialId());
+                ids.add(pmsCompleteDeliveryVO.getUnitId());
+                if (Objects.nonNull(pmsCompleteDeliveryVO.getWarehouseId())) {
+                    office.add(pmsCompleteDeliveryVO.getWarehouseId());
+                }
+                if (Objects.nonNull(pmsCompleteDeliveryVO.getShelfId())) {
+                    office.add(pmsCompleteDeliveryVO.getShelfId());
+                }
             });
             //获取单位数据
             Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
@@ -108,8 +86,8 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
             //获取工序信息
             Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
-            if (CollUtil.isNotEmpty(pmsCompleteDeliveryVOList)) {
-                pmsCompleteDeliveryVOList.forEach(
+            if (CollUtil.isNotEmpty(records)) {
+                records.forEach(
                         pmsCompleteDeliveryVO -> {
                             //处理单位数据
                             pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
@@ -131,8 +109,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 );
             }
         }
-        page.setTotal(pmsCompleteDeliveryVOList.size());
-        return page.setRecords(pmsCompleteDeliveryVOList);
+        return page;
     }
 
     @Override
