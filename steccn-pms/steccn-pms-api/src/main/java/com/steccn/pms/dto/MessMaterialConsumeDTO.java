@@ -40,4 +40,7 @@ public class MessMaterialConsumeDTO implements Serializable {
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createDate;
+
+    @ApiModelProperty("打包时间")
+    private LocalDateTime packTime;
 }

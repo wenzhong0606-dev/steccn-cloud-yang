@@ -69,6 +69,9 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     @ApiModelProperty("箱号")
     private String caseNo;
 
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createDate;
+
     @ApiModelProperty("打包时间")
     private LocalDateTime packTime;
 }

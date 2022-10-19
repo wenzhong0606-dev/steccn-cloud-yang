@@ -17,7 +17,7 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -128,7 +128,7 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     /**
      * 生产工单id
      */
-    private byte[] workOrderId;
+    private Long workOrderId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

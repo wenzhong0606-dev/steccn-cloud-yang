@@ -72,6 +72,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteMessFeignApi remoteMessFeignApi;
     @Autowired
     private PmsCompleteDeliveryService completeDeliveryService;
+    @Autowired
+    private PmsCompleteDeliveryInfoService completeDeliveryInfoService;
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -140,7 +142,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //校验单位是否存在
         Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
         Assert.isTrue(unitBoolean, "单位不存在");
-
         //生成报工记录
         PmsReportWork pmsReportWork = new PmsReportWork();
         BeanUtils.copyProperties(dto, pmsReportWork);
@@ -171,7 +172,15 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 sum = sum.add(materialDTO.getQuantity());
                 PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
                 BeanUtils.copyProperties(materialDTO, info);
-
+                info.setMaterialId(materialDTO.getModuleId());
+                info.setMaterialCode(materialDTO.getModuleCode());
+                info.setMaterialName(materialDTO.getModuleName());
+                info.setCaseNo(materialDTO.getCaseNo());
+                info.setBatchNo(materialDTO.getBatchNo());
+                info.setPackTime(materialDTO.getPackTime());
+                info.setWorkOrderId(materialDTO.getProduceOrderId());
+                info.setWarehouseId(materialDTO.getWarehouseId());
+                info.setShelfId(materialDTO.getShelfId());
                 info.setCompleteDeliveryId(completeDelivery.getId());
                 modelList.add(info);
             }
@@ -184,8 +193,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
             completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             completeDeliveryService.save(completeDelivery);
+            completeDeliveryInfoService.saveBatch(modelList);
         }
-        //生成出库单
         return Boolean.TRUE;
     }
 
@@ -248,18 +257,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
                 for(MessMaterialConsumeDTO messDto : messList){
                     ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
+                    BeanUtils.copyProperties(messDto,resDTO);
                     resDTO.setProduceOrderId(pmsProduceOrder.getId());
+                    resDTO.setProcessId(pmsProduceOrderCraft.getId());
                     resDTO.setProcessName(pmsProduceOrderCraft.getName());
                     resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
                     resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
                     resDTO.setModuleId(messDto.getMaterialId());
-                    resDTO.setInventoryId(messDto.getInventoryId());
                     EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
                     resDTO.setModuleName(eqpSpareVO.getName());
                     resDTO.setModuleCode(eqpSpareVO.getCode());
                     resDTO.setQuantity(messDto.getAvailableQuantity());
                     resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
-                    resDTO.setBatchNo(messDto.getBatchNo());
                     SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
                     resDTO.setWarehouseId(warehouse.getId());
                     resDTO.setWarehouseName(warehouse.getOfficeName());

@@ -47,8 +47,6 @@ public class SteccnJavaTimeModule extends SimpleModule {
 		// yyyy-MM-dd HH:mm:ss
 		this.addDeserializer(LocalDateTime.class,
 				new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
-		this.addDeserializer(LocalDateTime.class,
-				new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DatePattern.UTC_SIMPLE_PATTERN)));
 		// yyyy-MM-dd
 		this.addDeserializer(LocalDate.class,
 				new LocalDateDeserializer(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
