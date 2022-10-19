@@ -8,8 +8,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
@@ -43,6 +46,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
 
     @Autowired
     private PmsCompleteStorageService pmsCompleteStorageService;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -74,6 +79,16 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
+            //处理单位数据
+            Set<Long> dictSet = Sets.newHashSet();
+            voList.forEach( barcodePrintRecordVO -> {
+                dictSet.add(barcodePrintRecordVO.getUnitId());
+            });
+            //获取单位数据
+            Map<Long, String> dictChMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            voList.forEach(barcodePrintRecordVO -> {
+                barcodePrintRecordVO.setUnit(dictChMap.get(barcodePrintRecordVO.getUnitId()));
+            });
             resPage.setRecords(voList);
         }
         return resPage;

@@ -474,6 +474,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.1查询当前产线的执行订单数量
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
         Assert.isNull(pmsProduceOrderVO, "其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
+        //2.2 校验状态（仅已创建可下达）
+        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()),"仅已下达状态可执行");
         //3.生成新的批次，并翻转订单状态为执行中
         ProduceOrderBatchDto produceOrderBatchDto = new ProduceOrderBatchDto();
         produceOrderBatchDto.setStartTime(LocalDateTime.now());

@@ -29,6 +29,12 @@ public class BarcodePrintRecordVO implements Serializable {
     @ApiModelProperty("时间")
     private LocalDateTime createTime;
 
+    @ApiModelProperty("单位id")
+    private Long unitId;
+
+    @ApiModelProperty("单位")
+    private String unit;
+
     @ApiModelProperty("数量")
     private BigDecimal quantity;
 
