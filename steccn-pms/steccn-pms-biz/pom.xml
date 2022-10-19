@@ -114,6 +114,12 @@
             <artifactId>spring-boot-admin-starter-client</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-log</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

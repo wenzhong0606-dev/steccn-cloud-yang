@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -81,6 +82,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsCompleteDeliveryInfoService completeDeliveryInfoService;
 
     @Override
+    @SysLog("工序报工分页列表")
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
         //1.将日期拼接最大时间和最小时间
         jointConditionTime(dto);
