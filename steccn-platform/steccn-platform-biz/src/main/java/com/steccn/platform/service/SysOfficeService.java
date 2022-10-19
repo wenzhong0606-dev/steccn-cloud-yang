@@ -66,9 +66,10 @@ public interface SysOfficeService extends IService<SysOffice> {
 
     /**
      * 仓库和货架
+     * @param typeList 类型集合
      * @return 集合
      */
-    List<SysOfficeVO> warehouseAndShelf();
+    List<SysOfficeVO> warehouseAndShelf(List<String> typeList);
 
     /**
      * 查询货架的仓库id，如果无仓库，则返回null

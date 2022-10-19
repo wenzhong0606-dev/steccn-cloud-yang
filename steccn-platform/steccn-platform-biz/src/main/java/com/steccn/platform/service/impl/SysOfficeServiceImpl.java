@@ -141,7 +141,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                 .in(SysOffice::getOfficeCode, codeSet));
         if (CollUtil.isNotEmpty(sysOfficeList)) {
             for (SysOffice sysOffice : sysOfficeList) {
-                SysOfficeVO sysOfficeVO =new SysOfficeVO();
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
                 BeanUtils.copyProperties(sysOffice, sysOfficeVO);
                 resMap.put(sysOffice.getOfficeCode(), sysOfficeVO);
             }
@@ -150,16 +150,23 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
-    public List<SysOfficeVO> warehouseAndShelf() {
+    public List<SysOfficeVO> warehouseAndShelf(List<String> typeList) {
         //查询机构类型为5和12的
-        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, Lists.newArrayList(SysOfficeConstant.WAREHOUSE_TYPE, SysOfficeConstant.SHELF_TYPE)));
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, typeList));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
             //复制查询结果到新的集合
             List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
             //从下往上递归查询
             //过滤出层次级别为1的根节点集合
-            rootVOList = sysOfficeVOS.stream().filter(v -> SysOfficeConstant.ROOT_LEVEL.equals(v.getTreeLevel())).collect(Collectors.toList());
+            Map<Integer, List<SysOfficeVO>> levelMap = sysOfficeVOS.stream().collect(Collectors.groupingBy(SysOfficeVO::getTreeLevel));
+            Integer minLevel = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, List<SysOfficeVO>> entry : levelMap.entrySet()) {
+                if (entry.getKey() < minLevel) {
+                    minLevel = entry.getKey();
+                    rootVOList = entry.getValue();
+                }
+            }
             for (SysOfficeVO sysOffice : rootVOList) {
                 List<SysOfficeVO> children = getChildren(sysOfficeVOS, sysOffice.getOfficeCode());
                 sysOffice.setChildren(children);
@@ -172,7 +179,6 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
      * 获取子节点
      */
     /**
-     *
      * @param childrenList
      * @param parentCode
      * @return
@@ -181,7 +187,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         ArrayList<SysOfficeVO> result = new ArrayList<>();
         //遍历集合设置子节点
         for (SysOfficeVO sysOfficeVO : childrenList) {
-            if ( sysOfficeVO.getParentCode().equals(parentCode)){
+            if (sysOfficeVO.getParentCode().equals(parentCode)) {
                 //递归方法找到子节点
                 List<SysOfficeVO> children = getChildren(childrenList, sysOfficeVO.getOfficeCode());
                 sysOfficeVO.setChildren(children);
@@ -195,24 +201,26 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     public SysOfficeVO shelfWarehouse(Integer id) {
         SysOffice shelf = getById(id);
         SysOffice sysOffice = parentSysOffice(shelf);
-        if(Objects.nonNull(sysOffice)){
-            return BeanUtil.copyProperties(sysOffice,SysOfficeVO.class);
+        if (Objects.nonNull(sysOffice)) {
+            return BeanUtil.copyProperties(sysOffice, SysOfficeVO.class);
         }
         return null;
     }
+
     /**
      * 父节点
+     *
      * @param sysOffice 结构信息
      * @return
      */
-    private SysOffice parentSysOffice(SysOffice sysOffice){
+    private SysOffice parentSysOffice(SysOffice sysOffice) {
         //如果对象不为空，且对象的类型是货架，进入递归查询
-        if(Objects.nonNull(sysOffice) &&  SysOfficeConstant.SHELF_TYPE.equals(sysOffice.getOfficeType())){
-            SysOffice model =  getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, sysOffice.getParentCode()));
+        if (Objects.nonNull(sysOffice) && SysOfficeConstant.SHELF_TYPE.equals(sysOffice.getOfficeType())) {
+            SysOffice model = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, sysOffice.getParentCode()));
             return parentSysOffice(model);
         }
         //①对象为空 ②对象的类型不是货架，可能是仓库，也可能是别的
-        if(Objects.isNull(sysOffice) || !SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOffice.getOfficeType())){
+        if (Objects.isNull(sysOffice) || !SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOffice.getOfficeType())) {
             return null;
         }
         return sysOffice;
