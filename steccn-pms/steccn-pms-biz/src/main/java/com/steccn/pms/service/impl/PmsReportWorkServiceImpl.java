@@ -11,7 +11,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -28,9 +30,11 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -164,6 +169,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //插入数据库中pms_complete_delivery，pms_complete_delivery_info
         List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
         if (CollUtil.isNotEmpty(materialConsumeList)) {
+            List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
+
             PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
             completeDelivery.setId(IdUtil.getSnowflake().nextId());
             List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
@@ -178,14 +185,17 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 info.setCaseNo(materialDTO.getCaseNo());
                 info.setBatchNo(materialDTO.getBatchNo());
                 info.setPackTime(materialDTO.getPackTime());
-                info.setWorkOrderId(materialDTO.getProduceOrderId());
                 info.setWarehouseId(materialDTO.getWarehouseId());
                 info.setShelfId(materialDTO.getShelfId());
                 info.setCompleteDeliveryId(completeDelivery.getId());
                 modelList.add(info);
+                MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
+                BeanUtils.copyProperties(materialDTO, mess);
+                materialList.add(mess);
             }
             SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE)).get();
-            completeDelivery.setOutStorageVoucher("xxxa");
+            completeDelivery.setCode(maxOutVouchCode());
+            completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
             completeDelivery.setDeliveryTime(LocalDateTime.now());
             completeDelivery.setQuantity(sum);
             completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
@@ -194,9 +204,43 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
+            //物料消耗 ，扣除库存
+            MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
+            messDto.setCreateBy(SecurityUtils.getUser().getName());
+            messDto.setCode(completeDelivery.getCode());
+            messDto.setType(sysDictVO.getCode());
+            messDto.setMaterialList(materialList);
+            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+            if(Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()){
+                throw new BusinessException("库存变化，请重新报工");
+            }
         }
         return Boolean.TRUE;
     }
+
+    /**
+     * 最大出库code
+     *
+     * @return
+     */
+    private String maxOutVouchCode() {
+        String prefix = PmsCodeUtil.PREFIX_SO + LocalDate.now().toString().replaceAll(PmsCodeUtil.SHORT_LINE, Strings.EMPTY) + PmsCodeUtil.SHORT_LINE;
+        PmsCompleteDelivery one = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>()
+                .likeRight(PmsCompleteDelivery::getCode, prefix)
+                .orderByDesc(PmsCompleteDelivery::getCode)
+                .last(MpConstant.STR_LIMIT_1));
+        long currentMax = PmsCodeUtil.DEFAULT_PADDING;
+        if (Objects.nonNull(one)) {
+            String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);
+            try {
+                currentMax = Long.parseLong(substring);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return PmsCodeUtil.getNextCode(prefix, PmsCodeUtil.NUM_BIT_4, currentMax);
+    }
+
 
     @Override
     public Page<ProcessReportWorkPageVO> recordPage(ProcessReportWorkRecordDTO dto) {

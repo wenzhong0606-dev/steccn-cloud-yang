@@ -23,5 +23,5 @@ public class MessOutStorageVoucherDTO {
     private String createBy;
 
     @ApiModelProperty("物料信息")
-    private List<MessInStorageVoucherListDTO> materialList;
+    private List<MessOutStorageVoucherListDTO> materialList;
 }

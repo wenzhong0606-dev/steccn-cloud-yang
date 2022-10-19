@@ -71,7 +71,6 @@ public class PmsCompleteDeliveryInfo implements Serializable {
      */
     private Long processId;
 
-
     /**
      * 仓库id
      */
@@ -124,11 +123,6 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     @TableLogic
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
-
-    /**
-     * 生产工单id
-     */
-    private Long workOrderId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -30,6 +30,11 @@ public class PmsCodeUtil {
     public final static String PREFIX_SI = "SI-";
 
     /**
+     * 前缀-出库单
+     */
+    public final static String PREFIX_SO = "SO-";
+
+    /**
      * 短线
      */
     public final static String SHORT_LINE = "-";
