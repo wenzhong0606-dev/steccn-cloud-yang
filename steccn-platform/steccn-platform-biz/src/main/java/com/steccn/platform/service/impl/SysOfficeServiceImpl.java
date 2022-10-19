@@ -162,7 +162,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             Map<Integer, List<SysOfficeVO>> levelMap = sysOfficeVOS.stream().collect(Collectors.groupingBy(SysOfficeVO::getTreeLevel));
             Integer minLevel = Integer.MAX_VALUE;
             for (Map.Entry<Integer, List<SysOfficeVO>> entry : levelMap.entrySet()) {
-                if (entry.getKey() < minLevel) {
+                if (Objects.nonNull(entry.getKey()) && entry.getKey() < minLevel) {
                     minLevel = entry.getKey();
                     rootVOList = entry.getValue();
                 }
