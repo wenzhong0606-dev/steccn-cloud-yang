@@ -109,12 +109,9 @@
         state
         from pms_produce_order
         <where>
-            del_flag = 0
-            <if test="dto.state != null and dto.state !=''">
+            del_flag = 0 and state != 0
+            <if test="dto.state != null">
                 and state = #{dto.state}
-            </if>
-            <if test="dto.state = null">
-                and state != 0
             </if>
             <if test="dto.productionLineId != null and dto.productionLineId !=''">
                 and production_line_id = #{dto.productionLineId}
