@@ -19,6 +19,11 @@ public class QtOnlineCheckItemDTO implements Serializable {
     private Integer itemId;
 
     /**
+     * 检验项name
+     */
+    private String itemName;
+
+    /**
      * 分组id
      */
     private Integer groupId;

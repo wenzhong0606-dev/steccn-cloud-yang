@@ -422,6 +422,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                             Map<Integer,List<QtDefectiveItem>> resultMap = defectiveArrayList.stream().collect(Collectors.groupingBy(QtDefectiveItem::getCategoryId));
                             resultTmp.setGroupId(tmp.getId());
                             resultTmp.setItemId(groupItemTmp.getCheckItemId());
+                            resultTmp.setItemName(qtCheckItemService.getById(groupItemTmp.getCheckItemId()).getName());
                             //组装category数据
                             List<QtOnlineCheckCategoryDTO> categoryResultList = new ArrayList<>();
                             for(Map.Entry<Integer,List<QtDefectiveItem>> entry:resultMap.entrySet()){

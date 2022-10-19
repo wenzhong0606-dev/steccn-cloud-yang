@@ -533,6 +533,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public Page<QtCheckTaskListVO> pageList(QtCheckTaskListDTO dto) {
+        //如果是进行中则默认是暂存和进行中状态
+        if(dto.getStatus()!=null && dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())){
+            dto.setStatus(null);
+            List<Integer> statusList = new ArrayList<>();
+            statusList.add(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode());
+            statusList.add(QtManagerConstant.QtCheckTaskStatusEnum.TEMPORARY.getCode());
+            dto.setStatusList(statusList);
+        }
         //1、配置分页信息
         MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
                 .selectAll(QtCheckTask.class)
@@ -553,6 +561,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .and((dto.getMaterialNameOrCode() != null && !dto.getMaterialNameOrCode().equals("")), wrapper -> wrapper.like(QtMaterial::getName, dto.getMaterialNameOrCode()).or().like(QtMaterial::getCode, dto.getMaterialNameOrCode()))
                 //状态
                 .in(CollUtil.isNotEmpty(dto.getStatusList()),QtCheckTask::getStatus,dto.getStatusList())
+                //状态
+                .eq(dto.getStatus()!=null,QtCheckTask::getStatus,dto.getStatus())
                 //供应商
                 .apply(dto.getSupplierId() != null, "JSON_CONTAINS(supplier, JSON_OBJECT('id', {0}))", dto.getSupplierId())
                 //到货时间大于等于
