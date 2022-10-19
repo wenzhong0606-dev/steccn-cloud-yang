@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
@@ -17,9 +18,13 @@ import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.mapper.PmsBarcodePrintMapper;
+import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +40,9 @@ import java.util.stream.Collectors;
 @Service
 public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMapper, PmsBarcodePrint>
         implements PmsBarcodePrintService {
+
+    @Autowired
+    private PmsCompleteStorageService pmsCompleteStorageService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -72,8 +80,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Boolean delete(Long id) {
-        return removeById(id);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteBatch(List<Long> idList) {
+        Assert.notEmpty(idList, "删除集合不能为空");
+        List<PmsBarcodePrint> printList = listByIds(idList);
+        Assert.notEmpty(printList, "删除的数据集合不能为空");
+        Set<String> caseNoSet = printList.stream().map(PmsBarcodePrint::getCaseNo).collect(Collectors.toSet());
+        Set<String> existInVouchSet = pmsCompleteStorageService.existInVouch(caseNoSet);
+        if (CollUtil.isNotEmpty(existInVouchSet)) {
+            throw new BusinessException("箱号：" + existInVouchSet + "已生成入库单");
+        }
+        return removeByIds(idList);
     }
 
     @Override
@@ -93,17 +110,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     @Override
     public BarcodePrintRecordVO info(Long id) {
         PmsBarcodePrint model = getById(id);
-        Assert.notNull(model,"打印详细信息不存在");
+        Assert.notNull(model, "打印详细信息不存在");
         BarcodePrintRecordVO vo = new BarcodePrintRecordVO();
-        BeanUtils.copyProperties(model,vo);
+        BeanUtils.copyProperties(model, vo);
         return vo;
     }
 
     @Override
     public Map<String, PmsCompleteStorageNumDTO> batchSum(Set<String> batchNoSet) {
         Map<String, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
-        List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getBatchNo,batchNoSet));
-        if(CollUtil.isNotEmpty(dbList)){
+        List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getBatchNo, batchNoSet));
+        if (CollUtil.isNotEmpty(dbList)) {
             Map<String, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getBatchNo));
             for (Map.Entry<String, List<PmsBarcodePrint>> entry : dbMap.entrySet()) {
                 BigDecimal sum = BigDecimal.ZERO;

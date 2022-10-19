@@ -8,6 +8,7 @@ import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,10 +35,10 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
 
     /**
      * 删除箱号
-     * @param id 主键id
+     * @param idList 主键id集合
      * @return 删除
      */
-    Boolean delete(Long id);
+    Boolean deleteBatch(List<Long> idList);
 
     /**
      * 箱号set

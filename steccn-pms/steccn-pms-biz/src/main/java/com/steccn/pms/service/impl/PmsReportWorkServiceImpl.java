@@ -83,6 +83,33 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
         //1.将日期拼接最大时间和最小时间
+        jointConditionTime(dto);
+
+        //2.自定义sql查询
+        Page<ProcessReportWorkPageVO> page = this.baseMapper.processReportPage(new Page(dto.getCurrent(), dto.getSize()), dto);
+
+        //3.将id映射成name
+        List<ProcessReportWorkPageVO> records = page.getRecords();
+        Set<Long> unitList = Sets.newHashSet();
+        Set<Integer> organIdSet = Sets.newHashSet();
+        records.forEach(ele -> {
+            unitList.add(ele.getUnitId());
+            organIdSet.add(ele.getStationId());
+        });
+        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
+        records.forEach(ele -> {
+            ele.setUnitName(sysDictMap.get(ele.getUnitId()));
+            ele.setStationName(sysOfficeMap.get(ele.getStationId()));
+        });
+        return page;
+    }
+
+    /**
+     * 拼接条件时间
+     * @param dto
+     */
+    private void jointConditionTime(ProcessReportWorkPageDTO dto) {
         //创建时间-开始
         if (Objects.nonNull(dto.getCreateDtStart())) {
             dto.setCreateTimeStart(LocalDateTime.of(dto.getCreateDtStart(), LocalTime.MIN));
@@ -107,25 +134,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         if (Objects.nonNull(dto.getEndDtEnd())) {
             dto.setEndTimeEnd(LocalDateTime.of(dto.getEndDtEnd(), LocalTime.MAX));
         }
-
-        //2.自定义sql查询
-        Page<ProcessReportWorkPageVO> page = this.baseMapper.processReportPage(new Page(dto.getCurrent(), dto.getSize()), dto);
-
-        //3.将id映射成name
-        List<ProcessReportWorkPageVO> records = page.getRecords();
-        Set<Long> unitList = Sets.newHashSet();
-        Set<Integer> organIdSet = Sets.newHashSet();
-        records.forEach(ele -> {
-            unitList.add(ele.getUnitId());
-            organIdSet.add(ele.getStationId());
-        });
-        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
-        records.forEach(ele -> {
-            ele.setUnitName(sysDictMap.get(ele.getUnitId()));
-            ele.setStationName(sysOfficeMap.get(ele.getStationId()));
-        });
-        return page;
     }
 
     @Override
@@ -147,6 +155,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //校验单位是否存在
         Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
         Assert.isTrue(unitBoolean, "单位不存在");
+        //校验是否物料的条数是否正确 todo 2022-10-19
+
         //生成报工记录
         PmsReportWork pmsReportWork = new PmsReportWork();
         BeanUtils.copyProperties(dto, pmsReportWork);
@@ -211,7 +221,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             messDto.setType(sysDictVO.getCode());
             messDto.setMaterialList(materialList);
             MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
-            if(Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()){
+            if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
                 throw new BusinessException("库存变化，请重新报工");
             }
         }
@@ -240,7 +250,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         }
         return PmsCodeUtil.getNextCode(prefix, PmsCodeUtil.NUM_BIT_4, currentMax);
     }
-
 
     @Override
     public Page<ProcessReportWorkPageVO> recordPage(ProcessReportWorkRecordDTO dto) {
@@ -281,46 +290,45 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
             List<MessMaterialStorageDTO> messMaterialStorageList = Lists.newArrayList();
-            Map<Long,Long> unitMaterialMap = Maps.newHashMap();
+            Map<Long, Long> unitMaterialMap = Maps.newHashMap();
             pmsWorkOrderBomList.forEach(ele -> {
                 BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 4, RoundingMode.HALF_UP);
                 MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
                 storageDTO.setMaterialId(ele.getModuleId());
                 storageDTO.setQuantity(divide);
                 messMaterialStorageList.add(storageDTO);
-                unitMaterialMap.put(ele.getModuleId(),ele.getUnitId());
+                unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
             List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
-            if(CollUtil.isNotEmpty(messList)){
-                Set<String> storageSet = Sets.newHashSet();
-                for(MessMaterialConsumeDTO messDto : messList){
-                    storageSet.add(messDto.getWarehouseCode());
-                    storageSet.add(messDto.getShelfCode());
-                }
-                Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
-                SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-                for(MessMaterialConsumeDTO messDto : messList){
-                    ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
-                    BeanUtils.copyProperties(messDto,resDTO);
-                    resDTO.setProduceOrderId(pmsProduceOrder.getId());
-                    resDTO.setProcessId(pmsProduceOrderCraft.getId());
-                    resDTO.setProcessName(pmsProduceOrderCraft.getName());
-                    resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
-                    resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
-                    resDTO.setModuleId(messDto.getMaterialId());
-                    EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
-                    resDTO.setModuleName(eqpSpareVO.getName());
-                    resDTO.setModuleCode(eqpSpareVO.getCode());
-                    resDTO.setQuantity(messDto.getAvailableQuantity());
-                    resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
-                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
-                    resDTO.setWarehouseId(warehouse.getId());
-                    resDTO.setWarehouseName(warehouse.getOfficeName());
-                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
-                    resDTO.setShelfId(shelf.getId());
-                    resDTO.setShelfName(shelf.getOfficeName());
-                    resList.add(resDTO);
-                }
+            Assert.notEmpty(messList, "物料消耗集合不能为空");
+            Set<String> storageSet = Sets.newHashSet();
+            for (MessMaterialConsumeDTO messDto : messList) {
+                storageSet.add(messDto.getWarehouseCode());
+                storageSet.add(messDto.getShelfCode());
+            }
+            Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
+            SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+            for (MessMaterialConsumeDTO messDto : messList) {
+                ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
+                BeanUtils.copyProperties(messDto, resDTO);
+                resDTO.setProduceOrderId(pmsProduceOrder.getId());
+                resDTO.setProcessId(pmsProduceOrderCraft.getId());
+                resDTO.setProcessName(pmsProduceOrderCraft.getName());
+                resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
+                resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
+                resDTO.setModuleId(messDto.getMaterialId());
+                EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
+                resDTO.setModuleName(eqpSpareVO.getName());
+                resDTO.setModuleCode(eqpSpareVO.getCode());
+                resDTO.setQuantity(messDto.getAvailableQuantity());
+                resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
+                SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
+                resDTO.setWarehouseId(warehouse.getId());
+                resDTO.setWarehouseName(warehouse.getOfficeName());
+                SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
+                resDTO.setShelfId(shelf.getId());
+                resDTO.setShelfName(shelf.getOfficeName());
+                resList.add(resDTO);
             }
         }
         return resList;
@@ -330,9 +338,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     public Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>()
-                .eq(Objects.nonNull(dto.getBatchNo()),PmsReportWork::getProcessId, dto.getProcessId())
-                .eq(Objects.nonNull(dto.getBatchNo()),PmsReportWork::getBatchNo, dto.getBatchNo())
-                .eq(Objects.nonNull(dto.getStationId()),PmsReportWork::getStationId, dto.getStationId())
+                .eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getProcessId, dto.getProcessId())
+                .eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getBatchNo, dto.getBatchNo())
+                .eq(Objects.nonNull(dto.getStationId()), PmsReportWork::getStationId, dto.getStationId())
                 .ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime())
                 .le(Objects.nonNull(dto.getEndTime()), PmsReportWork::getCreateTime, dto.getStartTime());
         //2.定义分页对象

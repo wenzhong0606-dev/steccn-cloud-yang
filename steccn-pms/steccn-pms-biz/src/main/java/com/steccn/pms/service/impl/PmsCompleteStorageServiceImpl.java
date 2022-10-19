@@ -182,8 +182,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         messDto.setMaterialList(materialList);
         MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
         //入库必定要成功
-        if(Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()){
-            log.info("入库单 -> "+messInStorageVoucherVO.getMessage());
+        if (Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()) {
+            log.info("入库单 -> " + messInStorageVoucherVO.getMessage());
         }
         return pmsCompleteStorage.getCode();
     }
@@ -333,6 +333,18 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
         page.setTotal(storageVOList.size());
         return page.setRecords(storageVOList);
+    }
+
+    @Override
+    public Set<String> existInVouch(Set<String> caseNoSet) {
+        Set<String> resSet = Sets.newHashSet();
+        List<PmsCompleteStorageInfo> dbList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
+                .select(PmsCompleteStorageInfo::getCaseNo)
+                .in(PmsCompleteStorageInfo::getCaseNo, caseNoSet));
+        if (CollUtil.isNotEmpty(dbList)) {
+            resSet = dbList.stream().map(PmsCompleteStorageInfo::getCaseNo).collect(Collectors.toSet());
+        }
+        return resSet;
     }
 
     /**

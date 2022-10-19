@@ -59,4 +59,11 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return
      */
     Page<PmsCompleteStorageVO> completeStoragePageList(PmsCompleteStorageDTO dto);
+
+    /**
+     * 箱号是否已生成入库单
+     * @param caseNoSet 箱号集合
+     * @return 已生成入库单的箱号
+     */
+    Set<String> existInVouch(Set<String> caseNoSet);
 }
