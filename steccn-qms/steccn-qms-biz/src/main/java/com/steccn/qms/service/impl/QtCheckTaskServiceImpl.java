@@ -69,7 +69,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public Boolean add(QtAddCheckTaskDTO dto) {
+    public Long add(QtAddCheckTaskDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
         //任务类型,原始任务
@@ -106,7 +106,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //取旧的快照
             qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
-        return save(qtCheckTask);
+        save(qtCheckTask);
+        return qtCheckTask.getId();
     }
 
     /**
@@ -486,6 +487,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
         qtCheckTask.setStatus(2);
+        qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
+        qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+        qtCheckTask.setFinishedTime(LocalDateTime.now());
         return updateById(qtCheckTask);
     }
 
@@ -681,6 +685,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //若为暂存状态，则是检验中
                 if (vo.getStatus() == 4) {
                     vo.setStatus(1);
+                }
+                QtCheckPlan planNameTmp = qtCheckPlanService.getById(vo.getCheckPlanId());
+                if(planNameTmp!=null){
+                    vo.setCheckPlanName(planNameTmp.getName());
                 }
             }
         }

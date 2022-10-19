@@ -169,4 +169,18 @@ public class QtCheckTaskListVO {
      */
     private String startName;
 
+    /**
+     * 缺陷总数
+     */
+    private Integer defectNum;
+
+    /**
+     * 计划id
+     */
+    private Integer checkPlanId;
+
+    /**
+     * 计划name
+     */
+    private String checkPlanName;
 }

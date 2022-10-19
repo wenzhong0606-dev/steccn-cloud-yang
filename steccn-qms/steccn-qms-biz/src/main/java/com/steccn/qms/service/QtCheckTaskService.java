@@ -23,7 +23,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Boolean add(QtAddCheckTaskDTO dto);
+    Long add(QtAddCheckTaskDTO dto);
 
     /**
      * 巡检列表Vo

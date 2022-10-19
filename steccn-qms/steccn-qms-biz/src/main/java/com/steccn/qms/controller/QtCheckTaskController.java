@@ -33,7 +33,7 @@ public class QtCheckTaskController {
 
     @PostMapping
     @ApiOperation(value = "新建巡检任务")
-    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtAddCheckTaskDTO dto) {
+    public R<Long> add(@Validated(InsertGroup.class) @RequestBody QtAddCheckTaskDTO dto) {
         return R.success(qtCheckTaskService.add(dto));
     }
 
