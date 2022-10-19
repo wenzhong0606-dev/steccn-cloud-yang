@@ -13,10 +13,13 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.mapper.PmsWorkOrderBomMapper;
+import com.steccn.pms.vo.PmProcessVO;
 import com.steccn.pms.vo.PmsWorkOrderBomVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,8 +37,8 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         implements PmsWorkOrderBomService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
-
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final PmProcessService processService;
 
     /**
      * 保存物料信息
@@ -76,14 +79,18 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         //3.处理数据
         Set<Long> ids = Sets.newHashSet();
         List<Long> materialIds = Lists.newArrayList();
+        List<Long> processIds = Lists.newArrayList();
         list.forEach(pmsWorkOrderBom -> {
             ids.add(pmsWorkOrderBom.getUnitId());
             materialIds.add(pmsWorkOrderBom.getModuleId());
+            processIds.add(pmsWorkOrderBom.getProcessId());
         });
         //3.1.获取字典数据
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
         //3.2 获取物料数据
         Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+        //3.3 获取工序数据
+        Map<Long, PmProcessVO> processVOMap = processService.listById(processIds);
         List<PmsWorkOrderBomVO> pmsWorkOrderBomVOList = Lists.newArrayList();
         list.forEach(pmsWorkOrderBom -> {
             PmsWorkOrderBomVO pmsWorkOrderBomVO = new PmsWorkOrderBomVO();
@@ -92,6 +99,10 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             if (Objects.nonNull(eqpSpareVO)) {
                 pmsWorkOrderBomVO.setName(eqpSpareVO.getName());
                 pmsWorkOrderBomVO.setCode(eqpSpareVO.getCode());
+            }
+            //处理工序数据
+            if (CollUtil.isNotEmpty(processVOMap)){
+                pmsWorkOrderBomVO.setProcessName(processVOMap.get(pmsWorkOrderBomVO.getProcessId()).getName());
             }
             pmsWorkOrderBomVO.setUnit(dictMap.get(pmsWorkOrderBomVO.getUnitId()));
             pmsWorkOrderBomVOList.add(pmsWorkOrderBomVO);

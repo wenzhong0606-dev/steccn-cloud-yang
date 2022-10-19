@@ -41,9 +41,9 @@ public class PmsProcessInStationServiceImpl extends ServiceImpl<PmsProcessInStat
     public Page<PmsProcessInStationVO> inPage(PmsProcessInStationDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsProcessInStation> eq = new LambdaQueryWrapper<PmsProcessInStation>()
-                .eq(PmsProcessInStation::getProcessId, dto.getProcessId())
-                .eq(PmsProcessInStation::getBatchNo, dto.getBatchNo())
-                .eq(PmsProcessInStation::getStationId, dto.getStationId())
+                .eq(Objects.nonNull(dto.getProcessId()),PmsProcessInStation::getProcessId, dto.getProcessId())
+                .eq(Objects.nonNull(dto.getBatchNo()),PmsProcessInStation::getBatchNo, dto.getBatchNo())
+                .eq(Objects.nonNull(dto.getStationId()),PmsProcessInStation::getStationId, dto.getStationId())
                 .ge(Objects.nonNull(dto.getStartTime()), PmsProcessInStation::getInStationTime, dto.getStartTime())
                 .le(Objects.nonNull(dto.getEndTime()), PmsProcessInStation::getInStationTime, dto.getStartTime());
         //2.定义分页对象

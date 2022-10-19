@@ -40,6 +40,9 @@ public class PmsWorkOrderBomVO {
     @ApiModelProperty("工序Id")
     private Long processId;
 
+    @ApiModelProperty("工序名称")
+    private String processName;
+
     @ApiModelProperty("固定数量")
     private Integer fixedQuantityFlag;
 

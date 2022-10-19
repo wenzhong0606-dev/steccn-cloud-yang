@@ -90,6 +90,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                     pmsCompleteDeliveryVO.setUnitId(pmsCompleteDeliveryInfo.getUnitId());
                     pmsCompleteDeliveryVO.setCaseNo(pmsCompleteDeliveryInfo.getCaseNo());
                     pmsCompleteDeliveryVO.setBatchNo(pmsCompleteDeliveryInfo.getBatchNo());
+                    pmsCompleteDeliveryVO.setMaterialId(pmsCompleteDeliveryInfo.getMaterialId());
                     office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getWarehouseId()));
                     office.add(Math.toIntExact(pmsCompleteDeliveryInfo.getShelfId()));
                     pmsCompleteDeliveryVO.setWarehouseId(pmsCompleteDeliveryInfo.getWarehouseId());
@@ -113,17 +114,24 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                             //处理单位数据
                             pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
                             //处理工序数据
-                            pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
+                            if (CollUtil.isNotEmpty(processMap)) {
+                                pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
+                            }
                             //处理仓库货架信息
-                            pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
-                            pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
+                            if (CollUtil.isNotEmpty(officeMapData)) {
+                                pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
+                                pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
+                            }
                             //处理物料数据
-                            pmsCompleteDeliveryVO.setMaterialName(materialData.get(pmsCompleteDeliveryVO.getMaterialName()).getName());
-                            pmsCompleteDeliveryVO.setMaterialCode(materialData.get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
+                            if (CollUtil.isNotEmpty(materialData)) {
+                                pmsCompleteDeliveryVO.setMaterialName(materialData.get(pmsCompleteDeliveryVO.getMaterialName()).getName());
+                                pmsCompleteDeliveryVO.setMaterialCode(materialData.get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
+                            }
                         }
                 );
             }
         }
+        page.setTotal(pmsCompleteDeliveryVOList.size());
         return page.setRecords(pmsCompleteDeliveryVOList);
     }
 

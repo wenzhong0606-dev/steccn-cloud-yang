@@ -139,6 +139,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     dictIds.add(pmsProduceOrderVO.getTypeId());
                     dictIds.add(pmsProduceOrderVO.getUnitId());
                     officeIds.add(pmsProduceOrderVO.getProductionLineId());
+                    dictIds.add(pmsProduceOrderVO.getCompleteUnitId());
+                    dictIds.add(pmsProduceOrderVO.getMinPackageUnitId());
                 }
         );
         //3.1查询字典数据
@@ -156,6 +158,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
                     //4.3 处理单位数据
                     pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+                    pmsProduceOrderVO.setMinPackageUnit(dictMap.get(pmsProduceOrderVO.getMinPackageUnitId()));
+                    pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
                     //4.4 处理工艺版本数据
                     pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
                 }

@@ -31,11 +31,6 @@ public class PmsCompleteDelivery implements Serializable {
     private LocalDateTime deliveryTime;
 
     /**
-     * 物料id
-     */
-    private Long materialId;
-
-    /**
      * 数量
      */
     private BigDecimal quantity;

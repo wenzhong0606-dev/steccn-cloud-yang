@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 生产订单
+ *
  * @TableName pms_produce_order
  */
-@TableName(value ="pms_produce_order")
+@TableName(value = "pms_produce_order")
 @Data
 public class PmsProduceOrder implements Serializable {
     /**
@@ -104,6 +106,16 @@ public class PmsProduceOrder implements Serializable {
      * 最小包装数量
      */
     private BigDecimal minPackageQuantity;
+
+    /**
+     * 最小包装单位
+     */
+    private Long minPackageUnitId;
+
+    /**
+     * 备注
+     */
+    private String note;
 
     /**
      * 创建人id
