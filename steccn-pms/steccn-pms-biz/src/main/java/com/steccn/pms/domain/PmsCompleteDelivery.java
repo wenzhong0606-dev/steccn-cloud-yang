@@ -66,6 +66,11 @@ public class PmsCompleteDelivery implements Serializable {
     private Long produceOrderId;
 
     /**
+     * 工序id
+     */
+    private Long processId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

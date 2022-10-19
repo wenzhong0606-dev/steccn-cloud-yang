@@ -331,6 +331,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 pmsCompleteStorageVO.setShelfName(warehouses.getData().get(pmsCompleteStorageVO.getShelfId()).getOfficeName());
             });
         }
+        page.setTotal(storageVOList.size());
         return page.setRecords(storageVOList);
     }
 
