@@ -182,8 +182,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<QtCheckTaskDetailCopyVO> copy = Lists.newArrayList();
         if (!qtCheckTaskDetails.isEmpty()) {
             //包装好group和copy
-            qtCheckTaskDetails.forEach(tmp -> {
+            for(QtCheckTaskDetail tmp:qtCheckTaskDetails){
                 QtCheckPlanDetailsVO qtCheckPlanDetailsVOTmp = qtCheckPlanService.info(qtCheckTask.getCheckPlanId(), id, tmp.getCopy());
+                //如果有值则表示在线检，跳出循环即可
+                if(CollUtil.isNotEmpty(qtCheckPlanDetailsVOTmp.getOnlineItem())){
+                    qtCheckPlanDetailsVO.setOnlineItem(qtCheckPlanDetailsVOTmp.getOnlineItem());
+                    break;
+                }
                 //查看是否有details
                 QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
                         .eq(QtCheckTaskCopy::getTaskId, id)
@@ -193,10 +198,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVOTmp.getCheckGroup());
                 //放入copyDetails
                 QtCheckTaskCopyDetailsDTO copyDetailsVO = new QtCheckTaskCopyDetailsDTO();
-                BeanUtils.copyProperties(qtCheckTaskCopy, copyDetailsVO);
+                if(qtCheckTaskCopy!=null){
+                    BeanUtils.copyProperties(qtCheckTaskCopy, copyDetailsVO);
+                }
                 qtCheckTaskDetailCopyVO.setCopyDetails(copyDetailsVO);
                 copy.add(qtCheckTaskDetailCopyVO);
-            });
+
+            }
 
         }
         //details没有值说明没有输入详细值
@@ -347,13 +355,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //插入在线检数据
         else if (task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem()!=null){
-            QtCheckTaskDetail detail = new QtCheckTaskDetail();
             List<QtCheckTaskDetail> model = Lists.newArrayList();
             dto.getOnlineItem().forEach(tmp->{
-                detail.setTaskId(dto.getId());
+                QtCheckTaskDetail detail = new QtCheckTaskDetail();
                 detail.setItemId(tmp.getItemId());
                 detail.setGroupId(tmp.getGroupId());
                 detail.setCopy(0);
+                detail.setTaskId(dto.getId());
                 List<QtOnlineCheckDefectDTO> defectList = new ArrayList<>();
                 if(CollUtil.isNotEmpty(tmp.getCategory())){
                     tmp.getCategory().forEach(category -> {

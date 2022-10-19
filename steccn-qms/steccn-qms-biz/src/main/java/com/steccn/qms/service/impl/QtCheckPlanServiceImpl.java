@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -439,7 +440,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                                     QtCheckTaskDetail taskDetail = qtCheckTaskDetailService.getOne(detailCondition);
                                     //处理数量
                                     if(taskDetail!=null && taskDetail.getDefectNum()!=null){
-                                        Map<Integer,QtOnlineCheckDefectDTO> defectMap = taskDetail.getDefectNum().stream().collect(Collectors.toMap(QtOnlineCheckDefectDTO::getDefectId,Function.identity()));
+                                        String numString = JSON.toJSONString(taskDetail.getDefectNum());
+                                        List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString,QtOnlineCheckDefectDTO.class);
+                                        Map<Integer,QtOnlineCheckDefectDTO> defectMap = defectNumList.stream().collect(Collectors.toMap(QtOnlineCheckDefectDTO::getDefectId,Function.identity()));
                                         if(defectMap.get(defectListTmp.getId())!=null){
                                             defectResultDTO.setDefectNumber(defectMap.get(defectListTmp.getId()).getDefectNumber());
                                         }

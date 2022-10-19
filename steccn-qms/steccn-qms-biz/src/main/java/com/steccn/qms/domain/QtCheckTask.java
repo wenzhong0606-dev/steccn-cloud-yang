@@ -161,6 +161,11 @@ public class QtCheckTask implements Serializable {
     private String customerName;
 
     /**
+     * 缺陷总数
+     */
+    private Integer defectNum;
+
+    /**
      * 缺陷记录开始时间
      */
     private LocalDateTime defectStartTime;
