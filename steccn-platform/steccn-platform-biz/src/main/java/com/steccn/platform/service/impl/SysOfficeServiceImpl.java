@@ -2,12 +2,15 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -205,6 +208,22 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             return BeanUtil.copyProperties(sysOffice, SysOfficeVO.class);
         }
         return null;
+    }
+
+    @Override
+    public StationLineVO stationScan(Integer id) {
+        SysOffice station = getById(id);
+        Assert.notNull(station,"数据为空");
+        StationLineVO resVo = new StationLineVO();
+        resVo.setStationId(station.getId());
+        resVo.setStationName(station.getOfficeName());
+        Map<String, SysOfficeVO> sysOfficeVOMap = listByCodeSet(Sets.newHashSet(station.getParentCode()));
+        if(Objects.nonNull(sysOfficeVOMap)){
+            SysOfficeVO line = sysOfficeVOMap.get(station.getParentCode());
+            resVo.setProductLineId(line.getId());
+            resVo.setProductLineName(line.getOfficeName());
+        }
+        return resVo;
     }
 
     /**

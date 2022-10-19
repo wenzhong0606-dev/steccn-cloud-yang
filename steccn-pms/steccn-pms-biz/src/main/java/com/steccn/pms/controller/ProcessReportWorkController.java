@@ -54,10 +54,4 @@ public class ProcessReportWorkController {
     public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){
         return R.success(pmsReportWorkService.reportWorkPageList(dto));
     }
-
-    @ApiOperation("工序报工-扫描工位二维码")
-    @GetMapping("/station/scan/{id}")
-    public R<BaseSelectVO<Integer>> stationScan(@PathVariable("id") Integer id){
-        return R.success(pmsReportWorkService.stationScan(id));
-    }
 }

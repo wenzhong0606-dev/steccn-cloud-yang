@@ -51,11 +51,4 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 分页报工信息
      */
     Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto);
-
-    /**
-     * 工序报工-确定工位
-     * @param id id
-     * @return baseSelectVo
-     */
-    BaseSelectVO<Integer> stationScan(Integer id);
 }

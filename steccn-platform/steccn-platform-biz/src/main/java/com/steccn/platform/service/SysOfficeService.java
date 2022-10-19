@@ -1,6 +1,7 @@
 package com.steccn.platform.service;
 
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -77,4 +78,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     SysOfficeVO shelfWarehouse(Integer id);
+
+    /**
+     * 扫描工位二维码
+     * @param id 工位id
+     * @return
+     */
+    StationLineVO stationScan(Integer id);
 }

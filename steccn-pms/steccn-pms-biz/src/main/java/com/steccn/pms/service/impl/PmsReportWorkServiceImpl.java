@@ -309,13 +309,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return page.setRecords(res);
     }
 
-    @Override
-    public BaseSelectVO<Integer> stationScan(Integer id) {
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(Sets.newHashSet(id))).get();
-        Assert.notEmpty(officeMap, "工位不存在");
-        return new BaseSelectVO(id, officeMap.get(id));
-    }
-
     /**
      * 获取报工编码
      *

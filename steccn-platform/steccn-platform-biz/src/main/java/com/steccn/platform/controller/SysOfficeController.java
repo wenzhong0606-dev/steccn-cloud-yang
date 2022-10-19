@@ -3,6 +3,7 @@ package com.steccn.platform.controller;
 
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysOfficeService;
@@ -64,5 +65,11 @@ public class SysOfficeController {
     @GetMapping("/shelf/warehouse/{id}")
     public R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id) {
         return R.success(sysOfficeService.shelfWarehouse(id));
+    }
+
+    @ApiOperation("扫描工位二维码")
+    @GetMapping("/station/scan/{id}")
+    public R<StationLineVO> stationScan(@PathVariable("id") Integer id){
+        return R.success(sysOfficeService.stationScan(id));
     }
 }
