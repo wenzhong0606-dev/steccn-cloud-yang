@@ -105,4 +105,15 @@ public class PmsProduceOrderVO {
     @ApiModelProperty("最小包装数量")
     private BigDecimal minPackageQuantity;
 
+    @ApiModelProperty("班次id")
+    private Long classesId;
+
+    @ApiModelProperty("班次名称")
+    private String classesName;
+
+    @ApiModelProperty("班组id")
+    private Long classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
 }
