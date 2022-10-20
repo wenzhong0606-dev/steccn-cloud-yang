@@ -3,6 +3,7 @@ package com.steccn.common.config;
 import com.steccn.common.aspect.SysLogAspect;
 import com.steccn.common.event.SysLogListener;
 import com.steccn.common.properties.LogProperties;
+import com.steccn.platform.feign.RemoteLogFeignApi;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -21,8 +22,8 @@ public class LogAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = LogProperties.PREFIX, name = "enable", havingValue = "true")
-    public SysLogListener sysLogListener(LogProperties logProperties) {
-        return new SysLogListener(logProperties);
+    public SysLogListener sysLogListener(LogProperties logProperties, RemoteLogFeignApi remoteLogFeignApi) {
+        return new SysLogListener(logProperties, remoteLogFeignApi);
     }
 
     @Bean

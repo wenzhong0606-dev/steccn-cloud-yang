@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -28,6 +29,7 @@ public class ProcessReportWorkController {
 
     @ApiOperation("工序分页列表")
     @PostMapping("/page")
+    @SysLog("工序报工分页列表")
     public R<Page<ProcessReportWorkPageVO>> pageList(@RequestBody ProcessReportWorkPageDTO dto) {
         return R.success(pmsReportWorkService.pageList(dto));
     }

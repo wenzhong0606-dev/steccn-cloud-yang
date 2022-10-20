@@ -82,7 +82,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsCompleteDeliveryInfoService completeDeliveryInfoService;
 
     @Override
-    @SysLog("工序报工分页列表")
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
         //1.将日期拼接最大时间和最小时间
         jointConditionTime(dto);

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.SysLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.SysLog">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="type" column="type" jdbcType="BOOLEAN"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="remoteAddr" column="remote_addr" jdbcType="VARCHAR"/>
+            <result property="userAgent" column="user_agent" jdbcType="VARCHAR"/>
+            <result property="requestUri" column="request_uri" jdbcType="VARCHAR"/>
+            <result property="method" column="method" jdbcType="VARCHAR"/>
+            <result property="params" column="params" jdbcType="OTHER"/>
+            <result property="time" column="time" jdbcType="BIGINT"/>
+            <result property="exception" column="exception" jdbcType="VARCHAR"/>
+            <result property="serviceId" column="service_id" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,type,title,
+        remote_addr,user_agent,request_uri,
+        method,params,time,
+        exception,service_id,create_by,
+        create_name,create_time,del_flag
+    </sql>
+</mapper>
