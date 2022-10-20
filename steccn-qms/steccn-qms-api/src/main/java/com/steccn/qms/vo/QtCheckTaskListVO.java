@@ -30,9 +30,14 @@ public class QtCheckTaskListVO {
     private String materialName;
 
     /**
+     * 物料id
+     */
+    private Long materialId;
+
+    /**
      * 到货时间
      */
-    private LocalDateTime arrivalTime;
+    private LocalDate arrivalTime;
 
     /**
      * 供应商名
@@ -183,4 +188,19 @@ public class QtCheckTaskListVO {
      * 计划name
      */
     private String checkPlanName;
+
+    /**
+     * 完成任务人id
+     */
+    private Long finishedBy;
+
+    /**
+     * 完成任务人姓名
+     */
+    private String finishedName;
+
+    /**
+     * 送货单号
+     */
+    private String sendOrder;
 }

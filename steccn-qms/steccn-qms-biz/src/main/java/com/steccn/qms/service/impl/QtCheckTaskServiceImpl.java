@@ -69,13 +69,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long add(QtAddCheckTaskDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
-        //任务类型,原始任务
-        qtCheckTask.setType(0);
         //状态待检验
         qtCheckTask.setStatus(0);
+        if(dto.getOriginalId()!=null){
+            //复检任务
+            qtCheckTask.setType(1);
+        }else {
+            //正常任务
+            qtCheckTask.setType(0);
+        }
         //获取最大的自增编码
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
         /**
@@ -107,6 +113,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
         save(qtCheckTask);
+        //如果有原始任务id,则表示为复检任务
+        if(dto.getOriginalId()!=null){
+            //复检任务
+            QtCheckTask originalTask = getById(dto.getOriginalId());
+            QtRecheckTask recheckModel = new QtRecheckTask();
+            recheckModel.setOriginalId(dto.getOriginalId());
+            recheckModel.setRecheckId(qtCheckTask.getId());
+            recheckModel.setOriginalCode(originalTask.getCode());
+            qtRecheckTaskService.save(recheckModel);
+        }
         return qtCheckTask.getId();
     }
 
@@ -149,6 +165,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (qtCheckTask != null) {
             //json名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
+            //计划id
+            qtCheckTaskListVo.setCheckPlanName(qtCheckPlanService.getById(qtCheckTask.getCheckPlanId()).getName());
             if (qtCheckTask.getMaterialWorkshop() != null) {
                 qtCheckTask.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             }
@@ -262,6 +280,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateStatus(QtCheckTaskStatusDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         QtCheckTask oldModel = getById(dto.getId());

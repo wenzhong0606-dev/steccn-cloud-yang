@@ -25,6 +25,7 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 物料id
      */
+    @NotNull(groups = {InsertGroup.class}, message = "物料id不能为空")
     private Long materialId;
 
     /**
@@ -118,4 +119,9 @@ public class QtAddCheckTaskDTO implements Serializable {
      * 送货单号
      */
     private String sendOrder;
+
+    /**
+     * 原始任务id
+     */
+    private Long originalId;
 }
