@@ -28,4 +28,10 @@ public class EqpSpareVO implements Serializable {
     @ApiModelProperty("备件名称")
     private String name;
 
+    @ApiModelProperty("单位id")
+    private String unitId;
+
+    @ApiModelProperty("单位")
+    private String unit;
+
 }

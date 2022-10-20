@@ -7,6 +7,8 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.models.auth.In;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -20,12 +22,16 @@ import java.time.LocalDateTime;
 public class ProduceOrderAcceptPageDTO extends BasePageDTO {
 
     @ApiModelProperty("开始时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime startTime;
+    private LocalDate startTime;
 
     @ApiModelProperty("结束时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime endTime;
+    private LocalDate endTime;
+
+    @ApiModelProperty("实际开始时间")
+    private LocalDateTime actualStartTime;
+
+    @ApiModelProperty("实际结束时间")
+    private LocalDateTime actualEndTime;
 
     @ApiModelProperty("产线id")
     private Integer productionLineId;

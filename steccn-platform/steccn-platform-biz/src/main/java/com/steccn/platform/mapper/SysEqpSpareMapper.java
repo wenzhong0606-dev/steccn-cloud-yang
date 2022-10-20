@@ -20,12 +20,25 @@ import java.util.List;
 @Mapper
 public interface SysEqpSpareMapper extends BaseMapper<SysEqpSpare> {
 
-    @Select("select id,code,name from sys_eqp_spare where name like concat(concat('%',#{name}),'%')")
-    List<EqpSpareVO> listSpares(String name);
+    /**
+     * 根据备件名称查询备件内容
+     * @param name
+     * @return
+     */
+    List<EqpSpareVO> listSpares(@Param("name") String name);
 
-    @Select("select id,code,name from sys_eqp_spare where code = #{code}")
-    EqpSpareVO getByCode(String code);
+    /**
+     * 根据备件编码查询备件信息
+     * @param code
+     * @return
+     */
+    EqpSpareVO getByCode(@Param("code") String code);
 
+    /**
+     * 根据备件编码批量查询
+     * @param codeList
+     * @return
+     */
     Collection<SysEqpSpare> listByCode(@Param("codeList") List<String> codeList);
 }
 

@@ -116,8 +116,8 @@
             <if test="dto.productionLineId != null and dto.productionLineId !=''">
                 and production_line_id = #{dto.productionLineId}
             </if>
-            <if test="dto.startTime !=null and dto.endTime != null">
-                and actual_start_time between #{dto.startTime} and #{dto.endTime}
+            <if test="dto.actualStartTime !=null and dto.actualEndTime != null">
+                and plan_start_time between #{dto.actualStartTime} and #{dto.actualEndTime}
             </if>
         </where>
     </select>

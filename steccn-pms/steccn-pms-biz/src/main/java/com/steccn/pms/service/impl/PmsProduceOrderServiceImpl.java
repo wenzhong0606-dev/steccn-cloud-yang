@@ -305,6 +305,15 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     @Override
     public Page<PmsProduceOrderVO> acceptPage(ProduceOrderAcceptPageDTO dto) {
+        //处理时间数据
+        if (Objects.nonNull(dto.getStartTime())) {
+            dto.setActualStartTime(LocalDateTime.of(dto.getStartTime(), LocalTime.MIN));
+        }
+        //计划开始时间-结束
+        if (Objects.nonNull(dto.getEndTime())) {
+            dto.setActualEndTime(LocalDateTime.of(dto.getEndTime(), LocalTime.MAX));
+        }
+
         //1.自定义sql查询订单接收数据
         Page<PmsProduceOrderVO> page = this.baseMapper.acceptPage(new Page(dto.getCurrent(), dto.getSize()), dto);
         //2.处理订单数据
