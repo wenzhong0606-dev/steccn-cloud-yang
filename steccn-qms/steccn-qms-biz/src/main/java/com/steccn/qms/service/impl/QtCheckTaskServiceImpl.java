@@ -112,6 +112,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //取旧的快照
             qtCheckTask.setCheckPlanId(maxSnapshot.getId());
         }
+        //复检任务需要置空
+        if(dto.getOriginalId()!=null){
+            qtCheckTask.setFinishedTime(null);
+            qtCheckTask.setFinishedName(null);
+            qtCheckTask.setFinishedBy(null);
+            qtCheckTask.setCancelTime(null);
+            qtCheckTask.setCancelBy(null);
+            qtCheckTask.setCancelName(null);
+            qtCheckTask.setStartTime(null);
+            qtCheckTask.setStartBy(null);
+            qtCheckTask.setStartName(null);
+        }
         save(qtCheckTask);
         //如果有原始任务id,则表示为复检任务
         if(dto.getOriginalId()!=null){
