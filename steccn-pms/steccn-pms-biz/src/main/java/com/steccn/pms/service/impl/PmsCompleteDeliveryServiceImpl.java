@@ -86,25 +86,23 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
             //获取工序信息
             Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
+            PmsProduceOrderCraftVO defaultCraftVO = new PmsProduceOrderCraftVO();
+            EqpSpareVO eqpSpareVO = new EqpSpareVO();
             if (CollUtil.isNotEmpty(records)) {
                 records.forEach(
                         pmsCompleteDeliveryVO -> {
+                            PmsProduceOrderCraftVO pmsProduceOrderCraftVO = processMap.getOrDefault(pmsCompleteDeliveryVO.getProcessId(), defaultCraftVO);
+                            EqpSpareVO spareVO = materialData.getOrDefault(pmsCompleteDeliveryVO.getMaterialCode(), eqpSpareVO);
                             //处理单位数据
                             pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
                             //处理工序数据
-                            if (CollUtil.isNotEmpty(processMap)) {
-                                pmsCompleteDeliveryVO.setProcessName(processMap.get(pmsCompleteDeliveryVO.getProcessId()).getName());
-                            }
+                            pmsCompleteDeliveryVO.setProcessName(pmsProduceOrderCraftVO.getName());
                             //处理仓库货架信息
-                            if (CollUtil.isNotEmpty(officeMapData)) {
-                                pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
-                                pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
-                            }
+                            pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
+                            pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
                             //处理物料数据
-                            if (CollUtil.isNotEmpty(materialData)) {
-                                pmsCompleteDeliveryVO.setMaterialName(materialData.get(pmsCompleteDeliveryVO.getMaterialName()).getName());
-                                pmsCompleteDeliveryVO.setMaterialCode(materialData.get(pmsCompleteDeliveryVO.getMaterialCode()).getCode());
-                            }
+                            pmsCompleteDeliveryVO.setMaterialName(spareVO.getName());
+                            pmsCompleteDeliveryVO.setMaterialCode(spareVO.getCode());
                         }
                 );
             }
