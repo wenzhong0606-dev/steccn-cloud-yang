@@ -113,6 +113,7 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
         //2.解析排序规则
         if (QtManagerConstant.QT_CHECK_ITEM_SORT_FIELD_NAME.equals(dto.getSortField())) {
             if(dto.getAscFlag()){
+                //使用last把sql用于排序的中文函数代码语句拼接到最后
                 condition.last("ORDER BY CONVERT(name using gbk) ASC");
             }else {
                 condition.last("ORDER BY CONVERT(name using gbk) DESC");

@@ -30,4 +30,12 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @return
      */
     Page<PmsCompleteStorageVO> pageByOrderId(PmsCompleteStorageDTO dto);
+
+
+    /**
+     * 根据完成订单入库单号获取箱号编码
+     * @param id
+     * @return
+     */
+    String  getCaseNo (Long id);
 }

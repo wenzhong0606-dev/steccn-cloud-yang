@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.service.PmsCompleteStorageInfoService;
@@ -10,6 +11,7 @@ import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -31,6 +33,16 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     @Override
     public Page<PmsCompleteStorageVO> pageByOrderId(PmsCompleteStorageDTO dto) {
         return this.baseMapper.pageByOrderId(new Page(dto.getCurrent(), dto.getSize()), dto.getProduceOrderId());
+    }
+
+    @Override
+    public String getCaseNo(Long id) {
+        PmsCompleteStorageInfo one = getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>().eq(PmsCompleteStorageInfo::getCompleteStorageId, id));
+
+       if (Objects.isNull(one)){
+           throw new BusinessException("未找到完工入库-详情");
+       }
+        return one.getCaseNo();
     }
 }
 

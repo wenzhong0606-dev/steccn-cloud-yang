@@ -1,7 +1,10 @@
 package com.steccn.pms.feign;
 
-import com.steccn.pms.dto.*;
+import com.steccn.pms.dto.MessInStorageVoucherDTO;
+import com.steccn.pms.dto.MessOutStorageVoucherDTO;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
+import com.steccn.pms.dto.MessMaterialConsumeDTO;
+import com.steccn.pms.dto.MessMaterialStorageDTO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author yequan
@@ -49,15 +50,5 @@ public interface RemoteMessFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
-
-    /**
-     * 生成出库单
-     * @param caseNoSet 箱子位置
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/stockByCaseNo")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
 
 }

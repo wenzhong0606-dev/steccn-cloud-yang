@@ -73,6 +73,12 @@ public class PmsCodeUtil {
     public final static Integer DEFAULT_PADDING = 0;
 
 
+
+
+
+
+
+
     /**
      * @param prefix     前缀
      * @param numBit     数字位数【0填充】

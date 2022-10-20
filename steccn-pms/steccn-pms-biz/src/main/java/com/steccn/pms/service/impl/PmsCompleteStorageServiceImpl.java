@@ -245,8 +245,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
-        Map<String, CaseSiteDTO> caseSiteMap = pmsBarcodePrintService.caseSite(barcodePrintMap.keySet());
-        CaseSiteDTO defaultCaseSiteDTO = new CaseSiteDTO();
+        PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
+        Set<Integer> storageSet = Sets.newHashSet();
+        for (Map.Entry<String, PmsBarcodePrint> entry : barcodePrintMap.entrySet()) {
+            PmsBarcodePrint pbp = entry.getValue();
+            storageSet.add(pbp.getWarehouseId());
+            storageSet.add(pbp.getShelfId());
+        }
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
 
         List<CompleteStorageMaterialVO> materialVOList = new ArrayList<>(infoList.size());
         for (PmsCompleteStorageInfo info : infoList) {
@@ -258,11 +264,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             materialVO.setMaterialCode(produceOrder.getMaterialCode());
             materialVO.setMaterialName(produceOrder.getMaterialName());
             materialVO.setUnitName(sysDictMap.get(materialVO.getUnitId()));
-            CaseSiteDTO caseSite = caseSiteMap.getOrDefault(info.getCaseNo(), defaultCaseSiteDTO);
-            materialVO.setWarehouseId(caseSite.getWarehouseId());
-            materialVO.setWarehouseName(caseSite.getWarehouseName());
-            materialVO.setShelfId(caseSite.getShelfId());
-            materialVO.setShelfName(caseSite.getShelfName());
+            materialVO.setWarehouseId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getWarehouseId());
+            materialVO.setWarehouseName(sysOfficeMap.get(materialVO.getWarehouseId()));
+            materialVO.setShelfId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getShelfId());
+            materialVO.setShelfName(sysOfficeMap.get(materialVO.getShelfId()));
             materialVOList.add(materialVO);
         }
         completeStorageListVO.setList(materialVOList);
@@ -311,6 +316,32 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             resSet = dbList.stream().map(PmsCompleteStorageInfo::getCaseNo).collect(Collectors.toSet());
         }
         return resSet;
+    }
+
+    /**
+     * 根据入库单编码找到入库凭证修改完成状态
+     * @param code
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean completeStorageReviseStatue(String code) {
+        //根据入库单编号查找入库单
+        PmsCompleteStorage getOne = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
+        if (!Objects.nonNull(getOne)){
+            throw new BusinessException("未找到此入库单编码");
+        }
+
+        if (getOne.getCode().equals(getOne.getInStorageVoucher())){
+
+            getOne.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+            //更新生产订单完成入库数据表
+            updateById(getOne);
+        }
+        String caseNo = completeStorageInfoService.getCaseNo(getOne.getId());
+        pmsBarcodePrintService.alreadyPutIn(caseNo);
+
+        return true;
     }
 
     /**

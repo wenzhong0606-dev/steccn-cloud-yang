@@ -59,7 +59,7 @@ public class QtMaterialLinkCheckPlanServiceImpl extends ServiceImpl<QtMaterialLi
         if(qtMaterialLinkCheckPlanList.size() > 0){
             return saveBatch(qtMaterialLinkCheckPlanList);
         }else {
-            throw new BusinessException("type值为空");
+            throw new BusinessException("关联类型type值为空");
         }
     }
 

@@ -606,6 +606,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             BeanUtils.copyProperties(tmp, vo);
             vos.add(vo);
         });
+
         return vos;
     }
 

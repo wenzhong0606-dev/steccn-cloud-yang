@@ -45,6 +45,7 @@
             <artifactId>steccn-common-core</artifactId>
         </dependency>
 
+
     </dependencies>
 
 </project>

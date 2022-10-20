@@ -13,16 +13,12 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
-import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
-import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.mapper.PmsBarcodePrintMapper;
 import com.steccn.pms.service.PmsCompleteStorageService;
@@ -52,10 +48,6 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private PmsCompleteStorageService pmsCompleteStorageService;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
-    @Autowired
-    private RemoteMessFeignApi remoteMessFeignApi;
-    @Autowired
-    private RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -89,7 +81,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
             //处理单位数据
             Set<Long> dictSet = Sets.newHashSet();
-            voList.forEach(barcodePrintRecordVO -> {
+            voList.forEach( barcodePrintRecordVO -> {
                 dictSet.add(barcodePrintRecordVO.getUnitId());
             });
             //获取单位数据
@@ -183,31 +175,14 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Map<String, CaseSiteDTO> caseSite(Set<String> caseNoSet) {
-        Map<String, CaseSiteDTO> resMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(caseNoSet)) {
-            Map<String, CaseSiteDTO> messMap = remoteMessFeignApi.caseSite(caseNoSet);
-            if (CollUtil.isNotEmpty(messMap)) {
-                Set<String> siteSet = Sets.newHashSet();
-                for (Map.Entry<String, CaseSiteDTO> entry : messMap.entrySet()) {
-                    siteSet.add(entry.getValue().getShelfCode());
-                    siteSet.add(entry.getValue().getWarehouseCode());
-                }
-                Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(siteSet)).get();
-                SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-                for (Map.Entry<String, CaseSiteDTO> entry : messMap.entrySet()) {
-                    CaseSiteDTO value = entry.getValue();
-                    SysOfficeVO warehouse = sysOfficeMap.getOrDefault(value.getWarehouseCode(), defaultSysOfficeVO);
-                    value.setWarehouseId(warehouse.getId());
-                    value.setWarehouseName(warehouse.getOfficeName());
-                    SysOfficeVO shelf = sysOfficeMap.getOrDefault(value.getShelfCode(), defaultSysOfficeVO);
-                    value.setShelfId(shelf.getId());
-                    value.setShelfName(shelf.getOfficeName());
-                }
-                resMap = messMap;
-            }
+    public Boolean alreadyPutIn(String caseNo) {
+        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo));
+        if (Objects.isNull(one)){
+            throw new BusinessException("条码打印表未找到该箱号");
         }
-        return resMap;
+        one.setCaseState(PmManagerConstant.CaseStateEnum.ALREADY.getCode());
+        update();
+        return true;
     }
 
     /**

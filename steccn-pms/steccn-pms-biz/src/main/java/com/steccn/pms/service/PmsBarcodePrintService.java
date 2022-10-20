@@ -5,7 +5,6 @@ import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
-import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 
@@ -70,9 +69,9 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
     Map<Long, PmsCompleteStorageNumDTO> orderSum(Set<Long> orderSet);
 
     /**
-     * 箱子位置
-     * @param caseNoSet 箱号集合
-     * @return 箱号-位置
+     * 根据完成箱号编码修改状态
+     * @param caseNo
+     * @return
      */
-    Map<String, CaseSiteDTO> caseSite(Set<String> caseNoSet);
+    Boolean  alreadyPutIn(String caseNo);
 }
