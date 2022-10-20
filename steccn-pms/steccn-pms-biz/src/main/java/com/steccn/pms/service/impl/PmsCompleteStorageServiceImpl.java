@@ -245,14 +245,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
-        PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
-        Set<Integer> storageSet = Sets.newHashSet();
-        for (Map.Entry<String, PmsBarcodePrint> entry : barcodePrintMap.entrySet()) {
-            PmsBarcodePrint pbp = entry.getValue();
-            storageSet.add(pbp.getWarehouseId());
-            storageSet.add(pbp.getShelfId());
-        }
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+        Map<String, CaseSiteDTO> caseSiteMap = pmsBarcodePrintService.caseSite(barcodePrintMap.keySet());
+        CaseSiteDTO defaultCaseSiteDTO = new CaseSiteDTO();
 
         List<CompleteStorageMaterialVO> materialVOList = new ArrayList<>(infoList.size());
         for (PmsCompleteStorageInfo info : infoList) {
@@ -264,10 +258,11 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             materialVO.setMaterialCode(produceOrder.getMaterialCode());
             materialVO.setMaterialName(produceOrder.getMaterialName());
             materialVO.setUnitName(sysDictMap.get(materialVO.getUnitId()));
-            materialVO.setWarehouseId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getWarehouseId());
-            materialVO.setWarehouseName(sysOfficeMap.get(materialVO.getWarehouseId()));
-            materialVO.setShelfId(barcodePrintMap.getOrDefault(info.getCaseNo(), defaultPmsBarcodePrint).getShelfId());
-            materialVO.setShelfName(sysOfficeMap.get(materialVO.getShelfId()));
+            CaseSiteDTO caseSite = caseSiteMap.getOrDefault(info.getCaseNo(), defaultCaseSiteDTO);
+            materialVO.setWarehouseId(caseSite.getWarehouseId());
+            materialVO.setWarehouseName(caseSite.getWarehouseName());
+            materialVO.setShelfId(caseSite.getShelfId());
+            materialVO.setShelfName(caseSite.getShelfName());
             materialVOList.add(materialVO);
         }
         completeStorageListVO.setList(materialVOList);
