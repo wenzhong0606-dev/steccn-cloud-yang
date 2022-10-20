@@ -2,8 +2,8 @@ package com.steccn.platform.dto;
 
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
-
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @ApiModel(value = "日志查询对象")
-public class SysLogDTO {
+public class SysLogDTO implements Serializable {
 
 	/**
 	 * 编号

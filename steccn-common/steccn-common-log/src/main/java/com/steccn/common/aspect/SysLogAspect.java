@@ -63,7 +63,6 @@ public class SysLogAspect {
             logDTO.setTime(endTime - startTime);
 //            publisher.publishEvent(new SysLogEvent(logDTO));
         }
-        log.info("{}", logDTO);
         return obj;
     }
 
