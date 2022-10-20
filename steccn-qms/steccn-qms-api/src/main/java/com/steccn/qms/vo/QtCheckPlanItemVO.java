@@ -66,4 +66,15 @@ public class QtCheckPlanItemVO extends QtCheckItemListVO implements Serializable
      * pc端任务详情专用
      */
     private Map<String,String> result;
+
+    /**
+     * 0是不合格  1是合格
+     *
+     */
+    private Integer isQualified;
+
+    /**
+     * pc端任务详情专用，存放不合格的checkResult
+     */
+    private List<String> isQualifiedList;
 }

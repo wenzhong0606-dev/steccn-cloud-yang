@@ -3,7 +3,9 @@ package com.steccn.qms.dto;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * pcItem类
@@ -26,8 +28,8 @@ public class QtPcCheckTaskCheckGroupItemDTO implements Serializable {
     private Map<String, String> result;
 
     /**
-     * 是否合格
-     * 1合格 0不合格
+     * 塞入不合格的checkResult
+     *
      */
-    private Integer isQualified;
+    private List<String> isQualified;
 }

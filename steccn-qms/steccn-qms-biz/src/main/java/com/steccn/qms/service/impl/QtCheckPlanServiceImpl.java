@@ -488,6 +488,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(detailCondition);
                     if (taskDetails != null && taskDetails.size() > 0) {
                         qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
+                        qtCheckPlanItemVo.setIsQualified(taskDetails.get(0).getIsQualified());
                         //如果缺陷项存在，返回缺陷项
                         if (taskDetails.get(0).getDefectId() != null) {
                             QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(taskDetails.get(0).getDefectId());
