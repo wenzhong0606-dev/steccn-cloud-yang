@@ -1,9 +1,15 @@
 spring:
   redis:
-    host: ${REDIS_HOST:127.0.0.1}
+    host: ${REDIS_HOST:10.1.103.235}
     port: ${REDIS_PORT:6379}
     database: 15
-    lettuce:
+    jedis:
+      pool:
+        max-active: 30
+        max-idle: 10
+        min-idle: 2
+        max-wait: 2s
+    redisson:
       pool:
         max-active: 30
         max-idle: 10
