@@ -282,7 +282,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         //2.处理数据
         List<Long> ids = Lists.newArrayList();
         Set<Integer> warehouseIds = Sets.newHashSet();
-        List<PmsCompleteStorageVO> storageVOList = Lists.newArrayList();
         //获取订单的仓库信息
         PmsProduceOrder order = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, dto.getProduceOrderId()));
         List<PmsCompleteStorageVO> records = page.getRecords();
@@ -298,7 +297,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             R<Map<Long, SysDictVO>> mapR = remoteDictFeignApi.listById(ids);
             //获取仓库以及货架信息
             R<Map<Integer, SysOfficeVO>> warehouses = remoteOfficeFeign.listById(warehouseIds);
-            storageVOList.forEach(pmsCompleteStorageVO -> {
+            records.forEach(pmsCompleteStorageVO -> {
                 pmsCompleteStorageVO.setUnit(mapR.getData().get(pmsCompleteStorageVO.getUnitId()).getName());
                 pmsCompleteStorageVO.setWarehouseName(warehouses.getData().get(pmsCompleteStorageVO.getWarehouseId()).getOfficeName());
                 pmsCompleteStorageVO.setShelfName(warehouses.getData().get(pmsCompleteStorageVO.getShelfId()).getOfficeName());

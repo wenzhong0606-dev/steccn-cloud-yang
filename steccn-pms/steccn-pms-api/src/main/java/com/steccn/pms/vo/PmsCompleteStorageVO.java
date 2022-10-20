@@ -43,7 +43,7 @@ public class PmsCompleteStorageVO {
     private String caseNo;
 
     @ApiModelProperty("批次")
-    private String batch;
+    private String batchNo;
 
     @ApiModelProperty("仓库id")
     private Integer warehouseId;
