@@ -3,6 +3,7 @@ package com.steccn.common.properties;
 import com.steccn.common.constant.LogServiceEnum;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 
@@ -14,6 +15,7 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 @Setter
 @RefreshScope
 @ConfigurationProperties(LogProperties.PREFIX)
+@Slf4j
 public class LogProperties {
 
 	public Boolean enable = true;
@@ -27,4 +29,8 @@ public class LogProperties {
      */
     private LogServiceEnum logType = LogServiceEnum.DB;
 
+    public void setEnable(Boolean enable) {
+        log.info("enable -> {}",enable);
+        this.enable = enable;
+    }
 }

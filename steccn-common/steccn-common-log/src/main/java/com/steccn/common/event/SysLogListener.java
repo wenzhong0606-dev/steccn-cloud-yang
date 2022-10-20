@@ -25,7 +25,7 @@ public class SysLogListener {
 		if(logProperties.getEnable()) {
 			if (logProperties.getLogType().equals(LogServiceEnum.DB)) {
 		       //todo 异步 -> 远程过程调用接口
-				log.debug("{}",sysLog);
+				log.debug("saveSysLog -> {}",sysLog);
 			} else if (logProperties.getLogType().equals(LogServiceEnum.LOGGER)) {
 				log.info("request log : {} ", event.getSysLog());
 			}

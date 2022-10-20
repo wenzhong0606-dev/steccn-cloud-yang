@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.LogTypeEnum;
+import com.steccn.common.event.SysLogEvent;
 import com.steccn.platform.dto.SysLogDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -61,7 +62,7 @@ public class SysLogAspect {
         } finally {
             Long endTime = System.currentTimeMillis();
             logDTO.setTime(endTime - startTime);
-//            publisher.publishEvent(new SysLogEvent(logDTO));
+            publisher.publishEvent(new SysLogEvent(logDTO));
         }
         return obj;
     }
