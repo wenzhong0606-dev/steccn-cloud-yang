@@ -281,26 +281,25 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Page<PmsCompleteStorageVO> page = completeStorageInfoService.pageByOrderId(dto);
         //2.处理数据
         List<Long> ids = Lists.newArrayList();
-        Set<Integer> warehouseIds = Sets.newHashSet();
-        //获取订单的仓库信息
-        PmsProduceOrder order = pmsProduceOrderService.getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getId, dto.getProduceOrderId()));
+        Set<String> warehouseCodes = Sets.newHashSet();
         List<PmsCompleteStorageVO> records = page.getRecords();
         if (CollUtil.isNotEmpty(records)) {
             records.forEach(pmsCompleteStorageVO -> {
                 ids.add(pmsCompleteStorageVO.getUnitId());
-                warehouseIds.add(order.getDefaultShelfId());
-                warehouseIds.add(order.getDefaultWarehouseId());
-                pmsCompleteStorageVO.setWarehouseId(order.getDefaultWarehouseId());
-                pmsCompleteStorageVO.setShelfId(order.getDefaultShelfId());
+                warehouseCodes.add(pmsCompleteStorageVO.getCaseNo());
             });
             //获取单位信息
             R<Map<Long, SysDictVO>> mapR = remoteDictFeignApi.listById(ids);
             //获取仓库以及货架信息
-            R<Map<Integer, SysOfficeVO>> warehouses = remoteOfficeFeign.listById(warehouseIds);
+            Map<String, CaseSiteDTO> caseSiteDTOMap = pmsBarcodePrintService.caseSite(warehouseCodes);
+            CaseSiteDTO defaultCaseSiteDTO = new CaseSiteDTO();
             records.forEach(pmsCompleteStorageVO -> {
+                CaseSiteDTO caseSiteDTO = caseSiteDTOMap.getOrDefault(pmsCompleteStorageVO.getCaseNo(), defaultCaseSiteDTO);
                 pmsCompleteStorageVO.setUnit(mapR.getData().get(pmsCompleteStorageVO.getUnitId()).getName());
-                pmsCompleteStorageVO.setWarehouseName(warehouses.getData().get(pmsCompleteStorageVO.getWarehouseId()).getOfficeName());
-                pmsCompleteStorageVO.setShelfName(warehouses.getData().get(pmsCompleteStorageVO.getShelfId()).getOfficeName());
+                pmsCompleteStorageVO.setWarehouseName(caseSiteDTO.getWarehouseName());
+                pmsCompleteStorageVO.setShelfName(caseSiteDTO.getShelfName());
+                pmsCompleteStorageVO.setWarehouseId(caseSiteDTO.getWarehouseId());
+                pmsCompleteStorageVO.setShelfId(caseSiteDTO.getShelfId());
             });
         }
         return page;
