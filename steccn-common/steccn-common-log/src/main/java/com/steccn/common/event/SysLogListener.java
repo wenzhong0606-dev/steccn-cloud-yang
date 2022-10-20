@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author yequan
  * @desc 异步监听日志事件
@@ -28,8 +30,7 @@ public class SysLogListener {
 		if(logProperties.getEnable()) {
 			if (logProperties.getLogType().equals(LogServiceEnum.DB)) {
 		       //todo 异步 -> 远程过程调用接口
-				remoteLogFeignApi.add(sysLog);
-				log.debug("saveSysLog -> {}",sysLog);
+				CompletableFuture.runAsync(()->remoteLogFeignApi.add(sysLog));
 			} else if (logProperties.getLogType().equals(LogServiceEnum.LOGGER)) {
 				log.info("request log : {} ", event.getSysLog());
 			}

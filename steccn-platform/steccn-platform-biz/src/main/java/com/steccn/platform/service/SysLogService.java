@@ -10,5 +10,10 @@ import com.steccn.platform.dto.SysLogDTO;
 */
 public interface SysLogService extends IService<SysLog> {
 
+    /**
+     * 新增用户操作日志
+     * @param sysLogDTO 用户操作信息
+     * @return 是否成功
+     */
     Boolean add(SysLogDTO sysLogDTO);
 }

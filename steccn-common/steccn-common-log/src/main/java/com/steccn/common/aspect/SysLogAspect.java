@@ -55,7 +55,6 @@ public class SysLogAspect {
         Object obj;
         try {
             obj = point.proceed();
-            logDTO.setType(LogTypeEnum.NORMAL.getType());
         } catch (Exception e) {
             logDTO.setType(LogTypeEnum.ERROR.getType());
             logDTO.setException(e.getMessage());
