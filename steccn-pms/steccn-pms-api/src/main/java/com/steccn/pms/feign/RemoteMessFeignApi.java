@@ -32,7 +32,7 @@ public interface RemoteMessFeignApi {
 
 
     /**
-     * 获取物料库存信息
+     * 生成入库单
      * @param messDto 物料集合
      * @return
      */
@@ -42,7 +42,7 @@ public interface RemoteMessFeignApi {
     MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
 
     /**
-     * 获取物料库存信息
+     * 生成出库单
      * @param messDto 物料集合
      * @return
      */

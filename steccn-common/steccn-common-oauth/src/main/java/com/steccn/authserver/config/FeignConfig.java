@@ -8,11 +8,15 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
 
+/**
+ * @author yequan
+ */
 @Configuration
 public class FeignConfig {
     @Bean
-    public RequestInterceptor requestInterceptor(){
+    public RequestInterceptor requestInterceptor() {
         return new RequestInterceptor() {
             @Override
             public void apply(RequestTemplate template) {
@@ -21,12 +25,14 @@ public class FeignConfig {
                 ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 //老请求
                 //空指针Exception
-                HttpServletRequest request = requestAttributes.getRequest();
-                if (request != null){
-                    //同步请求头数据,Cookie
-                    String authorization = request.getHeader("Authorization");
-                    //给新请求同步了老请求的Cookie
-                    template.header("Authorization",authorization);
+                if (Objects.nonNull(requestAttributes)) {
+                    HttpServletRequest request = requestAttributes.getRequest();
+                    if (request != null) {
+                        //同步请求头数据,Cookie
+                        String authorization = request.getHeader("Authorization");
+                        //给新请求同步了老请求的Cookie
+                        template.header("Authorization", authorization);
+                    }
                 }
             }
         };
