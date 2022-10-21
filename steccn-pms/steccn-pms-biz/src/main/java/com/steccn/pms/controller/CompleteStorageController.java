@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class CompleteStorageController {
 
     @PostMapping("/generate")
     @ApiOperation("生成入库单")
-    public R<String> generate(@Validated @RequestBody List<CompleteStorageScanDTO> list) {
+    public R<String> generate(@Validated @Valid @RequestBody List<CompleteStorageScanDTO> list) {
         return R.success(pmsCompleteStorageService.generate(list));
     }
 

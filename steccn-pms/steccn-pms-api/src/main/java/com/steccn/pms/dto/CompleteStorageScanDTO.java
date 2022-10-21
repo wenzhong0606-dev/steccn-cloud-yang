@@ -25,12 +25,15 @@ public class CompleteStorageScanDTO implements Serializable {
     private String caseNo;
 
     @ApiModelProperty("批次号")
+    @NotBlank(message = "批次号不能为空")
     private String batchNo;
 
     @ApiModelProperty("创建时间")
+    @NotNull(message = "创建时间不能为空")
     private LocalDateTime createTime;
 
     @ApiModelProperty("箱状态")
+    @NotNull(message = "箱状态不能为空")
     private Integer caseState;
 
     @ApiModelProperty("生产订单id")
@@ -65,6 +68,7 @@ public class CompleteStorageScanDTO implements Serializable {
     private String shelfName;
 
     @ApiModelProperty("物料id")
+    @NotNull(message = "物料主键不能为空")
     private Long materialId;
 
     @ApiModelProperty("物料名称")
