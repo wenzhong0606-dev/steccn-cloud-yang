@@ -82,7 +82,7 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @param caseNo
      * @return
      */
-    Boolean alreadyPutIn(String caseNo);
+    Boolean reviseAlreadyPutInStatue(String caseNo);
 
     /**
      * 箱子位置

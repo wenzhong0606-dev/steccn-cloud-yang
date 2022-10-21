@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
@@ -72,5 +73,5 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @param code
      * @return
      */
-    Boolean completeStorageReviseStatue(String code);
+    R<Boolean> completeStorageReviseStatue(String code);
 }

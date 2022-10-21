@@ -186,13 +186,13 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Boolean alreadyPutIn(String caseNo) {
+    public Boolean reviseAlreadyPutInStatue(String caseNo) {
         PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo));
         if (Objects.isNull(one)){
             throw new BusinessException("条码打印表未找到该箱号");
         }
         one.setCaseState(PmManagerConstant.CaseStateEnum.ALREADY.getCode());
-        update();
+        updateById(one);
         return true;
     }
 

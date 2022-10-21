@@ -324,23 +324,20 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean completeStorageReviseStatue(String code) {
+    public R<Boolean> completeStorageReviseStatue(String code) {
         //根据入库单编号查找入库单
-        PmsCompleteStorage getOne = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
-        if (!Objects.nonNull(getOne)){
+        PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
+        if (Objects.isNull(getOneCompleteStorage)){
             throw new BusinessException("未找到此入库单编码");
         }
-
-        if (getOne.getCode().equals(getOne.getInStorageVoucher())){
-
-            getOne.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+        if (getOneCompleteStorage.getCode().equals(getOneCompleteStorage.getInStorageVoucher())){
+            getOneCompleteStorage.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
             //更新生产订单完成入库数据表
-            updateById(getOne);
+            updateById(getOneCompleteStorage);
         }
-        String caseNo = completeStorageInfoService.getCaseNo(getOne.getId());
-        pmsBarcodePrintService.alreadyPutIn(caseNo);
-
-        return true;
+        String caseNo = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
+        pmsBarcodePrintService. reviseAlreadyPutInStatue(caseNo);
+        return R.success(true);
     }
 
     /**

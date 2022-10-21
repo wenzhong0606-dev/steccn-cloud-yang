@@ -53,16 +53,15 @@ public class CompleteStorageController {
         return R.success(pmsCompleteStorageService.info(id));
     }
 
-    @ApiOperation("获取订单的完工入库分页列表")
     @PostMapping("/order/page")
+    @ApiOperation("获取订单的完工入库分页列表")
     public R<Page<PmsCompleteStorageVO>> completeStoragePageList(@RequestBody PmsCompleteStorageDTO dto) {
         return R.success(pmsCompleteStorageService.completeStoragePageList(dto));
     }
 
-
-    @ApiOperation("完成生产订单入库修改状态")
     @PutMapping("/complete")
-    public Boolean completeStorageReviseStatue(@ApiParam("入库单编码")@RequestParam("code") String code) {
+    @ApiOperation("完成生产订单入库修改状态")
+    public R<Boolean> completeStorageReviseStatue(@ApiParam("入库单编码")@RequestParam("code") String code) {
         return pmsCompleteStorageService.completeStorageReviseStatue(code);
     }
 }
