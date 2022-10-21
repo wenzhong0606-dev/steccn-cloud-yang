@@ -22,4 +22,8 @@ public class BarcodePrintRecordDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("批次编码")
     private String batchNo;
 
+    @ApiModelProperty("状态")
+    private Integer caseState;
+
+
 }

@@ -85,6 +85,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Page<PmsBarcodePrint> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
+                .eq(PmsBarcodePrint::getCaseState,dto.getCaseState())
                 .orderByDesc(PmsBarcodePrint::getCreateTime));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
