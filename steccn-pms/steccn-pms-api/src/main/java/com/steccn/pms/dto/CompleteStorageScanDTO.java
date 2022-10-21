@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,6 +21,7 @@ public class CompleteStorageScanDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("箱号")
+    @NotBlank(message = "箱号不能为空")
     private String caseNo;
 
     @ApiModelProperty("批次号")
@@ -31,15 +34,19 @@ public class CompleteStorageScanDTO implements Serializable {
     private Integer caseState;
 
     @ApiModelProperty("生产订单id")
+    @NotNull(message = "生产订单主键不能为空")
     private Long produceOrderId;
 
     @ApiModelProperty("生产订单编号")
+    @NotNull(message = "生产订单编号不能为空")
     private String produceOrderNo;
 
     @ApiModelProperty("数量")
+    @NotNull(message = "数量不能为空")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位")
+    @NotNull(message = "数量单位不能为空")
     private Long unitId;
 
     @ApiModelProperty("单位名称")

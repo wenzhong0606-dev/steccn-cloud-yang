@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.dto.MessInStorageVoucherDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.vo.CompleteStorageListVO;
@@ -13,6 +14,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,7 +39,7 @@ public class CompleteStorageController {
 
     @PostMapping("/generate")
     @ApiOperation("生成入库单")
-    public R<String> generate(@RequestBody List<CompleteStorageScanDTO> list) {
+    public R<String> generate(@Validated @RequestBody List<CompleteStorageScanDTO> list) {
         return R.success(pmsCompleteStorageService.generate(list));
     }
 
@@ -59,9 +61,9 @@ public class CompleteStorageController {
         return R.success(pmsCompleteStorageService.completeStoragePageList(dto));
     }
 
-    @PutMapping("/revise")
+    @PostMapping("/complete")
     @ApiOperation("完成生产订单入库修改状态")
-    public R<Boolean> completeStorageReviseStatue(@ApiParam("入库单编码")@RequestParam("code") String code) {
-        return pmsCompleteStorageService.completeStorageReviseStatue(code);
+    public R<Boolean> completeStorageReviseStatue(@RequestBody MessInStorageVoucherDTO dto) {
+        return R.success(pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode()));
     }
 }

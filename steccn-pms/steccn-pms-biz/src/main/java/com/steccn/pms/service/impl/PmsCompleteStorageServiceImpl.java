@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -107,6 +108,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         resDTO.setShelfName(sysOfficeMap.get(pmsProduceOrder.getDefaultShelfId()));
         //5.箱状态
         resDTO.setCaseState(pmsBarcodePrint.getCaseState());
+        //6.赋值主物料信息
+        resDTO.setMaterialId(pmsProduceOrder.getMaterialId());
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(pmsProduceOrder.getMaterialId()))).get();
+        EqpSpareVO materialVo = materialMap.getOrDefault(pmsProduceOrder.getMaterialId(), new EqpSpareVO());
+        resDTO.setMaterialCode(materialVo.getCode());
+        resDTO.setMaterialName(materialVo.getName());
         return resDTO;
     }
 
@@ -324,7 +331,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R<Boolean> completeStorageReviseStatue(String code) {
+    public Boolean completeStorageReviseStatue(String code) {
+        Assert.notBlank(code, "入库单编码不能为空");
         //根据入库单编号查找入库单
         PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
         if (Objects.isNull(getOneCompleteStorage)){
@@ -336,8 +344,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             updateById(getOneCompleteStorage);
         }
         String caseNo = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
-        pmsBarcodePrintService. reviseAlreadyPutInStatue(caseNo);
-        return R.success(true);
+        pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNo);
+        return Boolean.TRUE;
     }
 
     /**

@@ -511,6 +511,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, produceLineId)
                 .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
+                .last(MpConstant.STR_LIMIT_1)
         );
         if (Objects.nonNull(order)) {
             pmsProduceOrderVO = new PmsProduceOrderVO();
