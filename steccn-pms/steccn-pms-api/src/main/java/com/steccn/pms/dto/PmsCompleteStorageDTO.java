@@ -17,4 +17,7 @@ public class PmsCompleteStorageDTO extends BasePageDTO {
 
     @ApiModelProperty("订单id")
     private Long produceOrderId;
+
+    @ApiModelProperty("入库单编码")
+    private String code;
 }

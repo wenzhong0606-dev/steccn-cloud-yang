@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
@@ -82,7 +83,7 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      * @param caseNo
      * @return
      */
-    Boolean reviseAlreadyPutInStatue(String caseNo);
+    Boolean reviseAlreadyPutInStatue(List<String> caseNoList);
 
     /**
      * 箱子位置

@@ -3,7 +3,6 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -331,8 +330,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean completeStorageReviseStatue(String code) {
-        Assert.notBlank(code, "入库单编码不能为空");
+    public R<Boolean> completeStorageReviseStatue(String code) {
         //根据入库单编号查找入库单
         PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
         if (Objects.isNull(getOneCompleteStorage)){
@@ -343,9 +341,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //更新生产订单完成入库数据表
             updateById(getOneCompleteStorage);
         }
-        String caseNo = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
-        pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNo);
-        return Boolean.TRUE;
+        List<String> caseNoList = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
+        pmsBarcodePrintService. reviseAlreadyPutInStatue(caseNoList);
+        return R.success(true);
     }
 
     /**

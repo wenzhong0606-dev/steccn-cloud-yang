@@ -73,5 +73,5 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @param code
      * @return
      */
-    Boolean completeStorageReviseStatue(String code);
+    R<Boolean> completeStorageReviseStatue(String code);
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,5 +38,5 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      * @param id
      * @return
      */
-    String  getCaseNo (Long id);
+    List<String> getCaseNo (Long id);
 }

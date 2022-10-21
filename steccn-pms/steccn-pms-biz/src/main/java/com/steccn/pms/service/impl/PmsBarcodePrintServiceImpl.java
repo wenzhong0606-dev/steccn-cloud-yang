@@ -18,6 +18,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
@@ -186,13 +187,15 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Boolean reviseAlreadyPutInStatue(String caseNo) {
-        PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo));
-        if (Objects.isNull(one)){
-            throw new BusinessException("条码打印表未找到该箱号");
+    public Boolean reviseAlreadyPutInStatue(List<String> caseNoList) {
+        if (CollUtil.isEmpty(caseNoList)){
+            throw new BusinessException("箱号列表为空");
         }
-        one.setCaseState(PmManagerConstant.CaseStateEnum.ALREADY.getCode());
-        updateById(one);
+        for (String caseNo : caseNoList) {
+            PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo));
+            one.setCaseState(PmManagerConstant.CaseStateEnum.ALREADY.getCode());
+            updateById(one);
+        }
         return true;
     }
 
