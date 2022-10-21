@@ -26,11 +26,6 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
     private Integer status;
 
     /**
-     * 样本数量
-     */
-    private Integer copyNum;
-
-    /**
      * 合格数量
      */
     private Integer goodNum;
