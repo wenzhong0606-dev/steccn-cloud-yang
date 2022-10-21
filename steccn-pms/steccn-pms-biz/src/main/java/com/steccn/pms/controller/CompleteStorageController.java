@@ -59,7 +59,7 @@ public class CompleteStorageController {
         return R.success(pmsCompleteStorageService.completeStoragePageList(dto));
     }
 
-    @PutMapping("/complete")
+    @PutMapping("/revise")
     @ApiOperation("完成生产订单入库修改状态")
     public R<Boolean> completeStorageReviseStatue(@ApiParam("入库单编码")@RequestParam("code") String code) {
         return pmsCompleteStorageService.completeStorageReviseStatue(code);
