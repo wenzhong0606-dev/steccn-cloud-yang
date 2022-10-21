@@ -5,6 +5,7 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -97,12 +98,12 @@ public class QtCheckTaskListDTO extends BasePageDTO implements Serializable {
     /**
      * 到货日期开始
      */
-    private LocalDateTime arrivalTimeStart;
+    private LocalDate arrivalTimeStart;
 
     /**
      * 到货日期结束
      */
-    private LocalDateTime arrivalTimeEnd;
+    private LocalDate arrivalTimeEnd;
 
     /**
      * 客户id

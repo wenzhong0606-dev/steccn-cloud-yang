@@ -249,6 +249,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //pc端对数据进行处理
         if(isPc){
+            //先拿到checkGroup
             List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
             //对每个item进行赋值
             checkGroup.forEach(groupTmp->{
