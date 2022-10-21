@@ -22,6 +22,11 @@ public interface SysDictConstant {
     String TYPE_WAREHOUSING_TYPE = "warehousing_type";
 
     /**
+     * 出库类型
+     */
+    String TYPE_OUTBOUND_TYPE = "outbound_type";
+
+    /**
      * code字符串
      */
     String CODE_0 = "0";

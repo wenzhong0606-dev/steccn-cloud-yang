@@ -46,7 +46,8 @@
                a.batch_no,
                a.warehouse_id,
                a.shelf_id,
-               a.process_id
+               a.process_id,
+               b.type_id
         FROM pms_complete_delivery_info a
                  JOIN pms_complete_delivery b ON a.complete_delivery_id = b.id
         WHERE b.produce_order_id = #{orderId}

@@ -71,6 +71,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             records.forEach(pmsCompleteDeliveryVO -> {
                 materialIds.add(pmsCompleteDeliveryVO.getMaterialId());
                 ids.add(pmsCompleteDeliveryVO.getUnitId());
+                ids.add(pmsCompleteDeliveryVO.getTypeId());
                 if (Objects.nonNull(pmsCompleteDeliveryVO.getWarehouseId())) {
                     office.add(pmsCompleteDeliveryVO.getWarehouseId());
                 }
@@ -95,6 +96,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                             EqpSpareVO spareVO = materialData.getOrDefault(pmsCompleteDeliveryVO.getMaterialCode(), eqpSpareVO);
                             //处理单位数据
                             pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
+                            pmsCompleteDeliveryVO.setTypeName(dictData.get(pmsCompleteDeliveryVO.getTypeId()));
                             //处理工序数据
                             pmsCompleteDeliveryVO.setProcessName(pmsProduceOrderCraftVO.getName());
                             //处理仓库货架信息

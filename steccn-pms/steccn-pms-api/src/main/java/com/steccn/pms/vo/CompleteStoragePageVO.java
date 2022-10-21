@@ -50,5 +50,5 @@ public class CompleteStoragePageVO implements Serializable {
     private Long typeId;
 
     @ApiModelProperty("类型")
-    private Long typeName;
+    private String typeName;
 }

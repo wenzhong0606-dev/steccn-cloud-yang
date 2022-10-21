@@ -156,7 +156,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //校验单位是否存在
         Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
         Assert.isTrue(unitBoolean, "单位不存在");
-        //校验是否物料的条数是否正确 todo 2022-10-19
+        //校验是否物料的条数是否正确
 
         //生成报工记录
         PmsReportWork pmsReportWork = new PmsReportWork();
@@ -204,7 +204,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 BeanUtils.copyProperties(materialDTO, mess);
                 materialList.add(mess);
             }
-            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE)).get();
+            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
             completeDelivery.setCode(maxOutVouchCode());
             completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
             completeDelivery.setDeliveryTime(LocalDateTime.now());

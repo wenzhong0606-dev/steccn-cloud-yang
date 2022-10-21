@@ -70,4 +70,11 @@ public class PmsCompleteDeliveryVO {
 
     @ApiModelProperty("工序")
     private String processName;
+
+    @ApiModelProperty("类型id")
+    private Long typeId;
+
+    @ApiModelProperty("类型")
+    private String typeName;
 }
+

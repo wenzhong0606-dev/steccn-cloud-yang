@@ -211,13 +211,18 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         //如果查询结果不为空，拷贝返回的数据
         if (CollUtil.isNotEmpty(pageList.getRecords())) {
             List<PmsCompleteStorage> modelList = pageList.getRecords();
-            Set<Long> dictSet = modelList.stream().map(PmsCompleteStorage::getUnitId).collect(Collectors.toSet());
+            Set<Long> dictSet = Sets.newHashSet();
+            for (PmsCompleteStorage storage : modelList) {
+                dictSet.add(storage.getUnitId());
+                dictSet.add(storage.getTypeId());
+            }
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
             List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
             for (PmsCompleteStorage model : modelList) {
                 CompleteStoragePageVO vo = new CompleteStoragePageVO();
                 BeanUtils.copyProperties(model, vo);
                 vo.setUnitName(sysDictMap.get(vo.getUnitId()));
+                vo.setTypeName(sysDictMap.get(vo.getTypeId()));
                 voList.add(vo);
             }
             resPage.setRecords(voList);
