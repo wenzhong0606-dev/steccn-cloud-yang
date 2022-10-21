@@ -31,5 +31,6 @@ public class QtPcCheckTaskCheckGroupItemDTO implements Serializable {
      * 塞入不合格的checkResult
      *
      */
-    private List<String> isQualified;
+    private List<String> isQualifiedList;
+
 }

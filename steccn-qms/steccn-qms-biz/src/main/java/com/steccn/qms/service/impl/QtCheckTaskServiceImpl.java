@@ -479,7 +479,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 qtCheckTaskDetail.setItemId(item.getItemId());
                                 qtCheckTaskDetail.setGroupId(group.getId());
                                 //在该list中的数据是不合格数据的值
-                                if(CollUtil.isNotEmpty(item.getIsQualified()) && item.getIsQualified().contains(key)){
+                                if(CollUtil.isNotEmpty(item.getIsQualifiedList()) && item.getIsQualifiedList().contains(key)){
                                     qtCheckTaskDetail.setIsQualified(0);
                                 }else {
                                     qtCheckTaskDetail.setIsQualified(1);
