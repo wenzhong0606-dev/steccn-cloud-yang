@@ -93,7 +93,8 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 .eq(Objects.nonNull(dto.getStatus()), PmCraftRoute::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getIsCurrentVersion()), PmCraftRoute::getIsCurrentVersion, dto.getIsCurrentVersion())
                 .eq(Objects.nonNull(dto.getVersion()), PmCraftRoute::getVersion, dto.getVersion())
-                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmCraftRoute::getCode, dto.getCode());
+                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmCraftRoute::getCode, dto.getCode())
+                .eq(PmCraftRoute::getMaterialId,dto.getMaterialId());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
