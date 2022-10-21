@@ -7,13 +7,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
-import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -73,5 +71,5 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @param code
      * @return
      */
-    R<Boolean> completeStorageReviseStatue(String code);
+    R<Boolean> completeStorageReviseStatue(String code,String confirmName);
 }

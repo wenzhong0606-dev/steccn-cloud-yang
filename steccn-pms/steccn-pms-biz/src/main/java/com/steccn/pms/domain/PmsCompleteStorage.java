@@ -113,4 +113,10 @@ public class PmsCompleteStorage implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 确认人名称
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private String confirmName;
 }

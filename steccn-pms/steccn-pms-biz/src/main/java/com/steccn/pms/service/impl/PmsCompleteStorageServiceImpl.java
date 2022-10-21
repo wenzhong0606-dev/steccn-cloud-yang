@@ -330,7 +330,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R<Boolean> completeStorageReviseStatue(String code) {
+    public R<Boolean> completeStorageReviseStatue(String code,String confirmName) {
+        if (Objects.isNull(code)||Objects.isNull(confirmName)){
+            throw new BusinessException("确认用户名或者入库单编码不能为空");
+        }
         //根据入库单编号查找入库单
         PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
         if (Objects.isNull(getOneCompleteStorage)){
@@ -338,6 +341,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
         if (getOneCompleteStorage.getCode().equals(getOneCompleteStorage.getInStorageVoucher())){
             getOneCompleteStorage.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+            getOneCompleteStorage.setInStorageTime(LocalDateTime.now());
+            getOneCompleteStorage.setConfirmName(confirmName);
             //更新生产订单完成入库数据表
             updateById(getOneCompleteStorage);
         }

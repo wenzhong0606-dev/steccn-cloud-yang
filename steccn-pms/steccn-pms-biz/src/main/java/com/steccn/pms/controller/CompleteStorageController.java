@@ -71,6 +71,6 @@ public class CompleteStorageController {
     @PutMapping("/revise")
     @ApiOperation("根据完成生产订单入库单编码修改状态")
     public R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto) {
-        return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode());
+        return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
     }
 }

@@ -80,7 +80,7 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
     /**
      * 根据完成箱号编码修改状态
      *
-     * @param caseNo
+     * @param caseNoList
      * @return
      */
     Boolean reviseAlreadyPutInStatue(List<String> caseNoList);

@@ -20,4 +20,7 @@ public class PmsCompleteStorageDTO extends BasePageDTO {
 
     @ApiModelProperty("入库单编码")
     private String code;
+
+    @ApiModelProperty("确认人名称")
+    private String confirmName;
 }
