@@ -1,6 +1,9 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
@@ -40,13 +43,16 @@ public class CompleteStorageController {
 
     @PostMapping("/generate")
     @ApiOperation("生成入库单")
-    public R<String> generate(@Validated @Valid @RequestBody List<CompleteStorageScanDTO> list) {
-        return R.success(pmsCompleteStorageService.generate(list));
+    public R<String> generate(@Valid @RequestBody ValidList<CompleteStorageScanDTO> validList) {
+        if (CollUtil.isEmpty(validList)) {
+            throw new BusinessException("请选择箱子");
+        }
+        return R.success(pmsCompleteStorageService.generate(validList.getList()));
     }
 
     @PostMapping("/page")
     @ApiOperation("入库单列表")
-    public R<Page<CompleteStoragePageVO>> pageList(@RequestBody CompleteStoragePageDTO dto) {
+    public R<Page<CompleteStoragePageVO>> pageList(@Valid @RequestBody CompleteStoragePageDTO dto) {
         return R.success(pmsCompleteStorageService.pageList(dto));
     }
 
