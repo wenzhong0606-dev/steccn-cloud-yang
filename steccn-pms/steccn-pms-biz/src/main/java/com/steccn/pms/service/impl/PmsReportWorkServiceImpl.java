@@ -321,7 +321,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
                 resDTO.setModuleName(eqpSpareVO.getName());
                 resDTO.setModuleCode(eqpSpareVO.getCode());
-                resDTO.setQuantity(messDto.getAvailableQuantity());
+                resDTO.setQuantity(messDto.getQuantity());
                 resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
                 SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
                 resDTO.setWarehouseId(warehouse.getId());

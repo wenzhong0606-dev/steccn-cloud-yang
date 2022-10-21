@@ -32,6 +32,9 @@ public class MessMaterialConsumeDTO implements Serializable {
     @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
 
+    @ApiModelProperty("实际数量")
+    private BigDecimal quantity;
+
     @ApiModelProperty("仓库code")
     private String warehouseCode;
 
