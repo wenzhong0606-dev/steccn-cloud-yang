@@ -63,7 +63,7 @@
         from pms_produce_order
         <where>
             del_flag = 0
-            <if test="dto.state != null and dto.state !='' ">
+            <if test="dto.state != null">
                 AND state = #{dto.state}
             </if>
             <if test="dto.code != null and dto.code != ''">
