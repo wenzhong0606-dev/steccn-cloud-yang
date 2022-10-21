@@ -11,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,13 +31,13 @@ public class BarcodePrintController {
 
     @ApiOperation("打印")
     @PostMapping("/print")
-    public R<Boolean> print(@RequestBody BarcodePrintDTO dto) {
+    public R<Boolean> print(@Valid @RequestBody BarcodePrintDTO dto) {
         return R.success(pmsBarcodePrintService.print(dto));
     }
 
     @ApiOperation("打印记录")
     @PostMapping("/print/record")
-    public R<Page<BarcodePrintRecordVO>> printRecord(@RequestBody BarcodePrintRecordDTO dto) {
+    public R<Page<BarcodePrintRecordVO>> printRecord(@Valid @RequestBody BarcodePrintRecordDTO dto) {
         return R.success(pmsBarcodePrintService.printRecord(dto));
     }
 

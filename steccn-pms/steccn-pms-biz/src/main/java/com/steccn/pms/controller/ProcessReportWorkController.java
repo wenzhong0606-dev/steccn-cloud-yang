@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -42,13 +43,13 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工记录")
     @PostMapping("/record/page")
-    public R<Page<ProcessReportWorkPageVO>> recordPage(@RequestBody ProcessReportWorkRecordDTO dto) {
+    public R<Page<ProcessReportWorkPageVO>> recordPage(@Valid @RequestBody ProcessReportWorkRecordDTO dto) {
         return R.success(pmsReportWorkService.recordPage(dto));
     }
 
     @ApiOperation("物料消耗")
     @PostMapping("/material/consume")
-    public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
+    public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@Valid @RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
         return R.success(pmsReportWorkService.materialConsume(dto));
     }
     @ApiOperation("工艺信息-报工分页列表")
