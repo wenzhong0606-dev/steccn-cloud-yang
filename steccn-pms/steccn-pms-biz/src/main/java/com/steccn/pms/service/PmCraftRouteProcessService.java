@@ -29,4 +29,11 @@ public interface PmCraftRouteProcessService extends IService<PmCraftRouteProcess
      * @return
      */
     List<PmCraftRouteProcessVO> list(Long craftRouteId);
+
+    /**
+     * 根据路线id删除工序信息
+     * @param id
+     * @return
+     */
+    Boolean deleteByRoteId(Long id);
 }

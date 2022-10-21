@@ -76,6 +76,12 @@ public class PmCraftRouteProcessServiceImpl extends ServiceImpl<PmCraftRouteProc
          }
         return pmCraftRouteProcessList;
     }
+
+    @Override
+    public Boolean deleteByRoteId(Long id) {
+        LambdaQueryWrapper<PmCraftRouteProcess> eq = new LambdaQueryWrapper<PmCraftRouteProcess>().eq(PmCraftRouteProcess::getRouteId, id);
+        return remove(eq);
+    }
 }
 
 

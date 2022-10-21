@@ -10,7 +10,9 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.util.Json;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -90,6 +92,7 @@ public class PmCraftRouteDTO extends BasePageDTO implements Serializable {
     private String roadmap;
 
     @ApiModelProperty("工序信息")
+    @Valid
     private List<PmCraftRouteProcessDTO> processDTOList;
 
 }

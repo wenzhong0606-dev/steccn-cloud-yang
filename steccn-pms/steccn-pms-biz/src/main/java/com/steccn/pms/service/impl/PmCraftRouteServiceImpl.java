@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -158,6 +159,14 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 pmCraftRouteModuleService.saveMaterial(dto);
             } catch (Exception e) {
                 throw new BusinessException("物料组件数据保存失败");
+            }
+        }
+        pmCraftRouteProcessService.deleteByRoteId(dto.getId());
+        if (CollUtil.isNotEmpty(dto.getProcessDTOList())) {
+            try {
+                pmCraftRouteProcessService.saveProcess(dto);
+            } catch (Exception e) {
+                throw new BusinessException("保存工序信息失败");
             }
         }
         //保存数据
