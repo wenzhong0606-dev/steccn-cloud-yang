@@ -444,7 +444,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                                         List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString,QtOnlineCheckDefectDTO.class);
                                         Map<Integer,QtOnlineCheckDefectDTO> defectMap = defectNumList.stream().collect(Collectors.toMap(QtOnlineCheckDefectDTO::getDefectId,Function.identity()));
                                         if(defectMap.get(defectListTmp.getId())!=null){
-                                            defectResultDTO.setDefectNumber(defectMap.get(defectListTmp.getId()).getDefectNumber());
+                                            defectResultDTO.setDefectNum(defectMap.get(defectListTmp.getId()).getDefectNum());
                                         }
                                     }
                                     qtDefectListDTOResult.add(defectResultDTO);

@@ -17,7 +17,7 @@ public class QtOnlineCheckDefectDTO implements Serializable {
 
     private Integer defectId;
 
-    private Integer defectNumber;
+    private Integer defectNum;
 
     private String defectName;
 }

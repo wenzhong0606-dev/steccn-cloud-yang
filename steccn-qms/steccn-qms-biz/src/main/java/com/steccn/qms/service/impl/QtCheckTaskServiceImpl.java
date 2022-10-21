@@ -249,46 +249,51 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //pc端对数据进行处理
         if(isPc){
-            //先拿到checkGroup
-            List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
-            //如果没有group则说明是在线检
-            if (checkGroup != null) {
-                //对每个item进行赋值
-                checkGroup.forEach(groupTmp->{
-                    groupTmp.getItems().forEach(itemTmp -> {
-                        Map<String,String> result = new HashMap<>();
-                        Set<String> unQualifiedSet = new HashSet<>();
-                        //对每一层copy进行遍历
-                        for(QtCheckTaskDetailCopyVO copyTmp:copy){
-                            String num = String.valueOf(copyTmp.getNum());
-                            //需要对每一个copy下的分组和项进行校验，匹配则放入值
-                            copyTmp.getCheckGroup().forEach(copyGroupTmp->{
-                                if(copyGroupTmp.getId().equals(groupTmp.getId())){
-                                    copyGroupTmp.getItems().forEach(itemGroupTmp->{
-                                        if(itemGroupTmp.getItemId().equals(itemTmp.getItemId())){
-                                            if(StringUtils.isNotBlank(itemGroupTmp.getCheckResult())){
-                                                result.put("checkResult"+num,itemGroupTmp.getCheckResult());
+            //copy没有值是在线检
+            if(copy.size()>0){
+                //先拿到checkGroup
+                List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
+                //如果没有group则说明是在线检
+                if (checkGroup != null) {
+                    //对每个item进行赋值
+                    checkGroup.forEach(groupTmp->{
+                        groupTmp.getItems().forEach(itemTmp -> {
+                            Map<String,String> result = new HashMap<>();
+                            Set<String> unQualifiedSet = new HashSet<>();
+                            //对每一层copy进行遍历
+                            for(QtCheckTaskDetailCopyVO copyTmp:copy){
+                                String num = String.valueOf(copyTmp.getNum());
+                                //需要对每一个copy下的分组和项进行校验，匹配则放入值
+                                copyTmp.getCheckGroup().forEach(copyGroupTmp->{
+                                    if(copyGroupTmp.getId().equals(groupTmp.getId())){
+                                        copyGroupTmp.getItems().forEach(itemGroupTmp->{
+                                            if(itemGroupTmp.getItemId().equals(itemTmp.getItemId())){
+                                                if(StringUtils.isNotBlank(itemGroupTmp.getCheckResult())){
+                                                    result.put("checkResult"+num,itemGroupTmp.getCheckResult());
+                                                }
+                                                if(itemGroupTmp.getDefectId()!=null){
+                                                    result.put("defectId"+num,itemGroupTmp.getCheckResult());
+                                                    result.put("defectName"+num,itemGroupTmp.getDefectName());
+                                                }
+                                                if(itemGroupTmp.getIsQualified()!=null && itemGroupTmp.getIsQualified().equals(0)){
+                                                    unQualifiedSet.add("checkResult"+num);
+                                                }
                                             }
-                                            if(itemGroupTmp.getDefectId()!=null){
-                                                result.put("defectId"+num,itemGroupTmp.getCheckResult());
-                                                result.put("defectName"+num,itemGroupTmp.getDefectName());
-                                            }
-                                            if(itemGroupTmp.getIsQualified()!=null && itemGroupTmp.getIsQualified().equals(0)){
-                                                unQualifiedSet.add("checkResult"+num);
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                        itemTmp.setResult(result);
-                        List<String> unQualifiedList = new ArrayList<>();
-                        unQualifiedList.addAll(unQualifiedSet);
-                        itemTmp.setIsQualifiedList(unQualifiedList);
+                                        });
+                                    }
+                                });
+                            }
+                            itemTmp.setResult(result);
+                            List<String> unQualifiedList = new ArrayList<>();
+                            unQualifiedList.addAll(unQualifiedSet);
+                            itemTmp.setIsQualifiedList(unQualifiedList);
+                        });
                     });
-                });
-                qtCheckTaskDetailVo.setCheckGroup(checkGroup);
-            } else {
+                    qtCheckTaskDetailVo.setCheckGroup(checkGroup);
+                } else {
+                    qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
+                }
+            }else {
                 qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
             }
         }else {
@@ -435,6 +440,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto) {
+        if(CollUtil.isEmpty(dto.getCheckGroup()) && dto.getOnlineItem()==null){
+            throw new BusinessException("传的值为空");
+        }
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         QtCheckTask tasKDetail = getById(dto.getId());
         //先删除可能暂存的值
@@ -486,14 +494,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             });
             qtCheckTaskDetailService.saveBatch(valueModels);
-        } else {
-            throw new BusinessException("分组数据为空");
         }
         //插入在线检数据
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem()!=null){
-            QtCheckTaskDetail detail = new QtCheckTaskDetail();
             List<QtCheckTaskDetail> model = Lists.newArrayList();
             dto.getOnlineItem().forEach(tmp->{
+                QtCheckTaskDetail detail = new QtCheckTaskDetail();
                 detail.setTaskId(dto.getId());
                 detail.setItemId(tmp.getItemId());
                 detail.setGroupId(tmp.getGroupId());
@@ -526,13 +532,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             taskModel.setNote(dto.getNote());
         }
         if(StringUtils.isNotBlank(dto.getResult())){
-            taskModel.setNote(dto.getResult());
+            taskModel.setResult(dto.getResult());
         }
         if(dto.getDefectNum()!=null){
             taskModel.setDefectNum(dto.getDefectNum());
         }
         taskModel.setId(dto.getId());
         taskModel.setStatus(dto.getStatus());
+        if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
+            taskModel.setFinishedBy(SecurityUtils.getUser().getUserId());
+            taskModel.setFinishedName(SecurityUtils.getUser().getUsername());
+            taskModel.setFinishedTime(LocalDateTime.now());
+        }
         return updateById(taskModel);
     }
 
@@ -612,6 +623,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             statusList.add(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode());
             statusList.add(QtManagerConstant.QtCheckTaskStatusEnum.TEMPORARY.getCode());
             dto.setStatusList(statusList);
+        }
+        //如果传了进行中,则包括暂存状态
+        if(CollUtil.isNotEmpty(dto.getStatusList())){
+            if(dto.getStatusList().contains(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())){
+                dto.getStatusList().add(QtManagerConstant.QtCheckTaskStatusEnum.TEMPORARY.getCode());
+            }
         }
         //1、配置分页信息
         MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
