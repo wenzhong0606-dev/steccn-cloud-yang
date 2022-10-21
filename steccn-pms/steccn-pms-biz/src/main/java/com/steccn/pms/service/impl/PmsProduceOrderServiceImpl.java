@@ -482,7 +482,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
         Assert.isNull(pmsProduceOrderVO, "其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
         //2.2 校验状态（仅已创建可下达）
-        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()),"仅已下达状态可执行");
+        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()), "仅已下达状态可执行");
         //3.生成新的批次，并翻转订单状态为执行中
         ProduceOrderBatchDto produceOrderBatchDto = new ProduceOrderBatchDto();
         produceOrderBatchDto.setStartTime(LocalDateTime.now());
@@ -592,6 +592,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.定义返回数据
         ReportWorkOrderVO vo = new ReportWorkOrderVO();
         BeanUtils.copyProperties(order, vo);
+
+        vo.setUnitId(craft.getUnitId());
+        Map<Long, String> unitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(craft.getUnitId()))).get();
+        vo.setUnitName(unitMap.get(craft.getUnitId()));
+
         vo.setProduceOrderId(order.getId());
         vo.setProduceOrderCode(order.getCode());
         vo.setBatch(currentBatch.getId());

@@ -56,5 +56,11 @@ public class ReportWorkOrderVO implements Serializable {
 
     @ApiModelProperty("班组名称")
     private String classGroupName;
+
+    @ApiModelProperty("单位id")
+    private Long unitId;
+
+    @ApiModelProperty("单位名称")
+    private String unitName;
 }
 
