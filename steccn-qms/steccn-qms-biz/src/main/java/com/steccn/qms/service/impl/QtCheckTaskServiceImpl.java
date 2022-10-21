@@ -251,41 +251,46 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(isPc){
             //先拿到checkGroup
             List<QtCheckPlanGroupVO> checkGroup = copy.get(0).getCheckGroup();
-            //对每个item进行赋值
-            checkGroup.forEach(groupTmp->{
-                groupTmp.getItems().forEach(itemTmp -> {
-                    Map<String,String> result = new HashMap<>();
-                    Set<String> unQualifiedSet = new HashSet<>();
-                    //对每一层copy进行遍历
-                    for(QtCheckTaskDetailCopyVO copyTmp:copy){
-                        String num = String.valueOf(copyTmp.getNum());
-                        //需要对每一个copy下的分组和项进行校验，匹配则放入值
-                        copyTmp.getCheckGroup().forEach(copyGroupTmp->{
-                           if(copyGroupTmp.getId().equals(groupTmp.getId())){
-                               copyGroupTmp.getItems().forEach(itemGroupTmp->{
-                                   if(itemGroupTmp.getItemId().equals(itemTmp.getItemId())){
-                                       if(StringUtils.isNotBlank(itemGroupTmp.getCheckResult())){
-                                           result.put("checkResult"+num,itemGroupTmp.getCheckResult());
-                                       }
-                                       if(itemGroupTmp.getDefectId()!=null){
-                                           result.put("defectId"+num,itemGroupTmp.getCheckResult());
-                                           result.put("defectName"+num,itemGroupTmp.getDefectName());
-                                       }
-                                       if(itemGroupTmp.getIsQualified()!=null && itemGroupTmp.getIsQualified().equals(0)){
-                                           unQualifiedSet.add("checkResult"+num);
-                                       }
-                                   }
-                               });
-                           }
-                        });
-                    }
-                    itemTmp.setResult(result);
-                    List<String> unQualifiedList = new ArrayList<>();
-                    unQualifiedList.addAll(unQualifiedSet);
-                    itemTmp.setIsQualifiedList(unQualifiedList);
+            //如果没有group则说明是在线检
+            if (checkGroup != null) {
+                //对每个item进行赋值
+                checkGroup.forEach(groupTmp->{
+                    groupTmp.getItems().forEach(itemTmp -> {
+                        Map<String,String> result = new HashMap<>();
+                        Set<String> unQualifiedSet = new HashSet<>();
+                        //对每一层copy进行遍历
+                        for(QtCheckTaskDetailCopyVO copyTmp:copy){
+                            String num = String.valueOf(copyTmp.getNum());
+                            //需要对每一个copy下的分组和项进行校验，匹配则放入值
+                            copyTmp.getCheckGroup().forEach(copyGroupTmp->{
+                                if(copyGroupTmp.getId().equals(groupTmp.getId())){
+                                    copyGroupTmp.getItems().forEach(itemGroupTmp->{
+                                        if(itemGroupTmp.getItemId().equals(itemTmp.getItemId())){
+                                            if(StringUtils.isNotBlank(itemGroupTmp.getCheckResult())){
+                                                result.put("checkResult"+num,itemGroupTmp.getCheckResult());
+                                            }
+                                            if(itemGroupTmp.getDefectId()!=null){
+                                                result.put("defectId"+num,itemGroupTmp.getCheckResult());
+                                                result.put("defectName"+num,itemGroupTmp.getDefectName());
+                                            }
+                                            if(itemGroupTmp.getIsQualified()!=null && itemGroupTmp.getIsQualified().equals(0)){
+                                                unQualifiedSet.add("checkResult"+num);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        itemTmp.setResult(result);
+                        List<String> unQualifiedList = new ArrayList<>();
+                        unQualifiedList.addAll(unQualifiedSet);
+                        itemTmp.setIsQualifiedList(unQualifiedList);
+                    });
                 });
-            });
-            qtCheckTaskDetailVo.setCheckGroup(checkGroup);
+                qtCheckTaskDetailVo.setCheckGroup(checkGroup);
+            } else {
+                qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
+            }
         }else {
             qtCheckPlanDetailsVO.setCopy(copy);
             qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
@@ -506,10 +511,29 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             });
             qtCheckTaskDetailService.saveBatch(model);
         }
-        QtCheckTaskStatusDTO statusDTO = new QtCheckTaskStatusDTO();
-        statusDTO.setId(dto.getId());
-        statusDTO.setStatus(dto.getStatus());
-        return updateStatus(statusDTO);
+        //pc可能会存任务信息
+        QtCheckTask taskModel = new QtCheckTask();
+        if(dto.getBadNum()!=null){
+            taskModel.setBadNum(dto.getBadNum());
+        }
+        if(dto.getGoodNum()!=null){
+            taskModel.setGoodNum(dto.getGoodNum());
+        }
+        if(dto.getCheckNum()!=null){
+            taskModel.setCheckNum(dto.getCheckNum());
+        }
+        if(StringUtils.isNotBlank(dto.getNote())){
+            taskModel.setNote(dto.getNote());
+        }
+        if(StringUtils.isNotBlank(dto.getResult())){
+            taskModel.setNote(dto.getResult());
+        }
+        if(dto.getDefectNum()!=null){
+            taskModel.setDefectNum(dto.getDefectNum());
+        }
+        taskModel.setId(dto.getId());
+        taskModel.setStatus(dto.getStatus());
+        return updateById(taskModel);
     }
 
     /**
