@@ -5,23 +5,45 @@
 <mapper namespace="com.steccn.pms.mapper.PmCraftRouteProcessMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmCraftRouteProcess">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="processId" column="process_id" jdbcType="INTEGER"/>
-            <result property="ifTheSelected" column="if_the_selected" jdbcType="TINYINT"/>
-            <result property="routeId" column="route_id" jdbcType="INTEGER"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="processId" column="process_id" jdbcType="INTEGER"/>
+        <result property="ifTheSelected" column="if_the_selected" jdbcType="TINYINT"/>
+        <result property="routeId" column="route_id" jdbcType="INTEGER"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,process_id,if_the_selected,
+        id
+        ,process_id,if_the_selected,
         route_id,create_by,create_name,
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+    <select id="processList" resultType="com.steccn.pms.vo.PmCraftRouteProcessVO">
+        SELECT
+            a.id,
+            a.process_name,
+            a.process_id,
+            b.CODE AS prcessCode,
+            b.type AS typeCode,
+            a.quantity,
+            a.unit_id,
+            a.standard_unit_id,
+            a.standard_quantity,
+            a.report_work_flag,
+            a.report_check_flag,
+            a.in_station_flag,
+            a.out_station_flag,
+            a.process_scrap
+        FROM
+            pm_craft_route_process a
+                JOIN pm_process b ON a.process_id = b.id
+        WHERE a.route_id = #{craftRouteId}
+    </select>
 </mapper>

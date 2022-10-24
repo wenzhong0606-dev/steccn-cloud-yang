@@ -60,7 +60,23 @@ public interface RemoteDictFeignApi {
     @ApiOperation("数据字典是否存在于这个类型下的id")
     R<Boolean> existTypeId(@ApiParam("类型编码") @RequestParam("type") String type, @ApiParam("主键id") @RequestParam("id") Long id);
 
+    /**
+     * 根据code查询数据字典的值
+     * @param sysDictDTO
+     * @return
+     */
     @PostMapping("/feign/platform/sys/dict/listByCode")
     @ApiOperation("根据code查询数据字典的值")
     R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO);
+
+
+    /**
+     * 根据编码类型查询数据字典的值
+     * @param codes
+     * @param type
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/dict/listByCode")
+    @ApiOperation("根据编码类型查询数据字典的值")
+    R<Map<String,String>> listByCode(@ApiParam("字典编码")@RequestParam("codes") Set<String> codes,@ApiParam("类型")@RequestParam("type") String type);
 }

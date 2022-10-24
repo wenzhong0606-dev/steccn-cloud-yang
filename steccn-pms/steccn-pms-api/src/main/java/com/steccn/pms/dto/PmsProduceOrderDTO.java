@@ -85,6 +85,10 @@ public class PmsProduceOrderDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量不能为空")
     private BigDecimal minPackageQuantity;
 
+    @ApiModelProperty("最小包装数量单位")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量单位不能为空")
+    private BigDecimal minPackageUnitId;
+
     @ApiModelProperty("工序信息")
     private List<PmsProduceOrderCraftDTO> processList;
 

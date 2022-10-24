@@ -12,6 +12,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 工艺路线工序VO
@@ -23,11 +24,26 @@ import java.math.BigDecimal;
 @ApiModel("工艺路线工序VO")
 public class PmCraftRouteProcessVO implements Serializable {
 
+    @ApiModelProperty("主键")
+    private Long id;
+
     @ApiModelProperty("工序id")
     private Long processId;
 
     @ApiModelProperty("工序名称")
     private String processName;
+
+    @ApiModelProperty("工序编码")
+    private String processCode;
+
+    @ApiModelProperty("工序类型")
+    private String typeName;
+
+    @ApiModelProperty("类型编码")
+    private String typeCode;
+
+    @ApiModelProperty("工序类型id")
+    private Long typeId;
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;
@@ -47,8 +63,6 @@ public class PmCraftRouteProcessVO implements Serializable {
     @ApiModelProperty("标准数量单位id")
     private Long standardUnitId;
 
-
-
     @ApiModelProperty("是否报工")
     private Integer reportWorkFlag;
 
@@ -66,6 +80,9 @@ public class PmCraftRouteProcessVO implements Serializable {
 
     @ApiModelProperty("工序报废百分比")
     private BigDecimal processScrap;
+
+    @ApiModelProperty("工位")
+    private List<PmProcessStationVO> processStationVOList;
 
 
 }

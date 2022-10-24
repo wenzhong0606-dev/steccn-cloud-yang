@@ -55,6 +55,14 @@ public interface SysDictService extends IService<SysDict> {
     SysDictVO getByCode(String code,String type);
 
     /**
+     * 根据类型编码获取字典数据
+     * @param codes
+     * @param type
+     * @return
+     */
+    Map<String,String> listByCode(Set<String> codes,String type);
+
+    /**
      * 查询字典数据列表
      * @param sysDictDTO
      * @return

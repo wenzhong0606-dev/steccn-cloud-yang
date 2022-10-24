@@ -85,7 +85,8 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         LambdaQueryWrapper<PmProcess> eq = new LambdaQueryWrapper<PmProcess>()
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmProcess::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
-                .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType());
+                .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType())
+                .eq(Objects.nonNull(dto.getId()),PmProcess::getId,dto.getId());
         //排序按创建时间排序
         eq.orderBy(true, false, PmProcess::getCreateTime);
         //2.定义分页对象
@@ -253,7 +254,6 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     public void excelExportData(HttpServletResponse response) throws IOException {
         downloadExcel(response, getExcelData());
     }
-
 
     /**
      * 获取要导出的数据

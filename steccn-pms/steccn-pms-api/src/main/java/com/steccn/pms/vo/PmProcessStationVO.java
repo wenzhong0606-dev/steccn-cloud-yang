@@ -23,4 +23,8 @@ public class PmProcessStationVO implements Serializable {
 
     @ApiModelProperty("执行工位id")
     private String executeStationCode;
+
+    @ApiModelProperty("工序id")
+    private Long processId;
+
 }
