@@ -5,7 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderCraftStation;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -35,6 +39,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         implements PmsProduceOrderCraftService {
 
     private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     /**
      * 保存生产订单-工序信息
@@ -80,10 +85,14 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         }
         //3.处理数据
         List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
+        //3.1处理单位数据
+        Set<Long> dictIds = Sets.newHashSet();
         list.forEach(pmsProduceOrderCraft -> {
             //查询工位信息
             PmsProduceOrderCraftVO pmsProduceOrderCraftVO = new PmsProduceOrderCraftVO();
             BeanUtil.copyProperties(pmsProduceOrderCraft, pmsProduceOrderCraftVO);
+            dictIds.add(pmsProduceOrderCraftVO.getTypeId());
+            dictIds.add(pmsProduceOrderCraftVO.getUnitId());
             List<PmsWorkOrderCraftStation> stations = pmsWorkOrderCraftStationService.list(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
                     .eq(PmsWorkOrderCraftStation::getProduceOrderCraftId, pmsProduceOrderCraft.getId()));
             if (CollUtil.isNotEmpty(stations)) {
@@ -91,6 +100,14 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
             }
             craftVOList.add(pmsProduceOrderCraftVO);
         });
+        //3.2 获取字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        if (CollUtil.isNotEmpty(craftVOList)) {
+            craftVOList.forEach(pmsProduceOrderCraft -> {
+                pmsProduceOrderCraft.setUnit(dictMap.get(pmsProduceOrderCraft.getUnitId()));
+                pmsProduceOrderCraft.setType(dictMap.get(pmsProduceOrderCraft.getTypeId()));
+            });
+        }
         return craftVOList;
     }
 
