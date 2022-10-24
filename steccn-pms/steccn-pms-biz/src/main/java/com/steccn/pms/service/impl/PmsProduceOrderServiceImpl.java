@@ -421,7 +421,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         PmsProduceOrder order = selectOrder(orderId);
         //2.校验状态
         Assert.checkBetween(order.getState(), 0, 0, "仅已创建状态订单可关闭");
-        return removeById(orderId);
+        order.setState(PmManagerConstant.OrderStateEnum.SEVEN.getCode());
+        return updateById(order);
     }
 
     /**
@@ -456,11 +457,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 || PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState()), "当前订单状态不可确认");
         //3.记录批次时间
         //3.1 获取批次信息
-        PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
-        Assert.notNull(batch, "当前订单不存在批次信息，请检查");
-        //3.2批次结束时间
-        batch.setEndTime(LocalDateTime.now());
-        pmsWorkOrderBatchService.updateById(batch);
+        if (PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())) {
+            PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
+            Assert.notNull(batch, "当前订单不存在批次信息，请检查");
+            //3.2批次结束时间
+            batch.setEndTime(LocalDateTime.now());
+            batch.setCurrentBatchFlag(PmsCodeUtil.DEFAULT_PADDING);
+            pmsWorkOrderBatchService.updateById(batch);
+        }else {
+            //完成 确认状态
+            PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
+            if (Objects.nonNull(batch)){
+                batch.setEndTime(LocalDateTime.now());
+                batch.setCurrentBatchFlag(PmsCodeUtil.DEFAULT_PADDING);
+                pmsWorkOrderBatchService.updateById(batch);
+            }
+        }
         //4.修改订单状态
         if (PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())) {
             order.setState(PmManagerConstant.OrderStateEnum.FOUR.getCode());
@@ -480,9 +492,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.校验当前产线是否在其他执行中的订单
         //2.1查询当前产线的执行订单数量
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
-        Assert.isNull(pmsProduceOrderVO, "其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
+        if (Objects.nonNull(pmsProduceOrderVO)){
+            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
+        }
         //2.2 校验状态（仅已创建可下达）
-        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()), "仅已下达状态可执行");
+        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()) || order.getState().equals(PmManagerConstant.OrderStateEnum.FOUR.getCode()), "仅已下达状态或暂停中可执行");
         //3.生成新的批次，并翻转订单状态为执行中
         ProduceOrderBatchDto produceOrderBatchDto = new ProduceOrderBatchDto();
         produceOrderBatchDto.setStartTime(LocalDateTime.now());

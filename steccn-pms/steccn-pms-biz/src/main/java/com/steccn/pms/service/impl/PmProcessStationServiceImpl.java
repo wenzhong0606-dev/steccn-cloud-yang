@@ -1,7 +1,10 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.pms.domain.PmProcessStation;
@@ -9,13 +12,12 @@ import com.steccn.pms.dto.PmProcessDTO;
 import com.steccn.pms.dto.PmProcessStationDTO;
 import com.steccn.pms.service.PmProcessStationService;
 import com.steccn.pms.mapper.PmProcessStationMapper;
+import com.steccn.pms.vo.PmProcessStationVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -47,6 +49,20 @@ public class PmProcessStationServiceImpl extends ServiceImpl<PmProcessStationMap
             processStationList.add(pmProcessStation);
         });
         return saveBatch(processStationList);
+    }
+
+    @Override
+    public Map<Long, List<PmProcessStationVO>> listByProcessId(Set<Long> ids) {
+        Map<Long, List<PmProcessStationVO>> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(ids)) {
+            return map;
+        }
+        List<PmProcessStation> list = list(new LambdaQueryWrapper<PmProcessStation>().in(PmProcessStation::getProcessId, ids));
+        if (CollUtil.isNotEmpty(list)) {
+            List<PmProcessStationVO> pmProcessStationVOS = BeanUtil.copyToList(list, PmProcessStationVO.class);
+            map = pmProcessStationVOS.stream().collect(Collectors.groupingBy(PmProcessStationVO::getProcessId));
+        }
+        return map;
     }
 }
 

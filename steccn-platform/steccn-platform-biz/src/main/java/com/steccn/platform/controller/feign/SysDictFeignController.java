@@ -65,4 +65,10 @@ public class SysDictFeignController {
         return R.success(sysDictService.listByCode(sysDictDTO));
     }
 
+    @GetMapping("/listByCode")
+    @ApiOperation("根据编码类型查询数据字典的名称")
+    public R<Map<String,String>> listByCode(@ApiParam("字典编码")@RequestParam("codes") Set<String> codes,@ApiParam("类型")@RequestParam("type") String type){
+        return R.success(sysDictService.listByCode(codes,type));
+    }
+
 }

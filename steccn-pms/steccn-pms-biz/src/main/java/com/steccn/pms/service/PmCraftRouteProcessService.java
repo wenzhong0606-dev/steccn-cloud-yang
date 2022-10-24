@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.vo.PmCraftRouteProcessVO;
+import com.steccn.pms.vo.PmProcessVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -36,4 +38,5 @@ public interface PmCraftRouteProcessService extends IService<PmCraftRouteProcess
      * @return
      */
     Boolean deleteByRoteId(Long id);
+
 }

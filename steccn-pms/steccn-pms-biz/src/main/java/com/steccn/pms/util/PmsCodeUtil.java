@@ -52,6 +52,12 @@ public class PmsCodeUtil {
      */
     public final static Integer NUM_BIT_2 = 2;
 
+    /**
+     * 数字位数-1
+     */
+    public final static Integer NUM_BIT_1 = 1;
+
+
 
     /**
      * 编码前缀-生产订单 PP

@@ -2,7 +2,12 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmCraftRouteProcess;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.domain.PmProcess;
+import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmCraftRouteProcessMapper extends BaseMapper<PmCraftRouteProcess> {
 
+    /**
+     * 根据工艺路线id获取当前的线路下的工序信息
+     * @param craftRouteId
+     * @return
+     */
+    List<PmCraftRouteProcessVO> processList(@Param("craftRouteId") Long craftRouteId);
 }
 
 

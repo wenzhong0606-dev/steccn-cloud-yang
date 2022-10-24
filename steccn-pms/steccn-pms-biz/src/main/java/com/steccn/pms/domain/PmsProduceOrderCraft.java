@@ -31,6 +31,11 @@ public class PmsProduceOrderCraft implements Serializable {
     private String name;
 
     /**
+     * 工序id
+     */
+    private Long processId;
+
+    /**
      * 工序类型id
      */
     private Long typeId;

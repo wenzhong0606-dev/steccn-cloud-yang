@@ -30,6 +30,11 @@ public class PmProcessStation implements Serializable {
     private String executeStationCode;
 
     /**
+     * 执行工位id
+     */
+    private Integer executeStationId;
+
+    /**
      * 工序id
      */
     private Long processId;

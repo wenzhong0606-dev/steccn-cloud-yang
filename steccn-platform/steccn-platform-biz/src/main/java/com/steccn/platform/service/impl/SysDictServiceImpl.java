@@ -93,6 +93,26 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     }
 
     @Override
+    public Map<String, String> listByCode(Set<String> codes, String type) {
+        Map<String, String> map = Maps.newHashMap();
+        //1.根据类型code查询出所有的数据字典数据
+        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>().eq(SysDict::getType, type));
+        //2.如果数据为空，直接返回空集合
+        if (CollUtil.isEmpty(dataList)) {
+            return map;
+        }
+        //3.处理数据
+        dataList.forEach(sysDict -> {
+            codes.forEach(code -> {
+                if (code.equals(sysDict.getCode())) {
+                    map.put(code, sysDict.getName());
+                }
+            });
+        });
+        return map;
+    }
+
+    @Override
     public Map<String, SysDictVO> listByCode(SysDictDTO sysDictDTO) {
         Map<String, SysDictVO> resMap = Maps.newHashMap();
         Collection<SysDict> sysDictList = baseMapper.listByCodes(sysDictDTO);

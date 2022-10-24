@@ -69,6 +69,9 @@
             <if test="dto.code != null and dto.code != ''">
                 and code LIKE CONCAT(CONCAT('%',#{dto.code}),'%')
             </if>
+            <if test="dto.materialName != null and dto.materialName != ''">
+                and material_name LIKE CONCAT(CONCAT('%',#{dto.materialName}),'%')
+            </if>
             <if test="dto.materialCode != null and dto.materialCode != ''">
                 and material_code LIKE CONCAT(CONCAT('%',#{dto.materialCode}),'%')
             </if>

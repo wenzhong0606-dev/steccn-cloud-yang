@@ -17,6 +17,10 @@ public interface PmManagerConstant {
 
     String FILE_EXTENSION_XLSX = ".xlsx";
 
+    /**
+     * 类型编码-工序类型
+     */
+    String PROCESS_TYPE = "process_type";
 
 
     /**
@@ -57,9 +61,9 @@ public interface PmManagerConstant {
         TWO(2, "执行中"),
         THREE(3, "暂停中"),
         FOUR(4, "已暂停"),
-        FIVE(5,"完成中"),
-        SIX(6,"已完成"),
-        SEVEN(7,"已关闭");
+        FIVE(5, "完成中"),
+        SIX(6, "已完成"),
+        SEVEN(7, "已关闭");
 
         private final Integer code;
 

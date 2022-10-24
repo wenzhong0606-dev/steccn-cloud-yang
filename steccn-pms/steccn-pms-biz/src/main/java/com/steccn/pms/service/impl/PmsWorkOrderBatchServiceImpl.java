@@ -53,6 +53,8 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         return orderBatch;
     }
 
+
+
     @Override
     public Boolean add(ProduceOrderBatchDto dto) {
         //1.定义数据模型
@@ -61,6 +63,7 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         //2.给当前批次信息生成批次号
         //TODO 班次
         orderBatch.setCode(PmsCodeUtil.getBatchCode(PmsCodeUtil.PREFIX_PMS_BATCH, PmsCodeUtil.NUM_BIT_2, currentMaxCode(),"01"));
+        orderBatch.setCurrentBatchFlag(PmsCodeUtil.NUM_BIT_1);
         //3.保存批次信息
         return save(orderBatch);
     }

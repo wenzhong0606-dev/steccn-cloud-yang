@@ -59,7 +59,6 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RemoteOfficeFeign remoteOfficeFeign;
 
 
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean print(BarcodePrintDTO dto) {
@@ -86,14 +85,14 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Page<PmsBarcodePrint> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
-                .eq(PmsBarcodePrint::getCaseState,dto.getCaseState())
+                .eq(PmsBarcodePrint::getCaseState, dto.getCaseState())
                 .orderByDesc(PmsBarcodePrint::getCreateTime));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
             //处理单位数据
             Set<Long> dictSet = Sets.newHashSet();
-            voList.forEach( barcodePrintRecordVO -> {
+            voList.forEach(barcodePrintRecordVO -> {
                 dictSet.add(barcodePrintRecordVO.getUnitId());
             });
             //获取单位数据
@@ -146,6 +145,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     @Override
     public Map<String, PmsCompleteStorageNumDTO> batchSum(Set<String> batchNoSet) {
         Map<String, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
+        if (CollUtil.isEmpty(batchNoSet)) {
+            return resMap;
+        }
         List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getBatchNo, batchNoSet));
         if (CollUtil.isNotEmpty(dbList)) {
             Map<String, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getBatchNo));
@@ -188,7 +190,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
 
     @Override
     public Boolean reviseAlreadyPutInStatue(List<String> caseNoList) {
-        if (CollUtil.isEmpty(caseNoList)){
+        if (CollUtil.isEmpty(caseNoList)) {
             throw new BusinessException("箱号列表为空");
         }
         for (String caseNo : caseNoList) {
