@@ -23,8 +23,11 @@ public class PmProcessStationDTO implements Serializable {
     @ApiModelProperty("执行工位名称")
     private String executeStationName;
 
-    @ApiModelProperty("执行工位id")
+    @ApiModelProperty("执行工位编码")
     private String executeStationCode;
+
+    @ApiModelProperty("执行工位id")
+    private String executeStationId;
 
     @ApiModelProperty("工序id")
     private Integer processId;

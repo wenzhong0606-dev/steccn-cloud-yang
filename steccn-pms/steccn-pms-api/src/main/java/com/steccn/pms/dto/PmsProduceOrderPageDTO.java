@@ -29,6 +29,9 @@ public class PmsProduceOrderPageDTO  extends BasePageDTO {
     @ApiModelProperty("物料编码")
     private String materialCode;
 
+    @ApiModelProperty("物料名称")
+    private String materialName;
+
     @ApiModelProperty("产线id")
     private Integer productionLineId;
 
