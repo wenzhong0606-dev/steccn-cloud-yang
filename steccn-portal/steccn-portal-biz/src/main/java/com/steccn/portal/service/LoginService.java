@@ -13,8 +13,6 @@ import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-//import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -32,7 +30,6 @@ public class LoginService {
     private final RemoteTokenApi remoteTokenApi;
     private final OaInfoService oaInfoService;
     private final MesMenuService mesMenuService;
-    private final StringRedisTemplate redisTemplate;
 
     /**
      * 登录模块
@@ -110,7 +107,6 @@ public class LoginService {
             throw new BusinessException(e.getLocalizedMessage());
         }
         if (flag) {
-            redisTemplate.opsForValue().set(String.valueOf(steccnTokenVO.getOaUserId()), steccnTokenVO.getAccessToken());
             return R.success(steccnTokenVO);
         } else {
             return R.failure("用户名密码错误");
