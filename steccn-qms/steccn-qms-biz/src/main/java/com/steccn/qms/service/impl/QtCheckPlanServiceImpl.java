@@ -610,6 +610,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         //赋值数组
                         q.setRangeArray(snapshotArray(q.getRangeArray(), checkItemIdMap));
                         q.setAverageArray(snapshotArray(q.getAverageArray(), checkItemIdMap));
+                        q.setMeanArray(snapshotArray(q.getMeanArray(),checkItemIdMap));
+                        q.setEndAverageArray(snapshotArray(q.getEndAverageArray(),checkItemIdMap));
                         q.setLinkedDefectiveItem(snapshotArray(q.getLinkedDefectiveItem(), defectiveItemIdMap));
                         batchItem.add(q);
                     });
