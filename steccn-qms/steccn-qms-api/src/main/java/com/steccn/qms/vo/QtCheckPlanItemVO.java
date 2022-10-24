@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 检验项回显Vo
@@ -60,4 +61,20 @@ public class QtCheckPlanItemVO extends QtCheckItemListVO implements Serializable
 
     @ApiModelProperty("缺陷项名字")
     private String defectName;
+
+    /**
+     * pc端任务详情专用
+     */
+    private Map<String,String> result;
+
+    /**
+     * 0是不合格  1是合格
+     *
+     */
+    private Integer isQualified;
+
+    /**
+     * pc端任务详情专用，存放不合格的checkResult
+     */
+    private List<String> isQualifiedList;
 }

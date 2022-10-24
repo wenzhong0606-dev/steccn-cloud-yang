@@ -158,7 +158,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (!type.equals(sysDictVO.getType())) {
             throw new BusinessException(errorMsg);
         }
-//      数值1 百分比2 文本3 单选4 多选5 人工判断良或次6 自动计算极差7 自动计算平均值8
+//      数值1 百分比2 文本3 单选4 多选5 人工判断良或次6 自动计算极差7 自动计算平均值8 自动计算均方差9
 //      仅当数据类型为“数值”、“百分比”、“文本”、“单选”、“多选”、“人工判断良或次”时显示
 //      1）数据类型为“数值”、“百分比”：提示“请输入默认值”，数值输入，范围同double型
 //      2）数据类型为“文本”：提示“请输入默认值”，文本输入，1<=长度<=100
@@ -256,8 +256,37 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //如果检验方案中的极差数组中绑定了该检验项，则无法编辑
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionRangeArray = new LambdaQueryWrapper<>();
         itemConditionRangeArray.apply("JSON_CONTAINS(range_array, JSON_ARRAY({0}))", dto.getId());
+        //measureUnit非必填，所以需要进行null判断
+        //1、dto中的measureUnit  oldModel中的measureUnit 任意一个不为null
+        Boolean flag;
+        //measureUnit
+        if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()!=null){
+            if(dto.getMeasureUnit().equals(oldModel.getMeasureUnit())){
+                flag = false;
+            }
+        }else {
+            //两个都为null则表示没有改变
+            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()==null){
+                flag = false;
+            }
+            //一个为null另一个不为null
+            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()!=null){
+                flag = true;
+            }
+            //一个为null另一个不为null
+            if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()==null){
+                flag = true;
+            }
+
+        }
+        //数据类型
+        if(dto.getDataType().equals(oldModel.getDataType())){
+            flag = false;
+        }else {
+            flag = true;
+        }
         if (qtCheckPlanGroupItemService.count(itemConditionRangeArray) != 0) {
-            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
+            if (flag) {
                 throw new BusinessException("该检验项在极差数组中,无法修改数据类型，计量单位");
             }
         }
@@ -265,7 +294,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         LambdaQueryWrapper<QtCheckPlanGroupItem> itemConditionAverageArray = new LambdaQueryWrapper<>();
         itemConditionAverageArray.apply("JSON_CONTAINS(average_array, JSON_ARRAY({0}))", dto.getId());
         if (qtCheckPlanGroupItemService.count(itemConditionAverageArray) != 0) {
-            if (!dto.getMeasureUnit().equals(oldModel.getMeasureUnit()) || !dto.getDataType().equals(oldModel.getDataType())) {
+            if (flag) {
                 throw new BusinessException("该检验项在平均数组中,无法修改数据类型，计量单位");
             }
         }
@@ -283,6 +312,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         oldModel.setPossibleValue(dto.getPossibleValue());
         oldModel.setOpDesc(dto.getOpDesc());
         oldModel.setNote(dto.getNote());
+        oldModel.setCheckMethod(dto.getCheckMethod());
         boolean save = updateById(oldModel);
         //判断是否关联检验方案，如果关联则需要升检验方案的版本
         Set<Integer> planIdList = qtCheckPlanService.linkedPlan(oldModel.getId(), 0);
@@ -412,6 +442,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
      */
     private boolean existName(Integer categoryId, String name, Integer filterId) {
         long count = count(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getShowFlag, MpConstant.YES)
                 .eq(QtCheckItem::getCategoryId, categoryId)
                 .eq(QtCheckItem::getName, name)
                 .ne(Objects.nonNull(filterId), QtCheckItem::getId, filterId));

@@ -1,7 +1,9 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,12 +25,14 @@ import com.steccn.qms.mapper.QtCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +62,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
 
     private final QtCheckPlanMapper qtCheckPlanMapper;
+
+    private final QtItemCategoryService qtItemCategoryService;
 
     /**
      * 新增检验计划
@@ -94,6 +100,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             dto.setNote("");
         }
         planModel.setNote(dto.getNote());
+        planModel.setCheckMethod(dto.getCheckMethod());
         //3、获取最大编码
         planModel.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYFA, CodeGenerateUtil.NUM_BIT_6, currentMaxCode()));
         //修改和新增为一个方法,若有id则是修改，若无则是新增
@@ -121,7 +128,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
      * @param dto    dto
      */
     private void saveGroupAndItem(Integer planId, QtCheckPlanDTO dto) {
-        //4、处理检验分组(当是计量检验时,分组不为空)
+        //4、处理检验分组(当是计量检验时,分组不为空) 否则插入一个分组即可
         if (dto.getCheckMethod()==0 && CollUtil.isNotEmpty(dto.getCheckGroup())) {
             for (int i = 0; i < dto.getCheckGroup().size(); i++) {
                 QtCheckPlanGroup groupModel = new QtCheckPlanGroup();
@@ -131,10 +138,16 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 qtCheckPlanGroupService.save(groupModel);
                 saveItem(dto.getCheckGroup().get(i).getItems(),groupModel.getId());
             }
-        }
-        //计数检验直接传item
-        if(dto.getCheckMethod()==1 && CollUtil.isNotEmpty(dto.getItems())){
-            saveItem(dto.getItems(),0);
+        }else {
+            if(dto.getItems()==null){
+                throw new BusinessException("检验方案为计数检验时，items不能为空");
+            }
+            QtCheckPlanGroup groupModel = new QtCheckPlanGroup();
+            groupModel.setPlanId(planId);
+            groupModel.setName("");
+            groupModel.setSort(0);
+            qtCheckPlanGroupService.save(groupModel);
+            saveItem(dto.getItems(),groupModel.getId());
         }
     }
 
@@ -165,7 +178,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         dicId.add(tmp.getDataType());
                     });
                     R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-                    if (res.getData().size() != 1 && !res.getData().get(dicId.get(0)).getCode().equals("8")) {
+                    //平均数组中数据类型必须为数值和百分比
+                    if (res.getData().size() != 1 && !((res.getData().get(dicId.get(0)).getCode().equals("1"))||(res.getData().get(dicId.get(0)).getCode().equals("2")))) {
                         throw new BusinessException("平均数数组中的检验项类型错误");
                     }
                 }
@@ -181,7 +195,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         dicId.add(tmp.getDataType());
                     });
                     R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-                    if (res.getData().size() != 1 && !res.getData().get(dicId.get(0)).getCode().equals("7")) {
+                    //极差数组中数据类型必须为数值和百分比
+                    if (res.getData().size() != 1 && !((res.getData().get(dicId.get(0)).getCode().equals("1"))||(res.getData().get(dicId.get(0)).getCode().equals("2")))) {
                         throw new BusinessException("极差数组中的检验项类型错误");
                     }
                 }
@@ -197,7 +212,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         dicId.add(tmp.getDataType());
                     });
                     R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-                    if (res.getData().size() != 1 && !res.getData().get(dicId.get(0)).getCode().equals("9")) {
+                    //方差数组中数据类型必须为数值和百分比
+                    if (res.getData().size() != 1 && !((res.getData().get(dicId.get(0)).getCode().equals("1"))||(res.getData().get(dicId.get(0)).getCode().equals("2")))) {
                         throw new BusinessException("均方差数组中的检验项类型错误");
                     }
                 }
@@ -213,7 +229,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         dicId.add(tmp.getDataType());
                     });
                     R<Map<Long, SysDictVO>> res = remoteDictFeign.listById(dicId);
-                    if (res.getData().size() != 1 && !res.getData().get(dicId.get(0)).getCode().equals("10")) {
+                    //截尾平均数组中数据类型必须为数值和百分比
+                    if (res.getData().size() != 1 && !((res.getData().get(dicId.get(0)).getCode().equals("1"))||(res.getData().get(dicId.get(0)).getCode().equals("2")))) {
                         throw new BusinessException("截尾平均值数组中的检验项类型错误");
                     }
                 }
@@ -291,119 +308,212 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //1、先拿到方案
         QtCheckPlanDetailsVO resVo = new QtCheckPlanDetailsVO();
         QtCheckPlan qtCheckPlan = getById(id);
+        //为null的则是原始数据,防止出现遗漏
+        if(qtCheckPlan.getCheckMethod() == null){
+            qtCheckPlan.setCheckMethod(0);
+        }
         BeanUtils.copyProperties(qtCheckPlan, resVo);
-        //如果是计量检验，则有分组
-        if(qtCheckPlan.getCheckMethod() == null ||qtCheckPlan.getCheckMethod() == 0){
-            //2、拿到分组信息
-            List<QtCheckPlanGroup> groups = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>()
-                    .eq(QtCheckPlanGroup::getPlanId, resVo.getId())
-                    .orderByAsc(QtCheckPlanGroup::getSort));
-            List<QtCheckPlanGroupVO> qtCheckPlanGroupVOS = new ArrayList<>();
-            groups.forEach(tmp -> {
-                QtCheckPlanGroupVO groupVo = new QtCheckPlanGroupVO();
-                BeanUtils.copyProperties(tmp, groupVo);
-                groupVo.setGroupName(tmp.getName());
-                //3、处理item信息
-                //itemGroup的值
-                List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
-                        .eq(QtCheckPlanGroupItem::getGroupId, tmp.getId())
-                        .orderByAsc(QtCheckPlanGroupItem::getSort));
-                List<QtCheckPlanItemVO> qtCheckPlanItemVOS = new ArrayList<>();
-                qtCheckPlanGroupItems.forEach(groupItemTmp -> {
-                    QtCheckPlanItemVO qtCheckPlanItemVo = new QtCheckPlanItemVO();
-                    //复制itemGroup特有的值
-                    BeanUtils.copyProperties(groupItemTmp, qtCheckPlanItemVo);
-                    //复制原来item的值
-                    //原来item的值
-                    QtCheckItemListVO qtCheckItemListVO = qtCheckItemService.info(groupItemTmp.getCheckItemId());
-                    BeanUtils.copyProperties(qtCheckItemListVO, qtCheckPlanItemVo);
-                    qtCheckPlanItemVo.setId(groupItemTmp.getId());
-                    //处理极差数组
-                    if (groupItemTmp.getRangeArray() != null && groupItemTmp.getRangeArray().size() > 0) {
-                        Collection<QtCheckItem> rangeArrayList = qtCheckItemService.listByIds(groupItemTmp.getRangeArray());
-                        List<QtRangeArrayVO> rangeArrayVos = new ArrayList<>();
-                        rangeArrayList.forEach(rangeArrayTmp -> {
-                            QtRangeArrayVO qtRangeArrayVo = new QtRangeArrayVO();
-                            BeanUtils.copyProperties(rangeArrayTmp, qtRangeArrayVo);
-                            rangeArrayVos.add(qtRangeArrayVo);
-                        });
-                        qtCheckPlanItemVo.setRangeArray(rangeArrayVos);
-                    }
-                    //处理平均数数组
-                    if (groupItemTmp.getAverageArray() != null && groupItemTmp.getAverageArray().size() > 0) {
-                        Collection<QtCheckItem> averageArrayList = qtCheckItemService.listByIds(groupItemTmp.getAverageArray());
-                        List<QtAverageArrayVO> averageArrayVos = new ArrayList<>();
-                        averageArrayList.forEach(averageArrayTmp -> {
-                            QtAverageArrayVO averageArrayVO = new QtAverageArrayVO();
-                            BeanUtils.copyProperties(averageArrayTmp, averageArrayVO);
-                            averageArrayVos.add(averageArrayVO);
-                        });
-                        qtCheckPlanItemVo.setAverageArray(averageArrayVos);
-                    }
+        //2、拿到分组信息
+        List<QtCheckPlanGroup> groups = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>()
+                .eq(QtCheckPlanGroup::getPlanId, resVo.getId())
+                .orderByAsc(QtCheckPlanGroup::getSort));
+        List<QtCheckPlanGroupVO> qtCheckPlanGroupVOS = new ArrayList<>();
+        //在线检的结果list
+        List<QtOnlineCheckItemDTO> onlineCheckResult = new ArrayList<>();
+        groups.forEach(tmp -> {
+            QtCheckPlanGroupVO groupVo = new QtCheckPlanGroupVO();
+            BeanUtils.copyProperties(tmp, groupVo);
+            groupVo.setGroupName(tmp.getName());
+            //3、处理item信息
+            //itemGroup的值
+            List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                    .eq(QtCheckPlanGroupItem::getGroupId, tmp.getId())
+                    .orderByAsc(QtCheckPlanGroupItem::getSort));
+            List<QtCheckPlanItemVO> qtCheckPlanItemVOS = new ArrayList<>();
+            qtCheckPlanGroupItems.forEach(groupItemTmp -> {
+                LambdaQueryWrapper detailCondition =  new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, taskId)
+                        .and((groupItemTmp.getCheckItemId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getItemId, groupItemTmp.getCheckItemId()))
+                        .and((groupItemTmp.getGroupId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId, groupItemTmp.getGroupId()))
+                        .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy));
+                QtCheckPlanItemVO qtCheckPlanItemVo = new QtCheckPlanItemVO();
+                //复制itemGroup特有的值
+                BeanUtils.copyProperties(groupItemTmp, qtCheckPlanItemVo);
+                //复制原来item的值
+                //原来item的值
+                QtCheckItemListVO qtCheckItemListVO = qtCheckItemService.info(groupItemTmp.getCheckItemId());
+                BeanUtils.copyProperties(qtCheckItemListVO, qtCheckPlanItemVo);
+                qtCheckPlanItemVo.setId(groupItemTmp.getId());
+                //处理极差数组
+                if (groupItemTmp.getRangeArray() != null && groupItemTmp.getRangeArray().size() > 0) {
+                    Collection<QtCheckItem> rangeArrayList = qtCheckItemService.listByIds(groupItemTmp.getRangeArray());
+                    List<QtRangeArrayVO> rangeArrayVos = new ArrayList<>();
+                    rangeArrayList.forEach(rangeArrayTmp -> {
+                        QtRangeArrayVO qtRangeArrayVo = new QtRangeArrayVO();
+                        BeanUtils.copyProperties(rangeArrayTmp, qtRangeArrayVo);
+                        rangeArrayVos.add(qtRangeArrayVo);
+                    });
+                    qtCheckPlanItemVo.setRangeArray(rangeArrayVos);
+                }
+                //处理平均数数组
+                if (groupItemTmp.getAverageArray() != null && groupItemTmp.getAverageArray().size() > 0) {
+                    Collection<QtCheckItem> averageArrayList = qtCheckItemService.listByIds(groupItemTmp.getAverageArray());
+                    List<QtAverageArrayVO> averageArrayVos = new ArrayList<>();
+                    averageArrayList.forEach(averageArrayTmp -> {
+                        QtAverageArrayVO averageArrayVO = new QtAverageArrayVO();
+                        BeanUtils.copyProperties(averageArrayTmp, averageArrayVO);
+                        averageArrayVos.add(averageArrayVO);
+                    });
+                    qtCheckPlanItemVo.setAverageArray(averageArrayVos);
+                }
+                //处理方差数数组
+                if (groupItemTmp.getMeanArray() != null && groupItemTmp.getMeanArray().size() > 0) {
+                    Collection<QtCheckItem> meanArrayList = qtCheckItemService.listByIds(groupItemTmp.getMeanArray());
+                    List<QtMeanArrayVO> meanArrayVos = new ArrayList<>();
+                    meanArrayList.forEach(meanArrayTmp -> {
+                        QtMeanArrayVO meanArrayVO = new QtMeanArrayVO();
+                        BeanUtils.copyProperties(meanArrayTmp, meanArrayVO);
+                        meanArrayVos.add(meanArrayVO);
+                    });
+                    qtCheckPlanItemVo.setMeanArray(meanArrayVos);
+                }
+                //处理截尾平均数数组
+                if (groupItemTmp.getEndAverageArray() != null && groupItemTmp.getEndAverageArray().size() > 0) {
+                    Collection<QtCheckItem> endAverageArrayList = qtCheckItemService.listByIds(groupItemTmp.getEndAverageArray());
+                    List<QtEndAverageArrayVO> endAverageArrayVos = new ArrayList<>();
+                    endAverageArrayList.forEach(endAverageArrayTmp -> {
+                        QtEndAverageArrayVO endAverageArrayVO = new QtEndAverageArrayVO();
+                        BeanUtils.copyProperties(endAverageArrayTmp, endAverageArrayVO);
+                        endAverageArrayVos.add(endAverageArrayVO);
+                    });
+                    qtCheckPlanItemVo.setEndAverageArray(endAverageArrayVos);
+                }
 
-                    //处理缺陷项
-                    if (groupItemTmp.getLinkedDefectiveItem() != null && groupItemTmp.getLinkedDefectiveItem().size() > 0) {
-                        Collection<QtDefectiveItem> defectiveArrayList = qtDefectiveItemService.listByIds(groupItemTmp.getLinkedDefectiveItem());
-                        List<QtLinkedDefectiveItemVO> defectItemVos = new ArrayList<>();
-                        defectiveArrayList.forEach(defectiveArrayTmp -> {
-                            QtLinkedDefectiveItemVO defectiveItemVo = new QtLinkedDefectiveItemVO();
-                            BeanUtils.copyProperties(defectiveArrayTmp, defectiveItemVo);
-                            defectItemVos.add(defectiveItemVo);
-                        });
-                        qtCheckPlanItemVo.setLinkedDefectiveItem(defectItemVos);
+                //处理缺陷项
+                if (groupItemTmp.getLinkedDefectiveItem() != null && groupItemTmp.getLinkedDefectiveItem().size() > 0) {
+                    Collection<QtDefectiveItem> defectiveArrayList = qtDefectiveItemService.listByIds(groupItemTmp.getLinkedDefectiveItem());
+                    List<QtLinkedDefectiveItemVO> defectItemVos = new ArrayList<>();
+                    defectiveArrayList.forEach(defectiveArrayTmp -> {
+                        QtLinkedDefectiveItemVO defectiveItemVo = new QtLinkedDefectiveItemVO();
+                        BeanUtils.copyProperties(defectiveArrayTmp, defectiveItemVo);
+                        defectItemVos.add(defectiveItemVo);
+                    });
+                    qtCheckPlanItemVo.setLinkedDefectiveItem(defectItemVos);
+                    //如果检验方案是在线检,那么需要特殊处理缺陷项
+                    //先拿到该检验方案的检验类型
+                    //如果taskID不为null则是巡检任务下的数据
+                    Integer planId;
+                    if(qtCheckPlan.getOriginalId()!=null){
+                        planId = qtCheckPlan.getOriginalId();
+                    }else {
+                        planId = id;
                     }
-
-                    //处理关联客户
-                    if (groupItemTmp.getLinkedCustomer() != null && groupItemTmp.getLinkedCustomer().size() > 0) {
-                        R<List<SysOfficeVO>> officeRes = remoteOfficeFeign.data();
-                        //把所有东西导入code和名字导入map
-                        Map<String, String> resMap = new HashMap<>();
-                        if (officeRes.getData() != null && officeRes.getData().size() > 0) {
-                            officeRes.getData().forEach(officeTmp -> {
-                                resMap.put(officeTmp.getOfficeCode(), officeTmp.getOfficeName());
-                            });
-                        }
-                        List<QtLinkedCustomerCodeVO> qtLinkedCustomerCodeVOS = Lists.newArrayList();
-                        groupItemTmp.getLinkedCustomer().forEach(customerTmp -> {
-                            QtLinkedCustomerCodeVO qtLinkedCustomerCodeVo = new QtLinkedCustomerCodeVO();
-                            if (resMap.get(customerTmp) != null) {
-                                qtLinkedCustomerCodeVo.setCode(customerTmp);
-                                qtLinkedCustomerCodeVo.setName(resMap.get(customerTmp));
+                    List<QtMaterialLinkCheckPlan> linkCheckPlanModel = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>().eq(QtMaterialLinkCheckPlan::getCheckPlanId,planId));
+                    if(CollUtil.isNotEmpty(linkCheckPlanModel)){
+                        Boolean flag = false;
+                        //如果绑定了在线检，则返回不同类型
+                        for(QtMaterialLinkCheckPlan linkPlanTmp:linkCheckPlanModel){
+                            if(linkPlanTmp.getCheckTypeCode().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                                flag = true;
                             }
-                            qtLinkedCustomerCodeVOS.add(qtLinkedCustomerCodeVo);
-                        });
-                        qtCheckPlanItemVo.setLinkedCustomerCode(qtLinkedCustomerCodeVOS);
-                    }
-
-                    //处理检查结果
-                    if (taskId != null && copy != null) {
-                        List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, taskId)
-                                .and((groupItemTmp.getCheckItemId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getItemId, groupItemTmp.getCheckItemId()))
-                                .and((groupItemTmp.getGroupId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId, groupItemTmp.getGroupId()))
-                                .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy)));
-                        if (taskDetails != null && taskDetails.size() > 0) {
-                            qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
-                            //如果缺陷项存在，返回缺陷项
-                            if (taskDetails.get(0).getDefectId() != null) {
-                                QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(taskDetails.get(0).getDefectId());
-                                if (defectiveItem != null) {
-                                    qtCheckPlanItemVo.setDefectId(defectiveItem.getId());
-                                    qtCheckPlanItemVo.setDefectName(defectiveItem.getName());
+                        }
+                        if(flag){
+                            QtOnlineCheckItemDTO resultTmp = new QtOnlineCheckItemDTO();
+                            //把相同category的数据组合
+                            Map<Integer,List<QtDefectiveItem>> resultMap = defectiveArrayList.stream().collect(Collectors.groupingBy(QtDefectiveItem::getCategoryId));
+                            resultTmp.setGroupId(tmp.getId());
+                            resultTmp.setItemId(groupItemTmp.getCheckItemId());
+                            resultTmp.setItemName(qtCheckItemService.getById(groupItemTmp.getCheckItemId()).getName());
+                            //组装category数据
+                            List<QtOnlineCheckCategoryDTO> categoryResultList = new ArrayList<>();
+                            for(Map.Entry<Integer,List<QtDefectiveItem>> entry:resultMap.entrySet()){
+                                QtOnlineCheckCategoryDTO categoryResult = new QtOnlineCheckCategoryDTO();
+                                QtItemCategory qtItemCategory = qtItemCategoryService.getById(entry.getKey());
+                                if(qtItemCategory!=null){
+                                    categoryResult.setName(qtItemCategory.getName());
                                 }
+                                List<QtOnlineCheckDefectDTO> qtDefectListDTOResult = new ArrayList<>();
+                                entry.getValue().forEach(defectListTmp->{
+                                    QtOnlineCheckDefectDTO defectResultDTO = new QtOnlineCheckDefectDTO();
+                                    defectResultDTO.setDefectId(defectListTmp.getId());
+                                    defectResultDTO.setDefectName(defectListTmp.getName());
+                                    QtCheckTaskDetail taskDetail = qtCheckTaskDetailService.getOne(detailCondition);
+                                    //处理数量
+                                    if(taskDetail!=null && taskDetail.getDefectNum()!=null){
+                                        String numString = JSON.toJSONString(taskDetail.getDefectNum());
+                                        List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString,QtOnlineCheckDefectDTO.class);
+                                        Map<Integer,QtOnlineCheckDefectDTO> defectMap = defectNumList.stream().collect(Collectors.toMap(QtOnlineCheckDefectDTO::getDefectId,Function.identity()));
+                                        if(defectMap.get(defectListTmp.getId())!=null){
+                                            defectResultDTO.setDefectNum(defectMap.get(defectListTmp.getId()).getDefectNum());
+                                        }
+                                    }
+                                    qtDefectListDTOResult.add(defectResultDTO);
+                                });
+                                categoryResult.setDefect(qtDefectListDTOResult);
+                                categoryResultList.add(categoryResult);
+                            }
+                            resultTmp.setCategory(categoryResultList);
+                            onlineCheckResult.add(resultTmp);
+                        }
+                    }
+
+                }
+
+
+
+                //处理关联客户
+                if (groupItemTmp.getLinkedCustomer() != null && groupItemTmp.getLinkedCustomer().size() > 0) {
+                    R<List<SysOfficeVO>> officeRes = remoteOfficeFeign.data();
+                    //把所有东西导入code和名字导入map
+                    Map<String, String> resMap = new HashMap<>();
+                    if (officeRes.getData() != null && officeRes.getData().size() > 0) {
+                        officeRes.getData().forEach(officeTmp -> {
+                            resMap.put(officeTmp.getOfficeCode(), officeTmp.getOfficeName());
+                        });
+                    }
+                    List<QtLinkedCustomerCodeVO> qtLinkedCustomerCodeVOS = Lists.newArrayList();
+                    groupItemTmp.getLinkedCustomer().forEach(customerTmp -> {
+                        QtLinkedCustomerCodeVO qtLinkedCustomerCodeVo = new QtLinkedCustomerCodeVO();
+                        if (resMap.get(customerTmp) != null) {
+                            qtLinkedCustomerCodeVo.setCode(customerTmp);
+                            qtLinkedCustomerCodeVo.setName(resMap.get(customerTmp));
+                        }
+                        qtLinkedCustomerCodeVOS.add(qtLinkedCustomerCodeVo);
+                    });
+                    qtCheckPlanItemVo.setLinkedCustomerCode(qtLinkedCustomerCodeVOS);
+                }
+
+                //处理检查结果
+                if (taskId != null && copy != null) {
+                    List<QtCheckTaskDetail> taskDetails = qtCheckTaskDetailService.list(detailCondition);
+                    if (taskDetails != null && taskDetails.size() > 0) {
+                        qtCheckPlanItemVo.setCheckResult(taskDetails.get(0).getCheckResult());
+                        qtCheckPlanItemVo.setIsQualified(taskDetails.get(0).getIsQualified());
+                        //如果缺陷项存在，返回缺陷项
+                        if (taskDetails.get(0).getDefectId() != null) {
+                            QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(taskDetails.get(0).getDefectId());
+                            if (defectiveItem != null) {
+                                qtCheckPlanItemVo.setDefectId(defectiveItem.getId());
+                                qtCheckPlanItemVo.setDefectName(defectiveItem.getName());
                             }
                         }
                     }
-                    //设置itemId
-                    qtCheckPlanItemVo.setItemId(groupItemTmp.getCheckItemId());
-                    qtCheckPlanItemVOS.add(qtCheckPlanItemVo);
-                    groupVo.setItems(qtCheckPlanItemVOS);
-                });
-                qtCheckPlanGroupVOS.add(groupVo);
-            });
-            resVo.setCheckGroup(qtCheckPlanGroupVOS);
-        }else {
 
+                }
+                //设置itemId
+                qtCheckPlanItemVo.setItemId(groupItemTmp.getCheckItemId());
+                qtCheckPlanItemVOS.add(qtCheckPlanItemVo);
+                groupVo.setItems(qtCheckPlanItemVOS);
+            });
+            qtCheckPlanGroupVOS.add(groupVo);
+        });
+        resVo.setCheckGroup(qtCheckPlanGroupVOS);
+        resVo.setOnlineItem(onlineCheckResult);
+        //如果是method是1，则只返回items给前端
+        if(resVo.getCheckMethod() == 1 && resVo.getCheckGroup()!=null && resVo.getCheckGroup().get(0).getItems()!=null){
+            List<QtCheckPlanItemVO> items  = resVo.getCheckGroup().get(0).getItems();
+            resVo.setItems(items);
+            resVo.setCheckGroup(null);
         }
         return resVo;
     }
@@ -595,10 +705,11 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
-    public List<QtCheckPlanListAllVO> listAll() {
+    public List<QtCheckPlanListAllVO> listAll(Integer method) {
         LambdaQueryWrapper<QtCheckPlan> condition = new LambdaQueryWrapper<QtCheckPlan>()
                 .eq(QtCheckPlan::getStatus, 1)
-                .eq(QtCheckPlan::getShowFlag, MpConstant.YES);
+                .eq(QtCheckPlan::getShowFlag, MpConstant.YES)
+                .eq(QtCheckPlan::getCheckMethod,method);
         List<QtCheckPlan> qtCheckPlans = list(condition);
         List<QtCheckPlanListAllVO> vos = Lists.newArrayList();
         qtCheckPlans.forEach(tmp -> {

@@ -26,6 +26,11 @@ public class QtRecheckTask implements Serializable {
     private Long originalId;
 
     /**
+     * 原始任务Code
+     */
+    private String originalCode;
+
+    /**
      * 复核任务id
      */
     private Long recheckId;

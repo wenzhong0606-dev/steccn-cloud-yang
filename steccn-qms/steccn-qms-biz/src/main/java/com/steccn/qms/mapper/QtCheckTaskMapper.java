@@ -1,5 +1,6 @@
 package com.steccn.qms.mapper;
 
+import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -15,7 +16,7 @@ import java.util.List;
 * @Entity com.steccn.qms.domain.QtCheckTask
 */
 @Mapper
-public interface QtCheckTaskMapper extends BaseMapper<QtCheckTask> {
+public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
     /**
      * 通过任务类型查找数据

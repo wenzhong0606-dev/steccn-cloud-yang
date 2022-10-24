@@ -4,14 +4,17 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import lombok.Data;
 
 /**
  * 巡检任务详细信息表
  * @TableName qt_check_task_detail
  */
-@TableName(value ="qt_check_task_detail")
+@TableName(value ="qt_check_task_detail",autoResultMap = true)
 @Data
 public class QtCheckTaskDetail implements Serializable {
     /**
@@ -74,7 +77,6 @@ public class QtCheckTaskDetail implements Serializable {
     /**
      * 是否删除标识：0否 1是
      */
-    @TableLogic
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
@@ -95,4 +97,13 @@ public class QtCheckTaskDetail implements Serializable {
      * 样本
      */
     private Integer copy;
+
+    /**
+     * 是否合格
+     * 1合格 0不合格
+     */
+    private Integer isQualified;
+
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<QtOnlineCheckDefectDTO> defectNum;
 }

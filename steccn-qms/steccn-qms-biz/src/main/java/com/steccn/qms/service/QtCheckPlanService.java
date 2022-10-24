@@ -64,7 +64,7 @@ public interface QtCheckPlanService extends IService<QtCheckPlan> {
      * 查询所有检验项的名字和id
      * @return
      */
-    List<QtCheckPlanListAllVO> listAll();
+    List<QtCheckPlanListAllVO> listAll(Integer method);
 
     /**
      *  给检验计划做快照

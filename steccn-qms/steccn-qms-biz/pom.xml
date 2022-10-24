@@ -42,6 +42,12 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
+        <!--mybatis-plus联合查询-->
+        <dependency>
+            <groupId>com.github.yulichang</groupId>
+            <artifactId>mybatis-plus-join</artifactId>
+            <version>1.2.4</version>
+        </dependency>
         <!--导入mysql驱动-->
         <dependency>
             <groupId>mysql</groupId>

@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -46,5 +47,10 @@ public class QtCheckResultDTO implements Serializable {
      * 备注
      */
     private String note;
+
+    /**
+     * 缺陷总数
+     */
+    private Integer defectNum;
 
 }

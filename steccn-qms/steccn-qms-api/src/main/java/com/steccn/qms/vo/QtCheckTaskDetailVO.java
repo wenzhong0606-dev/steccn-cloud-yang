@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 巡检详情页面
@@ -28,4 +29,10 @@ public class QtCheckTaskDetailVO implements Serializable {
      *
      */
     private QtCheckPlanDetailsVO qtCheckPlanDetailsVO;
+
+
+    /**
+     * pc返回值
+     */
+    private List<QtCheckPlanGroupVO> checkGroup;
 }

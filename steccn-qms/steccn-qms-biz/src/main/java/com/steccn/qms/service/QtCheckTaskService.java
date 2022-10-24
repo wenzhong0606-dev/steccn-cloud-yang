@@ -1,8 +1,10 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.vo.QtCheckPlanVO;
 import com.steccn.qms.vo.QtCheckTaskDetailVO;
 import com.steccn.qms.vo.QtCheckTaskListVO;
 import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
@@ -21,7 +23,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Boolean add(QtAddCheckTaskDTO dto);
+    Long add(QtAddCheckTaskDTO dto);
 
     /**
      * 巡检列表Vo
@@ -35,7 +37,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param id
      * @return
      */
-    QtCheckTaskDetailVO taskDetail(Long id);
+    QtCheckTaskDetailVO taskDetail(Long id,Boolean isPc);
 
     /**
      * 修改任务状态
@@ -50,6 +52,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     Boolean itemValue(QtCheckTaskSubmitDTO dto);
+
+    /**
+     * pc加入值
+     * @param dto
+     * @return
+     */
+    Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto);
 
     /**
      * 完成
@@ -70,4 +79,6 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     List<QtCheckTaskTypeCountVO> countTaskByType();
+
+    Page<QtCheckTaskListVO> pageList(QtCheckTaskListDTO dto);
 }

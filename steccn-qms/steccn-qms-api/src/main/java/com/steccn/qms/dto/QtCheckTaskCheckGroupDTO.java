@@ -32,4 +32,10 @@ public class QtCheckTaskCheckGroupDTO implements Serializable {
      * 缺陷项id
      */
     private Integer defectId;
+
+    /**
+     * 是否合格
+     */
+    @NotNull(message = "是否合格不能为null")
+    private Integer isQualified;
 }

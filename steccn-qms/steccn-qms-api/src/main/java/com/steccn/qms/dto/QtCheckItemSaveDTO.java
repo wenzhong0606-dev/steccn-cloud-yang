@@ -58,4 +58,10 @@ public class QtCheckItemSaveDTO implements Serializable {
     @ApiModelProperty("备注")
     @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")
     private String note;
+
+    @ApiModelProperty("检查方法")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "检查方法不超过100个中文")
+    private String checkMethod;
+
+
 }

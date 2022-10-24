@@ -3,15 +3,19 @@ package com.steccn.qms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 /**
  * 巡检任务表
  * @TableName qt_check_task
  */
-@TableName(value ="qt_check_task")
+@TableName(value ="qt_check_task" ,autoResultMap = true)
 @Data
 public class QtCheckTask implements Serializable {
     /**
@@ -31,14 +35,41 @@ public class QtCheckTask implements Serializable {
     private Long materialId;
 
     /**
-     * 车间
+     * 物料车间
      */
-    private Integer workshopId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO materialWorkshop;
+
+    @TableField(value = "material_workshop ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String materialWorkshopName;
+
+    /**
+     * 生产车间
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO productWorkshop;
+
+    @TableField(value = "product_workshop ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productWorkshopName;
 
     /**
      * 产线
      */
-    private Integer productLineId;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO productLine;
+
+    @TableField(value = "product_line ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productLineName;
+
 
     /**
      * 生产工单
@@ -86,6 +117,85 @@ public class QtCheckTask implements Serializable {
     private String note;
 
     /**
+     * 任务开始时间
+     */
+    private LocalDateTime startTime;
+
+    /**
+     * 任务完成时间
+     */
+    private LocalDateTime finishedTime;
+
+    /**
+     * 到货时间
+     */
+    private LocalDate arrivalTime;
+
+    /**
+     * 发货时间
+     */
+    private LocalDate deliverTime;
+
+    /**
+     * 供应商id
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO supplier;
+
+    @TableField(value = "supplier ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String supplierName;
+
+    /**
+     * 客户id
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO customer;
+
+    @TableField(value = "customer ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String customerName;
+
+    /**
+     * 缺陷总数
+     */
+    private Integer defectNum;
+
+    /**
+     * 缺陷记录开始时间
+     */
+    private LocalDateTime defectStartTime;
+
+    /**
+     * 缺陷记录结束时间
+     */
+    private LocalDateTime defectEndTime;
+
+    /**
+     * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     */
+    private Integer taskType;
+
+    /**
+     * 发货数量
+     */
+    private Integer deliverNum;
+
+    /**
+     * 发货单号
+     */
+    private String deliverOrder;
+
+    /**
+     * 任务单号
+     */
+    private String code;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
@@ -130,4 +240,45 @@ public class QtCheckTask implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 开始任务人id
+     */
+    private Long startBy;
+
+    /**
+     * 开始任务人姓名
+     */
+    private String startName;
+
+    /**
+     * 完成任务人id
+     */
+    private Long finishedBy;
+
+    /**
+     * 完成任务人姓名
+     */
+    private String finishedName;
+
+    /**
+     * 取消人
+     */
+    private Long cancelBy;
+
+    /**
+     * 取消人姓名
+     */
+    private String cancelName;
+
+    /**
+     * 取消时间
+     */
+    private LocalDateTime cancelTime;
+
+    /**
+     * 送货单号
+     */
+    private String sendOrder;
+
 }

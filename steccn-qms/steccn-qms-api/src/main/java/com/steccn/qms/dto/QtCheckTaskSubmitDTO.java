@@ -25,4 +25,9 @@ public class QtCheckTaskSubmitDTO implements Serializable {
     private Integer status;
 
     private List<QtCheckTaskValueDTO> values;
+
+    /**
+     * 在线检
+     */
+    private List<QtOnlineCheckItemDTO> onlineItem;
 }

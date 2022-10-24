@@ -212,4 +212,38 @@ public class OaService {
         }
     }
 
+    /**
+     * 通过用户名获取oa用户信息
+     * @return  OaUserInfo
+     */
+    public List<OaUserIdAndName> getAll(){
+        List<OaUserIdAndName> oaUserIdAndName = new ArrayList<>();
+        //放入Token
+        OaApiTokenResult oaApiTokenResult = this.getApiToken();;
+        if(!oaApiTokenResult.isStatus()){
+            log.error(oaApiTokenResult.getMsg());
+            return oaUserIdAndName;
+        }else{
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            //放入Token
+            headers.set("appid",OaConstant.OA_API_APPID);
+            headers.set("token",oaApiTokenResult.getToken());
+            headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+            String result = oaApi.getAllOaUser(headers);
+            //转成对象
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
+                JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
+                for(int i = 0; i < jsonArray.size(); i++){
+                    JSONObject objTmp = jsonArray.getJSONObject(i);
+                    OaUserIdAndName info = new OaUserIdAndName();
+                    info.setId(objTmp.getInteger("id"));
+                    info.setName(objTmp.getString("name"));
+                    oaUserIdAndName.add(info);
+                }
+            }
+            return oaUserIdAndName;
+        }
+    }
+
 }

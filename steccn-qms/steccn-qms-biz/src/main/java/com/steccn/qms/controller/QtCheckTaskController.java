@@ -1,14 +1,12 @@
 package com.steccn.qms.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckTaskService;
-import com.steccn.qms.vo.QtCheckTaskDefectVO;
-import com.steccn.qms.vo.QtCheckTaskDetailVO;
-import com.steccn.qms.vo.QtCheckTaskListVO;
-import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
+import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +33,7 @@ public class QtCheckTaskController {
 
     @PostMapping
     @ApiOperation(value = "新建巡检任务")
-    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtAddCheckTaskDTO dto) {
+    public R<Long> add(@Validated(InsertGroup.class) @RequestBody QtAddCheckTaskDTO dto) {
         return R.success(qtCheckTaskService.add(dto));
     }
 
@@ -47,8 +45,14 @@ public class QtCheckTaskController {
 
     @GetMapping("{id}")
     @ApiOperation(value = "获取任务详细")
-    public R<QtCheckTaskDetailVO> getTaskList(@PathVariable Long id){
-        return R.success(qtCheckTaskService.taskDetail(id));
+    public R<QtCheckTaskDetailVO> getTaskDetail(@PathVariable Long id){
+        return R.success(qtCheckTaskService.taskDetail(id,false));
+    }
+
+    @GetMapping("/pc/{id}")
+    @ApiOperation(value = "pc获取任务详细")
+    public R<QtCheckTaskDetailVO> getPcTaskDetail(@PathVariable Long id){
+        return R.success(qtCheckTaskService.taskDetail(id,true));
     }
 
     @PutMapping("/status")
@@ -58,9 +62,15 @@ public class QtCheckTaskController {
     }
 
     @PutMapping("/values")
-    @ApiOperation(value = "给任务设置值")
+    @ApiOperation(value = "手机端给任务设置值")
     public R<Boolean> itemValue(@RequestBody QtCheckTaskSubmitDTO dto){
         return R.success(qtCheckTaskService.itemValue(dto));
+    }
+
+    @PutMapping("/pc/values")
+    @ApiOperation(value = "给任务设置值")
+    public R<Boolean> pcItemValue(@RequestBody QtPcCheckTaskSubmitDTO dto){
+        return R.success(qtCheckTaskService.pcItemValue(dto));
     }
 
     @GetMapping("/count")
@@ -85,5 +95,11 @@ public class QtCheckTaskController {
     @ApiOperation(value = "缺陷项回显")
     public R<List<QtCheckTaskDefectVO>> defects(@PathVariable Integer id){
         return R.success(qtCheckPlanGroupItemService.findTaskDefect(id));
+    }
+
+    @PostMapping("/page")
+    @ApiOperation(value = "检验方案列表")
+    public R<Page<QtCheckTaskListVO>> pageList(@RequestBody QtCheckTaskListDTO dto) {
+        return R.success(qtCheckTaskService.pageList(dto));
     }
 }

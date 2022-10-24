@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtOnlineCheckItemDTO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,7 +29,15 @@ public class QtCheckPlanDetailsVO implements Serializable {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     /**
+     * 当检验方式为1时 只有计数检验
+     */
+    private List<QtCheckPlanItemVO> items;
+    /**
      * 任务详情专用vo
      */
     private List<QtCheckTaskDetailCopyVO> copy;
+    /**
+     * 在线检专用Tmp
+     */
+    private List<QtOnlineCheckItemDTO> onlineItem;
 }
