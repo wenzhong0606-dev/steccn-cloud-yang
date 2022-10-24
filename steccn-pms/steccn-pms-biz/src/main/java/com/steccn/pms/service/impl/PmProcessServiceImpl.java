@@ -83,7 +83,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
                 .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmProcess::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType())
-                .eq(Objects.nonNull(dto.getId()),PmProcess::getId,dto.getId());
+                .eq(Objects.nonNull(dto.getId()), PmProcess::getId, dto.getId());
         //排序按创建时间排序
         eq.orderBy(true, false, PmProcess::getCreateTime);
         //2.定义分页对象
@@ -142,7 +142,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
         String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
         PmProcess pmProcess = new PmProcess();
-        BeanUtils.copyProperties(dto,pmProcess);
+        BeanUtils.copyProperties(dto, pmProcess);
         pmProcess.setUpdateName(name);
         pmProcess.setUpdateBy(userId);
         processStationService.deleteByProcessId(dto.getId());
@@ -254,6 +254,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
 
     /**
      * 获取要导出的数据
+     *
      * @return
      */
     private List<PmProcessExcelDTO> getExcelData() {
@@ -268,22 +269,23 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     @Override
     public Map<Long, String> listByIdsCh(List<Long> processIds) {
         Map<Long, String> map = Maps.newHashMap();
-        if (CollUtil.isEmpty(processIds)){
+        if (CollUtil.isEmpty(processIds)) {
             return map;
         }
         List<PmProcess> processList = listByIds(processIds);
-        processList.forEach( process -> {
-            processIds.forEach(
-                    processId ->{
-                        if (processId.equals(process.getId())){
-                            map.put(processId,process.getName());
+        if (CollUtil.isNotEmpty(processList)) {
+            processList.forEach(process -> {
+                processIds.forEach(
+                        processId -> {
+                            if (processId.equals(process.getId())) {
+                                map.put(processId, process.getName());
+                            }
                         }
-                    }
-            );
-        });
-        return map;
-    }
-
+                );
+            });
+        }
+            return map;
+        }
 }
 
 
