@@ -10,11 +10,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmCraftRouteDTO;
@@ -45,11 +49,10 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         implements PmCraftRouteService {
 
     private final PmCraftRouteModuleService pmCraftRouteModuleService;
-
     private final PmCraftRouteProcessService pmCraftRouteProcessService;
-
-    @Autowired
-    private RemoteDictFeignApi remoteDictFeignApi;
+    private final PmProcessService processService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public R<Boolean> add(PmCraftRouteDTO dto) {
@@ -104,35 +107,37 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //5.拷贝返回的信息
         List<PmCraftRouteVO> res = BeanUtil.copyToList(resPage.getRecords(), PmCraftRouteVO.class);
         //6.处理数据
-        List<Long> ids = Lists.newArrayList();
+        Set<Long> ids = Sets.newHashSet();
         List<Long> processIds = Lists.newArrayList();
+        List<Long> spareIDs = Lists.newArrayList();
         res.forEach(craftRouteVO -> {
             //6.1 处理物料组件数据
             LambdaQueryWrapper<PmCraftRouteModule> wrapper = new LambdaQueryWrapper<PmCraftRouteModule>().eq(PmCraftRouteModule::getCraftRouteId, craftRouteVO.getId());
             List<PmCraftRouteModule> list = pmCraftRouteModuleService.list(wrapper);
             craftRouteVO.setList(BeanUtil.copyToList(list, PmCraftRouteModuleVO.class));
             craftRouteVO.getList().forEach(craftRouteModuleVO -> {
+                spareIDs.add(craftRouteModuleVO.getMaterialId());
                 ids.add(craftRouteModuleVO.getUnitId());
                 processIds.add(craftRouteModuleVO.getProcessId());
+
             });
             //6.2 处理工序数据
             craftRouteVO.setProcessList(pmCraftRouteProcessService.list(craftRouteVO.getId()));
         });
         //获取字典数据
-        R<Map<Long, SysDictVO>> dict = remoteDictFeignApi.listById(ids);
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+        //获取物料数据
+        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(spareIDs)).get();
+        //获取工序数据
+        Map<Long, String> processNameMap = processService.listByIdsCh(processIds);
         //将数据处理返回
         res.forEach(craftRouteVO -> {
                     craftRouteVO.getList().forEach(moduleVO -> {
-                        try {
-                            SysDictVO sysDictVO = dict.getData().get(moduleVO.getUnitId());
-                            if (Objects.isNull(sysDictVO)) {
-                                moduleVO.setUnit(null);
-                            } else {
-                                moduleVO.setUnit(sysDictVO.getName());
-                            }
-                        } catch (Exception e) {
-                            throw new BusinessException("数据异常");
-                        }
+                        EqpSpareVO eqpSpareVO = spareVOMap.get(moduleVO.getMaterialId());
+                        moduleVO.setUnit(dictMap.get(moduleVO.getUnitId()));
+                        moduleVO.setMaterialCode(eqpSpareVO.getCode());
+                        moduleVO.setMaterialName(eqpSpareVO.getName());
+                        moduleVO.setProcessName(processNameMap.get(moduleVO.getProcessId()));
                     });
                 }
         );

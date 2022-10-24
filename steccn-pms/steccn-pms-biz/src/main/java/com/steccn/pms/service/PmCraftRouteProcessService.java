@@ -9,6 +9,7 @@ import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmProcessVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -37,4 +38,5 @@ public interface PmCraftRouteProcessService extends IService<PmCraftRouteProcess
      * @return
      */
     Boolean deleteByRoteId(Long id);
+
 }

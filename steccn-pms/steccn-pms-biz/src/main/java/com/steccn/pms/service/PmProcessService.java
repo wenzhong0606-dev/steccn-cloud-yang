@@ -91,4 +91,10 @@ public interface PmProcessService extends IService<PmProcess> {
      */
     void excelExportData(HttpServletResponse response) throws IOException;
 
+    /**
+     * 根据工序id 获取工序名称
+     * @param processIds
+     * @return
+     */
+    Map<Long, String> listByIdsCh(List<Long> processIds);
 }

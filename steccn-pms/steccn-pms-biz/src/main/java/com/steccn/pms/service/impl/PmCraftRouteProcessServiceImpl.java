@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -96,6 +97,8 @@ public class PmCraftRouteProcessServiceImpl extends ServiceImpl<PmCraftRouteProc
         LambdaQueryWrapper<PmCraftRouteProcess> eq = new LambdaQueryWrapper<PmCraftRouteProcess>().eq(PmCraftRouteProcess::getRouteId, id);
         return remove(eq);
     }
+
+
 }
 
 

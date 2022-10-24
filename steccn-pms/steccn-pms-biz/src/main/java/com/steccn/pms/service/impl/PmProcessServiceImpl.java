@@ -18,10 +18,7 @@ import com.steccn.minio.fegin.RemoteFileFeignApi;
 import com.steccn.minio.vo.FileInfoVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmBillOfMaterial;
-import com.steccn.pms.domain.PmMaterial;
-import com.steccn.pms.domain.PmProcess;
-import com.steccn.pms.domain.PmProcessStation;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmProcessExcelDTO;
 import com.steccn.pms.dto.PmsBillExcelDTO;
@@ -268,6 +265,24 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         return pmProcessExcelDTOS;
     }
 
+    @Override
+    public Map<Long, String> listByIdsCh(List<Long> processIds) {
+        Map<Long, String> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(processIds)){
+            return map;
+        }
+        List<PmProcess> processList = listByIds(processIds);
+        processList.forEach( process -> {
+            processIds.forEach(
+                    processId ->{
+                        if (processId.equals(process.getId())){
+                            map.put(processId,process.getName());
+                        }
+                    }
+            );
+        });
+        return map;
+    }
 
 }
 
