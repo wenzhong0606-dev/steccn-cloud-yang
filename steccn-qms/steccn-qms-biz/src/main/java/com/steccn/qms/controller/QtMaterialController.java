@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
@@ -35,6 +36,7 @@ public class QtMaterialController {
 
     @PostMapping
     @ApiOperation(value = "物料配置")
+    @SysLog("物料配置")
     public R<Boolean> edit(@RequestBody QtMaterialLinkCheckPlanDTO dto) {
         return R.success(qtMaterialService.edit(dto));
     }
