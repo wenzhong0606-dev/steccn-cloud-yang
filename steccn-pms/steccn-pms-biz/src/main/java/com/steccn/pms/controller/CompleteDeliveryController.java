@@ -24,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/pms/complete/delivery")
 @Slf4j
+@RequiredArgsConstructor
 public class CompleteDeliveryController {
 
-    @Autowired
-    private PmsCompleteDeliveryService pmsCompleteDeliveryService;
+    private final PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
     @ApiOperation("获取订单投料分页列表")
     @PostMapping("/page")
@@ -40,6 +40,4 @@ public class CompleteDeliveryController {
     public R<Page<PmsCompleteDeliveryVO>> feedPageList(@RequestBody PmsCompleteDeliveryDTO dto) {
         return R.success(pmsCompleteDeliveryService.feedPageList(dto));
     }
-
-
 }
