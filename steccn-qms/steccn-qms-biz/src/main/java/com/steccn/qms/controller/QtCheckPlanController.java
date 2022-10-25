@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanService;
@@ -31,6 +32,7 @@ public class QtCheckPlanController {
 
     @PostMapping
     @ApiOperation(value = "新建检验方案")
+    @SysLog("新增检验方案")
     public R<Boolean> add(@RequestBody QtCheckPlanDTO dto) {
         return R.success(qtCheckPlanService.add(dto));
     }
@@ -49,18 +51,21 @@ public class QtCheckPlanController {
 
     @PutMapping
     @ApiOperation(value = "修改检验方案的值")
+    @SysLog("修改检验方案的值")
     public R<Boolean> edit(@RequestBody QtCheckPlanDTO dto){
         return R.success(qtCheckPlanService.edit(dto));
     }
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用")
+    @SysLog("检验方案停用启用")
     public R<Boolean> status(@Valid @RequestBody QtCheckPlanStausDTO dto) {
         return R.success(qtCheckPlanService.status(dto));
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除检验方案")
+    @SysLog("删除检验方案")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtCheckPlanService.delete(id));
     }
