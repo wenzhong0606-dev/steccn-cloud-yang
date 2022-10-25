@@ -177,71 +177,72 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsReportWork.setBatchNo(pmsWorkOrderBatch.getCode());
                 pmsReportWork.setId(IdUtil.getSnowflake().nextId());
                 save(pmsReportWork);
-                //报工工时信息
-                List<PmsReportWorkHour> hourModelList = Lists.newArrayList();
-                if (CollUtil.isNotEmpty(dto.getHourDTOList())) {
-                    for (ProcessReportWorkHourDTO hourDTO : dto.getHourDTOList()) {
-                        PmsReportWorkHour hourModel = new PmsReportWorkHour();
-                        BeanUtils.copyProperties(hourDTO, hourModel);
-                        hourModel.setReportWorkId(pmsReportWork.getId());
-                        hourModelList.add(hourModel);
-                    }
-                    reportWorkHourService.saveBatch(hourModelList);
-                }
-                //插入数据库中pms_complete_delivery，pms_complete_delivery_info
-                List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
-                if (CollUtil.isNotEmpty(materialConsumeList)) {
-                    List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
-                    PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
-                    completeDelivery.setId(IdUtil.getSnowflake().nextId());
-                    List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
-                    BigDecimal sum = BigDecimal.ZERO;
-                    for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
-                        sum = sum.add(materialDTO.getQuantity());
-                        PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
-                        BeanUtils.copyProperties(materialDTO, info);
-                        info.setMaterialId(materialDTO.getModuleId());
-                        info.setMaterialCode(materialDTO.getModuleCode());
-                        info.setMaterialName(materialDTO.getModuleName());
-                        info.setCaseNo(materialDTO.getCaseNo());
-                        info.setBatchNo(materialDTO.getBatchNo());
-                        info.setPackTime(materialDTO.getPackTime());
-                        info.setWarehouseId(materialDTO.getWarehouseId());
-                        info.setShelfId(materialDTO.getShelfId());
-                        info.setCompleteDeliveryId(completeDelivery.getId());
-                        modelList.add(info);
-                        MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
-                        BeanUtils.copyProperties(materialDTO, mess);
-                        materialList.add(mess);
-                    }
-                    SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
-                    completeDelivery.setCode(maxOutVouchCode());
-                    completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
-                    completeDelivery.setDeliveryTime(LocalDateTime.now());
-                    completeDelivery.setQuantity(sum);
-                    completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
-                    completeDelivery.setTypeId(sysDictVO.getId());
-                    completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
-                    completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
-                    completeDeliveryService.save(completeDelivery);
-                    completeDeliveryInfoService.saveBatch(modelList);
-                    //物料消耗 ，扣除库存
-                    MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
-                    messDto.setCreateBy(SecurityUtils.getUser().getName());
-                    messDto.setCode(completeDelivery.getCode());
-                    messDto.setType(sysDictVO.getCode());
-                    messDto.setMaterialList(materialList);
-                    MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
-                    if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
-                        throw new BusinessException("库存变化，请重新报工");
-                    }
-                }
+                //保存工时信息
+                reportWorkHourService.saveHourList(pmsReportWork.getId(), dto.getHourDTOList());
+                //插入库存
+                insertDelivery(dto, pmsReportWork);
                 return Boolean.TRUE;
             });
         } finally {
             lock.unlock();
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 插入库存
+     * @param dto dto
+     * @param pmsReportWork 报工信息
+     */
+    private void insertDelivery(ProcessReportWorkSubmitDTO dto, PmsReportWork pmsReportWork) {
+        //插入数据库中pms_complete_delivery，pms_complete_delivery_info
+        List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
+        if (CollUtil.isNotEmpty(materialConsumeList)) {
+            List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
+            PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
+            completeDelivery.setId(IdUtil.getSnowflake().nextId());
+            List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
+            BigDecimal sum = BigDecimal.ZERO;
+            for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
+                sum = sum.add(materialDTO.getQuantity());
+                PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
+                BeanUtils.copyProperties(materialDTO, info);
+                info.setMaterialId(materialDTO.getModuleId());
+                info.setMaterialCode(materialDTO.getModuleCode());
+                info.setMaterialName(materialDTO.getModuleName());
+                info.setCaseNo(materialDTO.getCaseNo());
+                info.setBatchNo(materialDTO.getBatchNo());
+                info.setPackTime(materialDTO.getPackTime());
+                info.setWarehouseId(materialDTO.getWarehouseId());
+                info.setShelfId(materialDTO.getShelfId());
+                info.setCompleteDeliveryId(completeDelivery.getId());
+                modelList.add(info);
+                MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
+                BeanUtils.copyProperties(materialDTO, mess);
+                materialList.add(mess);
+            }
+            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
+            completeDelivery.setCode(maxOutVouchCode());
+            completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
+            completeDelivery.setDeliveryTime(LocalDateTime.now());
+            completeDelivery.setQuantity(sum);
+            completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
+            completeDelivery.setTypeId(sysDictVO.getId());
+            completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
+            completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+            completeDeliveryService.save(completeDelivery);
+            completeDeliveryInfoService.saveBatch(modelList);
+            //物料消耗 ，扣除库存
+            MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
+            messDto.setCreateBy(SecurityUtils.getUser().getName());
+            messDto.setCode(completeDelivery.getCode());
+            messDto.setType(sysDictVO.getCode());
+            messDto.setMaterialList(materialList);
+            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+            if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
+                throw new BusinessException("库存变化，请重新报工");
+            }
+        }
     }
 
     /**
