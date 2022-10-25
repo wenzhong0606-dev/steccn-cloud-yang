@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -37,6 +38,7 @@ public class QtCheckItemController {
 
     @PostMapping
     @ApiOperation(value = "新建检验项")
+    @SysLog("新建检验项")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtCheckItemSaveDTO dto) {
         return R.success(qtCheckItemService.add(dto));
     }
@@ -49,18 +51,21 @@ public class QtCheckItemController {
 
     @PutMapping
     @ApiOperation(value = "编辑检验项")
+    @SysLog("编辑检验项")
     public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtCheckItemSaveDTO dto) {
         return R.success(qtCheckItemService.edit(dto));
     }
 
     @PutMapping("/status")
-    @ApiOperation(value = "停用启用")
+    @ApiOperation(value = "检验项停用启用")
+    @SysLog("检验项停用启用")
     public R<Boolean> status(@Valid @RequestBody QtItemStatusDTO dto) {
         return R.success(qtCheckItemService.status(dto));
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除检验项")
+    @SysLog("删除检验项")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtCheckItemService.delete(id));
     }

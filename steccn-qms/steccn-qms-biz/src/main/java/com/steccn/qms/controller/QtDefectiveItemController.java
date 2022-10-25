@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -40,24 +41,28 @@ public class QtDefectiveItemController implements Serializable {
 
     @PostMapping
     @ApiOperation(value = "新建缺陷项")
+    @SysLog("新建缺陷项")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.add(dto));
     }
 
     @PutMapping
     @ApiOperation(value = "编辑缺陷项")
+    @SysLog("编辑缺陷项")
     public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtDefectiveItemSaveDTO dto) {
         return R.success(qtDefectiveItemService.edit(dto));
     }
 
     @PutMapping("/status")
     @ApiOperation(value = "停用启用缺陷项")
+    @SysLog("停用启用缺陷项")
     public R<Boolean> status(@Valid @RequestBody QtItemStatusDTO dto) {
         return R.success(qtDefectiveItemService.status(dto));
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除缺陷项")
+    @SysLog("删除缺陷项")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtDefectiveItemService.delete(id));
     }
