@@ -457,8 +457,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 || PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState()), "当前订单状态不可确认");
         //3.记录批次时间
         //3.1 获取批次信息
+        PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
         if (PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())) {
-            PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
             Assert.notNull(batch, "当前订单不存在批次信息，请检查");
             //3.2批次结束时间
             batch.setEndTime(LocalDateTime.now());
@@ -466,7 +466,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsWorkOrderBatchService.updateById(batch);
         }else {
             //完成 确认状态
-            PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
             if (Objects.nonNull(batch)){
                 batch.setEndTime(LocalDateTime.now());
                 batch.setCurrentBatchFlag(PmsCodeUtil.DEFAULT_PADDING);
