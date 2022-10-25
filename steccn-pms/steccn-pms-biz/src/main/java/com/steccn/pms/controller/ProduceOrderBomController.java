@@ -1,5 +1,6 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +28,7 @@ public class ProduceOrderBomController {
 
     @ApiOperation("删除物料信息")
     @DeleteMapping("/{id}")
+    @SysLog("删除物料信息")
     public R<Boolean> delete(@PathVariable("id") Integer id){
         return R.success(pmsWorkOrderBomService.delete(id));
     }

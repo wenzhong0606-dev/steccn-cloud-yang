@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -40,6 +41,7 @@ public class PmProcessController {
 
     @ApiModelProperty("新增工序")
     @PostMapping
+    @SysLog("工序新增")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody PmProcessDTO dto) {
         return processService.saveProcess(dto);
     }
@@ -58,18 +60,21 @@ public class PmProcessController {
 
     @ApiModelProperty("删除工序")
     @DeleteMapping("/{id}")
+    @SysLog("删除工序")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(processService.delete(id));
     }
 
     @ApiModelProperty("修改工序")
     @PutMapping
+    @SysLog("修改工序信息")
     public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody PmProcessDTO dto) {
         return processService.edit(dto);
     }
 
     @ApiModelProperty("Excel导入")
     @PostMapping("/excelImportData")
+    @SysLog("excel导入")
     public R<Boolean> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
         return R.success(processService.excelImportData(dto));
     }
