@@ -3,6 +3,7 @@ package com.steccn.qms.controller;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtItemCategorySaveDTO;
@@ -17,6 +18,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
+ * @author yequan
  * @desc 检验项，缺陷项类别管理
  */
 @RestController
@@ -35,6 +37,7 @@ public class QtItemCategoryController {
 
     @ApiOperation("保存检验项|缺陷项类别")
     @PostMapping
+    @SysLog("保存检验项|缺陷项类别")
     public R<Boolean> saveCategory(@Valid @RequestBody QtItemCategorySaveDTO dto) {
         //1.检验类别类型是否正常
         if (!QtManagerConstant.QtItemCategoryEnum.categoryAll().contains(dto.getType())) {
@@ -52,6 +55,7 @@ public class QtItemCategoryController {
 
     @ApiOperation("检验项|缺陷项类别删除")
     @DeleteMapping("/{id}")
+    @SysLog("检验项|缺陷项类别删除")
     public R<Boolean> delete(@PathVariable("id") Integer id) {
         return R.success(qtItemCategoryService.delete(id));
     }
