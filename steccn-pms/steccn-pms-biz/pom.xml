@@ -117,7 +117,11 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-log</artifactId>
-            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-redis</artifactId>
         </dependency>
 
     </dependencies>

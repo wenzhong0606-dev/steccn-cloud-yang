@@ -14,7 +14,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -30,16 +30,18 @@ import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
-import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,6 +49,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yequan
@@ -80,6 +83,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsCompleteDeliveryService completeDeliveryService;
     @Autowired
     private PmsCompleteDeliveryInfoService completeDeliveryInfoService;
+    @Autowired
+    private RedissonClient redissonClient;
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
 
     @Override
     public Page<ProcessReportWorkPageVO> pageList(ProcessReportWorkPageDTO dto) {
@@ -108,6 +116,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 拼接条件时间
+     *
      * @param dto
      */
     private void jointConditionTime(ProcessReportWorkPageDTO dto) {
@@ -140,91 +149,98 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean submitReportWork(ProcessReportWorkSubmitDTO dto) {
-        //检验生产订单是否存在
-        PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
-        Assert.notNull(pmsProduceOrder, "生产订单不存在");
-        //校验产线和工位是否存在
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId()))).get();
-        Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
-        //校验工序是否存在
-        PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
-        Assert.notNull(pmsProduceOrderCraft, "工序不存在");
-        //校验批次是否存在
-        PmsWorkOrderBatch pmsWorkOrderBatch = workOrderBatchService.getById(dto.getBatch());
-        Assert.notNull(pmsWorkOrderBatch, "批次不存在");
-        //校验班次和班组是否存在
-        //校验单位是否存在
-        Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
-        Assert.isTrue(unitBoolean, "单位不存在");
-        //校验是否物料的条数是否正确
-
-        //生成报工记录
-        PmsReportWork pmsReportWork = new PmsReportWork();
-        BeanUtils.copyProperties(dto, pmsReportWork);
-        pmsReportWork.setCode(reportWorkCode(pmsProduceOrder.getCode(), pmsProduceOrderCraft.getSort()));
-        pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
-        pmsReportWork.setBatchNo(pmsWorkOrderBatch.getCode());
-        pmsReportWork.setId(IdUtil.getSnowflake().nextId());
-        save(pmsReportWork);
-        //报工工时信息
-        List<PmsReportWorkHour> hourModelList = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(dto.getHourDTOList())) {
-            for (ProcessReportWorkHourDTO hourDTO : dto.getHourDTOList()) {
-                PmsReportWorkHour hourModel = new PmsReportWorkHour();
-                BeanUtils.copyProperties(hourDTO, hourModel);
-                hourModel.setReportWorkId(pmsReportWork.getId());
-                hourModelList.add(hourModel);
-            }
-            reportWorkHourService.saveBatch(hourModelList);
-        }
-        //插入数据库中pms_complete_delivery，pms_complete_delivery_info
-        List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
-        if (CollUtil.isNotEmpty(materialConsumeList)) {
-            List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
-
-            PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
-            completeDelivery.setId(IdUtil.getSnowflake().nextId());
-            List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
-            BigDecimal sum = BigDecimal.ZERO;
-            for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
-                sum = sum.add(materialDTO.getQuantity());
-                PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
-                BeanUtils.copyProperties(materialDTO, info);
-                info.setMaterialId(materialDTO.getModuleId());
-                info.setMaterialCode(materialDTO.getModuleCode());
-                info.setMaterialName(materialDTO.getModuleName());
-                info.setCaseNo(materialDTO.getCaseNo());
-                info.setBatchNo(materialDTO.getBatchNo());
-                info.setPackTime(materialDTO.getPackTime());
-                info.setWarehouseId(materialDTO.getWarehouseId());
-                info.setShelfId(materialDTO.getShelfId());
-                info.setCompleteDeliveryId(completeDelivery.getId());
-                modelList.add(info);
-                MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
-                BeanUtils.copyProperties(materialDTO, mess);
-                materialList.add(mess);
-            }
-            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
-            completeDelivery.setCode(maxOutVouchCode());
-            completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
-            completeDelivery.setDeliveryTime(LocalDateTime.now());
-            completeDelivery.setQuantity(sum);
-            completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
-            completeDelivery.setTypeId(sysDictVO.getId());
-            completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
-            completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
-            completeDeliveryService.save(completeDelivery);
-            completeDeliveryInfoService.saveBatch(modelList);
-            //物料消耗 ，扣除库存
-            MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
-            messDto.setCreateBy(SecurityUtils.getUser().getName());
-            messDto.setCode(completeDelivery.getCode());
-            messDto.setType(sysDictVO.getCode());
-            messDto.setMaterialList(materialList);
-            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
-            if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
-                throw new BusinessException("库存变化，请重新报工");
-            }
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_REPORT_WORK);
+        lock.lock();
+        try {
+            transactionTemplate.execute(status -> {
+                //检验生产订单是否存在
+                PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
+                Assert.notNull(pmsProduceOrder, "生产订单不存在");
+                //校验产线和工位是否存在
+                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId()))).get();
+                Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
+                //校验工序是否存在
+                PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
+                Assert.notNull(pmsProduceOrderCraft, "工序不存在");
+                //校验批次是否存在
+                PmsWorkOrderBatch pmsWorkOrderBatch = workOrderBatchService.getById(dto.getBatch());
+                Assert.notNull(pmsWorkOrderBatch, "批次不存在");
+                //校验班次和班组是否存在
+                //校验单位是否存在
+                Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
+                Assert.isTrue(unitBoolean, "单位不存在");
+                //校验是否物料的条数是否正确
+                //生成报工记录
+                PmsReportWork pmsReportWork = new PmsReportWork();
+                BeanUtils.copyProperties(dto, pmsReportWork);
+                pmsReportWork.setCode(reportWorkCode(pmsProduceOrder.getCode(), pmsProduceOrderCraft.getSort()));
+                pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
+                pmsReportWork.setBatchNo(pmsWorkOrderBatch.getCode());
+                pmsReportWork.setId(IdUtil.getSnowflake().nextId());
+                save(pmsReportWork);
+                //报工工时信息
+                List<PmsReportWorkHour> hourModelList = Lists.newArrayList();
+                if (CollUtil.isNotEmpty(dto.getHourDTOList())) {
+                    for (ProcessReportWorkHourDTO hourDTO : dto.getHourDTOList()) {
+                        PmsReportWorkHour hourModel = new PmsReportWorkHour();
+                        BeanUtils.copyProperties(hourDTO, hourModel);
+                        hourModel.setReportWorkId(pmsReportWork.getId());
+                        hourModelList.add(hourModel);
+                    }
+                    reportWorkHourService.saveBatch(hourModelList);
+                }
+                //插入数据库中pms_complete_delivery，pms_complete_delivery_info
+                List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
+                if (CollUtil.isNotEmpty(materialConsumeList)) {
+                    List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
+                    PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
+                    completeDelivery.setId(IdUtil.getSnowflake().nextId());
+                    List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
+                    BigDecimal sum = BigDecimal.ZERO;
+                    for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
+                        sum = sum.add(materialDTO.getQuantity());
+                        PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
+                        BeanUtils.copyProperties(materialDTO, info);
+                        info.setMaterialId(materialDTO.getModuleId());
+                        info.setMaterialCode(materialDTO.getModuleCode());
+                        info.setMaterialName(materialDTO.getModuleName());
+                        info.setCaseNo(materialDTO.getCaseNo());
+                        info.setBatchNo(materialDTO.getBatchNo());
+                        info.setPackTime(materialDTO.getPackTime());
+                        info.setWarehouseId(materialDTO.getWarehouseId());
+                        info.setShelfId(materialDTO.getShelfId());
+                        info.setCompleteDeliveryId(completeDelivery.getId());
+                        modelList.add(info);
+                        MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
+                        BeanUtils.copyProperties(materialDTO, mess);
+                        materialList.add(mess);
+                    }
+                    SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
+                    completeDelivery.setCode(maxOutVouchCode());
+                    completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
+                    completeDelivery.setDeliveryTime(LocalDateTime.now());
+                    completeDelivery.setQuantity(sum);
+                    completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
+                    completeDelivery.setTypeId(sysDictVO.getId());
+                    completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
+                    completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+                    completeDeliveryService.save(completeDelivery);
+                    completeDeliveryInfoService.saveBatch(modelList);
+                    //物料消耗 ，扣除库存
+                    MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
+                    messDto.setCreateBy(SecurityUtils.getUser().getName());
+                    messDto.setCode(completeDelivery.getCode());
+                    messDto.setType(sysDictVO.getCode());
+                    messDto.setMaterialList(materialList);
+                    MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+                    if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
+                        throw new BusinessException("库存变化，请重新报工");
+                    }
+                }
+                return Boolean.TRUE;
+            });
+        } finally {
+            lock.unlock();
         }
         return Boolean.TRUE;
     }

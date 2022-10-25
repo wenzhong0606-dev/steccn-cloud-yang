@@ -36,8 +36,8 @@
         <validation-api.version>2.0.1.Final</validation-api.version>
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
-		<minio.version>7.0.2</minio.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <minio.version>7.0.2</minio.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencyManagement>
@@ -161,6 +161,21 @@
                 <artifactId>steccn-platform-biz</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
+
+            <!--redis-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-common-redis</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+
+            <!-- log日志-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-common-log</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+
             <!--lombok-->
             <dependency>
                 <groupId>org.projectlombok</groupId>
