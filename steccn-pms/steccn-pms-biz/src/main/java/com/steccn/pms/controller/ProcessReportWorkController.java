@@ -30,13 +30,13 @@ public class ProcessReportWorkController {
 
     @ApiOperation("工序分页列表")
     @PostMapping("/page")
-    @SysLog("工序报工分页列表")
     public R<Page<ProcessReportWorkPageVO>> pageList(@RequestBody ProcessReportWorkPageDTO dto) {
         return R.success(pmsReportWorkService.pageList(dto));
     }
 
     @ApiOperation("提交报工")
     @PostMapping("/add")
+    @SysLog("提交报工")
     public R<Boolean> submitReportWork(@RequestBody ProcessReportWorkSubmitDTO dto) {
         return R.success(pmsReportWorkService.submitReportWork(dto));
     }

@@ -147,7 +147,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean submitReportWork(ProcessReportWorkSubmitDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_REPORT_WORK);
         lock.lock();

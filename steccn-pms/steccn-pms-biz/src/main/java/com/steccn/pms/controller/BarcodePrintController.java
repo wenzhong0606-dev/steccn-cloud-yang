@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
@@ -31,6 +32,7 @@ public class BarcodePrintController {
 
     @ApiOperation("打印")
     @PostMapping("/print")
+    @SysLog("打印")
     public R<Boolean> print(@Valid @RequestBody BarcodePrintDTO dto) {
         return R.success(pmsBarcodePrintService.print(dto));
     }
@@ -43,6 +45,7 @@ public class BarcodePrintController {
 
     @PostMapping("/print/record/remove")
     @ApiOperation("打印记录删除")
+    @SysLog("打印记录删除")
     public R<Boolean> delete(@RequestBody List<Long> idList) {
         return R.success(pmsBarcodePrintService.deleteBatch(idList));
     }

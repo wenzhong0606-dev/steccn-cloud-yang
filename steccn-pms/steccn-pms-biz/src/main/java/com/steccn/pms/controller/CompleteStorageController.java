@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
@@ -43,6 +44,7 @@ public class CompleteStorageController {
 
     @PostMapping("/generate")
     @ApiOperation("生成入库单")
+    @SysLog("生成入库单")
     public R<String> generate(@Valid @RequestBody ValidList<CompleteStorageScanDTO> validList) {
         if (CollUtil.isEmpty(validList)) {
             throw new BusinessException("请选择箱子");
