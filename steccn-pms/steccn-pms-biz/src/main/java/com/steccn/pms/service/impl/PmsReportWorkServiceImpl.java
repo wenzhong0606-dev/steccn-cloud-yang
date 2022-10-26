@@ -379,7 +379,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     public Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto) {
         //1.定义查询条件
         LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>()
-                .eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getProcessId, dto.getProcessId())
+                .eq(Objects.nonNull(dto.getProcessId()), PmsReportWork::getProcessId, dto.getProcessId())
+                .eq(Objects.nonNull(dto.getProduceId()), PmsReportWork::getProcessId, dto.getProduceId())
                 .eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getBatchNo, dto.getBatchNo())
                 .eq(Objects.nonNull(dto.getStationId()), PmsReportWork::getStationId, dto.getStationId())
                 .ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime())

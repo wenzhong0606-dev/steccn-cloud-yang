@@ -35,4 +35,7 @@ public class PmsReportWorkPageDTO extends BasePageDTO {
     @ApiModelProperty("工位id")
     private Integer stationId;
 
+    @ApiModelProperty("订单id")
+    private Long produceId;
+
 }
