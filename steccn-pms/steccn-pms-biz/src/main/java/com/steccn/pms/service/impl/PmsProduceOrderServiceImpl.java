@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -79,7 +78,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         save(model);
         //4.2保存工序信息
         if (CollUtil.isNotEmpty(dto.getProcessList())) {
-            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId(),model.getProductionLineId());
+            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId(), model.getProductionLineId());
         }
         //4.3保存物料信息
         if (CollUtil.isNotEmpty(dto.getMaterialList())) {
@@ -465,9 +464,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             batch.setEndTime(LocalDateTime.now());
             batch.setCurrentBatchFlag(PmsCodeUtil.DEFAULT_PADDING);
             pmsWorkOrderBatchService.updateById(batch);
-        }else {
+        } else {
             //完成 确认状态
-            if (Objects.nonNull(batch)){
+            if (Objects.nonNull(batch)) {
                 batch.setEndTime(LocalDateTime.now());
                 batch.setCurrentBatchFlag(PmsCodeUtil.DEFAULT_PADDING);
                 pmsWorkOrderBatchService.updateById(batch);
@@ -492,8 +491,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.校验当前产线是否在其他执行中的订单
         //2.1查询当前产线的执行订单数量
         PmsProduceOrderVO pmsProduceOrderVO = listByProduceLineId(order.getProductionLineId());
-        if (Objects.nonNull(pmsProduceOrderVO)){
-            new BackingStoreException("其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
+        if (Objects.nonNull(pmsProduceOrderVO)) {
+            throw new BusinessException("其他订单(" + pmsProduceOrderVO.getCode() + ")正在执行中");
         }
         //2.2 校验状态（仅已创建可下达）
         Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()) || order.getState().equals(PmManagerConstant.OrderStateEnum.FOUR.getCode()), "仅已下达状态或暂停中可执行");
@@ -632,12 +631,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        LocalDateTime max = LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
-        LocalDateTime min = LocalDateTime.of(LocalDate.now(),LocalTime.MIN);
-        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                .between(PmsProduceOrder::getCreateTime,min,max)
-                .orderByDesc(PmsProduceOrder::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>().orderByDesc(PmsProduceOrder::getCode).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
@@ -652,6 +646,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }
         return currentMax;
     }
+
+
 }
 
 
