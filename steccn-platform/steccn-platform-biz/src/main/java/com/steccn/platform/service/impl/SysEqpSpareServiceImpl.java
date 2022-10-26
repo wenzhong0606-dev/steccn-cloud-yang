@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SpareDTO;
@@ -12,14 +13,13 @@ import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author W10
@@ -35,7 +35,15 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     @Override
     public List<EqpSpareVO> listSpares(String name) {
-        return sysEqpSpareMapper.listSpares(name);
+        List<EqpSpareVO> eqpSpareVOList = sysEqpSpareMapper.listSpares(name);
+        List<EqpSpareVO> collect = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(eqpSpareVOList)){
+            collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(
+                    Collectors.toCollection(() -> new TreeSet<>(
+                            Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
+
+        }
+        return collect;
     }
 
     @Override

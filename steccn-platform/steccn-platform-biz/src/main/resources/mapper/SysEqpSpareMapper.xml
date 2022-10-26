@@ -41,7 +41,7 @@
         </where>
     </select>
     <select id="listSpares" resultType="com.steccn.platform.vo.EqpSpareVO">
-        SELECT a.id,
+        SELECT DISTINCT a.id,
                a.code,
                a.name,
                b.id   AS unitId,
