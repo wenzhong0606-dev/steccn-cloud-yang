@@ -20,8 +20,9 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      * 根据生产订单id保存工序信息
      * @param processList
      * @param id
+     * @param productionLineId
      */
-    void saveCrafts(List<PmsProduceOrderCraftDTO> processList,Long id);
+    void saveCrafts(List<PmsProduceOrderCraftDTO> processList,Long id,Integer productionLineId);
 
     /**
      * 根据生产订单id获取工序信息

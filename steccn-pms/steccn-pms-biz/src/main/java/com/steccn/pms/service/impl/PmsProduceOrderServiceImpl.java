@@ -79,7 +79,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         save(model);
         //4.2保存工序信息
         if (CollUtil.isNotEmpty(dto.getProcessList())) {
-            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId());
+            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId(),model.getProductionLineId());
         }
         //4.3保存物料信息
         if (CollUtil.isNotEmpty(dto.getMaterialList())) {
