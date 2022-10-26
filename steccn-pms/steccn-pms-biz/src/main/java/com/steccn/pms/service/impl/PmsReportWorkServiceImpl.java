@@ -316,7 +316,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //根据生产订单id和工序
         List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
                 .eq(PmsWorkOrderBom::getWorkProduceId, pmsProduceOrder.getId())
-                .eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getId()));
+                .eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getProcessId()));
         //定义返回集合
         List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
