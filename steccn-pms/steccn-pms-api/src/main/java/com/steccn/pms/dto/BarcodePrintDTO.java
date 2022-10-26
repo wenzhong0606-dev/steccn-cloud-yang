@@ -40,6 +40,10 @@ public class BarcodePrintDTO implements Serializable {
     @NotNull(message = "数量不能为空")
     private BigDecimal quantity;
 
+    @ApiModelProperty("单位id")
+    @NotNull(message = "单位不能为空")
+    private Long unitId;
+
     @ApiModelProperty("打印条数")
     @NotNull(message = "打印条数不能为空")
     private Integer printStrip;
