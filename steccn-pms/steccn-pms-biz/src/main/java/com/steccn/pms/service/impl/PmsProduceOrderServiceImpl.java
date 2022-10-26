@@ -597,9 +597,16 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
                 .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES));
         Assert.notNull(currentBatch, "订单" + order.getCode() + "无当前批次");
+        //查询订单的工序craft
+        List<PmsProduceOrderCraft> craftList = pmsProduceOrderCraftService.list(new LambdaQueryWrapper<PmsProduceOrderCraft>()
+                .eq(PmsProduceOrderCraft::getProduceOrderId, order.getId())
+                .select(PmsProduceOrderCraft::getId));
+        Assert.notEmpty(craftList, "该订单暂未配置工序信息");
+        Set<Long> craftIdSet = craftList.stream().map(PmsProduceOrderCraft::getId).collect(Collectors.toSet());
         //2.查询工位
         PmsWorkOrderCraftStation station = pmsWorkOrderCraftStationService.getOne(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
                 .eq(PmsWorkOrderCraftStation::getExecuteStationId, stationId)
+                .in(PmsWorkOrderCraftStation::getProduceOrderCraftId, craftIdSet)
                 .last(MpConstant.STR_LIMIT_1));
         Assert.notNull(station, "该工位暂无工序配置");
         //3.查询工序
