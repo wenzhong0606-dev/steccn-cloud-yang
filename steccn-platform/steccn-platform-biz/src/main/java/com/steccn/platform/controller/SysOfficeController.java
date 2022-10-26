@@ -41,11 +41,13 @@ public class SysOfficeController {
         return R.success(sysOfficeService.data());
     }
 
+    @ApiOperation("返回数据类型下所有数据")
     @GetMapping("/flat")
     public R<List<SysOfficeVO>> listFlatDataByType(@RequestParam String type) {
         return R.success(sysOfficeService.flatData(type));
     }
 
+    @ApiOperation("返回类型和父级节点下数据")
     @PostMapping("/getByPcodeAndType")
     public R<List<SysOfficeVO>> listFlatDataByPcode(@RequestBody SysOfficeParentDTO dto) {
         return R.success(sysOfficeService.findDataByPCodeAndType(dto));
@@ -72,4 +74,5 @@ public class SysOfficeController {
     public R<StationLineVO> stationScan(@PathVariable("id") Integer id){
         return R.success(sysOfficeService.stationScan(id));
     }
+
 }
