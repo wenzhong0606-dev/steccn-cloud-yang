@@ -34,6 +34,10 @@ public class PmsProduceOrderCraftDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序名称不能为空")
     private String name;
 
+    @ApiModelProperty("工序id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序名称不能为空")
+    private String processId;
+
     @ApiModelProperty("类型id")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "类型不能为空")
     private Long typeId;
