@@ -50,6 +50,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -148,6 +149,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public Boolean submitReportWork(ProcessReportWorkSubmitDTO dto) {
+        Assert.isTrue(validMaterialConsume(dto),"物料消耗校验不通过");
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_REPORT_WORK);
         lock.lock();
         try {
@@ -185,6 +187,28 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             });
         } finally {
             lock.unlock();
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 校验物料消耗
+     *
+     * @param dto
+     * @return
+     */
+    private Boolean validMaterialConsume(ProcessReportWorkSubmitDTO dto) {
+        Assert.notEmpty(dto.getMaterialConsumeList(), "物料消耗为空");
+        //根据生产订单id和工序
+        List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                .eq(PmsWorkOrderBom::getWorkProduceId, dto.getProduceOrderId())
+                .eq(PmsWorkOrderBom::getProcessId, dto.getProcessId()));
+        if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
+            Set<Long> materialIdSet = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
+            Set<Long> consumeSet = dto.getMaterialConsumeList().stream().map(ProcessReportWorkMaterialListDTO::getModuleId).collect(Collectors.toSet());
+            if (!consumeSet.containsAll(materialIdSet)) {
+                throw new BusinessException("部分物料库存不足，请补库存");
+            }
         }
         return Boolean.TRUE;
     }
