@@ -533,9 +533,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
                     .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
+            String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
+
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
+                pmsProduceOrderVO.setProductionLineName(productionLineName);
             }
         }
         return pmsProduceOrderVO;

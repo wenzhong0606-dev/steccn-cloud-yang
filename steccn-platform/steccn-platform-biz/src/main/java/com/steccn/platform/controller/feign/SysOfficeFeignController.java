@@ -34,7 +34,7 @@ public class SysOfficeFeignController {
 
     @GetMapping("/name")
     public R<String> listFlatDataByType(@RequestParam Integer id) {
-        return R.success(sysOfficeService.findNameById(id));
+        return new R<>(sysOfficeService.findNameById(id));
     }
 
     @PostMapping("/ids")
