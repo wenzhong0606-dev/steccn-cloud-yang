@@ -17,6 +17,8 @@ public interface PmManagerConstant {
 
     String FILE_EXTENSION_XLSX = ".xlsx";
 
+    String STATE_13 = "13";
+
     /**
      * 类型编码-工序类型
      */

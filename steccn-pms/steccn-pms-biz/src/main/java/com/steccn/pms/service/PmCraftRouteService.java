@@ -2,9 +2,11 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmCraftRoute;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmCraftRouteDTO;
+import com.steccn.pms.dto.PmProcessStationDTO;
 import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 
@@ -71,4 +73,12 @@ public interface PmCraftRouteService extends IService<PmCraftRoute> {
      * @return
      */
     Map<Long,String> versionById(Set<Long> craftIds);
+
+    /**
+     * 根据产线id以及工艺id获取工艺下所有工序的可执行工位
+     * @param productLineId
+     * @param craftRouteId
+     * @return
+     */
+    List<SysOfficeVO> stations(Integer productLineId, Integer craftRouteId);
 }

@@ -31,4 +31,17 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="stations" resultType="com.steccn.pms.dto.PmProcessStationDTO">
+        SELECT DISTINCT
+            d.execute_station_id,
+            d.id,
+            d.execute_station_name,
+            d.execute_station_code
+        FROM
+            pm_craft_route a
+                JOIN pm_craft_route_process b ON a.id = b.route_id
+                JOIN pm_process c ON c.id = b.process_id
+                JOIN pm_process_station d ON d.process_id = c.id
+        WHERE a.id = #{craftRouteId}
+    </select>
 </mapper>

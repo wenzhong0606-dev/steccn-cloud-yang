@@ -5,12 +5,16 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.dto.PmCraftRouteProcessDTO;
+import com.steccn.pms.dto.PmProcessStationDTO;
 import com.steccn.pms.service.PmCraftRouteService;
 import com.steccn.pms.vo.PmCraftRouteProcessVO;
 import com.steccn.pms.vo.PmCraftRouteVO;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -70,5 +74,12 @@ public class PmCraftRouteController {
     @GetMapping("/getProcessInfo")
     public R<PmCraftRouteProcessVO> getProcessInfo(@RequestParam("processId") Long processId, @RequestParam("craftRouteId") String craftRouteId) {
         return pmCraftRouteService.getProcessInfo(processId, craftRouteId);
+    }
+
+    @ApiOperation("根据产线以及工艺信息下的可执行工位")
+    @GetMapping("/stations")
+    public R<List<SysOfficeVO>> stations(@ApiParam("产线id") @RequestParam("productLineId") Integer productLineId,
+                                                 @ApiParam("工艺id") @RequestParam("craftRouteId") Integer craftRouteId){
+        return R.success(pmCraftRouteService.stations(productLineId,craftRouteId));
     }
 }

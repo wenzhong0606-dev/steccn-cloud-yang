@@ -2,6 +2,7 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -91,4 +92,13 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/code")
     @ApiOperation("根据code查询中文")
     R<Map<String, SysOfficeVO>> listByCodeSet(@RequestBody Set<String> codeSet);
+
+    /**
+     * 根据父id获取下级节点数据
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据父id获取下级节点数据")
+    @PostMapping("/feign/platform/sys/office/listByParentId")
+    R<List<SysOfficeVO>> listByParentId(@RequestBody SysOfficeParentDTO dto);
 }

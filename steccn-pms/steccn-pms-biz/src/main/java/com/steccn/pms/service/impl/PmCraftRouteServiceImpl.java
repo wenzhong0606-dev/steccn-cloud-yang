@@ -16,13 +16,18 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmCraftRouteDTO;
 import com.steccn.pms.dto.PmCraftRouteProcessDTO;
+import com.steccn.pms.dto.PmProcessStationDTO;
 import com.steccn.pms.service.PmCraftRouteModuleService;
 import com.steccn.pms.service.PmCraftRouteProcessService;
 import com.steccn.pms.service.PmCraftRouteService;
@@ -36,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -53,6 +59,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
     private final PmProcessService processService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public R<Boolean> add(PmCraftRouteDTO dto) {
@@ -241,6 +248,36 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         }
         //4.返回数据
         return resMap;
+    }
+
+    @Override
+    public List<SysOfficeVO> stations(Integer productLineId, Integer craftRouteId) {
+        //1.自定义sql获取该工艺路线下的可执行工位
+        List<PmProcessStationDTO> list = this.baseMapper.stations(craftRouteId);
+        List<SysOfficeVO> officeVOList = Lists.newArrayList();
+        List<SysOfficeVO> collect =Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            //2.获取产线下的工位信息
+            SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            sysOfficeParentDTO.setId(productLineId);
+            sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
+            List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+            if (CollUtil.isNotEmpty(officeVOS)){
+                list.forEach( stations ->{
+                    officeVOS.forEach(
+                            officeVO->{
+                                if (stations.getExecuteStationId().equals(officeVO.getId())){
+                                    officeVOList.add(officeVO);
+                                }
+                            }
+                    );
+                });
+               collect = officeVOList.stream().collect(Collectors.collectingAndThen(
+                        Collectors.toCollection(() -> new TreeSet<>(
+                                Comparator.comparing(SysOfficeVO::getId))), ArrayList::new));
+            }
+        }
+        return collect;
     }
 
     /**
