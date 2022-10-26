@@ -2,14 +2,19 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderCraftStation;
 import com.steccn.pms.dto.PmsProduceOrderCraftDTO;
@@ -19,6 +24,7 @@ import com.steccn.pms.mapper.PmsProduceOrderCraftMapper;
 import com.steccn.pms.service.PmsWorkOrderCraftStationService;
 import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 import com.steccn.pms.vo.PmsWorkOrderCraftStationVO;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
@@ -40,6 +46,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
 
     private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     /**
      * 保存生产订单-工序信息
@@ -48,7 +55,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
      * @param id          生产订单id
      */
     @Override
-    public void saveCrafts(List<PmsProduceOrderCraftDTO> processList, Long id) {
+    public void saveCrafts(List<PmsProduceOrderCraftDTO> processList, Long id, Integer productionLineId) {
         processList.forEach(craft -> {
             //1.处理工序信息数据
             PmsProduceOrderCraft model = new PmsProduceOrderCraft();
@@ -58,7 +65,19 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
             save(model);
             //3.保存工位信息
             if (CollUtil.isNotEmpty(craft.getStationList())) {
+                //获取当前产线下的可执行工位
+                SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+                sysOfficeParentDTO.setId(productionLineId);
+                sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
+                List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
                 List<PmsWorkOrderCraftStationDTO> stationList = craft.getStationList();
+                //处理数据
+                Assert.notNull(officeVOS, "该产线下不存在可执行工位信息，请检查");
+                List<Integer> stationIds = Lists.newArrayList();
+                List<Integer> officeIds = Lists.newArrayList();
+                stationList.forEach(station -> stationIds.add(station.getExecuteStationId()));
+                officeVOS.forEach(officeVO ->officeIds.add(officeVO.getId()));
+                Assert.isTrue(officeIds.containsAll(stationIds), "工位信息不在该产线下,请检查");
                 stationList.forEach(station -> {
                     PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
                     BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
