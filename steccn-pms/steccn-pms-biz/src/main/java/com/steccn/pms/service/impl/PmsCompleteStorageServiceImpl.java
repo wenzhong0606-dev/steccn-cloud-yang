@@ -253,6 +253,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
 
         dictList.add(pmsCompleteStorage.getUnitId());
+        dictList.add(pmsCompleteStorage.getTypeId());
         Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
@@ -283,6 +284,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
         completeStorageListVO.setList(materialVOList);
         completeStorageListVO.setUnitName(sysDictMap.get(completeStorageListVO.getUnitId()));
+        completeStorageListVO.setTypeName(sysDictMap.get(completeStorageListVO.getTypeId()));
         return completeStorageListVO;
     }
 
