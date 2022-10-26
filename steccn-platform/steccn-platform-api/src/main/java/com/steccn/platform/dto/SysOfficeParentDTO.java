@@ -1,5 +1,6 @@
 package com.steccn.platform.dto;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -23,4 +24,9 @@ public class SysOfficeParentDTO implements Serializable {
      * 机构类型
      */
     private String officeType;
+
+    /**
+     * 主键id
+     */
+    private Integer id;
 }

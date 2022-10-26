@@ -75,4 +75,10 @@ public class SysOfficeController {
         return R.success(sysOfficeService.stationScan(id));
     }
 
+    @ApiOperation("根据父id获取下级节点数据")
+    @PostMapping("/listByParentId")
+    public R<List<SysOfficeVO>> listByParentId(@RequestBody SysOfficeParentDTO dto){
+        return R.success(sysOfficeService.listByParentId(dto));
+    }
+
 }

@@ -85,4 +85,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     StationLineVO stationScan(Integer id);
+
+    /**
+     * 根据父节点id获取下级数据
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> listByParentId(SysOfficeParentDTO dto);
 }

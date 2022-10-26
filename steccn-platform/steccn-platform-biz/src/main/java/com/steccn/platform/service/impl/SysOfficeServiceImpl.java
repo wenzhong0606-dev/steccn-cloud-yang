@@ -213,17 +213,27 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public StationLineVO stationScan(Integer id) {
         SysOffice station = getById(id);
-        Assert.notNull(station,"数据为空");
+        Assert.notNull(station, "数据为空");
         StationLineVO resVo = new StationLineVO();
         resVo.setStationId(station.getId());
         resVo.setStationName(station.getOfficeName());
         Map<String, SysOfficeVO> sysOfficeVOMap = listByCodeSet(Sets.newHashSet(station.getParentCode()));
-        if(Objects.nonNull(sysOfficeVOMap)){
+        if (Objects.nonNull(sysOfficeVOMap)) {
             SysOfficeVO line = sysOfficeVOMap.get(station.getParentCode());
             resVo.setProductLineId(line.getId());
             resVo.setProductLineName(line.getOfficeName());
         }
         return resVo;
+    }
+
+    @Override
+    public List<SysOfficeVO> listByParentId(SysOfficeParentDTO dto) {
+        //1.自定义sql查询数据
+        List<SysOfficeVO> list = this.baseMapper.listByParentId(dto.getId(), dto.getOfficeType());
+        if (CollUtil.isNotEmpty(list)) {
+            return list;
+        }
+        return null;
     }
 
     /**

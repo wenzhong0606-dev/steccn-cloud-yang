@@ -40,4 +40,20 @@
         create_by,create_date,update_by,
         update_date,remarks
     </sql>
+    <select id="listByParentId" resultType="com.steccn.platform.vo.SysOfficeVO">
+        SELECT
+            id,
+            office_type,
+            office_code,
+            office_name,
+            tree_leaf,
+            tree_sort,
+            tree_level,
+            parent_code
+        FROM
+            sys_office
+        WHERE
+            parent_code = ( SELECT office_code FROM sys_office WHERE id = #{id} )
+          AND office_type = #{officeType}
+    </select>
 </mapper>

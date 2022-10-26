@@ -2,17 +2,30 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.vo.SysOfficeVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
-* @author W10
-* @description 针对表【sys_office(Mes组织机构表)】的数据库操作Mapper
-* @createDate 2022-09-02 16:25:59
-* @Entity com.steccn.platform.domain.SysOffice
-*/
+ * @author W10
+ * @description 针对表【sys_office(Mes组织机构表)】的数据库操作Mapper
+ * @createDate 2022-09-02 16:25:59
+ * @Entity com.steccn.platform.domain.SysOffice
+ */
 @Mapper
 public interface SysOfficeMapper extends BaseMapper<SysOffice> {
 
+    /**
+     * 根据id和类型查询下级数据
+     *
+     * @param id
+     * @param officeType
+     * @return
+     */
+    List<SysOfficeVO> listByParentId(@Param("id") Integer id, @Param("officeType") String officeType);
 }
 
 
