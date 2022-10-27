@@ -37,7 +37,7 @@ public class ProcessReportWorkController {
     @ApiOperation("提交报工")
     @PostMapping("/add")
     @SysLog("提交报工")
-    public R<Boolean> submitReportWork(@RequestBody ProcessReportWorkSubmitDTO dto) {
+    public R<Boolean> submitReportWork(@Valid @RequestBody ProcessReportWorkSubmitDTO dto) {
         return R.success(pmsReportWorkService.submitReportWork(dto));
     }
 

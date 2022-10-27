@@ -4,8 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,6 +45,9 @@ public class CompleteStorageScanDTO implements Serializable {
 
     @ApiModelProperty("数量")
     @NotNull(message = "数量不能为空")
+    @DecimalMin(value="0",message="数量应大于0")
+    @DecimalMax(value="99999999.999",message="数量大小应小于99999999.999")
+    @Digits(integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位")
