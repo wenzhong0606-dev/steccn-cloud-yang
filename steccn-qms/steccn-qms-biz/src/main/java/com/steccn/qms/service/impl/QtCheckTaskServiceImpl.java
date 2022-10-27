@@ -194,6 +194,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if (qtCheckTask.getProductLine() != null) {
                 qtCheckTask.setProductLineName(qtCheckTask.getProductLine().getName());
             }
+            //如果是暂存状态，则返回检验中
+            if(qtCheckTask.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.TEMPORARY.getCode())){
+                qtCheckTask.setStatus(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode());
+            }
             BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
