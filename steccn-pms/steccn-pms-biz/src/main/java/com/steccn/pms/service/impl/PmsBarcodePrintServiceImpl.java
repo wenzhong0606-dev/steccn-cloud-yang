@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -86,7 +88,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Page<PmsBarcodePrint> page = page(new Page<>(dto.getCurrent(), dto.getSize()), new LambdaQueryWrapper<PmsBarcodePrint>()
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
-                .eq(Objects.nonNull(dto.getCaseState()) , PmsBarcodePrint::getCaseState, dto.getCaseState())
+                .eq(Objects.nonNull(dto.getCaseState()), PmsBarcodePrint::getCaseState, dto.getCaseState())
                 .orderByDesc(PmsBarcodePrint::getCreateTime));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
@@ -187,16 +189,13 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Boolean reviseAlreadyPutInStatue(List<String> caseNoList) {
-        if (CollUtil.isEmpty(caseNoList)) {
-            throw new BusinessException("箱号列表为空");
+    public Boolean reviseAlreadyPutInStatue(List<String> caseNoList,Integer code) {
+        if (CollUtil.isNotEmpty(caseNoList)) {
+            update(new LambdaUpdateWrapper<PmsBarcodePrint>()
+                    .set(PmsBarcodePrint::getCaseState, code)
+                    .in(PmsBarcodePrint::getCaseNo, caseNoList));
         }
-        for (String caseNo : caseNoList) {
-            PmsBarcodePrint one = getOne(new LambdaQueryWrapper<PmsBarcodePrint>().eq(PmsBarcodePrint::getCaseNo, caseNo));
-            one.setCaseState(PmManagerConstant.CaseStateEnum.ALREADY.getCode());
-            updateById(one);
-        }
-        return true;
+        return Boolean.TRUE;
     }
 
     @Override

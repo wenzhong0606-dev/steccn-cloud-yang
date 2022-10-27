@@ -183,11 +183,18 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         messDto.setCode(pmsCompleteStorage.getCode());
         messDto.setType(sysDictVO.getCode());
         messDto.setMaterialList(materialList);
-        MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
-        //入库必定要成功
-        if (Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()) {
-            log.info("入库单 -> " + messInStorageVoucherVO.getMessage());
+        try {
+            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
+            //入库必定要成功
+            if (Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()) {
+                log.info("入库单 -> " + messInStorageVoucherVO.getMessage());
+            }
+        }catch (Exception e){
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("入库单创建失败");
         }
+        //箱状态修改成待入库
+        pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet),PmManagerConstant.CaseStateEnum.PREPARE.getCode());
         return pmsCompleteStorage.getCode();
     }
 
@@ -354,7 +361,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             updateById(getOneCompleteStorage);
         }
         List<String> caseNoList = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
-        pmsBarcodePrintService. reviseAlreadyPutInStatue(caseNoList);
+        pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNoList, PmManagerConstant.CaseStateEnum.ALREADY.getCode());
         return R.success(true);
     }
 
