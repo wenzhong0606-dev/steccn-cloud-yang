@@ -42,6 +42,6 @@
             pms_complete_storage_info a
                 JOIN pms_complete_storage b ON a.complete_storage_id = b.id
         WHERE
-            b.produce_order_id = #{orderId}
+            a.produce_order_id = #{orderId}
     </select>
 </mapper>
