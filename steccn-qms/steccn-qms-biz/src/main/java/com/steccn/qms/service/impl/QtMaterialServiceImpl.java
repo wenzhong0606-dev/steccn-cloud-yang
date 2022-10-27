@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -197,12 +198,16 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
 
     @Override
     public List<QtMaterialLinkPlanVO> listLink(Long id,Integer type) {
+        List<QtMaterialLinkPlanVO> vos = Lists.newArrayList();
+        //如果前端传来的id为空，返回空数组
+        if (id == null){
+            return vos;
+        }
         LambdaQueryWrapper<QtMaterialLinkCheckPlan> condition = new QueryWrapper<QtMaterialLinkCheckPlan>()
                 .select("DISTINCT check_plan_id").lambda()
                 .eq(QtMaterialLinkCheckPlan::getMaterialId,id)
                 .eq(QtMaterialLinkCheckPlan::getCheckTypeCode,type);
         List<QtMaterialLinkCheckPlan> qtMaterialLinkCheckPlans = qtMaterialLinkCheckPlanService.list(condition);
-        List<QtMaterialLinkPlanVO> vos = Lists.newArrayList();
         if(qtMaterialLinkCheckPlans!=null && !qtMaterialLinkCheckPlans.isEmpty()){
             qtMaterialLinkCheckPlans.forEach(tmp->{
                 QtMaterialLinkPlanVO vo = new QtMaterialLinkPlanVO();
