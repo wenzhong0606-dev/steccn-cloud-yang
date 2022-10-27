@@ -9,10 +9,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -573,6 +575,24 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return updateById(order);
     }
 
+    @Override
+    public Map<Long, BaseSelectVO<Long>> listUnit(Set<Long> orderSet) {
+        Map<Long, BaseSelectVO<Long>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orderSet)) {
+            List<PmsProduceOrder> pmsProduceOrders = listByIds(orderSet);
+            if (CollUtil.isNotEmpty(pmsProduceOrders)) {
+                Set<Long> unitSet = pmsProduceOrders.stream().map(PmsProduceOrder::getUnitId).collect(Collectors.toSet());
+                Map<Long, String> unitDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitSet)).get();
+                for (PmsProduceOrder pmsProduceOrder : pmsProduceOrders) {
+                    BaseSelectVO<Long> baseVo = new BaseSelectVO<>();
+                    baseVo.setId(pmsProduceOrder.getUnitId());
+                    baseVo.setName(unitDictMap.get(baseVo.getId()));
+                    resMap.put(pmsProduceOrder.getId(), baseVo);
+                }
+            }
+        }
+        return resMap;
+    }
 
     /**
      * 查询订单
@@ -619,9 +639,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         ReportWorkOrderVO vo = new ReportWorkOrderVO();
         BeanUtils.copyProperties(order, vo);
 
-        vo.setUnitId(craft.getUnitId());
-        Map<Long, String> unitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(craft.getUnitId()))).get();
-        vo.setUnitName(unitMap.get(craft.getUnitId()));
+        vo.setUnitId(order.getUnitId());
+        Map<Long, String> unitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId()))).get();
+        vo.setUnitName(unitMap.get(order.getUnitId()));
 
         vo.setProduceOrderId(order.getId());
         vo.setProduceOrderCode(order.getCode());
@@ -644,10 +664,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        LocalDateTime max = LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
-        LocalDateTime min = LocalDateTime.of(LocalDate.now(),LocalTime.MIN);
+        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                .between(PmsProduceOrder::getCreateTime,min,max)
+                .between(PmsProduceOrder::getCreateTime, min, max)
                 .orderByDesc(PmsProduceOrder::getCode)
                 .last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空

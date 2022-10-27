@@ -13,6 +13,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -225,10 +226,21 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             }
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
             List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
+
+            //订单的单位
+            Set<Long> orderSet = modelList.stream().map(PmsCompleteStorage::getProduceOrderId).collect(Collectors.toSet());
+            Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
+
             for (PmsCompleteStorage model : modelList) {
                 CompleteStoragePageVO vo = new CompleteStoragePageVO();
                 BeanUtils.copyProperties(model, vo);
-                vo.setUnitName(sysDictMap.get(vo.getUnitId()));
+                BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(model.getProduceOrderId());
+                vo.setUnitId(null);
+                vo.setUnitName(null);
+                if(Objects.nonNull(baseSelectVO)){
+                    vo.setUnitId(baseSelectVO.getId());
+                    vo.setUnitName(baseSelectVO.getName());
+                }
                 vo.setTypeName(sysDictMap.get(vo.getTypeId()));
                 voList.add(vo);
             }

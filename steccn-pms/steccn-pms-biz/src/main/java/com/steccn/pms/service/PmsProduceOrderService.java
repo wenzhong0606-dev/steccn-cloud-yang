@@ -1,12 +1,15 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -142,4 +145,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Boolean complete(Long orderId);
+
+    /**
+     * 订单的单位
+     * @param orderSet 订单集合
+     * @return key 订单id value 订单的单位
+     */
+    Map<Long, BaseSelectVO<Long>> listUnit(Set<Long> orderSet);
 }

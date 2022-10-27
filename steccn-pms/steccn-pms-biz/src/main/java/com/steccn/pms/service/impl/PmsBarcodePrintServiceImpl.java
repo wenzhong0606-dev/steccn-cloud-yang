@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -22,6 +23,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.BarcodePrintDTO;
 import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
@@ -30,6 +32,7 @@ import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.PmsBarcodePrintService;
 import com.steccn.pms.mapper.PmsBarcodePrintMapper;
 import com.steccn.pms.service.PmsCompleteStorageService;
+import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
 import lombok.AllArgsConstructor;
@@ -60,6 +63,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RemoteMessFeignApi remoteMessFeignApi;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private PmsProduceOrderService pmsProduceOrderService;
 
 
     @Override
@@ -94,14 +99,14 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
             //处理单位数据
-            Set<Long> dictSet = Sets.newHashSet();
+            Set<Long> orderSet = page.getRecords().stream().map(PmsBarcodePrint::getProduceOrderId).collect(Collectors.toSet());
+            Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
             voList.forEach(barcodePrintRecordVO -> {
-                dictSet.add(barcodePrintRecordVO.getUnitId());
-            });
-            //获取单位数据
-            Map<Long, String> dictChMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
-            voList.forEach(barcodePrintRecordVO -> {
-                barcodePrintRecordVO.setUnit(dictChMap.get(barcodePrintRecordVO.getUnitId()));
+                BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
+                if(Objects.nonNull(baseSelectVO)){
+                    barcodePrintRecordVO.setUnitId(baseSelectVO.getId());
+                    barcodePrintRecordVO.setUnit(baseSelectVO.getName());
+                }
             });
             resPage.setRecords(voList);
         }
@@ -142,6 +147,15 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Assert.notNull(model, "打印详细信息不存在");
         BarcodePrintRecordVO vo = new BarcodePrintRecordVO();
         BeanUtils.copyProperties(model, vo);
+        Long produceOrderId = vo.getProduceOrderId();
+        if(Objects.nonNull(produceOrderId)){
+            Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(Sets.newHashSet(produceOrderId));
+            if(CollUtil.isNotEmpty(orderUnitMap)){
+                BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(produceOrderId);
+                vo.setUnitId(baseSelectVO.getId());
+                vo.setUnit(baseSelectVO.getName());
+            }
+        }
         return vo;
     }
 

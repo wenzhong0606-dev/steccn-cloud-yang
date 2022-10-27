@@ -40,4 +40,7 @@ public class BarcodePrintRecordVO implements Serializable {
 
     @ApiModelProperty("箱子状态")
     private Integer caseState;
+
+    @ApiModelProperty("生产订单id")
+    private Long produceOrderId;
 }

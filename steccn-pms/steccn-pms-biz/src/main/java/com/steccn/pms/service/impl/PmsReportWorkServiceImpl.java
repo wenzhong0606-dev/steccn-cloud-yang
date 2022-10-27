@@ -17,6 +17,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -100,16 +101,23 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
         //3.将id映射成name
         List<ProcessReportWorkPageVO> records = page.getRecords();
-        Set<Long> unitList = Sets.newHashSet();
+        Set<Long> orderSet = Sets.newHashSet();
         Set<Integer> organIdSet = Sets.newHashSet();
         records.forEach(ele -> {
-            unitList.add(ele.getUnitId());
+            orderSet.add(ele.getProduceOrderId());
             organIdSet.add(ele.getStationId());
         });
-        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitList)).get();
+        Map<Long, BaseSelectVO<Long>> orderUnitMap = produceOrderService.listUnit(orderSet);
+
         Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
         records.forEach(ele -> {
-            ele.setUnitName(sysDictMap.get(ele.getUnitId()));
+            BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(ele.getProduceOrderId());
+            ele.setUnitId(null);
+            ele.setUnitName(null);
+            if (Objects.nonNull(baseSelectVO)) {
+                ele.setUnitId(baseSelectVO.getId());
+                ele.setUnitName(baseSelectVO.getName());
+            }
             ele.setStationName(sysOfficeMap.get(ele.getStationId()));
         });
         return page;
@@ -213,7 +221,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
             //可用数量必须大于实际数量
             for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
-                if(materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1){
+                if (materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
                     throw new BusinessException("物料消耗实际数量不可以大于可用数量");
                 }
             }
@@ -341,10 +349,13 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
             Set<Long> unitIdList = Sets.newHashSet();
             List<Long> idList = Lists.newArrayList();
+            Map<Long, Long> materialUnitMap = Maps.newHashMap();
             for (PmsWorkOrderBom pmsWorkOrderBom : pmsWorkOrderBomList) {
                 unitIdList.add(pmsWorkOrderBom.getUnitId());
                 idList.add(pmsWorkOrderBom.getModuleId());
+                materialUnitMap.put(pmsWorkOrderBom.getModuleId(), pmsWorkOrderBom.getUnitId());
             }
+            unitIdList.add(pmsProduceOrder.getUnitId());
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
