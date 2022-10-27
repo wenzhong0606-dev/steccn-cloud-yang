@@ -179,6 +179,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             //计划id
             qtCheckTaskListVo.setCheckPlanName(qtCheckPlanService.getById(qtCheckTask.getCheckPlanId()).getName());
+            //
             if (qtCheckTask.getMaterialWorkshop() != null) {
                 qtCheckTask.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             }
@@ -323,7 +324,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //开始任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
-            qtCheckTask.setStartName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setStartName(SecurityUtils.getUser().getName());
             qtCheckTask.setStartTime(LocalDateTime.now());
         }
         //取消任务
@@ -333,13 +334,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 throw new BusinessException("只有待检验状态才能取消");
             }
             qtCheckTask.setCancelBy(SecurityUtils.getUser().getUserId());
-            qtCheckTask.setCancelName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setCancelName(SecurityUtils.getUser().getName());
             qtCheckTask.setCancelTime(LocalDateTime.now());
         }
         //完成任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
             qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
-            qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+            //修改完成任务显示拼音的bug
+            //qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+            qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
             qtCheckTask.setFinishedTime(LocalDateTime.now());
         }
         return updateById(qtCheckTask);
@@ -545,7 +548,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         taskModel.setStatus(dto.getStatus());
         if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
             taskModel.setFinishedBy(SecurityUtils.getUser().getUserId());
-            taskModel.setFinishedName(SecurityUtils.getUser().getUsername());
+            taskModel.setFinishedName(SecurityUtils.getUser().getName());
             taskModel.setFinishedTime(LocalDateTime.now());
         }
         return updateById(taskModel);
@@ -563,7 +566,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         BeanUtils.copyProperties(dto, qtCheckTask);
         qtCheckTask.setStatus(2);
         qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
-        qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+        qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
         qtCheckTask.setFinishedTime(LocalDateTime.now());
         return updateById(qtCheckTask);
     }
@@ -595,11 +598,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         model.setStatus(0);
         model.setType(1);
         model.setId(null);
+        model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
         save(model);
         QtRecheckTask recheckModel = new QtRecheckTask();
         recheckModel.setOriginalId(id);
         recheckModel.setRecheckId(model.getId());
-        recheckModel.setOriginalCode(model.getCode());
+        //修改复检任务生成任务单号bug，要求复检任务单号和原始单号不同
+        recheckModel.setOriginalCode(res.getCode());
         qtRecheckTaskService.save(recheckModel);
         return model.getId();
     }
@@ -766,6 +771,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //若为暂存状态，则是检验中
                 if (vo.getStatus() == 4) {
                     vo.setStatus(1);
+                }
+                if(vo.getMaterialWorkshopName() == null || ("null").equals(vo.getMaterialWorkshopName())){
+                    vo.setMaterialWorkshopName("");
                 }
                 QtCheckPlan planNameTmp = qtCheckPlanService.getById(vo.getCheckPlanId());
                 if(planNameTmp!=null){
