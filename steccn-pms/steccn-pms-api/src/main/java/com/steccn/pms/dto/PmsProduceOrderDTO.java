@@ -6,8 +6,12 @@ import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -61,6 +65,9 @@ public class PmsProduceOrderDTO {
 
     @ApiModelProperty("数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位id")
@@ -83,6 +90,9 @@ public class PmsProduceOrderDTO {
 
     @ApiModelProperty("最小包装数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量不能为空")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
     private BigDecimal minPackageQuantity;
 
     @ApiModelProperty("最小包装数量单位")
