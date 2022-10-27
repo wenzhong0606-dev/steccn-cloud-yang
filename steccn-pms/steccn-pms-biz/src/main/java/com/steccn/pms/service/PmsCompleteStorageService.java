@@ -69,7 +69,8 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
     /**
      * 根据入库单编码找到入库凭证修改状态 pms_complete_storage中statue 0已创建 1已完成 pms_barcode_print 箱状态0:已完工 1:待入库 2：已入库
      * @param code
-     * @return
+     * @param confirmName
+     * @return R
      */
     R<Boolean> completeStorageReviseStatue(String code,String confirmName);
 }
