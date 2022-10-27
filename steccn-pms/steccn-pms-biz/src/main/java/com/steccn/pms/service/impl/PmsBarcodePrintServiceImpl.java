@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -148,18 +149,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         if (CollUtil.isEmpty(batchNoSet)) {
             return resMap;
         }
-        List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getBatchNo, batchNoSet));
+        List<PmsBarcodePrint> dbList = list(new QueryWrapper<PmsBarcodePrint>()
+                .select("batch_no , sum(quantity) as quantity , any_value(unit_id) as unit_id, any_value(produce_order_id) as produce_order_id").lambda()
+                .in(PmsBarcodePrint::getBatchNo, batchNoSet)
+                .groupBy(PmsBarcodePrint::getBatchNo));
         if (CollUtil.isNotEmpty(dbList)) {
-            Map<String, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getBatchNo));
-            for (Map.Entry<String, List<PmsBarcodePrint>> entry : dbMap.entrySet()) {
-                BigDecimal sum = BigDecimal.ZERO;
-                for (PmsBarcodePrint print : entry.getValue()) {
-                    sum = sum.add(print.getQuantity());
-                }
+            for (PmsBarcodePrint pmsBarcodePrint : dbList) {
                 PmsCompleteStorageNumDTO numDTO = new PmsCompleteStorageNumDTO();
-                numDTO.setQuantity(sum);
-                numDTO.setUnitId(entry.getValue().get(0).getUnitId());
-                resMap.put(entry.getKey(), numDTO);
+                numDTO.setQuantity(pmsBarcodePrint.getQuantity());
+                numDTO.setUnitId(pmsBarcodePrint.getUnitId());
+                numDTO.setProduceOrderId(pmsBarcodePrint.getProduceOrderId());
+                resMap.put(pmsBarcodePrint.getBatchNo(), numDTO);
             }
         }
         return resMap;
@@ -169,19 +169,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     public Map<Long, PmsCompleteStorageNumDTO> orderSum(Set<Long> orderSet) {
         Map<Long, PmsCompleteStorageNumDTO> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(orderSet)) {
-            List<PmsBarcodePrint> dbList = list(new LambdaQueryWrapper<PmsBarcodePrint>().in(PmsBarcodePrint::getProduceOrderId, orderSet));
+            List<PmsBarcodePrint> dbList = list(new QueryWrapper<PmsBarcodePrint>()
+                    .select("produce_order_id , sum(quantity) as quantity , any_value(unit_id) as unit_id ").lambda()
+                    .in(PmsBarcodePrint::getProduceOrderId, orderSet)
+                    .groupBy(PmsBarcodePrint::getProduceOrderId));
             if (CollUtil.isNotEmpty(dbList)) {
-                Map<Long, List<PmsBarcodePrint>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsBarcodePrint::getProduceOrderId));
-                for (Map.Entry<Long, List<PmsBarcodePrint>> entry : dbMap.entrySet()) {
-                    BigDecimal sum = BigDecimal.ZERO;
-                    for (PmsBarcodePrint print : entry.getValue()) {
-                        sum = sum.add(print.getQuantity());
-                    }
+                for (PmsBarcodePrint pmsBarcodePrint : dbList) {
                     PmsCompleteStorageNumDTO numDTO = new PmsCompleteStorageNumDTO();
-                    numDTO.setQuantity(sum);
-                    numDTO.setProduceOrderId(entry.getKey());
-                    numDTO.setUnitId(entry.getValue().get(0).getUnitId());
-                    resMap.put(entry.getKey(), numDTO);
+                    numDTO.setQuantity(pmsBarcodePrint.getQuantity());
+                    numDTO.setUnitId(pmsBarcodePrint.getUnitId());
+                    numDTO.setProduceOrderId(pmsBarcodePrint.getProduceOrderId());
+                    resMap.put(pmsBarcodePrint.getProduceOrderId(), numDTO);
                 }
             }
         }
