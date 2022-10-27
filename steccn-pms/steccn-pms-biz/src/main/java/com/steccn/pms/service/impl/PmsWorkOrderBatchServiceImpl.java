@@ -14,9 +14,11 @@ import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.mapper.PmsWorkOrderBatchMapper;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.WorkOrderBatchVO;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -54,15 +56,14 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
     }
 
 
-
     @Override
     public Boolean add(ProduceOrderBatchDto dto) {
         //1.定义数据模型
         PmsWorkOrderBatch orderBatch = new PmsWorkOrderBatch();
-        BeanUtil.copyProperties(dto,orderBatch);
+        BeanUtil.copyProperties(dto, orderBatch);
         //2.给当前批次信息生成批次号
         //TODO 班次
-        orderBatch.setCode(PmsCodeUtil.getBatchCode(PmsCodeUtil.PREFIX_PMS_BATCH, PmsCodeUtil.NUM_BIT_2, currentMaxCode(),"01"));
+        orderBatch.setCode(PmsCodeUtil.getBatchCode(PmsCodeUtil.PREFIX_PMS_BATCH, PmsCodeUtil.NUM_BIT_2, currentMaxCode(), "01"));
         orderBatch.setCurrentBatchFlag(PmsCodeUtil.NUM_BIT_1);
         //3.保存批次信息
         return save(orderBatch);
@@ -78,12 +79,16 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        PmsWorkOrderBatch maxCodeModel = getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().orderByDesc(PmsWorkOrderBatch::getCode).last(MpConstant.STR_LIMIT_1));
+        String prefix = PmsCodeUtil.PREFIX_PMS_BATCH + LocalDate.now().toString().replaceAll(PmsCodeUtil.SHORT_LINE, Strings.EMPTY) + PmsCodeUtil.SHORT_LINE + "01" + PmsCodeUtil.SHORT_LINE;
+        PmsWorkOrderBatch maxCodeModel = getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
+                .likeRight(PmsWorkOrderBatch::getCode, prefix)
+                .orderByDesc(PmsWorkOrderBatch::getCode)
+                .last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8 +PmsCodeUtil.NUM_BIT_3);
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_BATCH.length() + PmsCodeUtil.NUM_BIT_8 + PmsCodeUtil.NUM_BIT_4);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
@@ -93,7 +98,6 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         }
         return currentMax;
     }
-
 
 
 }
