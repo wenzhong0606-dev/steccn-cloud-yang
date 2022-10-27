@@ -596,8 +596,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据订单查询当前批次
         PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
                 .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
-                .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES));
+                .orderByDesc(PmsWorkOrderBatch::getCode)
+                .last(MpConstant.STR_LIMIT_1));
         Assert.notNull(currentBatch, "订单" + order.getCode() + "无当前批次");
+
         //查询订单的工序craft
         List<PmsProduceOrderCraft> craftList = pmsProduceOrderCraftService.list(new LambdaQueryWrapper<PmsProduceOrderCraft>()
                 .eq(PmsProduceOrderCraft::getProduceOrderId, order.getId())
