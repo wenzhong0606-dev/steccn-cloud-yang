@@ -335,7 +335,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                         .eq(QtCheckTaskDetail::getTaskId, taskId)
                         .and((groupItemTmp.getCheckItemId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getItemId, groupItemTmp.getCheckItemId()))
                         .and((groupItemTmp.getGroupId() != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getGroupId, groupItemTmp.getGroupId()))
-                        .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy));
+                        .and((copy != null), wrapper -> wrapper.eq(QtCheckTaskDetail::getCopy, copy)).orderByAsc(QtCheckTaskDetail::getCreateTime);
                 QtCheckPlanItemVO qtCheckPlanItemVo = new QtCheckPlanItemVO();
                 //复制itemGroup特有的值
                 BeanUtils.copyProperties(groupItemTmp, qtCheckPlanItemVo);
