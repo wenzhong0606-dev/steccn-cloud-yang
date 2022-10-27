@@ -56,6 +56,11 @@ public class PmsCompleteDelivery implements Serializable {
     private String outStorageVoucher;
 
     /**
+     * 报工id
+     */
+    private Long reportWorkId;
+
+    /**
      * 生产订单id
      */
     private Long produceOrderId;

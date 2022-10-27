@@ -217,10 +217,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     throw new BusinessException("物料消耗实际数量不可以大于可用数量");
                 }
             }
-            //去除物料消耗list
-            List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
-            dto.setMaterialConsumeList(materialListDTOList);
         }
+        //去除物料消耗list
+        List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
+        dto.setMaterialConsumeList(materialListDTOList);
     }
 
     /**
@@ -266,6 +266,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
             completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             completeDelivery.setProcessId(dto.getProcessId());
+            completeDelivery.setReportWorkId(pmsReportWork.getId());
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
             //物料消耗 ，扣除库存
