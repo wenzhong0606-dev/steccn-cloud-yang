@@ -132,9 +132,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             QtRecheckTask recheckModel = new QtRecheckTask();
             recheckModel.setOriginalId(dto.getOriginalId());
             recheckModel.setRecheckId(qtCheckTask.getId());
-            //recheckModel.setOriginalCode(originalTask.getCode());
-            //新建的复检任务单号应该和原来的任务单号不同
-            recheckModel.setOriginalCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
+            recheckModel.setOriginalCode(originalTask.getCode());
             qtRecheckTaskService.save(recheckModel);
         }
         return qtCheckTask.getId();
@@ -322,8 +320,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //开始任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
-            //修改开始任务显示用户名为拼音的bug
-            //qtCheckTask.setStartName(SecurityUtils.getUser().getUsername());
             qtCheckTask.setStartName(SecurityUtils.getUser().getName());
             qtCheckTask.setStartTime(LocalDateTime.now());
         }
@@ -548,7 +544,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         taskModel.setStatus(dto.getStatus());
         if(dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())){
             taskModel.setFinishedBy(SecurityUtils.getUser().getUserId());
-            taskModel.setFinishedName(SecurityUtils.getUser().getUsername());
+            taskModel.setFinishedName(SecurityUtils.getUser().getName());
             taskModel.setFinishedTime(LocalDateTime.now());
         }
         return updateById(taskModel);
@@ -566,7 +562,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         BeanUtils.copyProperties(dto, qtCheckTask);
         qtCheckTask.setStatus(2);
         qtCheckTask.setFinishedBy(SecurityUtils.getUser().getUserId());
-        qtCheckTask.setFinishedName(SecurityUtils.getUser().getUsername());
+        qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
         qtCheckTask.setFinishedTime(LocalDateTime.now());
         return updateById(qtCheckTask);
     }
@@ -598,13 +594,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         model.setStatus(0);
         model.setType(1);
         model.setId(null);
+        model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
         save(model);
         QtRecheckTask recheckModel = new QtRecheckTask();
         recheckModel.setOriginalId(id);
         recheckModel.setRecheckId(model.getId());
-        //recheckModel.setOriginalCode(model.getCode());
         //修改复检任务生成任务单号bug，要求复检任务单号和原始单号不同
-        recheckModel.setOriginalCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
+        recheckModel.setOriginalCode(res.getCode());
         qtRecheckTaskService.save(recheckModel);
         return model.getId();
     }

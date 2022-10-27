@@ -61,7 +61,7 @@ public class QtMaterialController {
 
     @GetMapping("/linkedPlan")
     @ApiOperation(value = "查询物料绑定的检验方案")
-    public R<List<QtMaterialLinkPlanVO>> listAll(@RequestParam("id") Long id ,@RequestParam("type") Integer type) {
+    public R<List<QtMaterialLinkPlanVO>> listAll(@RequestParam(value = "id",required = false) Long id ,@RequestParam("type") Integer type) {
         return R.success(qtMaterialService.listLink(id,type));
     }
 }
