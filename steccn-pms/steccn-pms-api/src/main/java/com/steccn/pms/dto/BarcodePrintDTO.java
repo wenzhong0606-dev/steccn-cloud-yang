@@ -49,10 +49,14 @@ public class BarcodePrintDTO implements Serializable {
 
     @ApiModelProperty("打印条数")
     @NotNull(message = "打印条数不能为空")
+    @Max(value = 500,message = "打印条数最大为500")
+    @Min(value = 1,message = "打印条数最小为1")
     private Integer printStrip;
 
     @ApiModelProperty("打印张数")
     @NotNull(message = "打印张数不能为空")
+    @Max(value = 500,message = "打印张数最大为500")
+    @Min(value = 1,message = "打印张数最小为1")
     private Integer printNumber;
 
     @ApiModelProperty("班次id")
