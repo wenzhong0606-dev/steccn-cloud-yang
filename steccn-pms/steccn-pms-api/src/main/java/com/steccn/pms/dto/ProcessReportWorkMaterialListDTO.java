@@ -20,7 +20,6 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("库存id")
-    @NotNull(message = "库存单主键不能为空")
     private Long inventoryId;
 
     @ApiModelProperty("生产订单id")
