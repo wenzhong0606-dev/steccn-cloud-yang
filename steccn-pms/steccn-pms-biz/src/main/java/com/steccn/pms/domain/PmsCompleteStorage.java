@@ -59,11 +59,6 @@ public class PmsCompleteStorage implements Serializable {
     private String inStorageVoucher;
 
     /**
-     * 生产订单id
-     */
-    private Long produceOrderId;
-
-    /**
      * 产线id
      */
     private Integer productLineId;

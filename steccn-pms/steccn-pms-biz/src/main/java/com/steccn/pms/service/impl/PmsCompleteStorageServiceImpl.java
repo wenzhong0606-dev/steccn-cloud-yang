@@ -4,17 +4,16 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -143,7 +142,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
 
         Long produceOrderId = dtoList.get(0).getProduceOrderId();
-        pmsCompleteStorage.setProduceOrderId(produceOrderId);
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
         Assert.notNull(pmsProduceOrder, "生产订单不存在");
         pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
@@ -236,20 +234,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
             List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
 
-            //订单的单位
-            Set<Long> orderSet = modelList.stream().map(PmsCompleteStorage::getProduceOrderId).collect(Collectors.toSet());
-            Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
-
             for (PmsCompleteStorage model : modelList) {
                 CompleteStoragePageVO vo = new CompleteStoragePageVO();
                 BeanUtils.copyProperties(model, vo);
-                BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(model.getProduceOrderId());
-                vo.setUnitId(null);
-                vo.setUnitName(null);
-                if (Objects.nonNull(baseSelectVO)) {
-                    vo.setUnitId(baseSelectVO.getId());
-                    vo.setUnitName(baseSelectVO.getName());
-                }
+                vo.setUnitName(sysDictMap.get(model.getUnitId()));
                 vo.setTypeName(sysDictMap.get(vo.getTypeId()));
                 voList.add(vo);
             }
@@ -267,17 +255,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         BeanUtils.copyProperties(pmsCompleteStorage, completeStorageListVO);
         //查询所有的箱信息
         List<PmsCompleteStorageInfo> infoList = completeStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().eq(PmsCompleteStorageInfo::getCompleteStorageId, id));
-        //查询订单信息
-        Long produceOrderId = pmsCompleteStorage.getProduceOrderId();
-        PmsProduceOrder produceOrder = pmsProduceOrderService.getById(produceOrderId);
-        Assert.notNull(produceOrder, "生产订单不存在");
 
         //定义字典集合和箱号集合
         Set<Long> dictList = Sets.newHashSet();
         Set<String> caseNoList = Sets.newHashSet();
+        Set<Long> orderSet = Sets.newHashSet();
         for (PmsCompleteStorageInfo info : infoList) {
             dictList.add(info.getUnitId());
             caseNoList.add(info.getCaseNo());
+            orderSet.add(info.getProduceOrderId());
         }
 
         dictList.add(pmsCompleteStorage.getUnitId());
@@ -294,11 +280,20 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         }
         Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
 
+        List<PmsProduceOrder> pmsProduceOrders = pmsProduceOrderService.listByIds(orderSet);
+        Map<Long, PmsProduceOrder> resMap = Maps.newHashMap();
+        PmsProduceOrder defaultPmsProduceOrder = new PmsProduceOrder();
+        if (CollUtil.isNotEmpty(pmsProduceOrders)) {
+            for (PmsProduceOrder pmsProduceOrder : pmsProduceOrders) {
+                resMap.put(pmsProduceOrder.getId(), pmsProduceOrder);
+            }
+        }
         List<CompleteStorageMaterialVO> materialVOList = new ArrayList<>(infoList.size());
         for (PmsCompleteStorageInfo info : infoList) {
             CompleteStorageMaterialVO materialVO = new CompleteStorageMaterialVO();
             BeanUtils.copyProperties(info, materialVO);
-            materialVO.setProduceOrderId(produceOrderId);
+            PmsProduceOrder produceOrder = resMap.getOrDefault(info.getProduceOrderId(), defaultPmsProduceOrder);
+            materialVO.setProduceOrderId(produceOrder.getId());
             materialVO.setProduceOrderNo(produceOrder.getCode());
             materialVO.setMaterialId(produceOrder.getMaterialId());
             materialVO.setMaterialCode(produceOrder.getMaterialCode());
