@@ -39,6 +39,12 @@ public class PmsCompleteStorageInfo implements Serializable {
      */
     private LocalDateTime packTime;
 
+
+    /**
+     * 生产订单id
+     */
+    private Long produceOrderId;
+
     /**
      * 装箱数量
      */
