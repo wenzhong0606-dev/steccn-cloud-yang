@@ -149,7 +149,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public Boolean submitReportWork(ProcessReportWorkSubmitDTO dto) {
-        Assert.isTrue(validMaterialConsume(dto),"物料消耗校验不通过");
+        Assert.isTrue(validMaterialConsume(dto), "物料消耗校验不通过");
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_REPORT_WORK);
         lock.lock();
         try {
@@ -215,7 +215,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     /**
      * 插入库存
-     * @param dto dto
+     *
+     * @param dto           dto
      * @param pmsReportWork 报工信息
      */
     private void insertDelivery(ProcessReportWorkSubmitDTO dto, PmsReportWork pmsReportWork) {
@@ -262,7 +263,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             messDto.setCode(completeDelivery.getCode());
             messDto.setType(sysDictVO.getCode());
             messDto.setMaterialList(materialList);
-            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+            MessInStorageVoucherVO messInStorageVoucherVO = null;
+            try {
+                messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
             if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
                 throw new BusinessException("库存变化，请重新报工");
             }
