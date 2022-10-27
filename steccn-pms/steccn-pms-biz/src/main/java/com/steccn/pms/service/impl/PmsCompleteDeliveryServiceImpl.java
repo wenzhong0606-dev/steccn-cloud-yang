@@ -81,19 +81,15 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             });
             //获取单位数据
             Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
-            //获取物料信息
-            Map<Long, EqpSpareVO> materialData = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
             //获取仓库货架信息
             Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
             //获取工序信息
             Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
             PmsProduceOrderCraftVO defaultCraftVO = new PmsProduceOrderCraftVO();
-            EqpSpareVO eqpSpareVO = new EqpSpareVO();
             if (CollUtil.isNotEmpty(records)) {
                 records.forEach(
                         pmsCompleteDeliveryVO -> {
                             PmsProduceOrderCraftVO pmsProduceOrderCraftVO = processMap.getOrDefault(pmsCompleteDeliveryVO.getProcessId(), defaultCraftVO);
-                            EqpSpareVO spareVO = materialData.getOrDefault(pmsCompleteDeliveryVO.getMaterialCode(), eqpSpareVO);
                             //处理单位数据
                             pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
                             pmsCompleteDeliveryVO.setTypeName(dictData.get(pmsCompleteDeliveryVO.getTypeId()));
@@ -102,9 +98,6 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                             //处理仓库货架信息
                             pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
                             pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
-                            //处理物料数据
-                            pmsCompleteDeliveryVO.setMaterialName(spareVO.getName());
-                            pmsCompleteDeliveryVO.setMaterialCode(spareVO.getCode());
                         }
                 );
             }
