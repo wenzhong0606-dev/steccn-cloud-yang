@@ -78,6 +78,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 if (Objects.nonNull(pmsCompleteDeliveryVO.getShelfId())) {
                     office.add(pmsCompleteDeliveryVO.getShelfId());
                 }
+                processIds.add(pmsCompleteDeliveryVO.getProcessId());
             });
             //获取单位数据
             Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
