@@ -653,7 +653,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
-                .leftJoin(QtRecheckTask.class, QtRecheckTask::getOriginalId, QtCheckTask::getId)
+                .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
                 //查询
                 //物料名称或者编码
                 .and((dto.getMaterialNameOrCode() != null && !dto.getMaterialNameOrCode().equals("")), wrapper -> wrapper.like(QtMaterial::getName, dto.getMaterialNameOrCode()).or().like(QtMaterial::getCode, dto.getMaterialNameOrCode()))
@@ -779,6 +779,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 if(planNameTmp!=null){
                     vo.setCheckPlanName(planNameTmp.getName());
                 }
+                log.debug("vo:"+vo);
             }
         }
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
