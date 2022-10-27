@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,12 +20,15 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("库存id")
+    @NotNull(message = "库存单主键不能为空")
     private Long inventoryId;
 
     @ApiModelProperty("生产订单id")
+    @NotNull(message = "生产订单不能为空")
     private Long produceOrderId;
 
     @ApiModelProperty("组件id")
+    @NotNull(message = "组件不能为空")
     private Long moduleId;
 
     @ApiModelProperty("组件编码")
@@ -40,9 +44,17 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private String processName;
 
     @ApiModelProperty("数量 = 订单BOM组件数量 / 订单数量 * 加工数量 可修改")
+    @NotNull(message = "数量不能为空")
+    @DecimalMin(value="0",message="数量应大于0")
+    @DecimalMax(value="99999999.999",message="数量大小应小于99999999.999")
+    @Digits(integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
     private BigDecimal quantity;
 
     @ApiModelProperty("可用数量")
+    @NotNull(message = "可用数量不能为空")
+    @DecimalMin(value="0",message="可用数量应大于0")
+    @DecimalMax(value="99999999.999",message="可用数量大小应小于99999999.999")
+    @Digits(integer = 8,fraction = 3,message = "可用数量整数位上限为8位，小数位上限位3位")
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("单位id")
