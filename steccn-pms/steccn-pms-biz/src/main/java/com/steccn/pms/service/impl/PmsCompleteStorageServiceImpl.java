@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -125,6 +126,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
         Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
 
+        //校验生产订单的产线是否相同不同，不可以创建入库单
+        Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
+        List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getId, orderSet)
+                .groupBy(PmsProduceOrder::getProductionLineId));
+        if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
+            throw new BusinessException("不同产线的订单不可以一起生成入库单");
+        }
         //校验箱子不能重复出现在不同的入库单
         List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
         //创建主表
@@ -190,12 +199,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             if (Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()) {
                 log.info("入库单 -> " + messInStorageVoucherVO.getMessage());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             throw new BusinessException("入库单创建失败");
         }
         //箱状态修改成待入库
-        pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet),PmManagerConstant.CaseStateEnum.PREPARE.getCode());
+        pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet), PmManagerConstant.CaseStateEnum.PREPARE.getCode());
         return pmsCompleteStorage.getCode();
     }
 
@@ -237,7 +246,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(model.getProduceOrderId());
                 vo.setUnitId(null);
                 vo.setUnitName(null);
-                if(Objects.nonNull(baseSelectVO)){
+                if (Objects.nonNull(baseSelectVO)) {
                     vo.setUnitId(baseSelectVO.getId());
                     vo.setUnitName(baseSelectVO.getName());
                 }
@@ -351,21 +360,22 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
     /**
      * 根据入库单编码找到入库凭证修改完成状态
+     *
      * @param code
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R<Boolean> completeStorageReviseStatue(String code,String confirmName) {
-        if (Objects.isNull(code)||Objects.isNull(confirmName)){
+    public R<Boolean> completeStorageReviseStatue(String code, String confirmName) {
+        if (Objects.isNull(code) || Objects.isNull(confirmName)) {
             throw new BusinessException("确认用户名或者入库单编码不能为空");
         }
         //根据入库单编号查找入库单
         PmsCompleteStorage getOneCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, code));
-        if (Objects.isNull(getOneCompleteStorage)){
+        if (Objects.isNull(getOneCompleteStorage)) {
             throw new BusinessException("未找到此入库单编码");
         }
-        if (getOneCompleteStorage.getCode().equals(getOneCompleteStorage.getInStorageVoucher())){
+        if (getOneCompleteStorage.getCode().equals(getOneCompleteStorage.getInStorageVoucher())) {
             getOneCompleteStorage.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
             getOneCompleteStorage.setInStorageTime(LocalDateTime.now());
             getOneCompleteStorage.setConfirmName(confirmName);

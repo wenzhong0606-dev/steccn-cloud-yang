@@ -17,6 +17,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -362,7 +363,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             List<MessMaterialStorageDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
             pmsWorkOrderBomList.forEach(ele -> {
-                BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 4, RoundingMode.HALF_UP);
+                BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 3, RoundingMode.HALF_UP);
                 MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
                 storageDTO.setMaterialId(ele.getModuleId());
                 storageDTO.setQuantity(divide);
@@ -390,7 +391,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
                 resDTO.setModuleName(eqpSpareVO.getName());
                 resDTO.setModuleCode(eqpSpareVO.getCode());
-                resDTO.setQuantity(messDto.getQuantity());
+                resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(),3));
                 resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
                 SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
                 resDTO.setWarehouseId(warehouse.getId());
