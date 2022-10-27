@@ -44,7 +44,7 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME = "defectStartTime";
 
-    String QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE = "originalCode";
+    String QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE = "originalTaskCode";
 
     String QT_CHECK_TASK_SORT_FIELD_DEFECT_DELIVER_ORDER = "deliverOrder";
 
