@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -641,7 +642,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>().orderByDesc(PmsProduceOrder::getCode).last(MpConstant.STR_LIMIT_1));
+        LocalDateTime max = LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
+        LocalDateTime min = LocalDateTime.of(LocalDate.now(),LocalTime.MIN);
+        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                .between(PmsProduceOrder::getCreateTime,min,max)
+                .orderByDesc(PmsProduceOrder::getCode)
+                .last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {

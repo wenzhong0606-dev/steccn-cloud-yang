@@ -7,9 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.models.auth.In;
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 
 /**
@@ -32,6 +30,9 @@ public class PmsWorkOrderBomDTO {
 
     @ApiModelProperty("数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "整数位上限为8位，小数位上限位3位")
     private BigDecimal quantity;
 
     @ApiModelProperty("单位Id")
@@ -43,6 +44,9 @@ public class PmsWorkOrderBomDTO {
     private Long processId;
 
     @ApiModelProperty("固定数量")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="固定数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="固定数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "固定数量整数位上限为8位，小数位上限位3位")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "固定数量不能为空")
     private Integer fixedQuantityFlag;
 

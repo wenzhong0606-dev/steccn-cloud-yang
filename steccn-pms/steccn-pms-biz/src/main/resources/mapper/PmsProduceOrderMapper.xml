@@ -94,6 +94,7 @@
                 and actual_end_time between #{dto.actualEndDateStart} and #{dto.actualEndDateEnd}
             </if>
         </where>
+        Order By create_time DESC
     </select>
     <select id="acceptPage" resultType="com.steccn.pms.vo.PmsProduceOrderVO">
         select id,
