@@ -52,6 +52,9 @@
         <if test="dto.processName != null and dto.processName != ''">
             AND pp.name LIKE CONCAT('%',#{dto.processName},'%')
         </if>
+        <if test="dto.produceOrderId!= null and dto.produceOrderId != ''">
+            AND pp.produce_order_id =#{dto.produceOrderId}
+        </if>
         <if test="dto.produceOrderNo != null and dto.produceOrderNo != ''">
             AND prw.produce_order_no LIKE CONCAT('%',#{dto.produceOrderNo},'%')
         </if>

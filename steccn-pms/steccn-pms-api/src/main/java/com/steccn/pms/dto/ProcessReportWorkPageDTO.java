@@ -24,6 +24,9 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
     @ApiModelProperty("生产订单编码")
     private String produceOrderNo;
 
+    @ApiModelProperty("生产订单id")
+    private Long produceOrderId;
+
     @ApiModelProperty("工位")
     private Integer stationId;
 
