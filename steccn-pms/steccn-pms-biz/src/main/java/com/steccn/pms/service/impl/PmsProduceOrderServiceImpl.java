@@ -538,10 +538,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .last(MpConstant.STR_LIMIT_1));
             String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
 
+            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(),order.getMinPackageUnitId()))).get();
+
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
                 pmsProduceOrderVO.setProductionLineName(productionLineName);
+                pmsProduceOrderVO.setUnit(dictMap.get(order.getUnitId()));
+                pmsProduceOrderVO.setMinPackageUnit(dictMap.get(order.getMinPackageUnitId()));
             }
         }
         return pmsProduceOrderVO;
