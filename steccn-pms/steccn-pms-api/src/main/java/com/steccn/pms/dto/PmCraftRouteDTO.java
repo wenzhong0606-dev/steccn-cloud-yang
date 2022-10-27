@@ -85,10 +85,11 @@ public class PmCraftRouteDTO extends BasePageDTO implements Serializable {
     private String note;
 
     @ApiModelProperty("工艺路线组件")
+    @Valid
     private List<PmCraftRouteModuleDTO> list;
 
     @ApiModelProperty("工艺路线图")
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "工艺路线图不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "工艺路线图不能为空")
     private String roadmap;
 
     @ApiModelProperty("工序信息")

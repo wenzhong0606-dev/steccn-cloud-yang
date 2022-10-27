@@ -6,10 +6,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -30,62 +27,65 @@ public class PmCraftRouteModuleDTO implements Serializable {
     private Long id;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
     @ApiModelProperty("物料组件id")
     private Long materialId;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
     @ApiModelProperty("物料编码")
     private String materialCode;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
     @ApiModelProperty("物料名称")
     private String materialName;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料数量不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料数量不能为空")
     @ApiModelProperty("物料数量")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="物料数量数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="物料数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "物料数量整数位上限为8位，小数位上限位3位")
     private Integer quantity;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "单位不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "单位不能为空")
     @ApiModelProperty("单位id")
     private Long unitId;
 
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "固定数量不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "固定数量不能为空")
     @ApiModelProperty("是否是固定数量：1是0否")
     @Max(value = 1, message = "状态只能是 0否  1是")
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer isFixedQuantity;
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "副产品不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "副产品不能为空")
     @ApiModelProperty("是否是副产品：1是0否")
     @Max(value = 1, message = "状态只能是 0否  1是")
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer isCopruduct;
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "联产品不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "联产品不能为空")
     @ApiModelProperty("是否是联产品：1是0否")
     @Max(value = 1, message = "状态只能是 0否  1是")
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer isJointProduct;
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "反冲不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "反冲不能为空")
     @ApiModelProperty("是否是反冲：1是0否")
     @Max(value = 1, message = "状态只能是 0否  1是")
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer isBackCalculation;
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "工序报废百分比不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "工序报废百分比不能为空")
     @ApiModelProperty("工序报废百分比")
     @Max(value = 100, message = "百分比不能大于100")
     @Min(value = 0, message = "百分比不能小于0")
     private Float processScrapingPercent;
 
-    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件报废不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件报废不能为空")
     @Max(value = 100, message = "百分比不能大于100")
     @Min(value = 0, message = "百分比不能小于0")
     @ApiModelProperty("组件报废百分比")
