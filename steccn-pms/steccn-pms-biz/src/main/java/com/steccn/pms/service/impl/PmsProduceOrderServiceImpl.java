@@ -56,7 +56,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
-    private final PmsCompleteStorageService pmsCompleteStorageService;
+    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsBarcodePrintService pmsBarcodePrintService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmCraftRouteService pmCraftRouteService;
@@ -80,7 +80,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.保存订单信息
         //4.1.保存基础信息
         //获取货架信息
-        if (Objects.nonNull(model.getDefaultShelfId())){
+        if (Objects.nonNull(model.getDefaultShelfId())) {
             SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
             model.setDefaultWarehouseId(sysOfficeVO.getId());
         }
@@ -137,19 +137,43 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Set<Long> dictIds = Sets.newHashSet();
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> craftIds = Sets.newHashSet();
+        Set<Long> orderSet = Sets.newHashSet();
+        Set<Long> craftSet = Sets.newHashSet();
         page.getRecords().forEach(
                 pmsProduceOrderVO -> {
-                    //获取工序信息
-                    pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
-                    //获取物料信息
-                    pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
-                    //获取工艺id
+//                    //获取工序信息
+                    craftSet.add(pmsProduceOrderVO.getId());
+//                    pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
+//                    //获取物料信息
+//                    pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
+//                    //获取工艺id
                     craftIds.add(pmsProduceOrderVO.getCraftId());
                     dictIds.add(pmsProduceOrderVO.getTypeId());
                     dictIds.add(pmsProduceOrderVO.getUnitId());
                     officeIds.add(pmsProduceOrderVO.getProductionLineId());
-                    dictIds.add(pmsProduceOrderVO.getCompleteUnitId());
-                    dictIds.add(pmsProduceOrderVO.getMinPackageUnitId());
+                    orderSet.add(pmsProduceOrderVO.getId());
+                }
+        );
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
+        //获取物料信息
+        Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(craftSet);
+
+        List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
+        List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
+        //3.0 补充处理完工信息
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsCompleteStorageInfoService.numByOrderId(orderSet);
+        page.getRecords().forEach(
+                pmsProduceOrderVO -> {
+                    List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
+                    List<PmsWorkOrderBomVO> orderBomVOList = materials.getOrDefault(pmsProduceOrderVO.getId(), bomVOList);
+                    PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
+                    pmsProduceOrderVO.setProcessList(orderCraftVOList);
+                    pmsProduceOrderVO.setMaterialList(orderBomVOList);
+                    if (Objects.nonNull(storageNumDTO)) {
+                        pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
+                        pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
+                        dictIds.add(storageNumDTO.getUnitId());
+                    }
                 }
         );
         //3.1查询字典数据
@@ -171,6 +195,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
                     //4.4 处理工艺版本数据
                     pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
+                    //4.4 处理完工数据
+                    pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
                 }
         );
         return page;
@@ -187,7 +213,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             PmsProduceOrder pmsProduceOrder = new PmsProduceOrder();
             BeanUtil.copyProperties(dto, pmsProduceOrder);
             //获取货架信息
-            if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())){
+            if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())) {
                 SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId())).get();
                 pmsProduceOrder.setDefaultShelfId(sysOfficeVO.getId());
             }
@@ -549,7 +575,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .last(MpConstant.STR_LIMIT_1));
             String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
 
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(),order.getMinPackageUnitId()))).get();
+            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId()))).get();
 
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());

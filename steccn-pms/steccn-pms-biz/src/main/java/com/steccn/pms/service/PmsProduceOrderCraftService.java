@@ -8,6 +8,7 @@ import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -44,4 +45,11 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 根据订单id获取工艺信息
+     * @param craftSet
+     * @return
+     */
+    Map<Long, List<PmsProduceOrderCraftVO>> crafts(Set<Long> craftSet);
 }
