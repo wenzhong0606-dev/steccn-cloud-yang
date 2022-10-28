@@ -273,7 +273,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
             completeDelivery.setTypeId(sysDictVO.getId());
             completeDelivery.setProduceOrderId(pmsReportWork.getProduceOrderId());
-            completeDelivery.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+            completeDelivery.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
             completeDelivery.setProcessId(dto.getProcessId());
             completeDelivery.setReportWorkId(pmsReportWork.getId());
             completeDeliveryService.save(completeDelivery);
