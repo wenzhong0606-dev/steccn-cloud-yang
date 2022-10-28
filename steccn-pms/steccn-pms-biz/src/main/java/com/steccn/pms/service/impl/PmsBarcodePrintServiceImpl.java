@@ -73,6 +73,10 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Integer printStrip = dto.getPrintStrip();
         List<PmsBarcodePrint> modelList = new ArrayList<>(printStrip);
 
+        //生产订单
+        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder,"生产订单不能为空");
+
         //获取当前订单最大的
         long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
         //遍历打印条数
@@ -81,6 +85,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             BeanUtils.copyProperties(dto, printModel);
             printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
             printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+            printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
+            printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
             modelList.add(printModel);
         }
         saveBatch(modelList);
