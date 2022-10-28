@@ -19,6 +19,9 @@ public class PmsWorkOrderBomVO {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("订单id")
+    private Long workProduceId;
+
     @ApiModelProperty("物料id")
     private Long moduleId;
 

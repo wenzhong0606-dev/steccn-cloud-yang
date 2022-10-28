@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,6 +34,13 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
      */
     Page<PmsCompleteStorageVO> pageByOrderId(PmsCompleteStorageDTO dto);
 
+
+    /**
+     * 根据订单id获取完工数量单位
+     * @param orderSet
+     * @return
+     */
+    Map<Long,PmsCompleteStorageNumDTO> numByOrderId(Set<Long> orderSet);
 
     /**
      * 根据完成订单入库单号获取箱号编码

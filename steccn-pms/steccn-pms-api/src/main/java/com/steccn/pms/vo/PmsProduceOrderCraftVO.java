@@ -21,6 +21,9 @@ public class PmsProduceOrderCraftVO {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("订单id")
+    private Long produceOrderId;
+
     @ApiModelProperty("工序id")
     private Long processId;
 

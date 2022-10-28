@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -76,7 +77,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
                 List<Integer> stationIds = Lists.newArrayList();
                 List<Integer> officeIds = Lists.newArrayList();
                 stationList.forEach(station -> stationIds.add(station.getExecuteStationId()));
-                officeVOS.forEach(officeVO ->officeIds.add(officeVO.getId()));
+                officeVOS.forEach(officeVO -> officeIds.add(officeVO.getId()));
                 Assert.isTrue(officeIds.containsAll(stationIds), "工位信息不在该产线下,请检查");
                 stationList.forEach(station -> {
                     PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
@@ -106,23 +107,24 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
         //3.1处理单位数据
         Set<Long> dictIds = Sets.newHashSet();
+        Set<Long> craftSet = Sets.newHashSet();
         list.forEach(pmsProduceOrderCraft -> {
-            //查询工位信息
             PmsProduceOrderCraftVO pmsProduceOrderCraftVO = new PmsProduceOrderCraftVO();
             BeanUtil.copyProperties(pmsProduceOrderCraft, pmsProduceOrderCraftVO);
             dictIds.add(pmsProduceOrderCraftVO.getTypeId());
             dictIds.add(pmsProduceOrderCraftVO.getUnitId());
-            List<PmsWorkOrderCraftStation> stations = pmsWorkOrderCraftStationService.list(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
-                    .eq(PmsWorkOrderCraftStation::getProduceOrderCraftId, pmsProduceOrderCraft.getId()));
-            if (CollUtil.isNotEmpty(stations)) {
-                pmsProduceOrderCraftVO.setStationList(BeanUtil.copyToList(stations, PmsWorkOrderCraftStationVO.class));
-            }
+            craftSet.add(pmsProduceOrderCraft.getId());
             craftVOList.add(pmsProduceOrderCraftVO);
         });
+        //获取工位数据
+        Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(craftSet);
+        List<PmsWorkOrderCraftStationVO> defaultStation = Lists.newArrayList();
         //3.2 获取字典数据
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
         if (CollUtil.isNotEmpty(craftVOList)) {
             craftVOList.forEach(pmsProduceOrderCraft -> {
+                List<PmsWorkOrderCraftStationVO> orDefault = stations.getOrDefault(pmsProduceOrderCraft.getId(), defaultStation);
+                pmsProduceOrderCraft.setStationList(orDefault);
                 pmsProduceOrderCraft.setUnit(dictMap.get(pmsProduceOrderCraft.getUnitId()));
                 pmsProduceOrderCraft.setType(dictMap.get(pmsProduceOrderCraft.getTypeId()));
             });
@@ -156,7 +158,50 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         return removeById(id);
     }
 
+    @Override
+    public Map<Long, List<PmsProduceOrderCraftVO>> crafts(Set<Long> craftSet) {
+        Map<Long, List<PmsProduceOrderCraftVO>> collect = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(craftSet)) {
+            //获取工艺信息
+            List<PmsProduceOrderCraft> list = list(new LambdaQueryWrapper<PmsProduceOrderCraft>().in(PmsProduceOrderCraft::getProduceOrderId, craftSet));
+            if (CollUtil.isNotEmpty(list)) {
+                List<PmsProduceOrderCraftVO> craftVOList = BeanUtil.copyToList(list, PmsProduceOrderCraftVO.class);
+                collect = craftVOList.parallelStream().collect(Collectors.groupingBy(PmsProduceOrderCraftVO::getProduceOrderId));
+                //处理工位信息
+                Set<Long> crafts = Sets.newHashSet();
+                //处理单位数据
+                Set<Long> dictIds = Sets.newHashSet();
+                collect.forEach((key, value) ->
+                        value.forEach(
+                                craft -> {
+                                    crafts.add(craft.getId());
+                                    dictIds.add(craft.getTypeId());
+                                    dictIds.add(craft.getUnitId());
+                                    craftSet.add(craft.getId());
+                                }
 
+                        )
+                );
+                //获取工位数据
+                Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(craftSet);
+                //获取字典数据
+                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+                List<PmsWorkOrderCraftStationVO> defaultStation = Lists.newArrayList();
+                collect.forEach((key, value) ->
+                        value.forEach(
+                                craft -> {
+                                    List<PmsWorkOrderCraftStationVO> orDefault = stations.getOrDefault(craft.getId(), defaultStation);
+                                    craft.setStationList(orDefault);
+                                    craft.setUnit(dictMap.get(craft.getUnitId()));
+                                    craft.setType(dictMap.get(craft.getTypeId()));
+                                }
+                        )
+                );
+            }
+
+        }
+        return collect;
+    }
 }
 
 

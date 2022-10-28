@@ -3,9 +3,12 @@ package com.steccn.pms.service;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 import com.steccn.pms.vo.PmsWorkOrderBomVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -34,4 +37,11 @@ public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 根据订单id获取物料信息
+     * @param craftSet
+     * @return
+     */
+    Map<Long, List<PmsWorkOrderBomVO>> materials(Set<Long> craftSet);
 }

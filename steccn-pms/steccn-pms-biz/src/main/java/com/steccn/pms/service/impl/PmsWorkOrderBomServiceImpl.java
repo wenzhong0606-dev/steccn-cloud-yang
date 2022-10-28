@@ -6,6 +6,7 @@ import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.R;
@@ -20,11 +21,13 @@ import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.mapper.PmsWorkOrderBomMapper;
 import com.steccn.pms.vo.PmProcessVO;
+import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 import com.steccn.pms.vo.PmsWorkOrderBomVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -101,7 +104,7 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
                 pmsWorkOrderBomVO.setCode(eqpSpareVO.getCode());
             }
             //处理工序数据
-            if (CollUtil.isNotEmpty(processVOMap)){
+            if (CollUtil.isNotEmpty(processVOMap)) {
                 pmsWorkOrderBomVO.setProcessName(processVOMap.get(pmsWorkOrderBomVO.getProcessId()).getName());
             }
             pmsWorkOrderBomVO.setUnit(dictMap.get(pmsWorkOrderBomVO.getUnitId()));
@@ -113,6 +116,55 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
     @Override
     public Boolean delete(Integer id) {
         return removeById(id);
+    }
+
+    @Override
+    public Map<Long, List<PmsWorkOrderBomVO>> materials(Set<Long> craftSet) {
+        Map<Long, List<PmsWorkOrderBomVO>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(craftSet)) {
+            List<PmsWorkOrderBom> list = list(new LambdaQueryWrapper<PmsWorkOrderBom>().in(PmsWorkOrderBom::getWorkProduceId, craftSet));
+            if (CollUtil.isNotEmpty(list)) {
+                List<PmsWorkOrderBomVO> craftVOList = BeanUtil.copyToList(list, PmsWorkOrderBomVO.class);
+                resMap = craftVOList.parallelStream().collect(Collectors.groupingBy(PmsWorkOrderBomVO::getWorkProduceId));
+                //处理字典工序数据
+                Set<Long> ids = Sets.newHashSet();
+                List<Long> materialIds = Lists.newArrayList();
+                List<Long> processIds = Lists.newArrayList();
+                resMap.forEach((key, value) -> {
+                    value.forEach(
+                            material -> {
+                                ids.add(material.getUnitId());
+                                materialIds.add(material.getModuleId());
+                                processIds.add(material.getProcessId());
+                            }
+                    );
+                });
+                //3.1.获取字典数据
+                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+                //3.2 获取物料数据
+                Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+                //3.3 获取工序数据
+                Map<Long, PmProcessVO> processVOMap = processService.listById(processIds);
+                resMap.forEach((key, value) -> {
+                    value.forEach(
+                            material -> {
+                                EqpSpareVO eqpSpareVO = spareVOMap.get(material.getModuleId());
+                                if (Objects.nonNull(eqpSpareVO)) {
+                                    material.setName(eqpSpareVO.getName());
+                                    material.setCode(eqpSpareVO.getCode());
+                                }
+                                //处理工序数据
+                                if (CollUtil.isNotEmpty(processVOMap)) {
+                                    material.setProcessName(processVOMap.get(material.getProcessId()).getName());
+                                }
+                                material.setUnit(dictMap.get(material.getUnitId()));
+                            }
+                    );
+                });
+
+            }
+        }
+        return resMap;
     }
 }
 

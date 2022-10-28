@@ -50,7 +50,6 @@ public class PmsProduceOrderDTO {
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料名称不能为空")
     private String materialCode;
 
-
     @ApiModelProperty("计划开始时间")
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "计划开始时间不能为空")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
