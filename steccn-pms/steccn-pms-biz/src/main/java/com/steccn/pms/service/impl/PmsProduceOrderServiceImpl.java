@@ -143,10 +143,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 pmsProduceOrderVO -> {
 //                    //获取工序信息
                     craftSet.add(pmsProduceOrderVO.getId());
-//                    pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
-//                    //获取物料信息
-//                    pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
-//                    //获取工艺id
                     craftIds.add(pmsProduceOrderVO.getCraftId());
                     dictIds.add(pmsProduceOrderVO.getTypeId());
                     dictIds.add(pmsProduceOrderVO.getUnitId());
@@ -157,7 +153,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
         //获取物料信息
         Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(craftSet);
-
         List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
         List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
         //3.0 补充处理完工信息
@@ -220,6 +215,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             updateById(pmsProduceOrder);
             // 获取工序信息
             if (CollUtil.isNotEmpty(dto.getProcessList())) {
+                Set<Long> ids = Sets.newHashSet();
                 dto.getProcessList().forEach(
                         pmsProduceOrderCraftDTO -> {
                             PmsProduceOrderCraft craft = new PmsProduceOrderCraft();
@@ -227,6 +223,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             craft.setProduceOrderId(dto.getId());
                             if (Objects.nonNull(craft.getId())) {
                                 //修改工序信息
+                                ids.add(craft.getId());
                                 pmsProduceOrderCraftService.updateById(craft);
                                 //处理工位数据
                                 if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
@@ -260,22 +257,28 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                             }
                         }
                 );
+                //删除工序信息
+                pmsProduceOrderCraftService.deleteCrafts(ids, dto.getId());
             }
             //获取物料信息
             List<PmsWorkOrderBom> bomList = Lists.newArrayList();
             if (CollUtil.isNotEmpty(dto.getMaterialList())) {
+                Set<Long> idSet = Sets.newHashSet();
                 dto.getMaterialList().forEach(material -> {
                     PmsWorkOrderBom pmsWorkOrderBom = new PmsWorkOrderBom();
                     BeanUtil.copyProperties(material, pmsWorkOrderBom);
                     pmsWorkOrderBom.setWorkProduceId(dto.getId());
                     if (Objects.nonNull(material.getId())) {
+                        idSet.add(material.getId());
                         pmsWorkOrderBomService.updateById(pmsWorkOrderBom);
                     } else {
                         bomList.add(pmsWorkOrderBom);
                     }
                 });
+                //删除物料信息
+                pmsWorkOrderBomService.deleteBom(idSet,dto.getId());
+                pmsWorkOrderBomService.saveBatch(bomList);
             }
-            pmsWorkOrderBomService.saveBatch(bomList);
         }
         return true;
     }
@@ -361,6 +364,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             dictIds.add(pmsProduceOrderVO.getUnitId());
             dictIds.add(pmsProduceOrderVO.getTypeId());
             orderIds.add(pmsProduceOrderVO.getId());
+
         });
         //3.查询数据
         //3.1查询完工数据

@@ -166,6 +166,14 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         }
         return resMap;
     }
+
+    @Override
+    public Boolean deleteBom(Set<Long> idSet, Long id) {
+        if (CollUtil.isNotEmpty(idSet) && Objects.nonNull(id)) {
+            return remove(new LambdaQueryWrapper<PmsWorkOrderBom>().notIn(PmsWorkOrderBom::getId, idSet).eq(PmsWorkOrderBom::getWorkProduceId, id));
+        }
+        return Boolean.TRUE;
+    }
 }
 
 

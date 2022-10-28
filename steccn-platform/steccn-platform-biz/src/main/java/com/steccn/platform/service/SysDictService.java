@@ -75,4 +75,6 @@ public interface SysDictService extends IService<SysDict> {
      * @return 是否
      */
     Map<Long, String> listByIdCh(Set<Long> idList);
+
+
 }

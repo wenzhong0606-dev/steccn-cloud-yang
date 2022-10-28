@@ -3,6 +3,9 @@ package com.steccn.pms.mapper;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.Set;
 
 /**
 * @author yequan
@@ -13,6 +16,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsProduceOrderCraftMapper extends BaseMapper<PmsProduceOrderCraft> {
 
+    /**
+     * 删除不在集合中的数据
+     * @param idSet
+     * @param produceId
+     * @return
+     */
+    Boolean deleteCrafts(@Param("idSet") Set<Long> idSet,@Param("produceId") Long produceId);
 }
 
 

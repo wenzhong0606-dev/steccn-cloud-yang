@@ -5,29 +5,30 @@
 <mapper namespace="com.steccn.pms.mapper.PmsProduceOrderCraftMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsProduceOrderCraft">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="code" column="code" jdbcType="VARCHAR"/>
-            <result property="name" column="name" jdbcType="VARCHAR"/>
-            <result property="typeId" column="type_id" jdbcType="BIGINT"/>
-            <result property="sort" column="sort" jdbcType="INTEGER"/>
-            <result property="standardQuantity" column="standard_quantity" jdbcType="DECIMAL"/>
-            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
-            <result property="reportWorkFlag" column="report_work_flag" jdbcType="TINYINT"/>
-            <result property="reportCheckFlag" column="report_check_flag" jdbcType="TINYINT"/>
-            <result property="inStationFlag" column="in_station_flag" jdbcType="TINYINT"/>
-            <result property="outStationFlag" column="out_station_flag" jdbcType="TINYINT"/>
-            <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="code" column="code" jdbcType="VARCHAR"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="typeId" column="type_id" jdbcType="BIGINT"/>
+        <result property="sort" column="sort" jdbcType="INTEGER"/>
+        <result property="standardQuantity" column="standard_quantity" jdbcType="DECIMAL"/>
+        <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+        <result property="reportWorkFlag" column="report_work_flag" jdbcType="TINYINT"/>
+        <result property="reportCheckFlag" column="report_check_flag" jdbcType="TINYINT"/>
+        <result property="inStationFlag" column="in_station_flag" jdbcType="TINYINT"/>
+        <result property="outStationFlag" column="out_station_flag" jdbcType="TINYINT"/>
+        <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,code,name,
+        id
+        ,code,name,
         type_id,sort,standard_quantity,
         unit_id,report_work_flag,report_check_flag,
         in_station_flag,out_station_flag,produce_order_id,
@@ -35,4 +36,11 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <delete id="deleteCrafts">
+        DELETE FROM pms_produce_order_craft WHERE ID NOT IN(
+        SELECT id FROM pms_produce_order_craft where produce_order_id =#{produceId} and id in
+        <foreach collection="idSet" index="id" separator=",">
+            #{id}
+        </foreach>)
+    </delete>
 </mapper>

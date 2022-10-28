@@ -70,7 +70,7 @@ public class QtCheckPlanController {
         return R.success(qtCheckPlanService.delete(id));
     }
 
-    @GetMapping("/listAll/{method}")
+    @GetMapping("/listAll")
     @ApiOperation(value = "查询所有启用的检验方案")
     public R<List<QtCheckPlanListAllVO>> pageList(@PathVariable("method") Integer method) {
         return R.success(qtCheckPlanService.listAll(method));

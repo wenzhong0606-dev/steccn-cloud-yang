@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,10 +30,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -201,6 +199,14 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
 
         }
         return collect;
+    }
+
+    @Override
+    public Boolean deleteCrafts(Set<Long> idSet, Long produceId) {
+        if (CollUtil.isNotEmpty(idSet) && Objects.nonNull(produceId)) {
+            return remove(new LambdaQueryWrapper<PmsProduceOrderCraft>().eq(PmsProduceOrderCraft::getProduceOrderId, produceId).notIn(PmsProduceOrderCraft::getId, idSet));
+        }
+        return Boolean.TRUE;
     }
 }
 
