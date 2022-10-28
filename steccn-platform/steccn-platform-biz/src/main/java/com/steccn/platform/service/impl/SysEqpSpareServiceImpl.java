@@ -41,7 +41,6 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(
                     Collectors.toCollection(() -> new TreeSet<>(
                             Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
-
         }
         return collect;
     }
