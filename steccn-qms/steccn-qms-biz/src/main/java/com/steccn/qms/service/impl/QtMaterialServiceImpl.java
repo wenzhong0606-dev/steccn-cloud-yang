@@ -145,9 +145,9 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
                     List<QtMaterialLinkCheckPlanTypeDTO> lists = JSONObject.parseArray(s,QtMaterialLinkCheckPlanTypeDTO.class);
                     List<String> matchedCheckType = new ArrayList<>();
                     List<String> linkedCheckPlan = new ArrayList<>();
-                    for(int i = 0; i < lists.size(); i++){
-                        linkedCheckPlan.add(lists.get(i).getCheckPlanName());
-                        matchedCheckType.add(lists.get(i).getCheckType());
+                    for (QtMaterialLinkCheckPlanTypeDTO typeDTO : lists) {
+                        matchedCheckType.add(typeDTO.getCheckType());
+                        linkedCheckPlan.add(typeDTO.getCheckPlanName());
                     }
                     vo.setMatchedCheckType(matchedCheckType);
                     vo.setLinkedCheckPlan(linkedCheckPlan);
@@ -168,7 +168,6 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
     @Override
     public QtMaterial info(Long id) {
         QtMaterial qtMaterial = getById(id);
-        R<List<SysOfficeVO>> res = remoteOfficeFeign.flatData("7");
         return qtMaterial;
     }
 

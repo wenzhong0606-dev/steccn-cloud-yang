@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @desc 数据字典
@@ -48,5 +49,11 @@ public class SysDictController {
     @ApiOperation("根据code查询数据字典的值")
     public R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO){
         return R.success(sysDictService.listByCode(sysDictDTO));
+    }
+
+    @PostMapping("/ids")
+    @ApiOperation("根据主键id查询数据字典的值")
+    public R<Map<Long,String>> getSysDictListByIds(@ApiParam("数据字典主键id的集合") @RequestBody Set<Long> ids){
+        return R.success(sysDictService.listByIdCh(ids));
     }
 }

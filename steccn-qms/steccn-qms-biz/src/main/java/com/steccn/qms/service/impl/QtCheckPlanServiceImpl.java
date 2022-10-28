@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -708,15 +709,18 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
 
     @Override
     public List<QtCheckPlanListAllVO> listAll(Integer method) {
+        Assert.notNull(method,"检验方式不能为空");
         LambdaQueryWrapper<QtCheckPlan> condition = new LambdaQueryWrapper<QtCheckPlan>()
                 .eq(QtCheckPlan::getStatus, 1)
                 .eq(QtCheckPlan::getShowFlag, MpConstant.YES)
                 .eq(QtCheckPlan::getCheckMethod,method);
         List<QtCheckPlan> qtCheckPlans = list(condition);
+        //创建返回数据集合
         List<QtCheckPlanListAllVO> vos = Lists.newArrayList();
         qtCheckPlans.forEach(tmp -> {
             QtCheckPlanListAllVO vo = new QtCheckPlanListAllVO();
             BeanUtils.copyProperties(tmp, vo);
+            //把需要返回的数据添加进集合
             vos.add(vo);
         });
 

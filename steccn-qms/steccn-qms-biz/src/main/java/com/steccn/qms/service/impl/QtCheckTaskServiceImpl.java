@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -146,6 +147,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public List<QtCheckTaskListVO> checkTaskList(QtCheckTaskListDTO dto) {
+        Assert.notNull(dto.getCheckTypeCode(),"检验类型不能为空");
+        Assert.notNull(dto.getStatus(),"任务状态不能为空");
         List<QtCheckTask> qtCheckTasks = qtCheckTaskMapper.selectByTaskType(dto.getCheckTypeCode(), dto.getStatus());
         List<QtCheckTaskListVO> vos = new ArrayList<>();
         if (qtCheckTasks != null && qtCheckTasks.size() > 0) {

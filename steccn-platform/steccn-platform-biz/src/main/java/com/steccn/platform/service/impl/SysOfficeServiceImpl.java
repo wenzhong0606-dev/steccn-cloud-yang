@@ -155,14 +155,14 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public List<SysOfficeVO> warehouseAndShelf(List<String> typeList) {
-        //查询机构类型为5和12的
+        //根据前端传过来的机构类型获取组织机构列表
         List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, typeList));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
             //复制查询结果到新的集合
             List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
-            //从下往上递归查询
-            //过滤出层次级别为1的根节点集合
+            //从上往下递归查询
+            //过滤出层次级别为0的根节点集合
             Map<Integer, List<SysOfficeVO>> levelMap = sysOfficeVOS.stream().collect(Collectors.groupingBy(SysOfficeVO::getTreeLevel));
             Integer minLevel = Integer.MAX_VALUE;
             for (Map.Entry<Integer, List<SysOfficeVO>> entry : levelMap.entrySet()) {
