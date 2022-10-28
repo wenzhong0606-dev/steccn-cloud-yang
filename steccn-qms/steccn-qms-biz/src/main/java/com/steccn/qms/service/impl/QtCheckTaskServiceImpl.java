@@ -605,7 +605,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setRecheckId(taskId);
         recheckModel.setOriginalCode(model.getCode());
         qtRecheckTaskService.save(recheckModel);
-        return dto.getId();
+        return taskId;
     }
 
     @Override
