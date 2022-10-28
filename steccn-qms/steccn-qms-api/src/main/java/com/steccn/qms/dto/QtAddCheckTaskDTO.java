@@ -117,7 +117,7 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 发货数量
      */
-    @Max(groups = {InsertGroup.class},value = 999999 ,message = "发货数量不能超过99999999")
+    @Max(groups = {InsertGroup.class},value = 99999999 ,message = "发货数量不能超过99999999")
     @Min(groups = {InsertGroup.class},value = 1,message = "最少发货数量为1")
 
     private Integer deliverNum;
