@@ -53,11 +53,6 @@ public class PmsCompleteDeliveryInfo implements Serializable {
     private LocalDateTime packTime;
 
     /**
-     * 生产订单id
-     */
-    private Long produceOrderId;
-
-    /**
      * 装箱数量
      */
     private BigDecimal quantity;
