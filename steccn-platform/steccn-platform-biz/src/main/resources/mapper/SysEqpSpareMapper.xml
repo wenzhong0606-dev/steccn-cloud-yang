@@ -48,7 +48,7 @@
                b.name AS unit
         FROM sys_eqp_spare a
                  JOIN sys_dict b ON a.UNIT = b.name
-        WHERE a.name LIKE CONCAT(CONCAT('%', #{name}), '%') and b.type = 'measure_unit'
+        WHERE a.name LIKE CONCAT('%', #{name}, '%') and b.type = 'measure_unit'
     </select>
     <select id="getByCode" resultType="com.steccn.platform.vo.EqpSpareVO">
         SELECT a.id,
