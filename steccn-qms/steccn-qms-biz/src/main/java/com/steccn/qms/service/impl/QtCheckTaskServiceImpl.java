@@ -695,7 +695,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getStatus);
+            if(dto.getAscFlag()){
+                condition.last("ORDER BY FIELD(t.status,0,1,4,2,3)");
+            }else {
+                condition.last("ORDER BY FIELD(t.status,3,2,4,1,0)");
+            }
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(materialName using gbk) ASC");
