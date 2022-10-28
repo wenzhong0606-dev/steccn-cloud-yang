@@ -156,7 +156,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsProduceOrderCraftVO> craftVOList = Lists.newArrayList();
         List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
         //3.0 补充处理完工信息
-        Map<Long, PmsCompleteStorageNumDTO> map = pmsCompleteStorageInfoService.numByOrderId(orderSet);
+        Map<Long, PmsCompleteStorageNumDTO> map = pmsBarcodePrintService.orderSum(orderSet);
         page.getRecords().forEach(
                 pmsProduceOrderVO -> {
                     List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
@@ -354,7 +354,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(dto.getEndTime())) {
             dto.setActualEndTime(LocalDateTime.of(dto.getEndTime(), LocalTime.MAX));
         }
-
         //1.自定义sql查询订单接收数据
         Page<PmsProduceOrderVO> page = this.baseMapper.acceptPage(new Page(dto.getCurrent(), dto.getSize()), dto);
         //2.处理订单数据
