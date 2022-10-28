@@ -143,10 +143,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 pmsProduceOrderVO -> {
 //                    //获取工序信息
                     craftSet.add(pmsProduceOrderVO.getId());
-//                    pmsProduceOrderVO.setProcessList(pmsProduceOrderCraftService.getCrafts(pmsProduceOrderVO.getId()));
-//                    //获取物料信息
-//                    pmsProduceOrderVO.setMaterialList(pmsWorkOrderBomService.getMaterialList(pmsProduceOrderVO.getId()));
-//                    //获取工艺id
                     craftIds.add(pmsProduceOrderVO.getCraftId());
                     dictIds.add(pmsProduceOrderVO.getTypeId());
                     dictIds.add(pmsProduceOrderVO.getUnitId());
@@ -368,6 +364,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             dictIds.add(pmsProduceOrderVO.getUnitId());
             dictIds.add(pmsProduceOrderVO.getTypeId());
             orderIds.add(pmsProduceOrderVO.getId());
+
         });
         //3.查询数据
         //3.1查询完工数据

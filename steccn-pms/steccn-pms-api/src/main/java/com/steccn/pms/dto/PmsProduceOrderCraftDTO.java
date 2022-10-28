@@ -23,11 +23,10 @@ import java.util.List;
 public class PmsProduceOrderCraftDTO {
 
     @ApiModelProperty("主键")
-    @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
     @ApiModelProperty("工序编码")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "编码不能为空")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工序编码不能为空")
     private String code;
 
     @ApiModelProperty("工序名称")

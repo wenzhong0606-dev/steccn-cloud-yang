@@ -21,11 +21,10 @@ import java.math.BigDecimal;
 public class PmsWorkOrderBomDTO {
 
     @ApiModelProperty("id")
-    @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
     @ApiModelProperty("物料id")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料id不能为空")
     private Long moduleId;
 
     @ApiModelProperty("数量")
