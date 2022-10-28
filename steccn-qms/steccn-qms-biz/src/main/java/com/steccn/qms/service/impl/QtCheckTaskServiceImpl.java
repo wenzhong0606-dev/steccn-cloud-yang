@@ -602,13 +602,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         model.setType(1);
         model.setId(null);
         model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
-        save(model);
+        QtAddCheckTaskDTO taskDTO = new QtAddCheckTaskDTO();
+        BeanUtils.copyProperties(model,taskDTO);
+        Long taskId = add(taskDTO);
         QtRecheckTask recheckModel = new QtRecheckTask();
         recheckModel.setOriginalId(id);
-        recheckModel.setRecheckId(model.getId());
+        recheckModel.setRecheckId(taskId);
         recheckModel.setOriginalCode(res.getCode());
         qtRecheckTaskService.save(recheckModel);
-        return model.getId();
+        return taskId;
     }
 
     @Override
