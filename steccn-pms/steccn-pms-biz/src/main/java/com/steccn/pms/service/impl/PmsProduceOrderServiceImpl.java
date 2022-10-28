@@ -19,6 +19,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
@@ -78,6 +79,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
         //4.保存订单信息
         //4.1.保存基础信息
+        //获取货架信息
+        if (Objects.nonNull(model.getDefaultWarehouseId())){
+            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.shelfWarehouse(model.getDefaultWarehouseId())).get();
+            model.setDefaultShelfId(model.getDefaultWarehouseId());
+            model.setDefaultWarehouseId(sysOfficeVO.getId());
+        }
         save(model);
         //4.2保存工序信息
         if (CollUtil.isNotEmpty(dto.getProcessList())) {
@@ -213,7 +220,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                                     List<PmsWorkOrderCraftStation> stations = Lists.newArrayList();
                                     pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
                                         PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
-                                        pmsWorkOrderCraftStation.setId(craft.getId());
+                                        pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
                                         BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
                                         stations.add(pmsWorkOrderCraftStation);
                                     });

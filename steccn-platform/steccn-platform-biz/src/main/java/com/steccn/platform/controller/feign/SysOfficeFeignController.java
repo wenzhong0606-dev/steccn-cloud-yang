@@ -70,4 +70,10 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.listByParentId(dto));
     }
 
+    @ApiOperation("货架的仓库")
+    @GetMapping("/shelf/warehouse/{id}")
+    public R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id) {
+        return R.success(sysOfficeService.shelfWarehouse(id));
+    }
+
 }

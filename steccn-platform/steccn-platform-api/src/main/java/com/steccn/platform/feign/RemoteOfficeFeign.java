@@ -53,6 +53,7 @@ public interface RemoteOfficeFeign {
 
     /**
      * 根据id查询名字
+     *
      * @param id 机构id
      * @return
      */
@@ -95,10 +96,20 @@ public interface RemoteOfficeFeign {
 
     /**
      * 根据父id获取下级节点数据
+     *
      * @param dto
      * @return
      */
     @ApiOperation("根据父id获取下级节点数据")
     @PostMapping("/feign/platform/sys/office/listByParentId")
     R<List<SysOfficeVO>> listByParentId(@RequestBody SysOfficeParentDTO dto);
+
+    /**
+     * 获取货架的id仓库信息
+     * @param id
+     * @return
+     */
+    @ApiOperation("货架的仓库")
+    @GetMapping("/feign/platform/sys/office/shelf/warehouse/{id}")
+    R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id);
 }
