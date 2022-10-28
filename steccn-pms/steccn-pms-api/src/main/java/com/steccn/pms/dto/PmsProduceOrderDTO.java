@@ -85,6 +85,8 @@ public class PmsProduceOrderDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工艺不能为空")
     private Long craftId;
 
+    @ApiModelProperty("备注")
+    private String note;
 
     @ApiModelProperty("默认货架id")
     private Integer defaultShelfId;
