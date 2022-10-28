@@ -69,10 +69,10 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 复检任务
-     * @param id
+     * @param dto
      * @return
      */
-    Long retask(Long id);
+    Long retask(QtReTaskDTO dto);
 
     /**
      * 通过类型查询任务

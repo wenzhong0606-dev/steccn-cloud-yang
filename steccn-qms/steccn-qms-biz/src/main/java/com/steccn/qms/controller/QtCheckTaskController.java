@@ -91,11 +91,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.finished(dto));
     }
 
-    @GetMapping("retask/{id}")
+    //@PostMapping("retask/{id}")
+    @PostMapping("/retask")
     @ApiOperation(value = "创建复检任务")
     @SysLog("创建复检任务")
-    public R<Long> retask(@PathVariable Long id){
-        return R.success(qtCheckTaskService.retask(id));
+    public R<Long> retask(@RequestBody QtReTaskDTO dto){
+        return R.success(qtCheckTaskService.retask(dto));
     }
 
     @GetMapping("defect/{id}")

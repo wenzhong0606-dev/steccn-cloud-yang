@@ -576,22 +576,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     /**
      * 复检任务
-     *
-     * @param id
+     * @param dto
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long retask(Long id) {
-        QtCheckTask res = getById(id);
-        QtCheckTask model = new QtCheckTask();
-        if (res == null) {
+    public Long retask(QtReTaskDTO dto) {
+        if (dto.getId() == null) {
             throw new BusinessException("任务信息不存在");
         }
-        if (!res.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
-            throw new BusinessException("任务状态不为完成");
-        }
-        BeanUtils.copyProperties(res, model);
+        QtCheckTask model = new QtCheckTask();
+        BeanUtils.copyProperties(dto, model);
         //复制值后置空
         model.setBadNum(null);
         model.setCheckNum(null);
@@ -606,11 +601,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         BeanUtils.copyProperties(model,taskDTO);
         Long taskId = add(taskDTO);
         QtRecheckTask recheckModel = new QtRecheckTask();
-        recheckModel.setOriginalId(id);
+        recheckModel.setOriginalId(dto.getId());
         recheckModel.setRecheckId(taskId);
-        recheckModel.setOriginalCode(res.getCode());
+        recheckModel.setOriginalCode(model.getCode());
         qtRecheckTaskService.save(recheckModel);
-        return taskId;
+        return dto.getId();
     }
 
     @Override
