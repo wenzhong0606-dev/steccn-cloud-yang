@@ -112,4 +112,13 @@ public interface RemoteOfficeFeign {
     @ApiOperation("货架的仓库")
     @GetMapping("/feign/platform/sys/office/shelf/warehouse/{id}")
     R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id);
+
+    /**
+     * 根据孩子id获取父亲节点数据
+     * @param id 孩子id
+     * @return
+     */
+    @ApiOperation("根据孩子id获取父亲节点数据")
+    @GetMapping("/feign/platform/sys/office/parent/{id}")
+    R<SysOfficeVO> parent(@PathVariable("id") Integer id);
 }

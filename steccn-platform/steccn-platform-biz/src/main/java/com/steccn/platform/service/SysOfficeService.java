@@ -80,6 +80,13 @@ public interface SysOfficeService extends IService<SysOffice> {
     SysOfficeVO shelfWarehouse(Integer id);
 
     /**
+     * 根据孩子id获取父亲节点数据
+     * @param childId 货架id
+     * @return
+     */
+    SysOfficeVO parentOffice(Integer childId);
+
+    /**
      * 扫描工位二维码
      * @param id 工位id
      * @return

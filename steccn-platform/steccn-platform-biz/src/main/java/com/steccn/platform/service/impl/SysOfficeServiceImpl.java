@@ -3,6 +3,7 @@ package com.steccn.platform.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -206,6 +207,20 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         SysOffice sysOffice = parentSysOffice(shelf);
         if (Objects.nonNull(sysOffice)) {
             return BeanUtil.copyProperties(sysOffice, SysOfficeVO.class);
+        }
+        return null;
+    }
+
+    @Override
+    public SysOfficeVO parentOffice(Integer childId) {
+        SysOffice child = getById(childId);
+        if(Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())){
+            SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, child.getParentCode()));
+            if(Objects.nonNull(parent)){
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(parent, sysOfficeVO);
+                return sysOfficeVO;
+            }
         }
         return null;
     }
