@@ -52,4 +52,12 @@ public interface PmsProduceOrderCraftService extends IService<PmsProduceOrderCra
      * @return
      */
     Map<Long, List<PmsProduceOrderCraftVO>> crafts(Set<Long> craftSet);
+
+    /**
+     * 根据订单id删除不在集合中的工序数据
+     * @param idSet
+     * @param produceId
+     * @return
+     */
+    Boolean deleteCrafts(Set<Long>idSet,Long produceId);
 }

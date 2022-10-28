@@ -44,4 +44,6 @@ public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
      * @return
      */
     Map<Long, List<PmsWorkOrderBomVO>> materials(Set<Long> craftSet);
+
+    Boolean deleteBom(Set<Long> idSet, Long id);
 }
