@@ -80,9 +80,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.保存订单信息
         //4.1.保存基础信息
         //获取货架信息
-        if (Objects.nonNull(model.getDefaultWarehouseId())){
-            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.shelfWarehouse(model.getDefaultWarehouseId())).get();
-            model.setDefaultShelfId(model.getDefaultWarehouseId());
+        if (Objects.nonNull(model.getDefaultShelfId())){
+            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
             model.setDefaultWarehouseId(sysOfficeVO.getId());
         }
         save(model);
@@ -187,6 +186,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(dto)) {
             PmsProduceOrder pmsProduceOrder = new PmsProduceOrder();
             BeanUtil.copyProperties(dto, pmsProduceOrder);
+            //获取货架信息
+            if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())){
+                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId())).get();
+                pmsProduceOrder.setDefaultShelfId(sysOfficeVO.getId());
+            }
             updateById(pmsProduceOrder);
             // 获取工序信息
             if (CollUtil.isNotEmpty(dto.getProcessList())) {

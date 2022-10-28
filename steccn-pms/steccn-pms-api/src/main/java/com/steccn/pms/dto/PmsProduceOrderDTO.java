@@ -85,8 +85,9 @@ public class PmsProduceOrderDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "工艺不能为空")
     private Long craftId;
 
-    @ApiModelProperty("默认仓库id")
-    private Integer defaultWarehouseId;
+
+    @ApiModelProperty("默认货架id")
+    private Integer defaultShelfId;
 
     @ApiModelProperty("最小包装数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "最小包装数量不能为空")
