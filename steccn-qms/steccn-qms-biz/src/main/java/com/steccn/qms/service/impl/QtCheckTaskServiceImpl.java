@@ -603,7 +603,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtRecheckTask recheckModel = new QtRecheckTask();
         recheckModel.setOriginalId(id);
         recheckModel.setRecheckId(model.getId());
-        //修改复检任务生成任务单号bug，要求复检任务单号和原始单号不同
         recheckModel.setOriginalCode(res.getCode());
         qtRecheckTaskService.save(recheckModel);
         return model.getId();
