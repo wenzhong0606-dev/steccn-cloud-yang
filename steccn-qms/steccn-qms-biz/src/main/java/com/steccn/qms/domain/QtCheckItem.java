@@ -48,6 +48,7 @@ public class QtCheckItem implements Serializable {
     /**
      * 计量单位
      */
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private Long measureUnit;
 
     /**
