@@ -17,7 +17,15 @@ public enum LocalDateEnum {
     /**
      * 月
      */
-    MONTH(2);
+    MONTH(2),
+    /**
+     * 季度
+     */
+    QUARTERLY(3),
+    /**
+     * 年
+     */
+    YEAR(4);
 
     private final int code;
 
