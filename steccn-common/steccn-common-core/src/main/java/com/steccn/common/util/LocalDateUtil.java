@@ -5,6 +5,7 @@ import com.steccn.common.constant.LocalDateEnum;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -104,6 +105,55 @@ public class LocalDateUtil {
     }
 
     /**
+     * 获取指定日期当季度第一天的日期字符串,带日期格式化参数
+     *
+     * @param localDateTime 指定日期时间
+     * @param pattern       日期时间格式
+     * @return String 格式：yyyy-MM-dd
+     */
+    public static String getFirstDayOfQuarterlyStr(LocalDateTime localDateTime, String pattern) {
+        Month firstMonthOfQuarter = LocalDate.now().getMonth().firstMonthOfQuarter();
+        return format(LocalDateTime.of(LocalDate.now().getYear(), firstMonthOfQuarter, 1,0,0,0), pattern);
+    }
+
+    /**
+     * 获取指定日期当季度最后一天的日期字符串,带日期格式化参数
+     *
+     * @param localDateTime 指定日期时间
+     * @param pattern       日期时间格式
+     * @return String 格式：yyyy-MM-dd
+     */
+    public static String getLastDayOfQuarterlyStr(LocalDateTime localDateTime, String pattern) {
+        Month firstMonthOfQuarter = localDateTime.getMonth().firstMonthOfQuarter();
+        Month endMonthOfQuarter = Month.of(firstMonthOfQuarter.getValue()+2);
+        return format(LocalDateTime.of(LocalDate.now().getYear(), endMonthOfQuarter, endMonthOfQuarter.length(LocalDate.now().isLeapYear()),23,59,59), pattern);
+    }
+
+    /**
+     * 获取指定日期当年第一天的日期字符串,带日期格式化参数
+     *
+     * @param localDateTime 指定日期时间
+     * @param pattern       日期时间格式
+     * @return String 格式：yyyy-MM-dd 00:00:00
+     */
+    public static String getFirstDayOfYearStr(LocalDateTime localDateTime, String pattern) {
+        return format(localDateTime.withDayOfYear(1).withHour(0).withMinute(0).withSecond(0), pattern);
+    }
+
+    /**
+     * 获取指定日期当年最后一天的日期字符串,带日期格式化参数
+     *
+     * @param localDateTime 指定日期时间
+     * @param pattern       日期时间格式
+     * @return String 格式：yyyy-MM-dd 23:59:59
+     */
+    public static String getLastDayOfYearStr(LocalDateTime localDateTime, String pattern) {
+        return format(localDateTime.with(TemporalAdjusters.lastDayOfYear()).withHour(23).withMinute(59).withSecond(59), pattern);
+    }
+
+
+
+    /**
      * 根据类型获取开始和结束时间
      *
      * @param type    类型 0：日，1：周，2：月
@@ -118,9 +168,15 @@ public class LocalDateUtil {
         } else if (Objects.equals(type, LocalDateEnum.WEEK.getCode())) {
             firstAndLastDateList.add(getFirstDayOfWeekStr(LocalDateTime.now(), pattern));
             firstAndLastDateList.add(getLastDayOfWeekStr(LocalDateTime.now(), pattern));
-        } else {
+        } else if (Objects.equals(type, LocalDateEnum.MONTH.getCode())){
             firstAndLastDateList.add(getFirstDayOfMonthStr(LocalDateTime.now(), pattern));
             firstAndLastDateList.add(getLastDayOfMonthStr(LocalDateTime.now(), pattern));
+        } else if (Objects.equals(type, LocalDateEnum.QUARTERLY.getCode())){
+            firstAndLastDateList.add(getFirstDayOfQuarterlyStr(LocalDateTime.now(), pattern));
+            firstAndLastDateList.add(getLastDayOfQuarterlyStr(LocalDateTime.now(), pattern));
+        } else {
+            firstAndLastDateList.add(getFirstDayOfYearStr(LocalDateTime.now(), pattern));
+            firstAndLastDateList.add(getLastDayOfYearStr(LocalDateTime.now(), pattern));
         }
 
         return firstAndLastDateList;
@@ -130,13 +186,21 @@ public class LocalDateUtil {
         System.out.println(LocalDate.now());
         System.out.println(getStartTimeOfDayStr(LocalDateTime.now()));
         System.out.println(getEndTimeOfDayStr(LocalDateTime.now()));
+
         System.out.println(getFirstDayOfWeekStr(LocalDateTime.now(), DATE_PATTERN));
         System.out.println(getLastDayOfWeekStr(LocalDateTime.now(), DATE_PATTERN));
+
         System.out.println(getFirstDayOfMonthStr(LocalDateTime.now(), DATE_PATTERN));
         System.out.println(getLastDayOfMonthStr(LocalDateTime.now(), DATE_PATTERN));
+
+
+        System.out.println(getFirstDayOfYearStr(LocalDateTime.now(),DATETIME_PATTERN));
+        System.out.println(getLastDayOfYearStr(LocalDateTime.now(),DATETIME_PATTERN));
 
         System.out.println(getFirstAndLastDate(0, DATETIME_PATTERN));
         System.out.println(getFirstAndLastDate(1, DATETIME_PATTERN));
         System.out.println(getFirstAndLastDate(2, DATETIME_PATTERN));
+        System.out.println(getFirstAndLastDate(3, DATETIME_PATTERN));
+        System.out.println(getFirstAndLastDate(4, DATETIME_PATTERN));
     }
 }
