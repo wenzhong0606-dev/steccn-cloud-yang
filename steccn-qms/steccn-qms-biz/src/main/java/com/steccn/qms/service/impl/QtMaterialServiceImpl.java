@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -181,7 +182,8 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
         LambdaQueryWrapper<QtMaterial> condition = new LambdaQueryWrapper<QtMaterial>()
                 //物料名称或者物料编码
                 .and((nameOrCode != null && !nameOrCode.equals("")),wrapper -> wrapper.like(QtMaterial::getName,nameOrCode).or().like(QtMaterial::getCode,nameOrCode))
-                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1));
+                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1))
+                .last(StringUtils.isBlank(nameOrCode),"limit 100");
 //                .and(wrapper -> wrapper.apply("JSON_CONTAINS(type, JSON_OBJECT('checkTypeCode',{0}))",checkTypeCode));
         List<QtMaterial> materialModel = list(condition);
         List<QtMaterialListAllVO> vos = Lists.newArrayList();
