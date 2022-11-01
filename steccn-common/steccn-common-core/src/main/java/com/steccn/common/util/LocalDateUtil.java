@@ -1,16 +1,21 @@
 package com.steccn.common.util;
 
+import com.steccn.common.constant.LocalDateEnum;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author chenhuan
  * @date 2022/11/1 14:47
  */
-public class LocalDataUtil {
+public class LocalDateUtil {
 
     /**
      * 显示年月日时分秒，例如 2022-11-01 09:51:53
@@ -23,12 +28,11 @@ public class LocalDataUtil {
     public static final String DATE_PATTERN = "yyyy-MM-dd";
 
 
-
     /**
      * 获取日期时间字符串
      *
      * @param localDateTime 需要转化的日期时间
-     * @param pattern  时间格式
+     * @param pattern       时间格式
      * @return String 日期时间字符串，例如 2022-11-01 09:51:53
      */
     public static String format(LocalDateTime localDateTime, String pattern) {
@@ -99,15 +103,40 @@ public class LocalDataUtil {
         return format(localDateTime.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59), pattern);
     }
 
+    /**
+     * 根据类型获取开始和结束时间
+     *
+     * @param type    类型 0：日，1：周，2：月
+     * @param pattern 日期时间格式
+     * @return List<String> 格式：[2022-11-01 00:00:00, 2022-11-01 23:59:59]
+     */
+    public static List<String> getFirstAndLastDate(int type, String pattern) {
+        List<String> firstAndLastDateList = new ArrayList<>();
+        if (Objects.equals(type, LocalDateEnum.DAY.getCode())) {
+            firstAndLastDateList.add(getStartTimeOfDayStr(LocalDateTime.now()));
+            firstAndLastDateList.add(getEndTimeOfDayStr(LocalDateTime.now()));
+        } else if (Objects.equals(type, LocalDateEnum.WEEK.getCode())) {
+            firstAndLastDateList.add(getFirstDayOfWeekStr(LocalDateTime.now(), pattern));
+            firstAndLastDateList.add(getLastDayOfWeekStr(LocalDateTime.now(), pattern));
+        } else {
+            firstAndLastDateList.add(getFirstDayOfMonthStr(LocalDateTime.now(), pattern));
+            firstAndLastDateList.add(getLastDayOfMonthStr(LocalDateTime.now(), pattern));
+        }
+
+        return firstAndLastDateList;
+    }
+
     public static void main(String[] args) {
         System.out.println(LocalDate.now());
         System.out.println(getStartTimeOfDayStr(LocalDateTime.now()));
         System.out.println(getEndTimeOfDayStr(LocalDateTime.now()));
-        System.out.println(getFirstDayOfWeekStr(LocalDateTime.now(),DATE_PATTERN));
-        System.out.println(getLastDayOfWeekStr(LocalDateTime.now(),DATE_PATTERN));
-        System.out.println(getFirstDayOfMonthStr(LocalDateTime.now(),DATE_PATTERN));
-        System.out.println(getLastDayOfMonthStr(LocalDateTime.now(),DATE_PATTERN));
+        System.out.println(getFirstDayOfWeekStr(LocalDateTime.now(), DATE_PATTERN));
+        System.out.println(getLastDayOfWeekStr(LocalDateTime.now(), DATE_PATTERN));
+        System.out.println(getFirstDayOfMonthStr(LocalDateTime.now(), DATE_PATTERN));
+        System.out.println(getLastDayOfMonthStr(LocalDateTime.now(), DATE_PATTERN));
 
-
+        System.out.println(getFirstAndLastDate(0, DATETIME_PATTERN));
+        System.out.println(getFirstAndLastDate(1, DATETIME_PATTERN));
+        System.out.println(getFirstAndLastDate(2, DATETIME_PATTERN));
     }
 }
