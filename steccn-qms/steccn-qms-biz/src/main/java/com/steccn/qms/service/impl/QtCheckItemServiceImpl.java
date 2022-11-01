@@ -5,6 +5,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -218,7 +219,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Override
     public QtCheckItemListVO info(Integer id) {
         QtCheckItemListVO resVo = null;
-        QtCheckItem byId = getById(id);
+        QueryWrapper<QtCheckItem> byId = new QueryWrapper<QtCheckItem>().eq("id",id).orderByAsc("create_time");
         if (Objects.nonNull(byId)) {
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);
