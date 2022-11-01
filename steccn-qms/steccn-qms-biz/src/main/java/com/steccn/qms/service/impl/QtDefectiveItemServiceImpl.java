@@ -193,7 +193,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         List<QtDefectiveItem> dataList = list(new LambdaQueryWrapper<QtDefectiveItem>()
                 .eq(QtDefectiveItem::getShowFlag, MpConstant.YES)
                 .eq(QtDefectiveItem::getStatus, MpConstant.STATUS_START)
-                .orderByDesc(QtDefectiveItem::getCreateTime));
+                .orderByAsc(QtDefectiveItem::getCreateTime));
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
         }
