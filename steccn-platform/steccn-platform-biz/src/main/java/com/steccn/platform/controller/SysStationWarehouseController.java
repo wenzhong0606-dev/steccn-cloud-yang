@@ -25,7 +25,7 @@ public class SysStationWarehouseController {
 
     private final SysStationWarehouseService sysStationWarehouseService;
 
-    @PostMapping
+    @PostMapping("list")
     @ApiOperation("工位配置列表")
     public R<Page<SysStationWarehouse>> pageList(SysStationWarehouseDTO dto) {
         return R.success(sysStationWarehouseService.pageList(dto));
