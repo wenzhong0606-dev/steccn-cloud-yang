@@ -16,7 +16,7 @@
         <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
         <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
         <result property="stationId" column="station_id" jdbcType="INTEGER"/>
-        <result property="classGroupId" column="class_group_id" jdbcType="INTEGER"/>
+        <result property="classGroupId" column="class_group_id" jdbcType="BIGINT"/>
         <result property="produceOrderId" column="produce_order_id" jdbcType="BIGINT"/>
         <result property="createBy" column="create_by" jdbcType="BIGINT"/>
         <result property="createName" column="create_name" jdbcType="VARCHAR"/>
