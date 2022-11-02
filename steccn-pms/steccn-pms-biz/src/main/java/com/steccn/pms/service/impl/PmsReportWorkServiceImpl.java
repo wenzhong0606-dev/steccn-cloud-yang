@@ -90,6 +90,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RedissonClient redissonClient;
     @Autowired
     private TransactionTemplate transactionTemplate;
+    @Autowired
+    private PmsReportWorkConsumeService pmsReportWorkConsumeService;
 
 
     @Override
@@ -192,6 +194,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 save(pmsReportWork);
                 //保存工时信息
                 reportWorkHourService.saveHourList(pmsReportWork.getId(), dto.getHourDTOList());
+                //保存能耗信息
+                pmsReportWorkConsumeService.saveConsume(pmsReportWork.getId(), dto.getConsumeDTOList());
                 //插入库存
                 insertDelivery(dto, pmsReportWork);
                 return Boolean.TRUE;
