@@ -38,6 +38,11 @@ public class PmsMaterialRequisitionInfo implements Serializable {
     private Long materialId;
 
     /**
+     * 物料编码
+     */
+    private String materialCode;
+
+    /**
      * 需求时间
      */
     private LocalDate requireDate;
