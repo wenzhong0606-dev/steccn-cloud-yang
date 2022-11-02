@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsMaterialRequisitionInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMaterialRequisitionInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="organization" column="organization" jdbcType="OTHER"/>
+            <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="requireDate" column="require_date" jdbcType="DATE"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="receiveQuantity" column="receive_quantity" jdbcType="DECIMAL"/>
+            <result property="associatedNo" column="associated_no" jdbcType="VARCHAR"/>
+            <result property="materialRequisitionId" column="material_requisition_id" jdbcType="BIGINT"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,organization,shelf_id,
+        material_id,require_date,quantity,
+        receive_quantity,associated_no,material_requisition_id,
+        create_by,create_name,create_time,
+        update_by,update_name,update_time,
+        del_flag
+    </sql>
+</mapper>
