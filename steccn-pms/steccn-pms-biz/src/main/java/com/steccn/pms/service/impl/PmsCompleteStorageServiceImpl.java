@@ -158,12 +158,21 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
         Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(eqpList)).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
+        //获取箱信息
+        Map<String, PmsBarcodePrint> caseMap = pmsBarcodePrintService.caseMap(caseNoSet);
+        PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
+
         for (CompleteStorageScanDTO caseInfo : dtoList) {
             PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
             BeanUtils.copyProperties(caseInfo, modelInfo);
             modelInfo.setCompleteStorageId(pmsCompleteStorage.getId());
             modelInfo.setPackTime(caseInfo.getCreateTime());
             sumQuantity = sumQuantity.add(caseInfo.getQuantity());
+
+            PmsBarcodePrint pmsBarcodePrint = caseMap.getOrDefault(modelInfo.getCaseNo(), defaultPmsBarcodePrint);
+            modelInfo.setClassesId(pmsBarcodePrint.getClassesId());
+            modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
             modelInfoList.add(modelInfo);
 
             MessInStorageVoucherListDTO mess = new MessInStorageVoucherListDTO();

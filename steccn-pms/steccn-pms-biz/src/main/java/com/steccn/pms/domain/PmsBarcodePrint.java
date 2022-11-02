@@ -61,12 +61,12 @@ public class PmsBarcodePrint implements Serializable {
     /**
      * 班次id
      */
-    private Integer classesId;
+    private Long classesId;
 
     /**
      * 班组id
      */
-    private Integer classGroupId;
+    private Long classGroupId;
 
     /**
      * 箱号

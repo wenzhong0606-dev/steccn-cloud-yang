@@ -34,7 +34,7 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
     private Long processId;
 
     @ApiModelProperty("班次")
-    private Integer classesId;
+    private Long classesId;
 
     @ApiModelProperty("创建时间-开始")
     private LocalDate createDtStart;

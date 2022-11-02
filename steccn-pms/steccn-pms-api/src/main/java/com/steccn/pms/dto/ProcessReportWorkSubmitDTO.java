@@ -61,10 +61,10 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     private Integer productLineId;
 
     @ApiModelProperty("班次id")
-    private Integer classesId;
+    private Long classesId;
 
     @ApiModelProperty("班组id")
-    private Integer classGroupId;
+    private Long classGroupId;
 
     @ApiModelProperty("开始时间")
     private LocalDateTime startTime;
@@ -79,6 +79,10 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @ApiModelProperty("物料消耗")
     @Valid
     private List<ProcessReportWorkMaterialListDTO> materialConsumeList;
+
+    @ApiModelProperty("能耗")
+    @Valid
+    private List<ProcessReportWorkConsumeDTO> consumeDTOList;
 
     private static final long serialVersionUID = 1L;
 }

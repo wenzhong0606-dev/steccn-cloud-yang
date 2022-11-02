@@ -56,6 +56,16 @@ public class PmsCompleteStorageInfo implements Serializable {
     private Long unitId;
 
     /**
+     * 班次id
+     */
+    private Long classesId;
+
+    /**
+     * 班组id
+     */
+    private Long classGroupId;
+
+    /**
      * 完工入库单id
      */
     private Long completeStorageId;

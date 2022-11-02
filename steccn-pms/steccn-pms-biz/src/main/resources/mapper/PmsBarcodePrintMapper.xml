@@ -13,7 +13,7 @@
             <result property="printStrip" column="print_strip" jdbcType="INTEGER"/>
             <result property="printNumber" column="print_number" jdbcType="INTEGER"/>
             <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
-            <result property="classGroupId" column="class_group_id" jdbcType="INTEGER"/>
+            <result property="classGroupId" column="class_group_id" jdbcType="BIGINT"/>
             <result property="caseNo" column="case_no" jdbcType="VARCHAR"/>
             <result property="createBy" column="create_by" jdbcType="BIGINT"/>
             <result property="createName" column="create_name" jdbcType="VARCHAR"/>

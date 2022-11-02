@@ -64,7 +64,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 班次id
      */
-    private Integer classesId;
+    private Long classesId;
 
     /**
      * 产线id
@@ -79,7 +79,7 @@ public class PmsReportWork implements Serializable {
     /**
      * 班组id
      */
-    private Integer classGroupId;
+    private Long classGroupId;
 
     /**
      * 生产订单编码
