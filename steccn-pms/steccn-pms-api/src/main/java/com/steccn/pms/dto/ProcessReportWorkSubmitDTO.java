@@ -80,5 +80,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @Valid
     private List<ProcessReportWorkMaterialListDTO> materialConsumeList;
 
+    @ApiModelProperty("能耗")
+    @Valid
+    private List<ProcessReportWorkConsumeDTO> consumeDTOList;
+
     private static final long serialVersionUID = 1L;
 }

@@ -2,6 +2,7 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsMrpInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author yequan
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2022-11-02 10:10:08
 * @Entity com.steccn.pms.domain.PmsMrpInfo
 */
+@Mapper
 public interface PmsMrpInfoMapper extends BaseMapper<PmsMrpInfo> {
 
 }

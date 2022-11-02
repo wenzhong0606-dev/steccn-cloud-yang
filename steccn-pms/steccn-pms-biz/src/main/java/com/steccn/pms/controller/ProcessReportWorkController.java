@@ -1,6 +1,9 @@
 package com.steccn.pms.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Adolph.Ye
@@ -38,6 +42,15 @@ public class ProcessReportWorkController {
     @PostMapping("/add")
     @SysLog("提交报工")
     public R<Boolean> submitReportWork(@Valid @RequestBody ProcessReportWorkSubmitDTO dto) {
+        if(CollUtil.isNotEmpty(dto.getConsumeDTOList())){
+            Set<Integer> set = Sets.newHashSet();
+            for (ProcessReportWorkConsumeDTO consumeDTO : dto.getConsumeDTOList()) {
+                boolean add = set.add(consumeDTO.getType());
+                if(!add){
+                    throw new BusinessException("能耗类型不能重复");
+                }
+            }
+        }
         return R.success(pmsReportWorkService.submitReportWork(dto));
     }
 
