@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 /**
@@ -25,11 +26,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     implements QtReportService{
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Integer add(QtAddReportDTO dto) {
-        Assert.isNull(dto,"新建报表不能为空");
         QtReport qtReport = new QtReport();
         BeanUtils.copyProperties(dto,qtReport);
-        QtReport report = getById(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
+        QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
         Assert.isNull(report,"该报表卡片名称已存在");
         this.save(qtReport);
         return qtReport.getId();

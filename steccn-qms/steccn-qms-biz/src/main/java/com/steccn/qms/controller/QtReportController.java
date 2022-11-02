@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtAddReportDTO;
@@ -22,6 +23,7 @@ public class QtReportController {
 
     @PostMapping
     @ApiOperation(value = "新建报表任务")
+    @SysLog("新建报表任务")
     public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtAddReportDTO dto) {
         return R.success(qtReportService.add(dto));
     }
