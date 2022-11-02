@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
-import com.steccn.qms.vo.QtCheckPlanVO;
-import com.steccn.qms.vo.QtCheckTaskDetailVO;
-import com.steccn.qms.vo.QtCheckTaskListVO;
-import com.steccn.qms.vo.QtCheckTaskTypeCountVO;
+import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 
 import java.util.List;
@@ -81,4 +78,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     List<QtCheckTaskTypeCountVO> countTaskByType();
 
     Page<QtCheckTaskListVO> pageList(QtCheckTaskListDTO dto);
+
+    QtCheckTaskListVO productOrderInfo(String id);
+
+    QtCheckTaskListVO selectProductOrder(QtBaseIdNameDTO dto);
+
+    Page<QtCheckProduceTaskVO> pageProductOrder(String id);
+
+
 }

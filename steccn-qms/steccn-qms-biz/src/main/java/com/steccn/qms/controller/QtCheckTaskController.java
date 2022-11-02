@@ -91,7 +91,6 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.finished(dto));
     }
 
-    //@PostMapping("retask/{id}")
     @PostMapping("/retask")
     @ApiOperation(value = "创建复检任务")
     @SysLog("创建复检任务")
@@ -109,5 +108,24 @@ public class QtCheckTaskController {
     @ApiOperation(value = "检验方案列表")
     public R<Page<QtCheckTaskListVO>> pageList(@RequestBody QtCheckTaskListDTO dto) {
         return R.success(qtCheckTaskService.pageList(dto));
+    }
+
+    @GetMapping("/productOrder/{id}")
+    @ApiOperation(value = "生产订单号查询生产车间产线批次")
+    public R<QtCheckTaskListVO> productOrderInfo(@PathVariable String id){
+        return R.success(qtCheckTaskService.productOrderInfo(id));
+    }
+
+    @PostMapping("/productOrder/info")
+    @ApiOperation(value = "根据产线查询生产订单号")
+    public R<QtCheckTaskListVO> selectProductOrder(@RequestBody QtBaseIdNameDTO dto){
+        return R.success(qtCheckTaskService.selectProductOrder(dto));
+    }
+
+    @GetMapping("/productOrder/details/{id}")
+    @ApiOperation(value = "根据生产订单号查询检验任务详情")
+    public R<Page<QtCheckTaskListVO>> selectProductDetails(@PathVariable String id){
+        //return R.success(qtCheckTaskService.pageProductOrder(id));
+        return null;
     }
 }

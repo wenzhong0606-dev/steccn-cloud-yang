@@ -585,27 +585,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (dto.getId() == null) {
             throw new BusinessException("任务信息不存在");
         }
-        QtCheckTask model = new QtCheckTask();
-        BeanUtils.copyProperties(dto, model);
-        //复制值后置空
-        model.setBadNum(null);
-        model.setCheckNum(null);
-        model.setGoodNum(null);
-        model.setResult(null);
-        model.setNote(null);
-        model.setStatus(0);
-        model.setType(1);
-        model.setId(null);
-        //model.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
-        QtAddCheckTaskDTO taskDTO = new QtAddCheckTaskDTO();
-        BeanUtils.copyProperties(model,taskDTO);
-        Long taskId = add(taskDTO);
-        QtRecheckTask recheckModel = new QtRecheckTask();
-        recheckModel.setOriginalId(dto.getId());
-        recheckModel.setRecheckId(taskId);
-        QtCheckTask qtCheckTask = getById(dto.getId());
-        recheckModel.setOriginalCode(qtCheckTask.getCode());
-        qtRecheckTaskService.save(recheckModel);
+        QtReTaskDTO qtReTaskDTO = new QtReTaskDTO();
+        qtReTaskDTO.setOriginalId(dto.getId());
+        //qtReTaskDTO.setCheckPlanId(dto.getCheckPlanId());
+        Long taskId = 0L ;
+        QtAddCheckTaskDTO neworiginalId = new QtAddCheckTaskDTO();
+
+        if (qtReTaskDTO != null) {
+            BeanUtils.copyProperties(qtReTaskDTO, neworiginalId);
+        }
+         add(neworiginalId);
         return taskId;
     }
 
@@ -789,6 +778,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         BeanUtils.copyProperties(iPage, page);
         return page;
+    }
+//TODO
+    @Override
+    public QtCheckTaskListVO productOrderInfo(String id) {
+        return null;
+    }
+//TODO
+    @Override
+    public QtCheckTaskListVO selectProductOrder(QtBaseIdNameDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Page<QtCheckProduceTaskVO> pageProductOrder(String id) {
+        return null;
     }
 
     private Long currentMaxCode() {
