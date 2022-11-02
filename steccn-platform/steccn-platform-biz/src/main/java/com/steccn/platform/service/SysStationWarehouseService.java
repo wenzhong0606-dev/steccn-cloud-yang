@@ -1,7 +1,9 @@
 package com.steccn.platform.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.domain.SysStationWarehouse;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysStationWarehouseDTO;
 
 /**
 * @author yequan
@@ -9,5 +11,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2022-11-02 15:28:34
 */
 public interface SysStationWarehouseService extends IService<SysStationWarehouse> {
+
+    Page<SysStationWarehouse> pageList(SysStationWarehouseDTO dto);
+
+    Boolean add(SysStationWarehouseDTO dto);
+
+    Boolean edit(SysStationWarehouseDTO dto);
+
 
 }
