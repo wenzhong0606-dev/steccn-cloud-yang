@@ -23,11 +23,6 @@ public class PmsMrpInfo implements Serializable {
     private Long id;
 
     /**
-     * 物料id
-     */
-    private Long materialId;
-
-    /**
      * 日期
      */
     private LocalDate mrpDate;

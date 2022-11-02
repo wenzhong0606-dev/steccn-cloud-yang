@@ -6,7 +6,6 @@
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMrpInfo">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
             <result property="mrpDate" column="mrp_date" jdbcType="DATE"/>
             <result property="mrpTypeId" column="mrp_type_id" jdbcType="BIGINT"/>
             <result property="mrpElement" column="mrp_element" jdbcType="VARCHAR"/>
@@ -23,7 +22,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,material_id,mrp_date,
+        id,mrp_date,
         mrp_type_id,mrp_element,quantity,
         available_quantity,mrp_id,create_by,
         create_name,create_time,update_by,
