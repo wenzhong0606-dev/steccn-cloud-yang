@@ -97,6 +97,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-log</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
