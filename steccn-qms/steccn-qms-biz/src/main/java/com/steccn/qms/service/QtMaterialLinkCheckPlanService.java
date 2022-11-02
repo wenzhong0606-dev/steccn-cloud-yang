@@ -1,10 +1,8 @@
 package com.steccn.qms.service;
 
-import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtCheckPlanDTO;
+import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
 import com.steccn.qms.dto.QtMaterialLinkCheckPlanDTO;
-import com.steccn.qms.vo.QtMaterialLinkPlanVO;
 
 import java.util.List;
 
@@ -22,4 +20,10 @@ public interface QtMaterialLinkCheckPlanService extends IService<QtMaterialLinkC
     Boolean add(QtMaterialLinkCheckPlanDTO dto);
 
 
+    /**
+     * 根据物料id查询检验类型
+     * @param id
+     * @return
+     */
+    List<Integer> getCheckType(Long id);
 }

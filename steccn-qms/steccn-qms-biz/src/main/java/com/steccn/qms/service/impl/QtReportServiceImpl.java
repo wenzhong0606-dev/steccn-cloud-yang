@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.qms.domain.QtReport;
 import com.steccn.qms.dto.QtAddReportDTO;
+import com.steccn.qms.service.QtMaterialService;
 import com.steccn.qms.service.QtReportService;
 import com.steccn.qms.mapper.QtReportMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -16,6 +19,8 @@ import org.springframework.util.Assert;
 * @createDate 2022-11-01 16:42:01
 */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     implements QtReportService{
 

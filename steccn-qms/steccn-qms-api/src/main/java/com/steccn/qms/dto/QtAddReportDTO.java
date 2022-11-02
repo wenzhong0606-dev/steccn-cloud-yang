@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class QtAddReportDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
     /**
      * 主键id
      */
@@ -30,11 +31,13 @@ public class QtAddReportDTO implements Serializable {
     /**
      * 日期范围开始时间
      */
+    @NotNull(message = "日期范围开始时间不能为空")
     private LocalDate timeScopeStart;
 
     /**
      * 日期范围结束时间
      */
+    @NotNull(message = "日期范围结束时间不能为空")
     private LocalDate timeScopeEnd;
 
     /**
@@ -132,5 +135,4 @@ public class QtAddReportDTO implements Serializable {
      */
     private String updateName;
 
-    private static final long serialVersionUID = 1L;
 }

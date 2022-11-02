@@ -182,7 +182,7 @@ public class QtMaterialServiceImpl extends ServiceImpl<QtMaterialMapper, QtMater
         LambdaQueryWrapper<QtMaterial> condition = new LambdaQueryWrapper<QtMaterial>()
                 //物料名称或者物料编码
                 .and((nameOrCode != null && !nameOrCode.equals("")),wrapper -> wrapper.like(QtMaterial::getName,nameOrCode).or().like(QtMaterial::getCode,nameOrCode))
-                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,1))
+                .and(wrapper -> wrapper.eq(QtMaterial::getStatus,QtManagerConstant.QtMaterialStatusEnum.ENABLE))
                 .last(StringUtils.isBlank(nameOrCode),"limit 100");
 //                .and(wrapper -> wrapper.apply("JSON_CONTAINS(type, JSON_OBJECT('checkTypeCode',{0}))",checkTypeCode));
         List<QtMaterial> materialModel = list(condition);

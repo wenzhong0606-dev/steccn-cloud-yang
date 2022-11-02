@@ -64,6 +64,40 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
+    String DYNAMIC_TIME_TODAY = "今天";
+
+    String DYNAMIC_TIME_TOMORROW = "昨天";
+
+    String DYNAMIC_TIME_THIS_WEEK = "本周";
+
+    String DYNAMIC_TIME_LAST_WEEK = "上周";
+
+    String DYNAMIC_TIME_THIS_MONTH = "本月";
+
+    String DYNAMIC_TIME_LAST_MONTH = "上月";
+
+    String DYNAMIC_TIME_THIS_QUARTER = "本季度";
+
+    String DYNAMIC_TIME_LAST_QUARTER = "上季度";
+
+    String DYNAMIC_TIME_THIS_YEAR = "今年";
+
+    String DYNAMIC_TIME_LAST_YEAR = "去年";
+
+    String DYNAMIC_TIME_PAST_SEVEN_DAYS = "过去7天";
+
+    String DYNAMIC_TIME_PAST_FOURTEEN_DAYS = "过去14天";
+
+    String DYNAMIC_TIME_PAST_THIRTY_DAYS = "过去30天";
+
+    String DYNAMIC_TIME_PAST_NINETY_DAYS = "过去90天";
+
+    String DYNAMIC_TIME_PAST_ONE_HUNDRED_EIGHTY_DAYS = "过去180天";
+
+    String DYNAMIC_TIME_LAST_THREE_HUNDRED_SIXTY_FIVE_DAYS = "过去365天";
+
+
+
     /**
      * @desc 检验项 | 缺陷项类别枚举
      */
@@ -142,6 +176,19 @@ public interface QtManagerConstant {
         FINISHED(2,"已检验"),
         CANCELED(3,"已取消"),
         TEMPORARY(4,"暂存");
+
+        private Integer code;
+        private String name;
+    }
+
+    /**
+     * 物料状态:0停用,1启用
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtMaterialStatusEnum{
+        DISABLE(0,"停用"),
+        ENABLE(1,"启用");
 
         private Integer code;
         private String name;
