@@ -19,7 +19,7 @@ public class PmsProducePlan implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**

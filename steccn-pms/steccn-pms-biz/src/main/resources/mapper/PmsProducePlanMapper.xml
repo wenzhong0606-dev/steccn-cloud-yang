@@ -25,4 +25,18 @@
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+
+    <select id="selectAllByPlanDate" resultType="com.steccn.pms.vo.PmsProducePlanVO">
+        SELECT
+	        m.`CODE` materialCode,
+	        m.`NAME` materialName,
+	        p.material_id materialId,
+	        p.plan_date planDate,
+	        p.id id,
+	        p.quantity quantity
+        FROM
+	        pms_produce_plan p
+	        INNER JOIN pm_material m ON p.material_id = m.id
+        WHERE p.plan_date like concat(#{monthDate},"%")
+    </select>
 </mapper>
