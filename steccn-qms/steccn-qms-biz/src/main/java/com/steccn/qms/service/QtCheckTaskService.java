@@ -83,7 +83,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     QtCheckTaskListVO selectProductOrder(QtBaseIdNameDTO dto);
 
-    Page<QtCheckProduceTaskVO> pageProductOrder(String id);
+    Page<QtCheckProduceTaskVO> pageProductOrder(QtCheckaProductTaskListDTO dto);
 
 
 }

@@ -96,6 +96,10 @@ public interface QtManagerConstant {
 
     String DYNAMIC_TIME_LAST_THREE_HUNDRED_SIXTY_FIVE_DAYS = "过去365天";
 
+    final int beforeHour = 8;
+    final int afterHour = 20;
+    final long hourSpace = 2;
+
 
 
     /**

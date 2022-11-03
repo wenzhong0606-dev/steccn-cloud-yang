@@ -1,6 +1,7 @@
 package com.steccn.qms.vo;
 
 import com.steccn.qms.dto.QtBaseIdNameDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -203,4 +204,19 @@ public class QtCheckTaskListVO {
      * 送货单号
      */
     private String sendOrder;
+
+    /**
+     * 工位id
+     */
+    private Integer stationId;
+
+    /**
+     * 工位
+     */
+    private String station;
+
+    /**
+     * 班次
+     */
+    private String classes;
 }
