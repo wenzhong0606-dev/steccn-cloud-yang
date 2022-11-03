@@ -5,6 +5,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtAddReportDTO;
 import com.steccn.qms.service.QtReportService;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * SPC控制图
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/qms/report")
@@ -28,9 +32,15 @@ public class QtReportController {
     }
 
      @GetMapping("/choosegroup")
-     @ApiOperation(value = "根据物料id以及检验类型选择检验分组")
-    public R<List<Integer>>getGroupIdList(@RequestParam("materialId") Long materialId ,
+     @ApiOperation(value = "根据物料id以及检验类型查询可选择的检验分组")
+     public R<List<Integer>>getGroupIdList(@RequestParam("materialId") Long materialId ,
                                      @RequestParam("checkType") Integer checkType){
         return R.success(qtReportService.getGroupIdList(materialId,checkType));
+     }
+
+     @PostMapping("/{groupid}")
+     @ApiOperation("根据检验分组id选择检验项")
+     public R<List<QtCheckItemListVO>> getQtCheckItemList(@PathVariable("groupid") Integer groupid){
+        return R.success((qtReportService.getQtCheckItemList(groupid)));
      }
 }

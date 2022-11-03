@@ -5,14 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.qms.domain.QtCheckPlanGroup;
-import com.steccn.qms.domain.QtMaterialLinkCheckPlan;
-import com.steccn.qms.domain.QtReport;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtAddReportDTO;
-import com.steccn.qms.service.QtCheckPlanGroupService;
-import com.steccn.qms.service.QtMaterialLinkCheckPlanService;
-import com.steccn.qms.service.QtReportService;
+import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
+import com.steccn.qms.vo.QtCheckItemListVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -35,7 +32,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     implements QtReportService{
     private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
     private final QtCheckPlanGroupService qtCheckPlanGroupService;
+    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
+    private final QtCheckItemService qtCheckItemService;
 
+    /**
+     * 新建报表卡片
+     * @param dto
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Integer add(QtAddReportDTO dto) {
@@ -47,21 +51,55 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReport.getId();
     }
 
+    /**
+     * 根据物料id以及检验类型选择检验分组
+     * @param materialId
+     * @param checkType
+     * @return
+     */
     @Override
     public List<Integer> getGroupIdList(Long materialId, Integer checkType) {
         List<QtMaterialLinkCheckPlan> materialLinkCheckPlans = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
                 .eq(QtMaterialLinkCheckPlan::getMaterialId, materialId)
                 .eq(QtMaterialLinkCheckPlan::getCheckTypeCode, checkType));
+        //获取检验方案id
         List<Integer> collectCheckPlanId = materialLinkCheckPlans.stream().map(QtMaterialLinkCheckPlan::getCheckPlanId).collect(Collectors.toList());
         if (CollUtil.isEmpty(collectCheckPlanId)){
             throw new BusinessException("请先在物料配置中为物料配置#选中的检验类型#的检验方案");
         }
+        //创建检验方案分组id集合
         List<Integer> groupIdList= Lists.newArrayList();
+        //遍历检验方案id,去检验方案分组表查询获取分组id并添加进分组id集合
         collectCheckPlanId.forEach(collectId->{
             Integer groupId = qtCheckPlanGroupService.getOne(new LambdaQueryWrapper<QtCheckPlanGroup>().eq(QtCheckPlanGroup::getPlanId, collectId)).getId();
             groupIdList.add(groupId);
         });
         return groupIdList;
+    }
+
+    /**
+     * 根据检验分组id选择检验项
+     * @param groupid
+     * @return
+     */
+    @Override
+    public List<QtCheckItemListVO> getQtCheckItemList(Integer groupid) {
+        //获取检验项id集合
+        List<Integer> checkItemIds = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>().
+                        eq(QtCheckPlanGroupItem::getGroupId, groupid)).stream()
+                .map(QtCheckPlanGroupItem::getCheckItemId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(checkItemIds)){
+            throw new BusinessException("该检验分组下没有检验项");
+        }
+        //创建返回检验项的集合
+        List<QtCheckItemListVO> qtCheckItemListVOS=Lists.newArrayList();
+        checkItemIds.forEach(checkItemId->{
+            QtCheckItemListVO qtCheckItemListVO = new QtCheckItemListVO();
+            QtCheckItem qtCheckItem = qtCheckItemService.getOne(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getId, checkItemId));
+            BeanUtils.copyProperties(qtCheckItem,qtCheckItemListVO);
+            qtCheckItemListVOS.add(qtCheckItemListVO);
+        });
+        return qtCheckItemListVOS;
     }
 
 }
