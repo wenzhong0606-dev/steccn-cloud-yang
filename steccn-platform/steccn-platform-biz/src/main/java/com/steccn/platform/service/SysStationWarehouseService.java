@@ -12,10 +12,26 @@ import com.steccn.platform.dto.SysStationWarehouseDTO;
 */
 public interface SysStationWarehouseService extends IService<SysStationWarehouse> {
 
+    /**
+     * 分页查询工位配置
+     * @param dto
+     * @return
+     */
     Page<SysStationWarehouse> pageList(SysStationWarehouseDTO dto);
 
+    /**
+     * 新增工位配置
+     * @param dto
+     * @return
+     */
     Boolean add(SysStationWarehouseDTO dto);
 
+    /**
+     * 编辑工位配置
+     *
+     * @param dto
+     * @return
+     */
     Boolean edit(SysStationWarehouseDTO dto);
 
 
