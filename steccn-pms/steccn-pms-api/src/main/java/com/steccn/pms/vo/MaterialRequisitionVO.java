@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 生产领料单VO
  *
@@ -24,7 +26,7 @@ public class MaterialRequisitionVO {
     private String associatedNo;
 
     @ApiModelProperty("部门id")
-    private Long departmentId;
+    private Integer departmentId;
 
     @ApiModelProperty("部门名称")
     private String departmentName;
@@ -36,7 +38,7 @@ public class MaterialRequisitionVO {
     private String statusName;
 
     @ApiModelProperty("类型id")
-    private String typeId;
+    private Long typeId;
 
     @ApiModelProperty("类型名称")
     private String typeName;
@@ -46,4 +48,7 @@ public class MaterialRequisitionVO {
 
     @ApiModelProperty("创建时间")
     private String createTime;
+
+    @ApiModelProperty("详情信息")
+    private List<MaterialRequisitionInfoVO> list;
 }

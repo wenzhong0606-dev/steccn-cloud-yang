@@ -20,6 +20,35 @@ public interface PmManagerConstant {
     String STATE_13 = "13";
 
     /**
+     * 领料单状态
+     */
+    String MATERIAL_REQUISITION_STATUS = "material_requisition_bill_status";
+    /**
+     * 已创建
+     */
+    String MRBS_CREATED = "mrbs_created";
+
+    /**
+     * 审批中
+     */
+    String MRBS_APPROVAL_PASS = "mrbs_approval_pass";
+
+    /**
+     * 审批通过
+     */
+    String MRBS_APPROVAL_FAIL = "mrbs_approval_fail";
+
+    /**
+     * 已删除
+     */
+    String MRBS_DELETE = "mrbs_delete";
+
+    /**
+     * 已完成
+     */
+    String MRBS_FINISH = "mrbs_finish";
+
+    /**
      * 类型编码-工序类型
      */
     String PROCESS_TYPE = "process_type";

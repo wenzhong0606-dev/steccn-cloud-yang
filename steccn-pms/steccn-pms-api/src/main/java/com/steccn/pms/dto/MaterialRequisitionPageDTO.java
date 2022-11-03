@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -35,4 +36,10 @@ public class MaterialRequisitionPageDTO extends BasePageDTO {
 
     @ApiModelProperty("部门id")
     private Long departmentId;
+
+    @ApiModelProperty("创建时间-开始")
+    private LocalDateTime startCreateTime;
+
+    @ApiModelProperty("创建时间-结束")
+    private LocalDateTime endCreateTime;
 }

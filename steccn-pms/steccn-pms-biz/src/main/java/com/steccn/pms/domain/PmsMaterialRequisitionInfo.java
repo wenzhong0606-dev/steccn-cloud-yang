@@ -1,36 +1,39 @@
 package com.steccn.pms.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 生产领用单详情
  * @author yequan
  * @TableName pms_material_requisition_info
  */
-@TableName(value ="pms_material_requisition_info")
+@TableName(value ="pms_material_requisition_info",autoResultMap = true)
 @Data
 public class PmsMaterialRequisitionInfo implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
      * 机构id
      */
-    private Object organization;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Integer> organization;
 
     /**
      * 货架id
      */
-    private Long shelfId;
+    private Integer shelfId;
 
     /**
      * 物料id
@@ -61,6 +64,12 @@ public class PmsMaterialRequisitionInfo implements Serializable {
      * 关联单据
      */
     private String associatedNo;
+
+
+    /**
+     * 单位id
+     */
+    private Long unitId;
 
     /**
      * 生产领料单id

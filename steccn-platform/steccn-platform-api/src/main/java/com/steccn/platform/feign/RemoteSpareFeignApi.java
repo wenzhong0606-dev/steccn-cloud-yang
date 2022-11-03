@@ -1,6 +1,7 @@
 package com.steccn.platform.feign;
 
 
+import com.google.common.collect.Sets;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @FeignClient(contextId = "RemoteSpareFeignApi", value = FeignConstant.STECCN_PLATFORM_SERVICE_NAME)
 public interface RemoteSpareFeignApi {
@@ -41,4 +43,13 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/listById")
     @ApiOperation("根据id查询备件的信息")
     R<Map<Long, EqpSpareVO>> listById(@RequestBody List<Long> materialIds);
+
+    /**
+     * 根据id查询备件的信息
+     * @param materialIds 物料id
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/listByIdCh")
+    @ApiOperation("根据id查询备件的信息")
+    R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> materialIds);
 }

@@ -32,7 +32,7 @@ public class MaterialRequisitionInfoDTO {
     private String materialName;
 
     @ApiModelProperty("机构id")
-    private List<Long> organization;
+    private List<Integer> organization;
 
     @ApiModelProperty("机构名称")
     private List<String> organizationName;

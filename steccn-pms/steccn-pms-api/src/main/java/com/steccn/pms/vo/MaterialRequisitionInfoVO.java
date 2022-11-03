@@ -32,7 +32,7 @@ public class MaterialRequisitionInfoVO {
     private String materialName;
 
     @ApiModelProperty("机构id")
-    private List<Long> organization;
+    private List<Integer> organization;
 
     @ApiModelProperty("机构名称")
     private List<String> organizationName;
@@ -47,13 +47,13 @@ public class MaterialRequisitionInfoVO {
     private String requireDate;
 
     @ApiModelProperty("货架id")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架名称")
     private String shelfName;
 
     @ApiModelProperty("单位id")
-    private String unitId;
+    private Long unitId;
 
     @ApiModelProperty("单位数量")
     private String unitName;

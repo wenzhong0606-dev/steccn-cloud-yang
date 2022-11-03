@@ -37,7 +37,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     public List<EqpSpareVO> listSpares(String name) {
         List<EqpSpareVO> eqpSpareVOList = sysEqpSpareMapper.listSpares(name);
         List<EqpSpareVO> collect = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(eqpSpareVOList)){
+        if (CollUtil.isNotEmpty(eqpSpareVOList)) {
             collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(
                     Collectors.toCollection(() -> new TreeSet<>(
                             Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
@@ -98,6 +98,20 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
         for (EqpSpareVO eqpSpareVO : eqpSpareVOList) {
             resMap.put(eqpSpareVO.getId(), eqpSpareVO);
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, String> listByIdCh(Set<Long> materialIds) {
+        Map<Long, String> resMap = Maps.newHashMap();
+        Collection<SysEqpSpare> spareList = listByIds(materialIds);
+        if (CollUtil.isEmpty(spareList)) {
+            return resMap;
+        }
+        List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
+        for (EqpSpareVO eqpSpareVO : eqpSpareVOList) {
+            resMap.put(eqpSpareVO.getId(), eqpSpareVO.getName());
         }
         return resMap;
     }
