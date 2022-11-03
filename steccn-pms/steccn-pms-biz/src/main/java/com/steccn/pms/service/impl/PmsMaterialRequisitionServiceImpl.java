@@ -13,6 +13,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
@@ -32,10 +33,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yequan
@@ -114,8 +112,26 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     public Boolean edit(MaterialRequisitionDTO materialRequisitionDTO) {
-
-        return null;
+        //1.校验领料单状态
+        PmsMaterialRequisition materialRequisition = getById(materialRequisitionDTO.getId());
+        Assert.notNull(materialRequisition, "领料单不存在");
+        List<Long> idSet = Lists.newArrayList();
+        idSet.add(materialRequisition.getStatus());
+        Map<Long, SysDictVO> dictVOMap = FeignOptional.of(remoteDictFeignApi.listById(idSet)).get();
+        Assert.notNull(dictVOMap, "订单状态异常");
+        String code = dictVOMap.get(materialRequisition.getStatus()).getCode();
+        Assert.isTrue(code.equals(PmManagerConstant.MRBS_CREATED), "领料单不是可编辑状态");
+        //2.处理数据
+        PmsMaterialRequisition model = new PmsMaterialRequisition();
+        BeanUtil.copyProperties(materialRequisitionDTO, model);
+        Boolean aBoolean = updateById(model);
+        //3.编辑数据
+        if (aBoolean) {
+            if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
+                aBoolean = pmsMaterialRequisitionInfoService.editList(materialRequisitionDTO);
+            }
+        }
+        return aBoolean;
     }
 
     @Override
@@ -199,12 +215,12 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //1.根据id获取领料单
         PmsMaterialRequisition pmsMaterialRequisition = getById(dto.getId());
         //2.校验领料单是否存在
-        Assert.notNull(pmsMaterialRequisition,"该领料单不存在");
+        Assert.notNull(pmsMaterialRequisition, "该领料单不存在");
         //3.根据审批状态修改审批单
-        if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)){
+        if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)) {
             pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
-        }else {
+        } else {
             pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
         }

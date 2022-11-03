@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
@@ -34,18 +35,21 @@ public class MaterialRequisitionController {
 
     @ApiOperation("生产领料单新增")
     @PostMapping
+    @SysLog("生产领料单新增")
     public R<Boolean> add(@RequestBody MaterialRequisitionDTO materialRequisitionDTO) {
         return R.success(pmsMaterialRequisitionService.add(materialRequisitionDTO));
     }
 
     @ApiOperation("生产领料单编辑")
     @PutMapping
+    @SysLog("生产领料单编辑")
     public R<Boolean> edit(@RequestBody MaterialRequisitionDTO materialRequisitionDTO) {
         return R.success(pmsMaterialRequisitionService.edit(materialRequisitionDTO));
     }
 
     @ApiOperation("生产领料单删除")
     @DeleteMapping("/{id}")
+    @SysLog("生产领料单删除")
     public R<Boolean> delete(@PathVariable("id") Long id) {
         return R.success(pmsMaterialRequisitionService.delete(id));
     }
@@ -58,6 +62,7 @@ public class MaterialRequisitionController {
 
     @ApiOperation("领料单审批")
     @PutMapping("/approval")
+    @SysLog("领料单审批")
     public R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto){
         return R.success(pmsMaterialRequisitionService.approval(dto));
     }
