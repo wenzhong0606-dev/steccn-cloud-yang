@@ -163,6 +163,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         dictIdSet.add(materialRequisitionVO.getStatus());
         dictIdSet.add(materialRequisitionVO.getTypeId());
         officeIdSet.add(materialRequisitionVO.getDepartmentId());
+        officeIdSet.add(materialRequisitionVO.getWarehouseId());
         List<MaterialRequisitionInfoVO> infoList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(list)) {
             list.forEach(info -> {
@@ -206,6 +207,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
         materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
         materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+        materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
         materialRequisitionVO.setList(infoList);
         return materialRequisitionVO;
     }

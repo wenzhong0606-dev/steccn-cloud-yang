@@ -28,6 +28,12 @@ public class MaterialRequisitionVO {
     @ApiModelProperty("部门id")
     private Integer departmentId;
 
+    @ApiModelProperty("仓库id")
+    private Integer warehouseId;
+
+    @ApiModelProperty("仓库名称")
+    private String warehouseName;
+
     @ApiModelProperty("部门名称")
     private String departmentName;
 
