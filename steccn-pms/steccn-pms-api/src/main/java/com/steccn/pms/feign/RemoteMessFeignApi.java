@@ -16,7 +16,7 @@ import java.util.Set;
  * @author yequan
  * @desc mess系统服务接口
  */
-@FeignClient(name = "remoteMessFeignApi",url = "61.177.139.244:8080",decode404 = true)
+@FeignClient(name = "remoteMessFeignApi",url = "10.1.103.230:8081",decode404 = true)
 public interface RemoteMessFeignApi {
 
     /**
