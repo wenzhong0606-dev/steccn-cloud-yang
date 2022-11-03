@@ -31,15 +31,15 @@ public class PmsProducePlanController {
     }
 
     @ApiOperation("月计划批量新增")
-    @GetMapping
-    public R<List<PmsProducePlan>> addBatch(@RequestParam String monthDate) {
-        return R.success();
+    @PostMapping
+    public R<Boolean> addBatch(@RequestBody PmsProducePlanDTO dto) {
+        return R.success(pmsProducePlanService.addOrEditBatch(dto));
     }
 
     @ApiOperation("月计划批量编辑")
-    @GetMapping
-    public R<List<PmsProducePlan>> editBatch(@RequestParam String monthDate) {
-        return R.success();
+    @PutMapping
+    public R<Boolean> editBatch(@RequestBody PmsProducePlanDTO dto) {
+        return R.success(pmsProducePlanService.addOrEditBatch(dto));
     }
 
 }
