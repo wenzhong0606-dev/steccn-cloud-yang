@@ -718,7 +718,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8);
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8 +PmsCodeUtil.NUM_BIT_2);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;
