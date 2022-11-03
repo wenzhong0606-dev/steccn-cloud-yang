@@ -2,6 +2,7 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
@@ -56,8 +57,8 @@ public class MaterialRequisitionController {
     }
 
     @ApiOperation("领料单审批")
-    @PutMapping("/approval/{id}")
-    public R<Boolean> approval(@PathVariable("id") Long id){
-        return R.success(pmsMaterialRequisitionService.approval(id));
+    @PutMapping("/approval")
+    public R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto){
+        return R.success(pmsMaterialRequisitionService.approval(dto));
     }
 }

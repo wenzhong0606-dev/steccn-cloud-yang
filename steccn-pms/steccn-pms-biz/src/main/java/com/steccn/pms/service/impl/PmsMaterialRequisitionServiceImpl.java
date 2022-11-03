@@ -7,18 +7,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
-import com.nimbusds.jose.shaded.json.JSONArray;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
+import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
@@ -122,7 +120,12 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     public Boolean delete(Long id) {
-        return null;
+        boolean b = removeById(id);
+        if (b) {
+            pmsMaterialRequisitionInfoService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
+                    .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
+        }
+        return b;
     }
 
     @Override
@@ -192,8 +195,20 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     }
 
     @Override
-    public Boolean approval(Long id) {
-        return null;
+    public Boolean approval(MaterialRequisitionApprovalDTO dto) {
+        //1.根据id获取领料单
+        PmsMaterialRequisition pmsMaterialRequisition = getById(dto.getId());
+        //2.校验领料单是否存在
+        Assert.notNull(pmsMaterialRequisition,"该领料单不存在");
+        //3.根据审批状态修改审批单
+        if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)){
+            pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
+        }else {
+            pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
+        }
+        return updateById(pmsMaterialRequisition);
     }
 
     /**
@@ -215,7 +230,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION.length() + PmsCodeUtil.NUM_BIT_8 +PmsCodeUtil.NUM_BIT_2);
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION.length() + PmsCodeUtil.NUM_BIT_8 + PmsCodeUtil.NUM_BIT_2);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

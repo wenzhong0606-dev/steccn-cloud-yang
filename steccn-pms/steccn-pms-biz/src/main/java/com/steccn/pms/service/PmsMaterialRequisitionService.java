@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
@@ -51,8 +52,8 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
 
     /**
      * 领料单审批
-     * @param id
+     * @param dto
      * @return
      */
-    Boolean approval(Long id);
+    Boolean approval(MaterialRequisitionApprovalDTO dto);
 }

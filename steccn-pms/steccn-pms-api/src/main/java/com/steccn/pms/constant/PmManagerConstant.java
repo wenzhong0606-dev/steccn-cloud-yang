@@ -31,10 +31,15 @@ public interface PmManagerConstant {
     /**
      * 审批中
      */
-    String MRBS_APPROVAL_PASS = "mrbs_approval_pass";
+    String MRBS_APPROVAL= "mrbs_approval";
 
     /**
      * 审批通过
+     */
+    String MRBS_APPROVAL_PASS = "mrbs_approval_pass";
+
+    /**
+     * 审批未通过
      */
     String MRBS_APPROVAL_FAIL = "mrbs_approval_fail";
 
