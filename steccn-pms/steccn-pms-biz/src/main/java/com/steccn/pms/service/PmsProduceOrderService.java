@@ -6,6 +6,7 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
+import io.swagger.models.auth.In;
 
 import java.util.List;
 import java.util.Map;
@@ -152,4 +153,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return key 订单id value 订单的单位
      */
     Map<Long, BaseSelectVO<Long>> listUnit(Set<Long> orderSet);
+
+    /**
+     * 根据产线id获取正在执行中的订单
+     * @param ids
+     * @return
+     */
+    Map<Integer,PmsProduceOrderDTO> listByLineIds(Set<Integer> ids);
 }

@@ -17,6 +17,9 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * 生产订单相关内容
  *
@@ -143,5 +146,11 @@ public class ProduceOrderController {
     public R<Boolean> complete(@RequestBody PmsProduceOrderDTO dto) {
         Assert.notNull(dto.getId(),"订单id不能为空");
         return R.success(pmsProduceOrderService.complete(dto.getId()));
+    }
+
+    @PostMapping("/line/ids")
+    @ApiOperation("根据产线查询当前正在执行订单信息")
+    public R<Map<Integer, PmsProduceOrderDTO>> listByLineIds(@RequestBody Set<Integer> ids){
+        return R.success(pmsProduceOrderService.listByLineIds(ids));
     }
 }
