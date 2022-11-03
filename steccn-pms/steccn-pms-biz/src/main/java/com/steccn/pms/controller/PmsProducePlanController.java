@@ -22,24 +22,24 @@ import java.util.List;
 @RequestMapping("/pms/produce/plan")
 public class PmsProducePlanController {
 
-    private final PmsProducePlanService pmsProducePlanService;
-
-    @ApiOperation("月计划列表")
-    @GetMapping
-    public R<List<PmsProducePlanDTO>> list(@RequestParam String monthDate) {
-        return null;
-    }
-
-    @ApiOperation("月计划批量新增")
-    @PostMapping
-    public R<Boolean> addBatch(@RequestBody PmsProducePlanDTO dto) {
-        return R.success(pmsProducePlanService.addOrEditBatch(dto));
-    }
-
-    @ApiOperation("月计划批量编辑")
-    @PutMapping
-    public R<Boolean> editBatch(@RequestBody PmsProducePlanDTO dto) {
-        return R.success(pmsProducePlanService.addOrEditBatch(dto));
-    }
+//    private final PmsProducePlanService pmsProducePlanService;
+//
+//    @ApiOperation("月计划列表")
+//    @GetMapping
+//    public R<List<PmsProducePlanDTO>> list(@RequestParam String monthDate) {
+//        return null;
+//    }
+//
+//    @ApiOperation("月计划批量新增")
+//    @PostMapping
+//    public R<Boolean> addBatch(@RequestBody PmsProducePlanDTO dto) {
+//        return R.success(pmsProducePlanService.addOrEditBatch(dto));
+//    }
+//
+//    @ApiOperation("月计划批量编辑")
+//    @PutMapping
+//    public R<Boolean> editBatch(@RequestBody PmsProducePlanDTO dto) {
+//        return R.success(pmsProducePlanService.addOrEditBatch(dto));
+//    }
 
 }
