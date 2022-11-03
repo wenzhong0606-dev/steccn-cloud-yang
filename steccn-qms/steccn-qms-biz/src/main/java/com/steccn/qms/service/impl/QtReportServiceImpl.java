@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -100,6 +101,16 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtCheckItemListVOS.add(qtCheckItemListVO);
         });
         return qtCheckItemListVOS;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean reportDelete(Integer id) {
+        if (Objects.isNull(id)){
+            throw new BusinessException("spc卡片id不能为空");
+        }
+        removeById(id);
+        return Boolean.TRUE;
     }
 
 }

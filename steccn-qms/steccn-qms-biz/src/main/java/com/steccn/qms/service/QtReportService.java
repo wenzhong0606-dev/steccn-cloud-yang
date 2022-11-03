@@ -36,4 +36,11 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     List<QtCheckItemListVO> getQtCheckItemList(Integer groupid);
+
+    /**
+     * 根据id删除spc控制图卡片
+     * @param id
+     * @return
+     */
+    Boolean reportDelete(Integer id);
 }

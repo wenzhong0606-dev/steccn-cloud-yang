@@ -43,4 +43,12 @@ public class QtReportController {
      public R<List<QtCheckItemListVO>> getQtCheckItemList(@PathVariable("groupid") Integer groupid){
         return R.success((qtReportService.getQtCheckItemList(groupid)));
      }
+
+     @DeleteMapping("/delete/{id}")
+     @ApiOperation(value = "删除检验方案")
+     @SysLog("删除检验方案")
+     public R<Boolean> reportDelete(@PathVariable("id") Integer id){
+        return R.success(qtReportService.reportDelete(id));
+     }
+
 }
