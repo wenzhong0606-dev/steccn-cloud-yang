@@ -75,4 +75,9 @@ public class QtItemCategory implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 是否查看标识：0否 1是
+     */
+    private Integer showFlag;
 }
