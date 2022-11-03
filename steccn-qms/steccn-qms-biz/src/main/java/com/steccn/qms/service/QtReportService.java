@@ -5,6 +5,8 @@ import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtAddReportDTO;
 
+import java.util.List;
+
 /**
 * @author 86178
 * @description 针对表【qt_report】的数据库操作Service
@@ -18,4 +20,6 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Integer add(QtAddReportDTO dto);
+
+    List<Integer> getGroupIdList(Long materialId, Integer checkType);
 }

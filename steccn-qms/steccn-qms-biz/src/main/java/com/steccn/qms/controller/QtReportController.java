@@ -9,10 +9,9 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,4 +26,11 @@ public class QtReportController {
     public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtAddReportDTO dto) {
         return R.success(qtReportService.add(dto));
     }
+
+     @GetMapping("/choosegroup")
+     @ApiOperation(value = "根据物料id以及检验类型选择检验分组")
+    public R<List<Integer>>getGroupIdList(@RequestParam("materialId") Long materialId ,
+                                     @RequestParam("checkType") Integer checkType){
+        return R.success(qtReportService.getGroupIdList(materialId,checkType));
+     }
 }
