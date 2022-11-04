@@ -64,6 +64,9 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
+    /**
+     * 动态时间
+     */
     String DYNAMIC_TIME_TODAY = "今天";
 
     String DYNAMIC_TIME_TOMORROW = "昨天";
@@ -101,7 +104,13 @@ public interface QtManagerConstant {
     final long hourSpace = 2;
 
 
-
+    /**
+     * 报表卡片名称长度限制
+     */
+    final int nameLengthUpLimit = 20;
+    final int nameLengthDownLimit = 1;
+    final int noteLengthUpLimit = 100;
+    final int noteLengthDownLimit = 1;
     /**
      * @desc 检验项 | 缺陷项类别枚举
      */
