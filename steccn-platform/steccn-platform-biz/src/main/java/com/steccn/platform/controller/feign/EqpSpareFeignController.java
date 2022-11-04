@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -58,5 +59,14 @@ public class EqpSpareFeignController {
             return R.success(Maps.newHashMap());
         }
         return R.success(eqpSpareService.listById(materialIds));
+    }
+
+    @PostMapping("/listByIdCh")
+    @ApiOperation("根据id查询备件的数据")
+    public R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> materialIds) {
+        if (CollUtil.isEmpty(materialIds)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(eqpSpareService.listByIdCh(materialIds));
     }
 }

@@ -122,10 +122,9 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.selectProductOrder(dto));
     }
 
-    @GetMapping("/productOrder/details/{id}")
+    @PostMapping("/productOrder/details/taskInfo")
     @ApiOperation(value = "根据生产订单号查询检验任务详情")
-    public R<Page<QtCheckTaskListVO>> selectProductDetails(@PathVariable String id){
-        //return R.success(qtCheckTaskService.pageProductOrder(id));
-        return null;
+    public R<Page<QtCheckProduceTaskVO>> selectProductDetails(@RequestBody QtCheckaProductTaskListDTO dto){
+        return R.success(qtCheckTaskService.pageProductOrder(dto));
     }
 }

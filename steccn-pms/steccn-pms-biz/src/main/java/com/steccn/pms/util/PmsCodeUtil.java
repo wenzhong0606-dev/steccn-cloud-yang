@@ -57,7 +57,10 @@ public class PmsCodeUtil {
      */
     public final static Integer NUM_BIT_1 = 1;
 
-
+    /**
+     * 编码前缀-领料单 ML
+     */
+    public final static String PREFIX_PMS_MATERIAL_REQUISITION = "ML";
 
     /**
      * 编码前缀-生产订单 PP
@@ -77,12 +80,6 @@ public class PmsCodeUtil {
      * 数字位数-8
      */
     public final static Integer DEFAULT_PADDING = 0;
-
-
-
-
-
-
 
 
     /**
@@ -126,7 +123,7 @@ public class PmsCodeUtil {
             finalValStr = 0 + finalValStr;
         }
         String s = LocalDate.now().toString().replaceAll(SHORT_LINE, "");
-        return prefix + s + finalValStr;
+        return prefix + SHORT_LINE + s + SHORT_LINE + finalValStr;
     }
 
     /**

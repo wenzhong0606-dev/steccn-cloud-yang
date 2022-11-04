@@ -6,7 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMaterialRequisitionInfo">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="organization" column="organization" jdbcType="OTHER"/>
+            <result property="organization" column="organization" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
             <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
             <result property="materialId" column="material_id" jdbcType="BIGINT"/>
             <result property="requireDate" column="require_date" jdbcType="DATE"/>

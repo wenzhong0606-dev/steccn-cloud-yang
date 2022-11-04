@@ -32,4 +32,9 @@ public interface FeignConstant {
      * 文件服务
      */
     String STECCN_MINIO_SERVICE_NAME = "steccn-minio";
+
+    /**
+     * 生产系统服务名称
+     */
+    String STECCN_PMS_SERVICE_NAME ="steccn-pms";
 }

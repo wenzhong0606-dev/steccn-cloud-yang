@@ -9,6 +9,7 @@ import io.swagger.models.auth.In;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -60,4 +61,6 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      * @return
      */
     Map<Long,EqpSpareVO>  listById(List<Long> materialIds);
+
+    Map<Long,String>  listByIdCh(Set<Long> materialIds);
 }

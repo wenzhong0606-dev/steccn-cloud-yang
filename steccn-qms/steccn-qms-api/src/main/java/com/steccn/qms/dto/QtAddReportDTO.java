@@ -93,7 +93,7 @@ public class QtAddReportDTO implements Serializable {
     private QtBaseIdNameDTO workshop;
 
     /**
-     * 产线产生
+     * 生产产线
      */
     private QtBaseIdNameDTO productLine;
 

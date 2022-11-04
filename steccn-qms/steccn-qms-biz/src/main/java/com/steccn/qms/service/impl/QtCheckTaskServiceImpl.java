@@ -74,6 +74,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Long add(QtAddCheckTaskDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
+        //如果新建检验类型为在线检，缺陷记录时段不允许跨班次;即8:00、20:00两个时间点
+        if (dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+          if (dto.getDefectStartTime() != null && dto.getDefectEndTime() != null ) {
+              if (dto.getDefectStartTime().getHour() > QtManagerConstant.beforeHour
+                      && dto.getDefectEndTime().getHour() > QtManagerConstant.afterHour) {
+                  throw new BusinessException("缺陷记录时段不允许跨班次");
+              }
+          }
+            Assert.notNull("缺陷记录时段不能为空");
+        }
+
         //状态待检验
         qtCheckTask.setStatus(0);
         if(dto.getOriginalId()!=null){
@@ -780,8 +791,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return page;
     }
 //TODO
+
+    /**
+     * 根据生产订单号查询产线，批次等信息
+     * @param id
+     * @return
+     */
     @Override
     public QtCheckTaskListVO productOrderInfo(String id) {
+        //remoteOfficeFeign.flatData();
+
         return null;
     }
 //TODO
@@ -791,8 +810,59 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     @Override
-    public Page<QtCheckProduceTaskVO> pageProductOrder(String id) {
-        return null;
+    public Page<QtCheckProduceTaskVO> pageProductOrder(QtCheckaProductTaskListDTO dto) {
+        if (dto.getProductOrder() == null){
+            throw new BusinessException("生产订单号不能为空");
+        }
+        MPJLambdaWrapper<QtCheckTask> productOrder = new MPJLambdaWrapper<QtCheckTask>()
+                .eq(QtCheckaProductTaskListDTO::getProductOrder,dto.getProductOrder());
+        if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
+            if(dto.getAscFlag()){
+                productOrder.last("ORDER BY FIELD(t.status,0,1,4,2,3)");
+            }else {
+                productOrder.last("ORDER BY FIELD(t.status,3,2,4,1,0)");
+            }
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
+            if (dto.getAscFlag()) {
+                productOrder.last("ORDER BY CONVERT(materialName using gbk) ASC");
+            } else {
+                productOrder.last("ORDER BY CONVERT(materialName using gbk) DESC");
+            }
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getArrivalTime);
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME.equals(dto.getSortField())) {
+            if (dto.getAscFlag()) {
+                productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) ASC");
+            } else {
+                productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) DESC");
+            }
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getProductOrder);
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH.equals(dto.getSortField())) {
+            if (dto.getAscFlag()) {
+                productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) ASC");
+            } else {
+                productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) DESC");
+            }
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getDefectStartTime);
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtRecheckTask::getOriginalCode);
+        }else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
+            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
+        } else {
+            //默认按照创建时间降序
+            productOrder.orderByDesc(true, QtCheckTask::getCreateTime);
+        }
+        IPage<QtCheckTaskListVO> productOrderPage = qtCheckTaskMapper.selectJoinPage(new Page<>(dto.getCurrent(), dto.getSize()), QtCheckTaskListVO.class, productOrder);
+        //3、处理返回数据
+        QtCheckProduceTaskVO qtCheckProduceTaskVO = new QtCheckProduceTaskVO();
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        BeanUtils.copyProperties(productOrderPage, qtCheckProduceTaskVO);
+        BeanUtils.copyProperties(qtCheckProduceTaskVO, page);
+        return page;
     }
 
     private Long currentMaxCode() {

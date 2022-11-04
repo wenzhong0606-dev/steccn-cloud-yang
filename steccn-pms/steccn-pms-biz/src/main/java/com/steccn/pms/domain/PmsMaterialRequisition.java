@@ -19,7 +19,7 @@ public class PmsMaterialRequisition implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -40,12 +40,12 @@ public class PmsMaterialRequisition implements Serializable {
     /**
      * 部门id
      */
-    private Long departmentId;
+    private Integer departmentId;
 
     /**
      * 仓库id
      */
-    private Long warehouseId;
+    private Integer warehouseId;
 
     /**
      * 关联单据

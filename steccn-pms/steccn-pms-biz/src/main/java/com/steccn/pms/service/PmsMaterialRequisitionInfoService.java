@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.MaterialRequisitionDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsMaterialRequisitionInfoService extends IService<PmsMaterialRequisitionInfo> {
 
+    /**
+     * 列表编辑
+     * @param materialRequisitionDTO
+     * @return
+     */
+    Boolean editList(MaterialRequisitionDTO materialRequisitionDTO);
 }

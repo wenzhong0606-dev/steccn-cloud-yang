@@ -1,8 +1,12 @@
 package com.steccn.pms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.MaterialRequisitionPageDTO;
+import com.steccn.pms.vo.MaterialRequisitionVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author yequan
@@ -13,6 +17,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsMaterialRequisitionMapper extends BaseMapper<PmsMaterialRequisition> {
 
+    /**
+     * 获取分页列表
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<MaterialRequisitionVO> pageList(Page page, @Param("dto") MaterialRequisitionPageDTO dto);
 }
 
 

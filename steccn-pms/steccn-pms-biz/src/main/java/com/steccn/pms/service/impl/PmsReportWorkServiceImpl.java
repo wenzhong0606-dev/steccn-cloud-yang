@@ -375,35 +375,36 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
             List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
-            Assert.notEmpty(messList, "物料消耗集合不能为空");
-            Set<String> storageSet = Sets.newHashSet();
-            for (MessMaterialConsumeDTO messDto : messList) {
-                storageSet.add(messDto.getWarehouseCode());
-                storageSet.add(messDto.getShelfCode());
-            }
-            Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
-            SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-            for (MessMaterialConsumeDTO messDto : messList) {
-                ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
-                BeanUtils.copyProperties(messDto, resDTO);
-                resDTO.setProduceOrderId(pmsProduceOrder.getId());
-                resDTO.setProcessId(pmsProduceOrderCraft.getId());
-                resDTO.setProcessName(pmsProduceOrderCraft.getName());
-                resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
-                resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
-                resDTO.setModuleId(messDto.getMaterialId());
-                EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
-                resDTO.setModuleName(eqpSpareVO.getName());
-                resDTO.setModuleCode(eqpSpareVO.getCode());
-                resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(),3));
-                resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
-                SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
-                resDTO.setWarehouseId(warehouse.getId());
-                resDTO.setWarehouseName(warehouse.getOfficeName());
-                SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
-                resDTO.setShelfId(shelf.getId());
-                resDTO.setShelfName(shelf.getOfficeName());
-                resList.add(resDTO);
+            if(CollUtil.isNotEmpty(messList)){
+                Set<String> storageSet = Sets.newHashSet();
+                for (MessMaterialConsumeDTO messDto : messList) {
+                    storageSet.add(messDto.getWarehouseCode());
+                    storageSet.add(messDto.getShelfCode());
+                }
+                Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
+                SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+                for (MessMaterialConsumeDTO messDto : messList) {
+                    ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
+                    BeanUtils.copyProperties(messDto, resDTO);
+                    resDTO.setProduceOrderId(pmsProduceOrder.getId());
+                    resDTO.setProcessId(pmsProduceOrderCraft.getId());
+                    resDTO.setProcessName(pmsProduceOrderCraft.getName());
+                    resDTO.setUnitId(unitMaterialMap.get(messDto.getMaterialId()));
+                    resDTO.setUnitName(sysDictMap.get(resDTO.getUnitId()));
+                    resDTO.setModuleId(messDto.getMaterialId());
+                    EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
+                    resDTO.setModuleName(eqpSpareVO.getName());
+                    resDTO.setModuleCode(eqpSpareVO.getCode());
+                    resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(),3));
+                    resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
+                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
+                    resDTO.setWarehouseId(warehouse.getId());
+                    resDTO.setWarehouseName(warehouse.getOfficeName());
+                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
+                    resDTO.setShelfId(shelf.getId());
+                    resDTO.setShelfName(shelf.getOfficeName());
+                    resList.add(resDTO);
+                }
             }
         }
         return resList;

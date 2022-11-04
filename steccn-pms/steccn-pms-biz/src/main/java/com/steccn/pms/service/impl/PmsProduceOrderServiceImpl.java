@@ -276,7 +276,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     }
                 });
                 //删除物料信息
-                pmsWorkOrderBomService.deleteBom(idSet,dto.getId());
+                pmsWorkOrderBomService.deleteBom(idSet, dto.getId());
                 pmsWorkOrderBomService.saveBatch(bomList);
             }
         }
@@ -638,6 +638,22 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return resMap;
     }
 
+    @Override
+    public Map<Integer, PmsProduceOrderDTO> listByLineIds(Set<Integer> ids) {
+        Map<Integer, PmsProduceOrderDTO> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(ids)) {
+            return map;
+        }
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getProductionLineId, ids).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()));
+        if (CollUtil.isNotEmpty(list)) {
+            List<PmsProduceOrderDTO> pmsProduceOrderDTOS = BeanUtil.copyToList(list, PmsProduceOrderDTO.class);
+            pmsProduceOrderDTOS.forEach(pmsProduceOrderDTO -> {
+                map.put(pmsProduceOrderDTO.getProductionLineId(), pmsProduceOrderDTO);
+            });
+        }
+        return map;
+    }
+
     /**
      * 查询订单
      */
@@ -718,7 +734,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8);
+                String substringVal = maxCodeModel.getCode().substring(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER.length() + PmsCodeUtil.NUM_BIT_8 + PmsCodeUtil.NUM_BIT_2);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

@@ -4,6 +4,9 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtAddReportDTO;
+import com.steccn.qms.vo.QtCheckItemListVO;
+
+import java.util.List;
 
 /**
 * @author 86178
@@ -18,4 +21,26 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Integer add(QtAddReportDTO dto);
+
+    /**
+     * 根据物料id以及检验类型选择检验分组
+     * @param materialId
+     * @param checkType
+     * @return
+     */
+    List<Integer> getGroupIdList(Long materialId, Integer checkType);
+
+    /**
+     * 根据检验分组id选择检验项
+     * @param groupid
+     * @return
+     */
+    List<QtCheckItemListVO> getQtCheckItemList(Integer groupid);
+
+    /**
+     * 根据id删除spc控制图卡片
+     * @param id
+     * @return
+     */
+    Boolean reportDelete(Integer id);
 }

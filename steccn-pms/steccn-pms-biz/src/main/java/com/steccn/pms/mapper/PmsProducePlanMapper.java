@@ -2,7 +2,12 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsProducePlan;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.vo.PmsProducePlanVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +18,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsProducePlanMapper extends BaseMapper<PmsProducePlan> {
 
+    List<PmsProducePlanVO> selectAllByPlanDate(@Param("monthDate") String monthDate);
 }
 
 
