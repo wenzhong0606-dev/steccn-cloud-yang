@@ -148,9 +148,13 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 throw new BusinessException("文件类型不支持,请使用模板进行导入");
             }
         }
+
         List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
         EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList)).sheet().doRead();
-        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList,updateFlag);
+
+        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+        Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
+        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList,updateFlag,spareCodeMap);
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -161,38 +165,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }
 
         planImportVO.setImportFlag(true);
-
-
-        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
-        List<String> planDateList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
-        List<LocalDate> localDateList = new ArrayList<>();
-        for (String planDate : planDateList) {
-            LocalDate localDate = LocalDate.parse(planDate, ISO_DATE);
-            localDateList.add(localDate);
-        }
-
-        Map<String, Long> map = pmMaterialService.selectIdByCode(codeList);
         List<PmsProducePlan> addList = new ArrayList<>();
         List<PmsProducePlan> updateList = new ArrayList<>();
 
-        //根据导入的日期查询数据
-        List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
-        //根据物料code查询物料信息
-        Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.mapByCode(codeList).getData();
-        HashMap<String, Long> updateMap = Maps.newHashMap();
-        //获取所有日期查询数据的物料id和物料code
-        for (PmsProducePlan pmsProducePlan : producePlanList) {
-            EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
-            if (!Objects.isNull(spareVO)){
-                updateMap.put(spareVO.getCode(),spareVO.getId());
-            }
-        }
+        //获取需要修改的物料信息
+        HashMap<String, Long> updateMap = getUpdateMap(dtoList, codeList);
 
         for (PmsProducePlanExcelDTO excelDTO : dtoList) {
             if (updateFlag.equals(0)) {
                 PmsProducePlan pmsProducePlan = new PmsProducePlan();
                 BeanUtils.copyProperties(excelDTO,pmsProducePlan);
-                pmsProducePlan.setMaterialId(map.get(excelDTO.getMaterialCode()));
+                pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
                 pmsProducePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(),ISO_DATE));
                 addList.add(pmsProducePlan);
             } else {
@@ -238,12 +221,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         EasyExcel.write(response.getOutputStream(), PmsProducePlanExcelDTO.class).sheet("模板").doWrite(excelDTOList);
     }
 
-    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag) {
+    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map) {
 
         List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
-        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
 
-        Map<String, Long> map = pmMaterialService.selectIdByCode(codeList);
         for (PmsProducePlanExcelDTO excelDTO : dtoList) {
             ProducePlanMsgVO planMsgVO = new ProducePlanMsgVO();
             List<String> errorMsgList = new ArrayList<>();
@@ -278,6 +259,31 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }
 
         return planMsgVOList;
+    }
+
+    private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList,List<String> codeList){
+        List<String> planDateList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+        List<LocalDate> localDateList = new ArrayList<>();
+        for (String planDate : planDateList) {
+            LocalDate localDate = LocalDate.parse(planDate, ISO_DATE);
+            localDateList.add(localDate);
+        }
+
+        //根据导入的日期查询数据
+        List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
+        //根据物料code查询物料信息
+        Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.mapByCode(codeList).getData();
+
+        HashMap<String, Long> updateMap = Maps.newHashMap();
+        //获取所有日期查询数据的物料id和物料code
+        for (PmsProducePlan pmsProducePlan : producePlanList) {
+            EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
+            if (!Objects.isNull(spareVO)){
+                updateMap.put(spareVO.getCode(),spareVO.getId());
+            }
+        }
+
+        return updateMap;
     }
 }
 
