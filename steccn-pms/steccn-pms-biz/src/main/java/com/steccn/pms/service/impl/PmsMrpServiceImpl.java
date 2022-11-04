@@ -1,9 +1,12 @@
 package com.steccn.pms.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.pms.domain.PmsMrp;
+import com.steccn.pms.dto.PmsMrpPageDTO;
 import com.steccn.pms.service.PmsMrpService;
 import com.steccn.pms.mapper.PmsMrpMapper;
+import com.steccn.pms.vo.PmsMrpVO;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +18,10 @@ import org.springframework.stereotype.Service;
 public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
     implements PmsMrpService{
 
+    @Override
+    public Page<PmsMrpVO> pageList(PmsMrpPageDTO dto) {
+        return null;
+    }
 }
 
 
