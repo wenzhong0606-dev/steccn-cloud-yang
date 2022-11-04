@@ -38,7 +38,7 @@ public class QtReportController {
         return R.success(qtReportService.getGroupIdList(materialId,checkType));
      }
 
-     @PostMapping("/{groupid}")
+     @GetMapping("/{groupid}")
      @ApiOperation("根据检验分组id选择检验项")
      public R<List<QtCheckItemListVO>> getQtCheckItemList(@PathVariable("groupid") Integer groupid){
         return R.success((qtReportService.getQtCheckItemList(groupid)));

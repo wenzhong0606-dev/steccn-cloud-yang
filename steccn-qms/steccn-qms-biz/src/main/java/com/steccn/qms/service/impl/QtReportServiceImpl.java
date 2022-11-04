@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -71,9 +73,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //创建检验方案分组id集合
         List<Integer> groupIdList= Lists.newArrayList();
         //遍历检验方案id,去检验方案分组表查询获取分组id并添加进分组id集合
-        collectCheckPlanId.forEach(collectId->{
-            Integer groupId = qtCheckPlanGroupService.getOne(new LambdaQueryWrapper<QtCheckPlanGroup>().eq(QtCheckPlanGroup::getPlanId, collectId)).getId();
-            groupIdList.add(groupId);
+        List<QtCheckPlanGroup> qtCheckPlanGroups = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>().in(QtCheckPlanGroup::getPlanId, collectCheckPlanId));
+        qtCheckPlanGroups.forEach(q->{
+            groupIdList.add(q.getId());
         });
         return groupIdList;
     }
@@ -94,10 +96,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
         //创建返回检验项的集合
         List<QtCheckItemListVO> qtCheckItemListVOS=Lists.newArrayList();
-        checkItemIds.forEach(checkItemId->{
+        List<QtCheckItem> qtCheckItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getId, checkItemIds));
+
+        qtCheckItems.forEach(q->{
             QtCheckItemListVO qtCheckItemListVO = new QtCheckItemListVO();
-            QtCheckItem qtCheckItem = qtCheckItemService.getOne(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getId, checkItemId));
-            BeanUtils.copyProperties(qtCheckItem,qtCheckItemListVO);
+            BeanUtils.copyProperties(q,qtCheckItemListVO);
             qtCheckItemListVOS.add(qtCheckItemListVO);
         });
         return qtCheckItemListVOS;
