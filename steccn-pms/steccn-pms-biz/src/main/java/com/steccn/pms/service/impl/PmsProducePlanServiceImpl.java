@@ -1,10 +1,12 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.date.DatePattern;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmMaterial;
 import com.steccn.pms.domain.PmsProducePlan;
@@ -167,6 +169,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         for (PmsProducePlanVO pmsProducePlanVO : producePlanVOList) {
             PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
             BeanUtils.copyProperties(pmsProducePlanVO,planExcelDTO);
+            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlanVO.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
             excelDTOList.add(planExcelDTO);
         }
 
@@ -175,7 +178,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         //防止中文乱码
         String fileName = URLEncoder.encode("生产月计划", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(excelDTOList);
+        EasyExcel.write(response.getOutputStream(), PmsProducePlanExcelDTO.class).sheet("模板").doWrite(excelDTOList);
     }
 
     private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList) {
