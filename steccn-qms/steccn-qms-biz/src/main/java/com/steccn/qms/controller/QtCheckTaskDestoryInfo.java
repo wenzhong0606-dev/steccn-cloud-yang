@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import com.steccn.qms.service.QtCheckTaskDestoryInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +14,10 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/qms/check/destoryInfo")
 @Slf4j
+
 public class QtCheckTaskDestoryInfo {
 
-    private final QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo;
+    private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
 
 
 }
