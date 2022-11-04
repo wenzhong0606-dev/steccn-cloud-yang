@@ -7,6 +7,8 @@ import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,5 +42,13 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
      * @return
      */
     ProducePlanImportVO excelImportData(PmExcelDTO dto) throws IOException;
+
+    /**
+     * excel导出
+     *
+     * @param request
+     * @param response
+     */
+    void excelExportData(HttpServletRequest request, HttpServletResponse response);
 
 }

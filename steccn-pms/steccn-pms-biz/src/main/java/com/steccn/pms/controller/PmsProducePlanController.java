@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -49,6 +51,12 @@ public class PmsProducePlanController {
     @PostMapping("/excelImportData")
     public R<ProducePlanImportVO> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
         return R.success(pmsProducePlanService.excelImportData(dto));
+    }
+
+    @ApiModelProperty("Excel导出")
+    @GetMapping("/excelExportData")
+    public void excelExportData(HttpServletRequest request, HttpServletResponse response) {
+        pmsProducePlanService.excelExportData(request,response);
     }
 
 }

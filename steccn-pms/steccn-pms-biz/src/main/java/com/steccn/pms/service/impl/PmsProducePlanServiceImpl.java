@@ -17,13 +17,17 @@ import com.steccn.pms.vo.PmsProducePlanVO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.pms.vo.ProducePlanMsgVO;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,9 +157,33 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return planImportVO;
     }
 
+    @SneakyThrows
+    @Override
+    public void excelExportData(HttpServletRequest request, HttpServletResponse response) {
+        String monthDate = request.getParameter("monthDate");
+
+        List<PmsProducePlanExcelDTO> excelDTOList = new ArrayList<>();
+        List<PmsProducePlanVO> producePlanVOList = this.baseMapper.selectAllByPlanDate(monthDate);
+        for (PmsProducePlanVO pmsProducePlanVO : producePlanVOList) {
+            PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
+            BeanUtils.copyProperties(pmsProducePlanVO,planExcelDTO);
+            excelDTOList.add(planExcelDTO);
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("生产月计划", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), PmsBillExcelDTO.class).sheet("模板").doWrite(excelDTOList);
+    }
+
     private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList) {
 
         List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
+        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+
+        Map<String, Long> map = pmMaterialService.selectIdByCode(codeList);
         for (PmsProducePlanExcelDTO excelDTO : dtoList) {
             ProducePlanMsgVO planMsgVO = new ProducePlanMsgVO();
             List<String> errorMsgList = new ArrayList<>();
@@ -172,8 +200,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             if (Objects.isNull(excelDTO.getQuantity())) {
                 errorMsgList.add("数量");
             }
-            List<PmMaterial> materialList = pmMaterialService.list(new LambdaQueryWrapper<PmMaterial>().eq(PmMaterial::getCode, excelDTO.getMaterialCode()));
-            if (CollectionUtils.isEmpty(materialList)) {
+            if (Objects.isNull(map.get(excelDTO.getMaterialCode()))) {
                 errorMsgList.add("物料信息不存在");
             }
             //获取当前行的错误信息
