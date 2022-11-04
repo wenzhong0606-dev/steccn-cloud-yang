@@ -3,6 +3,7 @@ package com.steccn.qms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.qms.domain.QtCheckTaskDestoryInfo;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author 86187
@@ -10,6 +11,7 @@ import com.steccn.qms.domain.QtCheckTaskDestoryInfo;
 * @createDate 2022-11-03 10:29:18
 * @Entity
 */
+@Mapper
 public interface QtCheckTaskDestoryInfoMapper extends BaseMapper<QtCheckTaskDestoryInfo> {
 
 }
