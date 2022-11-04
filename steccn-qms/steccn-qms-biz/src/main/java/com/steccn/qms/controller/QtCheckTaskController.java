@@ -112,14 +112,14 @@ public class QtCheckTaskController {
 
     @GetMapping("/productOrder/{id}")
     @ApiOperation(value = "生产订单号查询生产车间产线批次")
-    public R<QtCheckTaskListVO> productOrderInfo(@PathVariable String id){
+    public R<QtCheckTaskListVO> productOrderInfo(@PathVariable Integer id){
         return R.success(qtCheckTaskService.productOrderInfo(id));
     }
 
-    @PostMapping("/productOrder/info")
+    @PostMapping("/productOrder/{id}")
     @ApiOperation(value = "根据产线查询生产订单号")
-    public R<QtCheckTaskListVO> selectProductOrder(@RequestBody QtBaseIdNameDTO dto){
-        return R.success(qtCheckTaskService.selectProductOrder(dto));
+    public R<QtProduceOrderLineVO> selectProductOrder(@PathVariable Integer id){
+        return R.success(qtCheckTaskService.selectProductOrder(id));
     }
 
     @PostMapping("/productOrder/details/taskInfo")

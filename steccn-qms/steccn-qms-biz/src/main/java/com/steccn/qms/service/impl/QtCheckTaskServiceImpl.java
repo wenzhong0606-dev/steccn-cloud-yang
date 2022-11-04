@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -15,7 +16,10 @@ import com.nimbusds.jose.util.IntegerUtils;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -28,7 +32,6 @@ import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,6 +65,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyMapper qtCheckTaskCopyMapper;
 
     private final QtDefectiveItemMapper qtDefectiveItemMapper;
+    
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     /**
      * 新增
@@ -798,15 +803,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public QtCheckTaskListVO productOrderInfo(String id) {
-        //remoteOfficeFeign.flatData();
-
+    public QtCheckTaskListVO productOrderInfo(Integer id) {
         return null;
     }
 //TODO
+
+    /**
+     * 根据产线查询生产订单号,批次等信息
+     * @param id
+     * @return
+     */
     @Override
-    public QtCheckTaskListVO selectProductOrder(QtBaseIdNameDTO dto) {
-        return null;
+    public QtProduceOrderLineVO selectProductOrder(Integer id) {
+        QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
+        R<PmsProduceOrderVO> pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id);
+        BeanUtils.copyProperties(pmsProduceOrderVO,qtProduceOrderLineVO);
+        return qtProduceOrderLineVO;
     }
 
     @Override
@@ -814,8 +826,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (dto.getProductOrder() == null){
             throw new BusinessException("生产订单号不能为空");
         }
+        List checkTypeCodeList = new ArrayList<>();
+        //把检验类型为在线检,巡检,首检,化验抽检四种检验类型放入检查集合中
+        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
+        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
+        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode());
+        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         MPJLambdaWrapper<QtCheckTask> productOrder = new MPJLambdaWrapper<QtCheckTask>()
-                .eq(QtCheckaProductTaskListDTO::getProductOrder,dto.getProductOrder());
+                .selectAll(QtCheckTask.class)
+                //关联复检表
+                .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
+                .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
+                .eq(QtCheckTask::getProductOrder,dto.getProductOrder())
+                .in(QtCheckTask::getTaskType,checkTypeCodeList);
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
             productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
@@ -850,19 +873,31 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getDefectStartTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE.equals(dto.getSortField())) {
             productOrder.orderBy(true, dto.getAscFlag(), QtRecheckTask::getOriginalCode);
-        }else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
             productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
         } else {
             //默认按照创建时间降序
             productOrder.orderByDesc(true, QtCheckTask::getCreateTime);
         }
-        IPage<QtCheckTaskListVO> productOrderPage = qtCheckTaskMapper.selectJoinPage(new Page<>(dto.getCurrent(), dto.getSize()), QtCheckTaskListVO.class, productOrder);
-        //3、处理返回数据
-        QtCheckProduceTaskVO qtCheckProduceTaskVO = new QtCheckProduceTaskVO();
+        //配置分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        BeanUtils.copyProperties(productOrderPage, qtCheckProduceTaskVO);
-        BeanUtils.copyProperties(qtCheckProduceTaskVO, page);
-        return page;
+        //查询分页数据
+        IPage<QtCheckTask> resPage = page(page,productOrder);
+        //拷贝page信息
+        BeanUtils.copyProperties(resPage, page);
+        //处理返回数据
+        Page produceTaskpage = new Page<>(dto.getCurrent(), dto.getSize());
+        List<QtCheckProduceTaskVO> resRecords = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(resPage.getRecords())) {
+            for (QtCheckTask qtCheckTask : resPage.getRecords()) {
+                QtCheckProduceTaskVO vo = new QtCheckProduceTaskVO();
+                BeanUtils.copyProperties(qtCheckTask, vo);
+                resRecords.add(vo);
+            }
+        }
+        //设置数据
+        produceTaskpage.setRecords(resRecords);
+        return produceTaskpage;
     }
 
     private Long currentMaxCode() {

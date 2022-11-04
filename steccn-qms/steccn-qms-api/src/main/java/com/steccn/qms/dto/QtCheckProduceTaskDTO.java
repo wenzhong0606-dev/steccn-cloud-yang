@@ -29,25 +29,11 @@ public class QtCheckProduceTaskDTO extends BasePageDTO implements Serializable {
      */
     private Integer status;
 
-    /**
-     * 状态可传多个
-     */
-    private List<Integer> statusList;
 
     /**
      * 物料名称或者编码
      */
     private String materialNameOrCode;
-
-    /**
-     * 物料车间id
-     */
-    private Integer materialWorkshopId;
-
-    /**
-     * 生产车间id
-     */
-    private Integer productWorkshopId;
 
     /**
      * 检验结果
@@ -59,10 +45,6 @@ public class QtCheckProduceTaskDTO extends BasePageDTO implements Serializable {
      */
     private String productOrder;
 
-    /**
-     * 产线id
-     */
-    private Integer productLineId;
 
     /**
      * 生产批次
@@ -75,24 +57,19 @@ public class QtCheckProduceTaskDTO extends BasePageDTO implements Serializable {
     private String originalTaskCode;
 
     /**
-     * 客户id
-     */
-    private Integer customerId;
-
-    /**
      * 创建日期开始
      */
     private LocalDateTime createTimeStart;
 
     /**
-     * 创建日期结束
-     */
-    private LocalDateTime createTimeEnd;
-
-    /**
      * 创建人Id
      */
     private Integer createBy;
+
+    /**
+     * 创建人
+     */
+    private String createName;
 
     /**
      * 缺陷记录开始时间
@@ -103,5 +80,10 @@ public class QtCheckProduceTaskDTO extends BasePageDTO implements Serializable {
      * 缺陷记录结束时间
      */
     private LocalDateTime defectEndTime;
+
+    /**
+     * 备注
+     */
+    private String note;
 
 }
