@@ -16,7 +16,6 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmMaterial;
-import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.domain.PmsMrp;
 import com.steccn.pms.domain.PmsProducePlan;
 import com.steccn.pms.dto.*;
@@ -83,7 +82,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         Map<String, List<PmsProducePlanVO>> groupBy = producePlanVOList
                 .stream()
-                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialId()));
+                .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
 
@@ -161,9 +160,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
         EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList)).sheet().doRead();
 
-        List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
-        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap);
+        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList,updateFlag,spareCodeMap);
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -185,7 +184,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 PmsProducePlan pmsProducePlan = new PmsProducePlan();
                 BeanUtils.copyProperties(excelDTO, pmsProducePlan);
                 pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
-                pmsProducePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE));
+                pmsProducePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(),ISO_DATE));
+                pmsProducePlan.setStatus(0);
                 addList.add(pmsProducePlan);
             } else {
                 //根据code获取id
@@ -202,8 +202,16 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
 
         }
-        updateBatchById(updateList);
-        saveBatch(addList);
+        if (CollectionUtils.isNotEmpty(addList)) {
+            if (!saveBatch(addList)) {
+                throw new BusinessException("生产月计划导入新增失败");
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            if (!updateBatchById(updateList)) {
+                throw new BusinessException("生产月计划修改失败");
+            }
+        }
 
         return planImportVO;
     }
@@ -270,8 +278,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return planMsgVOList;
     }
 
-    private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList, List<String> codeList) {
-        List<String> planDateList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+    private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList,List<String> codeList){
+        List<String> planDateList=dtoList.stream().map(PmsProducePlanExcelDTO::getPlanDate).collect(Collectors.toList());
         List<LocalDate> localDateList = new ArrayList<>();
         for (String planDate : planDateList) {
             LocalDate localDate = LocalDate.parse(planDate, ISO_DATE);
