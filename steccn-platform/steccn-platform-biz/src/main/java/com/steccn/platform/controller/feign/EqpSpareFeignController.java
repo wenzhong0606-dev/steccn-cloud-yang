@@ -69,4 +69,13 @@ public class EqpSpareFeignController {
         }
         return R.success(eqpSpareService.listByIdCh(materialIds));
     }
+
+    @RequestMapping("/mapByCode")
+    @ApiOperation("根据code查询备件的数据,key为id")
+    public R<Map<Long, EqpSpareVO>> mapByCode(@RequestBody List<String> codeList) {
+        if (CollUtil.isEmpty(codeList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(eqpSpareService.mapByCode(codeList));
+    }
 }

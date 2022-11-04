@@ -115,6 +115,20 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         }
         return resMap;
     }
+
+    @Override
+    public Map<Long, EqpSpareVO> mapByCode(List<String> codeList) {
+        Map<Long, EqpSpareVO> resMap = Maps.newHashMap();
+        Collection<SysEqpSpare> spareList = baseMapper.listByCode(codeList);
+        if (CollUtil.isEmpty(spareList)) {
+            return resMap;
+        }
+        List<EqpSpareVO> spareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
+        for (EqpSpareVO spareVO : spareVOList) {
+            resMap.put(spareVO.getId(), spareVO);
+        }
+        return resMap;
+    }
 }
 
 
