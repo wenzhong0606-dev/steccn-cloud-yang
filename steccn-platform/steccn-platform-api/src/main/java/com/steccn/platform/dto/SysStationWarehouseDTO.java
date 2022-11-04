@@ -18,17 +18,18 @@ public class SysStationWarehouseDTO extends BasePageDTO implements Serializable 
 
     private static final long serialVersionUID = 1L;
 
+    @NotNull(groups = {UpdateGroup.class}, message = "id不能为空")
     private Long id;
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "货架不能为空")
+    @NotNull(groups = {UpdateGroup.class}, message = "货架不能为空")
     @ApiModelProperty("货架id")
     private Integer shelfId;
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "工位不能为空")
+    @NotNull(groups = {UpdateGroup.class}, message = "工位不能为空")
     @ApiModelProperty("工位id")
     private Long stationId;
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "仓库不能为空")
+    @NotNull(groups = {UpdateGroup.class}, message = "仓库不能为空")
     @ApiModelProperty("仓库id")
     private Integer warehouseId;
 

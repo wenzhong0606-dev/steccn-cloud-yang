@@ -3,10 +3,16 @@ package com.steccn.platform.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysStationWarehouse;
+import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
+import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.service.SysStationWarehouseService;
 import com.steccn.platform.mapper.SysStationWarehouseMapper;
+import com.steccn.platform.vo.SysOfficeVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +23,12 @@ import java.util.Objects;
  * @description 针对表【sys_station_warehouse(工位配置)】的数据库操作Service实现
  * @createDate 2022-11-02 15:28:34
  */
+@RequiredArgsConstructor
 @Service
 public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWarehouseMapper, SysStationWarehouse>
         implements SysStationWarehouseService {
+
+    private final SysOfficeService sysOfficeService;
 
     @Override
     public Page<SysStationWarehouse> pageList(SysStationWarehouseDTO dto) {
@@ -30,7 +39,14 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
     }
 
     @Override
-    public Boolean add(SysStationWarehouseDTO dto) {
+    public Boolean add(SysStationWarehouseAddDTO dto) {
+        SysOfficeVO sysOfficeVO = sysOfficeService.parentOffice(dto.getShelfId());
+        if (!SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())){
+            throw new BusinessException("货架节点错误");
+        }
+        if (!dto.getWarehouseId().equals(sysOfficeVO.getId())) {
+            throw new BusinessException("仓库和货架不构成父子节点");
+        }
         SysStationWarehouse sysStationWarehouse = new SysStationWarehouse();
         BeanUtils.copyProperties(dto,sysStationWarehouse);
         return save(sysStationWarehouse);

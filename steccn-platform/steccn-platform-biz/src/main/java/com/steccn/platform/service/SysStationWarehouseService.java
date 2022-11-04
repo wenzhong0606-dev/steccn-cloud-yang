@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.domain.SysStationWarehouse;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
 
 /**
@@ -24,7 +25,7 @@ public interface SysStationWarehouseService extends IService<SysStationWarehouse
      * @param dto
      * @return
      */
-    Boolean add(SysStationWarehouseDTO dto);
+    Boolean add(SysStationWarehouseAddDTO dto);
 
     /**
      * 编辑工位配置

@@ -6,6 +6,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.SysStationWarehouse;
+import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
 import com.steccn.platform.service.SysStationWarehouseService;
 import io.swagger.annotations.Api;
@@ -38,7 +39,7 @@ public class SysStationWarehouseController {
     @SysLog("新增工位配置")
     @PostMapping
     @ApiOperation("新增工位配置")
-    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody SysStationWarehouseDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody SysStationWarehouseAddDTO dto) {
         return R.success(sysStationWarehouseService.add(dto));
     }
 
