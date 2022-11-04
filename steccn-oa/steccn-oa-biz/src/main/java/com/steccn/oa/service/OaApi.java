@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import com.steccn.oa.dto.OaCompanyRequestDTO;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaSsoTokenParam;
 import com.steccn.oa.dto.OaUserParam;
@@ -74,4 +75,13 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String getAllOaUser(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取OA公司数据
+     * @param headers 传参需要放入header中
+     * @return
+     */
+    @GetMapping(value = "/api/hrm/base/getHrmSearchTree")
+    @ResponseBody
+    String getCompany(@RequestHeader MultiValueMap<String,String> headers,@RequestParam OaCompanyRequestDTO dto);
 }

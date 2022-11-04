@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.vo.OaCompanyVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -245,5 +246,30 @@ public class OaService {
             return oaUserIdAndName;
         }
     }
+
+    /**
+     * OA获取公司列表
+     * @param id
+     * @return
+     */
+//    public List<OaCompanyVO> getCompany(Integer id){
+//        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+//        //把Token放入header中
+//        headers.set("appid",OaConstant.OA_API_APPID);
+//        headers.set("token",this.getApiToken().getToken());
+//        headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+//        OaCompanyRequestDTO dto = new OaCompanyRequestDTO();
+//        String result;
+//        //若id为null则默认
+//        if(id == null){
+//            result = oaApi.getCompany(headers,dto);
+//        }else {
+//            dto.setShowCanceled("");
+//            dto.setRightStr(dto.getRightStr());
+////            dto.getType()
+//        }
+//
+//    }
+
 
 }
