@@ -59,4 +59,11 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
      * @return
      */
     Boolean order(PmsProducePlanOrderDTO dto);
+
+    /**
+     * 模板下载
+     *
+     * @param response
+     */
+    void download(HttpServletResponse response);
 }

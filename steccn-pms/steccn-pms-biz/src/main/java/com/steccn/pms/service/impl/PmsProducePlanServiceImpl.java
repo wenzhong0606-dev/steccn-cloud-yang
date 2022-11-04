@@ -333,6 +333,18 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return pmsMrpService.add(pmsMrpList);
     }
 
+    @SneakyThrows
+    @Override
+    public void download(HttpServletResponse response) {
+        List<PmsProducePlan> producePlanList = new ArrayList<>();
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("生产月计划模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), PmsProducePlanExcelDTO.class).sheet("模板").doWrite(producePlanList);
+    }
+
 }
 
 

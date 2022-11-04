@@ -69,4 +69,13 @@ public class PmsProducePlanController {
         return R.success(pmsProducePlanService.order(dto));
     }
 
+    /**
+     * 下载月生产计划模板
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) {
+        pmsProducePlanService.download(response);
+    }
+
 }
