@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanExcelDTO;
+import com.steccn.pms.dto.PmsProducePlanOrderDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -51,4 +53,10 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
      */
     void excelExportData(HttpServletRequest request, HttpServletResponse response);
 
+    /**
+     * 下达
+     * @param dto
+     * @return
+     */
+    Boolean order(PmsProducePlanOrderDTO dto);
 }
