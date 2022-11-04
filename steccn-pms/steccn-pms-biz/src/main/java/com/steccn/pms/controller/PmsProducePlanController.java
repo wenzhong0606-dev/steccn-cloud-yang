@@ -1,10 +1,12 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanExcelDTO;
+import com.steccn.pms.dto.PmsProducePlanOrderDTO;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -17,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author chenhuan
@@ -57,6 +60,22 @@ public class PmsProducePlanController {
     @GetMapping("/excelExportData")
     public void excelExportData(HttpServletRequest request, HttpServletResponse response) {
         pmsProducePlanService.excelExportData(request,response);
+    }
+
+    @ApiModelProperty("计划下达")
+    @PutMapping("/order")
+    @SysLog("计划下达")
+    public R<Boolean> order(@RequestBody PmsProducePlanOrderDTO dto){
+        return R.success(pmsProducePlanService.order(dto));
+    }
+
+    /**
+     * 下载月生产计划模板
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) {
+        pmsProducePlanService.download(response);
     }
 
 }

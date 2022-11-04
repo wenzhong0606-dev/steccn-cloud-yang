@@ -1,8 +1,10 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.SubstrateDayReportDTO;
 import com.steccn.pms.service.ReportService;
+import com.steccn.pms.vo.EnergyCountVO;
 import com.steccn.pms.vo.SubstrateDayReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -25,5 +27,11 @@ public class ReportController {
     @ApiOperation("基片日报表")
     public R<SubstrateDayReportVO> substrateDayReport(@RequestBody SubstrateDayReportDTO dto) {
         return R.success(reportService.substrateDayReport(dto));
+    }
+
+    @PostMapping("/consume")
+    @ApiOperation("能耗水电油气")
+    public R<EnergyCountVO> consume(@RequestBody EnergyCountDTO dto) {
+        return R.success(reportService.consume(dto));
     }
 }
