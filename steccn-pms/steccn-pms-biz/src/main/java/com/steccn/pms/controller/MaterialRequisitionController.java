@@ -17,7 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 类说明
+ * 生产领料单控制器
  *
  * @author Mongknife
  * @date 2022/11/3

@@ -15,7 +15,7 @@ import java.util.List;
 @ApiModel("基片日报表vo")
 public class SubstrateDayReportListVO implements Serializable {
 
-    @ApiModelProperty("类型")
+    @ApiModelProperty("类型 0-数据 1-产线合计 2-车间合计 3-总合计")
     private Integer type;
 
     @ApiModelProperty("车间id")
@@ -33,7 +33,13 @@ public class SubstrateDayReportListVO implements Serializable {
     @ApiModelProperty("规格")
     private List<BaseQuantityVO> specList;
 
-    @ApiModelProperty("早班，晚班，合计")
-    private List<ProduceQuantityVO> classList;
+    @ApiModelProperty("早班")
+    private ProduceQuantityVO morning;
+
+    @ApiModelProperty("夜班")
+    private ProduceQuantityVO night;
+
+    @ApiModelProperty("总计")
+    private ProduceQuantityVO total;
 
 }

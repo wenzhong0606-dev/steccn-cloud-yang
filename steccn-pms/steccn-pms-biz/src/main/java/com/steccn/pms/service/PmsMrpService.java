@@ -1,7 +1,10 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsMrp;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsMrpPageDTO;
+import com.steccn.pms.vo.PmsMrpVO;
 
 /**
 * @author yequan
@@ -10,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface PmsMrpService extends IService<PmsMrp> {
 
+    /**
+     * 物料需求计划分页列表
+     * @param dto
+     * @return
+     */
+    Page<PmsMrpVO> pageList(PmsMrpPageDTO dto);
 }

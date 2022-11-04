@@ -16,5 +16,5 @@ import java.util.List;
 public class ProduceQuantityVO implements Serializable {
 
     @ApiModelProperty("数量vo")
-    private List<BaseQuantityVO> quantityVOList;
+    private List<String> quantityVOList;
 }

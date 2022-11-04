@@ -63,4 +63,11 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
     Map<Long,EqpSpareVO>  listById(List<Long> materialIds);
 
     Map<Long,String>  listByIdCh(Set<Long> materialIds);
+
+    /**
+     * 根据编码批量查询,返回id为key
+     * @param codeList
+     * @return
+     */
+    Map<Long,EqpSpareVO> mapByCode(List<String> codeList);
 }

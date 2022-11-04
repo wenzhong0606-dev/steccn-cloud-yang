@@ -1,7 +1,9 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.pms.domain.PmBillOfMaterial;
 import com.steccn.pms.domain.PmMaterial;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -46,6 +49,19 @@ public class PmMaterialServiceImpl extends ServiceImpl<PmMaterialMapper, PmMater
     @Override
     public void deleteByMaterialId(Long id) {
         pmMaterialMapper.deleteByMaterialId(id);
+    }
+
+    @Override
+    public Map<String, Long> selectIdByCode(List<String> codes) {
+        Map<String, Long> resMap = Maps.newHashMap();
+
+        LambdaQueryWrapper<PmMaterial> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(PmMaterial::getCode,codes);
+        List<PmMaterial> pmMaterialList = list(queryWrapper);
+        for (PmMaterial pmMaterial : pmMaterialList) {
+            resMap.put(pmMaterial.getCode(), pmMaterial.getId());
+        }
+        return resMap;
     }
 }
 

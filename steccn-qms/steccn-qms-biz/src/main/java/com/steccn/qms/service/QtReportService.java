@@ -1,10 +1,10 @@
 package com.steccn.qms.service;
 
-import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtAddReportDTO;
+import com.steccn.qms.dto.QtReportDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtReportVO;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public interface QtReportService extends IService<QtReport> {
      * @param dto
      * @return
      */
-    Integer add(QtAddReportDTO dto);
+    Integer add(QtReportDTO dto);
 
     /**
      * 根据物料id以及检验类型选择检验分组
@@ -43,4 +43,18 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Boolean reportDelete(Integer id);
+
+    /**
+     * 根据id查询Spc控制图卡片
+     * @param id
+     * @return
+     */
+    QtReportVO getQtReport(Integer id);
+
+    /**
+     * 编辑SPC报表
+     * @param qtReportDTO
+     * @return
+     */
+    Boolean edit(QtReportDTO qtReportDTO);
 }

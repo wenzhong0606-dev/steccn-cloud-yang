@@ -29,6 +29,18 @@ public class LocalDateUtil {
     }
 
     /**
+     * 获取日期时间字符串
+     *
+     * @param localDate 需要转化的日期
+     * @param pattern       时间格式
+     * @return String 日期时间字符串，例如 2022-11-01
+     */
+    public static String localDateFormat(LocalDate localDate, String pattern) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
+        return dateTimeFormatter.format(localDate);
+    }
+
+    /**
      * 获取指定日期开始时间的日期
      *
      * @param localDate 指定日期

@@ -15,7 +15,7 @@ import lombok.Data;
  * 报表
  * @TableName qt_report
  */
-@TableName(value ="qt_report")
+@TableName(value ="qt_report",autoResultMap = true)
 @Data
 public class QtReport implements Serializable {
     /**

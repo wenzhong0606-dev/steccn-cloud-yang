@@ -19,6 +19,9 @@ import java.util.List;
 public interface PmsProducePlanMapper extends BaseMapper<PmsProducePlan> {
 
     List<PmsProducePlanVO> selectAllByPlanDate(@Param("monthDate") String monthDate);
+
+    List<PmsProducePlan> selectAllByPlanDateAndCode(@Param("planDate") String planDate,@Param("materialCode") String materialCode);
+
 }
 
 

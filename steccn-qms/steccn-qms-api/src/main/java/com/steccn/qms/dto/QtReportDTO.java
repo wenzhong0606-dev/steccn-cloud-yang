@@ -3,7 +3,9 @@ package com.steccn.qms.dto;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -11,23 +13,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-public class QtAddReportDTO implements Serializable {
+public class QtReportDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     /**
      * 主键id
      */
+    @NotNull(groups = {UpdateGroup.class},message = "编辑卡片类型时id不能为空")
     private Integer id;
 
     /**
      * 报表卡片类型
      */
-    @NotEmpty(message="报表卡片类型不能为空",groups = {InsertGroup.class, UpdateGroup.class})
+    @NotBlank(message="报表卡片类型不能为空",groups = {InsertGroup.class, UpdateGroup.class})
     private String reportCardType;
 
     /**
      * 表报卡片名称
      */
-    @NotEmpty(message="报表卡片名称不能为空",groups = {InsertGroup.class, UpdateGroup.class})
+    @NotBlank(groups = {InsertGroup.class, UpdateGroup.class}, message = "名称不能为空")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "名称长度不超过20个中文")
     private String name;
 
     /**
@@ -45,7 +49,7 @@ public class QtAddReportDTO implements Serializable {
     /**
      * 粒度:小时、天、周、月、季度、年
      */
-    @NotNull(message = "粒度不能为空",groups = {InsertGroup.class, UpdateGroup.class})
+    @NotBlank(message = "粒度不能为空",groups = {InsertGroup.class, UpdateGroup.class})
     private String granularity;
 
     /**
@@ -85,7 +89,7 @@ public class QtAddReportDTO implements Serializable {
     /**
      * 下限
      */
-    private BigDecimal dowmLimit;
+    private BigDecimal downLimit;
 
     /**
      * 生产车间
@@ -115,6 +119,7 @@ public class QtAddReportDTO implements Serializable {
     /**
      * 备注
      */
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")
     private String note;
 
     /**
@@ -130,7 +135,7 @@ public class QtAddReportDTO implements Serializable {
     /**
      * 更新人id
      */
-    private Long updateBy;
+    private String updateBy;
 
     /**
      * 更新人名称

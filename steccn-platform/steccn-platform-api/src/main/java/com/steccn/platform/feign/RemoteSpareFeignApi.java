@@ -52,4 +52,13 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/listByIdCh")
     @ApiOperation("根据id查询备件的信息")
     R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> materialIds);
+
+    /**
+     * 根据codeList查询备件的信息
+     * @param codeList 物料codeList
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/mapByCode")
+    @ApiOperation("根据code查询备件的数据,key为id")
+    R<Map<Long, EqpSpareVO>> mapByCode(@RequestBody List<String> codeList);
 }
