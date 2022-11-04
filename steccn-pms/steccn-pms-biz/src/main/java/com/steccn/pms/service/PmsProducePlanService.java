@@ -2,8 +2,12 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsProducePlan;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
+import com.steccn.pms.dto.PmsProducePlanExcelDTO;
+import com.steccn.pms.vo.ProducePlanImportVO;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -28,5 +32,13 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
      * @return
      */
     Boolean addOrEditBatch(PmsProducePlanDTO dto);
+
+    /**
+     * excel导入
+     *
+     * @param dto
+     * @return
+     */
+    ProducePlanImportVO excelImportData(PmExcelDTO dto) throws IOException;
 
 }
