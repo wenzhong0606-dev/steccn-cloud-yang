@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class PmsProducePlanExcelDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ExcelIgnore
     private Integer rowIndex;
 
     @ExcelProperty("物料编码")
