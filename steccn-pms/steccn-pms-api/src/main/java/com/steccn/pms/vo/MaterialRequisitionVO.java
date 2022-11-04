@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("生产领料单VO")
-public class MaterialRequisitionVO {
+public class MaterialRequisitionVO implements Serializable {
 
     @ApiModelProperty("主键")
     private Long id;
