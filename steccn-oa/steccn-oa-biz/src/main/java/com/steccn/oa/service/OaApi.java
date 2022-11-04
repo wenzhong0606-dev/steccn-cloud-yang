@@ -1,9 +1,6 @@
 package com.steccn.oa.service;
 
-import com.steccn.oa.dto.OaCompanyRequestDTO;
-import com.steccn.oa.dto.OaLoginParam;
-import com.steccn.oa.dto.OaSsoTokenParam;
-import com.steccn.oa.dto.OaUserParam;
+import com.steccn.oa.dto.*;
 import feign.Headers;
 import feign.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -70,7 +67,7 @@ public interface OaApi {
 
     /**
      * 调用oa
-     * @param oaUserParam MultiValueMap
+     * @param headers
      * @return
      */
     @PostMapping(value = "/api/public/browser/complete/1",headers = {"content-type=application/x-www-form-urlencoded"})
@@ -95,4 +92,24 @@ public interface OaApi {
     @GetMapping(value = "/api/public/browser/data/4")
     @ResponseBody
     String getCompanyTree(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取公司下人员的sessionKey
+     * @param headers
+     * @param id
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/organization/getResourceSearchList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getCompanyEmpSessionKey(@RequestHeader MultiValueMap<String,String> headers,@RequestBody Integer id);
+
+    /**
+     * 通过sessionKey获取数据
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/organization/getResourceSearchList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getDataBySessionKey(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaDataKeyDTO dto);
 }
