@@ -17,6 +17,9 @@ public interface PmManagerConstant {
 
     String FILE_EXTENSION_XLSX = ".xlsx";
 
+    /**
+     * 工位code
+     */
     String STATE_13 = "13";
 
     /**

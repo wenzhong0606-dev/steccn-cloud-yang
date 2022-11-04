@@ -1,6 +1,8 @@
 package com.steccn.pms.service;
 
+import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.SubstrateDayReportDTO;
+import com.steccn.pms.vo.EnergyCountVO;
 import com.steccn.pms.vo.SubstrateDayReportVO;
 
 /**
@@ -15,4 +17,11 @@ public interface ReportService {
      * @return SubstrateDayReportVO
      */
     SubstrateDayReportVO substrateDayReport(SubstrateDayReportDTO dto);
+
+    /**
+     * 能耗水电油气
+     * @param dto dto
+     * @return
+     */
+    EnergyCountVO consume(EnergyCountDTO dto);
 }
