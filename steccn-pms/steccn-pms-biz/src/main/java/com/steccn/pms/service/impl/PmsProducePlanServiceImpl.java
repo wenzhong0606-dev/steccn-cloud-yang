@@ -57,7 +57,6 @@ import static java.time.format.DateTimeFormatter.ISO_DATE;
 public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper, PmsProducePlan>
         implements PmsProducePlanService {
 
-    private final PmMaterialService pmMaterialService;
     private final PmsMrpService pmsMrpService;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
