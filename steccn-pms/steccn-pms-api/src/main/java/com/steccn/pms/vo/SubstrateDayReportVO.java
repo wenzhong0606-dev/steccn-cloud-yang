@@ -1,31 +1,32 @@
 package com.steccn.pms.vo;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author yequan
- * @desc 基片日报
  */
+@ApiModel("基片日报表返回vo")
 @Data
-@ApiModel("基片日报表vo")
 public class SubstrateDayReportVO implements Serializable {
 
-    private Integer type ;
+    @ApiModelProperty("数据集合")
+    private List<SubstrateDayReportListVO> dataList;
 
-    private Integer workshopId;
+    @ApiModelProperty("车间种类数组")
+    private List<Integer> workshopNumList;
 
-    private String workshopName;
+    @ApiModelProperty("产线总类数组")
+    private List<Integer> productNumList;
 
-    private Integer productLineId;
+    @ApiModelProperty("规格数")
+    private Integer specsNum;
 
-    private String productLineName;
-
-    private MaterialSpecVO materialSpecVO;
-
-//    private List<>
-
+    @ApiModelProperty("白班夜班合计统计项数量")
+    private Integer dataNum;
 
 }
