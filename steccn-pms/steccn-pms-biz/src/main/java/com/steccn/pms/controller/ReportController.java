@@ -26,7 +26,4 @@ public class ReportController {
     public R<SubstrateDayReportVO> substrateDayReport(@RequestBody SubstrateDayReportDTO dto) {
         return R.success(reportService.substrateDayReport(dto));
     }
-
-
-
 }
