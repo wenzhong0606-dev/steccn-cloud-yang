@@ -35,4 +35,7 @@ public interface OaConstant {
     String OA_SYSTEM_USERID = "WgG/JdOb8YMGopow65ELcljv8PZoef5XktK+3IU6RBn5OSq4dHoX+qbFdGquwRp+OPabHlMZUh35q0KLrQMB42w7ucxzQ5+XG6gI7g9HKhxSux8DlTlRHqhfmg2oUJG9FhCN8eA/DoOeNi68JOX1wqbO7QZOKzPN5wT9XCfsCRs3bU92HDzzVmqK28sVMBH18IAQq+t0tu+tpRLDPFVy+R4OmzbkU06mXxyF49OEtLW9cYUh6xFdnydagqjafby4eGToxIE3nnQ9FvFYmzcJz4iHIZ+dmn1MS5BbTFDTMki1s3jHyp8mZWWuEnosOD/ZdP01zVbsDCDGTVUWUzCY6A==";
     String OA_WEAVER_SITE = "http://61.177.139.244:8887";
     String OA_RIGHT_STRING = "HrmResourceAdd:Add";
+    Integer YES = 1;
+    Integer NO = 0;
+    Integer NONE = -1;
 }

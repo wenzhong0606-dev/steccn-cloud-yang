@@ -34,5 +34,5 @@ public class OaCompanyVO implements Serializable {
     /**
      * 子节点
      */
-    private List<OaCompanyVO> sub;
+    private List<OaCompanyVO> subs;
 }

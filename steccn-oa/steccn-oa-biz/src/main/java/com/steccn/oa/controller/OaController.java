@@ -7,6 +7,7 @@ import com.steccn.oa.dto.*;
 
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
+import com.steccn.oa.vo.OaCompanyVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -94,5 +95,11 @@ public class OaController {
         }else {
             return R.failure("userInfo为空");
         }
+    }
+
+    @GetMapping("/company/{id}")
+    @ApiOperation(value = "OA获取公司数据")
+    public R<List<OaCompanyVO>> getOaCompany(@PathVariable Integer id ){
+        return R.success(oaService.getCompany(id));
     }
 }

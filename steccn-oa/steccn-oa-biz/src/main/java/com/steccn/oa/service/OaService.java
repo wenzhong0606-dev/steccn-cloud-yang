@@ -1,5 +1,6 @@
 package com.steccn.oa.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.steccn.oa.constant.OaConstant;
@@ -252,24 +253,38 @@ public class OaService {
      * @param id
      * @return
      */
-//    public List<OaCompanyVO> getCompany(Integer id){
-//        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-//        //把Token放入header中
-//        headers.set("appid",OaConstant.OA_API_APPID);
-//        headers.set("token",this.getApiToken().getToken());
-//        headers.set("userid",OaConstant.OA_SYSTEM_USERID);
-//        OaCompanyRequestDTO dto = new OaCompanyRequestDTO();
-//        String result;
-//        //若id为null则默认
-//        if(id == null){
-//            result = oaApi.getCompany(headers,dto);
-//        }else {
-//            dto.setShowCanceled("");
-//            dto.setRightStr(dto.getRightStr());
-////            dto.getType()
-//        }
-//
-//    }
+    public List<OaCompanyVO> getCompany(Integer id){
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        //把Token放入header中
+        headers.set("appid",OaConstant.OA_API_APPID);
+        headers.set("token",this.getApiToken().getToken());
+        headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+        OaCompanyRequestDTO dto = new OaCompanyRequestDTO();
+        List<OaCompanyVO> vos = new ArrayList<>();
+        String result;
+        //若id不为-1则正常调用，否则返回二级数据
+        if(!id.equals(OaConstant.NONE)){
+            //oa数据
+            dto.setShowCanceled("");
+            dto.setRightStr(OaConstant.OA_RIGHT_STRING);
+            dto.setType(OaConstant.YES);
+            dto.setId(id);
+            dto.setIsVirtual(OaConstant.NO);
+            dto.setKeyword("");
+            dto.setVirtualCompanyid(OaConstant.YES);
+            dto.setIsLoadSubDepartment(OaConstant.YES);
+            result = oaApi.getCompany(headers,dto);
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS);
+            vos = jsonArray.toJavaList(OaCompanyVO.class);
+        }else {
+            result = oaApi.getCompanyTree(headers);
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            OaCompanyVO vo = jsonObject.getJSONObject(OaConstant.OA_JSON_DATAS).toJavaObject(OaCompanyVO.class);
+            vos.add(vo);
+        }
+        return vos;
+    }
 
 
 }

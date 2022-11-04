@@ -5,7 +5,9 @@ import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaSsoTokenParam;
 import com.steccn.oa.dto.OaUserParam;
 import feign.Headers;
+import feign.Param;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -77,11 +79,20 @@ public interface OaApi {
     String getAllOaUser(@RequestHeader MultiValueMap<String,String> headers);
 
     /**
-     * 获取OA公司数据
+     * 获取OA公司下级数据
      * @param headers 传参需要放入header中
      * @return
      */
     @GetMapping(value = "/api/hrm/base/getHrmSearchTree")
     @ResponseBody
-    String getCompany(@RequestHeader MultiValueMap<String,String> headers,@RequestParam OaCompanyRequestDTO dto);
+    String getCompany(@RequestHeader MultiValueMap<String,String> headers, @SpringQueryMap OaCompanyRequestDTO dto);
+
+    /**
+     * 获取现有公司树
+     * @param headers
+     * @return
+     */
+    @GetMapping(value = "/api/public/browser/data/4")
+    @ResponseBody
+    String getCompanyTree(@RequestHeader MultiValueMap<String,String> headers);
 }

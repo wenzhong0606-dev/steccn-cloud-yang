@@ -24,7 +24,7 @@ public class OaCompanyRequestDTO implements Serializable {
 
     private Integer isVirtual;
 
-    private String keywords;
+    private String keyword;
 
     private Integer virtualCompanyid;
 
