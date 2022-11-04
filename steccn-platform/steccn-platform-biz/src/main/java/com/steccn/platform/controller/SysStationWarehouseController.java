@@ -9,6 +9,7 @@ import com.steccn.platform.domain.SysStationWarehouse;
 import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
 import com.steccn.platform.service.SysStationWarehouseService;
+import com.steccn.platform.vo.SysStationWarehouseVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class SysStationWarehouseController {
 
     @PostMapping("/page")
     @ApiOperation("工位配置列表")
-    public R<Page<SysStationWarehouse>> pageList(@RequestBody SysStationWarehouseDTO dto) {
+    public R<Page<SysStationWarehouseVO>> pageList(@RequestBody SysStationWarehouseDTO dto) {
         return R.success(sysStationWarehouseService.pageList(dto));
     }
 

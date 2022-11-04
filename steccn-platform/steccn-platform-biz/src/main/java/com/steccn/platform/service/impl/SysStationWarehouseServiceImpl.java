@@ -12,11 +12,13 @@ import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.service.SysStationWarehouseService;
 import com.steccn.platform.mapper.SysStationWarehouseMapper;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysStationWarehouseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -31,31 +33,55 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
     private final SysOfficeService sysOfficeService;
 
     @Override
-    public Page<SysStationWarehouse> pageList(SysStationWarehouseDTO dto) {
+    public Page<SysStationWarehouseVO> pageList(SysStationWarehouseDTO dto) {
+
+
         LambdaQueryWrapper<SysStationWarehouse> queryWrapper = new LambdaQueryWrapper<SysStationWarehouse>();
         queryWrapper.eq(SysStationWarehouse::getStationId, dto.getStationId());
+        Page<SysStationWarehouse> page = page(new Page<>(dto.getCurrent(), dto.getSize()), queryWrapper);
+        Page<SysStationWarehouseVO> voPage = new Page<>();
+        BeanUtils.copyProperties(page,voPage);
 
-        return page(new Page<>(dto.getCurrent(), dto.getSize()), queryWrapper);
+        Set<Integer> warehouseIdSet = page.getRecords().stream().map(SysStationWarehouse::getWarehouseId).collect(Collectors.toSet());
+        Set<Integer> shelfIdSet = page.getRecords().stream().map(SysStationWarehouse::getShelfId).collect(Collectors.toSet());
+
+        Map<Integer, SysOfficeVO> warehouseMap = sysOfficeService.listById(warehouseIdSet);
+        Map<Integer, SysOfficeVO> shelfIdMap = sysOfficeService.listById(shelfIdSet);
+
+        List<SysStationWarehouseVO> sysStationWarehouseVOList = new ArrayList<>();
+
+        for (SysStationWarehouse sysStationWarehouse : page.getRecords()) {
+            SysOfficeVO warehouse = warehouseMap.get(sysStationWarehouse.getWarehouseId());
+            SysOfficeVO shelf = shelfIdMap.get(sysStationWarehouse.getShelfId());
+
+            SysStationWarehouseVO sysStationWarehouseVO = new SysStationWarehouseVO();
+            sysStationWarehouseVO.setId(sysStationWarehouse.getId());
+            sysStationWarehouseVO.setWarehouseName(warehouse.getOfficeName());
+            sysStationWarehouseVO.setShelfName(shelf.getOfficeName());
+            sysStationWarehouseVOList.add(sysStationWarehouseVO);
+        }
+        voPage.setRecords(sysStationWarehouseVOList);
+        return voPage;
     }
 
     @Override
     public Boolean add(SysStationWarehouseAddDTO dto) {
         SysOfficeVO sysOfficeVO = sysOfficeService.parentOffice(dto.getShelfId());
-        if (!SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())){
+        if (!SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())) {
             throw new BusinessException("货架节点错误");
         }
         if (!dto.getWarehouseId().equals(sysOfficeVO.getId())) {
             throw new BusinessException("仓库和货架不构成父子节点");
         }
         SysStationWarehouse sysStationWarehouse = new SysStationWarehouse();
-        BeanUtils.copyProperties(dto,sysStationWarehouse);
+        BeanUtils.copyProperties(dto, sysStationWarehouse);
         return save(sysStationWarehouse);
     }
 
     @Override
     public Boolean edit(SysStationWarehouseDTO dto) {
         SysStationWarehouse sysStationWarehouse = new SysStationWarehouse();
-        BeanUtils.copyProperties(dto,sysStationWarehouse);
+        BeanUtils.copyProperties(dto, sysStationWarehouse);
         return updateById(sysStationWarehouse);
     }
 }

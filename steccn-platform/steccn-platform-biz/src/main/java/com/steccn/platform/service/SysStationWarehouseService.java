@@ -5,6 +5,7 @@ import com.steccn.platform.domain.SysStationWarehouse;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
+import com.steccn.platform.vo.SysStationWarehouseVO;
 
 /**
 * @author yequan
@@ -18,7 +19,7 @@ public interface SysStationWarehouseService extends IService<SysStationWarehouse
      * @param dto
      * @return
      */
-    Page<SysStationWarehouse> pageList(SysStationWarehouseDTO dto);
+    Page<SysStationWarehouseVO> pageList(SysStationWarehouseDTO dto);
 
     /**
      * 新增工位配置
