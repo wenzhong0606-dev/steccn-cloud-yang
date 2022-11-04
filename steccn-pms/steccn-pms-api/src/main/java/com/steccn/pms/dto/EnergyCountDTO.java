@@ -13,7 +13,11 @@ import java.io.Serializable;
 @ApiModel("能耗统计dto")
 public class EnergyCountDTO implements Serializable {
 
-    private Integer date;
+    @ApiModelProperty("时间范围类型")
+    private Integer dateRangeType;
+
+    @ApiModelProperty("生产车间id")
+    private Integer workshopId;
 
 
 }
