@@ -698,6 +698,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         //查询是否绑定了物料
         if (!weatherBindMaterial(id)) {
@@ -714,7 +715,7 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
             }
             //删除检验项
             if(CollUtil.isNotEmpty(groups)){
-                qtCheckPlanGroupItemService.remove(new LambdaQueryWrapper<QtCheckPlanGroupItem>().in(QtCheckPlanGroupItem::getGroupId,groups));
+                qtCheckPlanGroupItemService.remove(new LambdaQueryWrapper<QtCheckPlanGroupItem>().in(QtCheckPlanGroupItem::getGroupId,groupIds));
             }
             return removeById(id);
         } else {
