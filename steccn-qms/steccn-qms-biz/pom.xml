@@ -113,6 +113,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-log</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-pms-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
