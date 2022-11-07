@@ -2,9 +2,6 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.PmsProducePlanDetailsDTO;
-import com.steccn.pms.dto.PmsPullForceDTO;
-import com.steccn.pms.dto.PmsPullForceDetailsDTO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;

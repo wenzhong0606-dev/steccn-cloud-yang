@@ -1,15 +1,15 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.PmsProducePlanDTO;
-import com.steccn.pms.dto.PmsPullForceDTO;
-import com.steccn.pms.dto.PmsPullForceDetailsDTO;
+
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -40,7 +40,7 @@ public class PmsPullForceController {
 
     @ApiOperation("拉引量详情批量编辑")
     @PutMapping
-    public R<Boolean> editBatch(@RequestBody List<PmsPullForceEditDTO> dtoList) {
+    public R<Boolean> editBatch(@Validated(UpdateGroup.class) @RequestBody List<PmsPullForceEditDTO> dtoList) {
         return R.success(pmsPullForceService.editBatch(dtoList));
     }
 }
