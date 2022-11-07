@@ -7,10 +7,13 @@ import com.steccn.pms.domain.PmsReportWorkConsume;
 import com.steccn.pms.dto.ProcessReportWorkConsumeDTO;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
 import com.steccn.pms.mapper.PmsReportWorkConsumeMapper;
+import com.steccn.pms.vo.EnergyGroupListVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yequan
@@ -33,6 +36,12 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             }
             saveBatch(insertList);
         }
+    }
+
+    @Override
+    public List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
+        List<EnergyGroupListVO> groupList = this.baseMapper.energyGroup(productLineIdList, dateRangeList);
+        return Objects.isNull(groupList) ? Lists.newArrayList() : groupList;
     }
 }
 

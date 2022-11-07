@@ -178,26 +178,4 @@ public class LocalDateUtil {
 
         return firstAndLastDateList;
     }
-
-    public static void main(String[] args) {
-        System.out.println(LocalDate.now());
-        System.out.println(getStartTimeOfDayStr(LocalDate.now()));
-        System.out.println(getEndTimeOfDayStr(LocalDate.now()));
-
-        System.out.println(getFirstDayOfWeekStr(LocalDate.now()));
-        System.out.println(getLastDayOfWeekStr(LocalDate.now()));
-
-        System.out.println(getFirstDayOfMonthStr(LocalDate.now()));
-        System.out.println(getLastDayOfMonthStr(LocalDate.now()));
-
-
-        System.out.println(getFirstDayOfYearStr(LocalDate.now()));
-        System.out.println(getLastDayOfYearStr(LocalDate.now()));
-
-        System.out.println(getFirstAndLastDate(0));
-        System.out.println(getFirstAndLastDate(1));
-        System.out.println(getFirstAndLastDate(2));
-        System.out.println(getFirstAndLastDate(3));
-        System.out.println(getFirstAndLastDate(4));
-    }
 }

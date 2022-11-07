@@ -14,6 +14,15 @@ import java.util.Set;
 public interface PmReportConstant {
 
     /**
+     * 水电油气 bar标识定义
+     */
+    String ELECTRIC = "electric";
+    String WATER = "water";
+    String OIL = "oil";
+    String GAS = "gas";
+    String STR_BAR = "bar";
+
+    /**
      * 时间范围 本日，本周，本月
      */
     @Getter
@@ -24,6 +33,19 @@ public interface PmReportConstant {
         private final Integer code;
 
         private final String name;
+
+        /**
+         * 所有的类型
+         *
+         * @return
+         */
+        public static Set<Integer> all() {
+            Set<Integer> all = Sets.newHashSet();
+            for (DateRangeTypeEnum value : DateRangeTypeEnum.values()) {
+                all.add(value.getCode());
+            }
+            return all;
+        }
     }
 
     /**
@@ -40,6 +62,7 @@ public interface PmReportConstant {
 
         /**
          * 所有的类型
+         *
          * @return
          */
         public static Set<Integer> all() {

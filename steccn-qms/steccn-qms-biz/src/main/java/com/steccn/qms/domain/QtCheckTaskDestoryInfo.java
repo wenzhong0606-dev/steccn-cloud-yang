@@ -20,7 +20,7 @@ public class QtCheckTaskDestoryInfo implements Serializable {
      * 主键id
      */
     @TableId(value = "id", type = IdType.AUTO)
-    private Object id;
+    private Long id;
 
     /**
      * 任务id
