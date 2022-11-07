@@ -30,6 +30,6 @@ public class FurtherProduceReportListVO implements Serializable {
     private List<String> specList;
 
     @ApiModelProperty("工序信息")
-    private List<FurtherValueVO> module;
+    private List<FurtherValueStrVO> module;
 
 }

@@ -14,6 +14,7 @@ import java.util.List;
 @ApiModel("深加工value的视图对象")
 public class FurtherValueVO implements Serializable {
 
-    @ApiModelProperty("value的值")
-    private List<String> value;
+    @ApiModelProperty("深加工valueStr的视图对象")
+    private List<FurtherValueStrVO> value;
+
 }

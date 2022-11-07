@@ -34,29 +34,13 @@ public class ReportController {
     @PostMapping("/fur/produce")
     @ApiOperation("深加工日报表-产量")
     public R<FurtherProduceReportVO> furtherProduceDayReport(@RequestBody PmsDayReportDTO dto) {
-        FurtherProduceReportVO vo = new FurtherProduceReportVO();
-        List<FurtherProduceReportListVO> dataList = Lists.newArrayList();
-        FurtherProduceReportListVO dataVo = new FurtherProduceReportListVO();
-
-        List<FurtherValueVO> furtherValueVOList = Lists.newArrayList();
-        furtherValueVOList.add(new FurtherValueVO());
-        dataVo.setModule(furtherValueVOList);
-
-        dataList.add(dataVo);
-        vo.setDataList(dataList);
-        FurtherReportHeaderVO headerVO = new FurtherReportHeaderVO();
-        headerVO.setSpecList(new BaseReportHeaderVO());
-        List<BaseReportHeaderVO> headerVOList = Lists.newArrayList();
-        headerVOList.add(new BaseReportHeaderVO());
-        headerVO.setModule(headerVOList);
-        vo.setHeader(headerVO);
-        return R.success(vo);
+        return R.success();
     }
 
     @PostMapping("/fur/ingredient")
     @ApiOperation("深加工日报表-原料耗料")
-    public R<SubstrateDayReportVO> furtherIngredientDayReport(@RequestBody PmsDayReportDTO dto) {
-        return R.success(reportService.substrateDayReport(dto));
+    public R<FurtherIngredientReportVO> furtherIngredientDayReport(@RequestBody PmsDayReportDTO dto) {
+        return R.success();
     }
 
     @PostMapping("/consume")
