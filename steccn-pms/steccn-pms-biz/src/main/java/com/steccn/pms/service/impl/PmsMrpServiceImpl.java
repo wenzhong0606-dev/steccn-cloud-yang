@@ -48,9 +48,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 
     @Override
     public Boolean add(List<PmsMrp> list) {
-        //1.保存主数据
-        saveBatch(list);
-        //2.处理从数据
+        //1.处理数据
         List<PmsMrpInfo> pmsMrpInfos = Lists.newArrayList();
         Set<Long> materialIds = Sets.newHashSet();
         list.forEach(pmsMrp -> {
@@ -63,8 +61,9 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         SysDictVO inventoryType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
         SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_SAFETY_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
         //5.处理数据
+        //5.1保存主数据
+        saveBatch(list);
         list.forEach(pmsMrp -> {
-            //5.1 处理库存
             PmsMrpInfo mrpInventory = new PmsMrpInfo();
             MesMaterialInventoryDTO inventoryDTO = materialInventoryMap.getOrDefault(pmsMrp.getMaterialId(), mesMaterialInventoryDTO);
             mrpInventory.setAvailableQuantity(inventoryDTO.getAvailableQuantity());
@@ -72,15 +71,33 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             mrpInventory.setMrpId(pmsMrp.getId());
             mrpInventory.setMrpTypeId(inventoryType.getId());
             pmsMrpInfos.add(mrpInventory);
-            //5.2 处理安全库存
+            //处理安全库存
             PmsMrpInfo mrpSafety = new PmsMrpInfo();
             mrpSafety.setQuantity(BigDecimal.ZERO);
+            //todo 安全库存暂定为O 需计算扣除安全库存后的可用库存数量
+            mrpSafety.setAvailableQuantity(BigDecimal.ZERO);
             mrpInventory.setMrpDate(LocalDate.now());
             mrpSafety.setMrpId(pmsMrp.getId());
             mrpSafety.setMrpTypeId(safetyType.getId());
             pmsMrpInfos.add(mrpSafety);
+            //安全库存小于0，则创建计划订单数据
+            if (mrpInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) < 0) {
+//                createPlanOrder()
+            }
+//            createPlanOrder()
         });
         return pmsMrpInfoService.saveBatch(pmsMrpInfos);
+    }
+
+    PmsMrpInfo createPlanOrder(BigDecimal quantity, BigDecimal availableQuantity, Long mrpId) {
+        SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_PLANNED_ORDER, PmManagerConstant.MRP_TYPE)).get();
+        PmsMrpInfo planOrder = new PmsMrpInfo();
+        planOrder.setMrpTypeId(safetyType.getId());
+        planOrder.setQuantity(quantity);
+        planOrder.setMrpId(mrpId);
+        planOrder.setAvailableQuantity(availableQuantity);
+//        planOrder.se
+        return planOrder;
     }
 }
 
