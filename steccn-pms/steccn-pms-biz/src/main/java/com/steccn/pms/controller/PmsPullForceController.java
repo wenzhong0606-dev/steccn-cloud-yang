@@ -33,7 +33,7 @@ public class PmsPullForceController {
 
     @ApiOperation("拉引量详情")
     @GetMapping("/details")
-    public R<PmsPullForceDetailsVO> details(@RequestBody PmsPullForceDetailsDTO dto) {
+    public R<List<PmsPullForceDetailsVO>> details(@RequestBody PmsPullForceDetailsDTO dto) {
         return R.success(pmsPullForceService.details(dto));
     }
 

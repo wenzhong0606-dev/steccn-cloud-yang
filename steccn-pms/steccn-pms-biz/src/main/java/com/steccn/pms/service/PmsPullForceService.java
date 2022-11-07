@@ -32,7 +32,7 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @param dto
      * @return
      */
-    PmsPullForceDetailsVO details(PmsPullForceDetailsDTO dto);
+    List<PmsPullForceDetailsVO> details(PmsPullForceDetailsDTO dto);
 
     /**
      * 拉引量批量编辑
