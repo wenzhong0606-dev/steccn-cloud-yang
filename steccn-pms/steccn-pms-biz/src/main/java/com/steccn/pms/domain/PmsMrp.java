@@ -27,6 +27,11 @@ public class PmsMrp implements Serializable {
     private Long materialId;
 
     /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
      * 状态
      */
     private Integer status;

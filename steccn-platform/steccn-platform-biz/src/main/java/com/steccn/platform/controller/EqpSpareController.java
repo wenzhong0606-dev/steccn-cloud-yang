@@ -1,9 +1,11 @@
 package com.steccn.platform.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SpareDTO;
+import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.Api;
@@ -49,6 +51,7 @@ public class EqpSpareController {
         }
         return R.success(eqpSpareService.listByCode(codeList));
     }
+
     @RequestMapping("/listById")
     @ApiOperation("根据id查询备件的数据")
     public R<Map<Long, EqpSpareVO>> listById(@RequestBody List<Long> materialIds) {
@@ -58,5 +61,10 @@ public class EqpSpareController {
         return R.success(eqpSpareService.listById(materialIds));
     }
 
+    @PostMapping
+    @ApiOperation("获取备件分页列表")
+    public R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO) {
+        return R.success(eqpSpareService.listPage(sparePageDTO));
+    }
 
 }

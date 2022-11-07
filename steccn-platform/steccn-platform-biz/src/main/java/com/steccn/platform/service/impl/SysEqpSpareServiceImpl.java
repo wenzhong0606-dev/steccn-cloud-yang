@@ -3,12 +3,18 @@ package com.steccn.platform.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
+import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.service.SysDictService;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -32,6 +38,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         implements SysEqpSpareService {
 
     private final SysEqpSpareMapper sysEqpSpareMapper;
+    private final SysDictService sysDictService;
 
     @Override
     public List<EqpSpareVO> listSpares(String name) {
@@ -128,6 +135,30 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             resMap.put(spareVO.getId(), spareVO);
         }
         return resMap;
+    }
+
+    @Override
+    public Page<EqpSpareVO> listPage(SparePageDTO sparePageDTO) {
+        //1.自定义查询条件
+        LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName());
+        //2.定义分页对象
+        Page page = new Page<>(sparePageDTO.getCurrent(), sparePageDTO.getSize());
+        //3.查询分页数据
+        IPage resPage = page(page, eq);
+        //4.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //5.拷贝返回的信息
+        List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(resPage.getRecords(), EqpSpareVO.class);
+        //6.处理数据
+        Set<Long> dictIdSet = Sets.newHashSet();
+        eqpSpareVOList.forEach(eqpSpareVO -> {
+            dictIdSet.add(eqpSpareVO.getProcurementTypeId());
+        });
+        Map<Long, String> longStringMap = sysDictService.listByIdCh(dictIdSet);
+        eqpSpareVOList.forEach(eqpSpareVO -> {
+            eqpSpareVO.setProcurementTypeName(longStringMap.get(eqpSpareVO.getProcurementTypeId()));
+        });
+        return page.setRecords(eqpSpareVOList);
     }
 }
 

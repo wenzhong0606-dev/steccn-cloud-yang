@@ -34,4 +34,10 @@ public class EqpSpareVO implements Serializable {
     @ApiModelProperty("单位")
     private String unit;
 
+    @ApiModelProperty("采购类型id")
+    private Long procurementTypeId;
+
+    @ApiModelProperty("采购类型名称")
+    private String procurementTypeName;
+
 }

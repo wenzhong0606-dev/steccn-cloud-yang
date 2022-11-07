@@ -139,6 +139,19 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         return resMap;
     }
 
+    @Override
+    public Map<String, SysDictVO> listByCodes(Set<String> codes) {
+        Map<String, SysDictVO> resMap = Maps.newHashMap();
+        List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getCode, codes));
+        if (CollUtil.isNotEmpty(sysDictList)) {
+            List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                resMap.put(sysDictVO.getCode(), sysDictVO);
+            }
+        }
+        return resMap;
+    }
+
 
     /**
      * 根据list递归构造一颗树

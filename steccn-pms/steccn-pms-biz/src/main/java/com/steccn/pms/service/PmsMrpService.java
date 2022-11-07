@@ -23,10 +23,10 @@ public interface PmsMrpService extends IService<PmsMrp> {
      */
     Page<PmsMrpVO> pageList(PmsMrpPageDTO dto);
 
-    /**
-     * 添加物料需求计划信息
-     * @param list
-     * @return
-     */
-    Boolean add(List<PmsMrp> list);
+//    /**
+//     * 添加物料需求计划信息
+//     * @param list
+//     * @return
+//     */
+//    Boolean add(List<PmsMrp> list);
 }

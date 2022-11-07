@@ -1,9 +1,11 @@
 package com.steccn.platform.controller.feign;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SpareDTO;
+import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
@@ -33,13 +35,13 @@ public class EqpSpareFeignController {
 
     @ApiOperation("获取备件列表")
     @GetMapping("/searchSpares")
-    public R<Map<Long, EqpSpareVO>> searchSpares(@RequestParam("name")String name, @RequestParam("code") String code) {
-        return R.success(eqpSpareService.searchSpares(name,code));
+    public R<Map<Long, EqpSpareVO>> searchSpares(@RequestParam("name") String name, @RequestParam("code") String code) {
+        return R.success(eqpSpareService.searchSpares(name, code));
     }
 
     @ApiOperation("根据编码获取备件")
     @GetMapping("/getByCode")
-    public R<EqpSpareVO> getByCode(@RequestParam("code")String code){
+    public R<EqpSpareVO> getByCode(@RequestParam("code") String code) {
         return R.success(eqpSpareService.getByCode(code));
     }
 
@@ -77,5 +79,11 @@ public class EqpSpareFeignController {
             return R.success(Maps.newHashMap());
         }
         return R.success(eqpSpareService.mapByCode(codeList));
+    }
+
+    @PostMapping
+    @ApiOperation("获取备件分页列表")
+    public R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO) {
+        return R.success(eqpSpareService.listPage(sparePageDTO));
     }
 }
