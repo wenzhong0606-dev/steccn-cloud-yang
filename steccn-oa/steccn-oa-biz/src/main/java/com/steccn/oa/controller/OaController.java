@@ -9,6 +9,7 @@ import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
 import com.steccn.oa.vo.OaCompanyVO;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaToDoWorkflowVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -112,4 +113,9 @@ public class OaController {
         return R.success(oaService.getEmpByCondition(dto));
     }
 
+    @ApiOperation(value = "根据部门和名字获取Emp数据")
+    @PostMapping("/workflow/todoList")
+    public R<List<OaToDoWorkflowVO>> getOaEmp(@RequestBody OaToDoWorkFlowDTO dto){
+        return R.success(oaService.getToDoList(dto));
+    }
 }

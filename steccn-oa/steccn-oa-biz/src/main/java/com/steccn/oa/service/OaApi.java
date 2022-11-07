@@ -2,7 +2,6 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.dto.*;
 import feign.Headers;
-import feign.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.util.MultiValueMap;
@@ -112,4 +111,14 @@ public interface OaApi {
     @PostMapping(value = "/api/ec/dev/table/datas",headers = {"content-type=application/x-www-form-urlencoded"})
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     String getDataBySessionKey(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaDataKeyDTO dto);
+
+    /**
+     * 获取待办数据
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getToDoWorkflowRequestList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
 }

@@ -3,10 +3,12 @@ package com.steccn.oa.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaCompanyVO;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaToDoWorkflowVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -297,6 +299,19 @@ public class OaService {
         String result = oaApi.getDataBySessionKey(headers,dataKey);
         JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
+    }
+
+    /**
+     * 获取待办数据
+     */
+    public List<OaToDoWorkflowVO> getToDoList(OaToDoWorkFlowDTO dto){
+        dto.setUserId(SecurityUtils.getUser().getUserId().toString());
+        dto.setPageNo(OaConstant.YES);
+        //默认8条数据
+        dto.setPageSize(8);
+        String result = oaApi.getWorkflow(this.setHeaders(),dto);
+        List<OaToDoWorkflowVO> vos = JSONArray.parseArray(result).toJavaList(OaToDoWorkflowVO.class);
         return vos;
     }
 
