@@ -64,6 +64,7 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
+    String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME ="finishedTime";
     /**
      * 动态时间
      */
@@ -202,6 +203,24 @@ public interface QtManagerConstant {
     enum QtMaterialStatusEnum{
         DISABLE(0,"停用"),
         ENABLE(1,"启用");
+
+        private Integer code;
+        private String name;
+    }
+
+    /**
+     * 粒度
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtSPCGranularityEnum{
+        //粒度 小时 天 周 月 季度 年
+        HOUR(0,"小时"),
+        DAY(1,"天"),
+        WEEK(2,"周"),
+        MONTH(3,"月"),
+        QUARTER(4,"季度"),
+        YEAR(5,"年");
 
         private Integer code;
         private String name;

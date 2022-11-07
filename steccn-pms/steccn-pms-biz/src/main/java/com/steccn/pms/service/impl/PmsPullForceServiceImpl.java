@@ -5,15 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.dto.PmsProducePlanExcelDTO;
-import com.steccn.pms.dto.PmsPullForceDTO;
-import com.steccn.pms.dto.PmsPullForceDetailsDTO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.mapper.PmsPullForceMapper;
@@ -44,10 +40,10 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
-    public List<PmsPullForceVO> list(PmsPullForceDTO dto) {
+    public List<PmsPullForceVO> list(Integer workshopId, String monthDate) {
         List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, dto.getWorkshopId())
-                .like(PmsPullForce::getPullForceDate, dto.getMonthDate() + "%"));
+                .eq(PmsPullForce::getWorkshopId, workshopId)
+                .like(PmsPullForce::getPullForceDate, monthDate));
 
         //根据日期分组
         Map<LocalDate, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getPullForceDate));
@@ -88,10 +84,10 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
-    public List<PmsPullForceDetailsVO> details(PmsPullForceDetailsDTO dto) {
+    public List<PmsPullForceDetailsVO> details(Integer workshopId, String pullForceDate) {
         List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, dto.getWorkshopId())
-                .eq(PmsPullForce::getPullForceDate, dto.getPullForceDate()));
+                .eq(PmsPullForce::getWorkshopId, workshopId)
+                .eq(PmsPullForce::getPullForceDate, pullForceDate));
 
         //根据产线分组
         Map<Integer, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));

@@ -2,13 +2,11 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.PmsProducePlanDetailsDTO;
-import com.steccn.pms.dto.PmsPullForceDTO;
-import com.steccn.pms.dto.PmsPullForceDetailsDTO;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -21,18 +19,18 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
     /**
      * 拉引量列表
      *
-     * @param dto
+     * @param workshopId
      * @return
      */
-    List<PmsPullForceVO> list(PmsPullForceDTO dto);
+    List<PmsPullForceVO> list(Integer workshopId, String monthDate);
 
     /**
      * 拉引量详情
      *
-     * @param dto
+     * @param workshopId
      * @return
      */
-    List<PmsPullForceDetailsVO> details(PmsPullForceDetailsDTO dto);
+    List<PmsPullForceDetailsVO> details(Integer workshopId, String pullForceDate);
 
     /**
      * 拉引量批量编辑

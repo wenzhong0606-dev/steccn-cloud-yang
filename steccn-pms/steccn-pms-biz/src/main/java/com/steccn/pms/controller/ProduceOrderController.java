@@ -17,6 +17,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -152,5 +153,11 @@ public class ProduceOrderController {
     @ApiOperation("根据产线查询当前正在执行订单信息")
     public R<Map<Integer, PmsProduceOrderDTO>> listByLineIds(@RequestBody Set<Integer> ids){
         return R.success(pmsProduceOrderService.listByLineIds(ids));
+    }
+
+    @PostMapping("/track/report/list")
+    @ApiOperation("订单跟踪计划列表")
+    public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto){
+        return R.success(pmsProduceOrderService.trackReportList(dto));
     }
 }

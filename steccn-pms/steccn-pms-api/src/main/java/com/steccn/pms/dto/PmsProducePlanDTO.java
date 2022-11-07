@@ -1,7 +1,10 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +19,7 @@ public class PmsProducePlanDTO implements Serializable {
 
     private List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList;
     private String materialCode;
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "物料id不能为空")
     private Long materialId;
     private String materialName;
     private BigDecimal total;

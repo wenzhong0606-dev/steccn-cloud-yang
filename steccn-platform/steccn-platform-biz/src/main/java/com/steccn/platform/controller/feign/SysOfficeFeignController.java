@@ -8,6 +8,7 @@ import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,5 +82,4 @@ public class SysOfficeFeignController {
     public R<SysOfficeVO> parent(@PathVariable("id") Integer id) {
         return R.success(sysOfficeService.parentOffice(id));
     }
-
 }

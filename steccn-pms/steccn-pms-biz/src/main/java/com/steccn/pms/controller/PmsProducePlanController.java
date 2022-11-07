@@ -2,6 +2,7 @@ package com.steccn.pms.controller;
 
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
@@ -40,13 +41,13 @@ public class PmsProducePlanController {
 
     @ApiOperation("月计划批量新增")
     @PostMapping
-    public R<Boolean> addBatch(@RequestBody PmsProducePlanDTO dto) {
+    public R<Boolean> addBatch(@Validated(InsertGroup.class) @RequestBody PmsProducePlanDTO dto) {
         return R.success(pmsProducePlanService.addOrEditBatch(dto));
     }
 
     @ApiOperation("月计划批量编辑")
     @PutMapping
-    public R<Boolean> editBatch(@RequestBody PmsProducePlanDTO dto) {
+    public R<Boolean> editBatch(@Validated(UpdateGroup.class) @RequestBody PmsProducePlanDTO dto) {
         return R.success(pmsProducePlanService.addOrEditBatch(dto));
     }
 

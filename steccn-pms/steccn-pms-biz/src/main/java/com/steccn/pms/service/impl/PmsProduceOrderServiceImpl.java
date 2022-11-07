@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -652,6 +653,21 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             });
         }
         return map;
+    }
+
+    @Override
+    public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
+        Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()),dto.getProductLineList());
+        produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
+            BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
+            BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
+            if (Objects.isNull(completeQuantity)) {
+                produceOrderTrackReportVO.setShortfallQuantity(planQuantity);
+            } else {
+                produceOrderTrackReportVO.setShortfallQuantity(planQuantity.subtract(completeQuantity));
+            }
+        });
+        return produceOrderTrackReportVOPage;
     }
 
     /**

@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
@@ -100,31 +101,31 @@ public class QtReport implements Serializable {
      * 生产车间
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private QtBaseIdNameDTO workshop;
+    private List<QtBaseIdNameDTO> workshop;
 
     /**
      * 产线产生
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private QtBaseIdNameDTO productLine;
+    private List<QtBaseIdNameDTO> productLine;
 
     /**
      * 客户
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private QtBaseIdNameDTO customer;
+    private List<QtBaseIdNameDTO> customer;
 
     /**
      * 物料使用车间
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private QtBaseIdNameDTO materialUseWorkshop;
+    private List<QtBaseIdNameDTO> materialUseWorkshop;
 
     /**
      * 供应商
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private QtBaseIdNameDTO supplier;
+    private List<QtBaseIdNameDTO> supplier;
 
     /**
      * 备注
