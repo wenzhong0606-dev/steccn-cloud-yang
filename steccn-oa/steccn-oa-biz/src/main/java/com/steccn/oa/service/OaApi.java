@@ -96,12 +96,12 @@ public interface OaApi {
     /**
      * 获取公司下人员的sessionKey
      * @param headers
-     * @param id
+     * @param dto
      * @return
      */
     @PostMapping(value = "/api/hrm/organization/getResourceSearchList",headers = {"content-type=application/x-www-form-urlencoded"})
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
-    String getCompanyEmpSessionKey(@RequestHeader MultiValueMap<String,String> headers,@RequestBody Integer id);
+    String getCompanyEmpSessionKey(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaEmpDTO dto);
 
     /**
      * 通过sessionKey获取数据

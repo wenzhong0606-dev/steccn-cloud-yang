@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaCompanyVO;
+import com.steccn.oa.vo.OaEmpVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -191,11 +192,7 @@ public class OaService {
             log.error(oaApiTokenResult.getMsg());
             return oaUserInfo;
         }else{
-            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            //放入Token
-            headers.set("appid",OaConstant.OA_API_APPID);
-            headers.set("token",oaApiTokenResult.getToken());
-            headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+            MultiValueMap<String, String> headers = this.setHeaders();
             OaUserParam oaUserParam = new OaUserParam();
             oaUserParam.setQ(loginId);
             String result = oaApi.getOaUserInfo(headers,oaUserParam);
@@ -226,11 +223,7 @@ public class OaService {
             log.error(oaApiTokenResult.getMsg());
             return oaUserIdAndName;
         }else{
-            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            //放入Token
-            headers.set("appid",OaConstant.OA_API_APPID);
-            headers.set("token",oaApiTokenResult.getToken());
-            headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+            MultiValueMap<String, String> headers = setHeaders();
             String result = oaApi.getAllOaUser(headers);
             //转成对象
             JSONObject jsonObject = JSONObject.parseObject(result);
@@ -254,11 +247,7 @@ public class OaService {
      * @return
      */
     public List<OaCompanyVO> getCompany(Integer id){
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        //把Token放入header中
-        headers.set("appid",OaConstant.OA_API_APPID);
-        headers.set("token",this.getApiToken().getToken());
-        headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+        MultiValueMap<String, String> headers = this.setHeaders();
         OaCompanyRequestDTO dto = new OaCompanyRequestDTO();
         List<OaCompanyVO> vos = new ArrayList<>();
         String result;
@@ -286,5 +275,34 @@ public class OaService {
         return vos;
     }
 
+    /**
+     * 根据分部id和名字查询人物
+     * @param dto
+     * @return
+     */
+    public List<OaEmpVO> getEmpByCondition(OaEmpDTO dto){
+        //若传父亲节点，则默认父亲节点下的子节点
+        if(dto.getSubcompanyid()!=null && dto.getSubcompanyid().equals(OaConstant.NO)){
+            dto.setSubcompanyid(OaConstant.YES);
+        }
+        MultiValueMap<String, String> headers = setHeaders();
+        String sessionResult = oaApi.getCompanyEmpSessionKey(headers,dto);
+        //获得sessionKey
+        String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
+        return null;
+    }
 
+    /**
+     * 设置请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setHeaders(){
+        //设置请求头
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        //把Token放入header中
+        headers.set("appid",OaConstant.OA_API_APPID);
+        headers.set("token",this.getApiToken().getToken());
+        headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+        return headers;
+    }
 }
