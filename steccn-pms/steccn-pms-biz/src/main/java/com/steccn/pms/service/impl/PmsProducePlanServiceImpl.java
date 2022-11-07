@@ -159,9 +159,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
         EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList)).sheet().doRead();
 
-        List<String> codeList=dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+        List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
-        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList,updateFlag,spareCodeMap);
+        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap);
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -183,7 +183,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 PmsProducePlan pmsProducePlan = new PmsProducePlan();
                 BeanUtils.copyProperties(excelDTO, pmsProducePlan);
                 pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
-                pmsProducePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(),ISO_DATE));
+                pmsProducePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE));
                 pmsProducePlan.setStatus(0);
                 addList.add(pmsProducePlan);
             } else {
@@ -277,8 +277,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return planMsgVOList;
     }
 
-    private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList,List<String> codeList){
-        List<String> planDateList=dtoList.stream().map(PmsProducePlanExcelDTO::getPlanDate).collect(Collectors.toList());
+    private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList, List<String> codeList) {
+        List<String> planDateList = dtoList.stream().map(PmsProducePlanExcelDTO::getPlanDate).collect(Collectors.toList());
         List<LocalDate> localDateList = new ArrayList<>();
         for (String planDate : planDateList) {
             LocalDate localDate = LocalDate.parse(planDate, ISO_DATE);
@@ -326,9 +326,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsMrp.setStatus(PmManagerConstant.OrderStateEnum.ONE.getCode());
             materialIdList.add(pmsMrp.getMaterialId());
         });
-        Assert.isTrue(update(new LambdaQueryWrapper<PmsProducePlan>()
-                .in(PmsProducePlan::getMaterialId, materialIdList)
-                .between(PmsProducePlan::getPlanDate, firstDay, lastDay)), "修改物料下达状态失败");
+        //3.自定义sql 批量修改状态
+        Boolean aBoolean = this.baseMapper.updateBatchStatus(materialIdList, firstDay, lastDay, PmManagerConstant.OrderStateEnum.ONE.getCode());
+        Assert.isTrue(aBoolean,
+                "修改物料下达状态失败");
         //3.对物料列表进行MRP计算
         return pmsMrpService.add(pmsMrpList);
     }

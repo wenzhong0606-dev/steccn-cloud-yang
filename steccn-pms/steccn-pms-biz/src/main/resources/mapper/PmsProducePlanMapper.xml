@@ -5,49 +5,59 @@
 <mapper namespace="com.steccn.pms.mapper.PmsProducePlanMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsProducePlan">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
-            <result property="planDate" column="plan_date" jdbcType="DATE"/>
-            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
-            <result property="status" column="status" jdbcType="TINYINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+        <result property="planDate" column="plan_date" jdbcType="DATE"/>
+        <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,material_id,plan_date,
+        id
+        ,material_id,plan_date,
         quantity,status,create_by,
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+    <update id="updateBatchStatus">
+        UPDATE pms_produce_plan
+        SET STATUS = #{status}
+        WHERE( del_flag = 0
+        AND material_id in(
+        <foreach collection="materialIdList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>)
+        <if test="firstDay !=null and lastDay !=null">
+            AND plan_date between #{firstDay} and #{lastDay}
+        </if>)
+    </update>
 
     <select id="selectAllByPlanDate" resultType="com.steccn.pms.vo.PmsProducePlanVO">
-        SELECT
-	        m.`CODE` materialCode,
-	        m.`NAME` materialName,
-	        p.material_id materialId,
-	        p.plan_date planDate,
-	        p.id id,
-	        p.quantity quantity
-        FROM
-	        pms_produce_plan p
-	        INNER JOIN pm_material m ON p.material_id = m.id
-        WHERE p.plan_date like concat(#{monthDate},"%")
+        SELECT m.`CODE`      materialCode,
+               m.`NAME`      materialName,
+               p.material_id materialId,
+               p.plan_date   planDate,
+               p.id          id,
+               p.quantity    quantity
+        FROM pms_produce_plan p
+                 INNER JOIN pm_material m ON p.material_id = m.id
+        WHERE p.plan_date like concat(#{monthDate}, "%")
     </select>
 
     <select id="selectAllByPlanDateAndCode" resultType="com.steccn.pms.domain.PmsProducePlan">
-        SELECT
-	        p.plan_date planDate,
-	        p.id id,
-	        p.quantity quantity
-        FROM
-	        pms_produce_plan p
-	        INNER JOIN pm_material m ON p.material_id = m.id
-        WHERE p.plan_date = #{planDate} and m.`code` = #{materialCode}
+        SELECT p.plan_date planDate,
+               p.id        id,
+               p.quantity  quantity
+        FROM pms_produce_plan p
+                 INNER JOIN pm_material m ON p.material_id = m.id
+        WHERE p.plan_date = #{planDate}
+          and m.`code` = #{materialCode}
     </select>
 </mapper>

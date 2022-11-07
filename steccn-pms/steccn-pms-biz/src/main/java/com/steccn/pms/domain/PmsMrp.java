@@ -3,6 +3,7 @@ package com.steccn.pms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -17,7 +18,7 @@ public class PmsMrp implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -29,6 +30,11 @@ public class PmsMrp implements Serializable {
      * 状态
      */
     private Integer status;
+
+    /**
+     * 库存数量
+     */
+    private BigDecimal stockQuantity;
 
     /**
      * 创建人id

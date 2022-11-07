@@ -15,6 +15,51 @@ public interface PmManagerConstant {
 
     String MEASURE_UNIT = "measure_unit";
 
+    /**
+     * mrp 类型
+     */
+    String MRP_TYPE = "pms_mrp_type";
+
+    /**
+     * mrp库存
+     */
+    String MRP_INVENTORY = "mrp_inventory";
+
+    /**
+     * mrp 安全库存
+     */
+    String MRP_SAFETY_INVENTORY = "mrp_safety_inventory";
+
+    /**
+     * mrp 计划订单
+     */
+    String MRP_PLANNED_ORDER = "mrp_planned_order";
+
+    /**
+     * 采购申请
+     */
+    String MRP_PURCHASE_REQUEST = "mrp_purchase_request";
+
+    /**
+     * 采购订单
+     */
+    String MRP_PURCHASE_ORDER = "mrp_purchase_order";
+
+    /**
+     * 销售订单
+     */
+    String MRP_SALES_ORDER = "mrp_sales_order";
+
+    /**
+     * 独立需求
+     */
+    String MRP_INDEPENDENT_DEMAND = "mrp_independent_demand";
+
+    /**
+     * 生产需求
+     */
+    String MRP_MANUFACTURE_REQUIRMENT = "mrp_manufacture_requirment";
+
     String FILE_EXTENSION_XLSX = ".xlsx";
 
     /**
@@ -34,7 +79,7 @@ public interface PmManagerConstant {
     /**
      * 审批中
      */
-    String MRBS_APPROVAL= "mrbs_approval";
+    String MRBS_APPROVAL = "mrbs_approval";
 
     /**
      * 审批通过
