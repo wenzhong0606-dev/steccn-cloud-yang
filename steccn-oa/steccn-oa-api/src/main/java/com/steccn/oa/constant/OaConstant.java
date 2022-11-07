@@ -38,4 +38,5 @@ public interface OaConstant {
     Integer YES = 1;
     Integer NO = 0;
     Integer NONE = -1;
+    String OA_SESSION_KEY = "sessionkey";
 }
