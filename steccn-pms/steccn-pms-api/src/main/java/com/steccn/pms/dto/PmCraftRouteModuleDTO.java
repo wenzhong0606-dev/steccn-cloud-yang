@@ -27,26 +27,26 @@ public class PmCraftRouteModuleDTO implements Serializable {
     private Long id;
 
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件物料id不能为空")
     @ApiModelProperty("物料组件id")
     private Long materialId;
 
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件物料编码不能为空")
     @ApiModelProperty("物料编码")
     private String materialCode;
 
 
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "组件物料名称不能为空")
     @ApiModelProperty("物料名称")
     private String materialName;
 
 
 //    @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "物料数量不能为空")
     @ApiModelProperty("物料数量")
-    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="物料数量数量应大于0")
-    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="物料数量大小应小于99999999.999")
-    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "物料数量整数位上限为8位，小数位上限位3位")
+    @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class},value="0",message="组件物料数量数量应大于0")
+    @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class},value="99999999.999",message="组件物料数量大小应小于99999999.999")
+    @Digits(groups = {UpdateGroup.class, InsertGroup.class},integer = 8,fraction = 3,message = "组件物料数量整数位上限为8位，小数位上限位3位")
     private Integer quantity;
 
 
