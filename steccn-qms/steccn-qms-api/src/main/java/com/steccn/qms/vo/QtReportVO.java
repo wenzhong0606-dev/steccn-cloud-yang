@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 返回给前端的spc报表控制图数据
@@ -43,25 +44,25 @@ public class QtReportVO {
     /**
      * 生产车间
      */
-    private QtBaseIdNameDTO workshop;
+    private List<QtBaseIdNameDTO> workshop;
 
     /**
      * 生产产线
      */
-    private QtBaseIdNameDTO productLine;
+    private List<QtBaseIdNameDTO> productLine;
 
     /**
      * 客户
      */
-    private QtBaseIdNameDTO customer;
+    private List<QtBaseIdNameDTO> customer;
 
     /**
      * 物料使用车间
      */
-    private QtBaseIdNameDTO materialUseWorkshop;
+    private List<QtBaseIdNameDTO> materialUseWorkshop;
 
     /**
      * 供应商
      */
-    private QtBaseIdNameDTO supplier;
+    private List<QtBaseIdNameDTO> supplier;
 }

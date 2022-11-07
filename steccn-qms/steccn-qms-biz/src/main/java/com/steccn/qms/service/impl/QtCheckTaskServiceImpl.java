@@ -18,8 +18,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.pms.feign.RemotePmsFeignApi;
-import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -37,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author AndrewLuo
@@ -65,8 +65,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyMapper qtCheckTaskCopyMapper;
 
     private final QtDefectiveItemMapper qtDefectiveItemMapper;
-    
-    private final RemotePmsFeignApi remotePmsFeignApi;
+
 
     /**
      * 新增
@@ -815,10 +814,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public QtProduceOrderLineVO selectProductOrder(Integer id) {
-        QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
+       /* QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
         R<PmsProduceOrderVO> pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id);
         BeanUtils.copyProperties(pmsProduceOrderVO,qtProduceOrderLineVO);
-        return qtProduceOrderLineVO;
+        return qtProduceOrderLineVO;*/
+        return null;
     }
 
     @Override
@@ -898,6 +898,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //设置数据
         produceTaskpage.setRecords(resRecords);
         return produceTaskpage;
+    }
+
+    /**
+     * 深加工/基片巡检合格率趋势
+     * @param dto
+     * @return
+     */
+    //TODO
+    @Override
+    public QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto) {
+        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getProductWorkshop, dto.getProductWorkshop()).
+                ge(QtCheckTask::getFinishedTime, dto.getDateStart()).
+                le(QtCheckTask::getFinishedTime, dto.getDateEnd());
+        if (Objects.nonNull(dto.getProductWorkshop())){
+
+        }
+
+        return null;
     }
 
     private Long currentMaxCode() {

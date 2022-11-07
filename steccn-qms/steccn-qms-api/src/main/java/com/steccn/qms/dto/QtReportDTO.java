@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.google.common.collect.Lists;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
@@ -11,6 +12,8 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class QtReportDTO implements Serializable {
@@ -94,27 +97,27 @@ public class QtReportDTO implements Serializable {
     /**
      * 生产车间
      */
-    private QtBaseIdNameDTO workshop;
+    private List<QtBaseIdNameDTO> workshop;
 
     /**
      * 生产产线
      */
-    private QtBaseIdNameDTO productLine;
+    private List<QtBaseIdNameDTO> productLine;
 
     /**
      * 客户
      */
-    private QtBaseIdNameDTO customer;
+    private List<QtBaseIdNameDTO> customer;
 
     /**
      * 物料使用车间
      */
-    private QtBaseIdNameDTO materialUseWorkshop;
+    private List<QtBaseIdNameDTO> materialUseWorkshop;
 
     /**
      * 供应商
      */
-    private QtBaseIdNameDTO supplier;
+    private List<QtBaseIdNameDTO> supplier;
 
     /**
      * 备注
@@ -132,10 +135,11 @@ public class QtReportDTO implements Serializable {
      */
     private String createName;
 
+    private LocalDateTime creatTime;
     /**
      * 更新人id
      */
-    private String updateBy;
+    private Long updateBy;
 
     /**
      * 更新人名称

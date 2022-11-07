@@ -1,10 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtReportDTO;
-import com.steccn.qms.vo.QtCheckItemListVO;
-import com.steccn.qms.vo.QtReportVO;
+import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
+import com.steccn.qms.vo.*;
 
 import java.util.List;
 
@@ -28,14 +30,14 @@ public interface QtReportService extends IService<QtReport> {
      * @param checkType
      * @return
      */
-    List<Integer> getGroupIdList(Long materialId, Integer checkType);
+   List<QtCheckGroupVO> getGroupIdList(Long materialId, Integer checkType);
 
     /**
      * 根据检验分组id选择检验项
      * @param groupid
      * @return
      */
-    List<QtCheckItemListVO> getQtCheckItemList(Integer groupid);
+    List<QtCheckItemSPCVO> getQtCheckItemList(Integer groupid);
 
     /**
      * 根据id删除spc控制图卡片
@@ -57,4 +59,26 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Boolean edit(QtReportDTO qtReportDTO);
+
+    /**
+     * 明细表分页
+     * @param dto
+     * @return
+     */
+    Page<QtSpcReportDetailVO> pageList(QtSpcReportDetailPageDTO dto);
+
+    /**
+     * 根据Spc卡片类型查询卡片列表
+     * @param reportCardType
+     * @return
+     */
+    List<QtReportVO> getQtReportVOListByType(String reportCardType);
+
+    /**
+     * 根据检验项的id返回前端标准值、上偏差、下偏差,单位
+     * @param groupId
+     * @param itemId
+     * @return
+     */
+    QtCheckItemUnitVO getQtCheckItemUnitVO(Integer groupId,Integer itemId);
 }

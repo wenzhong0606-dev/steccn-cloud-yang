@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * 检验方案分组表
  * @TableName qt_check_plan_group
@@ -23,6 +25,7 @@ public class QtCheckPlanGroup implements Serializable {
     /**
      * 检验分组名称
      */
+    @NotBlank(message = "分组名称不能为空")
     private String name;
 
     /**

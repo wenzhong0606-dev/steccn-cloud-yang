@@ -86,4 +86,10 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     Page<QtCheckProduceTaskVO> pageProductOrder(QtCheckaProductTaskListDTO dto);
 
 
+    /**
+     * 深加工/基片巡检合格率趋势
+     * @param dto
+     * @return
+     */
+    QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto);
 }
