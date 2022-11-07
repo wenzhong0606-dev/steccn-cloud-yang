@@ -11,6 +11,7 @@ import com.steccn.pms.vo.EnergyGroupListVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,8 +39,8 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
     }
 
     @Override
-    public List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList) {
-        List<EnergyGroupListVO> groupList = this.baseMapper.energyGroup(productLineIdList);
+    public List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
+        List<EnergyGroupListVO> groupList = this.baseMapper.energyGroup(productLineIdList, dateRangeList);
         return Objects.isNull(groupList) ? Lists.newArrayList() : groupList;
     }
 }

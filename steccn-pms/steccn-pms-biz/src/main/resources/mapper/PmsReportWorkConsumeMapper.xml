@@ -39,6 +39,8 @@
         <foreach collection="productLineIdList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
+            AND wc.create_time &gt;= #{dateRangeList[0]}
+            AND wc.create_time &lt;= #{dateRangeList[1]}
         GROUP BY
             rw.product_line_id,
             rw.class_group_id,

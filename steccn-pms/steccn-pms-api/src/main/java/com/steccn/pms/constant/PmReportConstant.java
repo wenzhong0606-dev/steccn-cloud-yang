@@ -33,6 +33,19 @@ public interface PmReportConstant {
         private final Integer code;
 
         private final String name;
+
+        /**
+         * 所有的类型
+         *
+         * @return
+         */
+        public static Set<Integer> all() {
+            Set<Integer> all = Sets.newHashSet();
+            for (DateRangeTypeEnum value : DateRangeTypeEnum.values()) {
+                all.add(value.getCode());
+            }
+            return all;
+        }
     }
 
     /**

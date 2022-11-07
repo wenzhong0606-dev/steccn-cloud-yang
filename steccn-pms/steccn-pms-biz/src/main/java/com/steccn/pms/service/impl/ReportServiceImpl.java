@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +53,14 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public EnergyCountVO consume(EnergyCountDTO dto) {
         Assert.isTrue(PmReportConstant.DataGaugeTypeEnum.all().contains(dto.getDataGaugeType()), "统计维度不存在");
+        Assert.isTrue(PmReportConstant.DateRangeTypeEnum.all().contains(dto.getDateRangeType()), "日期范围不存在");
+        //获取日期
+        List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
+
         //获取产线数据
         List<SysOfficeVO> productLineList = productLineList(dto.getWorkshopId());
         Assert.notNull(productLineList, "车间下暂无产线");
+
         //产线按照treeSort排序
         productLineList.sort(Comparator.comparing(SysOfficeVO::getTreeSort));
 
@@ -62,7 +69,7 @@ public class ReportServiceImpl implements ReportService {
 
         //根据产线id查询分组数据
         List<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-        List<EnergyGroupListVO> energyGroupList = pmsReportWorkConsumeService.energyGroup(productLineIdList);
+        List<EnergyGroupListVO> energyGroupList = pmsReportWorkConsumeService.energyGroup(productLineIdList,dateRangeList);
         if (CollUtil.isNotEmpty(energyGroupList)) {
             //获取班组信息-甲班 乙班 丙班 组成map
             SysDictDTO sysDictDTO = new SysDictDTO();
