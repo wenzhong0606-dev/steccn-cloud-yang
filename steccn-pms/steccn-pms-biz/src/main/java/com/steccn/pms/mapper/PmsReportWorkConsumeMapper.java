@@ -2,7 +2,12 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsReportWorkConsume;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.vo.EnergyGroupListVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsReportWorkConsumeMapper extends BaseMapper<PmsReportWorkConsume> {
 
+    /**
+     * 根据产线分组水电油气能耗
+     * @param productLineIdList 产线id集合
+     * @return list
+     */
+    List<EnergyGroupListVO> energyGroup(@Param("productLineIdList") List<Integer> productLineIdList);
 }
 
 

@@ -25,4 +25,23 @@
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+    <select id="energyGroup" resultType="com.steccn.pms.vo.EnergyGroupListVO">
+        SELECT
+            rw.product_line_id,
+            rw.class_group_id,
+            wc.type,
+            sum(wc.quantity) as quantity
+        FROM
+            pms_report_work rw
+                JOIN pms_report_work_consume wc ON rw.id = wc.report_work_id
+        WHERE
+            product_line_id IN
+        <foreach collection="productLineIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        GROUP BY
+            rw.product_line_id,
+            rw.class_group_id,
+            wc.type
+    </select>
 </mapper>

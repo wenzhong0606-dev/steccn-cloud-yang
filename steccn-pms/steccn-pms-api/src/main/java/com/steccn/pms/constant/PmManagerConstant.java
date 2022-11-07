@@ -12,7 +12,9 @@ import lombok.Getter;
  */
 public interface PmManagerConstant {
 
-
+    /**
+     * 测量单位
+     */
     String MEASURE_UNIT = "measure_unit";
 
     /**
@@ -60,12 +62,22 @@ public interface PmManagerConstant {
      */
     String MRP_MANUFACTURE_REQUIRMENT = "mrp_manufacture_requirment";
 
+    /**
+     * 班组
+     */
+    String SYS_TEAM = "sys_team";
+
     String FILE_EXTENSION_XLSX = ".xlsx";
 
     /**
      * 工位code
      */
     String STATE_13 = "13";
+
+    /**
+     * 产线code
+     */
+    String STATE_9 = "9";
 
     /**
      * 领料单状态

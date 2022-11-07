@@ -24,6 +24,5 @@ public class EnergyCountVO implements Serializable {
     private List<BigDecimal> pullForceList;
 
     @ApiModelProperty("水、电、油、气")
-    private List<EnergyCountListVO> seriesData;
-
+    private EnergySeriesDataVO seriesData;
 }

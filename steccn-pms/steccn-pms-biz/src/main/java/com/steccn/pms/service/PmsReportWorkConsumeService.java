@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.pms.domain.PmsReportWorkConsume;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.ProcessReportWorkConsumeDTO;
+import com.steccn.pms.vo.EnergyGroupListVO;
 
 import java.util.List;
 
@@ -19,4 +20,11 @@ public interface PmsReportWorkConsumeService extends IService<PmsReportWorkConsu
      * @param consumeDTOList 能耗信息
       */
     void saveConsume(Long id, List<ProcessReportWorkConsumeDTO> consumeDTOList);
+
+    /**
+     * 水电油气能耗分组
+     * @param productLineIdList 产线id
+     * @return 分组集合
+     */
+    List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList);
 }
