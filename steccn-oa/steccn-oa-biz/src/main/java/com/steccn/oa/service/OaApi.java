@@ -109,7 +109,7 @@ public interface OaApi {
      * @param dto
      * @return
      */
-    @PostMapping(value = "/api/hrm/organization/getResourceSearchList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @PostMapping(value = "/api/ec/dev/table/datas",headers = {"content-type=application/x-www-form-urlencoded"})
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     String getDataBySessionKey(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaDataKeyDTO dto);
 }

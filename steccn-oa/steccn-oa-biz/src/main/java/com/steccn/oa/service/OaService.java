@@ -289,7 +289,15 @@ public class OaService {
         String sessionResult = oaApi.getCompanyEmpSessionKey(headers,dto);
         //获得sessionKey
         String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
-        return null;
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        dataKey.setDataKey(sessionKey);
+        if(dto.getCurrent()!=null){
+            dataKey.setCurrent(dto.getCurrent());
+        }
+        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
     }
 
     /**

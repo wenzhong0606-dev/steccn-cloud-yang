@@ -20,5 +20,5 @@ public class OaDataKeyDTO implements Serializable {
     /**
      * 分页数据
      */
-    private String current;
+    private Integer current;
 }

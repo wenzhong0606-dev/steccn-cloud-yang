@@ -8,6 +8,7 @@ import com.steccn.oa.dto.*;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
 import com.steccn.oa.vo.OaCompanyVO;
+import com.steccn.oa.vo.OaEmpVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +78,7 @@ public class OaController {
         return R.success(oaUserDTO);
     }
 
+    @ApiOperation("根据id获取用户信息")
     @GetMapping("/userInfo")
     R getUserInfo(@RequestParam("loginId") String loginId){
         OaUserInfo oaUserInfo = oaService.getOaUserInfo(loginId);
@@ -87,6 +89,7 @@ public class OaController {
         }
     }
 
+    @ApiOperation("获取所有人员")
     @GetMapping("/allUser")
     R getAllUser(){
         List<OaUserIdAndName> userIdAndNames = oaService.getAll();
@@ -97,9 +100,16 @@ public class OaController {
         }
     }
 
-    @GetMapping("/company/{id}")
     @ApiOperation(value = "OA获取公司数据")
+    @GetMapping("/company/{id}")
     public R<List<OaCompanyVO>> getOaCompany(@PathVariable Integer id ){
         return R.success(oaService.getCompany(id));
     }
+
+    @ApiOperation(value = "根据部门和名字获取Emp数据")
+    @PostMapping("/company/emp")
+    public R<List<OaEmpVO>> getOaEmp(@RequestBody OaEmpDTO dto){
+        return R.success(oaService.getEmpByCondition(dto));
+    }
+
 }

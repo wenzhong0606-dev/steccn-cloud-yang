@@ -22,7 +22,7 @@ public class OaEmpVO implements Serializable {
     /**
      * 姓名
      */
-    private String lastName;
+    private String lastname;
 
     /**
      * 职务
