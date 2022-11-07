@@ -11,9 +11,9 @@ import java.util.List;
  * @desc 基片日报表
  * @author yequan
  */
-@ApiModel("基片日报表")
+@ApiModel("日报表筛选条件")
 @Data
-public class SubstrateDayReportDTO implements Serializable {
+public class PmsDayReportDTO implements Serializable {
 
     @ApiModelProperty("车间")
     private List<Integer> workshopIdList;

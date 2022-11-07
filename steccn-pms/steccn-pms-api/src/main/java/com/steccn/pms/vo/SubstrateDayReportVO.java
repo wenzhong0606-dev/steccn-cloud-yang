@@ -24,5 +24,5 @@ public class SubstrateDayReportVO implements Serializable {
     private Integer dataNum;
 
     @ApiModelProperty("表头")
-    private ReportHeaderVO header;
+    private SubstrateReportHeaderVO header;
 }
