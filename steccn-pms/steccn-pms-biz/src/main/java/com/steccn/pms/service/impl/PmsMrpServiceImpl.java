@@ -76,19 +76,25 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             mrpSafety.setQuantity(BigDecimal.ZERO);
             //todo 安全库存暂定为O 需计算扣除安全库存后的可用库存数量
             mrpSafety.setAvailableQuantity(BigDecimal.ZERO);
-            mrpInventory.setMrpDate(LocalDate.now());
+            mrpSafety.setMrpDate(LocalDate.now());
             mrpSafety.setMrpId(pmsMrp.getId());
             mrpSafety.setMrpTypeId(safetyType.getId());
             pmsMrpInfos.add(mrpSafety);
             //安全库存小于0，则创建计划订单数据
-            if (mrpInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) < 0) {
-//                createPlanOrder()
+            if (mrpSafety.getAvailableQuantity().compareTo(BigDecimal.ZERO) < 0) {
+                pmsMrpInfos.add(createPlanOrder(mrpSafety.getAvailableQuantity(), BigDecimal.ZERO, pmsMrp.getId()));
             }
-//            createPlanOrder()
         });
         return pmsMrpInfoService.saveBatch(pmsMrpInfos);
     }
 
+    /**
+     * 创建计划订单数据
+     * @param quantity
+     * @param availableQuantity
+     * @param mrpId
+     * @return
+     */
     PmsMrpInfo createPlanOrder(BigDecimal quantity, BigDecimal availableQuantity, Long mrpId) {
         SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_PLANNED_ORDER, PmManagerConstant.MRP_TYPE)).get();
         PmsMrpInfo planOrder = new PmsMrpInfo();
@@ -96,7 +102,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         planOrder.setQuantity(quantity);
         planOrder.setMrpId(mrpId);
         planOrder.setAvailableQuantity(availableQuantity);
-//        planOrder.se
+        planOrder.setMrpDate(LocalDate.now());
         return planOrder;
     }
 }
