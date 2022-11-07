@@ -12,6 +12,8 @@ import com.steccn.pms.vo.ProduceOrderTrackReportVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @author yequan
  * @description 针对表【pms_produce_order(生产订单)】的数据库操作Mapper
@@ -46,7 +48,14 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      */
     Page<PmsProduceOrderVO> reportWorkOrderPage(Page page, @Param("dto") ReportWorkOrderPageDTO dto);
 
-    Page<ProduceOrderTrackReportVO> trackReportPage(Page page, @Param("dto") ProduceOrderTrackReportDTO dto);
+    /**
+     * 订单跟踪报表
+     *
+     * @param page
+     * @param productionLineIdList
+     * @return
+     */
+    Page<ProduceOrderTrackReportVO> trackReportPage(Page page, @Param("productionLineIdList") List<Integer> productionLineIdList);
 }
 
 

@@ -17,13 +17,13 @@ public class ProduceOrderTrackReportVO {
     private Integer productionLineId;
 
     @ApiModelProperty("订单号")
-    private Integer code;
+    private String code;
 
     @ApiModelProperty("产品编码")
-    private Integer materialCode;
+    private String materialCode;
 
     @ApiModelProperty("产品名称")
-    private Integer materialName;
+    private String materialName;
 
     @ApiModelProperty("计划数")
     private BigDecimal planQuantity;

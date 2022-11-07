@@ -14,8 +14,5 @@ import java.util.List;
 public class ProduceOrderTrackReportDTO extends BasePageDTO {
 
     @ApiModelProperty("产线id集合")
-    private List<Long> productLineList;
-
-    @ApiModelProperty("车间id集合")
-    private List<Long> workshopIdList;
+    private List<Integer> productLineList;
 }

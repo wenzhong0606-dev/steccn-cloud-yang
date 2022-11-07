@@ -156,7 +156,7 @@ public class ProduceOrderController {
     }
 
     @PostMapping("/track/report/list")
-    @ApiOperation("根据产线查询当前正在执行订单信息")
+    @ApiOperation("订单跟踪计划列表")
     public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto){
         return R.success(pmsProduceOrderService.trackReportList(dto));
     }

@@ -178,6 +178,10 @@
         FROM
 	        pms_produce_order o
 	    LEFT JOIN pms_complete_storage_info c ON o.id = c.produce_order_id
+	    where o.production_line_id in(
+        <foreach collection="productionLineIdList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>)
 	    GROUP BY o.id
     </select>
 </mapper>
