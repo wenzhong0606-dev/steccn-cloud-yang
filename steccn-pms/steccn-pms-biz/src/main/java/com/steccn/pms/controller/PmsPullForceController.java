@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -27,14 +28,14 @@ public class PmsPullForceController {
 
     @ApiOperation("拉引量列表")
     @GetMapping("/list")
-    public R<List<PmsPullForceVO>> list(@RequestBody PmsPullForceDTO dto) {
-        return R.success(pmsPullForceService.list(dto));
+    public R<List<PmsPullForceVO>> list(@RequestParam Integer workshopId, @RequestParam String monthDate) {
+        return R.success(pmsPullForceService.list(workshopId, monthDate));
     }
 
     @ApiOperation("拉引量详情")
     @GetMapping("/details")
-    public R<List<PmsPullForceDetailsVO>> details(@RequestBody PmsPullForceDetailsDTO dto) {
-        return R.success(pmsPullForceService.details(dto));
+    public R<List<PmsPullForceDetailsVO>> details(@RequestParam Integer workshopId, @RequestParam String pullForceDate) {
+        return R.success(pmsPullForceService.details(workshopId, pullForceDate));
     }
 
     @ApiOperation("拉引量详情批量编辑")

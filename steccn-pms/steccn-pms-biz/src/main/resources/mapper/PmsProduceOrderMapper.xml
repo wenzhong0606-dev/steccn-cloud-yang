@@ -162,4 +162,22 @@
         GROUP BY po.id
         order by po.create_time desc
     </select>
+
+    <select id="trackReportPage" resultType="com.steccn.pms.vo.ProduceOrderTrackReportVO">
+        SELECT
+	        o.production_line_id as productionLineId,
+	        o.`code` as code,
+	        o.material_code as materialCode,
+	        o.material_name as materialName,
+	        o.quantity as planQuantity,
+	        o.actual_start_time as actualStartTime,
+	        o.actual_end_time as actualEndTime,
+	        o.state as state,
+	        o.note as note,
+	        sum(c.quantity) as completeQuantity
+        FROM
+	        pms_produce_order o
+	    LEFT JOIN pms_complete_storage_info c ON o.id = c.produce_order_id
+	    GROUP BY o.id
+    </select>
 </mapper>

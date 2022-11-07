@@ -160,4 +160,12 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Map<Integer,PmsProduceOrderDTO> listByLineIds(Set<Integer> ids);
+
+    /**
+     * 订单跟踪报表列表
+     *
+     * @param dto
+     * @return
+     */
+    Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto);
 }

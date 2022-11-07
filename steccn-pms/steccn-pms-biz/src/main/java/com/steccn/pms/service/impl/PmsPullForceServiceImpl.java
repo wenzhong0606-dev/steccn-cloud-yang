@@ -44,10 +44,10 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
-    public List<PmsPullForceVO> list(PmsPullForceDTO dto) {
+    public List<PmsPullForceVO> list(Integer workshopId, String monthDate) {
         List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, dto.getWorkshopId())
-                .like(PmsPullForce::getPullForceDate, dto.getMonthDate() + "%"));
+                .eq(PmsPullForce::getWorkshopId, workshopId)
+                .like(PmsPullForce::getPullForceDate, monthDate));
 
         //根据日期分组
         Map<LocalDate, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getPullForceDate));
@@ -88,10 +88,10 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
-    public List<PmsPullForceDetailsVO> details(PmsPullForceDetailsDTO dto) {
+    public List<PmsPullForceDetailsVO> details(Integer workshopId, String pullForceDate) {
         List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, dto.getWorkshopId())
-                .eq(PmsPullForce::getPullForceDate, dto.getPullForceDate()));
+                .eq(PmsPullForce::getWorkshopId, workshopId)
+                .eq(PmsPullForce::getPullForceDate, pullForceDate));
 
         //根据产线分组
         Map<Integer, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));

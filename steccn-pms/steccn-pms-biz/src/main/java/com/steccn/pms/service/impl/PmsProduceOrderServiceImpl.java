@@ -654,6 +654,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return map;
     }
 
+    @Override
+    public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
+        return null;
+    }
+
     /**
      * 查询订单
      */

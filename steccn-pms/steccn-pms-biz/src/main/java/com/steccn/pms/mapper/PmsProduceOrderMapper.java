@@ -5,8 +5,10 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.dto.ProduceOrderAcceptPageDTO;
+import com.steccn.pms.dto.ProduceOrderTrackReportDTO;
 import com.steccn.pms.dto.ReportWorkOrderPageDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.ProduceOrderTrackReportVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -43,6 +45,8 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @return 报工信息
      */
     Page<PmsProduceOrderVO> reportWorkOrderPage(Page page, @Param("dto") ReportWorkOrderPageDTO dto);
+
+    Page<ProduceOrderTrackReportVO> trackReportPage(Page page, @Param("dto") ProduceOrderTrackReportDTO dto);
 }
 
 

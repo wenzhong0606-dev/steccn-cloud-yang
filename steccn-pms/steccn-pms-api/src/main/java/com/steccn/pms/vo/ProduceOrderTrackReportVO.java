@@ -1,0 +1,48 @@
+package com.steccn.pms.vo;
+
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * @author chenhuan
+ * @date 2022/11/7 15:53
+ */
+@Data
+public class ProduceOrderTrackReportVO {
+
+    @ApiModelProperty("产线id")
+    private Integer productionLineId;
+
+    @ApiModelProperty("订单号")
+    private Integer code;
+
+    @ApiModelProperty("产品编码")
+    private Integer materialCode;
+
+    @ApiModelProperty("产品名称")
+    private Integer materialName;
+
+    @ApiModelProperty("计划数")
+    private BigDecimal planQuantity;
+
+    @ApiModelProperty("计划开始时间")
+    private LocalDateTime actualStartTime;
+
+    @ApiModelProperty("计划结束时间")
+    private LocalDateTime actualEndTime;
+
+    @ApiModelProperty("完成数")
+    private BigDecimal completeQuantity;
+
+    @ApiModelProperty("差额数")
+    private BigDecimal shortfallQuantity;
+
+    @ApiModelProperty("订单状态")
+    private Integer state;
+
+    @ApiModelProperty("备注")
+    private String note;
+}

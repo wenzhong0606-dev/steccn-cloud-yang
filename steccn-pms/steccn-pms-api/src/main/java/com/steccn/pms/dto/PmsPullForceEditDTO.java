@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * @author chenhuan
@@ -18,14 +19,14 @@ public class PmsPullForceEditDTO {
     private Long id;
 
     @ApiModelProperty("产线id")
-    private Long productLineId;
+    private Integer productLineId;
 
     @ApiModelProperty("日期")
-    private String pullForceDate;
+    private LocalDate pullForceDate;
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;
 
     @ApiModelProperty("车间id")
-    private Long workshopId;
+    private Integer workshopId;
 }
