@@ -22,6 +22,15 @@ public interface PmsProducePlanMapper extends BaseMapper<PmsProducePlan> {
 
     List<PmsProducePlan> selectAllByPlanDateAndCode(@Param("planDate") String planDate,@Param("materialCode") String materialCode);
 
+    /**
+     * 根据物料id以及时间批量修改状态
+     * @param materialIdList
+     * @param firstDay
+     * @param lastDay
+     * @param status
+     * @return
+     */
+    Boolean updateBatchStatus(@Param("materialIdList") List<Long> materialIdList,@Param("firstDay") LocalDate firstDay,@Param("lastDay") LocalDate lastDay, @Param("status") Integer status);
 }
 
 

@@ -39,7 +39,7 @@
     <delete id="deleteCrafts">
         DELETE FROM pms_produce_order_craft WHERE ID NOT IN(
         SELECT id FROM pms_produce_order_craft where produce_order_id =#{produceId} and id in
-        <foreach collection="idSet" index="id" separator=",">
+        <foreach collection="idSet" item="id"  open="(" close=")"  separator=",">
             #{id}
         </foreach>)
     </delete>
