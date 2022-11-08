@@ -6,10 +6,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
@@ -109,6 +112,10 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
         Map<Integer, SysOfficeVO> map = remoteOfficeFeign.listById(productLineIdSet).getData();
         Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(workshopId);
+        sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
+        List<SysOfficeVO> sysOfficeVOList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
 
         List<PmsPullForceDetailsVO> pullForceDetailsVOList = new ArrayList<>();
         for (Map.Entry<Integer, List<PmsPullForce>> entry : groupBy.entrySet()) {
@@ -133,7 +140,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceDetailsVOList.add(pullForceDetailsVO);
         }
 
-        return pullForceDetailsVOList;
+        List<PmsPullForceDetailsVO> pmsPullForceDetailsVOList = new ArrayList<>();
+        for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+            PmsPullForceDetailsVO pmsPullForceDetailsVO = new PmsPullForceDetailsVO();
+            Optional<PmsPullForceDetailsVO> present = pullForceDetailsVOList.stream().filter(pullForceDetailsVO -> pullForceDetailsVO.getProductLineId().equals(sysOfficeVO.getId())).findAny();
+            if (present.isPresent()) {
+                pmsPullForceDetailsVOList.add(present.get());
+            } else {
+                pmsPullForceDetailsVO.setProductLineId(sysOfficeVO.getId());
+                pmsPullForceDetailsVO.setProductLineName(sysOfficeVO.getOfficeName());
+                pmsPullForceDetailsVOList.add(pmsPullForceDetailsVO);
+            }
+        }
+
+        return pmsPullForceDetailsVOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
