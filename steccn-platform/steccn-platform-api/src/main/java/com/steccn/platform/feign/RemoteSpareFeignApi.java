@@ -1,9 +1,9 @@
 package com.steccn.platform.feign;
 
-
-import com.google.common.collect.Sets;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -18,9 +18,10 @@ public interface RemoteSpareFeignApi {
 
     /**
      * 根据名称编码查询备件信息
+     *
      * @param name
      * @param code
-     * @return R<Map<Long, EqpSpareVO>>
+     * @return R<Map < Long, EqpSpareVO>>
      */
     @RequestMapping("/feign/platform/eqpSpare/searchSpares")
     @ApiOperation("根据名称编码查询备件信息")
@@ -28,7 +29,7 @@ public interface RemoteSpareFeignApi {
 
     @GetMapping("/feign/platform/eqpSpare/getByCode")
     @ApiOperation("根据名称编码查询备件信息")
-    R<EqpSpareVO> getByCode( @RequestParam("code") String code);
+    R<EqpSpareVO> getByCode(@RequestParam("code") String code);
 
     @RequestMapping("/feign/platform/eqpSpare/listByCode")
     @ApiOperation("根据code查询备件的信息")
@@ -37,6 +38,7 @@ public interface RemoteSpareFeignApi {
 
     /**
      * 根据id查询备件的信息
+     *
      * @param materialIds 物料id
      * @return
      */
@@ -46,6 +48,7 @@ public interface RemoteSpareFeignApi {
 
     /**
      * 根据id查询备件的信息
+     *
      * @param materialIds 物料id
      * @return
      */
@@ -55,10 +58,20 @@ public interface RemoteSpareFeignApi {
 
     /**
      * 根据codeList查询备件的信息
+     *
      * @param codeList 物料codeList
      * @return
      */
     @PostMapping("/feign/platform/eqpSpare/mapByCode")
     @ApiOperation("根据code查询备件的数据,key为id")
     R<Map<Long, EqpSpareVO>> mapByCode(@RequestBody List<String> codeList);
+
+    /**
+     * 备件分页列表
+     * @param sparePageDTO
+     * @return
+     */
+    @PostMapping
+    @ApiOperation("获取备件分页列表")
+    R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO);
 }

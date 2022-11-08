@@ -50,7 +50,7 @@ public class PmsMrpInfo implements Serializable {
     /**
      * 物料需求计划id
      */
-    private Long mrpId;
+    private Long materialId;
 
     /**
      * 创建人id

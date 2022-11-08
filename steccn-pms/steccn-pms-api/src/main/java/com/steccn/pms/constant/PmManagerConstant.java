@@ -80,6 +80,21 @@ public interface PmManagerConstant {
     String STATE_9 = "9";
 
     /**
+     * 车间code
+     */
+    String STATE_8 = "8";
+
+    /**
+     * 单位T
+     */
+    String UNIT_T = "T";
+
+    /**
+     * 单位类型
+     */
+    String ENERGY_CONSUME = "energy_consume";
+
+    /**
      * 领料单状态
      */
     String MATERIAL_REQUISITION_STATUS = "material_requisition_bill_status";

@@ -42,7 +42,7 @@ public class QtSpcReportDetailVO {
     /**
      * 计量单位
      */
-    private Long measureunit;
+    private Long measureUnit;
 
     /**
      * 检验结果平均值
@@ -62,7 +62,7 @@ public class QtSpcReportDetailVO {
     /**
      * 下限
      */
-    private BigDecimal dowmLimit;
+    private BigDecimal downLimit;
 
     /**
      * 检验任务单号

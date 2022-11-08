@@ -37,18 +37,22 @@ public class QtProduceOrderLineVO {
     @ApiModelProperty("物料名称")
     private String materialName;
 
-
     @ApiModelProperty("产线id")
     private Integer productionLineId;
 
     @ApiModelProperty("产线名称")
     private String productionLineName;
 
-
     @ApiModelProperty("批次信息")
     private Long batch;
 
     @ApiModelProperty("批次vo")
     private String batchNo;
+
+    @ApiModelProperty("生产车间id")
+    private Integer workshopId;
+
+    @ApiModelProperty("生产车间名称")
+    private String workshopName;
 
 }

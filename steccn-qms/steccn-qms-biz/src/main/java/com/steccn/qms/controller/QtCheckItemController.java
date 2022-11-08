@@ -10,6 +10,7 @@ import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.service.QtCheckItemService;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtRangeArrayVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,4 +76,12 @@ public class QtCheckItemController {
     public R<List<QtCheckItemListVO>> selectItemList() {
         return R.success(qtCheckItemService.selectItemList());
     }
+
+    @PostMapping("/select/station")
+    @ApiOperation(value = "查询工位列表")
+    public R<List<QtRangeArrayVO>> selectStationList() {
+        return R.success(qtCheckItemService.selectStationList());
+    }
+
+
 }

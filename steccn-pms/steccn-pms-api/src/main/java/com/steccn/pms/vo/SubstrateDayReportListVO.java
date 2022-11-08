@@ -18,20 +18,14 @@ public class SubstrateDayReportListVO implements Serializable {
     @ApiModelProperty("类型 0-数据 1-产线合计 2-车间合计 3-总合计")
     private Integer type;
 
-    @ApiModelProperty("车间id")
-    private Integer workshopId;
-
     @ApiModelProperty("车间名称")
     private String workshopName;
-
-    @ApiModelProperty("产线id")
-    private Integer productLineId;
 
     @ApiModelProperty("产线名称")
     private String productLineName;
 
     @ApiModelProperty("规格")
-    private List<BaseQuantityVO> specList;
+    private List<String> specList;
 
     @ApiModelProperty("早班")
     private ProduceQuantityVO morning;

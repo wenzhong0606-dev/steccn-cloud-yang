@@ -168,4 +168,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto);
+
+    /**
+     * 根据生产订单号查询正在执行中的产线,批次,车间信息
+     * @param code
+     * @return
+     */
+    PmsProduceOrderVO code(String code);
 }

@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -30,7 +31,7 @@ public interface PmsProducePlanMapper extends BaseMapper<PmsProducePlan> {
      * @param status
      * @return
      */
-    Boolean updateBatchStatus(@Param("materialIdList") List<Long> materialIdList,@Param("firstDay") LocalDate firstDay,@Param("lastDay") LocalDate lastDay, @Param("status") Integer status);
+    Boolean updateBatchStatus(@Param("materialIdList") Set<Long> materialIdList, @Param("firstDay") LocalDate firstDay, @Param("lastDay") LocalDate lastDay, @Param("status") Integer status);
 }
 
 

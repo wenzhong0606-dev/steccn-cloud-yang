@@ -71,4 +71,10 @@ public class SysDictFeignController {
         return R.success(sysDictService.listByCode(codes,type));
     }
 
+    @PostMapping("/listByCodes")
+    @ApiOperation("根据code查询数据字典的值")
+    public R<Map<String, SysDictVO>> listByCodes(@RequestBody Set<String> codes) {
+        return R.success(sysDictService.listByCodes(codes));
+    }
+
 }

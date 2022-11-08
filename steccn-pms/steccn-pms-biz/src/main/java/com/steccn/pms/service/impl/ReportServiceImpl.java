@@ -14,7 +14,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.dto.EnergyCountDTO;
-import com.steccn.pms.dto.SubstrateDayReportDTO;
+import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
 import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.*;
@@ -46,7 +46,7 @@ public class ReportServiceImpl implements ReportService {
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-    public SubstrateDayReportVO substrateDayReport(SubstrateDayReportDTO dto) {
+    public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
         return null;
     }
 

@@ -32,7 +32,7 @@ public class PmsMrpVO {
     private BigDecimal quantity;
 
     @ApiModelProperty("库存数量")
-    private BigDecimal inventoryQuantity;
+    private BigDecimal stockQuantity;
 
     @ApiModelProperty("状态 0：正常 1：关闭 2：删除")
     private String status;

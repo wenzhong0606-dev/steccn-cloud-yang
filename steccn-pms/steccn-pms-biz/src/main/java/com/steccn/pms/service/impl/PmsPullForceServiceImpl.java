@@ -5,10 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
@@ -24,6 +28,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.time.format.DateTimeFormatter.ISO_DATE;
 
 /**
  * @author yequan
@@ -52,7 +58,6 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
 
 
-
         List<PmsPullForceVO> pmsPullForceVOList = new ArrayList<>();
         //组装返回参数
         for (Map.Entry<LocalDate, List<PmsPullForce>> entry : groupBy.entrySet()) {
@@ -63,7 +68,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             List<PmsPullForce> localDateGroupList = entry.getValue();
             //再按班次分组
             Map<Long, List<PmsPullForce>> classMap = localDateGroupList.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId));
-            for (Map.Entry<Long, List<PmsPullForce>> classEntry : classMap.entrySet()){
+            for (Map.Entry<Long, List<PmsPullForce>> classEntry : classMap.entrySet()) {
                 //获取白班夜班总量
                 BigDecimal dayClassTotal = classEntry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
                 String classCode = classIdMap.get(classEntry.getKey()).getCode();
@@ -75,12 +80,25 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 }
             }
             //获取总量
-            BigDecimal total =localDateGroupList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal total = localDateGroupList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
 
-        return pmsPullForceVOList;
+        List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
+        for (LocalDate localDate : localDateList) {
+            PmsPullForceVO pmsPullForceVO = new PmsPullForceVO();
+            Optional<PmsPullForceVO> present = pmsPullForceVOList.stream().filter(pullForceVO -> pullForceVO.getPullForceDate().equals(localDate)).findAny();
+            if (present.isPresent()) {
+                BeanUtils.copyProperties(present.get(), pmsPullForceVO);
+            } else {
+                pmsPullForceVO.setPullForceDate(localDate);
+            }
+            pullForceVOList.add(pmsPullForceVO);
+        }
+
+        return pullForceVOList;
     }
 
     @Override
@@ -96,10 +114,14 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
         Map<Integer, SysOfficeVO> map = remoteOfficeFeign.listById(productLineIdSet).getData();
         Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(workshopId);
+        sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
+        List<SysOfficeVO> sysOfficeVOList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
 
         List<PmsPullForceDetailsVO> pullForceDetailsVOList = new ArrayList<>();
         for (Map.Entry<Integer, List<PmsPullForce>> entry : groupBy.entrySet()) {
-            BigDecimal total =entry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal total = entry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             PmsPullForceDetailsVO pullForceDetailsVO = new PmsPullForceDetailsVO();
             pullForceDetailsVO.setProductLineId(entry.getKey());
@@ -120,7 +142,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceDetailsVOList.add(pullForceDetailsVO);
         }
 
-        return pullForceDetailsVOList;
+        List<PmsPullForceDetailsVO> pmsPullForceDetailsVOList = new ArrayList<>();
+        for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+            PmsPullForceDetailsVO pmsPullForceDetailsVO = new PmsPullForceDetailsVO();
+            Optional<PmsPullForceDetailsVO> present = pullForceDetailsVOList.stream().filter(pullForceDetailsVO -> pullForceDetailsVO.getProductLineId().equals(sysOfficeVO.getId())).findAny();
+            if (present.isPresent()) {
+                pmsPullForceDetailsVOList.add(present.get());
+            } else {
+                pmsPullForceDetailsVO.setProductLineId(sysOfficeVO.getId());
+                pmsPullForceDetailsVO.setProductLineName(sysOfficeVO.getOfficeName());
+                pmsPullForceDetailsVOList.add(pmsPullForceDetailsVO);
+            }
+        }
+
+        return pmsPullForceDetailsVOList;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -128,10 +163,11 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public Boolean editBatch(List<PmsPullForceEditDTO> dtoList) {
         List<PmsPullForce> addList = new ArrayList<>();
         List<PmsPullForce> updateList = new ArrayList<>();
+        remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T,PmManagerConstant.ENERGY_CONSUME);
 
         for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
             PmsPullForce pmsPullForce = new PmsPullForce();
-            BeanUtils.copyProperties(pmsPullForceEditDTO,pmsPullForce);
+            BeanUtils.copyProperties(pmsPullForceEditDTO, pmsPullForce);
 
             if (Objects.isNull(pmsPullForceEditDTO.getId())) {
                 addList.add(pmsPullForce);

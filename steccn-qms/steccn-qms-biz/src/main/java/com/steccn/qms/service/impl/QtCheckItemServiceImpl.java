@@ -31,6 +31,7 @@ import com.steccn.qms.service.QtCheckPlanService;
 import com.steccn.qms.service.QtItemCategoryService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtRangeArrayVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -406,6 +407,13 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             resMap.put(v.getId(), newCheckItem.getId());
         });
         return resMap;
+    }
+
+    @Override
+    public List<QtRangeArrayVO> selectStationList() {
+
+
+        return null;
     }
 
     /**

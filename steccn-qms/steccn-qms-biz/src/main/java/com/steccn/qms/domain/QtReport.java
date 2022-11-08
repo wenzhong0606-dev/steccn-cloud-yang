@@ -133,6 +133,14 @@ public class QtReport implements Serializable {
     @TableField(value = "note")
     private String note;
 
+    @TableField(value = "report_group_id")
+    private Integer reportGroupId;
+
+    /**
+     * 报表卡片类型id
+     */
+    @TableField(value = "report_group_id")
+    private Integer reportSortId;
     /**
      * 创建人id
      */

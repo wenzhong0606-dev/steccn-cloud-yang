@@ -14,11 +14,17 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.nimbusds.jose.util.IntegerUtils;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -65,7 +71,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyMapper qtCheckTaskCopyMapper;
 
     private final QtDefectiveItemMapper qtDefectiveItemMapper;
-
+    
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     /**
      * 新增
@@ -794,18 +801,28 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         BeanUtils.copyProperties(iPage, page);
         return page;
     }
-//TODO
 
+//TODO
     /**
-     * 根据生产订单号查询产线，批次等信息
-     * @param id
+     * 根据生产订单号查询产线，批次,车间等信息
+     * @param code
      * @return
      */
     @Override
-    public QtCheckTaskListVO productOrderInfo(Integer id) {
-        return null;
+    public QtProduceOrderLineVO productOrderInfo(String code) {
+        QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
+        R<PmsProduceOrderVO> pmsProduceOrderVO = remotePmsFeignApi.code(code);
+
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(pmsProduceOrderVO.getData().getProductionLineId());
+        sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
+        //根据产线查询父级车间
+        SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(Integer.valueOf(PmManagerConstant.STATE_9))).get();
+        qtProduceOrderLineVO.setWorkshopId(Integer.valueOf(PmManagerConstant.STATE_8));
+        qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
+
+        return qtProduceOrderLineVO;
     }
-//TODO
 
     /**
      * 根据产线查询生产订单号,批次等信息
@@ -814,11 +831,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public QtProduceOrderLineVO selectProductOrder(Integer id) {
-       /* QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
+
+        QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
         R<PmsProduceOrderVO> pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id);
         BeanUtils.copyProperties(pmsProduceOrderVO,qtProduceOrderLineVO);
-        return qtProduceOrderLineVO;*/
-        return null;
+
+        return qtProduceOrderLineVO;
     }
 
     @Override
@@ -905,9 +923,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @param dto
      * @return
      */
-    //TODO
     @Override
     public QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto) {
+        //先根据开始时间和完成时间查出这段时间内完成的检验项
         LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getProductWorkshop, dto.getProductWorkshop()).
                 ge(QtCheckTask::getFinishedTime, dto.getDateStart()).
                 le(QtCheckTask::getFinishedTime, dto.getDateEnd());

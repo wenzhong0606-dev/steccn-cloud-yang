@@ -10,8 +10,8 @@ import java.io.Serializable;
  * @author yequan
  */
 @Data
-@ApiModel("日报表表头vo")
-public class ReportHeaderVO implements Serializable {
+@ApiModel("基片日报表表头vo")
+public class SubstrateReportHeaderVO implements Serializable {
 
     @ApiModelProperty("规格")
     private BaseReportHeaderVO specList;

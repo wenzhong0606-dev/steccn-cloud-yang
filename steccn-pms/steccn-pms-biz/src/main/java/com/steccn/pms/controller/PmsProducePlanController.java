@@ -35,7 +35,7 @@ public class PmsProducePlanController {
 
     @ApiOperation("月计划列表")
     @GetMapping("/list")
-    public R<List<PmsProducePlanDTO>> list(@RequestParam String monthDate) {
+    public R<List<PmsProducePlanDTO>> list(@RequestParam("monthDate") String monthDate) {
         return R.success(pmsProducePlanService.list(monthDate));
     }
 

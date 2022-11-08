@@ -46,7 +46,7 @@ public interface RemoteDictFeignApi {
      */
     @GetMapping("/feign/platform/sys/dict/getByCode")
     @ApiOperation("根据编码类型查询数据字典的值")
-    R<SysDictVO> getByCode(@ApiParam("字典编码")@RequestParam("code") String code,@ApiParam("类型")@RequestParam("type") String type);
+    R<SysDictVO> getByCode(@ApiParam("字典编码") @RequestParam("code") String code, @ApiParam("类型") @RequestParam("type") String type);
 
 
     /**
@@ -62,6 +62,7 @@ public interface RemoteDictFeignApi {
 
     /**
      * 根据code查询数据字典的值
+     *
      * @param sysDictDTO
      * @return
      */
@@ -72,11 +73,23 @@ public interface RemoteDictFeignApi {
 
     /**
      * 根据编码类型查询数据字典的值
+     *
      * @param codes
      * @param type
      * @return
      */
     @GetMapping("/feign/platform/sys/dict/listByCode")
     @ApiOperation("根据编码类型查询数据字典的值")
-    R<Map<String,String>> listByCode(@ApiParam("字典编码")@RequestParam("codes") Set<String> codes,@ApiParam("类型")@RequestParam("type") String type);
+    R<Map<String, String>> listByCode(@ApiParam("字典编码") @RequestParam("codes") Set<String> codes, @ApiParam("类型") @RequestParam("type") String type);
+
+
+    /**
+     * 根据code查询数据字典的值
+     *
+     * @param codes
+     * @return
+     */
+    @PostMapping("/listByCodes")
+    @ApiOperation("根据code查询数据字典的值")
+    R<Map<String, SysDictVO>> listByCodes(@RequestBody Set<String> codes);
 }
