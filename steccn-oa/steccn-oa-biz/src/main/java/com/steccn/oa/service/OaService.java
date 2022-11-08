@@ -287,8 +287,8 @@ public class OaService {
      */
     public List<OaEmpVO> getEmpByCondition(OaEmpDTO dto){
         //若传父亲节点，则默认父亲节点下的子节点
-        if(dto.getSubcompanyid()!=null && dto.getSubcompanyid().equals(OaConstant.NO)){
-            dto.setSubcompanyid(OaConstant.YES);
+        if(dto.getId()!=null && dto.getId().equals(OaConstant.NO)){
+            dto.setId(OaConstant.YES);
         }
         MultiValueMap<String, String> headers = setHeaders();
         String sessionResult = oaApi.getCompanyEmpSessionKey(headers,dto);
