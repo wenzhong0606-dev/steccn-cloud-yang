@@ -1,5 +1,7 @@
 package com.steccn.oa.service;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -19,6 +21,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import weaver.rsa.security.RSA;
 
 import java.util.ArrayList;
@@ -305,13 +308,25 @@ public class OaService {
     /**
      * 获取待办数据
      */
-    public List<OaToDoWorkflowVO> getToDoList(OaToDoWorkFlowDTO dto){
+    public List<OaToDoWorkflowVO> getToDoList(){
+        OaToDoWorkFlowDTO dto = new OaToDoWorkFlowDTO();
         dto.setUserId(SecurityUtils.getUser().getUserId().toString());
         dto.setPageNo(OaConstant.YES);
         //默认8条数据
         dto.setPageSize(8);
         String result = oaApi.getWorkflow(this.setHeaders(),dto);
-        List<OaToDoWorkflowVO> vos = JSONArray.parseArray(result).toJavaList(OaToDoWorkflowVO.class);
+        JSONArray arr = JSONArray.parseArray(result);
+        List<OaToDoWorkflowVO> vos = arr.toJavaList(OaToDoWorkflowVO.class);
+        //判断是否已读，已读则有operateTime
+        if(CollUtil.isNotEmpty(vos)){
+            vos.forEach(tmp->{
+                if(StrUtil.isNotBlank(tmp.getOperateTime())){
+                    tmp.setIsRead(OaConstant.YES);
+                }else {
+                    tmp.setIsRead(OaConstant.NO);
+                }
+            });
+        }
         return vos;
     }
 

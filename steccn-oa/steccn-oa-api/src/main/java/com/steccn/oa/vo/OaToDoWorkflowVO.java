@@ -23,12 +23,12 @@ public class OaToDoWorkflowVO implements Serializable {
     /**
      * 接收时间
      */
-    private LocalDateTime receiveTime;
+    private String receiveTime;
 
     /**
      * 操作时间
      */
-    private LocalDateTime operateTime;
+    private String operateTime;
 
     /**
      * 是否已读 0未读 1已读
