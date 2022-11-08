@@ -166,17 +166,17 @@ public class ReportServiceImpl implements ReportService {
         List<PmsReportWork> pmsReportWorkList = pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
                 .select("classes_id as classesId,product_line_id as productLineId,process_quantity as processQuantity")
                 .lambda().in(PmsReportWork::getProductLineId,productLineIdList)
-                .ge(PmsReportWork::getEndTime,dateRangeList.get(0))
-                .le(PmsReportWork::getEndTime,dateRangeList.get(1)));
+                .ge(PmsReportWork::getCreateTime,dateRangeList.get(0))
+                .le(PmsReportWork::getCreateTime,dateRangeList.get(1)));
         Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassesId));
 
         OutputCountVO outputCountVO = new OutputCountVO();
         //获取车间下所有的产线名称
         outputCountVO.setProductLineList(productLineNameList);
 
-        List<OutputCountListVO> outputCountListVOS = new ArrayList<>();
+        List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
 
-        outputCountVO.setDataList(outputCountListVOS);
+        outputCountVO.setDataList(outputCountListVOList);
         //获取产量数据
         for (Map.Entry<Long, List<PmsReportWork>> entry : classGroup.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
@@ -193,7 +193,7 @@ public class ReportServiceImpl implements ReportService {
             }
             listVO.setQuantityList(quantityList);
 
-            outputCountListVOS.add(listVO);
+            outputCountListVOList.add(listVO);
         }
 
         //获取入库数
@@ -214,7 +214,7 @@ public class ReportServiceImpl implements ReportService {
             }
             listVO.setQuantityList(quantityList);
 
-            outputCountListVOS.add(listVO);
+            outputCountListVOList.add(listVO);
         }
 
         //获取拉引量

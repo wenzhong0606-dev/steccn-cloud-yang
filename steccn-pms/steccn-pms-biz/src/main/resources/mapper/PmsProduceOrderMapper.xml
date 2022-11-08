@@ -196,7 +196,7 @@
         where o.production_line_id in(
         <foreach collection="productionLineIdList" item="id"  open="(" close=")" separator=",">
             #{id}
-        </foreach>) and (c.pack_time &gt;= #{startTime} and c.pack_time &lt;= #{endTime})
+        </foreach>) and (c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime})
         GROUP BY
 	        c.classes_id,
 	        o.production_line_id
