@@ -157,7 +157,7 @@ public class LocalDateUtil {
     public static List<LocalDate> getCurrentMonthDateAll(LocalDate localDate) {
         int year = localDate.getYear();
         Month month = localDate.getMonth();
-        int day = month.maxLength();
+        int day = month.length(localDate.isLeapYear());
         List<LocalDate> localDateList = new ArrayList<>();
         for (int i = 1; i <= day; i++) {
             LocalDate date = LocalDate.of(year, month, i);

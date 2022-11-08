@@ -163,6 +163,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public Boolean editBatch(List<PmsPullForceEditDTO> dtoList) {
         List<PmsPullForce> addList = new ArrayList<>();
         List<PmsPullForce> updateList = new ArrayList<>();
+        remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T,PmManagerConstant.ENERGY_CONSUME);
 
         for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
             PmsPullForce pmsPullForce = new PmsPullForce();

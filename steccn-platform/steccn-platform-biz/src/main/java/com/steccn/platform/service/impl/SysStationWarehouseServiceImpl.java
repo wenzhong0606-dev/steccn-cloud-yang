@@ -1,5 +1,6 @@
 package com.steccn.platform.service.impl;
 
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -41,6 +42,9 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
         Page<SysStationWarehouse> page = page(new Page<>(dto.getCurrent(), dto.getSize()), queryWrapper);
         Page<SysStationWarehouseVO> voPage = new Page<>();
         BeanUtils.copyProperties(page,voPage);
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return voPage;
+        }
 
         Set<Integer> warehouseIdSet = page.getRecords().stream().map(SysStationWarehouse::getWarehouseId).collect(Collectors.toSet());
         Set<Integer> shelfIdSet = page.getRecords().stream().map(SysStationWarehouse::getShelfId).collect(Collectors.toSet());
