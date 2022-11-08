@@ -106,7 +106,6 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)).findAny();
                 if (present.isPresent()) {
                     BeanUtils.copyProperties(present.get(), planDetailsDTO);
-                    producePlanDetailsDTOList.add(planDetailsDTO);
                 } else {
                     planDetailsDTO.setPlanDate(localDate);
                 }
