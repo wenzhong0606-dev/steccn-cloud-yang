@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
@@ -13,10 +14,14 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
+import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
+import com.steccn.pms.mapper.PmsProduceOrderMapper;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
+import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +44,18 @@ import java.util.stream.Collectors;
 public class ReportServiceImpl implements ReportService {
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
     private final PmsReportWorkConsumeService pmsReportWorkConsumeService;
+
     private final PmsReportWorkMapper pmsReportWorkMapper;
+
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final PmsPullForceService pmsPullForceService;
+
+    private final PmsReportWorkService pmsReportWorkService;
+
+    private final PmsProduceOrderMapper pmsProduceOrderMapper;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -134,6 +148,79 @@ public class ReportServiceImpl implements ReportService {
 
         }
         return resVo;
+    }
+
+    @Override
+    public OutputCountVO outputCount(EnergyCountDTO dto) {
+        //查询车间下所有的产线
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(dto.getWorkshopId());
+        sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
+        List<SysOfficeVO> productLineList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
+        Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
+
+        //获取日期
+        List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
+
+        List<PmsReportWork> pmsReportWorkList = pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
+                .select("classes_id as classesId,product_line_id as productLineId,process_quantity as processQuantity")
+                .lambda().in(PmsReportWork::getProductLineId,productLineIdList)
+                .ge(PmsReportWork::getEndTime,dateRangeList.get(0))
+                .le(PmsReportWork::getEndTime,dateRangeList.get(1)));
+        Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassesId));
+
+        OutputCountVO outputCountVO = new OutputCountVO();
+        //获取车间下所有的产线名称
+        outputCountVO.setProductLineList(productLineNameList);
+
+        List<OutputCountListVO> outputCountListVOS = new ArrayList<>();
+
+        outputCountVO.setDataList(outputCountListVOS);
+        //获取产量数据
+        for (Map.Entry<Long, List<PmsReportWork>> entry : classGroup.entrySet()) {
+            OutputCountListVO listVO = new OutputCountListVO();
+            listVO.setDataType("产量");
+            List<BigDecimal> quantityList = new ArrayList<>();
+            //获取该班次在产线的数量
+            for (SysOfficeVO sysOfficeVO : productLineList) {
+                Optional<PmsReportWork> present = entry.getValue().stream().filter(pmsReportWork -> pmsReportWork.getProductLineId().equals(sysOfficeVO.getId())).findAny();
+                if (present.isPresent()) {
+                    quantityList.add(present.get().getProcessQuantity());
+                } else {
+                    quantityList.add(null);
+                }
+            }
+            listVO.setQuantityList(quantityList);
+
+            outputCountListVOS.add(listVO);
+        }
+
+        //获取入库数
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList),dateRangeList.get(0),dateRangeList.get(1));
+        Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassesId));
+        for (Map.Entry<Long, List<CompleteStorageCountVO>> entry : completeMap.entrySet()) {
+            OutputCountListVO listVO = new OutputCountListVO();
+            listVO.setDataType("入库数");
+            List<BigDecimal> quantityList = new ArrayList<>();
+            //获取该班次在产线的数量
+            for (SysOfficeVO sysOfficeVO : productLineList) {
+                Optional<CompleteStorageCountVO> present = entry.getValue().stream().filter(completeStorage -> completeStorage.getProductionLineId().equals(sysOfficeVO.getId())).findAny();
+                if (present.isPresent()) {
+                    quantityList.add(present.get().getQuantity());
+                } else {
+                    quantityList.add(null);
+                }
+            }
+            listVO.setQuantityList(quantityList);
+
+            outputCountListVOS.add(listVO);
+        }
+
+        //获取拉引量
+
+
+        return outputCountVO;
     }
 
     /**

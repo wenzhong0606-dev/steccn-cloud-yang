@@ -51,4 +51,10 @@ public class ReportController {
     public R<EnergyCountVO> consume(@RequestBody EnergyCountDTO dto) {
         return R.success(reportService.consume(dto));
     }
+
+    @PostMapping("/outputCount")
+    @ApiOperation("产量统计")
+    public R<OutputCountVO> outputCount(@RequestBody EnergyCountDTO dto) {
+        return R.success(reportService.outputCount(dto));
+    }
 }

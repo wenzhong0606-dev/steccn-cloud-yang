@@ -3,6 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.vo.EnergyCountVO;
+import com.steccn.pms.vo.OutputCountVO;
 import com.steccn.pms.vo.SubstrateDayReportVO;
 
 /**
@@ -24,4 +25,12 @@ public interface ReportService {
      * @return
      */
     EnergyCountVO consume(EnergyCountDTO dto);
+
+    /**
+     * 产量统计
+     *
+     * @param dto
+     * @return
+     */
+    OutputCountVO outputCount(EnergyCountDTO dto);
 }
