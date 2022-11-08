@@ -152,7 +152,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 throw new BusinessException("生产月计划修改失败");
             }
         }
-        return pmsMrpInfoService.add(dto);
+        return true;
     }
 
     @Override

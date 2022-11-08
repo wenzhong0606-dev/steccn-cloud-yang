@@ -26,4 +26,7 @@ public class PmsPullForceDetailsVO {
 
     @ApiModelProperty("合计")
     private BigDecimal total;
+
+    @ApiModelProperty("单位名称")
+    private String unitName;
 }

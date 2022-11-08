@@ -92,6 +92,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             Optional<PmsPullForceVO> present = pmsPullForceVOList.stream().filter(pullForceVO -> pullForceVO.getPullForceDate().equals(localDate)).findAny();
             if (present.isPresent()) {
                 BeanUtils.copyProperties(present.get(), pmsPullForceVO);
+                pmsPullForceVO.setUnitName(PmManagerConstant.UNIT_T);
             } else {
                 pmsPullForceVO.setPullForceDate(localDate);
             }
@@ -128,6 +129,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceDetailsVO.setProductLineName(map.get(entry.getKey()).getOfficeName());
             pullForceDetailsVO.setId(entry.getValue().get(0).getId());
             pullForceDetailsVO.setTotal(total);
+            pullForceDetailsVO.setUnitName(PmManagerConstant.UNIT_T);
 
             //获取白班夜班数量
             for (PmsPullForce pmsPullForce : entry.getValue()) {
@@ -163,12 +165,12 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public Boolean editBatch(List<PmsPullForceEditDTO> dtoList) {
         List<PmsPullForce> addList = new ArrayList<>();
         List<PmsPullForce> updateList = new ArrayList<>();
-        remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T,PmManagerConstant.ENERGY_CONSUME);
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T, PmManagerConstant.ENERGY_CONSUME).getData();
 
         for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
             PmsPullForce pmsPullForce = new PmsPullForce();
             BeanUtils.copyProperties(pmsPullForceEditDTO, pmsPullForce);
-
+            pmsPullForce.setUnitId(sysDictVO.getId());
             if (Objects.isNull(pmsPullForceEditDTO.getId())) {
                 addList.add(pmsPullForce);
             } else {
