@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
@@ -52,7 +53,6 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
 
 
-
         List<PmsPullForceVO> pmsPullForceVOList = new ArrayList<>();
         //组装返回参数
         for (Map.Entry<LocalDate, List<PmsPullForce>> entry : groupBy.entrySet()) {
@@ -63,7 +63,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             List<PmsPullForce> localDateGroupList = entry.getValue();
             //再按班次分组
             Map<Long, List<PmsPullForce>> classMap = localDateGroupList.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId));
-            for (Map.Entry<Long, List<PmsPullForce>> classEntry : classMap.entrySet()){
+            for (Map.Entry<Long, List<PmsPullForce>> classEntry : classMap.entrySet()) {
                 //获取白班夜班总量
                 BigDecimal dayClassTotal = classEntry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
                 String classCode = classIdMap.get(classEntry.getKey()).getCode();
@@ -75,12 +75,25 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 }
             }
             //获取总量
-            BigDecimal total =localDateGroupList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal total = localDateGroupList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.now());
 
-        return pmsPullForceVOList;
+        List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
+        for (LocalDate localDate : localDateList) {
+            PmsPullForceVO pmsPullForceVO = new PmsPullForceVO();
+            Optional<PmsPullForceVO> present = pmsPullForceVOList.stream().filter(pullForceVO -> pullForceVO.getPullForceDate().equals(localDate)).findAny();
+            if (present.isPresent()) {
+                BeanUtils.copyProperties(present.get(), pmsPullForceVO);
+            } else {
+                pmsPullForceVO.setPullForceDate(localDate);
+            }
+            pullForceVOList.add(pmsPullForceVO);
+        }
+
+        return pullForceVOList;
     }
 
     @Override
@@ -99,7 +112,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
         List<PmsPullForceDetailsVO> pullForceDetailsVOList = new ArrayList<>();
         for (Map.Entry<Integer, List<PmsPullForce>> entry : groupBy.entrySet()) {
-            BigDecimal total =entry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal total = entry.getValue().stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             PmsPullForceDetailsVO pullForceDetailsVO = new PmsPullForceDetailsVO();
             pullForceDetailsVO.setProductLineId(entry.getKey());
@@ -131,7 +144,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
         for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
             PmsPullForce pmsPullForce = new PmsPullForce();
-            BeanUtils.copyProperties(pmsPullForceEditDTO,pmsPullForce);
+            BeanUtils.copyProperties(pmsPullForceEditDTO, pmsPullForce);
 
             if (Objects.isNull(pmsPullForceEditDTO.getId())) {
                 addList.add(pmsPullForce);

@@ -32,7 +32,7 @@ public class LocalDateUtil {
      * 获取日期时间字符串
      *
      * @param localDate 需要转化的日期
-     * @param pattern       时间格式
+     * @param pattern   时间格式
      * @return String 日期时间字符串，例如 2022-11-01
      */
     public static String localDateFormat(LocalDate localDate, String pattern) {
@@ -66,7 +66,7 @@ public class LocalDateUtil {
      * @return LocalDateTime 格式：yyyy-MM-dd HH:mm:ss
      */
     public static LocalDateTime getFirstDayOfWeekStr(LocalDate localDate) {
-        return LocalDateTime.of(localDate.with(DayOfWeek.MONDAY),LocalTime.MIN);
+        return LocalDateTime.of(localDate.with(DayOfWeek.MONDAY), LocalTime.MIN);
     }
 
     /**
@@ -76,7 +76,7 @@ public class LocalDateUtil {
      * @return localDateTime 格式：yyyy-MM-dd HH:mm:ss
      */
     public static LocalDateTime getLastDayOfWeekStr(LocalDate localDate) {
-        return LocalDateTime.of(localDate.with(DayOfWeek.SUNDAY),LocalTime.MAX);
+        return LocalDateTime.of(localDate.with(DayOfWeek.SUNDAY), LocalTime.MAX);
 
     }
 
@@ -87,18 +87,17 @@ public class LocalDateUtil {
      * @return localDateTime 格式：yyyy-MM-dd HH:mm:ss
      */
     public static LocalDateTime getFirstDayOfMonthStr(LocalDate localDate) {
-        return LocalDateTime.of(localDate.with(TemporalAdjusters.firstDayOfMonth()),LocalTime.MIN);
+        return LocalDateTime.of(localDate.with(TemporalAdjusters.firstDayOfMonth()), LocalTime.MIN);
     }
 
     /**
      * 获取指定日期当月最后一天的日期
      *
      * @param localDate 指定日期时间
-
      * @return localDateTime 格式：yyyy-MM-dd
      */
     public static LocalDateTime getLastDayOfMonthStr(LocalDate localDate) {
-        return LocalDateTime.of(localDate.with(TemporalAdjusters.lastDayOfMonth()),LocalTime.MAX);
+        return LocalDateTime.of(localDate.with(TemporalAdjusters.lastDayOfMonth()), LocalTime.MAX);
     }
 
     /**
@@ -110,8 +109,8 @@ public class LocalDateUtil {
     public static LocalDateTime getFirstDayOfQuarterlyStr(LocalDate localDate) {
         int year = localDate.getYear();
         Month firstMonthOfQuarter = localDate.getMonth().firstMonthOfQuarter();
-        localDate = LocalDate.of(year,firstMonthOfQuarter,1);
-        return LocalDateTime.of(localDate,LocalTime.MIN);
+        localDate = LocalDate.of(year, firstMonthOfQuarter, 1);
+        return LocalDateTime.of(localDate, LocalTime.MIN);
     }
 
     /**
@@ -123,10 +122,10 @@ public class LocalDateUtil {
     public static LocalDateTime getLastDayOfQuarterlyStr(LocalDate localDate) {
         int year = localDate.getYear();
         Month firstMonthOfQuarter = localDate.getMonth().firstMonthOfQuarter();
-        Month endMonthOfQuarter = Month.of(firstMonthOfQuarter.getValue()+2);
+        Month endMonthOfQuarter = Month.of(firstMonthOfQuarter.getValue() + 2);
         int day = endMonthOfQuarter.maxLength();
-        localDate =LocalDate.of(year,endMonthOfQuarter,day);
-        return LocalDateTime.of(localDate,LocalTime.MAX);
+        localDate = LocalDate.of(year, endMonthOfQuarter, day);
+        return LocalDateTime.of(localDate, LocalTime.MAX);
     }
 
     /**
@@ -149,12 +148,29 @@ public class LocalDateUtil {
         return LocalDateTime.of(localDate.with(TemporalAdjusters.lastDayOfYear()), LocalTime.MAX);
     }
 
+    /**
+     * 获取当前月所有日期
+     *
+     * @param localDate
+     * @return
+     */
+    public static List<LocalDate> getCurrentMonthDateAll(LocalDate localDate) {
+        int year = localDate.getYear();
+        Month month = localDate.getMonth();
+        int day = month.maxLength();
+        List<LocalDate> localDateList = new ArrayList<>();
+        for (int i = 1; i <= day; i++) {
+            LocalDate date = LocalDate.of(year, month, i);
+            localDateList.add(date);
+        }
+        return localDateList;
+    }
 
 
     /**
      * 根据类型获取开始和结束时间
      *
-     * @param type    类型 0：日，1：周，2：月，3：季度，4：年
+     * @param type 类型 0：日，1：周，2：月，3：季度，4：年
      * @return List<LocalDateTime> 格式：[2022-11-01 00:00:00, 2022-11-01 23:59:59]
      */
     public static List<LocalDateTime> getFirstAndLastDate(int type) {
@@ -165,10 +181,10 @@ public class LocalDateUtil {
         } else if (Objects.equals(type, LocalDateEnum.WEEK.getCode())) {
             firstAndLastDateList.add(getFirstDayOfWeekStr(LocalDate.now()));
             firstAndLastDateList.add(getLastDayOfWeekStr(LocalDate.now()));
-        } else if (Objects.equals(type, LocalDateEnum.MONTH.getCode())){
+        } else if (Objects.equals(type, LocalDateEnum.MONTH.getCode())) {
             firstAndLastDateList.add(getFirstDayOfMonthStr(LocalDate.now()));
             firstAndLastDateList.add(getLastDayOfMonthStr(LocalDate.now()));
-        } else if (Objects.equals(type, LocalDateEnum.QUARTERLY.getCode())){
+        } else if (Objects.equals(type, LocalDateEnum.QUARTERLY.getCode())) {
             firstAndLastDateList.add(getFirstDayOfQuarterlyStr(LocalDate.now()));
             firstAndLastDateList.add(getLastDayOfQuarterlyStr(LocalDate.now()));
         } else {
@@ -178,4 +194,5 @@ public class LocalDateUtil {
 
         return firstAndLastDateList;
     }
+
 }
