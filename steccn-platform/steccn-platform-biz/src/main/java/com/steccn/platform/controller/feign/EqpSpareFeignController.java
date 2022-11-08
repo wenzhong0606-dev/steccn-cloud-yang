@@ -81,7 +81,7 @@ public class EqpSpareFeignController {
         return R.success(eqpSpareService.mapByCode(codeList));
     }
 
-    @PostMapping
+    @PostMapping("/listPage")
     @ApiOperation("获取备件分页列表")
     public R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO) {
         return R.success(eqpSpareService.listPage(sparePageDTO));

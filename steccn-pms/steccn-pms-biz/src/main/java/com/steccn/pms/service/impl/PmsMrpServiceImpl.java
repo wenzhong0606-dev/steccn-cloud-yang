@@ -92,6 +92,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         LambdaQueryWrapper<PmsMrpInfo> pmsMrpInfoLambdaQueryWrapper = new QueryWrapper<PmsMrpInfo>().select("material_id,sum(quantity) as quantity").lambda()
                 .in(PmsMrpInfo::getMaterialId, materialIds)
                 .in(PmsMrpInfo::getMrpTypeId, typeMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND), typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT))
+                .eq(PmsMrpInfo::getStatus,PmManagerConstant.OrderStateEnum.ZERO.getCode())
                 .groupBy(PmsMrpInfo::getMaterialId);
         List<PmsMrpInfo> list = pmsMrpInfoService.list(pmsMrpInfoLambdaQueryWrapper);
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));

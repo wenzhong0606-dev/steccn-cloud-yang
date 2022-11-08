@@ -23,6 +23,15 @@ public interface PmReportConstant {
     String STR_BAR = "bar";
 
     /**
+     * type类型定义
+     */
+    Integer TYPE_0 = 0;
+    Integer TYPE_1 = 1;
+    Integer TYPE_2 = 2;
+    Integer TYPE_3 = 3;
+    Integer TYPE_4 = 4;
+
+    /**
      * 时间范围 本日，本周，本月
      */
     @Getter

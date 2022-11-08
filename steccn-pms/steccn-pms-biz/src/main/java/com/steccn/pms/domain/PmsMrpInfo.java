@@ -53,6 +53,16 @@ public class PmsMrpInfo implements Serializable {
     private Long materialId;
 
     /**
+     * 计划id
+     */
+    private Long planId;
+
+    /**
+     * 状态
+     */
+    private Integer status;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

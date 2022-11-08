@@ -1,12 +1,16 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.qms.domain.QtReportGroup;
 import com.steccn.qms.dto.QtReportGroupDTO;
 import com.steccn.qms.service.QtReportGroupService;
 import com.steccn.qms.mapper.QtReportGroupMapper;
 import com.steccn.qms.service.QtReportService;
+import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
 * @author 86178
@@ -43,6 +48,32 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
     public List<QtReportVO> getQtReportList(Integer id) {
         List<QtReportVO> qtReportList = qtReportService.getQtReportList(id);
         return qtReportList;
+    }
+
+    @Override
+    public List<QtReportGroupVO> getReportGroupVOlist() {
+        List<QtReportGroup> groups = list();
+        if (CollUtil.isEmpty(groups)){
+            throw new BusinessException("暂无分组请先创建");
+        }
+        List<QtReportGroupVO> qtReportGroupVOS=Lists.newArrayList();
+        groups.stream().forEach(g->{
+            QtReportGroupVO qtReportGroupVO = new QtReportGroupVO();
+            BeanUtils.copyProperties(g,qtReportGroupVO);
+            qtReportGroupVOS.add(qtReportGroupVO);
+        });
+        return qtReportGroupVOS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deletQtReportGroup(Integer id) {
+        if (Objects.isNull(id)){
+            throw new BusinessException("分组id不能为空");
+        }
+        removeById(id);
+        qtReportService.deleteByGroupId(id);
+        return null;
     }
 }
 

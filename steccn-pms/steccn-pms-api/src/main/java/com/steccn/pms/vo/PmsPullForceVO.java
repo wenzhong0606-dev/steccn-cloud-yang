@@ -27,4 +27,7 @@ public class PmsPullForceVO {
 
     @ApiModelProperty("日期")
     private LocalDate pullForceDate;
+
+    @ApiModelProperty("单位名称")
+    private String unitName;
 }

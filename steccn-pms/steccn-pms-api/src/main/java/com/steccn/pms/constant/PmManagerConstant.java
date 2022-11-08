@@ -67,6 +67,11 @@ public interface PmManagerConstant {
      */
     String SYS_TEAM = "sys_team";
 
+    /**
+     * 班次
+     */
+    String SYS_SHIFT = "sys_shift";
+
     String FILE_EXTENSION_XLSX = ".xlsx";
 
     /**
