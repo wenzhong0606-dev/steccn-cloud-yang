@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.steccn.qms.domain.QtReportGroup;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtReportGroupDTO;
+import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 
 import java.util.List;
@@ -22,4 +23,6 @@ public interface QtReportGroupService extends IService<QtReportGroup> {
      * @return
      */
     List<QtReportVO> getQtReportList(Integer id);
+
+    List<QtReportGroupVO> getReportGroupVOlist();
 }
