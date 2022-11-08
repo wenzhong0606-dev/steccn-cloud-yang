@@ -29,6 +29,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.time.format.DateTimeFormatter.ISO_DATE;
+
 /**
  * @author yequan
  * @description 针对表【pms_pull_force(拉引力表)】的数据库操作Service实现
@@ -82,7 +84,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
-        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.now());
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
 
         List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {

@@ -27,6 +27,7 @@ import com.steccn.pms.service.PmsMrpService;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.mapper.PmsProducePlanMapper;
 import com.steccn.pms.vo.PmsProducePlanVO;
+import com.steccn.pms.vo.PmsPullForceVO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.pms.vo.ProducePlanMsgVO;
 import lombok.RequiredArgsConstructor;
@@ -86,6 +87,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
+        //获取指定月份所有天数
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
 
         for (Map.Entry<String, List<PmsProducePlanVO>> entry : groupBy.entrySet()) {
             PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
@@ -98,10 +101,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlanDTO.setTotal(total);
 
             List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
-            for (PmsProducePlanVO pmsProducePlanVO : entry.getValue()) {
+            for (LocalDate localDate : localDateList) {
                 PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
-                BeanUtils.copyProperties(pmsProducePlanVO, planDetailsDTO);
+                Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)).findAny();
+                if (present.isPresent()) {
+                    BeanUtils.copyProperties(present.get(), planDetailsDTO);
+                    producePlanDetailsDTOList.add(planDetailsDTO);
+                } else {
+                    planDetailsDTO.setPlanDate(localDate);
+                }
                 producePlanDetailsDTOList.add(planDetailsDTO);
+
             }
             pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
             pmsProducePlanDTOList.add(pmsProducePlanDTO);
