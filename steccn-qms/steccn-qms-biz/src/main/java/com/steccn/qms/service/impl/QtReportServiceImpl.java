@@ -132,7 +132,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtCheckItemSPCVO.setCheckItemName(q.getName());
             qtCheckItemSPCVOS.add(qtCheckItemSPCVO);
         });
-        return qtCheckItemSPCVOS;
+        //去重
+        List<QtCheckItemSPCVO> qtCheckItemSPCVOList = qtCheckItemSPCVOS.stream().distinct().collect(Collectors.toList());
+        return qtCheckItemSPCVOList;
     }
 
     /**
