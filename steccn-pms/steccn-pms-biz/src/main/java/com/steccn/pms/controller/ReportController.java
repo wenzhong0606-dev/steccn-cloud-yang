@@ -4,14 +4,17 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.ReportService;
-import com.steccn.pms.vo.*;
+import com.steccn.pms.vo.EnergyCountVO;
+import com.steccn.pms.vo.FurtherIngredientReportVO;
+import com.steccn.pms.vo.FurtherProduceReportVO;
+import com.steccn.pms.vo.SubstrateDayReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yequan

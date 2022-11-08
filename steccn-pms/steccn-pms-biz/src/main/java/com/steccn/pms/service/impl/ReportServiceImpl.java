@@ -15,6 +15,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
 import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.*;
@@ -25,9 +26,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,14 +39,58 @@ import java.util.stream.Collectors;
 public class ReportServiceImpl implements ReportService {
 
     private final RemoteOfficeFeign remoteOfficeFeign;
-
     private final PmsReportWorkConsumeService pmsReportWorkConsumeService;
-
+    private final PmsReportWorkMapper pmsReportWorkMapper;
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
-        return null;
+        SubstrateDayReportVO vo = new SubstrateDayReportVO();
+        //构建表头
+        SubstrateReportHeaderVO header = new SubstrateReportHeaderVO();
+        BaseReportHeaderVO specList = new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚"));
+        header.setSpecList(specList);
+        //查询所有数据
+        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto);
+        //获取班次数据
+        SysDictDTO sysDictDTO = new SysDictDTO();
+        sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
+        Map<String, SysDictVO> classMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        List<SysDictVO> classList = classMap.values().stream().collect(Collectors.toList());
+        classList.sort(Comparator.comparing(SysDictVO::getSort));
+        //将有数据的产线拉取出来
+        Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        //根据车间去划分
+        Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
+
+        workShopMap.forEach((k, v) -> {
+            //根据产线遍历
+            v.forEach(productLine -> {
+                //获取当前产线下的数据
+                List<SubstrateDataListVO> productLineDataList = rowDataList.stream().filter(row -> productLineMap.equals(row.getProductLineId())).collect(Collectors.toList());
+                //将当前产线下的数据根据物料分组
+                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialId));
+                //遍历物料分组的数据，来组装数据
+                materialMap.forEach((m, n) -> {
+                    SubstrateDayReportListVO row = new SubstrateDayReportListVO();
+                    row.setType(PmReportConstant.TYPE_0);
+                    Map<Long, List<SubstrateDataListVO>> classDataMap = n.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getClassesId));
+                    //遍历班次
+                    classList.forEach(c -> {
+                        //获取班次信息
+                        List<SubstrateDataListVO> classData = classDataMap.get(c);
+                        //将classData分成不同类型
+                        Map<Integer,SubstrateDataListVO> typeMap = Maps.newHashMap();
+                        classData.forEach(cld ->{
+                            typeMap.put(cld.getType(),cld);
+                        });
+                    });
+                });
+            });
+
+        });
+        return vo;
     }
 
     @Override
@@ -69,7 +112,7 @@ public class ReportServiceImpl implements ReportService {
 
         //根据产线id查询分组数据
         List<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
-        List<EnergyGroupListVO> energyGroupList = pmsReportWorkConsumeService.energyGroup(productLineIdList,dateRangeList);
+        List<EnergyGroupListVO> energyGroupList = pmsReportWorkConsumeService.energyGroup(productLineIdList, dateRangeList);
         if (CollUtil.isNotEmpty(energyGroupList)) {
             //获取班组信息-甲班 乙班 丙班 组成map
             SysDictDTO sysDictDTO = new SysDictDTO();
