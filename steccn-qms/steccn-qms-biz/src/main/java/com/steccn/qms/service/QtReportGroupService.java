@@ -24,5 +24,16 @@ public interface QtReportGroupService extends IService<QtReportGroup> {
      */
     List<QtReportVO> getQtReportList(Integer id);
 
+    /**
+     * 查询分组以及该分组下的卡片
+     * @return
+     */
     List<QtReportGroupVO> getReportGroupVOlist();
+
+    /**
+     * 删除分组及分组下的卡片
+     * @param id
+     * @return
+     */
+    Boolean deletQtReportGroup(Integer id);
 }

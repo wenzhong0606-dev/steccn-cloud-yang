@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
 * @author 86178
@@ -62,6 +63,17 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
             qtReportGroupVOS.add(qtReportGroupVO);
         });
         return qtReportGroupVOS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deletQtReportGroup(Integer id) {
+        if (Objects.isNull(id)){
+            throw new BusinessException("分组id不能为空");
+        }
+        removeById(id);
+        qtReportService.deleteByGroupId(id);
+        return null;
     }
 }
 

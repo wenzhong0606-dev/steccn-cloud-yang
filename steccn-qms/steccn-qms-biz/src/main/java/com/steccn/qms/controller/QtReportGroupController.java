@@ -43,4 +43,11 @@ public class QtReportGroupController {
     public R<List<QtReportVO>> getQtReportList(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.getQtReportList(id));
     }
+
+    @DeleteMapping("/delete/{id}")
+    @ApiOperation(value = "根据id删除报表卡片分组以及该分组下的卡片")
+    @SysLog("根据id删除Spc卡片分组任务")
+    public R<Boolean> deletQtReportGroup(@PathVariable("id") Integer id){
+        return R.success(qtReportGroupService.deletQtReportGroup(id));
+    }
 }

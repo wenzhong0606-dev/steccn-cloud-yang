@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author 86178
@@ -82,6 +83,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Override
     public List<QtCheckGroupVO> getGroupIdList(Long materialId, Integer checkType) {
+        if (Objects.isNull(materialId)&& Objects.isNull(checkType)){
+            throw new BusinessException("请先选择物料名称以及检验类型");
+        }
         List<QtMaterialLinkCheckPlan> materialLinkCheckPlans = qtMaterialLinkCheckPlanService.list(new LambdaQueryWrapper<QtMaterialLinkCheckPlan>()
                 .eq(QtMaterialLinkCheckPlan::getMaterialId, materialId)
                 .eq(QtMaterialLinkCheckPlan::getCheckTypeCode, checkType));
@@ -211,8 +215,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReportVOS;
     }
 
-
-
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByGroupId(Integer id) {
+        List<Integer> ids= list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, id))
+                .stream().map(QtReport::getId).collect(Collectors.toList());
+       return removeByIds(ids);
+    }
 
 
     /**
