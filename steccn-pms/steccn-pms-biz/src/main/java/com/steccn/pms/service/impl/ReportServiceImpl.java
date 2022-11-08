@@ -15,6 +15,7 @@ import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
+import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -169,9 +171,68 @@ public class ReportServiceImpl implements ReportService {
      * @param productLineVOList 数据存放集合
      */
     private void addOther(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList) {
+        //拉引量(T)
+        Map<Long, PmsPullForce> pmsPullForces = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate());
+        PmsPullForce morning = pmsPullForces.get(classList.get(0).getId());
+        PmsPullForce night = pmsPullForces.get(classList.get(1).getId());
+        BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
+        BigDecimal nightBigDecimal = Objects.nonNull(night) ? night.getQuantity() : BigDecimal.ZERO;
+        SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, morningBigDecimal.add(nightBigDecimal)), "拉引量(T)");
+        productLineVOList.add(lyl);
+        //0耗电量 1耗水量 2耗油量 3耗气量
         List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine);
+
+        //单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
+        SubstrateDayReportListVO bly = getSubstrateDayReportListVO(productLine, morningBigDecimal, nightBigDecimal, energyList);
         productLineVOList.addAll(energyList);
+        productLineVOList.add(bly);
     }
+
+    /**
+     * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
+     *
+     * @param productLine
+     * @param morningBigDecimal
+     * @param nightBigDecimal
+     * @param energyList
+     * @return
+     */
+    private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList) {
+        BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().getQuantityVOList().get(0));
+        BigDecimal morningOil = new BigDecimal(energyList.get(2).getMorning().getQuantityVOList().get(0));
+        BigDecimal morningKcal = BigDecimal.ZERO;
+        BigDecimal nightGas = new BigDecimal(energyList.get(3).getNight().getQuantityVOList().get(0));
+        BigDecimal nightOil = new BigDecimal(energyList.get(2).getNight().getQuantityVOList().get(0));
+        BigDecimal nightKcal = BigDecimal.ZERO;
+        if (BigDecimal.ZERO.compareTo(morningBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
+            BigDecimal morningMultiply = morningGas.multiply(BigDecimal.valueOf(7800)).add(morningOil.multiply(BigDecimal.valueOf(9300)));
+            morningKcal = morningMultiply.divide(morningBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
+        }
+        if (BigDecimal.ZERO.compareTo(nightBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
+            BigDecimal nightMultiply = nightGas.multiply(BigDecimal.valueOf(7800)).add(nightOil.multiply(BigDecimal.valueOf(9300)));
+            nightKcal = nightMultiply.divide(nightBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
+        }
+        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, morningKcal.add(nightKcal)), "单耗(kcal/Kg玻璃液)");
+        return bly;
+    }
+
+
+    @Override
+    public SubstrateDayReportListVO rowData(SysOfficeVO productLine, List<BigDecimal> dataList, String specStr) {
+        SubstrateDayReportListVO row = new SubstrateDayReportListVO();
+        row.setWorkshopName(productLine.getParentName());
+        row.setProductLineName(productLine.getOfficeName());
+        row.setType(PmReportConstant.TYPE_1);
+        row.setSpecList(Arrays.asList(specStr, specStr, specStr));
+        String dataStr1 = String.valueOf(dataList.get(0));
+        String dataStr2 = String.valueOf(dataList.get(1));
+        String dataStr3 = String.valueOf(dataList.get(2));
+        row.setMorning(new ProduceQuantityVO(Arrays.asList(dataStr1, dataStr1)));
+        row.setNight(new ProduceQuantityVO(Arrays.asList(dataStr2, dataStr2)));
+        row.setTotal(new ProduceQuantityVO(Arrays.asList(dataStr3, dataStr3)));
+        return row;
+    }
+
 
     @Override
     public EnergyCountVO consume(EnergyCountDTO dto) {
@@ -231,9 +292,9 @@ public class ReportServiceImpl implements ReportService {
 
         List<PmsReportWork> pmsReportWorkList = pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
                 .select("classes_id as classesId,product_line_id as productLineId,process_quantity as processQuantity")
-                .lambda().in(PmsReportWork::getProductLineId,productLineIdList)
-                .ge(PmsReportWork::getCreateTime,dateRangeList.get(0))
-                .le(PmsReportWork::getCreateTime,dateRangeList.get(1)));
+                .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
+                .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
+                .le(PmsReportWork::getCreateTime, dateRangeList.get(1)));
         Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassesId));
 
         OutputCountVO outputCountVO = new OutputCountVO();
@@ -263,7 +324,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         //获取入库数
-        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList),dateRangeList.get(0),dateRangeList.get(1));
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList), dateRangeList.get(0), dateRangeList.get(1));
         Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassesId));
         for (Map.Entry<Long, List<CompleteStorageCountVO>> entry : completeMap.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();

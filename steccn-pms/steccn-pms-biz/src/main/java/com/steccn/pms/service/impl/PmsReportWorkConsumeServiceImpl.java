@@ -17,11 +17,13 @@ import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkConsumeDTO;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
 import com.steccn.pms.mapper.PmsReportWorkConsumeMapper;
+import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.EnergyGroupListVO;
 import com.steccn.pms.vo.ProduceQuantityVO;
 import com.steccn.pms.vo.SubstrateDayReportListVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -36,11 +38,11 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-02 15:32:08
  */
 @Service
-@RequiredArgsConstructor
 public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkConsumeMapper, PmsReportWorkConsume>
         implements PmsReportWorkConsumeService {
 
-    private final RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private ReportService reportService;
 
     @Override
     public void saveConsume(Long id, List<ProcessReportWorkConsumeDTO> consumeDTOList) {
@@ -80,34 +82,10 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             //遍历班次【早班晚班】
             BigDecimal morning = classesDataMap.getOrDefault(classList.get(0).getId(), BigDecimal.ZERO);
             BigDecimal night = classesDataMap.getOrDefault(classList.get(1).getId(), BigDecimal.ZERO);
-            SubstrateDayReportListVO gasVo = rowData(productLine, Lists.newArrayList(morning, night, BigDecimalUtil.add(morning, night)), consumeEnum.getName());
+            SubstrateDayReportListVO gasVo = reportService.rowData(productLine, Lists.newArrayList(morning, night, BigDecimalUtil.add(morning, night)), consumeEnum.getName());
             resList.add(gasVo);
         }
         return resList;
-    }
-
-
-    /**
-     * 构建行数据
-     *
-     * @param productLine
-     * @param dataList
-     * @param specStr
-     * @return
-     */
-    private SubstrateDayReportListVO rowData(SysOfficeVO productLine, List<BigDecimal> dataList, String specStr) {
-        SubstrateDayReportListVO row = new SubstrateDayReportListVO();
-        row.setWorkshopName(productLine.getParentName());
-        row.setProductLineName(productLine.getOfficeName());
-        row.setType(PmReportConstant.TYPE_1);
-        row.setSpecList(Arrays.asList(specStr, specStr, specStr));
-        String dataStr1 = String.valueOf(dataList.get(0));
-        String dataStr2 = String.valueOf(dataList.get(1));
-        String dataStr3 = String.valueOf(dataList.get(2));
-        row.setMorning(new ProduceQuantityVO(Arrays.asList(dataStr1, dataStr1)));
-        row.setNight(new ProduceQuantityVO(Arrays.asList(dataStr2, dataStr2)));
-        row.setTotal(new ProduceQuantityVO(Arrays.asList(dataStr3, dataStr3)));
-        return row;
     }
 
 }
