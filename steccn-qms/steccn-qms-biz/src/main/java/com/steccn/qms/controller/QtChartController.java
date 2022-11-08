@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class QtChartController {
 
-   // private final QtCheckTaskService qtCheckTaskService;
-
-    //TODO:深加工/基片巡检合格率趋势
+//    private final QtCheckTaskService qtCheckTaskService;
+//
+//    //TODO:深加工/基片巡检合格率趋势
 //    @PostMapping("/subordeep/acceptability")
 //    @ApiOperation(value = "深加工/基片巡检合格率趋势")
 //    public R<QtChartAcceptabilityVO> getSubOrDeepProcess(@RequestBody QtSubOrDeepAcceptabilityDTO dto){

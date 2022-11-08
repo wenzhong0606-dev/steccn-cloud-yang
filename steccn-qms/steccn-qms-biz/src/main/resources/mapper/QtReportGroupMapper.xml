@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.qms.mapper.QtReportGroupMapper">
+<!--
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtReportGroup">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="report_sort_name" column="report_sort_name" jdbcType="VARCHAR"/>
+            <result property="create_by" column="create_by" jdbcType="BIGINT"/>
+            <result property="create_name" column="create_name" jdbcType="VARCHAR"/>
+            <result property="create_time" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="update_by" column="update_by" jdbcType="BIGINT"/>
+            <result property="update_name" column="update_name" jdbcType="VARCHAR"/>
+            <result property="update_time" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,report_sort_name,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time
+    </sql>-->
+</mapper>

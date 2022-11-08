@@ -1,13 +1,17 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
+import com.steccn.qms.dto.QtExcelDTO;
 import com.steccn.qms.dto.QtReportDTO;
 import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
 import com.steccn.qms.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -22,7 +26,7 @@ public interface QtReportService extends IService<QtReport> {
      * @param dto
      * @return
      */
-    Integer add(QtReportDTO dto);
+    Boolean add(QtReportDTO dto);
 
     /**
      * 根据物料id以及检验类型选择检验分组
@@ -81,4 +85,20 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     QtCheckItemUnitVO getQtCheckItemUnitVO(Integer groupId,Integer itemId);
+
+
+
+    /**
+     * 下载模板
+     * @param response
+     * @throws IOException
+     */
+    void download(HttpServletResponse response) throws IOException;
+
+   /**
+    * 根据分组id查询报表卡片列表
+    * @param reportGroupId
+    * @return
+    */
+   List<QtReportVO> getQtReportList(Integer reportGroupId);
 }

@@ -1,6 +1,9 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.read.listener.PageReadListener;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,11 +15,12 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.dto.PmProcessExcelDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import com.steccn.qms.dto.QtDefectiveItemPageDTO;
-import com.steccn.qms.dto.QtReportDTO;
-import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
 import com.steccn.qms.vo.*;
@@ -28,6 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,7 +55,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtCheckTaskService qtCheckTaskService;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final RemoteDictFeignApi remoteDictFeignApi;
-
+private final QtReportGroupService qtReportGroupService;
     /**
      * 新建报表卡片
      *
@@ -57,13 +64,17 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Integer add(QtReportDTO dto) {
+    public Boolean add(QtReportDTO dto) {
         QtReport qtReport = new QtReport();
         BeanUtils.copyProperties(dto, qtReport);
         QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
         Assert.isNull(report, "该报表卡片已存在,请勿重复创建!");
-        this.save(qtReport);
-        return qtReport.getId();
+        //根据分组id去查询分组
+        QtReportGroup qtReportGroup = qtReportGroupService.getById(dto.getReportGroupId());
+        if (Objects.nonNull(qtReportGroup)){
+            this.save(qtReport);
+        }
+        return Boolean.TRUE;
     }
 
     /**
@@ -81,7 +92,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //获取检验方案id
         List<Integer> collectCheckPlanId = materialLinkCheckPlans.stream().map(QtMaterialLinkCheckPlan::getCheckPlanId).collect(Collectors.toList());
         if (CollUtil.isEmpty(collectCheckPlanId)) {
-            throw new BusinessException("请先在物料配置中为物料配置#选中的检验类型#的检验方案");
+            throw new BusinessException("请先在物料配置中为物料配置#选中检验类型#的检验方案");
         }
         //创建检验方案分组id集合
         List<QtCheckGroupVO> qtCheckGroupVOS = Lists.newArrayList();
@@ -115,10 +126,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckItemSPCVO> qtCheckItemSPCVOS = Lists.newArrayList();
         QtCheckItemSPCVO qtCheckItemSPCVO = new QtCheckItemSPCVO();
         List<QtCheckItem> qtCheckItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getId, checkItemIds));
-
         //添加检验项的id或名称
         qtCheckItems.forEach(q -> {
-            BeanUtils.copyProperties(q, qtCheckItemSPCVO);
+            qtCheckItemSPCVO.setCheckItemId(q.getId());
             qtCheckItemSPCVO.setCheckItemName(q.getName());
             qtCheckItemSPCVOS.add(qtCheckItemSPCVO);
         });
@@ -127,32 +137,87 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
     /**
      * 根据检验项的id返回前端标准值、上偏差、下偏差,单位
+     *
      * @param groupId
      * @param itemId
      * @return
      */
     @Override
-    public QtCheckItemUnitVO getQtCheckItemUnitVO(Integer groupId,Integer itemId) {
+    public QtCheckItemUnitVO getQtCheckItemUnitVO(Integer groupId, Integer itemId) {
+        //创建返回数据的对象
+        QtCheckItemUnitVO qtCheckItemUnitVO = new QtCheckItemUnitVO();
+        if (Objects.isNull(groupId) || Objects.isNull(itemId)) {
+            //有一个条件不满足返回给前端空对象
+            return qtCheckItemUnitVO;
+        }
         //根据检验项id去check_plan_group_item数据库中查询
         QtCheckPlanGroupItem qtCheckPlanGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
                 .eq(QtCheckPlanGroupItem::getCheckItemId, itemId)
-                .eq(QtCheckPlanGroupItem::getGroupId,groupId));
+                .eq(QtCheckPlanGroupItem::getGroupId, groupId));
         //根据id查询检验项
         QtCheckItem qtCheckItem = qtCheckItemService.getById(itemId);
         Set<Long> measureUnitSet = new HashSet<>();
         measureUnitSet.add(qtCheckItem.getMeasureUnit());
         Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureUnitSet)).get();
         String measureName = dictData.get(qtCheckItem.getMeasureUnit());
-        //创建返回数据的对象
-        QtCheckItemUnitVO qtCheckItemUnitVO = new QtCheckItemUnitVO();
         qtCheckItemUnitVO.setMeasureUnitName(measureName);
-        if (Objects.isNull(qtCheckPlanGroupItem)){
+        if (Objects.isNull(qtCheckPlanGroupItem)) {
             return qtCheckItemUnitVO;
-        }else {
-            BeanUtils.copyProperties(qtCheckPlanGroupItem,qtCheckItemUnitVO);
+        } else {
+            BeanUtils.copyProperties(qtCheckPlanGroupItem, qtCheckItemUnitVO);
             return qtCheckItemUnitVO;
         }
     }
+
+
+    /**
+     * 下载模板
+     *
+     * @param response
+     */
+    @Override
+    public void download(HttpServletResponse response) throws IOException {
+        downloadExcel(response, new ArrayList<>());
+    }
+    /**
+     * 下载SPC报表excel
+     *
+     * @param response
+     * @param list
+     * @throws IOException
+     */
+    private void downloadExcel(HttpServletResponse response, List<QtReportExcelDTO> list) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        //防止中文乱码
+        String fileName = URLEncoder.encode("报表卡片名称", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), QtReportExcelDTO.class).sheet("模板").doWrite(list);
+    }
+
+    /**
+     * 根据分组id查询报表卡片列表
+     * @param id
+     * @return
+     */
+    @Override
+    public List<QtReportVO> getQtReportList(Integer reportGroupId) {
+        if (Objects.isNull(reportGroupId)){
+            throw new BusinessException("分组id不能为空");
+        }
+        List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId));
+       List<QtReportVO> qtReportVOS= Lists.newArrayList();
+        qtReportList.stream().forEach(q->{
+            QtReportVO qtReportVO = new QtReportVO();
+            BeanUtils.copyProperties(q,qtReportVO);
+            qtReportVOS.add(qtReportVO);
+        });
+        return qtReportVOS;
+    }
+
+
+
+
 
     /**
      * 根据id删除spc卡片
@@ -216,7 +281,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     @Override
     public Page<QtSpcReportDetailVO> pageList(QtSpcReportDetailPageDTO dto) {
         //根据id先查找到spc数据库中的报表数据
-        QtReport report = getById(new LambdaQueryWrapper<QtReport>().eq(QtReport::getId, dto.getId()));
+        QtReport report = getById(dto.getId());
         //通过分组id以及检验项id去任务明细表里面获取任务id集合
         List<Long> taskIdList = Lists.newArrayList();
         if (Objects.nonNull(report)) {
@@ -253,11 +318,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //4.查询分页数据
-        IPage<QtMaterial> resPage = qtCheckTaskService.page(page, condition);
+        IPage<QtCheckTask> resPage = qtCheckTaskService.page(page, condition);
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的数据
-        //TODO
+        List<QtSpcReportDetailVO> qtSpcReportDetailVOList = Lists.newArrayList();
+
         return null;
     }
 

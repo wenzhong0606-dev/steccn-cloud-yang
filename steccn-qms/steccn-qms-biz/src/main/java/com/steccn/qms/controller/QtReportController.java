@@ -10,13 +10,16 @@ import com.steccn.qms.dto.QtReportDTO;
 import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
 import com.steccn.qms.service.QtReportService;
 import com.steccn.qms.vo.*;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +36,7 @@ public class QtReportController {
     @PostMapping
     @ApiOperation(value = "新建报表任务")
     @SysLog("新建报表任务")
-    public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
+    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
         return R.success(qtReportService.add(dto));
     }
 
@@ -86,5 +89,14 @@ public class QtReportController {
     @ApiOperation(value = "根据分组id以及检验项的id返回前端标准值、上偏差、下偏差,单位")
     public R<QtCheckItemUnitVO> getQtCheckItemUnitVO(@RequestParam("groupId") Integer groupId,@RequestParam("itemId")Integer itemId){
         return R.success(qtReportService.getQtCheckItemUnitVO(groupId,itemId));
+    }
+
+    /**
+     * 下载Spc报表明细加图表
+     */
+    @ApiModelProperty("下载模板")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response) throws IOException {
+        qtReportService.download(response);
     }
 }

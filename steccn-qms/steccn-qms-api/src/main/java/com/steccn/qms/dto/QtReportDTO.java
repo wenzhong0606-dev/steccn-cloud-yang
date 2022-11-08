@@ -126,6 +126,12 @@ public class QtReportDTO implements Serializable {
     private String note;
 
     /**
+     * 报表卡片类型id
+     */
+    @NotNull(message = "报表卡片类型id不能为空")
+    private Integer reportGroupId;
+
+    /**
      * 创建人id
      */
     private Long createBy;
