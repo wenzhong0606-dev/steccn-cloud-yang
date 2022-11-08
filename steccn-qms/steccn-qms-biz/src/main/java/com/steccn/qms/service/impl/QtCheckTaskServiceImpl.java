@@ -91,6 +91,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
               if (dto.getDefectStartTime().getHour() > QtManagerConstant.beforeHour
                       && dto.getDefectEndTime().getHour() > QtManagerConstant.afterHour) {
                   throw new BusinessException("缺陷记录时段不允许跨班次");
+              } else if (dto.getDefectStartTime().getHour() < QtManagerConstant.afterHour && dto.getDefectEndTime().getHour() < QtManagerConstant.beforeHour) {
+                  qtCheckTask.setClassesId(QtManagerConstant.morningWork);//早班
+              }else {
+                  qtCheckTask.setClassesId(QtManagerConstant.nightWork);//晚班
               }
           }
             Assert.notNull("缺陷记录时段不能为空");

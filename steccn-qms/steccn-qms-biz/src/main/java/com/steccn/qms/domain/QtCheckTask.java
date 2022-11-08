@@ -281,4 +281,11 @@ public class QtCheckTask implements Serializable {
      */
     private String sendOrder;
 
+    /**
+     * 班次
+     * 早班 0
+     * 晚班 1
+     */
+    private Integer classesId;
+
 }
