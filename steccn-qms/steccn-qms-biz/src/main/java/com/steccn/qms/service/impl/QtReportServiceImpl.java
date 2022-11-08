@@ -55,7 +55,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtCheckTaskService qtCheckTaskService;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final RemoteDictFeignApi remoteDictFeignApi;
-private final QtReportGroupService qtReportGroupService;
     /**
      * 新建报表卡片
      *
@@ -70,10 +69,7 @@ private final QtReportGroupService qtReportGroupService;
         QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
         Assert.isNull(report, "该报表卡片已存在,请勿重复创建!");
         //根据分组id去查询分组
-        QtReportGroup qtReportGroup = qtReportGroupService.getById(dto.getReportGroupId());
-        if (Objects.nonNull(qtReportGroup)){
-            this.save(qtReport);
-        }
+        this.save(qtReport);
         return Boolean.TRUE;
     }
 
