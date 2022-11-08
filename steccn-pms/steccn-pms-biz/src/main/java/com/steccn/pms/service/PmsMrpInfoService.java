@@ -4,6 +4,7 @@ import com.steccn.pms.domain.PmsMrpInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmsProducePlan;
 import com.steccn.pms.dto.PmsProducePlanDTO;
+import com.steccn.pms.dto.PmsProducePlanOrderDTO;
 
 import java.util.List;
 import java.util.Set;
@@ -15,19 +16,26 @@ import java.util.Set;
  */
 public interface PmsMrpInfoService extends IService<PmsMrpInfo> {
 
-    /**
-     * 增加物料需求计划详情
-     *
-     * @param dto
-     * @return
-     */
-    Boolean add(PmsProducePlanDTO dto);
+//    /**
+//     * 增加物料需求计划详情
+//     *
+//     * @param dto
+//     * @return
+//     */
+//    Boolean add(PmsProducePlanDTO dto);
 
     /**
      * 下达进行mrp运算
      *
-     * @param list
+     * @param dto
      * @return
      */
-    Boolean mrpAdd(Set<Long> list);
+    Boolean mrpAdd(PmsProducePlanOrderDTO dto);
+
+    /**
+     * 保存物料需求计划数据
+     * @param addProducePlanList
+     * @return
+     */
+    Boolean saveMrp(List<PmsProducePlan> addProducePlanList);
 }

@@ -47,7 +47,7 @@
             <if test="dto.materialCode != null and dto.materialCode != ''">
                 and b.material_code LIKE CONCAT('%',#{dto.materialCode},'%')
             </if>
-            <if test="dto.startCreateTime !=null and dto.planStartTimeEnd !=null">
+            <if test="dto.startCreateTime !=null and dto.endCreateTime !=null">
                 and a.create_time between #{dto.startCreateTime} and #{dto.endCreateTime}
             </if>
         </where>
