@@ -20,6 +20,9 @@ public class EnergyGroupListVO implements Serializable {
     @ApiModelProperty("班组")
     private Long classGroupId;
 
+    @ApiModelProperty("产线")
+    private Long classesId;
+
     @ApiModelProperty("类型")
     private Integer type;
 

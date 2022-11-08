@@ -17,7 +17,7 @@ public class OaEmpDTO implements Serializable {
     /**
      * 分部id
      */
-    private Integer subcompanyid;
+    private Integer id;
 
     /**
      * 分页

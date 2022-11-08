@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.EasyExcel;
@@ -27,6 +28,7 @@ import com.steccn.pms.service.PmsMrpService;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.mapper.PmsProducePlanMapper;
 import com.steccn.pms.vo.PmsProducePlanVO;
+import com.steccn.pms.vo.PmsPullForceVO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.pms.vo.ProducePlanMsgVO;
 import lombok.RequiredArgsConstructor;
@@ -86,6 +88,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 .collect(Collectors.groupingBy(pmsProducePlanVO -> pmsProducePlanVO.getMaterialName() + "," + pmsProducePlanVO.getMaterialCode() + "," + pmsProducePlanVO.getMaterialId()));
 
         List<PmsProducePlanDTO> pmsProducePlanDTOList = new ArrayList<>();
+        //获取指定月份所有天数
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
 
         for (Map.Entry<String, List<PmsProducePlanVO>> entry : groupBy.entrySet()) {
             PmsProducePlanDTO pmsProducePlanDTO = new PmsProducePlanDTO();
@@ -98,10 +102,16 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlanDTO.setTotal(total);
 
             List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
-            for (PmsProducePlanVO pmsProducePlanVO : entry.getValue()) {
+            for (LocalDate localDate : localDateList) {
                 PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
-                BeanUtils.copyProperties(pmsProducePlanVO, planDetailsDTO);
+                Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)).findAny();
+                if (present.isPresent()) {
+                    BeanUtils.copyProperties(present.get(), planDetailsDTO);
+                } else {
+                    planDetailsDTO.setPlanDate(localDate);
+                }
                 producePlanDetailsDTOList.add(planDetailsDTO);
+
             }
             pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
             pmsProducePlanDTOList.add(pmsProducePlanDTO);
@@ -143,7 +153,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 throw new BusinessException("生产月计划修改失败");
             }
         }
-        return pmsMrpInfoService.add(dto);
+        // 处理MRP 计算逻辑
+        addProducePlanList.addAll(updateProducePlanList);
+//        return pmsMrpInfoService.add(dto);
+        return pmsMrpInfoService.saveMrp(addProducePlanList);
     }
 
     @Override
@@ -247,15 +260,15 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         int mouth = Integer.parseInt(dto.getPlanDate().substring(5));
         LocalDate date = LocalDate.of(year, mouth, 01);
         // 获取当前月的第一天
-        LocalDate firstDay = date.with(TemporalAdjusters.firstDayOfMonth());
+        dto.setFirstDay(date.with(TemporalAdjusters.firstDayOfMonth()));
         // 获取当前月的最后一天
-        LocalDate lastDay = date.with(TemporalAdjusters.lastDayOfMonth());
+        dto.setLastDay(date.with(TemporalAdjusters.lastDayOfMonth()));
         List<PmsProducePlan> list = list(new QueryWrapper<PmsProducePlan>()
                 .select("material_id,sum(quantity) as quantity")
                 .lambda().in(PmsProducePlan::getMaterialId, dto.getMaterialIds())
-                .between(PmsProducePlan::getPlanDate, firstDay, lastDay)
+                .between(PmsProducePlan::getPlanDate, dto.getFirstDay(), dto.getLastDay())
                 .groupBy(PmsProducePlan::getMaterialId));
-        Assert.notNull(list, "需要下达的物料数据不存在");
+        Assert.isTrue(CollUtil.isNotEmpty(list), "需要下达的物料数据不存在");
         //2.修改下达后物料的状态
         Set<Long> materialIdList = Sets.newHashSet();
         list.forEach(pmsProducePlan -> {
@@ -263,11 +276,11 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             materialIdList.add(pmsProducePlan.getMaterialId());
         });
         //3.自定义sql 批量修改状态
-        Boolean aBoolean = this.baseMapper.updateBatchStatus(materialIdList, firstDay, lastDay, PmManagerConstant.OrderStateEnum.ONE.getCode());
+        Boolean aBoolean = this.baseMapper.updateBatchStatus(materialIdList, dto.getFirstDay(), dto.getLastDay(), PmManagerConstant.OrderStateEnum.ONE.getCode());
         Assert.isTrue(aBoolean,
                 "修改物料下达状态失败");
         //3.对物料列表进行MRP计算
-        return pmsMrpInfoService.mrpAdd(materialIdList);
+        return pmsMrpInfoService.mrpAdd(dto);
     }
 
     private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map) {

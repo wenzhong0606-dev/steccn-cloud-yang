@@ -184,4 +184,21 @@
         </foreach>)
 	    GROUP BY o.id
     </select>
+
+    <select id="selectCompleteStorageCount" resultType="com.steccn.pms.vo.CompleteStorageCountVO">
+        SELECT
+	        c.classes_id classesId,
+	        o.production_line_id productionLineId,
+	        sum( c.quantity ) quantity
+        FROM
+	        pms_produce_order o
+	        LEFT JOIN pms_complete_storage_info c ON o.id = c.produce_order_id
+        where o.production_line_id in(
+        <foreach collection="productionLineIdList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>) and (c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime})
+        GROUP BY
+	        c.classes_id,
+	        o.production_line_id
+    </select>
 </mapper>

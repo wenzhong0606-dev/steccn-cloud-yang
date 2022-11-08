@@ -67,6 +67,11 @@ public interface PmManagerConstant {
      */
     String SYS_TEAM = "sys_team";
 
+    /**
+     * 班次
+     */
+    String SYS_SHIFT = "sys_shift";
+
     String FILE_EXTENSION_XLSX = ".xlsx";
 
     /**
@@ -83,6 +88,16 @@ public interface PmManagerConstant {
      * 车间code
      */
     String STATE_8 = "8";
+
+    /**
+     * 单位T
+     */
+    String UNIT_T = "T";
+
+    /**
+     * 单位类型
+     */
+    String ENERGY_CONSUME = "energy_consume";
 
     /**
      * 领料单状态

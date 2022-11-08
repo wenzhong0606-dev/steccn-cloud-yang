@@ -8,10 +8,10 @@ import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author yequan
@@ -47,5 +47,11 @@ public class ReportController {
     @ApiOperation("能耗水电油气")
     public R<EnergyCountVO> consume(@RequestBody EnergyCountDTO dto) {
         return R.success(reportService.consume(dto));
+    }
+
+    @PostMapping("/outputCount")
+    @ApiOperation("产量统计")
+    public R<OutputCountVO> outputCount(@RequestBody EnergyCountDTO dto) {
+        return R.success(reportService.outputCount(dto));
     }
 }

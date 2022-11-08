@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtDefectiveItem;
@@ -49,6 +50,8 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         //2.从数据库获取数据
         List<QtItemCategory> dbList = list(new LambdaQueryWrapper<QtItemCategory>()
                 .eq(QtItemCategory::getType, type)
+                //有软删除的情况
+                .eq(QtItemCategory::getShowFlag, MpConstant.YES)
                 .orderByDesc(QtItemCategory::getCreateTime));
         //3.不为空，返回数据集合
         if (CollUtil.isNotEmpty(dbList)) {
@@ -63,6 +66,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         //1.去数据库查询是否存在[编辑传id，新增不传id]
         long count = count(new LambdaQueryWrapper<QtItemCategory>()
                 .ne(Objects.nonNull(dto.getId()), QtItemCategory::getId, dto.getId())
+                .eq(QtItemCategory::getShowFlag,MpConstant.YES)
                 .eq(QtItemCategory::getName, dto.getName())
                 .eq(QtItemCategory::getType, dto.getType()));
         //2.如果存在则抛异常
@@ -118,7 +122,8 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         //2.判断类别类型为检验项还是缺陷项
         if (QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(model.getType())) {
             long count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
-                    .eq(QtCheckItem::getCategoryId, id));
+                    .eq(QtCheckItem::getCategoryId, id)
+                    .eq(QtCheckItem::getShowFlag,MpConstant.YES));
             if (count > 0) {
                 throw new BusinessException("该类别包含至少1个检验项，不允许删除");
             }
@@ -131,7 +136,11 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         } else {
             throw new BusinessException("该类别类型不存在，无法删除");
         }
-        Boolean delete = removeById(id);
+        QtItemCategory deleteCondition = new QtItemCategory();
+        deleteCondition.setShowFlag(MpConstant.NO);
+        deleteCondition.setId(id);
+        //只需要逻辑删除，避免快照绑定
+        Boolean delete = updateById(deleteCondition);
         return delete;
     }
 

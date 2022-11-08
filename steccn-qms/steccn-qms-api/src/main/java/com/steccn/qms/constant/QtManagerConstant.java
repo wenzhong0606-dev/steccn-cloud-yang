@@ -236,4 +236,22 @@ public interface QtManagerConstant {
         private Integer code;
         private String name;
     }
+
+    /**
+     * 粒度
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChatTargetValue{
+        //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
+        JPCP(1,"基片成品率"),
+        JPQX(2,"基片缺陷总数"),
+        SJGQX(3,"深加工缺陷总数"),
+        LLJHG(4,"来料检合格率"),
+        JPXJHG(5,"基片巡检合格率"),
+        SJGXJHG(6,"深加工巡检合格率");
+
+        private Integer code;
+        private String name;
+    }
 }

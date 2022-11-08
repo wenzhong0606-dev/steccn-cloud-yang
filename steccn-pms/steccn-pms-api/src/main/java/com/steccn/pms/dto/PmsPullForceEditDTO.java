@@ -26,6 +26,10 @@ public class PmsPullForceEditDTO {
     @ApiModelProperty("产线id")
     private Integer productLineId;
 
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "车间id不能为空")
+    @ApiModelProperty("车间id")
+    private Integer workshopId;
+
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "日期不能为空")
     @ApiModelProperty("日期")
     private LocalDate pullForceDate;

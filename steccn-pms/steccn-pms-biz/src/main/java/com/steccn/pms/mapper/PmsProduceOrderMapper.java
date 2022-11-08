@@ -7,11 +7,13 @@ import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.dto.ProduceOrderAcceptPageDTO;
 import com.steccn.pms.dto.ProduceOrderTrackReportDTO;
 import com.steccn.pms.dto.ReportWorkOrderPageDTO;
+import com.steccn.pms.vo.CompleteStorageCountVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProduceOrderTrackReportVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -56,6 +58,16 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @return
      */
     Page<ProduceOrderTrackReportVO> trackReportPage(Page page, @Param("productionLineIdList") List<Integer> productionLineIdList);
+
+    /**
+     * 根据产线id查询入库数
+     *
+     * @param productionLineIdList
+     * @return
+     */
+    List<CompleteStorageCountVO> selectCompleteStorageCount(@Param("productionLineIdList") List<Integer> productionLineIdList
+            , @Param("startTime")LocalDateTime startTime
+            , @Param("endTime")LocalDateTime endTime);
 }
 
 

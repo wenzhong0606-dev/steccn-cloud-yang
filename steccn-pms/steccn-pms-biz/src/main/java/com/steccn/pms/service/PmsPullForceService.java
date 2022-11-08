@@ -8,12 +8,13 @@ import com.steccn.pms.vo.PmsPullForceVO;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
-* @author yequan
-* @description 针对表【pms_pull_force(拉引力表)】的数据库操作Service
-* @createDate 2022-11-02 10:10:08
-*/
+ * @author yequan
+ * @description 针对表【pms_pull_force(拉引力表)】的数据库操作Service
+ * @createDate 2022-11-02 10:10:08
+ */
 public interface PmsPullForceService extends IService<PmsPullForce> {
 
     /**
@@ -39,5 +40,15 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Boolean editBatch(List<PmsPullForceEditDTO> dtoList);
+
+
+    /**
+     * 获取一个产线2个班次的拉引量
+     *
+     * @param productLineId 产线id
+     * @param date          日期
+     * @return list
+     */
+    Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date);
 
 }

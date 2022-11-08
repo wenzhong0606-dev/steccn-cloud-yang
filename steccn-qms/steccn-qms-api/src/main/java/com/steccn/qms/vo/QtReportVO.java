@@ -12,6 +12,10 @@ import java.util.List;
 @Data
 public class QtReportVO {
     /**
+     * 报表卡片类型
+     */
+    private String reportCardType;
+    /**
      * 表报卡片名称
      */
     private String name;

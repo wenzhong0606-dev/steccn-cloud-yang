@@ -87,4 +87,38 @@
         </if>
         order by prw.create_time desc
     </select>
+    <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
+        SELECT
+            0 AS type,
+            ppo.production_line_id as productLineId,
+            ppo.material_id,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
+            prw.classes_id,
+            sum( prw.process_quantity ) AS quantity,
+            any_value(prw.unit_id)
+        FROM
+            pms_report_work prw
+                JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        GROUP BY
+            ppo.production_line_id,
+            ppo.material_id,
+            prw.classes_id UNION ALL
+        SELECT
+            1 AS type,
+            ppo.production_line_id as productLineId,
+            ppo.material_id,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
+            pcsi.classes_id,
+            sum( pcsi.quantity ) AS quantity,
+            any_value(pcsi.unit_id)
+        FROM
+            pms_complete_storage_info pcsi
+                JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        GROUP BY
+            ppo.production_line_id,
+            ppo.material_id,
+            pcsi.classes_id
+    </select>
 </mapper>

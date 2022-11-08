@@ -23,6 +23,21 @@ public interface PmReportConstant {
     String STR_BAR = "bar";
 
     /**
+     * type类型定义
+     */
+    Integer TYPE_0 = 0;
+    Integer TYPE_1 = 1;
+    Integer TYPE_2 = 2;
+    Integer TYPE_3 = 3;
+    Integer TYPE_4 = 4;
+
+    /**
+     * 早班 晚班
+     */
+    String SYS_SHIFT_0 = "0";
+    String SYS_SHIFT_1 = "1";
+
+    /**
      * 时间范围 本日，本周，本月
      */
     @Getter
@@ -72,5 +87,20 @@ public interface PmReportConstant {
             }
             return all;
         }
+    }
+
+    /**
+     * 0耗电量 1耗水量 2耗油量 3耗气量
+     */
+    @Getter
+    @AllArgsConstructor
+    enum ReportWorkConsumeEnum {
+        ELECTRIC(0, "耗电量(Kwh)"),
+        WATER(1, "耗水量(T)"),
+        OIL(2, "耗气量(m³)"),
+        GAS(3, "耗油量(Kg)");
+
+        private final Integer code;
+        private final String name;
     }
 }

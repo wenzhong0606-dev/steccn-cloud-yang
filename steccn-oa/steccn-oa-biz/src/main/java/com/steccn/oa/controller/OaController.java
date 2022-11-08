@@ -113,9 +113,9 @@ public class OaController {
         return R.success(oaService.getEmpByCondition(dto));
     }
 
-    @ApiOperation(value = "根据部门和名字获取Emp数据")
-    @PostMapping("/workflow/todoList")
-    public R<List<OaToDoWorkflowVO>> getOaEmp(@RequestBody OaToDoWorkFlowDTO dto){
-        return R.success(oaService.getToDoList(dto));
+    @ApiOperation(value = "获取待办列表")
+    @GetMapping("/workflow/todoList")
+    public R<List<OaToDoWorkflowVO>> getOaEmp(){
+        return R.success(oaService.getToDoList());
     }
 }

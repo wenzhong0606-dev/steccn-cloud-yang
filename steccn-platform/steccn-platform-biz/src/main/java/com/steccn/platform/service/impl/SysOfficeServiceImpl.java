@@ -117,9 +117,22 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
         Collection<SysOffice> sysOfficeList = listByIds(idList);
         if (CollUtil.isNotEmpty(sysOfficeList)) {
+            //对此接口进行功能增强,可以获取父节点的名称，id，名字
+            Set<String> parentCodeSet = sysOfficeList.stream().map(SysOffice::getParentCode).collect(Collectors.toSet());
+            Map<String, SysOffice> parentMap = Maps.newHashMap();
+            SysOffice defaultSysOffice = new SysOffice();
+            if (CollUtil.isNotEmpty(parentCodeSet)) {
+                List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeCode, parentCodeSet));
+                if (CollUtil.isNotEmpty(parentList)) {
+                    parentList.forEach(v -> parentMap.put(v.getOfficeCode(), v));
+                }
+            }
             for (SysOffice sysOffice : sysOfficeList) {
                 SysOfficeVO sysOfficeVO = new SysOfficeVO();
                 BeanUtils.copyProperties(sysOffice, sysOfficeVO);
+                SysOffice orDefault = parentMap.getOrDefault(sysOffice.getParentCode(), defaultSysOffice);
+                sysOfficeVO.setParentId(orDefault.getId());
+                sysOfficeVO.setParentName(orDefault.getOfficeName());
                 resMap.put(sysOfficeVO.getId(), sysOfficeVO);
             }
         }
@@ -214,9 +227,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
-        if(Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())){
+        if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {
             SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeCode, child.getParentCode()));
-            if(Objects.nonNull(parent)){
+            if (Objects.nonNull(parent)) {
                 SysOfficeVO sysOfficeVO = new SysOfficeVO();
                 BeanUtils.copyProperties(parent, sysOfficeVO);
                 return sysOfficeVO;
@@ -269,7 +282,6 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }
         return sysOffice;
     }
-
 
 
     /**

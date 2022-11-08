@@ -5,27 +5,47 @@
 <mapper namespace="com.steccn.pms.mapper.PmsMrpInfoMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMrpInfo">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="mrpDate" column="mrp_date" jdbcType="DATE"/>
-            <result property="mrpTypeId" column="mrp_type_id" jdbcType="BIGINT"/>
-            <result property="mrpElement" column="mrp_element" jdbcType="VARCHAR"/>
-            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
-            <result property="availableQuantity" column="available_quantity" jdbcType="DECIMAL"/>
-            <result property="mrpId" column="mrp_id" jdbcType="BIGINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="mrpDate" column="mrp_date" jdbcType="DATE"/>
+        <result property="mrpTypeId" column="mrp_type_id" jdbcType="BIGINT"/>
+        <result property="mrpElement" column="mrp_element" jdbcType="VARCHAR"/>
+        <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+        <result property="availableQuantity" column="available_quantity" jdbcType="DECIMAL"/>
+        <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,mrp_date,
+        id
+        ,mrp_date,
         mrp_type_id,mrp_element,quantity,
         available_quantity,mrp_id,create_by,
         create_name,create_time,update_by,
         update_name,update_time,del_flag
     </sql>
+    <select id="list" resultType="com.steccn.pms.domain.PmsMrpInfo">
+        select a.id,
+               a.material_id,
+               a.mrp_element,
+               a.mrp_date,
+               a.quantity,
+               a.available_quantity,
+               a.plan_id from pms_mrp_info a
+        join pms_produce_plan b on a.plan_id = b.id
+        where a.del_flag =0
+          and b.status = 1
+          and a.material_id in
+        <foreach collection="dto.materialIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        <if test="dto.firstDay != null and dto.lastDay != null">
+            and mrp_date between #{dto.firstDay} and #{dto.lastDay}
+        </if>
+    </select>
 </mapper>

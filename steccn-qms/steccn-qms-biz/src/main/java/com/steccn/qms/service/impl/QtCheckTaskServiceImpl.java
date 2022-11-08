@@ -927,9 +927,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @param dto
      * @return
      */
-    //TODO
     @Override
     public QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto) {
+        //先根据开始时间和完成时间查出这段时间内完成的检验项
         LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getProductWorkshop, dto.getProductWorkshop()).
                 ge(QtCheckTask::getFinishedTime, dto.getDateStart()).
                 le(QtCheckTask::getFinishedTime, dto.getDateEnd());

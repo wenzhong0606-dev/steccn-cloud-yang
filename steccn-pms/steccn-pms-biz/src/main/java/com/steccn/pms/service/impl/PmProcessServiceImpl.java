@@ -186,6 +186,12 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         return pmProcessVOList;
     }
 
+    /**
+     * EXCEL数据导入
+     * @param dto
+     * @return
+     * @throws IOException
+     */
     @Override
     public Boolean excelImportData(PmExcelDTO dto) throws IOException {
         //文件类型校验
@@ -227,7 +233,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
 
 
     /**
-     * 下载物料清单excel
+     * 下载SPC报表excel
      *
      * @param response
      * @param list
@@ -237,7 +243,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         //防止中文乱码
-        String fileName = URLEncoder.encode("工序信息", "UTF-8").replaceAll("\\+", "%20");
+        String fileName = URLEncoder.encode("报表明细", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         EasyExcel.write(response.getOutputStream(), PmProcessExcelDTO.class).sheet("模板").doWrite(list);
     }
