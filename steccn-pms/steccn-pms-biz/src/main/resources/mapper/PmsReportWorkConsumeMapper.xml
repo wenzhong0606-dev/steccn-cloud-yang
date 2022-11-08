@@ -46,4 +46,22 @@
             rw.class_group_id,
             wc.type
     </select>
+    <select id="substrateEnergy" resultType="com.steccn.pms.vo.EnergyGroupListVO">
+        SELECT
+            rw.product_line_id,
+            rw.classes_id,
+            wc.type,
+            sum( wc.quantity ) AS quantity
+        FROM
+            pms_report_work rw
+                JOIN pms_report_work_consume wc ON rw.id = wc.report_work_id
+        WHERE
+            product_line_id = #{productLineId}
+          AND DATE_FORMAT( wc.create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            rw.product_line_id,
+            rw.classes_id,
+            wc.type
+
+    </select>
 </mapper>

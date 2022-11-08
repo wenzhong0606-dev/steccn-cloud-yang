@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -62,10 +63,14 @@ public class ReportServiceImpl implements ReportService {
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
         //构建表头
         SubstrateReportHeaderVO header = new SubstrateReportHeaderVO();
-        BaseReportHeaderVO specList = new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚"));
-        header.setSpecList(specList);
+        header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
+        header.setDayShift(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "产量(片)")));
+        header.setNightShift(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "产量(片)")));
+        header.setTotal(new BaseReportHeaderVO("合计", Arrays.asList("入库(片)", "产量(片)")));
+
         //查询所有数据
         List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto);
+
         //获取班次数据
         SysDictDTO sysDictDTO = new SysDictDTO();
         sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
@@ -77,34 +82,95 @@ public class ReportServiceImpl implements ReportService {
         Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
-
+        List<SubstrateDayReportListVO> productLineVOList = Lists.newArrayList();
         workShopMap.forEach((k, v) -> {
             //根据产线遍历
-            v.forEach(productLine -> {
+            for (SysOfficeVO productLine : v) {
+                //产线数量合计-早班，晚班，合计
+                Map<Integer, BigDecimal> countMap1 = Maps.newHashMap();
+                Map<Integer, BigDecimal> countMap2 = Maps.newHashMap();
+                Map<Integer, BigDecimal> countMap3 = Maps.newHashMap();
                 //获取当前产线下的数据
-                List<SubstrateDataListVO> productLineDataList = rowDataList.stream().filter(row -> productLineMap.equals(row.getProductLineId())).collect(Collectors.toList());
+                List<SubstrateDataListVO> productLineDataList = rowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
                 //将当前产线下的数据根据物料分组
                 Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialId));
                 //遍历物料分组的数据，来组装数据
-                materialMap.forEach((m, n) -> {
+                for (Map.Entry<Long, List<SubstrateDataListVO>> entry : materialMap.entrySet()) {
                     SubstrateDayReportListVO row = new SubstrateDayReportListVO();
                     row.setType(PmReportConstant.TYPE_0);
-                    Map<Long, List<SubstrateDataListVO>> classDataMap = n.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getClassesId));
+                    row.setWorkshopName(productLine.getParentName());
+                    row.setProductLineName(productLine.getOfficeName());
+                    Map<Long, List<SubstrateDataListVO>> classDataMap = entry.getValue().stream().collect(Collectors.groupingBy(SubstrateDataListVO::getClassesId));
+                    //入库inCount 产量proCount
+                    BigDecimal inCount = BigDecimal.ZERO;
+                    BigDecimal proCount = BigDecimal.ZERO;
                     //遍历班次
-                    classList.forEach(c -> {
+                    for (SysDictVO c : classList) {
                         //获取班次信息
-                        List<SubstrateDataListVO> classData = classDataMap.get(c);
+                        List<SubstrateDataListVO> classData = classDataMap.get(c.getId());
                         //将classData分成不同类型
-                        Map<Integer,SubstrateDataListVO> typeMap = Maps.newHashMap();
-                        classData.forEach(cld ->{
-                            typeMap.put(cld.getType(),cld);
-                        });
-                    });
-                });
-            });
+                        Map<Integer, SubstrateDataListVO> typeMap = Maps.newHashMap();
+                        SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
+                        classData.forEach(cld -> typeMap.put(cld.getType(), cld));
+                        ProduceQuantityVO classQuantity = new ProduceQuantityVO();
+                        SubstrateDataListVO typeVO0 = typeMap.getOrDefault(PmReportConstant.TYPE_0, defaultSubstrateDataListVO);
+                        SubstrateDataListVO typeVO1 = typeMap.getOrDefault(PmReportConstant.TYPE_1, defaultSubstrateDataListVO);
+                        typeVO0.setQuantity(Objects.nonNull(typeVO0.getQuantity()) ? typeVO0.getQuantity() : BigDecimal.ZERO);
+                        typeVO1.setQuantity(Objects.nonNull(typeVO1.getQuantity()) ? typeVO1.getQuantity() : BigDecimal.ZERO);
+                        inCount = BigDecimalUtil.add(inCount, typeVO0.getQuantity());
+                        proCount = BigDecimalUtil.add(proCount, typeVO1.getQuantity());
+                        classQuantity.setQuantityVOList(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
+                        if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
+                            //早班
+                            row.setMorning(classQuantity);
+                            BigDecimalUtil.accumulate(countMap1, 0, typeVO0.getQuantity());
+                            BigDecimalUtil.accumulate(countMap1, 1, typeVO1.getQuantity());
+                        } else {
+                            //晚班
+                            row.setNight(classQuantity);
+                            BigDecimalUtil.accumulate(countMap2, 0, typeVO0.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 1, typeVO1.getQuantity());
+                        }
+                    }
+                    ProduceQuantityVO columnTotalQuantity = new ProduceQuantityVO();
+                    columnTotalQuantity.setQuantityVOList(Arrays.asList(String.valueOf(inCount), String.valueOf(proCount)));
+                    BigDecimalUtil.accumulate(countMap3, 0, inCount);
+                    BigDecimalUtil.accumulate(countMap3, 1, proCount);
+                    row.setTotal(columnTotalQuantity);
+                    productLineVOList.add(row);
+                }
+                SubstrateDayReportListVO rowTotal = new SubstrateDayReportListVO();
+                rowTotal.setType(PmReportConstant.TYPE_1);
+                rowTotal.setWorkshopName(productLine.getParentName());
+                rowTotal.setProductLineName(productLine.getOfficeName());
+                rowTotal.setMorning(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap1.get(0)), String.valueOf(countMap1.get(1)))));
+                rowTotal.setNight(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap2.get(0)), String.valueOf(countMap2.get(1)))));
+                rowTotal.setTotal(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap3.get(0)), String.valueOf(countMap3.get(1)))));
+                rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
+                productLineVOList.add(rowTotal);
 
+                //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
+                addOther(dto, classList, productLine, productLineVOList);
+            }
         });
+        vo.setSpecsNum(3);
+        vo.setDataNum(2);
+        vo.setHeader(header);
+        vo.setDataList(productLineVOList);
         return vo;
+    }
+
+    /**
+     * 插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
+     *
+     * @param dto               查询条件
+     * @param classList         班次数据
+     * @param productLine       产线信息
+     * @param productLineVOList 数据存放集合
+     */
+    private void addOther(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList) {
+        List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine);
+        productLineVOList.addAll(energyList);
     }
 
     @Override
