@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -23,9 +24,11 @@ public class MaterialRequisitionPageDTO extends BasePageDTO {
     private String code;
 
     @ApiModelProperty("开始时间")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startTime;
 
     @ApiModelProperty("结束时间")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endTime;
 
     @ApiModelProperty("物料编码")

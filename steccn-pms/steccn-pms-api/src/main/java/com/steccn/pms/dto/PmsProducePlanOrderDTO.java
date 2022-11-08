@@ -26,4 +26,8 @@ public class PmsProducePlanOrderDTO {
     @ApiModelProperty("物料id")
     @NotNull(groups = {UpdateGroup.class}, message = "物料不能为空")
     private List<Long> materialIds;
+    @ApiModelProperty("当前月的第一天")
+    private LocalDate firstDay;
+    @ApiModelProperty("当前月的最后一天")
+    private LocalDate lastDay;
 }

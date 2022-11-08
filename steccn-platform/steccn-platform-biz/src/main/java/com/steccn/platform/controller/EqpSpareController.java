@@ -61,7 +61,7 @@ public class EqpSpareController {
         return R.success(eqpSpareService.listById(materialIds));
     }
 
-    @PostMapping
+    @PostMapping("/listPage")
     @ApiOperation("获取备件分页列表")
     public R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO) {
         return R.success(eqpSpareService.listPage(sparePageDTO));

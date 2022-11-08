@@ -2,7 +2,12 @@ package com.steccn.pms.mapper;
 
 import com.steccn.pms.domain.PmsMrpInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.PmsProducePlanOrderDTO;
+import com.steccn.pms.vo.PmsMrpInfoVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsMrpInfoMapper extends BaseMapper<PmsMrpInfo> {
 
+    /**
+     * 查询需要下达的物料的信息
+     * @param dto
+     * @return
+     */
+    List<PmsMrpInfo>  list(@Param("dto") PmsProducePlanOrderDTO dto);
 }
 
 

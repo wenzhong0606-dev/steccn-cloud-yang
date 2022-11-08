@@ -71,7 +71,7 @@ public interface RemoteSpareFeignApi {
      * @param sparePageDTO
      * @return
      */
-    @PostMapping
+    @PostMapping("/feign/platform/eqpSpare/listPage")
     @ApiOperation("获取备件分页列表")
     R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO);
 }

@@ -10,6 +10,7 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -61,7 +62,7 @@ public class MaterialRequisitionInfoDTO {
     private String receiveQuantity;
 
     @ApiModelProperty("需求时间")
-    private String requireDate;
+    private LocalDate requireDate;
 
     @ApiModelProperty("货架id")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "货架不能为空")
