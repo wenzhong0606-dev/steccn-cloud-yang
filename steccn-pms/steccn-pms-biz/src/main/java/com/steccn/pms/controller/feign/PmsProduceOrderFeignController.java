@@ -42,4 +42,10 @@ public class PmsProduceOrderFeignController {
         return R.success(pmsProduceOrderService.listByProduceLineId(productLineId));
     }
 
+    @ApiOperation("根据生产订单号查询产线,车间,批次信息")
+    @GetMapping("/code")
+    public R<PmsProduceOrderVO> code(@ApiParam("订单号") @RequestParam("code") String code) {
+        return R.success(pmsProduceOrderService.code(code));
+    }
+
 }

@@ -7,6 +7,7 @@ import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
 import com.steccn.qms.vo.QtCheckItemListVO;
+import com.steccn.qms.vo.QtRangeArrayVO;
 
 import java.util.List;
 import java.util.Map;
@@ -80,4 +81,6 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @return map key为旧检验项id value为新检验项id
      */
     Map<Integer, Integer> checkItemSnapshot(List<Integer> checkIdList);
+
+    List<QtRangeArrayVO> selectStationList();
 }

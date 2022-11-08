@@ -13,6 +13,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.Constant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
@@ -668,6 +669,26 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             }
         });
         return produceOrderTrackReportVOPage;
+    }
+
+    /**
+     * 根据生产订单号来查询当前正在执行中的记录
+     * @param code
+     * @return 生产订单信息
+     */
+    @Override
+    public PmsProduceOrderVO code(String code) {
+        //1.根据生产订单号来查询当前正在执行中的记录
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO));
+        //2.校验数据
+        Assert.isNull(order,"该生产订单号不存在");
+
+        //3.复制数据传入VO
+        PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
+        BeanUtils.copyProperties(order,pmsProduceOrderVO);
+
+        return pmsProduceOrderVO;
+
     }
 
     /**
