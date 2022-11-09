@@ -48,7 +48,7 @@
                p.quantity    quantity
         FROM pms_produce_plan p
                  INNER JOIN pm_material m ON p.material_id = m.id
-        WHERE p.plan_date like concat(#{monthDate}, "%")
+        WHERE p.plan_date like concat(#{monthDate},'%')
     </select>
 
     <select id="selectAllByPlanDateAndCode" resultType="com.steccn.pms.domain.PmsProducePlan">

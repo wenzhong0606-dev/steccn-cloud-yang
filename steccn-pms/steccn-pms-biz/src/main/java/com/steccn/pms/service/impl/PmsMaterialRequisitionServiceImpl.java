@@ -94,7 +94,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         BeanUtil.copyProperties(materialRequisitionDTO, model);
         model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
         //获取创建状态在字典中的id
-        Long status = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED, PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId();
+        Long status = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
+                PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId();
         model.setStatus(status);
         save(model);
         if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {

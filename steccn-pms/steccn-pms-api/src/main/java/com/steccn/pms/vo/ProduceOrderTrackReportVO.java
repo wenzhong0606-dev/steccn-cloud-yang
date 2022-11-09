@@ -16,6 +16,9 @@ public class ProduceOrderTrackReportVO {
     @ApiModelProperty("产线id")
     private Integer productionLineId;
 
+    @ApiModelProperty("产线id")
+    private String productionLineName;
+
     @ApiModelProperty("订单号")
     private String code;
 
@@ -28,6 +31,9 @@ public class ProduceOrderTrackReportVO {
     @ApiModelProperty("计划数")
     private BigDecimal planQuantity;
 
+    @ApiModelProperty("计划数平方")
+    private BigDecimal planQuantitySq;
+
     @ApiModelProperty("计划开始时间")
     private LocalDateTime actualStartTime;
 
@@ -37,8 +43,14 @@ public class ProduceOrderTrackReportVO {
     @ApiModelProperty("完成数")
     private BigDecimal completeQuantity;
 
+    @ApiModelProperty("完成数平方")
+    private BigDecimal completeQuantitySq;
+
     @ApiModelProperty("差额数")
     private BigDecimal shortfallQuantity;
+
+    @ApiModelProperty("差额数平方")
+    private BigDecimal shortfallQuantitySq;
 
     @ApiModelProperty("订单状态")
     private Integer state;

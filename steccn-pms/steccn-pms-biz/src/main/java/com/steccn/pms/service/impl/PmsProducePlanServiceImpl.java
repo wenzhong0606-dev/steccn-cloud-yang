@@ -234,13 +234,19 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     @Override
     public void excelExportData(HttpServletRequest request, HttpServletResponse response) {
         String monthDate = request.getParameter("monthDate");
+        List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().like(PmsProducePlan::getPlanDate, monthDate + "%"));
+        //查询物料信息
+        Set<Long> materialIdSet = producePlanList.stream().map(PmsProducePlan::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> materialMap = remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)).getData();
+
 
         List<PmsProducePlanExcelDTO> excelDTOList = new ArrayList<>();
-        List<PmsProducePlanVO> producePlanVOList = this.baseMapper.selectAllByPlanDate(monthDate);
-        for (PmsProducePlanVO pmsProducePlanVO : producePlanVOList) {
+        for (PmsProducePlan pmsProducePlan : producePlanList) {
             PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
-            BeanUtils.copyProperties(pmsProducePlanVO, planExcelDTO);
-            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlanVO.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
+            planExcelDTO.setMaterialCode(materialMap.get(pmsProducePlan.getMaterialId()).getCode());
+            planExcelDTO.setMaterialName(materialMap.get(pmsProducePlan.getMaterialId()).getName());
+            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlan.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
+            planExcelDTO.setQuantity(pmsProducePlan.getQuantity());
             excelDTOList.add(planExcelDTO);
         }
 

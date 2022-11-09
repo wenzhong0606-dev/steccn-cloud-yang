@@ -31,8 +31,7 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
     @Override
     public Boolean editList(MaterialRequisitionDTO materialRequisitionDTO) {
         //1.定义修改的数据集合和新增的数据集合
-        List<PmsMaterialRequisitionInfo> updateList = Lists.newArrayList();
-        List<PmsMaterialRequisitionInfo> addList = Lists.newArrayList();
+        List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
         Set<Long> idSet = Sets.newHashSet();
         //2.处理数据
         materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
@@ -40,19 +39,18 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
             BeanUtil.copyProperties(materialRequisitionInfoDTO, materialRequisitionInfo);
             materialRequisitionInfo.setMaterialRequisitionId(materialRequisitionDTO.getId());
             if (Objects.nonNull(materialRequisitionInfo.getId())) {
-                updateList.add(materialRequisitionInfo);
+                list.add(materialRequisitionInfo);
                 idSet.add(materialRequisitionInfo.getId());
             } else {
-                addList.add(materialRequisitionInfo);
+                list.add(materialRequisitionInfo);
             }
         });
         //3.删除其他多余的数据
         remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
                 .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, materialRequisitionDTO.getId())
-                .notIn(PmsMaterialRequisitionInfo::getId, idSet));
+                .notIn(CollUtil.isNotEmpty(idSet),PmsMaterialRequisitionInfo::getId, idSet));
         //4.批量修改新增
-        saveBatch(addList);
-        return updateBatchById(updateList);
+        return saveOrUpdateBatch(list);
     }
 }
 

@@ -658,10 +658,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
+        Map<Integer, SysOfficeVO> productLineMap = remoteOfficeFeign.listById(new HashSet<>(dto.getProductLineList())).getData();
         Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()),dto.getProductLineList());
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
             BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
+            produceOrderTrackReportVO.setProductionLineName(productLineMap.get(produceOrderTrackReportVO.getProductionLineId()).getOfficeName());
             if (Objects.isNull(completeQuantity)) {
                 produceOrderTrackReportVO.setShortfallQuantity(planQuantity);
             } else {

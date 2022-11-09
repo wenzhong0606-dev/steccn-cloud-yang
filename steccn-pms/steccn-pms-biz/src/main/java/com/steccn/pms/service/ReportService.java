@@ -3,10 +3,7 @@ package com.steccn.pms.service;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
-import com.steccn.pms.vo.EnergyCountVO;
-import com.steccn.pms.vo.OutputCountVO;
-import com.steccn.pms.vo.SubstrateDayReportListVO;
-import com.steccn.pms.vo.SubstrateDayReportVO;
+import com.steccn.pms.vo.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -50,4 +47,11 @@ public interface ReportService {
      * @return
      */
     SubstrateDayReportListVO rowData(SysOfficeVO productLine, List<BigDecimal> dataList, String specStr);
+
+    /**
+     * 深加工日报表-产量信息
+     * @param dto dto
+     * @return
+     */
+    FurtherProduceReportVO furtherProduceDayReport(PmsDayReportDTO dto);
 }

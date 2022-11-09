@@ -67,4 +67,5 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 产量map
      */
     Map<Long, PmsReportWork> dateProductNum(Integer productLineId, LocalDate date);
+
 }
