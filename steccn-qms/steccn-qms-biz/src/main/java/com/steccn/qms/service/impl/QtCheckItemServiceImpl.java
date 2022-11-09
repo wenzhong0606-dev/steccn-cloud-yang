@@ -17,7 +17,9 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckItem;
 import com.steccn.qms.domain.QtCheckPlanGroupItem;
@@ -64,6 +66,9 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
 
     @Autowired
     private QtCheckPlanService qtCheckPlanService;
+
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<QtCheckItemListVO> pageList(QtCheckItemPageDTO dto) {
@@ -410,10 +415,12 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
-    public List<QtRangeArrayVO> selectStationList() {
+    public  R<List<SysOfficeVO>>  selectStationList(List<String> typeList) {
+
+        R<List<SysOfficeVO>> stationList = remoteOfficeFeign.warehouseAndShelf(typeList);
 
 
-        return null;
+        return stationList;
     }
 
     /**

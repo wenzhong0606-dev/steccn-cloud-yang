@@ -82,4 +82,15 @@ public class SysOfficeFeignController {
     public R<SysOfficeVO> parent(@PathVariable("id") Integer id) {
         return R.success(sysOfficeService.parentOffice(id));
     }
+
+    /**
+     * 查询工位列表
+     * @param typeList
+     * @return
+     */
+    @PostMapping("/warehouse")
+    @ApiOperation("下拉选项")
+    public R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList) {
+        return R.success(sysOfficeService.warehouseAndShelf(typeList));
+    }
 }

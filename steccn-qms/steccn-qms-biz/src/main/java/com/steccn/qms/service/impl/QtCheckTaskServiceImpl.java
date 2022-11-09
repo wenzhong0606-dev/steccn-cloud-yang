@@ -485,6 +485,25 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<String, Object> valueCondition = new HashMap<>();
         valueCondition.put("task_id", dto.getId());
         qtCheckTaskDetailService.removeByMap(valueCondition);
+        //处理样本概况数据
+        //样本概况在来料捡,化验抽捡,配料抽检时显示
+        if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())){
+            if (CollUtil.isNotEmpty(dto.getSampleInfoList())){
+                QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
+                Map<String, Object> deleteCondition = new HashMap<>();
+                dto.getSampleInfoList().forEach(sampleInfo -> {
+                    if (StringUtils.isNotBlank(sampleInfo.getSampleNum()) && sampleInfo.getSampleNum().equals(true)){
+                        for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
+
+
+
+
+                        }
+
+                        }
+                        });
+            }
+        }
         //处理数据
         if (CollUtil.isNotEmpty(dto.getCheckGroup())) {
             dto.getCheckGroup().forEach(group -> {

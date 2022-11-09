@@ -65,4 +65,8 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      */
     private List<QtOnlineCheckItemDTO> onlineItem;
 
+    /**
+     * 样本概况信息
+     */
+    private List<QtCheckTaskCopyDetailsDTO> sampleInfoList;
 }

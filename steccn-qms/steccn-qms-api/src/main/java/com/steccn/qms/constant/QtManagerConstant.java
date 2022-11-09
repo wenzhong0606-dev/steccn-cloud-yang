@@ -114,6 +114,31 @@ public interface QtManagerConstant {
     final int morningWork = 0;
     final int nightWork = 1;
 
+    /**
+     * 日环比,周环比标志
+     */
+    Boolean DAY_FLAG = false;
+    Boolean WEEK_FLAG = false;
+
+    /**
+     * 周枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum WEEKDAY{
+        //周枚举 MON星期一 TUE星期二 WED星期三 THU星期四 FRI星期五 STA星期六 SUN星期日
+        MON(1, "星期一"),
+        TUE(2,"星期二"),
+        WED(3,"星期三"),
+        THU(4,"星期四"),
+        FRI(5,"星期五"),
+        STA(6,"星期六"),
+        SUN(7,"星期日");
+
+        private Integer day;
+        private String dayName;
+    }
+
 
 
     /**

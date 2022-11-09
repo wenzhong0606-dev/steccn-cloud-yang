@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.domain.QtCheckItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
@@ -82,5 +84,5 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      */
     Map<Integer, Integer> checkItemSnapshot(List<Integer> checkIdList);
 
-    List<QtRangeArrayVO> selectStationList();
+    R<List<SysOfficeVO>> selectStationList(List<String> typeList);
 }

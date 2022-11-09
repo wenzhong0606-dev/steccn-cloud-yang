@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 样本详情DTO
@@ -47,4 +48,14 @@ public class QtCheckTaskCopyDetailsDTO implements Serializable {
      * 配料付数
      */
     private Integer ingredientNum;
+
+    /**
+     * 结果
+     */
+    private Map<String, String> result;
+
+    /**
+     *
+     */
+    private Boolean sampleFlag;
 }
