@@ -67,7 +67,8 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      */
     List<CompleteStorageCountVO> selectCompleteStorageCount(@Param("productionLineIdList") List<Integer> productionLineIdList
             , @Param("startTime")LocalDateTime startTime
-            , @Param("endTime")LocalDateTime endTime);
+            , @Param("endTime")LocalDateTime endTime
+            , @Param("group") Integer group);
 }
 
 

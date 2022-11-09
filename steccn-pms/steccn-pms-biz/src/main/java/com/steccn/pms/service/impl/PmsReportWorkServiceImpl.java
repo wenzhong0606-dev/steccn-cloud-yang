@@ -375,7 +375,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
             List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
-            if(CollUtil.isNotEmpty(messList)){
+            if (CollUtil.isNotEmpty(messList)) {
                 Set<String> storageSet = Sets.newHashSet();
                 for (MessMaterialConsumeDTO messDto : messList) {
                     storageSet.add(messDto.getWarehouseCode());
@@ -395,7 +395,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     EqpSpareVO eqpSpareVO = eqpSpareMap.getOrDefault(messDto.getMaterialId(), defaultEqpSpareVO);
                     resDTO.setModuleName(eqpSpareVO.getName());
                     resDTO.setModuleCode(eqpSpareVO.getCode());
-                    resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(),3));
+                    resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(), 3));
                     resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
                     SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
                     resDTO.setWarehouseId(warehouse.getId());
@@ -445,6 +445,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         //todo 班次数据待定(OA获取)
         return page.setRecords(res);
+    }
+
+    @Override
+    public Map<Long, PmsReportWork> dateProductNum(Integer productLineId, LocalDate date) {
+        Map<Long, PmsReportWork> resMap = Maps.newHashMap();
+        if (Objects.nonNull(productLineId) && Objects.nonNull(date)) {
+            List<PmsReportWork> resList = this.baseMapper.dateProductNum(productLineId, date);
+            if (CollUtil.isNotEmpty(resList)) {
+                resList.forEach(ele -> {
+                    resMap.put(ele.getClassesId(), ele);
+                });
+            }
+        }
+        return resMap;
     }
 
     /**

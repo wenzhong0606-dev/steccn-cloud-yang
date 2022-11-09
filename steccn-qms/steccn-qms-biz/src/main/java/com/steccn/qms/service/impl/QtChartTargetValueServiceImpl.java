@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
-* @author Admin
+* @author AndrewLuo
 * @description 针对表【qt_chat_target_value】的数据库操作Service实现
 * @createDate 2022-11-08 18:34:41
 */

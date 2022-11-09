@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 public class OutputCountVO {
 
-    List<String> productLineList;
+    List<String> dx;
 
     List<OutputCountListVO> dataList;
 }

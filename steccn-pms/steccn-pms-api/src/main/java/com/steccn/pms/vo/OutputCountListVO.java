@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class OutputCountListVO {
 
-    private String className;
+    private String dataName;
 
     private String dataType;
 

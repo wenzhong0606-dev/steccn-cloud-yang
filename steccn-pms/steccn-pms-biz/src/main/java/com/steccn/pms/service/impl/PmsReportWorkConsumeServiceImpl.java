@@ -65,7 +65,7 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
     }
 
     @Override
-    public List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine) {
+    public List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap) {
         List<SubstrateDayReportListVO> resList = Lists.newArrayList();
 
         List<EnergyGroupListVO> groupList = this.baseMapper.substrateEnergy(productLine.getId(), dto.getDate());
@@ -82,8 +82,9 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             //遍历班次【早班晚班】
             BigDecimal morning = classesDataMap.getOrDefault(classList.get(0).getId(), BigDecimal.ZERO);
             BigDecimal night = classesDataMap.getOrDefault(classList.get(1).getId(), BigDecimal.ZERO);
-            SubstrateDayReportListVO gasVo = reportService.rowData(productLine, Lists.newArrayList(morning, night, BigDecimalUtil.add(morning, night)), consumeEnum.getName());
-            resList.add(gasVo);
+            SubstrateDayReportListVO dayVo = reportService.rowData(productLine, Lists.newArrayList(morning, night, BigDecimalUtil.add(morning, night)), consumeEnum.getName());
+            BigDecimalUtil.accumulate(workshopCountMap, consumeEnum.getCode() + 2, BigDecimalUtil.add(morning, night));
+            resList.add(dayVo);
         }
         return resList;
     }
