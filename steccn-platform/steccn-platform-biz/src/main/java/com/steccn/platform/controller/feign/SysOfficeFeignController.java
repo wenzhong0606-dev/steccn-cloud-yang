@@ -3,9 +3,11 @@ package com.steccn.platform.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -81,5 +83,11 @@ public class SysOfficeFeignController {
     @GetMapping("/parent/{id}")
     public R<SysOfficeVO> parent(@PathVariable("id") Integer id) {
         return R.success(sysOfficeService.parentOffice(id));
+    }
+
+    @PostMapping("/list/parencodes")
+    @ApiOperation("根据车间id列表选择产线")
+    public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
+        return R.success(sysOfficeService.getListSysOfficeList(dto));
     }
 }

@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import java.util.List;
  * 返回给前端的spc报表控制图数据
  */
 @Data
-public class QtReportVO {
+public class QtReportVO implements Serializable {
     /**
      * 报表卡片类型
      */

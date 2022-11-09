@@ -41,13 +41,13 @@ public class QtReport implements Serializable {
      * 日期范围开始时间
      */
     @TableField(value = "time_scope_start")
-    private LocalDate timeScopeStart;
+    private LocalDateTime timeScopeStart;
 
     /**
      * 日期范围结束时间
      */
     @TableField(value = "time_scope_end")
-    private LocalDate timeScopeEnd;
+    private LocalDateTime timeScopeEnd;
 
     /**
      * 粒度:小时、天、周、月、季度、年

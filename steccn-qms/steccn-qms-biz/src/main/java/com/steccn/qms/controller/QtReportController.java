@@ -94,10 +94,11 @@ public class QtReportController {
     /**
      * 下载Spc报表明细加图表
      */
-    @ApiModelProperty(value = "下载模板")
     @GetMapping("/download")
+    @ApiModelProperty(value = "下载模板")
     public void download(HttpServletResponse response) throws IOException {
         qtReportService.download(response);
     }
+
 
 }

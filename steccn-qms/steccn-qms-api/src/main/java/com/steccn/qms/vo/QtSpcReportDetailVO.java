@@ -3,12 +3,13 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class QtSpcReportDetailVO {
+public class QtSpcReportDetailVO implements Serializable {
     /**
      * 主键id
      */

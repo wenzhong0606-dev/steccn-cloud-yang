@@ -114,7 +114,10 @@ public interface QtManagerConstant {
     final int afterHour = 20;
     final long hourSpace = 2;
 
-
+    /**
+     * 检验项类型
+     */
+    final int check_type = 2;
     /**
      * 报表卡片名称长度限制
      */

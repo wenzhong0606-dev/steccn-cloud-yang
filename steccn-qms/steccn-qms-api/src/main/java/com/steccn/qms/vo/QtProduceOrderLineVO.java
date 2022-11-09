@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("生产订单VO")
-public class QtProduceOrderLineVO {
+public class QtProduceOrderLineVO implements Serializable {
 
     @ApiModelProperty("主键")
     private Long id;

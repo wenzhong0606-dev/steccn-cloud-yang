@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author W10
@@ -26,6 +27,9 @@ public interface SysOfficeMapper extends BaseMapper<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByParentId(@Param("id") Integer id, @Param("officeType") String officeType);
+
+
+    List<SysOfficeVO> listByParentCode(@Param("codes") List<String> codes,@Param("officeType") String officeType);
 }
 
 

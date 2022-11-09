@@ -6,6 +6,7 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtReportGroup;
 import com.steccn.qms.dto.QtReportGroupDTO;
 import com.steccn.qms.service.QtReportGroupService;
+import com.steccn.qms.vo.QtReportChartVO;
 import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 import io.swagger.annotations.ApiOperation;
@@ -39,8 +40,8 @@ public class QtReportGroupController {
         return R.success(qtReportGroupService.getReportGroupVOlist());
     }
     @PostMapping ("/{id}")
-    @ApiOperation(value = "根据报表卡片分组ID去查询报表卡片列表")
-    public R<List<QtReportVO>> getQtReportList(@PathVariable("id") Integer id){
+    @ApiOperation(value = "根据报表卡片分组ID去查询报表卡片图表")
+    public R<List<QtReportChartVO>> getQtReportList(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.getQtReportList(id));
     }
 
