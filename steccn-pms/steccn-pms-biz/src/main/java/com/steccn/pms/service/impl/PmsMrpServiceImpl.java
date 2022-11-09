@@ -78,6 +78,8 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             pmsMrpVO.setMaterialCode(eqpSpareVO.getCode());
             pmsMrpVO.setTypeId(eqpSpareVO.getProcurementTypeId());
             pmsMrpVO.setTypeName(eqpSpareVO.getProcurementTypeName());
+            pmsMrpVO.setUnitId(eqpSpareVO.getUnitId());
+            pmsMrpVO.setUnitName(eqpSpareVO.getUnit());
             materialIds.add(eqpSpareVO.getId());
             pmsMrpVOList.add(pmsMrpVO);
         });
@@ -91,7 +93,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         Map<String, SysDictVO> typeMap = FeignOptional.of(remoteDictFeignApi.listByCodes(typeCodes)).get();
         LambdaQueryWrapper<PmsMrpInfo> pmsMrpInfoLambdaQueryWrapper = new QueryWrapper<PmsMrpInfo>().select("material_id,sum(quantity) as quantity").lambda()
                 .in(PmsMrpInfo::getMaterialId, materialIds)
-                .in(PmsMrpInfo::getMrpTypeId, typeMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND), typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT))
+                .in(PmsMrpInfo::getMrpTypeId, typeMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId(), typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId())
                 .eq(PmsMrpInfo::getStatus,PmManagerConstant.OrderStateEnum.ZERO.getCode())
                 .groupBy(PmsMrpInfo::getMaterialId);
         List<PmsMrpInfo> list = pmsMrpInfoService.list(pmsMrpInfoLambdaQueryWrapper);
@@ -103,6 +105,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             pmsMrpVO.setQuantity(orDefault.getQuantity());
             pmsMrpVO.setStockQuantity(inventoryOrDefault.getAvailableQuantity());
         });
+        page.setTotal(pmsMrpVOList.size());
         return page.setRecords(pmsMrpVOList);
     }
 

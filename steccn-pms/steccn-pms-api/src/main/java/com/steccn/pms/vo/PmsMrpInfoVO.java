@@ -30,7 +30,7 @@ public class PmsMrpInfoVO {
     private Long mrpTypeId;
 
     @ApiModelProperty("mrp类型名称")
-    private Long mrpTypeName;
+    private String mrpTypeName;
 
     @ApiModelProperty("mrp元素")
     private String mrpElement;

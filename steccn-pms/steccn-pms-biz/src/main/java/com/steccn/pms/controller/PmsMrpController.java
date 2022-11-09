@@ -2,9 +2,11 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.pms.domain.PmsMrpInfo;
 import com.steccn.pms.dto.PmsMrpPageDTO;
 import com.steccn.pms.service.PmsMrpService;
 import com.steccn.pms.vo.MaterialRequisitionVO;
+import com.steccn.pms.vo.PmsMrpInfoVO;
 import com.steccn.pms.vo.PmsMrpVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +32,6 @@ public class PmsMrpController {
     public R<Page<PmsMrpVO>> pageList(@RequestBody PmsMrpPageDTO dto) {
         return R.success(pmsMrpService.pageList(dto));
     }
+
 
 }

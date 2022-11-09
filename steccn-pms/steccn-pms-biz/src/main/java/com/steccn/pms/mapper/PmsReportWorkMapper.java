@@ -47,6 +47,16 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     List<PmsReportWork> dateProductNum(@Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
+
+    /**
+     * 基于产线，班次，物料，工序分组报工数据【加工，合格，不良】
+     *
+     * @param productLineIdList 产线id
+     * @param classesIdList     班次id
+     * @param date              指定日期
+     * @return list
+     */
+    List<PmsReportWork> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
 }
 
 
