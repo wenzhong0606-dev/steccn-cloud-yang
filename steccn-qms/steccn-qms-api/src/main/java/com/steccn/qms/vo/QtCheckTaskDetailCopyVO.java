@@ -30,4 +30,6 @@ public class QtCheckTaskDetailCopyVO implements Serializable {
      * 样本详情
      */
     private QtCheckTaskCopyDetailsDTO copyDetails;
+
+
 }
