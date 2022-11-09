@@ -34,7 +34,7 @@ public class ReportController {
     @PostMapping("/fur/produce")
     @ApiOperation("深加工日报表-产量")
     public R<FurtherProduceReportVO> furtherProduceDayReport(@RequestBody PmsDayReportDTO dto) {
-        return R.success();
+        return R.success(reportService.furtherProduceDayReport(dto));
     }
 
     @PostMapping("/fur/ingredient")
