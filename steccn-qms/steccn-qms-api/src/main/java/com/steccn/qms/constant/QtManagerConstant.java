@@ -100,6 +100,16 @@ public interface QtManagerConstant {
 
     String DYNAMIC_TIME_LAST_THREE_HUNDRED_SIXTY_FIVE_DAYS = "过去365天";
 
+    String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
+
+    String QT_CHART_EXCEL_MODEL_NAME = "JPCP.xlsx";
+
+    String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    String QT_CHART_EXCEL_ENCODE = "UTF-8";
+
+    String QT_CHART_JPCP_NAME = "基片成品趋势";
+
     /**
      * beforeHour 代表早上8点
      * afterHour  代表晚上20点
