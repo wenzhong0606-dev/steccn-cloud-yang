@@ -44,8 +44,8 @@ public class MaterialRequisitionInfoDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
     private List<Integer> organization;
 
-    @ApiModelProperty("机构名称")
-    private List<String> organizationName;
+//    @ApiModelProperty("机构名称")
+//    private List<String> organizationName;
 
     @ApiModelProperty("需求数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "需求数量不能为空")
