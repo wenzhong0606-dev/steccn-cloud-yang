@@ -3,8 +3,10 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsMrpInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.domain.PmsProducePlan;
 import com.steccn.pms.dto.PmsMrpInfoPageDTO;
+import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanOrderDTO;
 import com.steccn.pms.vo.PmsMrpInfoVO;
@@ -48,4 +50,10 @@ public interface PmsMrpInfoService extends IService<PmsMrpInfo> {
      * @return
      */
     Page<PmsMrpInfoVO> infoPage(PmsMrpInfoPageDTO dto);
+
+    /**
+     * 转生产订单生成生产订单需求信息
+     * @param model
+     */
+    void turnProduceOrder(PmsProduceOrderDTO model);
 }

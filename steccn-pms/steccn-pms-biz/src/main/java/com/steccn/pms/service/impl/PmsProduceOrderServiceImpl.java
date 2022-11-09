@@ -62,6 +62,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsBarcodePrintService pmsBarcodePrintService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmCraftRouteService pmCraftRouteService;
+    private final PmsMrpInfoService pmsMrpInfoService;
 
     /**
      * 新增生产订单信息
@@ -94,6 +95,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.3保存物料信息
         if (CollUtil.isNotEmpty(dto.getMaterialList())) {
             pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
+        }
+        //判断是否是计划转生产订单
+        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())){
+            try {
+                BeanUtil.copyProperties(model,dto);
+                pmsMrpInfoService.turnProduceOrder(dto);
+            } catch (Exception e) {
+            }
         }
         return true;
     }
