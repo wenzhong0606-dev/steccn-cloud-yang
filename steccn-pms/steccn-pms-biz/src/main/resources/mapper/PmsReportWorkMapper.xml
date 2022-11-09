@@ -131,7 +131,7 @@
         GROUP BY
             classes_id
     </select>
-    <select id="furtherProduceReport" resultType="com.steccn.pms.domain.PmsReportWork">
+    <select id="furtherProduceReport" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
         SELECT
             prw.product_line_id,
             prw.classes_id,

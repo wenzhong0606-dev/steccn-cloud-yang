@@ -7,6 +7,7 @@ import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.vo.PmsReportWorkGroupVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.SubstrateDataListVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -73,7 +74,7 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @param date              指定日期
      * @return list
      */
-    List<PmsReportWork> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+    List<FurtherProduceReportDataVO> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
 }
 
 

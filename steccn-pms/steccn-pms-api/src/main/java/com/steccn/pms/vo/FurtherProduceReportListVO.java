@@ -23,7 +23,7 @@ public class FurtherProduceReportListVO implements Serializable {
     @ApiModelProperty("产线名称")
     private String productLineName;
 
-    @ApiModelProperty("班级名称")
+    @ApiModelProperty("班次名称")
     private String className;
 
     @ApiModelProperty("规格")
