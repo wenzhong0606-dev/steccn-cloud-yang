@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
@@ -290,20 +291,48 @@ public class ReportServiceImpl implements ReportService {
         //获取日期
         List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
 
-        List<PmsReportWork> pmsReportWorkList = pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
-                .select("classes_id as classesId,product_line_id as productLineId,process_quantity as processQuantity")
-                .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
-                .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
-                .le(PmsReportWork::getCreateTime, dateRangeList.get(1)));
+        //根据统计维度获取分组字段
+        OutputCountVO outputCountVO = new OutputCountVO();
+        if (PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode().equals(dto.getDataGaugeType())) {
+             outputCountVO = productLineCount(productLineList, dateRangeList);
+        } else {
+
+        }
+
+        //获取拉引量
+
+
+        return outputCountVO;
+    }
+
+    private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList, List<SFunction<PmsReportWork,?>> columnList) {
+
+        return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
+                .select("classes_id as classesId,product_line_id as productLineId,sum(process_quantity) as processQuantity")
+                .lambda().in(PmsReportWork::getProductLineId,productLineIdList)
+                .ge(PmsReportWork::getCreateTime,dateRangeList.get(0))
+                .le(PmsReportWork::getCreateTime,dateRangeList.get(1)).groupBy(columnList));
+    }
+
+    private OutputCountVO productLineCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList){
+
+        //获取产线id和产线名称
+        Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
+
+        //添加分组字段获取数据
+        List<SFunction<PmsReportWork,?>> columnList = new ArrayList<>();
+        columnList.add(PmsReportWork::getClassesId);
+        columnList.add(PmsReportWork::getProductLineId);
+        List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
         Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassesId));
 
         OutputCountVO outputCountVO = new OutputCountVO();
-        //获取车间下所有的产线名称
-        outputCountVO.setProductLineList(productLineNameList);
-
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
-
+        //获取车间下所有的产线名称
+        outputCountVO.setDx(productLineNameList);
         outputCountVO.setDataList(outputCountListVOList);
+
         //获取产量数据
         for (Map.Entry<Long, List<PmsReportWork>> entry : classGroup.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
@@ -324,7 +353,10 @@ public class ReportServiceImpl implements ReportService {
         }
 
         //获取入库数
-        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList), dateRangeList.get(0), dateRangeList.get(1));
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList)
+                ,dateRangeList.get(0)
+                ,dateRangeList.get(1)
+                ,PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode());
         Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassesId));
         for (Map.Entry<Long, List<CompleteStorageCountVO>> entry : completeMap.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
@@ -343,10 +375,6 @@ public class ReportServiceImpl implements ReportService {
 
             outputCountListVOList.add(listVO);
         }
-
-        //获取拉引量
-
-
         return outputCountVO;
     }
 
