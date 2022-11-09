@@ -355,7 +355,6 @@ public class ReportServiceImpl implements ReportService {
             for (SysOfficeVO productLine : productLineList) {
                 //产线的合计 key-产线 value【key为数量类别，value为数量】
                 Map<Long, Map<Integer, BigDecimal>> lineCountMap = Maps.newHashMap();
-
                 //过滤出产线数据并将产线数据分成不同班次
                 Map<Long, List<FurtherProduceReportDataVO>> lineDataMap = dataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.groupingBy(FurtherProduceReportDataVO::getClassesId));
                 //遍历不同的班次
@@ -364,7 +363,6 @@ public class ReportServiceImpl implements ReportService {
                     Map<Long, Map<Integer, BigDecimal>> classCountMap = Maps.newHashMap();
                     //获取班次的数据
                     SysDictVO sysDictVO = classMap.get(classEntry.getKey());
-
                     Map<Long, List<FurtherProduceReportDataVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherProduceReportDataVO::getMaterialId));
                     //遍历物料分组
                     for (Map.Entry<Long, List<FurtherProduceReportDataVO>> materialEntry : materialMap.entrySet()) {
@@ -384,32 +382,15 @@ public class ReportServiceImpl implements ReportService {
                             valueStrList.add(BigDecimalUtil.format(orDefault.getBadnessQuantity()));
                             BigDecimal divide = BigDecimalUtil.divide(subtract, orDefault.getProcessQuantity());
                             valueStrList.add(BigDecimalUtil.format(divide.multiply(BigDecimal.valueOf(100))));
-                            //行合计
-                            BigDecimalUtil.accumulate(rowCountMap, 0, orDefault.getProcessQuantity());
-                            BigDecimalUtil.accumulate(rowCountMap, 1, subtract);
-                            BigDecimalUtil.accumulate(rowCountMap, 2, orDefault.getBadnessQuantity());
-                            BigDecimalUtil.accumulate(rowCountMap, 3, divide.multiply(BigDecimal.valueOf(100)));
-
-                            //班组求和
-                            BigDecimalUtil.biAccumulate(classCountMap, pmProcess.getId(), 0, orDefault.getProcessQuantity());
-                            BigDecimalUtil.biAccumulate(classCountMap, pmProcess.getId(), 1, subtract);
-                            BigDecimalUtil.biAccumulate(classCountMap, pmProcess.getId(), 2, orDefault.getBadnessQuantity());
-                            BigDecimalUtil.biAccumulate(classCountMap, pmProcess.getId(), 3, divide.multiply(BigDecimal.valueOf(100)));
-
-                            //产线求和
-                            BigDecimalUtil.biAccumulate(lineCountMap, pmProcess.getId(), 0, orDefault.getProcessQuantity());
-                            BigDecimalUtil.biAccumulate(lineCountMap, pmProcess.getId(), 1, subtract);
-                            BigDecimalUtil.biAccumulate(lineCountMap, pmProcess.getId(), 2, orDefault.getBadnessQuantity());
-                            BigDecimalUtil.biAccumulate(lineCountMap, pmProcess.getId(), 3, divide.multiply(BigDecimal.valueOf(100)));
-
-                            //车间求和
-                            BigDecimalUtil.biAccumulate(workshopCountMap, pmProcess.getId(), 0, orDefault.getProcessQuantity());
-                            BigDecimalUtil.biAccumulate(workshopCountMap, pmProcess.getId(), 1, subtract);
-                            BigDecimalUtil.biAccumulate(workshopCountMap, pmProcess.getId(), 2, orDefault.getBadnessQuantity());
-                            BigDecimalUtil.biAccumulate(workshopCountMap, pmProcess.getId(), 3, divide.multiply(BigDecimal.valueOf(100)));
-
-
                             moduleList.add(new FurtherValueStrVO(valueStrList));
+                            //列统计数据
+                            pmColumnCount(rowCountMap, orDefault, subtract, divide);
+                            //班组求和
+                            pmRowCount(classCountMap, pmProcess.getId(), orDefault, subtract, divide);
+                            //产线求和
+                            pmRowCount(lineCountMap, pmProcess.getId(), orDefault, subtract, divide);
+                            //车间求和
+                            pmRowCount(workshopCountMap, pmProcess.getId(), orDefault, subtract, divide);
                         }
                         //合计
                         List<String> rowCountList = Lists.newArrayList();
@@ -417,114 +398,39 @@ public class ReportServiceImpl implements ReportService {
                         rowCountList.add(BigDecimalUtil.format(rowCountMap.get(1)));
                         rowCountList.add(BigDecimalUtil.format(rowCountMap.get(2)));
                         rowCountList.add(BigDecimalUtil.format(rowCountMap.get(3)));
-                        BigDecimalUtil.biAccumulate(classCountMap, 0L, 0, rowCountMap.get(0));
-                        BigDecimalUtil.biAccumulate(classCountMap, 0L, 1, rowCountMap.get(1));
-                        BigDecimalUtil.biAccumulate(classCountMap, 0L, 2, rowCountMap.get(2));
-                        BigDecimalUtil.biAccumulate(classCountMap, 0L, 3, rowCountMap.get(3));
-
-                        BigDecimalUtil.biAccumulate(lineCountMap, 0L, 0, rowCountMap.get(0));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 0L, 1, rowCountMap.get(1));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 0L, 2, rowCountMap.get(2));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 0L, 3, rowCountMap.get(3));
-
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 0L, 0, rowCountMap.get(0));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 0L, 1, rowCountMap.get(1));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 0L, 2, rowCountMap.get(2));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 0L, 3, rowCountMap.get(3));
-
+                        //班组合计
+                        pmColumnCount(classCountMap, 0L, rowCountMap);
+                        //产线合计
+                        pmColumnCount(lineCountMap, 0L, rowCountMap);
+                        //车间合计
+                        pmColumnCount(workshopCountMap, 0L, rowCountMap);
                         moduleList.add(new FurtherValueStrVO(rowCountList));
                         //入库
                         Map<Long, BigDecimal> orDefaultMap = materialCompleteMap.getOrDefault(materialEntry.getKey(), Maps.newHashMap());
                         String format = BigDecimalUtil.format(orDefaultMap.get(classEntry.getKey()));
                         moduleList.add(new FurtherValueStrVO(Arrays.asList(format, format, format)));
-                        BigDecimalUtil.biAccumulate(classCountMap, 1L, 0, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(classCountMap, 1L, 1, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(classCountMap, 1L, 2, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 1L, 0, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 1L, 1, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(lineCountMap, 1L, 2, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 1L, 0, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 1L, 1, orDefaultMap.get(classEntry.getKey()));
-                        BigDecimalUtil.biAccumulate(workshopCountMap, 1L, 2, orDefaultMap.get(classEntry.getKey()));
+                        //班次，产线，车间
+                        countIn(classEntry.getKey(), classCountMap, orDefaultMap);
+                        countIn(classEntry.getKey(), lineCountMap, orDefaultMap);
+                        countIn(classEntry.getKey(), workshopCountMap, orDefaultMap);
                         FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList);
                         tableData.add(rowData);
                     }
                     //班次的合计
-                    List<FurtherValueStrVO> classCountModuleList = Lists.newArrayList();
-                    for (PmProcess pmProcess : pmProcessList) {
-                        List<String> classModuleList = Lists.newArrayList();
-                        classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(0)));
-                        classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(1)));
-                        classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(2)));
-                        classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(3)));
-                        classCountModuleList.add(new FurtherValueStrVO(classModuleList));
-                    }
-                    Map<Integer, BigDecimal> classCountChildMap = classCountMap.get(0L);
-                    Map<Integer, BigDecimal> classInChildMap = classCountMap.get(1L);
-                    List<String> classCountChildList = Lists.newArrayList();
-                    classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(0)));
-                    classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(1)));
-                    classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(2)));
-                    classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(3)));
-                    List<String> classInChildList = Lists.newArrayList();
-                    classInChildList.add(BigDecimalUtil.format(classInChildMap.get(0)));
-                    classInChildList.add(BigDecimalUtil.format(classInChildMap.get(1)));
-                    classInChildList.add(BigDecimalUtil.format(classInChildMap.get(2)));
-                    classCountModuleList.add(new FurtherValueStrVO(classCountChildList));
-                    classCountModuleList.add(new FurtherValueStrVO(classInChildList));
-                    FurtherProduceReportListVO classCountRow = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList);
+                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO);
                     tableData.add(classCountRow);
                 }
                 //产线的合计
-                List<FurtherValueStrVO> lineCountModuleList = Lists.newArrayList();
-                for (PmProcess pmProcess : pmProcessList) {
-                    List<String> lineModuleList = Lists.newArrayList();
-                    lineModuleList.add(BigDecimalUtil.format(lineCountMap.get(pmProcess.getId()).get(0)));
-                    lineModuleList.add(BigDecimalUtil.format(lineCountMap.get(pmProcess.getId()).get(1)));
-                    lineModuleList.add(BigDecimalUtil.format(lineCountMap.get(pmProcess.getId()).get(2)));
-                    lineModuleList.add(BigDecimalUtil.format(lineCountMap.get(pmProcess.getId()).get(3)));
-                    lineCountModuleList.add(new FurtherValueStrVO(lineModuleList));
-                }
-                Map<Integer, BigDecimal> lineCountChildMap = lineCountMap.get(0L);
-                Map<Integer, BigDecimal> lineInChildMap = lineCountMap.get(1L);
-                List<String> lineCountChildList = Lists.newArrayList();
-                lineCountChildList.add(BigDecimalUtil.format(lineCountChildMap.get(0)));
-                lineCountChildList.add(BigDecimalUtil.format(lineCountChildMap.get(1)));
-                lineCountChildList.add(BigDecimalUtil.format(lineCountChildMap.get(2)));
-                lineCountChildList.add(BigDecimalUtil.format(lineCountChildMap.get(3)));
-                List<String> lineInChildList = Lists.newArrayList();
-                lineInChildList.add(BigDecimalUtil.format(lineInChildMap.get(0)));
-                lineInChildList.add(BigDecimalUtil.format(lineInChildMap.get(1)));
-                lineInChildList.add(BigDecimalUtil.format(lineInChildMap.get(2)));
-                lineCountModuleList.add(new FurtherValueStrVO(lineCountChildList));
-                lineCountModuleList.add(new FurtherValueStrVO(lineInChildList));
-                FurtherProduceReportListVO lineCountRow = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineCountModuleList);
+                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO());
+                lineCountRow.setClassName("合计");
+                lineCountRow.setType(PmReportConstant.TYPE_2);
                 tableData.add(lineCountRow);
             }
             //车间的合计
-            List<FurtherValueStrVO> workshopCountModuleList = Lists.newArrayList();
-            for (PmProcess pmProcess : pmProcessList) {
-                List<String> workshopModuleList = Lists.newArrayList();
-                workshopModuleList.add(BigDecimalUtil.format(workshopCountMap.get(pmProcess.getId()).get(0)));
-                workshopModuleList.add(BigDecimalUtil.format(workshopCountMap.get(pmProcess.getId()).get(1)));
-                workshopModuleList.add(BigDecimalUtil.format(workshopCountMap.get(pmProcess.getId()).get(2)));
-                workshopModuleList.add(BigDecimalUtil.format(workshopCountMap.get(pmProcess.getId()).get(3)));
-                workshopCountModuleList.add(new FurtherValueStrVO(workshopModuleList));
-            }
-            Map<Integer, BigDecimal> workshopCountChildMap = workshopCountMap.get(0L);
-            Map<Integer, BigDecimal> workshopInChildMap = workshopCountMap.get(1L);
-            List<String> workshopCountChildList = Lists.newArrayList();
-            workshopCountChildList.add(BigDecimalUtil.format(workshopCountChildMap.get(0)));
-            workshopCountChildList.add(BigDecimalUtil.format(workshopCountChildMap.get(1)));
-            workshopCountChildList.add(BigDecimalUtil.format(workshopCountChildMap.get(2)));
-            workshopCountChildList.add(BigDecimalUtil.format(workshopCountChildMap.get(3)));
-            List<String> workshopInChildList = Lists.newArrayList();
-            workshopInChildList.add(BigDecimalUtil.format(workshopInChildMap.get(0)));
-            workshopInChildList.add(BigDecimalUtil.format(workshopInChildMap.get(1)));
-            workshopInChildList.add(BigDecimalUtil.format(workshopInChildMap.get(2)));
-            workshopCountModuleList.add(new FurtherValueStrVO(workshopCountChildList));
-            workshopCountModuleList.add(new FurtherValueStrVO(workshopInChildList));
-            FurtherProduceReportListVO workshopCountRow = createFurtherProduceReportListVO(Arrays.asList(productLineList.get(0).getParentName(), "合计", "合计"), PmReportConstant.TYPE_3, workshopCountModuleList);
+            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO());
+            workshopCountRow.setClassName("合计");
+            workshopCountRow.setProductLineName("合计");
+            workshopCountRow.setType(PmReportConstant.TYPE_3);
             tableData.add(workshopCountRow);
 
         });
@@ -532,7 +438,108 @@ public class ReportServiceImpl implements ReportService {
         return vo;
     }
 
+    /**
+     * 统计入库
+     *
+     * @param classesId     班次
+     * @param classCountMap 统计map
+     * @param orDefaultMap  数据map
+     */
+    private void countIn(Long classesId, Map<Long, Map<Integer, BigDecimal>> classCountMap, Map<Long, BigDecimal> orDefaultMap) {
+        BigDecimalUtil.biAccumulate(classCountMap, 1L, 0, orDefaultMap.get(classesId));
+        BigDecimalUtil.biAccumulate(classCountMap, 1L, 1, orDefaultMap.get(classesId));
+        BigDecimalUtil.biAccumulate(classCountMap, 1L, 2, orDefaultMap.get(classesId));
+    }
 
+    /**
+     * 生成班次产线车间的合计
+     *
+     * @param pmProcessList 工序集合
+     * @param productLine   产线信息
+     * @param classCountMap 班次map
+     * @param sysDictVO     班次信息
+     * @return 合计
+     */
+    private FurtherProduceReportListVO getFurtherProduceReportListVO(List<PmProcess> pmProcessList, SysOfficeVO productLine, Map<Long, Map<Integer, BigDecimal>> classCountMap, SysDictVO sysDictVO) {
+        List<FurtherValueStrVO> classCountModuleList = Lists.newArrayList();
+        for (PmProcess pmProcess : pmProcessList) {
+            List<String> classModuleList = Lists.newArrayList();
+            classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(0)));
+            classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(1)));
+            classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(2)));
+            classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(3)));
+            classCountModuleList.add(new FurtherValueStrVO(classModuleList));
+        }
+        Map<Integer, BigDecimal> classCountChildMap = classCountMap.get(0L);
+        Map<Integer, BigDecimal> classInChildMap = classCountMap.get(1L);
+        List<String> classCountChildList = Lists.newArrayList();
+        classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(0)));
+        classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(1)));
+        classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(2)));
+        classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(3)));
+        List<String> classInChildList = Lists.newArrayList();
+        classInChildList.add(BigDecimalUtil.format(classInChildMap.get(0)));
+        classInChildList.add(BigDecimalUtil.format(classInChildMap.get(1)));
+        classInChildList.add(BigDecimalUtil.format(classInChildMap.get(2)));
+        classCountModuleList.add(new FurtherValueStrVO(classCountChildList));
+        classCountModuleList.add(new FurtherValueStrVO(classInChildList));
+        return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList);
+    }
+
+    /**
+     * 合计列统计数据
+     *
+     * @param pmProcessId 合计
+     * @param countMap    统计map
+     * @param rowCountMap 行
+     */
+    private void pmColumnCount(Map<Long, Map<Integer, BigDecimal>> countMap, Long pmProcessId, Map<Integer, BigDecimal> rowCountMap) {
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 0, rowCountMap.get(0));
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 1, rowCountMap.get(1));
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 2, rowCountMap.get(2));
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 3, rowCountMap.get(3));
+    }
+
+    /**
+     * 工序行统计数据
+     *
+     * @param countMap    求和map
+     * @param pmProcessId 工序主键
+     * @param dataVo      数据vo
+     * @param passNum     合格数
+     * @param passRate    合格率
+     */
+    private void pmRowCount(Map<Long, Map<Integer, BigDecimal>> countMap, Long pmProcessId, FurtherProduceReportDataVO dataVo, BigDecimal passNum, BigDecimal passRate) {
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 0, dataVo.getProcessQuantity());
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 1, passNum);
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 2, dataVo.getBadnessQuantity());
+        BigDecimalUtil.biAccumulate(countMap, pmProcessId, 3, passRate.multiply(BigDecimal.valueOf(100)));
+    }
+
+    /**
+     * 工序列统计数据
+     *
+     * @param rowCountMap 列统计map
+     * @param dataVo      数据vo
+     * @param passNum     合格数
+     * @param passRate    合格率
+     */
+    private void pmColumnCount(Map<Integer, BigDecimal> rowCountMap, FurtherProduceReportDataVO dataVo, BigDecimal passNum, BigDecimal passRate) {
+        BigDecimalUtil.accumulate(rowCountMap, 0, dataVo.getProcessQuantity());
+        BigDecimalUtil.accumulate(rowCountMap, 1, passNum);
+        BigDecimalUtil.accumulate(rowCountMap, 2, dataVo.getBadnessQuantity());
+        BigDecimalUtil.accumulate(rowCountMap, 3, passRate.multiply(BigDecimal.valueOf(100)));
+    }
+
+
+    /**
+     * 创建对象
+     *
+     * @param nameList 名称【车间，产线，班次】
+     * @param type     类型
+     * @param module   工序数据
+     * @return vo
+     */
     private FurtherProduceReportListVO createFurtherProduceReportListVO(List<String> nameList, Integer type, List<FurtherValueStrVO> module) {
         FurtherProduceReportListVO row = new FurtherProduceReportListVO();
         row.setType(type);
