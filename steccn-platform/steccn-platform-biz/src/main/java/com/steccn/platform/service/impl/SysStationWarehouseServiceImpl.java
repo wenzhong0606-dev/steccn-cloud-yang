@@ -63,6 +63,8 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
             sysStationWarehouseVO.setWarehouseName(warehouse.getOfficeName());
             sysStationWarehouseVO.setShelfName(shelf.getOfficeName());
             sysStationWarehouseVO.setNote(sysStationWarehouse.getNote());
+            sysStationWarehouseVO.setShelfId(sysStationWarehouse.getShelfId());
+            sysStationWarehouseVO.setWarehouseId(sysStationWarehouse.getWarehouseId());
             sysStationWarehouseVOList.add(sysStationWarehouseVO);
         }
         voPage.setRecords(sysStationWarehouseVOList);

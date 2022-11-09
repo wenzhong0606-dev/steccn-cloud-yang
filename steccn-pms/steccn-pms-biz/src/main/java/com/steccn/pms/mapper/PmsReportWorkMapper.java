@@ -5,12 +5,16 @@ import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
+import com.steccn.pms.vo.PmsReportWorkGroupVO;
+import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.pms.vo.SubstrateDataListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -47,6 +51,19 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return
      */
     List<PmsReportWork> dateProductNum(@Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
+
+    /**
+     * 根据日期和产线list获取产量
+     *
+     * @param productLineIdList
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    List<PmsReportWorkGroupVO> selectAllGroupByDate(@Param("productLineIdList") List<Integer> productLineIdList
+            , @Param("startDate") LocalDateTime startDate
+            , @Param("endDate") LocalDateTime endDate
+            , @Param("groupType") Integer groupType);
 
     /**
      * 基于产线，班次，物料，工序分组报工数据【加工，合格，不良】
