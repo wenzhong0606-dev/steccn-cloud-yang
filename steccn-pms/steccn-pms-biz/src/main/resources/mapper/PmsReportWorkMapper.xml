@@ -90,13 +90,13 @@
     <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
         SELECT
             0 AS type,
-            ppo.production_line_id,
+            ppo.production_line_id as productLineId,
             ppo.material_id,
-            ppo.material_code,
-            ppo.material_name,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
             prw.classes_id,
             sum( prw.process_quantity ) AS quantity,
-            prw.unit_id
+            any_value(prw.unit_id)
         FROM
             pms_report_work prw
                 JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
@@ -106,13 +106,13 @@
             prw.classes_id UNION ALL
         SELECT
             1 AS type,
-            ppo.production_line_id,
+            ppo.production_line_id as productLineId,
             ppo.material_id,
-            ppo.material_code,
-            ppo.material_name,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
             pcsi.classes_id,
             sum( pcsi.quantity ) AS quantity,
-            pcsi.unit_id
+            any_value(pcsi.unit_id)
         FROM
             pms_complete_storage_info pcsi
                 JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
@@ -120,5 +120,15 @@
             ppo.production_line_id,
             ppo.material_id,
             pcsi.classes_id
+    </select>
+    <select id="dateProductNum" resultType="com.steccn.pms.domain.PmsReportWork">
+        SELECT
+            classes_id , sum(process_quantity) as process_quantity
+        FROM
+            pms_report_work
+        where product_line_id = #{productLineId}
+          AND DATE_FORMAT(create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            classes_id
     </select>
 </mapper>

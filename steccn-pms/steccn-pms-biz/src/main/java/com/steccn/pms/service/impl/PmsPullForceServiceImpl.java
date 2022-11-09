@@ -1,8 +1,10 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
@@ -20,6 +22,7 @@ import com.steccn.pms.mapper.PmsPullForceMapper;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +87,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
-        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate + "-01", ISO_DATE));
 
         List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {
@@ -188,6 +191,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             }
         }
         return true;
+    }
+
+    @Override
+    public Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date) {
+        Map<Long, PmsPullForce> resMap = Maps.newHashMap();
+        if (Objects.nonNull(productLineId) && Objects.nonNull(date)) {
+            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getProductLineId, productLineId).eq(PmsPullForce::getPullForceDate, date));
+            if (CollUtil.isNotEmpty(list)) {
+                for (PmsPullForce pmsPullForce : list) {
+                    resMap.put(pmsPullForce.getClassesId(), pmsPullForce);
+                }
+            }
+        }
+        return resMap;
     }
 }
 

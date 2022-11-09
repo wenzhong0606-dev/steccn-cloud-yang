@@ -4,10 +4,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.ReportService;
-import com.steccn.pms.vo.EnergyCountVO;
-import com.steccn.pms.vo.FurtherIngredientReportVO;
-import com.steccn.pms.vo.FurtherProduceReportVO;
-import com.steccn.pms.vo.SubstrateDayReportVO;
+import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,5 +47,11 @@ public class ReportController {
     @ApiOperation("能耗水电油气")
     public R<EnergyCountVO> consume(@RequestBody EnergyCountDTO dto) {
         return R.success(reportService.consume(dto));
+    }
+
+    @PostMapping("/outputCount")
+    @ApiOperation("产量统计")
+    public R<OutputCountVO> outputCount(@RequestBody EnergyCountDTO dto) {
+        return R.success(reportService.outputCount(dto));
     }
 }
