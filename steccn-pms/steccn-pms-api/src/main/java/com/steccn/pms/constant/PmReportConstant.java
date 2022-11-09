@@ -103,4 +103,21 @@ public interface PmReportConstant {
         private final Integer code;
         private final String name;
     }
+
+    @Getter
+    @AllArgsConstructor
+    enum SubstrateReportConsumeEnum {
+        PULL_FORCE(0, "拉引量(T)"),
+        PASS_RATE(1, "合格率(%)"),
+        ELECTRIC(2, "耗电量(Kwh)"),
+        WATER(3, "耗水量(T)"),
+        OIL(4, "耗气量(m³)"),
+        GAS(5, "耗油量(Kg)"),
+        Kcal(6, "单耗(kcal/Kg玻璃液)");
+
+        private final Integer code;
+        private final String name;
+    }
+
+
 }

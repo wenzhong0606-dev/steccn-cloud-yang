@@ -52,6 +52,27 @@ public class BigDecimalUtil {
     }
 
     /**
+     * 除法val1 / val2保留3位小数
+     *
+     * @param val1 值1
+     * @param val2 值2
+     * @return 数值，四舍五入模式下保留3位小数
+     */
+    public static BigDecimal divide(BigDecimal val1, BigDecimal val2) {
+        if (Objects.isNull(val1)) {
+            val1 = BigDecimal.ZERO;
+        }
+        if (Objects.isNull(val2)) {
+            val2 = BigDecimal.ZERO;
+        }
+        if (BigDecimal.ZERO.compareTo(val2) != 0) {
+            return val1.divide(val2, DEFAULT_SCALE, RoundingMode.HALF_UP);
+        }
+        return BigDecimal.ZERO;
+    }
+
+
+    /**
      * map同一个key数据累计
      *
      * @param map

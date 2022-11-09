@@ -48,17 +48,11 @@ import java.util.stream.Collectors;
 public class ReportServiceImpl implements ReportService {
 
     private final RemoteOfficeFeign remoteOfficeFeign;
-
     private final PmsReportWorkConsumeService pmsReportWorkConsumeService;
-
     private final PmsReportWorkMapper pmsReportWorkMapper;
-
     private final RemoteDictFeignApi remoteDictFeignApi;
-
     private final PmsPullForceService pmsPullForceService;
-
     private final PmsReportWorkService pmsReportWorkService;
-
     private final PmsProduceOrderMapper pmsProduceOrderMapper;
 
     @Override
@@ -70,10 +64,8 @@ public class ReportServiceImpl implements ReportService {
         header.setDayShift(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "产量(片)")));
         header.setNightShift(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "产量(片)")));
         header.setTotal(new BaseReportHeaderVO("合计", Arrays.asList("入库(片)", "产量(片)")));
-
         //查询所有数据
         List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto);
-
         //获取班次数据
         SysDictDTO sysDictDTO = new SysDictDTO();
         sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
@@ -86,7 +78,13 @@ public class ReportServiceImpl implements ReportService {
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         List<SubstrateDayReportListVO> productLineVOList = Lists.newArrayList();
+        //全局统计
+        Map<Integer, BigDecimal> allCountMap = Maps.newHashMap();
+
         workShopMap.forEach((k, v) -> {
+            //车间统计
+            Map<Integer, BigDecimal> workshopCountMap = Maps.newHashMap();
+
             //根据产线遍历
             for (SysOfficeVO productLine : v) {
                 //产线数量合计-早班，晚班，合计
@@ -153,14 +151,57 @@ public class ReportServiceImpl implements ReportService {
                 productLineVOList.add(rowTotal);
 
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
-                addOther(dto, classList, productLine, productLineVOList);
+                addProductLineOther(dto, classList, productLine, productLineVOList, workshopCountMap);
+            }
+            addWorkShopOther(v.get(0), productLineVOList, workshopCountMap);
+
+            //计算总的库存
+            for (PmReportConstant.SubstrateReportConsumeEnum sub : PmReportConstant.SubstrateReportConsumeEnum.values()) {
+                BigDecimalUtil.accumulate(allCountMap, sub.getCode(), workshopCountMap.get(sub.getCode()));
             }
         });
+        //最后一个总计
+        addAllOther(productLineVOList, allCountMap);
         vo.setSpecsNum(3);
         vo.setDataNum(2);
         vo.setHeader(header);
         vo.setDataList(productLineVOList);
         return vo;
+    }
+
+    /**
+     * 全局总计
+     *
+     * @param productLineVOList
+     * @param allCountMap
+     */
+    private void addAllOther(List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> allCountMap) {
+        for (PmReportConstant.SubstrateReportConsumeEnum consumeEnum : PmReportConstant.SubstrateReportConsumeEnum.values()) {
+            Integer idx = consumeEnum.getCode();
+            SubstrateDayReportListVO subVo = rowData(new SysOfficeVO(), Arrays.asList(allCountMap.get(idx), allCountMap.get(idx), allCountMap.get(idx)), consumeEnum.getName());
+            subVo.setWorkshopName("总计");
+            subVo.setProductLineName("总计");
+            subVo.setType(PmReportConstant.TYPE_3);
+            productLineVOList.add(subVo);
+        }
+    }
+
+    /**
+     * 构造车间总计
+     *
+     * @param productLine       产线名称
+     * @param productLineVOList 返回集合
+     * @param workshopCountMap  车间数据总计
+     */
+    private void addWorkShopOther(SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
+        for (PmReportConstant.SubstrateReportConsumeEnum consumeEnum : PmReportConstant.SubstrateReportConsumeEnum.values()) {
+            Integer idx = consumeEnum.getCode();
+            SubstrateDayReportListVO subVo = rowData(productLine, Arrays.asList(workshopCountMap.get(idx), workshopCountMap.get(idx), workshopCountMap.get(idx)), consumeEnum.getName());
+            subVo.setWorkshopName(productLine.getParentName());
+            subVo.setProductLineName("总计");
+            subVo.setType(PmReportConstant.TYPE_2);
+            productLineVOList.add(subVo);
+        }
     }
 
     /**
@@ -171,20 +212,33 @@ public class ReportServiceImpl implements ReportService {
      * @param productLine       产线信息
      * @param productLineVOList 数据存放集合
      */
-    private void addOther(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList) {
+    private void addProductLineOther(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
         //拉引量(T)
-        Map<Long, PmsPullForce> pmsPullForces = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate());
-        PmsPullForce morning = pmsPullForces.get(classList.get(0).getId());
-        PmsPullForce night = pmsPullForces.get(classList.get(1).getId());
+        Map<Long, PmsPullForce> pmsPullForcesMap = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate());
+        PmsPullForce morning = pmsPullForcesMap.get(classList.get(0).getId());
+        PmsPullForce night = pmsPullForcesMap.get(classList.get(1).getId());
         BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
         BigDecimal nightBigDecimal = Objects.nonNull(night) ? night.getQuantity() : BigDecimal.ZERO;
         SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, morningBigDecimal.add(nightBigDecimal)), "拉引量(T)");
         productLineVOList.add(lyl);
+        BigDecimalUtil.accumulate(workshopCountMap, 0, morningBigDecimal.add(nightBigDecimal));
+
+        //合格率：根据当日当班产量(t)/拉引量计算，按百分比显示
+        Map<Long, PmsReportWork> pmsReportWorkMap = pmsReportWorkService.dateProductNum(productLine.getId(), dto.getDate());
+        PmsReportWork defaultPmsReportWork = new PmsReportWork();
+        PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
+        PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
+        BigDecimal morningRate = BigDecimalUtil.divide(morningPms.getProcessQuantity(), morningBigDecimal);
+        BigDecimal nightRate = BigDecimalUtil.divide(nightPms.getProcessQuantity(), nightBigDecimal);
+        SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, morningRate.add(nightRate)), "合格率(%)");
+        BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
+
+        productLineVOList.add(rateVo);
         //0耗电量 1耗水量 2耗油量 3耗气量
-        List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine);
+        List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine, workshopCountMap);
 
         //单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
-        SubstrateDayReportListVO bly = getSubstrateDayReportListVO(productLine, morningBigDecimal, nightBigDecimal, energyList);
+        SubstrateDayReportListVO bly = getSubstrateDayReportListVO(productLine, morningBigDecimal, nightBigDecimal, energyList, workshopCountMap);
         productLineVOList.addAll(energyList);
         productLineVOList.add(bly);
     }
@@ -198,7 +252,7 @@ public class ReportServiceImpl implements ReportService {
      * @param energyList
      * @return
      */
-    private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList) {
+    private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList, Map<Integer, BigDecimal> workshopCountMap) {
         BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().getQuantityVOList().get(0));
         BigDecimal morningOil = new BigDecimal(energyList.get(2).getMorning().getQuantityVOList().get(0));
         BigDecimal morningKcal = BigDecimal.ZERO;
@@ -214,6 +268,7 @@ public class ReportServiceImpl implements ReportService {
             nightKcal = nightMultiply.divide(nightBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
         }
         SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, morningKcal.add(nightKcal)), "单耗(kcal/Kg玻璃液)");
+        BigDecimalUtil.accumulate(workshopCountMap, 6, morningKcal.add(nightKcal));
         return bly;
     }
 

@@ -9,8 +9,10 @@ import com.steccn.pms.dto.ProcessReportWorkConsumeDTO;
 import com.steccn.pms.vo.EnergyGroupListVO;
 import com.steccn.pms.vo.SubstrateDayReportListVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -40,10 +42,11 @@ public interface PmsReportWorkConsumeService extends IService<PmsReportWorkConsu
     /**
      * 基片日报表能耗
      *
-     * @param dto         dto筛选条件
-     * @param classList   班次数据
-     * @param productLine 产线
+     * @param dto              dto筛选条件
+     * @param classList        班次数据
+     * @param productLine      产线
+     * @param workshopCountMap 车间合计
      * @return list
      */
-    List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine);
+    List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap);
 }

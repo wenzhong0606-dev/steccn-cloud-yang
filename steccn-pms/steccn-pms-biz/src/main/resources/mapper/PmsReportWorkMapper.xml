@@ -121,4 +121,14 @@
             ppo.material_id,
             pcsi.classes_id
     </select>
+    <select id="dateProductNum" resultType="com.steccn.pms.domain.PmsReportWork">
+        SELECT
+            classes_id , sum(process_quantity) as process_quantity
+        FROM
+            pms_report_work
+        where product_line_id = #{productLineId}
+          AND DATE_FORMAT(create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            classes_id
+    </select>
 </mapper>
