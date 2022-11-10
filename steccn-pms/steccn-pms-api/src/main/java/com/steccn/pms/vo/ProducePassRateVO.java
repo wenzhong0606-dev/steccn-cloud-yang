@@ -14,7 +14,7 @@ public class ProducePassRateVO {
 
     private LocalDate date;
 
-    private String groupName;
+    private Long groupId;
 
     private BigDecimal passRate;
 }

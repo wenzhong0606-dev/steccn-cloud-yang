@@ -121,4 +121,14 @@ public interface RemoteOfficeFeign {
     @ApiOperation("根据孩子id获取父亲节点数据")
     @GetMapping("/feign/platform/sys/office/parent/{id}")
     R<SysOfficeVO> parent(@PathVariable("id") Integer id);
+
+    /**
+     * 根据子id获取父级节点数据
+     *
+     * @param childIdList
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/parentOffice")
+    @ApiOperation("根据子id获取父级节点数据")
+    R<Map<Long, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Long> childIdList);
 }

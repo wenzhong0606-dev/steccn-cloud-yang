@@ -168,6 +168,19 @@ public class LocalDateUtil {
         return localDateList;
     }
 
+    /**
+     * 根据开始结束日期获取所有天数
+     *
+     * @return
+     */
+    public static List<LocalDate> getLocalDateByStartEndDate(LocalDate startDate, LocalDate endDate) {
+
+        List<LocalDate> localDateList = new ArrayList<>();
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            localDateList.add(d);
+        }
+        return  localDateList;
+    }
 
     /**
      * 根据类型获取开始和结束时间

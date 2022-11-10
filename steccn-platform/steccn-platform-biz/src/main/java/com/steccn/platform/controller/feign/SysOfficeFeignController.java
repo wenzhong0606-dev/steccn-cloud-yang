@@ -90,4 +90,10 @@ public class SysOfficeFeignController {
     public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
         return R.success(sysOfficeService.getListSysOfficeList(dto));
     }
+
+    @PostMapping("/list/parentOffice")
+    @ApiOperation("根据子id获取父级节点数据")
+    public R<Map<Long, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Long> childIdList){
+        return R.success(sysOfficeService.parentOfficeMap(childIdList));
+    }
 }

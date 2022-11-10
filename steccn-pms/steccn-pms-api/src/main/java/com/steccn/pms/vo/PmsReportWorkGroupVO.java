@@ -17,5 +17,6 @@ public class PmsReportWorkGroupVO {
 
     private BigDecimal quantity;
 
-    private Object groupId;
+    private Long groupId;
+
 }
