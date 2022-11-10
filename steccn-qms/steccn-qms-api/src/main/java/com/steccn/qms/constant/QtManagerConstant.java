@@ -277,15 +277,16 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtSPCGranularityEnum{
         //粒度 小时 天 周 月 季度 年
-        HOUR(0,"小时"),
-        DAY(1,"天"),
-        WEEK(2,"周"),
-        MONTH(3,"月"),
-        QUARTER(4,"季度"),
-        YEAR(5,"年");
+        HOUR(0,"小时","H"),
+        DAY(1,"天","D"),
+        WEEK(2,"周","W"),
+        MONTH(3,"月","M"),
+        QUARTER(4,"季度","Q"),
+        YEAR(5,"年","Y");
 
         private Integer code;
         private String name;
+        private String ename;
     }
 
     /**

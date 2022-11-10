@@ -7,6 +7,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +30,23 @@ public class LocalDateUtil {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
         return dateTimeFormatter.format(localDateTime);
     }
+
+    /**
+     * LocalDateTime转为日期
+     *
+     * @param localDateTime LocalDateTime
+     * @return 日期
+     */
+    public static Date localDateTimeToDate(final LocalDateTime localDateTime) {
+        if (null == localDateTime) {
+            return null;
+        }
+        final ZoneId zoneId = ZoneId.systemDefault();
+        final ZonedDateTime zdt = localDateTime.atZone(zoneId);
+        final Date date = Date.from(zdt.toInstant());
+        return date;
+    }
+
 
     /**
      * 获取日期时间字符串

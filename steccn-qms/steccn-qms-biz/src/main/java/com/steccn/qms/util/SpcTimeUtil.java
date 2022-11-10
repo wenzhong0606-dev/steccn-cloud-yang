@@ -8,7 +8,7 @@ import java.util.List;
 
 public class SpcTimeUtil {
     public static void main(String[] args) {
-        System.out.println(cutDate("Q", "2022-4-29 00:00:00", "2022-10-17 00:00:00"));
+        System.out.println(cutDate("H", "2022-4-29 00:00:00", "2022-10-17 00:00:00"));
     }
 
     /**
@@ -57,6 +57,7 @@ public class SpcTimeUtil {
                     calBegin.add(Calendar.MONTH, 3);
                     break;
                 case "M":
+                    calBegin.set(Calendar.WEEK_OF_MONTH, 1);
                     calBegin.add(Calendar.MONTH, 1);
                     break;
                 case "W":
