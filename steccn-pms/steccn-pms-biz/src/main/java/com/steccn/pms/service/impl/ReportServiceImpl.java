@@ -56,6 +56,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmProcessService pmProcessService;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
+    private final PmsCompleteDeliveryService completeDeliveryService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -470,6 +471,12 @@ public class ReportServiceImpl implements ReportService {
         //获取生产订单id集合
         Set<Long> produceOrderIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProduceOrderId).collect(Collectors.toSet());
 
+        //查询生产订单的耗料
+        Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> numConsumeMap = completeDeliveryService.processNumConsumeMap(produceOrderIdSet);
+        Map<Long, Map<Long, ProduceOrderProcessNumVO>> defaultProcessNumMap = Maps.newHashMap();
+        Map<Long, ProduceOrderProcessNumVO> defaultMaterialNumMap = Maps.newHashMap();
+        ProduceOrderProcessNumVO defaultProduceOrderProcessNumVO = new ProduceOrderProcessNumVO();
+
         //查询工序需要的物料,兼容所有的工序
         Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, processIdSet);
         Assert.notEmpty(materialProcessMap, "工序信息为配置物料信息，暂无报表数据");
@@ -498,17 +505,20 @@ public class ReportServiceImpl implements ReportService {
                 Map<Long, List<FurtherIngredientMapperVO>> lineDataMap = dataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.groupingBy(FurtherIngredientMapperVO::getClassesId));
                 //遍历不同的班次
                 for (Map.Entry<Long, List<FurtherIngredientMapperVO>> classEntry : lineDataMap.entrySet()) {
-                    Map<Long, List<FurtherIngredientMapperVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherIngredientMapperVO::getMaterialId));
+                    Map<Long, List<FurtherIngredientMapperVO>> produceOrderMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherIngredientMapperVO::getProduceOrderId));
                     //获取班次的数据
                     SysDictVO sysDictVO = classMap.get(classEntry.getKey());
-                    //遍历物料分组
-                    for (Map.Entry<Long, List<FurtherIngredientMapperVO>> materialEntry : materialMap.entrySet()) {
+                    //遍历生产订单物料分组
+                    for (Map.Entry<Long, List<FurtherIngredientMapperVO>> po : produceOrderMap.entrySet()) {
                         List<FurtherValueVO> processModule = Lists.newArrayList();
+                        Map<Long, Map<Long, ProduceOrderProcessNumVO>> processNumMap = numConsumeMap.getOrDefault(po.getKey(), defaultProcessNumMap);
                         //遍历工序物料集合
                         materialProcessMap.forEach((k, v) -> {
                             List<FurtherValueStrVO> strList = Lists.newArrayList();
+                            Map<Long, ProduceOrderProcessNumVO> materialNumMap = processNumMap.getOrDefault(k, defaultMaterialNumMap);
                             for (BaseSelectVO<Long> mBase : v) {
-                                strList.add(new FurtherValueStrVO(Arrays.asList(String.valueOf(mBase.getId()), mBase.getName())));
+                                ProduceOrderProcessNumVO materialBase = materialNumMap.getOrDefault(mBase.getId(), defaultProduceOrderProcessNumVO);
+                                strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(materialBase.getQuantity()), BigDecimalUtil.format(materialBase.getAvaQuantity()))));
                             }
                             processModule.add(new FurtherValueVO(strList));
                         });
