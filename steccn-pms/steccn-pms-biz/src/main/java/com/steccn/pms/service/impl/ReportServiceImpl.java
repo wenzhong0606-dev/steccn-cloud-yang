@@ -107,39 +107,35 @@ public class ReportServiceImpl implements ReportService {
                         Map<Integer, SubstrateDataListVO> typeMap = Maps.newHashMap();
                         SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
                         classData.forEach(cld -> typeMap.put(cld.getType(), cld));
-                        ProduceQuantityVO classQuantity = new ProduceQuantityVO();
                         SubstrateDataListVO typeVO0 = typeMap.getOrDefault(PmReportConstant.TYPE_0, defaultSubstrateDataListVO);
                         SubstrateDataListVO typeVO1 = typeMap.getOrDefault(PmReportConstant.TYPE_1, defaultSubstrateDataListVO);
                         inCount = BigDecimalUtil.add(inCount, typeVO0.getQuantity());
                         proCount = BigDecimalUtil.add(proCount, typeVO1.getQuantity());
-                        classQuantity.setQuantityVOList(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
                         if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
                             //早班
-                            row.setMorning(classQuantity);
+                            row.setMorning(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
                             BigDecimalUtil.accumulate(countMap1, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap1, 1, typeVO1.getQuantity());
                         } else {
                             //晚班
-                            row.setNight(classQuantity);
+                            row.setNight(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
                             BigDecimalUtil.accumulate(countMap2, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap2, 1, typeVO1.getQuantity());
                         }
                     }
-                    ProduceQuantityVO columnTotalQuantity = new ProduceQuantityVO();
-                    columnTotalQuantity.setQuantityVOList(Arrays.asList(String.valueOf(inCount), String.valueOf(proCount)));
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
                     BigDecimalUtil.accumulate(countMap3, 1, proCount);
                     row.setSpecList(defaultSpecList);
-                    row.setTotal(columnTotalQuantity);
+                    row.setTotal(Arrays.asList(String.valueOf(inCount), String.valueOf(proCount)));
                     productLineVOList.add(row);
                 }
                 SubstrateDayReportListVO rowTotal = new SubstrateDayReportListVO();
                 rowTotal.setType(PmReportConstant.TYPE_1);
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
-                rowTotal.setMorning(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap1.get(0)), String.valueOf(countMap1.get(1)))));
-                rowTotal.setNight(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap2.get(0)), String.valueOf(countMap2.get(1)))));
-                rowTotal.setTotal(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap3.get(0)), String.valueOf(countMap3.get(1)))));
+                rowTotal.setMorning(Arrays.asList(String.valueOf(countMap1.get(0)), String.valueOf(countMap1.get(1))));
+                rowTotal.setNight(Arrays.asList(String.valueOf(countMap2.get(0)), String.valueOf(countMap2.get(1))));
+                rowTotal.setTotal(Arrays.asList(String.valueOf(countMap3.get(0)), String.valueOf(countMap3.get(1))));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
 
                 productLineVOList.add(rowTotal);
@@ -275,11 +271,11 @@ public class ReportServiceImpl implements ReportService {
      * @return
      */
     private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList, Map<Integer, BigDecimal> workshopCountMap) {
-        BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().getQuantityVOList().get(0));
-        BigDecimal morningOil = new BigDecimal(energyList.get(2).getMorning().getQuantityVOList().get(0));
+        BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().get(0));
+        BigDecimal morningOil = new BigDecimal(energyList.get(2).getMorning().get(0));
         BigDecimal morningKcal = BigDecimal.ZERO;
-        BigDecimal nightGas = new BigDecimal(energyList.get(3).getNight().getQuantityVOList().get(0));
-        BigDecimal nightOil = new BigDecimal(energyList.get(2).getNight().getQuantityVOList().get(0));
+        BigDecimal nightGas = new BigDecimal(energyList.get(3).getNight().get(0));
+        BigDecimal nightOil = new BigDecimal(energyList.get(2).getNight().get(0));
         BigDecimal nightKcal = BigDecimal.ZERO;
         if (BigDecimal.ZERO.compareTo(morningBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
             BigDecimal morningMultiply = morningGas.multiply(BigDecimal.valueOf(7800)).add(morningOil.multiply(BigDecimal.valueOf(9300)));
@@ -305,9 +301,9 @@ public class ReportServiceImpl implements ReportService {
         String dataStr1 = String.valueOf(dataList.get(0));
         String dataStr2 = String.valueOf(dataList.get(1));
         String dataStr3 = String.valueOf(dataList.get(2));
-        row.setMorning(new ProduceQuantityVO(Arrays.asList(dataStr1, dataStr1)));
-        row.setNight(new ProduceQuantityVO(Arrays.asList(dataStr2, dataStr2)));
-        row.setTotal(new ProduceQuantityVO(Arrays.asList(dataStr3, dataStr3)));
+        row.setMorning(Arrays.asList(dataStr1, dataStr1));
+        row.setNight(Arrays.asList(dataStr2, dataStr2));
+        row.setTotal(Arrays.asList(dataStr3, dataStr3));
         return row;
     }
 
