@@ -1,7 +1,10 @@
 package com.steccn.qms.service;
 
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.vo.QtChartBarVO;
+
+import java.util.List;
 
 /**
  * 对图表进行计算
@@ -14,5 +17,5 @@ public interface QtChartGenerateService {
      * 生成基片损耗趋势图
      * @return
      */
-    QtChartBarVO generateSubstrateLoss(QtChartParamDTO dto);
+    List<QtChartSubDetailDTO> generateSubstrateLoss(QtChartParamDTO dto);
 }

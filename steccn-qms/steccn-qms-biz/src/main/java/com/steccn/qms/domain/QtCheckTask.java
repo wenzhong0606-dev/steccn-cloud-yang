@@ -293,5 +293,16 @@ public class QtCheckTask implements Serializable {
      */
     private Long stationId;
 
+    /**
+     * 处理把localDateTime转成String
+     */
+    @TableField(exist = false)
+    private String date;
+
+    /**
+     * 产线id
+     */
+    @TableField(exist = false)
+    private Integer productLineId;
 
 }

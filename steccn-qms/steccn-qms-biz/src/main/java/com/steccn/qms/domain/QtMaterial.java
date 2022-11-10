@@ -3,6 +3,7 @@ package com.steccn.qms.domain;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -91,4 +92,8 @@ public class QtMaterial implements Serializable {
      */
     private Integer status;
 
+    /**
+     * 长度
+     */
+    private BigDecimal lengthQuantity;
 }
