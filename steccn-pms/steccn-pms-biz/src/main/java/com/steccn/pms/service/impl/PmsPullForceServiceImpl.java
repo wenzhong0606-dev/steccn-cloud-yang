@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -23,7 +22,6 @@ import com.steccn.pms.vo.PmsPullForceClassQuantity;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,10 +113,9 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         //根据产线分组
         Map<Integer, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
         Set<Integer> productLineIdSet = pmsPullForceList.stream().map(PmsPullForce::getProductLineId).collect(Collectors.toSet());
-        Set<Long> classIdSet = pmsPullForceList.stream().map(PmsPullForce::getClassesId).collect(Collectors.toSet());
 
         Map<Integer, SysOfficeVO> map = remoteOfficeFeign.listById(productLineIdSet).getData();
-//        Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
+        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workshopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
@@ -136,14 +133,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
             //获取白班夜班数量
             List<PmsPullForceClassQuantity> pullForceClassQuantityList = new ArrayList<>();
-            for (PmsPullForce pmsPullForce : entry.getValue()) {
+            for (SysDictVO sysDictVO : sysDictVOList) {
                 PmsPullForceClassQuantity pullForceClassQuantity = new PmsPullForceClassQuantity();
-                pullForceClassQuantity.setId(pmsPullForce.getId());
-                pullForceClassQuantity.setClassId(pmsPullForce.getClassesId());
-                pullForceClassQuantity.setQuantity(pmsPullForce.getQuantity());
-                pullForceClassQuantityList.add(pullForceClassQuantity);
 
+                Optional<PmsPullForce> present = entry.getValue().stream().filter(pmsPullForce -> pmsPullForce.getClassesId().equals(sysDictVO.getId())).findAny();
+                if (present.isPresent()) {
+                    pullForceClassQuantity.setId(present.get().getId());
+                    pullForceClassQuantity.setClassId(present.get().getClassesId());
+                    pullForceClassQuantity.setQuantity(present.get().getQuantity());
+                } else {
+                    pullForceClassQuantity.setClassId(sysDictVO.getId());
+                }
+                pullForceClassQuantityList.add(pullForceClassQuantity);
             }
+
             pullForceDetailsVO.setPullForceClassQuantityList(pullForceClassQuantityList);
             pullForceDetailsVOList.add(pullForceDetailsVO);
         }

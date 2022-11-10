@@ -26,6 +26,11 @@ public class SysStationWarehouse implements Serializable {
     private Long stationId;
 
     /**
+     *
+     */
+    private Integer organType;
+
+    /**
      * 仓库id
      */
     private Integer warehouseId;
