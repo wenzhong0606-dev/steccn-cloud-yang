@@ -195,7 +195,7 @@
     </select>
     <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">
         SELECT
-            ppo.id,
+            ppo.id as produceOrderId,
             ppo.material_id,
             prw.process_id,
             prw.product_line_id,

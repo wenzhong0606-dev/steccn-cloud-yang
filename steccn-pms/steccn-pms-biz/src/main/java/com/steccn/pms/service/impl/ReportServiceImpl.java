@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -54,6 +55,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmsProduceOrderMapper pmsProduceOrderMapper;
     private final PmProcessService pmProcessService;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final PmsWorkOrderBomService pmsWorkOrderBomService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -446,6 +448,33 @@ public class ReportServiceImpl implements ReportService {
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
+
+        //构建表头
+        FurtherReportHeaderVO header = new FurtherReportHeaderVO();
+        header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
+
+        //获取所有的工序id
+        Set<Long> processIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProcessId).collect(Collectors.toSet());
+        //查询工序的信息
+        List<PmProcess> pmProcessList = pmProcessService.listByIds(processIdSet);
+        Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
+        Map<Long, PmProcess> pmProcessMap = Maps.newHashMap();
+        pmProcessList.forEach(ele -> pmProcessMap.put(ele.getId(), ele));
+        PmProcess defaultPmProcess = new PmProcess();
+
+        //获取生产订单id集合
+        Set<Long> produceOrderIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProduceOrderId).collect(Collectors.toSet());
+
+        //查询工序需要的物料,兼容所有的工序
+        Map<Long, List<BaseSelectVO<Long>>> materialMap = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, processIdSet);
+        Assert.notEmpty(materialMap, "工序信息为配置物料信息，暂无报表数据");
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        materialMap.forEach((k, v) -> {
+            BaseReportHeaderVO moduleHeader = new BaseReportHeaderVO(pmProcessMap.getOrDefault(k, defaultPmProcess).getName(), v.stream().map(BaseSelectVO::getName).collect(Collectors.toList()));
+            module.add(moduleHeader);
+        });
+        header.setModule(module);
+        vo.setHeader(header);
         return vo;
     }
 
