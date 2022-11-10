@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 /**
  * @author yequan
@@ -29,6 +30,12 @@ public class ReportController {
     @ApiOperation("基片日报表-产量")
     public R<SubstrateDayReportVO> substrateDayReport(@RequestBody PmsDayReportDTO dto) {
         return R.success(reportService.substrateDayReport(dto));
+    }
+
+    @PostMapping("/sub/ingredient")
+    @ApiOperation("基片日报表-原料耗料")
+    public R<List<SubstrateIngredientVO>> subIngredientReport(@RequestBody PmsDayReportDTO dto) {
+        return R.success();
     }
 
     @PostMapping("/fur/produce")
