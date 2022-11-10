@@ -214,7 +214,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 //根据code获取id
                 Long materialId = updateMap.get(excelDTO.getMaterialCode());
                 PmsProducePlan producePlan = new PmsProducePlan();
-                BeanUtils.copyProperties(excelDTO, producePlan);
+                producePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
+                producePlan.setQuantity(excelDTO.getQuantity());
+                producePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE));
+                producePlan.setStatus(0);
                 //如果物料id为空表示数据库无数据，新增
                 if (Objects.isNull(materialId)) {
                     addList.add(producePlan);

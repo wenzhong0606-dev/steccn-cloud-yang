@@ -21,9 +21,13 @@ public class SysStationWarehouseAddDTO implements Serializable {
     @ApiModelProperty("货架id")
     private Integer shelfId;
 
-    @NotNull(groups = {InsertGroup.class}, message = "工位不能为空")
-    @ApiModelProperty("工位id")
-    private Long stationId;
+    @NotNull(groups = {InsertGroup.class}, message = "组织架构id不能为空")
+    @ApiModelProperty("组织架构id")
+    private Long organId;
+
+    @NotNull(groups = {InsertGroup.class}, message = "组织架构类型不能为空")
+    @ApiModelProperty("组织架构类型")
+    private Integer organType;
 
     @NotNull(groups = {InsertGroup.class}, message = "仓库不能为空")
     @ApiModelProperty("仓库id")
