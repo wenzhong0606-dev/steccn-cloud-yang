@@ -85,7 +85,7 @@ public class SysOfficeController {
     }
 
     @PostMapping("/list/parentcodes")
-    @ApiOperation("根据车间id列表选择产线")
+    @ApiOperation("根据车间编码列表选择产线")
     public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
         return R.success(sysOfficeService.getListSysOfficeList(dto));
     }
