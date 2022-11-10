@@ -92,4 +92,14 @@ public interface RemoteDictFeignApi {
     @PostMapping("/feign/platform/sys/dict/listByCodes")
     @ApiOperation("根据code查询数据字典的值")
     R<Map<String, SysDictVO>> listByCodes(@RequestBody Set<String> codes);
+
+    /**
+     * 根据type查询数据字典的值
+     *
+     * @param type
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/dict/listByType")
+    @ApiOperation("根据type查询数据字典的值")
+    R<List<SysDictVO>> listByType(@RequestParam("type") String type);
 }

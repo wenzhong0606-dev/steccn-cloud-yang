@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -54,6 +55,8 @@ public class ReportServiceImpl implements ReportService {
     private final PmsProduceOrderMapper pmsProduceOrderMapper;
     private final PmProcessService pmProcessService;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
+    private final PmsWorkOrderBomService pmsWorkOrderBomService;
+    private final PmsCompleteDeliveryService completeDeliveryService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -440,14 +443,148 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto) {
+        //定义默认规格
+        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+
         //每一行数据是一个生产订单生产的主物料
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
+        //定义
+        List<FurtherIngredientReportListVO> tableData = Lists.newArrayList();
+
+        //构建表头
+        FurtherReportHeaderVO header = new FurtherReportHeaderVO();
+        header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
+
+        //获取所有的工序id
+        Set<Long> processIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProcessId).collect(Collectors.toSet());
+        //查询工序的信息
+        List<PmProcess> pmProcessList = pmProcessService.listByIds(processIdSet);
+        Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
+        Map<Long, PmProcess> pmProcessMap = Maps.newHashMap();
+        pmProcessList.forEach(ele -> pmProcessMap.put(ele.getId(), ele));
+        PmProcess defaultPmProcess = new PmProcess();
+
+        //获取生产订单id集合
+        Set<Long> produceOrderIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProduceOrderId).collect(Collectors.toSet());
+
+        //查询生产订单的耗料
+        Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> numConsumeMap = completeDeliveryService.processNumConsumeMap(produceOrderIdSet);
+        Map<Long, Map<Long, ProduceOrderProcessNumVO>> defaultProcessNumMap = Maps.newHashMap();
+        Map<Long, ProduceOrderProcessNumVO> defaultMaterialNumMap = Maps.newHashMap();
+        ProduceOrderProcessNumVO defaultProduceOrderProcessNumVO = new ProduceOrderProcessNumVO();
+
+        //查询工序需要的物料,兼容所有的工序物料
+        Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, processIdSet);
+        Assert.notEmpty(materialProcessMap, "工序信息为配置物料信息，暂无报表数据");
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        materialProcessMap.forEach((k, v) -> {
+            BaseReportHeaderVO moduleHeader = new BaseReportHeaderVO(pmProcessMap.getOrDefault(k, defaultPmProcess).getName(), v.stream().map(BaseSelectVO::getName).collect(Collectors.toList()));
+            module.add(moduleHeader);
+        });
+        header.setModule(module);
+        vo.setHeader(header);
+
+        //获取班次数据
+        List<SysDictVO> classList = getClassList();
+        Map<Long, SysDictVO> classMap = Maps.newHashMap();
+        classList.forEach(ele -> classMap.put(ele.getId(), ele));
+
+        //获取车间数据
+        Set<Integer> productLineSet = dataList.stream().map(FurtherIngredientMapperVO::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        //根据车间去划分
+        Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
+        workShopMap.forEach((workshop, productLineList) -> {
+            //根据产线遍历
+            for (SysOfficeVO productLine : productLineList) {
+                //产线统计
+                Map<Long, Map<Long, BigDecimal>> productCountMap1 = Maps.newHashMap();
+                Map<Long, Map<Long, BigDecimal>> productCountMap2 = Maps.newHashMap();
+                //过滤出产线数据并将产线数据分成不同班次
+                Map<Long, List<FurtherIngredientMapperVO>> lineDataMap = dataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.groupingBy(FurtherIngredientMapperVO::getClassesId));
+                //遍历不同的班次
+                for (Map.Entry<Long, List<FurtherIngredientMapperVO>> classEntry : lineDataMap.entrySet()) {
+                    //班次统计
+                    Map<Long, Map<Long, BigDecimal>> classesCountMap1 = Maps.newHashMap();
+                    Map<Long, Map<Long, BigDecimal>> classesCountMap2 = Maps.newHashMap();
+
+                    Map<Long, List<FurtherIngredientMapperVO>> produceOrderMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherIngredientMapperVO::getProduceOrderId));
+                    //获取班次的数据
+                    SysDictVO sysDictVO = classMap.get(classEntry.getKey());
+                    //遍历生产订单物料分组
+                    for (Map.Entry<Long, List<FurtherIngredientMapperVO>> po : produceOrderMap.entrySet()) {
+                        List<FurtherValueVO> processModule = Lists.newArrayList();
+                        Map<Long, Map<Long, ProduceOrderProcessNumVO>> processNumMap = numConsumeMap.getOrDefault(po.getKey(), defaultProcessNumMap);
+                        //遍历工序物料集合
+                        materialProcessMap.forEach((k, v) -> {
+                            List<FurtherValueStrVO> strList = Lists.newArrayList();
+                            Map<Long, ProduceOrderProcessNumVO> materialNumMap = processNumMap.getOrDefault(k, defaultMaterialNumMap);
+                            for (BaseSelectVO<Long> mBase : v) {
+                                ProduceOrderProcessNumVO materialBase = materialNumMap.getOrDefault(mBase.getId(), defaultProduceOrderProcessNumVO);
+                                strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(materialBase.getQuantity()), BigDecimalUtil.format(materialBase.getAvaQuantity()))));
+                                BigDecimalUtil.biAccumulate(classesCountMap1, k, mBase.getId(), materialBase.getQuantity());
+                                BigDecimalUtil.biAccumulate(classesCountMap2, k, mBase.getId(), materialBase.getAvaQuantity());
+                                BigDecimalUtil.biAccumulate(productCountMap1, k, mBase.getId(), materialBase.getQuantity());
+                                BigDecimalUtil.biAccumulate(productCountMap2, k, mBase.getId(), materialBase.getAvaQuantity());
+                            }
+                            processModule.add(new FurtherValueVO(strList));
+                        });
+                        //往列表中添加数据
+                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, defaultSpecList));
+                    }
+                    List<FurtherValueVO> classModuleList = Lists.newArrayList();
+                    materialProcessMap.forEach((k, v) -> {
+                        List<FurtherValueStrVO> strList = Lists.newArrayList();
+                        for (BaseSelectVO<Long> mBase : v) {
+                            BigDecimal classBig1 = classesCountMap1.get(k).get(mBase.getId());
+                            BigDecimal classBig2 = classesCountMap2.get(k).get(mBase.getId());
+                            strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(classBig1), BigDecimalUtil.format(classBig2))));
+                        }
+                        classModuleList.add(new FurtherValueVO(strList));
+                    });
+                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, defaultSpecList));
+                }
+
+                List<FurtherValueVO> lineModuleList = Lists.newArrayList();
+                materialProcessMap.forEach((k, v) -> {
+                    List<FurtherValueStrVO> strList = Lists.newArrayList();
+                    for (BaseSelectVO<Long> mBase : v) {
+                        BigDecimal lineBig1 = productCountMap1.get(k).get(mBase.getId());
+                        BigDecimal lineBig2 = productCountMap2.get(k).get(mBase.getId());
+                        strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(lineBig1), BigDecimalUtil.format(lineBig2))));
+                    }
+                    lineModuleList.add(new FurtherValueVO(strList));
+                });
+                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, defaultSpecList));
+            }
+        });
+        vo.setTableData(tableData);
         return vo;
     }
+
+    /**
+     * 构造FurtherIngredientReportListVO数据
+     *
+     * @param nameList
+     * @param type
+     * @param module
+     * @return
+     */
+    private FurtherIngredientReportListVO getFurtherIngredientReportListVO(List<String> nameList, Integer type, List<FurtherValueVO> module, List<String> defaultSpecList) {
+        FurtherIngredientReportListVO row = new FurtherIngredientReportListVO();
+        row.setType(type);
+        row.setWorkshopName(nameList.get(0));
+        row.setProductLineName(nameList.get(1));
+        row.setClassName(nameList.get(2));
+        row.setModule(module);
+        row.setSpecList(defaultSpecList);
+        return row;
+    }
+
 
     /**
      * 统计入库

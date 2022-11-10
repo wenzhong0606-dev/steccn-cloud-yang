@@ -136,7 +136,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         materialIds.add(dto.getId());
         Map<Long, MesMaterialInventoryDTO> materialInventory = remoteMessFeignApi.materialInventory(materialIds);
         MesMaterialInventoryDTO orDefault = materialInventory.getOrDefault(dto.getId(), new MesMaterialInventoryDTO());
-        //2.创建安全库存信息
+        //2.创建库存信息
         PmsMrpInfo pmsMrpInfo = create(PmManagerConstant.MRP_INVENTORY, null, orDefault.getAvailableQuantity(), dto.getId(),
                 LocalDate.now(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode());
         PmsMrpInfoVO infoVO = BeanUtil.copyProperties(pmsMrpInfo, PmsMrpInfoVO.class);
@@ -146,8 +146,8 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
             dto.setSize(dto.getSize() - PmManagerConstant.OrderStateEnum.ONE.getCode());
         }
         //4.自定义查询条件获取分页数据
-        LambdaQueryWrapper<PmsMrpInfo> eq = new LambdaQueryWrapper<PmsMrpInfo>().eq(Objects.nonNull(dto.getId()), PmsMrpInfo::getMaterialId, dto.getId())
-                .eq(PmsMrpInfo::getStatus, PmManagerConstant.OrderStateEnum.ZERO.getCode())
+        LambdaQueryWrapper<PmsMrpInfo> eq = new LambdaQueryWrapper<PmsMrpInfo>()
+                .eq(Objects.nonNull(dto.getId()), PmsMrpInfo::getMaterialId, dto.getId())
                 .orderByAsc(PmsMrpInfo::getMrpDate);
         //5.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -160,6 +160,17 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         //9.处理数据
         Set<Long> typeIds = Sets.newHashSet();
         typeIds.add(infoVO.getMrpTypeId());
+        //进行mrp计算
+        Set<String> codes = org.apache.commons.compress.utils.Sets.newHashSet();
+        codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
+        codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
+        codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
+        Map<String, SysDictVO> dictMapId = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
+        //获取独立需求类型id
+        Long mrpDemandId = dictMapId.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
+        //获取订单需求类型id
+        Long mrpRequirmentId = dictMapId.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+        BigDecimal availableQuantity = orDefault.getAvailableQuantity();
         res.forEach(pmsMrpInfoVO -> {
             typeIds.add(pmsMrpInfoVO.getMrpTypeId());
         });
@@ -168,14 +179,23 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         res.forEach(pmsMrpInfoVO -> {
             pmsMrpInfoVO.setMrpTypeName(dictMap.get(pmsMrpInfoVO.getMrpTypeId()));
         });
+        List<PmsMrpInfoVO> infoVOList = Lists.newArrayList();
+        for (PmsMrpInfoVO info : res) {
+            if (info.getMrpTypeId().equals(mrpDemandId) || info.getMrpTypeId().equals(mrpRequirmentId)) {
+                availableQuantity = availableQuantity.subtract(info.getQuantity());
+                info.setAvailableQuantity(availableQuantity);
+            } else {
+                availableQuantity = availableQuantity.add(info.getQuantity());
+                info.setAvailableQuantity(availableQuantity);
+            }
+            infoVOList.add(info);
+        }
         infoVO.setMrpTypeName(dictMap.get(infoVO.getMrpTypeId()));
-        res.add(PmManagerConstant.OrderStateEnum.ZERO.getCode(), infoVO);
-        page.setSize(res.size());
+        infoVOList.add(PmManagerConstant.OrderStateEnum.ZERO.getCode(), infoVO);
+        page.setSize(infoVOList.size());
         page.setTotal(page.getTotal() + PmManagerConstant.OrderStateEnum.ONE.getCode());
-        return page.setRecords(res);
+        return page.setRecords(infoVOList);
     }
-
-
 
 
     @Override
@@ -238,6 +258,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         }
 
     }
+
     /**
      * 创建需求计划数据
      *

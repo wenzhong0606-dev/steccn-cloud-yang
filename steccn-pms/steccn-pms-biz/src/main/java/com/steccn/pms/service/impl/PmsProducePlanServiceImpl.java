@@ -214,7 +214,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 //根据code获取id
                 Long materialId = updateMap.get(excelDTO.getMaterialCode());
                 PmsProducePlan producePlan = new PmsProducePlan();
-                BeanUtils.copyProperties(excelDTO, producePlan);
+                producePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
+                producePlan.setQuantity(excelDTO.getQuantity());
+                producePlan.setPlanDate(LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE));
+                producePlan.setStatus(0);
                 //如果物料id为空表示数据库无数据，新增
                 if (Objects.isNull(materialId)) {
                     addList.add(producePlan);
@@ -247,8 +250,6 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         //查询物料信息
         Set<Long> materialIdSet = producePlanList.stream().map(PmsProducePlan::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> materialMap = remoteSpareFeignApi.listById(new ArrayList<>(materialIdSet)).getData();
-
-
         List<PmsProducePlanExcelDTO> excelDTOList = new ArrayList<>();
         for (PmsProducePlan pmsProducePlan : producePlanList) {
             PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
@@ -300,13 +301,14 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         Set<String> codes = Sets.newHashSet();
         codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
         codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
+//        codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
         Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
         Set<Long> ids = Sets.newHashSet();
         Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds()));
         //获取独立需求类型id
         Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
         //获取订单需求类型id
-        Long mrpRequirmentId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+        Long mrpRequirmentId = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, PmManagerConstant.MRP_TYPE)).get().getId();
         dictMap.forEach((key, value) -> ids.add(value.getId()));
         List<PmsMrpInfo> infoList = Lists.newArrayList();
         collect.forEach((key, value) -> {
@@ -446,27 +448,24 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     public void turnProduceOrder(PmsProduceOrderDTO model) {
         List<PmsMrpInfo> infoList = Lists.newArrayList();
         List<Long> materialIds = Lists.newArrayList();
+        materialIds.add(model.getMaterialId());
         // 获取转订单的mrp计划订单数据
         PmsMrpInfo planInfo = pmsMrpInfoService.getById(model.getMrpId());
         //获取当月第一天
         LocalDate firstDay = planInfo.getMrpDate().with(TemporalAdjusters.firstDayOfMonth());
         // 获取当前月的最后一天
         LocalDate lastDay = planInfo.getMrpDate().with(TemporalAdjusters.lastDayOfMonth());
-
+        List<PmsMrpInfo> moduleInfoList = Lists.newArrayList();
         // 对当前订单主物料生成生产订单mrp计划数据
-        infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PRODUCE_ORDER, model.getQuantity(), BigDecimal.ZERO, model.getMaterialId(),
+        moduleInfoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PRODUCE_ORDER, model.getQuantity(), BigDecimal.ZERO, model.getMaterialId(),
                 planInfo.getMrpDate(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode()));
         // 获取当前的子物料生成订单需求
         model.getMaterialList().forEach(material -> {
-            infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, material.getQuantity(), BigDecimal.ZERO, material.getModuleId(),
+            materialIds.add(material.getId());
+            moduleInfoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, material.getQuantity(), BigDecimal.ZERO, material.getModuleId(),
                     planInfo.getMrpDate(), planInfo.getId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
         });
-        //
-        //1.获取需要下达的物料计划数据
-        List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>()
-                .in(PmsProducePlan::getMaterialId, materialIds)
-                .between(PmsProducePlan::getPlanDate, firstDay, lastDay));
-        Map<Long, List<PmsProducePlan>> collect = list.stream().collect(Collectors.groupingBy(PmsProducePlan::getMaterialId));
+        Map<Long, List<PmsMrpInfo>> moduleMap = moduleInfoList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
         Set<String> codes = Sets.newHashSet();
         codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
         codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
@@ -476,23 +475,33 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         //获取独立需求类型id
         Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
         //获取订单需求类型id
-        Long mrpRequirmentId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+        Long mrpRequirmentId = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, PmManagerConstant.MRP_TYPE)).get().getId();
         dictMap.forEach((key, value) -> ids.add(value.getId()));
-        collect.forEach((key, value) -> {
+        MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
+        inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
+        moduleMap.forEach((key, value) -> {
+            List<PmsMrpInfo> mrpList = Lists.newArrayList();
+            mrpList.addAll(value);
+            // 获取物料的计划数据
+            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>()
+                    .eq(PmsProducePlan::getMaterialId, key)
+                    .between(PmsProducePlan::getPlanDate, firstDay, lastDay));
             //1.1 清除物料的独立需求计划以及计划订单的mrp数据
             pmsMrpInfoService.remove(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, key).in(PmsMrpInfo::getMrpTypeId, ids));
             //1.2 获取物料已有的mrp计划
             List<PmsMrpInfo> mrpInfoList = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, key));
             //1.3 获取物料的库存可用信息
-            BigDecimal availableQuantity = inventoryDTOMap.get(key).getAvailableQuantity();
+            MesMaterialInventoryDTO inventory= inventoryDTOMap.getOrDefault(key, inventoryDTO);
+            BigDecimal availableQuantity = inventory.getAvailableQuantity();
             //1.4 对物料计划数据生成 mrp需求数据
-            for (PmsProducePlan pmsProducePlan : value) {
-                infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(), BigDecimal.ZERO, pmsProducePlan.getMaterialId(),
-                        pmsProducePlan.getPlanDate(), pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+            if (CollUtil.isNotEmpty(list)) {
+                for (PmsProducePlan pmsProducePlan : list) {
+                    mrpList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(), BigDecimal.ZERO, pmsProducePlan.getMaterialId(),
+                            pmsProducePlan.getPlanDate(), pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+                }
             }
-            //1.5 合并物料的mrp计划数据进行mrp计算
-            infoList.addAll(mrpInfoList);
-            List<PmsMrpInfo> sortedList = infoList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
+            mrpList.addAll(mrpInfoList);
+            List<PmsMrpInfo> sortedList = mrpList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
             LinkedHashMap<LocalDate, List<PmsMrpInfo>> dateMap = sortedList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMrpDate, LinkedHashMap::new, Collectors.toList()));
             //1.6 进行mrp计算并生成计划订单
             for (Map.Entry<LocalDate, List<PmsMrpInfo>> entry : dateMap.entrySet()) {
@@ -512,7 +521,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         // 计划订单数量 库存+供给-需求
                         //计算生成计划订单的数量
                         BigDecimal negate = availableQuantity.add(supplyQuantity).subtract(demandQuantity).negate();
-                        infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PLANNED_ORDER, negate, BigDecimal.ZERO,
+                        mrpList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PLANNED_ORDER, negate, BigDecimal.ZERO,
                                 key, entry.getKey(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode()));
                         availableQuantity = BigDecimal.ZERO;
                     } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
@@ -526,8 +535,72 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     availableQuantity = availableQuantity.add(supplyQuantity.subtract(demandQuantity));
                 }
             }
+            infoList.addAll(mrpList);
         });
         pmsMrpInfoService.saveOrUpdateBatch(infoList);
+//        // 获取需要下达的物料计划数据
+//        List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>()
+//                .in(PmsProducePlan::getMaterialId, materialIds)
+//                .between(PmsProducePlan::getPlanDate, firstDay, lastDay));
+//        Map<Long, List<PmsProducePlan>> collect = list.stream().collect(Collectors.groupingBy(PmsProducePlan::getMaterialId));
+//
+//        collect.forEach((key, value) -> {
+//            List<PmsMrpInfo> mrpList = Lists.newArrayList();
+//            moduleMap.forEach((modelId, modelList) -> {
+//                if (key.equals(modelId)) {
+//                    mrpList.addAll(modelList);
+//                }
+//            });
+//            //1.1 清除物料的独立需求计划以及计划订单的mrp数据
+//            pmsMrpInfoService.remove(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, key).in(PmsMrpInfo::getMrpTypeId, ids));
+//            //1.2 获取物料已有的mrp计划
+//            List<PmsMrpInfo> mrpInfoList = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, key));
+//            //1.3 获取物料的库存可用信息
+//            BigDecimal availableQuantity = inventoryDTOMap.get(key).getAvailableQuantity();
+//            //1.4 对物料计划数据生成 mrp需求数据
+//            for (PmsProducePlan pmsProducePlan : value) {
+//                mrpList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(), BigDecimal.ZERO, pmsProducePlan.getMaterialId(),
+//                        pmsProducePlan.getPlanDate(), pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+//            }
+//            //1.5 合并物料的mrp计划数据进行mrp计算
+//            mrpList.addAll(mrpInfoList);
+//            List<PmsMrpInfo> sortedList = mrpList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
+//            LinkedHashMap<LocalDate, List<PmsMrpInfo>> dateMap = sortedList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMrpDate, LinkedHashMap::new, Collectors.toList()));
+//            //1.6 进行mrp计算并生成计划订单
+//            for (Map.Entry<LocalDate, List<PmsMrpInfo>> entry : dateMap.entrySet()) {
+//                BigDecimal demandQuantity = BigDecimal.ZERO;
+//                BigDecimal supplyQuantity = BigDecimal.ZERO;
+//                for (PmsMrpInfo pmsMrpInfo : entry.getValue()) {
+//                    if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId) || pmsMrpInfo.getMrpTypeId().equals(mrpRequirmentId)) {
+//                        demandQuantity = demandQuantity.add(pmsMrpInfo.getQuantity());
+//                    } else {
+//                        supplyQuantity = supplyQuantity.add(pmsMrpInfo.getQuantity());
+//                    }
+//                }
+//                //如果供给小于需求，则考虑库存
+//                if (supplyQuantity.compareTo(demandQuantity) < 0) {
+//                    //如果库存小于需求减去供给,则创建计划订单
+//                    if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) < 0) {
+//                        // 计划订单数量 库存+供给-需求
+//                        //计算生成计划订单的数量
+//                        BigDecimal negate = availableQuantity.add(supplyQuantity).subtract(demandQuantity).negate();
+//                        mrpList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PLANNED_ORDER, negate, BigDecimal.ZERO,
+//                                key, entry.getKey(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+//                        availableQuantity = BigDecimal.ZERO;
+//                    } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
+//                        //如果库存大于需求减去供给
+//                        availableQuantity = availableQuantity.subtract(demandQuantity.subtract(supplyQuantity));
+//                    } else {
+//                        availableQuantity = BigDecimal.ZERO;
+//                    }
+//                } else if (supplyQuantity.compareTo(demandQuantity) > 0) {
+//                    //计算库存数量  库存 +（供给-需求）
+//                    availableQuantity = availableQuantity.add(supplyQuantity.subtract(demandQuantity));
+//                }
+//            }
+//            infoList.addAll(mrpList);
+//        });
+
     }
 
 

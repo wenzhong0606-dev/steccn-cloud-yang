@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -20,6 +21,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
 import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import com.steccn.pms.vo.PmsProduceOrderCraftVO;
+import com.steccn.pms.vo.ProduceOrderProcessNumVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -129,6 +132,36 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             });
         }
         return page;
+    }
+
+    @Override
+    public Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> processNumConsumeMap(Set<Long> produceOrderIdSet) {
+        //定义返回结构
+        Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> resMap = Maps.newHashMap();
+        //如果生产订单不为空
+        if (CollUtil.isNotEmpty(produceOrderIdSet)) {
+            //查询分组数据
+            List<ProduceOrderProcessNumVO> dataList = this.baseMapper.processNumConsumeMap(produceOrderIdSet);
+            //分组数据不为空
+            if (CollUtil.isNotEmpty(dataList)) {
+                //根据生产订单id分组  key-生产订单id value-分组数据
+                Map<Long, List<ProduceOrderProcessNumVO>> produceOrderMap = dataList.stream().collect(Collectors.groupingBy(ProduceOrderProcessNumVO::getProduceOrderId));
+                for (Map.Entry<Long, List<ProduceOrderProcessNumVO>> produceOrderEntry : produceOrderMap.entrySet()) {
+                    //根据工序分组  key-工序id value-工序map
+                    Map<Long, List<ProduceOrderProcessNumVO>> processMap = produceOrderEntry.getValue().stream().collect(Collectors.groupingBy(ProduceOrderProcessNumVO::getProcessId));
+                    Map<Long, Map<Long, ProduceOrderProcessNumVO>> processResMap = Maps.newHashMap();
+                    for (Map.Entry<Long, List<ProduceOrderProcessNumVO>> processEntry : processMap.entrySet()) {
+                        Map<Long, ProduceOrderProcessNumVO> materialResMap = Maps.newHashMap();
+                        for (ProduceOrderProcessNumVO materialVO : processEntry.getValue()) {
+                            materialResMap.put(materialVO.getMaterialId(), materialVO);
+                        }
+                        processResMap.put(processEntry.getKey(), materialResMap);
+                    }
+                    resMap.put(produceOrderEntry.getKey(), processResMap);
+                }
+            }
+        }
+        return resMap;
     }
 }
 

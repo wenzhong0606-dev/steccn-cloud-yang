@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -173,6 +174,30 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             return remove(new LambdaQueryWrapper<PmsWorkOrderBom>().notIn(PmsWorkOrderBom::getId, idSet).eq(PmsWorkOrderBom::getWorkProduceId, id));
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<Long, List<BaseSelectVO<Long>>> getProcessMaterial(Set<Long> produceOrderIdSet, Set<Long> processIdSet) {
+        Map<Long, List<BaseSelectVO<Long>>> resMap = Maps.newHashMap();
+        List<PmsWorkOrderBom> dbList = list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                .in(PmsWorkOrderBom::getWorkProduceId, produceOrderIdSet)
+                .in(PmsWorkOrderBom::getProcessId, processIdSet));
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取子物料的集合
+            Set<Long> moduleSet = dbList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
+            //获取物料数据
+            Map<Long, String> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(moduleSet)).get();
+
+            Map<Long, List<PmsWorkOrderBom>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsWorkOrderBom::getProcessId));
+            dbMap.forEach((k, v) -> {
+                List<BaseSelectVO<Long>> resList = Lists.newArrayList();
+                for (PmsWorkOrderBom pmsWorkOrderBom : v) {
+                    resList.add(new BaseSelectVO<>(pmsWorkOrderBom.getModuleId(), spareVOMap.get(pmsWorkOrderBom.getModuleId())));
+                }
+                resMap.put(k, resList);
+            });
+        }
+        return resMap;
     }
 }
 
