@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author chenhuan
@@ -12,17 +13,12 @@ import java.math.BigDecimal;
 @Data
 public class PmsPullForceDetailsVO {
 
-    private Long id;
-
     private Integer productLineId;
 
     private String productLineName;
 
-    @ApiModelProperty("白班数量")
-    private BigDecimal dayClassQuantity;
-
-    @ApiModelProperty("夜班数量")
-    private BigDecimal nightClassQuantity;
+    @ApiModelProperty("班次数量数量")
+    List<PmsPullForceClassQuantity> pullForceClassQuantityList;
 
     @ApiModelProperty("合计")
     private BigDecimal total;

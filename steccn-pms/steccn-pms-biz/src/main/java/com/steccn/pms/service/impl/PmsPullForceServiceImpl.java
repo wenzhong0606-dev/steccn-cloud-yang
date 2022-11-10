@@ -19,6 +19,7 @@ import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.mapper.PmsPullForceMapper;
+import com.steccn.pms.vo.PmsPullForceClassQuantity;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
@@ -117,7 +118,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         Set<Long> classIdSet = pmsPullForceList.stream().map(PmsPullForce::getClassesId).collect(Collectors.toSet());
 
         Map<Integer, SysOfficeVO> map = remoteOfficeFeign.listById(productLineIdSet).getData();
-        Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
+//        Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workshopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
@@ -130,20 +131,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             PmsPullForceDetailsVO pullForceDetailsVO = new PmsPullForceDetailsVO();
             pullForceDetailsVO.setProductLineId(entry.getKey());
             pullForceDetailsVO.setProductLineName(map.get(entry.getKey()).getOfficeName());
-            pullForceDetailsVO.setId(entry.getValue().get(0).getId());
             pullForceDetailsVO.setTotal(total);
             pullForceDetailsVO.setUnitName(PmManagerConstant.UNIT_T);
 
             //获取白班夜班数量
+            List<PmsPullForceClassQuantity> pullForceClassQuantityList = new ArrayList<>();
             for (PmsPullForce pmsPullForce : entry.getValue()) {
-                String classCode = classIdMap.get(pmsPullForce.getClassesId()).getCode();
-                if (SysDictConstant.CODE_0.equals(classCode)) {
-                    pullForceDetailsVO.setDayClassQuantity(pmsPullForce.getQuantity());
-                } else {
-                    pullForceDetailsVO.setNightClassQuantity(pmsPullForce.getQuantity());
-                }
-            }
+                PmsPullForceClassQuantity pullForceClassQuantity = new PmsPullForceClassQuantity();
+                pullForceClassQuantity.setId(pmsPullForce.getId());
+                pullForceClassQuantity.setClassId(pmsPullForce.getClassesId());
+                pullForceClassQuantity.setQuantity(pmsPullForce.getQuantity());
+                pullForceClassQuantityList.add(pullForceClassQuantity);
 
+            }
+            pullForceDetailsVO.setPullForceClassQuantityList(pullForceClassQuantityList);
             pullForceDetailsVOList.add(pullForceDetailsVO);
         }
 
