@@ -11,6 +11,8 @@ import com.steccn.pms.dto.PmsProducePlanDTO;
 import com.steccn.pms.dto.PmsProducePlanOrderDTO;
 import com.steccn.pms.vo.PmsMrpInfoVO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -56,4 +58,19 @@ public interface PmsMrpInfoService extends IService<PmsMrpInfo> {
      * @param model
      */
     void turnProduceOrder(PmsProduceOrderDTO model);
+
+
+    /**
+     * 创建pmsMrpInfo信息
+     * @param type
+     * @param quantity
+     * @param availableQuantity
+     * @param materialId
+     * @param mrpDate
+     * @param planId
+     * @param status
+     * @return
+     */
+    PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status);
+
 }
