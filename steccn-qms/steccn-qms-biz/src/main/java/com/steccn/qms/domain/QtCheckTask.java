@@ -293,4 +293,5 @@ public class QtCheckTask implements Serializable {
      */
     private Long stationId;
 
+
 }
