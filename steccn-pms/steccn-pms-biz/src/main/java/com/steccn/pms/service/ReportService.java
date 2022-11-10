@@ -50,8 +50,17 @@ public interface ReportService {
 
     /**
      * 深加工日报表-产量信息
+     *
      * @param dto dto
      * @return
      */
     FurtherProduceReportVO furtherProduceDayReport(PmsDayReportDTO dto);
+
+    /**
+     * 深加工日报表-原料耗料
+     *
+     * @param dto
+     * @return
+     */
+    FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto);
 }
