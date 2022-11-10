@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTaskCopy;
@@ -30,7 +31,9 @@ public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMappe
 
     @Override
     public List<QtCheckTaskCopyVO> getLocalDateList() {
-        List<QtCheckTaskCopy> qtCheckTaskCopies = list(new LambdaQueryWrapper<QtCheckTaskCopy>().orderByAsc(QtCheckTaskCopy::getSamplingTime).groupBy(QtCheckTaskCopy::getTaskId));
+        List<QtCheckTaskCopy> qtCheckTaskCopies = list(new QueryWrapper<QtCheckTaskCopy>()
+                .select("task_id ,sum(copy) as copy ")
+                .lambda().groupBy(QtCheckTaskCopy::getTaskId).orderByAsc(QtCheckTaskCopy::getSamplingTime));
         List<QtCheckTaskCopy> collect = qtCheckTaskCopies.stream().collect(
                 Collectors.collectingAndThen(Collectors.toCollection(
                         () -> new TreeSet<>(Comparator.comparing(p -> p.getTaskId()))), ArrayList::new)
