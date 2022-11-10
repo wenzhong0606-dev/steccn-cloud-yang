@@ -442,13 +442,15 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto) {
+        //定义默认规格
+        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+
         //每一行数据是一个生产订单生产的主物料
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
-
         //定义
         List<FurtherIngredientReportListVO> tableData = Lists.newArrayList();
 
@@ -479,6 +481,11 @@ public class ReportServiceImpl implements ReportService {
         header.setModule(module);
         vo.setHeader(header);
 
+        //获取班次数据
+        List<SysDictVO> classList = getClassList();
+        Map<Long, SysDictVO> classMap = Maps.newHashMap();
+        classList.forEach(ele -> classMap.put(ele.getId(), ele));
+
         //获取车间数据
         Set<Integer> productLineSet = dataList.stream().map(FurtherIngredientMapperVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
@@ -492,14 +499,21 @@ public class ReportServiceImpl implements ReportService {
                 //遍历不同的班次
                 for (Map.Entry<Long, List<FurtherIngredientMapperVO>> classEntry : lineDataMap.entrySet()) {
                     Map<Long, List<FurtherIngredientMapperVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherIngredientMapperVO::getMaterialId));
+                    //获取班次的数据
+                    SysDictVO sysDictVO = classMap.get(classEntry.getKey());
                     //遍历物料分组
                     for (Map.Entry<Long, List<FurtherIngredientMapperVO>> materialEntry : materialMap.entrySet()) {
+                        List<FurtherValueVO> processModule = Lists.newArrayList();
                         //遍历工序物料集合
                         materialProcessMap.forEach((k, v) -> {
-
+                            List<FurtherValueStrVO> strList = Lists.newArrayList();
+                            for (BaseSelectVO<Long> mBase : v) {
+                                strList.add(new FurtherValueStrVO(Arrays.asList(String.valueOf(mBase.getId()), mBase.getName())));
+                            }
+                            processModule.add(new FurtherValueVO(strList));
                         });
                         //往列表中添加数据
-                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList("x", "y", "z"), PmReportConstant.TYPE_0, Lists.newArrayList()));
+                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, defaultSpecList));
                     }
                 }
             }
@@ -510,18 +524,20 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 构造FurtherIngredientReportListVO数据
+     *
      * @param nameList
      * @param type
      * @param module
      * @return
      */
-    private FurtherIngredientReportListVO getFurtherIngredientReportListVO(List<String> nameList, Integer type, List<FurtherValueVO> module) {
+    private FurtherIngredientReportListVO getFurtherIngredientReportListVO(List<String> nameList, Integer type, List<FurtherValueVO> module, List<String> defaultSpecList) {
         FurtherIngredientReportListVO row = new FurtherIngredientReportListVO();
         row.setType(type);
         row.setWorkshopName(nameList.get(0));
         row.setProductLineName(nameList.get(1));
         row.setClassName(nameList.get(2));
         row.setModule(module);
+        row.setSpecList(defaultSpecList);
         return row;
     }
 
