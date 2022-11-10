@@ -17,10 +17,10 @@ public class SubstrateReportHeaderVO implements Serializable {
     private BaseReportHeaderVO specList;
 
     @ApiModelProperty("白班")
-    private BaseReportHeaderVO dayShift;
+    private BaseReportHeaderVO morning;
 
     @ApiModelProperty("夜班")
-    private BaseReportHeaderVO nightShift;
+    private BaseReportHeaderVO night;
 
     @ApiModelProperty("合计")
     private BaseReportHeaderVO total;

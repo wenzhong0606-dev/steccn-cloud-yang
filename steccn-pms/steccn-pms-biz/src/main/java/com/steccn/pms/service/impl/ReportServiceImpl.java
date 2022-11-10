@@ -57,6 +57,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
+        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
         //构建表头
         SubstrateReportHeaderVO header = getSubstrateHeader();
@@ -127,6 +129,7 @@ public class ReportServiceImpl implements ReportService {
                     columnTotalQuantity.setQuantityVOList(Arrays.asList(String.valueOf(inCount), String.valueOf(proCount)));
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
                     BigDecimalUtil.accumulate(countMap3, 1, proCount);
+                    row.setSpecList(defaultSpecList);
                     row.setTotal(columnTotalQuantity);
                     productLineVOList.add(row);
                 }
@@ -138,6 +141,7 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setNight(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap2.get(0)), String.valueOf(countMap2.get(1)))));
                 rowTotal.setTotal(new ProduceQuantityVO(Arrays.asList(String.valueOf(countMap3.get(0)), String.valueOf(countMap3.get(1)))));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
+
                 productLineVOList.add(rowTotal);
 
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
@@ -167,8 +171,8 @@ public class ReportServiceImpl implements ReportService {
     private SubstrateReportHeaderVO getSubstrateHeader() {
         SubstrateReportHeaderVO header = new SubstrateReportHeaderVO();
         header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
-        header.setDayShift(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "产量(片)")));
-        header.setNightShift(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "产量(片)")));
+        header.setMorning(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "产量(片)")));
+        header.setNight(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "产量(片)")));
         header.setTotal(new BaseReportHeaderVO("合计", Arrays.asList("入库(片)", "产量(片)")));
         return header;
     }
@@ -435,6 +439,17 @@ public class ReportServiceImpl implements ReportService {
 
         });
         vo.setTableData(tableData);
+        return vo;
+    }
+
+    @Override
+    public FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto) {
+        //每一行数据是一个生产订单生产的主物料
+        //定义返回vo
+        FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
+        //根据产线去查询所有订单的工序分组，用于表头
+
+
         return vo;
     }
 
