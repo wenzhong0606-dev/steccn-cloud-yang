@@ -110,6 +110,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_JPCP_NAME = "基片成品趋势";
 
+    String QT_CHART_DEEP_PROCESS_NAME = "深加工巡检合格率趋势";
+
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
@@ -136,6 +138,10 @@ public interface QtManagerConstant {
     Boolean DAY_FLAG = false;
     Boolean WEEK_FLAG = false;
 
+    /**
+     * 限制只取一条
+     */
+    String STR_LIMIT_1 = " limit 1 ";
     /**
      * 周枚举
      */
