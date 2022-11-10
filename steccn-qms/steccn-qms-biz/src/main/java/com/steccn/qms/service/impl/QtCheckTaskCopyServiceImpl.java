@@ -32,7 +32,12 @@ public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMappe
     @Override
     public List<QtCheckTaskCopyVO> getLocalDateList() {
         List<QtCheckTaskCopy> qtCheckTaskCopies = list(new QueryWrapper<QtCheckTaskCopy>()
-                .select("task_id ,sum(copy) as copy ")
+                .select("task_id ,sum(copy) as copy , any_value(id) as id , any_value(sample_num) as sample_num," +
+                        " any_value(license_plate) as license_plate ,any_value(analyst) as analyst , any_value(analyst_name) analyst_name ," +
+                        " any_value(sampling_time) as sampling_time ,any_value(analyst_time) as analyst_time ,any_value(ingredient_num) as ingredient_num ," +
+                        "any_value(create_by) as create_by, any_value(create_name) as create_name , any_value(update_by) as update_by ," +
+                        "any_value(update_name) update_name , any_value(del_flag) as del_flag , any_value(create_time) as create_time , " +
+                        "any_value(update_time) as update_time")
                 .lambda().groupBy(QtCheckTaskCopy::getTaskId).orderByAsc(QtCheckTaskCopy::getSamplingTime));
         List<QtCheckTaskCopy> collect = qtCheckTaskCopies.stream().collect(
                 Collectors.collectingAndThen(Collectors.toCollection(
