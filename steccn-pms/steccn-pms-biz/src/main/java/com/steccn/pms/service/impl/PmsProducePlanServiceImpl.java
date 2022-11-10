@@ -277,15 +277,15 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         dto.setFirstDay(date.with(TemporalAdjusters.firstDayOfMonth()));
         // 获取当前月的最后一天
         dto.setLastDay(date.with(TemporalAdjusters.lastDayOfMonth()));
-        List<PmsProducePlan> planlist = list(new QueryWrapper<PmsProducePlan>()
+        List<PmsProducePlan> planList = list(new QueryWrapper<PmsProducePlan>()
                 .select("material_id,sum(quantity) as quantity")
                 .lambda().in(PmsProducePlan::getMaterialId, dto.getMaterialIds())
                 .between(PmsProducePlan::getPlanDate, dto.getFirstDay(), dto.getLastDay())
                 .groupBy(PmsProducePlan::getMaterialId));
-        Assert.isTrue(CollUtil.isNotEmpty(planlist), "需要下达的物料数据不存在");
+        Assert.isTrue(CollUtil.isNotEmpty(planList), "需要下达的物料数据不存在");
         //2.修改下达后物料的状态
         Set<Long> materialIdList = Sets.newHashSet();
-        planlist.forEach(pmsProducePlan -> {
+        planList.forEach(pmsProducePlan -> {
             materialIdList.add(pmsProducePlan.getMaterialId());
         });
         //3.自定义sql 批量修改状态
@@ -349,8 +349,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
                         //如果库存大于需求减去供给
                         availableQuantity = availableQuantity.subtract(demandQuantity.subtract(supplyQuantity));
-                    }else {
-                        availableQuantity =BigDecimal.ZERO;
+                    } else {
+                        availableQuantity = BigDecimal.ZERO;
                     }
                 } else if (supplyQuantity.compareTo(demandQuantity) > 0) {
                     //计算库存数量  库存 +（供给-需求）
@@ -359,6 +359,84 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         });
         return pmsMrpInfoService.saveOrUpdateBatch(infoList);
+    }
+
+
+    @Override
+    public void turnProduceOrder(PmsProduceOrderDTO model) {
+        List<PmsMrpInfo> infoList = Lists.newArrayList();
+        // 获取转订单的mrp计划订单数据
+        PmsMrpInfo planInfo = pmsMrpInfoService.getById(model.getMrpId());
+        Set<String> codes = Sets.newHashSet();
+        codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
+        codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
+        Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
+        Set<Long> ids = Sets.newHashSet();
+        ids.add(dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId());
+        ids.add(dictMap.get(PmManagerConstant.MRP_PLANNED_ORDER).getId());
+        //获取独立需求类型id
+        Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
+        // 清除物料的独立需求计划以及计划订单的mrp数据
+        pmsMrpInfoService.remove(new LambdaQueryWrapper<PmsMrpInfo>()
+                .eq(PmsMrpInfo::getMaterialId, model.getMaterialId())
+                .in(PmsMrpInfo::getMrpTypeId, ids));
+        // 获取物料的库存可用信息
+        Set<Long> materialIds = Sets.newHashSet();
+        materialIds.add(model.getMaterialId());
+        Map<Long, MesMaterialInventoryDTO> inventoryMap = remoteMessFeignApi.materialInventory(materialIds);
+        BigDecimal availableQuantity = inventoryMap.get(model.getMaterialId()).getAvailableQuantity();
+        LocalDate mrpDate = planInfo.getMrpDate();
+        // 获取物料已有的mrp计划
+        List<PmsMrpInfo> mrpInfoList = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, model.getMaterialId()));
+        // 获取当月第一天
+        LocalDate firstDay = mrpDate.with(TemporalAdjusters.firstDayOfMonth());
+        // 获取当前月的最后一天
+        LocalDate lastDay = mrpDate.with(TemporalAdjusters.lastDayOfMonth());
+        //1.4 获取物料计划数据生成 mrp需求数据
+        List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>()
+                .eq(PmsProducePlan::getMaterialId, model.getMaterialId())
+                .between(PmsProducePlan::getPlanDate, firstDay, lastDay));
+        list.forEach(pmsProducePlan -> {
+            infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(), BigDecimal.ZERO, pmsProducePlan.getMaterialId(),
+                    pmsProducePlan.getPlanDate(), pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+        });
+        //1.5 合并物料的mrp计划数据进行mrp计算
+        infoList.addAll(mrpInfoList);
+        List<PmsMrpInfo> sortedList = infoList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
+        LinkedHashMap<LocalDate, List<PmsMrpInfo>> dateMap = sortedList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMrpDate, LinkedHashMap::new, Collectors.toList()));
+        //1.6 进行mrp计算并生成计划订单
+        for (Map.Entry<LocalDate, List<PmsMrpInfo>> entry : dateMap.entrySet()) {
+            BigDecimal demandQuantity = BigDecimal.ZERO;
+            BigDecimal supplyQuantity = BigDecimal.ZERO;
+            for (PmsMrpInfo pmsMrpInfo : entry.getValue()) {
+                if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId)) {
+                    demandQuantity = demandQuantity.add(pmsMrpInfo.getQuantity());
+                } else {
+                    supplyQuantity = supplyQuantity.add(pmsMrpInfo.getQuantity());
+                }
+            }
+            //如果供给小于需求，则考虑库存
+            if (supplyQuantity.compareTo(demandQuantity) < 0) {
+                //如果库存小于需求减去供给,则创建计划订单
+                if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) < 0) {
+                    // 计划订单数量 库存+供给-需求
+                    //计算生成计划订单的数量
+                    BigDecimal negate = availableQuantity.add(supplyQuantity).subtract(demandQuantity).negate();
+                    infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_PLANNED_ORDER, negate, BigDecimal.ZERO,
+                            model.getMaterialId(), entry.getKey(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+                    availableQuantity = BigDecimal.ZERO;
+                } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
+                    //如果库存大于需求减去供给
+                    availableQuantity = availableQuantity.subtract(demandQuantity.subtract(supplyQuantity));
+                } else {
+                    availableQuantity = BigDecimal.ZERO;
+                }
+            } else if (supplyQuantity.compareTo(demandQuantity) > 0) {
+                //计算库存数量  库存 +（供给-需求）
+                availableQuantity = availableQuantity.add(supplyQuantity.subtract(demandQuantity));
+            }
+        }
+        pmsMrpInfoService.saveOrUpdateBatch(infoList);
     }
 
 //    @Override

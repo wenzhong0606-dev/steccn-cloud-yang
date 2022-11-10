@@ -58,11 +58,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
-    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsBarcodePrintService pmsBarcodePrintService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmCraftRouteService pmCraftRouteService;
-    private final PmsMrpInfoService pmsMrpInfoService;
+    private final PmsProducePlanService pmsProducePlanService;
 
     /**
      * 新增生产订单信息
@@ -100,7 +99,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())){
             try {
                 BeanUtil.copyProperties(model,dto);
-                pmsMrpInfoService.turnProduceOrder(dto);
+                pmsProducePlanService.turnProduceOrder(dto);
             } catch (Exception e) {
             }
         }
