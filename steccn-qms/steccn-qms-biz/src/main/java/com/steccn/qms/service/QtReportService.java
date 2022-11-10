@@ -100,7 +100,7 @@ public interface QtReportService extends IService<QtReport> {
     * @param reportGroupId
     * @return
     */
-   List<QtReportVO> getQtReportList(Integer reportGroupId);
+   List<QtReportChartVO> getQtReportList(Integer reportGroupId);
 
     /**
      * 根据分组id批量删除卡片
@@ -108,4 +108,5 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Boolean deleteByGroupId(Integer id);
+
 }

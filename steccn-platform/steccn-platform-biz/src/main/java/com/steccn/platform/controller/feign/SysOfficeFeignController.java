@@ -93,4 +93,10 @@ public class SysOfficeFeignController {
     public R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList) {
         return R.success(sysOfficeService.warehouseAndShelf(typeList));
     }
+
+    @PostMapping("/list/parencodes")
+    @ApiOperation("根据车间id列表选择产线")
+    public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
+        return R.success(sysOfficeService.getListSysOfficeList(dto));
+    }
 }

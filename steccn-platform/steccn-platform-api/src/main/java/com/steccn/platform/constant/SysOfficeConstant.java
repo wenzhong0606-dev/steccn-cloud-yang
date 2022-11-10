@@ -14,11 +14,14 @@ public interface SysOfficeConstant {
      */
     String WAREHOUSE_TYPE = "12";
     String SHELF_TYPE = "5";
+
     /**
      * 根节点
      */
     Integer ROOT_LEVEL = 1;
 
-
-
+    /**
+     * 产线类型
+     */
+    String PRODUCT_LINE="9";
 }

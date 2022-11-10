@@ -154,9 +154,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         }
         // 处理MRP 计算逻辑
-        addProducePlanList.addAll(updateProducePlanList);
-//        return pmsMrpInfoService.add(dto);
-        return pmsMrpInfoService.saveMrp(addProducePlanList);
+//        addProducePlanList.addAll(updateProducePlanList);
+////        return pmsMrpInfoService.add(dto);
+        return true;
     }
 
     @Override

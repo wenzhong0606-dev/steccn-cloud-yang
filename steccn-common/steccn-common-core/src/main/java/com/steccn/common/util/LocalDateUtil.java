@@ -1,6 +1,7 @@
 package com.steccn.common.util;
 
 import com.steccn.common.constant.LocalDateEnum;
+import lombok.Data;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -13,6 +14,7 @@ import java.util.Objects;
  * @author chenhuan
  * @date 2022/11/1 14:47
  */
+@Data
 public class LocalDateUtil {
 
 

@@ -1,6 +1,8 @@
 package com.steccn.common.util;
 
 
+import com.google.common.collect.Maps;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
@@ -52,6 +54,26 @@ public class BigDecimalUtil {
     }
 
     /**
+     * 将val1 - val2
+     *
+     * @param val1 val1
+     * @param val2 val2
+     * @return 和
+     */
+    public static BigDecimal subtract(BigDecimal val1, BigDecimal val2) {
+        if (Objects.isNull(val1)) {
+            val1 = BigDecimal.ZERO;
+        }
+        if (Objects.isNull(val2)) {
+            val2 = BigDecimal.ZERO;
+        }
+        BigDecimal res = val1.subtract(val2);
+        res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
+        return res;
+    }
+
+
+    /**
      * 除法val1 / val2保留3位小数
      *
      * @param val1 值1
@@ -73,6 +95,7 @@ public class BigDecimalUtil {
 
 
     /**
+     * Map<K1,BigDecimal>
      * map同一个key数据累计
      *
      * @param map
@@ -95,4 +118,44 @@ public class BigDecimalUtil {
         });
     }
 
+    /**
+     * Map<K1,Map<K2,BigDecimal>>
+     * <p>
+     * map同一个key数据累计
+     *
+     * @param map
+     * @param k1
+     * @param k2
+     * @param value
+     * @param <K1,K2>
+     */
+    public static <K1, K2> void biAccumulate(Map<K1, Map<K2, BigDecimal>> map, K1 k1, K2 k2, BigDecimal value) {
+        //如果value为空，则默认为0
+        if (Objects.isNull(value)) {
+            value = BigDecimal.ZERO;
+        }
+        BigDecimal finalValue = value;
+        map.compute(k1, (p, q) -> {
+            if (Objects.isNull(q)) {
+                q = Maps.newHashMap();
+                q.put(k2, finalValue);
+            } else {
+                q.put(k2, add(q.get(k2), finalValue));
+            }
+            return q;
+        });
+    }
+
+    /**
+     * 格式化decimal数据
+     *
+     * @param value 数据
+     * @return
+     */
+    public static String format(BigDecimal value) {
+        if (Objects.isNull(value)) {
+            return BigDecimal.ZERO.toString();
+        }
+        return value.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).toString();
+    }
 }

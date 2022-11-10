@@ -10,8 +10,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
+import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -260,6 +262,25 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         List<SysOfficeVO> list = this.baseMapper.listByParentId(dto.getId(), dto.getOfficeType());
         if (CollUtil.isNotEmpty(list)) {
             return list;
+        }
+        return null;
+    }
+
+    @Override
+    public List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto) {
+
+        //1.自定义sql查询数据
+        List<SysOfficeVO> list = baseMapper.listByParentCode(dto.getOfficeParentCodes(), SysOfficeConstant.PRODUCT_LINE);
+
+        List<SysOfficeParentVO> sysOfficeParentVOS =Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)){
+        list.stream().forEach(s->{
+            SysOfficeParentVO sysOfficeParentVO = new SysOfficeParentVO();
+            sysOfficeParentVO.setOfficeName(s.getOfficeName());
+            sysOfficeParentVO.setId(s.getId());
+            sysOfficeParentVOS.add(sysOfficeParentVO);
+        });
+        return sysOfficeParentVOS;
         }
         return null;
     }

@@ -1,7 +1,9 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
+import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -99,4 +101,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByParentId(SysOfficeParentDTO dto);
+
+    /**
+     * 根据车间编码列表选择产线
+     * @param dto
+     * @return
+     */
+    List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto);
 }

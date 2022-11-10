@@ -2,8 +2,10 @@ package com.steccn.platform.controller;
 
 
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
+import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.service.SysOfficeService;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 机构数据
@@ -81,4 +84,9 @@ public class SysOfficeController {
         return R.success(sysOfficeService.listByParentId(dto));
     }
 
+    @PostMapping("/list/parentcodes")
+    @ApiOperation("根据车间id列表选择产线")
+    public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
+        return R.success(sysOfficeService.getListSysOfficeList(dto));
+    }
 }

@@ -4,10 +4,11 @@ package com.steccn.qms.vo;
 import lombok.Data;
 import org.apache.poi.ss.formula.functions.T;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class QtChartAcceptabilityVO {
+public class QtChartAcceptabilityVO implements Serializable {
     /**
      * 横坐标
      */

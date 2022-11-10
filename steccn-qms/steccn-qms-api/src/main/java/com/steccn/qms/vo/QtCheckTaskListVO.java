@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
  * @date 2022/09/09
  */
 @Data
-public class QtCheckTaskListVO {
+public class QtCheckTaskListVO implements Serializable {
     /**
      * 任务id
      */

@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,6 +58,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtCheckTaskService qtCheckTaskService;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final QtMaterialService qtMaterialService;
     /**
      * 新建报表卡片
      *
@@ -69,6 +72,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         BeanUtils.copyProperties(dto, qtReport);
         QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
         Assert.isNull(report, "该报表卡片已存在,请勿重复创建!");
+        qtReport.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
+        qtReport.setTimeScopeEnd(LocalDateUtil.getEndTimeOfDayStr(dto.getTimeScopeEnd()));
         //根据分组id去查询分组
         this.save(qtReport);
         return Boolean.TRUE;
@@ -98,8 +103,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckGroupVO> qtCheckGroupVOS = Lists.newArrayList();
         //遍历检验方案id,去检验方案分组表查询获取分组id并添加进分组id集合
         List<QtCheckPlanGroup> qtCheckPlanGroups = qtCheckPlanGroupService.list(new LambdaQueryWrapper<QtCheckPlanGroup>().in(QtCheckPlanGroup::getPlanId, collectCheckPlanId));
+        QtCheckGroupVO qtCheckGroupVO = new QtCheckGroupVO();
         qtCheckPlanGroups.forEach(q -> {
-            QtCheckGroupVO qtCheckGroupVO = new QtCheckGroupVO();
             BeanUtils.copyProperties(q, qtCheckGroupVO);
             qtCheckGroupVOS.add(qtCheckGroupVO);
         });
@@ -198,23 +203,36 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     }
 
     /**
-     * 根据分组id查询报表卡片列表
+     * 根据分组id查询报表图表列表
      * @param id
      * @return
      */
     @Override
-    public List<QtReportVO> getQtReportList(Integer reportGroupId) {
+    public List<QtReportChartVO> getQtReportList(Integer reportGroupId) {
         if (Objects.isNull(reportGroupId)){
             throw new BusinessException("分组id不能为空");
         }
-        List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId));
-       List<QtReportVO> qtReportVOS= Lists.newArrayList();
-        qtReportList.stream().forEach(q->{
-            QtReportVO qtReportVO = new QtReportVO();
-            BeanUtils.copyProperties(q,qtReportVO);
-            qtReportVOS.add(qtReportVO);
+        List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId)
+                .orderByDesc(QtReport::getId));
+        List<Long> materialIds= qtReportList.stream().map(QtReport::getMaterialId).collect(Collectors.toList());
+
+        List<QtMaterial> qtMaterials = qtMaterialService.list(new LambdaQueryWrapper<QtMaterial>().in(QtMaterial::getId, materialIds));
+        List<QtReportChartVO> qtReportChartVOS= Lists.newArrayList();
+        QtReportChartVO qtReportChartVO = new QtReportChartVO();
+        qtMaterials.forEach(q->{
+            qtReportChartVO.setMaterialName(q.getName());
+            qtReportChartVOS.add(qtReportChartVO);
         });
-        return qtReportVOS;
+
+
+        qtReportList.stream().forEach(q->{
+            BeanUtils.copyProperties(q,qtReportChartVO);
+            QtCheckTask qtCheckTask = qtCheckTaskService.getOne(new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getMaterialId, q.getMaterialId()).eq(QtCheckTask::getTaskType, q.getCheckType()));
+                  //  .and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),id));
+          //TODO
+            qtReportChartVOS.add(qtReportChartVO);
+        });
+        return qtReportChartVOS;
     }
 
     @Override
@@ -224,6 +242,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .stream().map(QtReport::getId).collect(Collectors.toList());
        return removeByIds(ids);
     }
+
+
 
 
     /**
@@ -276,6 +296,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(eq)) {
             BeanUtils.copyProperties(qtReportDTO, report);
         }
+        report.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(qtReportDTO.getTimeScopeStart()));
+        report.setTimeScopeEnd(LocalDateUtil.getEndTimeOfDayStr(qtReportDTO.getTimeScopeEnd()));
         return updateById(report);
     }
 
@@ -347,8 +369,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .last(StringUtils.isBlank(reportCardType), "limit 100"));
         List<QtReportVO> qtReportVOS = Lists.newArrayList();
         if (Objects.nonNull(qtReports)) {
+            QtReportVO qtReportVO = new QtReportVO();
             qtReports.forEach(q -> {
-                QtReportVO qtReportVO = new QtReportVO();
                 BeanUtils.copyProperties(q, qtReportVO);
                 qtReportVOS.add(qtReportVO);
             });
@@ -356,6 +378,62 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReportVOS;
     }
 
+    /**
+     * 切割時間段
+     *
+     * @param dateType  交易類型 M/D/H/m/s -->每月/每天/每小時/每分鐘
+     * @param start yyyy-MM-dd HH:mm:ss
+     * @param end   yyyy-MM-dd HH:mm:ss
+     * @return
+     */
+    public static List<String> cutDate(String dateType, String start, String end) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date dBegin = sdf.parse(start);
+            Date dEnd = sdf.parse(end);
+            return findDates(dateType, dBegin, dEnd);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+    public static List<String> findDates(String dateType, Date dBegin, Date dEnd) throws Exception {
+        List<String> listDate = new ArrayList<>();
+        Calendar calBegin = Calendar.getInstance();
+        calBegin.setTime(dBegin);
+        Calendar calEnd = Calendar.getInstance();
+        calEnd.setTime(dEnd);
+        while (calEnd.after(calBegin)) {
+            switch (dateType) {
+                case "Y":
+                    calBegin.add(Calendar.YEAR,1);
+                    break;
+                case "Q":
+                    calBegin.add(Calendar.MONTH,3);
+                    break;
+                case "M":
+                    calBegin.add(Calendar.MONTH, 1);
+                    break;
+                case "D":
+                    calBegin.add(Calendar.DAY_OF_YEAR, 1);
+                    break;
+                case "H":
+                    calBegin.add(Calendar.HOUR, 1);
+                    break;
+                case "m":
+                    calBegin.add(Calendar.MINUTE, 1);
+                    break;
+                case "S":
+                    calBegin.add(Calendar.SECOND, 1);
+                    break;
+            }
+            if (calEnd.after(calBegin))
+                listDate.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calBegin.getTime()));
+            else
+                listDate.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calEnd.getTime()));
+        }
+        return listDate;
+    }
 
 }
 

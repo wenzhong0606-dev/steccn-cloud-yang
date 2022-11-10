@@ -152,6 +152,10 @@ public interface QtManagerConstant {
 
 
     /**
+     * 检验项类型
+     */
+    final int check_type = 2;
+    /**
      * 报表卡片名称长度限制
      */
     final int nameLengthUpLimit = 20;
