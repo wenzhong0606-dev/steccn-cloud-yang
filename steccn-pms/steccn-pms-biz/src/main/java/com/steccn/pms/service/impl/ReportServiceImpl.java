@@ -444,8 +444,8 @@ public class ReportServiceImpl implements ReportService {
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
         //根据产线去查询所有订单的工序分组，用于表头
-
-
+        List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
         return vo;
     }
 

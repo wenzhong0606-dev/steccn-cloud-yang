@@ -5,11 +5,7 @@ import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
-import com.steccn.pms.vo.PmsReportWorkGroupVO;
-import com.steccn.pms.vo.PmsReportWorkVO;
-import com.steccn.pms.vo.FurtherProduceReportDataVO;
-import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.pms.vo.SubstrateDataListVO;
+import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.ss.formula.functions.T;
@@ -75,6 +71,17 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return list
      */
     List<FurtherProduceReportDataVO> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+
+
+    /**
+     * 深加工日报表-原料耗料
+     *
+     * @param productLineIdList 产线id
+     * @param classesIdList     班次id
+     * @param date              指定日期
+     * @return list
+     */
+    List<FurtherIngredientMapperVO> furtherIngredient(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
 }
 
 
