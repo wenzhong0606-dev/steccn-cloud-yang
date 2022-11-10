@@ -14,4 +14,9 @@ public interface QtChartDownloadService {
      * 下载基片成品率
      */
     void downloadSubstrate(HttpServletResponse response) throws IOException;
+
+    /**
+     * 下载深加工缺陷项类别分布
+     */
+    void downloadDefectSubstrate(HttpServletResponse response) throws IOException;
 }

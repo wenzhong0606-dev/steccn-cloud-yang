@@ -2,117 +2,75 @@ package com.steccn.qms.vo;
 
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtThirdPartyDefectContentDTO;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 部门分析驾驶舱返回VO
+ */
 @Data
+@ApiModel("部门分析驾驶舱返回VO")
 public class QtDefectChartVO {
     /**
-     * 主键id
+     * 部门分析驾驶舱概况的卡片名称
      */
-     private Integer id;
+    private String title;
 
     /**
-     * 缺陷项卡片名称
+     * 部门分析驾驶舱概况的卡片id
      */
-    private String name;
+    private Integer key;
 
     /**
-     * 缺陷类别,缺陷数量dto
+     * 部门驾驶舱概览的成品率，合格率，缺陷总数等值
      */
-    QtThirdPartyDefectContentDTO qtThirdPartyDefectContentDTO;
+    private String value;
 
     /**
-     * 日环比
+     * 日环比%
      */
     private String dayValue;
 
     /**
-     * 周环比
+     * 周同比%
      */
     private String weekValue;
 
     /**
-     *
+     * 日环比  0 下降
+     *        1 上升
      */
+    private Integer dayFlag;
 
     /**
-     * 开始时间
+     * 周同比 0 下降
+     *       1 上升
      */
-    private LocalDate timeScopeStart;
+    private Integer weekFlag;
 
     /**
-     * 结束时间
+     * 横坐标,记录星期一到日
      */
-    private LocalDate timeScopeEnd;
+    private List<String> xData;
 
     /**
-     * 检验项id
+     * 纵坐标，记录一周每天的数值
      */
-    private Integer checkItemId;
+    private List<Integer> yData;
 
     /**
-     * 检验项名称
+     * 目标值
      */
-    private String  checkItemName;
+    private Integer targetValue;
 
     /**
-     * 计量单位
+     * 每个卡片提示的当天合格率或缺陷总数提示信息
      */
-    private Long measureunit;
-
-    /**
-     * 检验结果平均值
-     */
-    private BigDecimal checkItemResultAverage;
-
-    /**
-     * 标准值
-     */
-    private BigDecimal standardValue;
-
-    /**
-     * 上限
-     */
-    private BigDecimal upLimit;
-
-    /**
-     * 下限
-     */
-    private BigDecimal dowmLimit;
-
-    /**
-     * 检验任务单号
-     */
-    private Integer checkTaskId;
-
-    /**
-     * 检验完成时间
-     */
-    private LocalDate finishedTime;
-
-    /**
-     * 检验结果
-     */
-    private Integer result;
-
-    /**
-     * 物料名称
-     */
-    private String materialName;
-
-    /**
-     * 生产产线
-     */
-    private List<QtBaseIdNameDTO> productLine;
-
-    /**
-     * 客户
-     */
-    private List<QtBaseIdNameDTO> customer;
+    private String tooltip;
 
 
 }

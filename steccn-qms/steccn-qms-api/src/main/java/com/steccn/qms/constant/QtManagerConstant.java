@@ -110,6 +110,12 @@ public interface QtManagerConstant {
 
     String QT_CHART_JPCP_NAME = "基片成品趋势";
 
+    String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
+
+    String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
+
+
+
     /**
      * beforeHour 代表早上8点
      * afterHour  代表晚上20点
