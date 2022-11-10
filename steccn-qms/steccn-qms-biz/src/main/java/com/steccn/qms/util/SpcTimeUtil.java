@@ -1,4 +1,4 @@
-package com.steccn.qms.constant;
+package com.steccn.qms.util;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

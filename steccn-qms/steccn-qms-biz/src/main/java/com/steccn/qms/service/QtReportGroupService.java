@@ -37,4 +37,11 @@ public interface QtReportGroupService extends IService<QtReportGroup> {
      * @return
      */
     Boolean deletQtReportGroup(Integer id);
+
+    /**
+     * 编辑报表分组
+     * @param dto
+     * @return
+     */
+    Boolean edit(QtReportGroupDTO dto);
 }

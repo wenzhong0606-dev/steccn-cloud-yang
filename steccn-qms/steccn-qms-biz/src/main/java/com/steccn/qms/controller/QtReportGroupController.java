@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtReportGroup;
 import com.steccn.qms.dto.QtReportGroupDTO;
@@ -50,5 +51,12 @@ public class QtReportGroupController {
     @SysLog("根据id删除Spc卡片分组任务")
     public R<Boolean> deletQtReportGroup(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.deletQtReportGroup(id));
+    }
+
+    @PutMapping("/edit")
+    @ApiOperation(value = "编辑报表分组")
+    @SysLog("编辑报表分组行为")
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtReportGroupDTO dto){
+        return R.success(qtReportGroupService.edit(dto));
     }
 }
