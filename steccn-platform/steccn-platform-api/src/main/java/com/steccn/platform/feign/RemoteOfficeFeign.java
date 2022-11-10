@@ -130,4 +130,14 @@ public interface RemoteOfficeFeign {
     @ApiOperation("下拉选项")
     @GetMapping("/feign/platform/sys/office/shelf/warehouse")
     R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList);
+
+    /**
+     * 根据子id获取父级节点数据
+     *
+     * @param childIdList
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/parentOffice")
+    @ApiOperation("根据子id获取父级节点数据")
+    R<Map<Long, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Long> childIdList);
 }

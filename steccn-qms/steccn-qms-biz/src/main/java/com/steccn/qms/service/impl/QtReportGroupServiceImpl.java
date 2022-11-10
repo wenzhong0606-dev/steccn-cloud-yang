@@ -38,10 +38,10 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtReportGroupDTO dto) {
+        QtReportGroup qtReportGroup = getOne(new LambdaQueryWrapper<QtReportGroup>().eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
+        Assert.isNull(qtReportGroup, "该报表卡片分组已存在,请勿重复创建!");
         QtReportGroup reportGroup = new QtReportGroup();
         BeanUtils.copyProperties(dto, reportGroup);
-        QtReportGroup qtReportGroup = getOne(new LambdaQueryWrapper<QtReportGroup>().eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
-        Assert.isNull(qtReportGroup, "该报表卡片类型已存在,请勿重复创建!");
         this.save(reportGroup);
         return Boolean.TRUE;
     }
@@ -90,6 +90,17 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
             qtReportService.deleteByGroupId(id);
         }
 
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean edit(QtReportGroupDTO dto) {
+        QtReportGroup qtReportGroup = getById(dto.getId());
+        Assert.isNull(qtReportGroup, "该报表卡片分组不存在,无法编辑");
+        QtReportGroup reportGroup = new QtReportGroup();
+        BeanUtils.copyProperties(dto, reportGroup);
+        updateById(reportGroup);
         return Boolean.TRUE;
     }
 }

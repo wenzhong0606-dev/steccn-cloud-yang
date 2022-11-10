@@ -193,4 +193,37 @@
         </if>
 
     </select>
+    <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">
+        SELECT
+            ppo.id,
+            ppo.material_id,
+            prw.process_id,
+            prw.product_line_id,
+            prw.classes_id
+        FROM
+            pms_report_work prw
+                JOIN pms_produce_order ppo ON ppo.id = prw.produce_order_id
+        WHERE
+            prw.del_flag = 0 AND ppo.del_flag = 0
+            <if test="classesIdList != null and classesIdList != ''">
+                AND prw.classes_id in
+                <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                    #{classesId}
+                </foreach>
+            </if>
+            <if test="productLineIdList != null and productLineIdList != ''">
+                AND prw.product_line_id in
+                <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                    #{productLineId}
+                </foreach>
+            </if>
+            AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            ppo.id,
+            prw.product_line_id,
+            prw.classes_id,
+            ppo.material_id,
+            prw.process_id
+
+    </select>
 </mapper>

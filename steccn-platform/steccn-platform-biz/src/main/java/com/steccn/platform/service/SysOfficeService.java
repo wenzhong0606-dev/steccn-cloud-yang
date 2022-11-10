@@ -108,4 +108,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto);
+
+    /**
+     * 根据孩子id获取父亲节点数据
+     * @param childId 货架id
+     * @return
+     */
+    Map<Long,SysOfficeVO> parentOfficeMap(List<Long> childId);
 }

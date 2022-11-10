@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -283,6 +284,21 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return sysOfficeParentVOS;
         }
         return null;
+    }
+
+    @Override
+    public Map<Long, SysOfficeVO> parentOfficeMap(List<Long> childId) {
+
+        Map<Long, SysOfficeVO> resMap = Maps.newHashMap();
+
+        List<SysOfficeVO> sysOfficeVOList = this.baseMapper.listByChildIds(new ArrayList<>(childId));
+        if (CollUtil.isNotEmpty(sysOfficeVOList)) {
+            for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+                resMap.put(sysOfficeVO.getId().longValue(), sysOfficeVO);
+            }
+        }
+        return resMap;
+
     }
 
     /**
