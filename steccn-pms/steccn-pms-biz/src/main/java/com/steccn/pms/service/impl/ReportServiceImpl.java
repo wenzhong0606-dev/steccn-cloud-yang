@@ -477,7 +477,7 @@ public class ReportServiceImpl implements ReportService {
         Map<Long, ProduceOrderProcessNumVO> defaultMaterialNumMap = Maps.newHashMap();
         ProduceOrderProcessNumVO defaultProduceOrderProcessNumVO = new ProduceOrderProcessNumVO();
 
-        //查询工序需要的物料,兼容所有的工序
+        //查询工序需要的物料,兼容所有的工序物料
         Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, processIdSet);
         Assert.notEmpty(materialProcessMap, "工序信息为配置物料信息，暂无报表数据");
         List<BaseReportHeaderVO> module = Lists.newArrayList();
@@ -501,10 +501,17 @@ public class ReportServiceImpl implements ReportService {
         workShopMap.forEach((workshop, productLineList) -> {
             //根据产线遍历
             for (SysOfficeVO productLine : productLineList) {
+                //产线统计
+                Map<Long, Map<Long, BigDecimal>> productCountMap1 = Maps.newHashMap();
+                Map<Long, Map<Long, BigDecimal>> productCountMap2 = Maps.newHashMap();
                 //过滤出产线数据并将产线数据分成不同班次
                 Map<Long, List<FurtherIngredientMapperVO>> lineDataMap = dataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.groupingBy(FurtherIngredientMapperVO::getClassesId));
                 //遍历不同的班次
                 for (Map.Entry<Long, List<FurtherIngredientMapperVO>> classEntry : lineDataMap.entrySet()) {
+                    //班次统计
+                    Map<Long, Map<Long, BigDecimal>> classesCountMap1 = Maps.newHashMap();
+                    Map<Long, Map<Long, BigDecimal>> classesCountMap2 = Maps.newHashMap();
+
                     Map<Long, List<FurtherIngredientMapperVO>> produceOrderMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherIngredientMapperVO::getProduceOrderId));
                     //获取班次的数据
                     SysDictVO sysDictVO = classMap.get(classEntry.getKey());
@@ -519,13 +526,40 @@ public class ReportServiceImpl implements ReportService {
                             for (BaseSelectVO<Long> mBase : v) {
                                 ProduceOrderProcessNumVO materialBase = materialNumMap.getOrDefault(mBase.getId(), defaultProduceOrderProcessNumVO);
                                 strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(materialBase.getQuantity()), BigDecimalUtil.format(materialBase.getAvaQuantity()))));
+                                BigDecimalUtil.biAccumulate(classesCountMap1, k, mBase.getId(), materialBase.getQuantity());
+                                BigDecimalUtil.biAccumulate(classesCountMap2, k, mBase.getId(), materialBase.getAvaQuantity());
+                                BigDecimalUtil.biAccumulate(productCountMap1, k, mBase.getId(), materialBase.getQuantity());
+                                BigDecimalUtil.biAccumulate(productCountMap2, k, mBase.getId(), materialBase.getAvaQuantity());
                             }
                             processModule.add(new FurtherValueVO(strList));
                         });
                         //往列表中添加数据
                         tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, defaultSpecList));
                     }
+                    List<FurtherValueVO> classModuleList = Lists.newArrayList();
+                    materialProcessMap.forEach((k, v) -> {
+                        List<FurtherValueStrVO> strList = Lists.newArrayList();
+                        for (BaseSelectVO<Long> mBase : v) {
+                            BigDecimal classBig1 = classesCountMap1.get(k).get(mBase.getId());
+                            BigDecimal classBig2 = classesCountMap2.get(k).get(mBase.getId());
+                            strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(classBig1), BigDecimalUtil.format(classBig2))));
+                        }
+                        classModuleList.add(new FurtherValueVO(strList));
+                    });
+                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, defaultSpecList));
                 }
+
+                List<FurtherValueVO> lineModuleList = Lists.newArrayList();
+                materialProcessMap.forEach((k, v) -> {
+                    List<FurtherValueStrVO> strList = Lists.newArrayList();
+                    for (BaseSelectVO<Long> mBase : v) {
+                        BigDecimal lineBig1 = productCountMap1.get(k).get(mBase.getId());
+                        BigDecimal lineBig2 = productCountMap2.get(k).get(mBase.getId());
+                        strList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(lineBig1), BigDecimalUtil.format(lineBig2))));
+                    }
+                    lineModuleList.add(new FurtherValueVO(strList));
+                });
+                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, defaultSpecList));
             }
         });
         vo.setTableData(tableData);
