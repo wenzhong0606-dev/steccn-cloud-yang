@@ -23,7 +23,6 @@ public class PmCraftRouteModuleDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("主键id")
-    @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
 
