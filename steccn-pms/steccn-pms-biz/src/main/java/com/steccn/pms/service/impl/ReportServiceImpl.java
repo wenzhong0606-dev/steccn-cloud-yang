@@ -60,6 +60,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
+        //type data 0  line 1 workshop 2 total 3
+
         List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
 
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
@@ -574,11 +576,11 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
         //根据条件确定生产订单
-
-        //
-
-
-        return null;
+        List<SubstrateIngredientVO> dataList = completeDeliveryService.subIngredientReport(dto);
+        dataList.forEach(ele -> {
+            //根据订单和子物料查询工位信息【订单的子物料关联工序，工序关联可执行工位】
+        });
+        return dataList;
     }
 
     /**

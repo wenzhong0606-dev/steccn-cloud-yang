@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -34,5 +35,8 @@ public class SubstrateIngredientVO implements Serializable {
 
     @ApiModelProperty("投料数量(t)")
     private BigDecimal outTon;
+
+    @ApiModelProperty("生产订单id")
+    private Set<Long> produceOrderIdSet;
 
 }

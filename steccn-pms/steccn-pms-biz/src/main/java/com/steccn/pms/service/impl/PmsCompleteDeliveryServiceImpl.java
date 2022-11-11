@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -17,18 +19,16 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
+import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
-import com.steccn.pms.vo.PmsCompleteDeliveryVO;
-import com.steccn.pms.vo.PmsProduceOrderCraftVO;
-import com.steccn.pms.vo.ProduceOrderProcessNumVO;
+import com.steccn.pms.vo.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -162,6 +162,35 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
+        List<SubstrateIngredientVO> resList = Lists.newArrayList();
+
+        List<SubstrateIngredientConsumeVO> dataList = this.baseMapper.subIngredientReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        if (CollUtil.isNotEmpty(dataList)) {
+            dataList.forEach(ele -> {
+                SubstrateIngredientVO vo = new SubstrateIngredientVO();
+                BeanUtils.copyProperties(ele, vo);
+                vo.setOutKg(ele.getQuantity());
+                vo.setOutTon(BigDecimalUtil.divide(ele.getQuantity(), BigDecimal.valueOf(1000)));
+                if (StrUtil.isNotBlank(ele.getProduceOrderIdStr())) {
+                    String[] split = ele.getProduceOrderIdStr().split(",");
+                    Set<Long> produceOrderIdSet = Sets.newHashSet();
+                    for (String str : split) {
+                        try {
+                            produceOrderIdSet.add(Long.parseLong(str));
+                        } catch (Exception e) {
+                            log.error(e.getLocalizedMessage());
+                        }
+                    }
+                    vo.setProduceOrderIdSet(produceOrderIdSet);
+                }
+                resList.add(vo);
+            });
+        }
+        return resList;
     }
 }
 

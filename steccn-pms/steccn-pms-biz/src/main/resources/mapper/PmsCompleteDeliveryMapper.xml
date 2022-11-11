@@ -88,4 +88,34 @@
 
 
     </select>
+    <select id="subIngredientReport" resultType="com.steccn.pms.vo.SubstrateIngredientConsumeVO">
+        SELECT
+            info.material_id,
+            any_value ( info.material_name ) as material_name,
+            any_value ( info.material_code ) as material_code,
+            sum( info.quantity ) AS quantity ,
+            GROUP_CONCAT(DISTINCT pcd.produce_order_id) as produceOrderIdStr
+        FROM
+            pms_report_work prw
+                JOIN pms_complete_delivery pcd on prw.id = pcd.report_work_id
+                JOIN pms_complete_delivery_info info ON info.complete_delivery_id = pcd.id
+        WHERE
+            pcd.del_flag = 0
+          AND info.del_flag = 0
+          AND DATE_FORMAT( pcd.create_time, '%Y-%m-%d' ) = #{date}
+        <if test="productLineIdList !=null and productLineIdList.size > 0">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="line" open="(" close=")" separator=",">
+                #{line}
+            </foreach>
+        </if>
+        <if test="classesIdList !=null and classesIdList.size > 0">
+            AND prw.classes_id in
+            <foreach collection="classesIdList" item="classes" open="(" close=")" separator=",">
+                #{classes}
+            </foreach>
+        </if>
+        GROUP BY
+            info.material_id
+    </select>
 </mapper>
