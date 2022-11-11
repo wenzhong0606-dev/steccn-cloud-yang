@@ -20,14 +20,29 @@ public class ProducePassRateVO {
     private Long classesId;
 
     /**
+     * 班次名字
+     */
+    private String classesName;
+
+    /**
      * 车间id
      */
     private Integer workshopId;
 
     /**
+     * 车间名字
+     */
+    private String workshopName;
+
+    /**
      * 产线id
      */
     private Integer productLineId;
+
+    /**
+     * 产线名字
+     */
+    private String productLineName;
 
     private BigDecimal passRate;
 }
