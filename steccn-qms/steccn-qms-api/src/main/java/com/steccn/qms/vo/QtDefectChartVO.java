@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtThirdPartyDefectContentDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,7 +16,7 @@ import java.util.Objects;
  */
 @Data
 @ApiModel("部门分析驾驶舱返回VO")
-public class QtDefectChartVO {
+public class QtDefectChartVO<K,V> {
     /**
      * 部门分析驾驶舱概况的卡片名称
      */
@@ -56,12 +57,12 @@ public class QtDefectChartVO {
     /**
      * 横坐标,记录星期一到日
      */
-    private List<Object> xData;
+    private List<K> xData;
 
     /**
      * 纵坐标，记录一周每天的数值
      */
-    private List<Integer> yData;
+    private List<V> yData;
 
     /**
      * 目标值
