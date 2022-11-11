@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class MaterialRequisitionPlanController {
 
-    @ApiOperation("领料计划")
-    @PostMapping("/list")
-    public R<Page<MaterialRequisitionPlanVO>> planPageList(@RequestBody MaterialRequisitionPlanDTO dto) {
-        return R.success(pmsMaterialRequisitionService.planPageList(dto));
-    }
+//    @ApiOperation("领料计划")
+//    @PostMapping("/list")
+//    public R<Page<MaterialRequisitionPlanVO>> planPageList(@RequestBody MaterialRequisitionPlanDTO dto) {
+//        return R.success(pmsMaterialRequisitionService.planPageList(dto));
+//    }
 }
