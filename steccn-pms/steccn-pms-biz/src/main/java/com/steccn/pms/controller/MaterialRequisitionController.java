@@ -8,7 +8,9 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
+import com.steccn.pms.dto.MaterialRequisitionPlanDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
+import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -69,8 +71,4 @@ public class MaterialRequisitionController {
     public R<Boolean> approval(@Validated(UpdateGroup.class) @RequestBody MaterialRequisitionApprovalDTO dto) {
         return R.success(pmsMaterialRequisitionService.approval(dto));
     }
-//
-//    @ApiOperation("领料计划")
-//    @PostMapping("/plan/list")
-//    public R<Page<>>
 }

@@ -305,6 +305,8 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
         Set<Long> ids = Sets.newHashSet();
         Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds()));
+        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
+        mesMaterialInventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
         //获取独立需求类型id
         Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
         //获取订单需求类型id
@@ -317,7 +319,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             //1.2 获取物料已有的mrp计划
             List<PmsMrpInfo> mrpInfoList = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, key));
             //1.3 获取物料的库存可用信息
-            BigDecimal availableQuantity = inventoryDTOMap.get(key).getAvailableQuantity();
+            BigDecimal availableQuantity = inventoryDTOMap.getOrDefault(key, mesMaterialInventoryDTO).getAvailableQuantity();
             //1.4 对物料计划数据生成 mrp需求数据
             for (PmsProducePlan pmsProducePlan : value) {
                 infoList.add(pmsMrpInfoService.create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(), BigDecimal.ZERO, pmsProducePlan.getMaterialId(),
