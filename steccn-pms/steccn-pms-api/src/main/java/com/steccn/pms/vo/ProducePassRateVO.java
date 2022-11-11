@@ -14,7 +14,20 @@ public class ProducePassRateVO {
 
     private LocalDate date;
 
-    private Long groupId;
+    /**
+     * 班次id
+     */
+    private Long classesId;
+
+    /**
+     * 车间id
+     */
+    private Integer workshopId;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
 
     private BigDecimal passRate;
 }

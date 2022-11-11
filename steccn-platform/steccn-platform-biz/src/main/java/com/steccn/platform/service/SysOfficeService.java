@@ -114,5 +114,5 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @param childId 货架id
      * @return
      */
-    Map<Long,SysOfficeVO> parentOfficeMap(List<Long> childId);
+    Map<Integer,SysOfficeVO> parentOfficeMap(List<Integer> childId);
 }

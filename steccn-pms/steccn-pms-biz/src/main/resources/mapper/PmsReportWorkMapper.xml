@@ -170,27 +170,15 @@
     <select id="selectAllGroupByDate" resultType="com.steccn.pms.vo.PmsReportWorkGroupVO">
         SELECT
             DATE_FORMAT(create_time,'%Y-%m-%d') date,
-        <if test="groupType == 0">
-            classes_id groupId,
-        </if>
-        <if test="groupType == 1">
-            product_line_id groupId,
-        </if>
+            classes_id classesId,
+            product_line_id productLineId,
             sum(process_quantity) quantity
         FROM
             pms_report_work
         WHERE
-        <foreach collection="productLineIdList" item="id"  open="(" close=")" separator=",">
-            #{id}
-        </foreach> and (c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime})
+            c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
         GROUP BY
-            DATE_FORMAT(create_time,'%Y-%m-%d'),
-        <if test="groupType == 0">
-            classes_id
-        </if>
-        <if test="groupType == 1">
-            product_line_id
-        </if>
+            DATE_FORMAT(create_time,'%Y-%m-%d'),product_line_id,classes_id
 
     </select>
     <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">

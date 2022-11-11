@@ -287,14 +287,14 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
-    public Map<Long, SysOfficeVO> parentOfficeMap(List<Long> childId) {
+    public Map<Integer, SysOfficeVO> parentOfficeMap(List<Integer> childId) {
 
-        Map<Long, SysOfficeVO> resMap = Maps.newHashMap();
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
 
         List<SysOfficeVO> sysOfficeVOList = this.baseMapper.listByChildIds(new ArrayList<>(childId));
         if (CollUtil.isNotEmpty(sysOfficeVOList)) {
             for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
-                resMap.put(sysOfficeVO.getId().longValue(), sysOfficeVO);
+                resMap.put(sysOfficeVO.getId(), sysOfficeVO);
             }
         }
         return resMap;

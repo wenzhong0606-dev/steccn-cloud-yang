@@ -32,7 +32,7 @@ public interface SysOfficeMapper extends BaseMapper<SysOffice> {
     List<SysOfficeVO> listByParentCode(@Param("codes") List<String> codes, @Param("officeType") String officeType);
 
 
-    List<SysOfficeVO> listByChildIds(@Param("childIdList") List<Long> childIdList);
+    List<SysOfficeVO> listByChildIds(@Param("childIdList") List<Integer> childIdList);
 }
 
 

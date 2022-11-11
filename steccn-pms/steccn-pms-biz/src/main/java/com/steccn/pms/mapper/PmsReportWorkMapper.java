@@ -50,17 +50,13 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     List<PmsReportWork> dateProductNum(@Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
 
     /**
-     * 根据日期和产线list获取产量
+     * 根据日分组获取产量
      *
-     * @param productLineIdList
      * @param startDate
      * @param endDate
      * @return
      */
-    List<PmsReportWorkGroupVO> selectAllGroupByDate(@Param("productLineIdList") List<Integer> productLineIdList
-            , @Param("startDate") LocalDateTime startDate
-            , @Param("endDate") LocalDateTime endDate
-            , @Param("groupType") Integer groupType);
+    List<PmsReportWorkGroupVO> selectAllGroupByDate(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     /**
      * 基于产线，班次，物料，工序分组报工数据【加工，合格，不良】

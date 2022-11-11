@@ -17,6 +17,16 @@ public class PmsReportWorkGroupVO {
 
     private BigDecimal quantity;
 
-    private Long groupId;
+    private Long classesId;
+
+    /**
+     * 车间id
+     */
+    private Integer workshopId;
+
+    /**
+     * 产线id
+     */
+    private Integer productLineId;
 
 }

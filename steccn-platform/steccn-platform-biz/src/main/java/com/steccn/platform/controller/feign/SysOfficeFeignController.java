@@ -104,7 +104,7 @@ public class SysOfficeFeignController {
 
     @PostMapping("/list/parentOffice")
     @ApiOperation("根据子id获取父级节点数据")
-    public R<Map<Long, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Long> childIdList){
+    public R<Map<Integer, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Integer> childIdList){
         return R.success(sysOfficeService.parentOfficeMap(childIdList));
     }
 }

@@ -17,9 +17,4 @@ public class ProducePassRateDTO {
 
     private LocalDateTime endDate;
 
-    private Integer groupType;
-
-    private List<Integer> productionLineIdList;
-
-    private List<Long> classIdList;
 }
