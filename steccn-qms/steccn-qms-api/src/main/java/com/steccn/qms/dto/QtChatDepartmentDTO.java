@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sun.istack.internal.NotNull;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -18,6 +20,8 @@ import java.util.List;
  * @date 2022/11/08
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @ApiModel("部门分析驾驶舱模块DTO")
 public class QtChatDepartmentDTO implements Serializable {
 

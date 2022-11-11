@@ -836,13 +836,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
         R<PmsProduceOrderVO> pmsProduceOrderVO = remotePmsFeignApi.code(code);
 
-        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
-        sysOfficeParentDTO.setId(pmsProduceOrderVO.getData().getProductionLineId());
-        sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-        //根据产线查询父级车间
-        SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(Integer.valueOf(PmManagerConstant.STATE_9))).get();
-        qtProduceOrderLineVO.setWorkshopId(Integer.valueOf(PmManagerConstant.STATE_8));
-        qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
+        if (pmsProduceOrderVO.getData()!=null) {
+            SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            sysOfficeParentDTO.setId(pmsProduceOrderVO.getData().getProductionLineId());
+            sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
+            //根据产线查询父级车间
+            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(Integer.valueOf(PmManagerConstant.STATE_9))).get();
+            qtProduceOrderLineVO.setWorkshopId(Integer.valueOf(PmManagerConstant.STATE_8));
+            qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
+        }
 
         return qtProduceOrderLineVO;
     }

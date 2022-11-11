@@ -228,4 +228,10 @@ public class LocalDateUtil {
         return firstAndLastDateList;
     }
 
+    public static String getWeekDay(){
+        LocalDate localDate = LocalDate.now();
+        String k = String.valueOf(localDate.getDayOfWeek());
+        return k;
+    }
+
 }

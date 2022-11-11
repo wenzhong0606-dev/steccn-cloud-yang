@@ -8,6 +8,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 部门分析驾驶舱返回VO
@@ -55,7 +56,7 @@ public class QtDefectChartVO {
     /**
      * 横坐标,记录星期一到日
      */
-    private List<String> xData;
+    private List<Object> xData;
 
     /**
      * 纵坐标，记录一周每天的数值

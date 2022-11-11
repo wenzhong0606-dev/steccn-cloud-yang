@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,16 +16,21 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("qt/chart/department")
+@RequestMapping("qms/chart/department")
 @ApiModel("部门分析驾驶舱")
 @Slf4j
 public class QtChartDepartmentController {
 
-    public QtChartDepartmentService qtChartDepartmentService;
+    private final QtChartDepartmentService qtChartDepartmentService;
 
-    @PostMapping("/info")
-    public R<List<QtDefectChartVO>> getChartDepartmentInfo(QtChatDepartmentDTO dto) {
+    @PostMapping("/info/jp")
+    public R<QtDefectChartVO> getChartDepartmentInfo(@RequestBody QtChatDepartmentDTO dto) {
         return R.success(qtChartDepartmentService.getChartDepartmentInfo(dto));
+    }
+
+    @PostMapping("/info/sjg")
+    public R<QtDefectChartVO> getChartDepartmentInfoSJG(@RequestBody QtChatDepartmentDTO dto) {
+        return R.success(qtChartDepartmentService.getChartDepartmentInfoSJG(dto));
     }
 
 }

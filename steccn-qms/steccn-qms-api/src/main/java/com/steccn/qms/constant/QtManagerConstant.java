@@ -161,6 +161,21 @@ public interface QtManagerConstant {
         private String dayName;
     }
 
+        /**
+         * 车间枚举
+         */
+        @Getter
+        @AllArgsConstructor
+        enum WORKSHOP {
+            JPCJ1("STEC001001", "基片一车间"),
+            JPCJ2("STEC001002", "基片二车间"),
+            SJGCJ1("STEC002", "深加工一车间"),
+            SJGCJ2("STEC003", "深加工二车间"),
+            SJGCJ3("STEC004", "深加工三车间");
+
+            private String code;
+            private String workShopName;
+        }
 
 
     /**
