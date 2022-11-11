@@ -14,6 +14,8 @@ import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
@@ -31,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 public class ReportServiceImpl implements ReportService {
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final PmsReportWorkConsumeService pmsReportWorkConsumeService;
     private final PmsReportWorkMapper pmsReportWorkMapper;
     private final RemoteDictFeignApi remoteDictFeignApi;
@@ -63,16 +65,21 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
         //type data 0  line 1 workshop 2 total 3
-
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+        List<SubstrateDataListVO> defaultSubstrateDataListVOList = Lists.newArrayList();
+        SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
 
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
         //构建表头
         SubstrateReportHeaderVO header = getSubstrateHeader();
         //查询所有数据
-        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto);
+        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        Assert.notEmpty(rowDataList, "数据为空，暂无基片日报表");
+        Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
         //获取班次数据
         List<SysDictVO> classList = getClassList();
+
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
@@ -85,7 +92,6 @@ public class ReportServiceImpl implements ReportService {
         workShopMap.forEach((k, v) -> {
             //车间统计
             Map<Integer, BigDecimal> workshopCountMap = Maps.newHashMap();
-
             //根据产线遍历
             for (SysOfficeVO productLine : v) {
                 //产线数量合计-早班，晚班，合计
@@ -109,10 +115,9 @@ public class ReportServiceImpl implements ReportService {
                     //遍历班次
                     for (SysDictVO c : classList) {
                         //获取班次信息
-                        List<SubstrateDataListVO> classData = classDataMap.get(c.getId());
+                        List<SubstrateDataListVO> classData = classDataMap.getOrDefault(c.getId(), defaultSubstrateDataListVOList);
                         //将classData分成不同类型
                         Map<Integer, SubstrateDataListVO> typeMap = Maps.newHashMap();
-                        SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
                         classData.forEach(cld -> typeMap.put(cld.getType(), cld));
                         SubstrateDataListVO typeVO0 = typeMap.getOrDefault(PmReportConstant.TYPE_0, defaultSubstrateDataListVO);
                         SubstrateDataListVO typeVO1 = typeMap.getOrDefault(PmReportConstant.TYPE_1, defaultSubstrateDataListVO);
@@ -120,31 +125,31 @@ public class ReportServiceImpl implements ReportService {
                         proCount = BigDecimalUtil.add(proCount, typeVO1.getQuantity());
                         if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
                             //早班
-                            row.setMorning(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
+                            row.setMorning(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(typeVO1.getQuantity())));
                             BigDecimalUtil.accumulate(countMap1, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap1, 1, typeVO1.getQuantity());
                         } else {
                             //晚班
-                            row.setNight(Arrays.asList(String.valueOf(typeVO0.getQuantity()), String.valueOf(typeVO1.getQuantity())));
+                            row.setNight(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(typeVO1.getQuantity())));
                             BigDecimalUtil.accumulate(countMap2, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap2, 1, typeVO1.getQuantity());
                         }
                     }
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
                     BigDecimalUtil.accumulate(countMap3, 1, proCount);
-                    row.setSpecList(defaultSpecList);
-                    row.setTotal(Arrays.asList(String.valueOf(inCount), String.valueOf(proCount)));
+                    row.setTotal(Arrays.asList(BigDecimalUtil.format(inCount), BigDecimalUtil.format(proCount)));
+                    EqpSpareVO eqpSpareVO = specMap.getOrDefault(entry.getKey(), defaultEqpSpareVO);
+                    row.setSpecList(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity())));
                     productLineVOList.add(row);
                 }
                 SubstrateDayReportListVO rowTotal = new SubstrateDayReportListVO();
                 rowTotal.setType(PmReportConstant.TYPE_1);
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
-                rowTotal.setMorning(Arrays.asList(String.valueOf(countMap1.get(0)), String.valueOf(countMap1.get(1))));
-                rowTotal.setNight(Arrays.asList(String.valueOf(countMap2.get(0)), String.valueOf(countMap2.get(1))));
-                rowTotal.setTotal(Arrays.asList(String.valueOf(countMap3.get(0)), String.valueOf(countMap3.get(1))));
+                rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
+                rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                rowTotal.setTotal(Arrays.asList(BigDecimalUtil.format(countMap3.get(0)), BigDecimalUtil.format(countMap3.get(1))));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
-
                 productLineVOList.add(rowTotal);
 
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
@@ -206,6 +211,7 @@ public class ReportServiceImpl implements ReportService {
             SubstrateDayReportListVO subVo = rowData(new SysOfficeVO(), Arrays.asList(allCountMap.get(idx), allCountMap.get(idx), allCountMap.get(idx)), consumeEnum.getName());
             subVo.setWorkshopName("总计");
             subVo.setProductLineName("总计");
+            subVo.setSpecList(Arrays.asList(consumeEnum.getName(), consumeEnum.getName(), consumeEnum.getName()));
             subVo.setType(PmReportConstant.TYPE_3);
             productLineVOList.add(subVo);
         }
@@ -225,6 +231,7 @@ public class ReportServiceImpl implements ReportService {
             subVo.setWorkshopName(productLine.getParentName());
             subVo.setProductLineName("总计");
             subVo.setType(PmReportConstant.TYPE_2);
+            subVo.setSpecList(Arrays.asList(consumeEnum.getName(), consumeEnum.getName(), consumeEnum.getName()));
             productLineVOList.add(subVo);
         }
     }
@@ -271,11 +278,11 @@ public class ReportServiceImpl implements ReportService {
     /**
      * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
      *
-     * @param productLine
-     * @param morningBigDecimal
-     * @param nightBigDecimal
-     * @param energyList
-     * @return
+     * @param productLine       产线id
+     * @param morningBigDecimal 早上数量
+     * @param nightBigDecimal   晚上数量
+     * @param energyList        能耗列表
+     * @return 统计数据
      */
     private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList, Map<Integer, BigDecimal> workshopCountMap) {
         BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().get(0));
@@ -305,9 +312,9 @@ public class ReportServiceImpl implements ReportService {
         row.setProductLineName(productLine.getOfficeName());
         row.setType(PmReportConstant.TYPE_1);
         row.setSpecList(Arrays.asList(specStr, specStr, specStr));
-        String dataStr1 = String.valueOf(dataList.get(0));
-        String dataStr2 = String.valueOf(dataList.get(1));
-        String dataStr3 = String.valueOf(dataList.get(2));
+        String dataStr1 = BigDecimalUtil.format(dataList.get(0));
+        String dataStr2 = BigDecimalUtil.format(dataList.get(1));
+        String dataStr3 = BigDecimalUtil.format(dataList.get(2));
         row.setMorning(Arrays.asList(dataStr1, dataStr1));
         row.setNight(Arrays.asList(dataStr2, dataStr2));
         row.setTotal(Arrays.asList(dataStr3, dataStr3));
@@ -318,12 +325,15 @@ public class ReportServiceImpl implements ReportService {
     public FurtherProduceReportVO furtherProduceDayReport(PmsDayReportDTO dto) {
 
         FurtherProduceReportVO vo = new FurtherProduceReportVO();
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
-        vo.setSpecsNum(defaultSpecList.size());
+        vo.setSpecsNum(PmReportConstant.TYPE_3);
 
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无报表信息");
+
+        Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //遍历所有的物料查询完工数量
         Set<Long> materialSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
@@ -424,21 +434,24 @@ public class ReportServiceImpl implements ReportService {
                         countIn(classEntry.getKey(), classCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), lineCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), workshopCountMap, orDefaultMap);
-                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, defaultSpecList);
+
+                        EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialEntry.getKey(), defaultEqpSpareVO);
+                        List<String> specDataList = Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity()));
+                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList);
                         tableData.add(rowData);
                     }
                     //班次的合计
-                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, defaultSpecList);
+                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, Arrays.asList("合计", "合计", "合计"));
                     tableData.add(classCountRow);
                 }
                 //产线的合计
-                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), defaultSpecList);
+                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
                 lineCountRow.setClassName("合计");
                 lineCountRow.setType(PmReportConstant.TYPE_2);
                 tableData.add(lineCountRow);
             }
             //车间的合计
-            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), defaultSpecList);
+            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
             workshopCountRow.setClassName("合计");
             workshopCountRow.setProductLineName("合计");
             workshopCountRow.setType(PmReportConstant.TYPE_3);
@@ -451,16 +464,17 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto) {
-        //定义默认规格
-
         //每一行数据是一个生产订单生产的主物料
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
-        vo.setSpecsNum(defaultSpecList.size());
+        vo.setSpecsNum(PmReportConstant.TYPE_3);
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
+        Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
         //定义
         List<FurtherIngredientReportListVO> tableData = Lists.newArrayList();
 
@@ -542,8 +556,9 @@ public class ReportServiceImpl implements ReportService {
                             }
                             processModule.add(new FurtherValueVO(strList));
                         });
-                        //往列表中添加数据
-                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, defaultSpecList));
+                        EqpSpareVO specDataVo = specMap.getOrDefault(po.getValue().get(0).getMaterialId(), defaultEqpSpareVO);
+                        List<String> specDataList = Arrays.asList(BigDecimalUtil.format(specDataVo.getLengthQuantity()), BigDecimalUtil.format(specDataVo.getWideQuantity()), BigDecimalUtil.format(specDataVo.getHighQuantity()));
+                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, specDataList));
                     }
                     List<FurtherValueVO> classModuleList = Lists.newArrayList();
                     materialProcessMap.forEach((k, v) -> {
@@ -555,7 +570,7 @@ public class ReportServiceImpl implements ReportService {
                         }
                         classModuleList.add(new FurtherValueVO(strList));
                     });
-                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, defaultSpecList));
+                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, Arrays.asList("合计", "合计", "合计")));
                 }
 
                 List<FurtherValueVO> lineModuleList = Lists.newArrayList();
@@ -568,7 +583,7 @@ public class ReportServiceImpl implements ReportService {
                     }
                     lineModuleList.add(new FurtherValueVO(strList));
                 });
-                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, defaultSpecList));
+                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, Arrays.asList("合计", "合计", "合计")));
             }
         });
         vo.setTableData(tableData);
@@ -589,6 +604,7 @@ public class ReportServiceImpl implements ReportService {
             }
         });
         Map<Long, Set<Long>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
+        log.info("{}", materialStationMap);
         return dataList;
     }
 
