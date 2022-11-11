@@ -191,6 +191,7 @@
         </if>
           AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
         GROUP BY
+            prw.produce_order_id,
             prw.product_line_id,
             prw.classes_id,
             prw.process_id,

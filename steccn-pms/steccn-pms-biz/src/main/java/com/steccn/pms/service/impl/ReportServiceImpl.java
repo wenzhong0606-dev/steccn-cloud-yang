@@ -79,6 +79,7 @@ public class ReportServiceImpl implements ReportService {
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
         //获取班次数据
         List<SysDictVO> classList = getClassList();
+
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
@@ -324,12 +325,15 @@ public class ReportServiceImpl implements ReportService {
     public FurtherProduceReportVO furtherProduceDayReport(PmsDayReportDTO dto) {
 
         FurtherProduceReportVO vo = new FurtherProduceReportVO();
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
-        vo.setSpecsNum(defaultSpecList.size());
+        vo.setSpecsNum(PmReportConstant.TYPE_3);
 
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无报表信息");
+
+        Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //遍历所有的物料查询完工数量
         Set<Long> materialSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
@@ -430,21 +434,24 @@ public class ReportServiceImpl implements ReportService {
                         countIn(classEntry.getKey(), classCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), lineCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), workshopCountMap, orDefaultMap);
-                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, defaultSpecList);
+
+                        EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialEntry.getKey(), defaultEqpSpareVO);
+                        List<String> specDataList = Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity()));
+                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList);
                         tableData.add(rowData);
                     }
                     //班次的合计
-                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, defaultSpecList);
+                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, Arrays.asList("合计", "合计", "合计"));
                     tableData.add(classCountRow);
                 }
                 //产线的合计
-                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), defaultSpecList);
+                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
                 lineCountRow.setClassName("合计");
                 lineCountRow.setType(PmReportConstant.TYPE_2);
                 tableData.add(lineCountRow);
             }
             //车间的合计
-            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), defaultSpecList);
+            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), Arrays.asList("合计", "合计", "合计"));
             workshopCountRow.setClassName("合计");
             workshopCountRow.setProductLineName("合计");
             workshopCountRow.setType(PmReportConstant.TYPE_3);
@@ -460,11 +467,14 @@ public class ReportServiceImpl implements ReportService {
         //每一行数据是一个生产订单生产的主物料
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
-        vo.setSpecsNum(defaultSpecList.size());
+        vo.setSpecsNum(PmReportConstant.TYPE_3);
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
+        Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
         //定义
         List<FurtherIngredientReportListVO> tableData = Lists.newArrayList();
 
@@ -546,8 +556,9 @@ public class ReportServiceImpl implements ReportService {
                             }
                             processModule.add(new FurtherValueVO(strList));
                         });
-                        //往列表中添加数据
-                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, defaultSpecList));
+                        EqpSpareVO specDataVo = specMap.getOrDefault(po.getValue().get(0).getMaterialId(), defaultEqpSpareVO);
+                        List<String> specDataList = Arrays.asList(BigDecimalUtil.format(specDataVo.getLengthQuantity()), BigDecimalUtil.format(specDataVo.getWideQuantity()), BigDecimalUtil.format(specDataVo.getHighQuantity()));
+                        tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, processModule, specDataList));
                     }
                     List<FurtherValueVO> classModuleList = Lists.newArrayList();
                     materialProcessMap.forEach((k, v) -> {
@@ -559,7 +570,7 @@ public class ReportServiceImpl implements ReportService {
                         }
                         classModuleList.add(new FurtherValueVO(strList));
                     });
-                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, defaultSpecList));
+                    tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classModuleList, Arrays.asList("合计", "合计", "合计")));
                 }
 
                 List<FurtherValueVO> lineModuleList = Lists.newArrayList();
@@ -572,7 +583,7 @@ public class ReportServiceImpl implements ReportService {
                     }
                     lineModuleList.add(new FurtherValueVO(strList));
                 });
-                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, defaultSpecList));
+                tableData.add(getFurtherIngredientReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), "合计"), PmReportConstant.TYPE_2, lineModuleList, Arrays.asList("合计", "合计", "合计")));
             }
         });
         vo.setTableData(tableData);
