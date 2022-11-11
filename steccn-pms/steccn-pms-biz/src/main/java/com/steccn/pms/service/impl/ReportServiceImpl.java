@@ -15,9 +15,11 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.PmProcess;
@@ -61,6 +63,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
     private final PmsCompleteDeliveryService completeDeliveryService;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -77,6 +80,10 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
+        log.info("{}", unitConvertMap);
+
         //获取班次数据
         List<SysDictVO> classList = getClassList();
 

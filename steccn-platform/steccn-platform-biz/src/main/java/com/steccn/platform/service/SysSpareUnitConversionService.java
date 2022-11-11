@@ -2,6 +2,11 @@ package com.steccn.platform.service;
 
 import com.steccn.platform.domain.SysSpareUnitConversion;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -10,4 +15,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysSpareUnitConversionService extends IService<SysSpareUnitConversion> {
 
+    /**
+     * 物料id的单位转换
+     * @param spareSet
+     * @return
+     */
+    Map<Long, List<SysSpareUnitConversionVO>> convert(Set<Long> spareSet);
 }
