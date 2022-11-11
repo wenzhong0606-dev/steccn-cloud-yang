@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -17,6 +18,8 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -34,13 +37,17 @@ import com.steccn.qms.mapper.QtMaterialLinkCheckPlanMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
+import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -944,21 +951,172 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     /**
-     * 深加工/基片巡检合格率趋势
+     * 深加工/基片巡检合格率趋势明细
      * @param dto
      * @return
      */
     @Override
-    public QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto) {
-        //先根据开始时间和完成时间查出这段时间内完成的检验项
-        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getProductWorkshop, dto.getProductWorkshop()).
-                ge(QtCheckTask::getFinishedTime, dto.getDateStart()).
-                le(QtCheckTask::getFinishedTime, dto.getDateEnd());
-        if (Objects.nonNull(dto.getProductWorkshop())){
+    public List<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
+        //先根据开始时间和结束时间查出这段时间内所有完成的符合条件的检验项
+        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
+                //车间
+                .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
+                //产线
+                .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                //班次
+                .and(Objects.nonNull(dto.getWorkingOrder()),wrapper->wrapper.eq(QtCheckTask::getClassesId,dto.getWorkingOrder()))
+                //物料
+                .and(Objects.nonNull(dto.getMaterialId()),wrapper -> wrapper.eq(QtCheckTask::getMaterialId,dto.getMaterialId()))
+                //客户
+                .apply(Objects.nonNull(dto.getCustomer()),"JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))",dto.getCustomer());
 
+
+        //构建返回数据集合
+        List<QtDeepOrSubAcceptabilityDetailVO> detailVOList =Lists.newArrayList();
+        //判断是深加工车间还是基片车间
+        if (dto.getName().equals(QtManagerConstant.DEEP_OFFICE_NAME)){
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_ONE).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_TWO).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_THREE);
+        }
+        if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)){
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_ONE).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_TWO);
         }
 
-        return null;
+        //根据对比条件筛选
+        if (dto.getCompare().equals("班次")){
+
+        }
+        //根据完成时间筛选
+        condition.ge(QtCheckTask::getFinishedTime, dto.getDateStart())
+                .le(QtCheckTask::getFinishedTime, dto.getDateEnd())
+                .groupBy(QtCheckTask::getClassesId);
+
+        List<QtCheckTask> qtCheckTasks = list(condition);
+        qtCheckTasks.forEach(qtCheckTask -> {
+            QtDeepOrSubAcceptabilityDetailVO vo = new QtDeepOrSubAcceptabilityDetailVO();
+            BeanUtils.copyProperties(qtCheckTask,vo);
+            BigDecimal checkNum = new BigDecimal(Integer.parseInt(qtCheckTask.getCheckNum().toString()));
+            BigDecimal goodNum = new BigDecimal(Integer.parseInt(qtCheckTask.getGoodNum().toString()));
+            vo.setAcceptability(goodNum.divide(checkNum , 2, BigDecimal.ROUND_HALF_UP));
+            vo.setFinishedTime(LocalDateUtil.format(qtCheckTask.getFinishedTime(),"YYYY-MM-DD hh:mm"));
+            vo.setClassesDate(LocalDateUtil.format(qtCheckTask.getCreateTime(),"YYYY-MM-DD"));
+            detailVOList.add(vo);
+        });
+
+        return detailVOList;
+    }
+
+    @Override
+    public QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto) {
+        //先根据开始时间和结束时间查出这段时间内所有完成的符合条件的检验项
+        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
+                //车间
+                .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
+                //产线
+                .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                //班次
+                .and(Objects.nonNull(dto.getWorkingOrder()),wrapper->wrapper.eq(QtCheckTask::getClassesId,dto.getWorkingOrder()))
+                //物料
+                .and(Objects.nonNull(dto.getMaterialId()),wrapper -> wrapper.eq(QtCheckTask::getMaterialId,dto.getMaterialId()))
+                //客户
+                .apply(Objects.nonNull(dto.getCustomer()),"JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))",dto.getCustomer());
+
+        //判断是深加工车间还是基片车间
+        if (dto.getName().equals(QtManagerConstant.DEEP_OFFICE_NAME)){
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_ONE).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_TWO).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_THREE);
+        }
+        if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)){
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_ONE).or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_TWO);
+        }
+        //根据完成时间筛选
+        condition.ge(QtCheckTask::getFinishedTime, dto.getDateStart())
+                .le(QtCheckTask::getFinishedTime, dto.getDateEnd())
+                .groupBy(QtCheckTask::getClassesId);
+        //创建返回数据的对象
+        QtChartBarVO qtChartBarVO = new QtChartBarVO();
+        String start = LocalDateUtil.localDateFormat(dto.getDateStart(), "yyyy-MM-dd HH:mm:ss");
+        String end = LocalDateUtil.localDateFormat(dto.getDateEnd(), "yyyy-MM-dd HH:mm:ss");
+        List<String> dateList = ShardingTimeUtil.cutDate(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start, end);
+       //加上初始时间
+        if (CollUtil.isEmpty(dateList)){
+
+        }
+        qtChartBarVO.setXAis(dateList);
+
+        QtChartBarDecimalDataVO qtChartBarDecimalDataVO = new QtChartBarDecimalDataVO();
+        //设置BigDecimal集合储存每天平均合格率
+        List<BigDecimal> dayRate = Lists.newArrayList();
+
+        //设置集合储存每天的白班的的合格率
+        List<BigDecimal> morningData = Lists.newArrayList();
+
+        //设置集合每天的夜班的合格率
+        List<BigDecimal> nightData = Lists.newArrayList();
+
+        //设置柱状图柱子
+        QtChartBarSeriesVO qtChartBarSeriesMorningVO = new QtChartBarSeriesVO();
+        QtChartBarSeriesVO qtChartBarSeriesNightVO = new QtChartBarSeriesVO();
+
+        dateList.forEach(d->{
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate date2 = LocalDate.parse(d, fmt);
+            LocalDateTime startTimeOfDay = LocalDateUtil.getStartTimeOfDayStr(date2);
+            LocalDateTime endTimeOfDay = LocalDateUtil.getEndTimeOfDayStr(date2);
+            //去数据库中查询在这一天内的完成的检验任务
+            List<QtCheckTask> qtCheckTasks = this.list(new QueryWrapper<QtCheckTask>().select("any_value(type) type , any_value(material_id) material_id , " +
+                            "any_value(material_workshop) material_workshop , any_value(product_line) product_line , any_value(product_order) product_order , " +
+                            "any_value(product_batch) product_batch , any_value(check_plan_id) check_plan_id , any_value(status) status , any_value(check_num) check_num , " +
+                            "any_value(good_num) good_num , any_value(bad_num) bad_num , any_value(result) result , any_value(del_flag) del_flag , " +
+                            "any_value(supplier) supplier , any_value(customer) customer , any_value(deliver_order) deliver_order , any_value(task_type) task_type ," +
+                            "any_value(deliver_num) deliver_num , any_value(product_workshop) product_workshop").lambda()
+                    //筛选完成的
+                    .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                    .ge(QtCheckTask::getFinishedTime, startTimeOfDay)
+                    .le(QtCheckTask::getFinishedTime, endTimeOfDay).groupBy(QtCheckTask::getClassesId));
+            //获取检验任务每天合格率的平均值
+            int checksum = qtCheckTasks.stream().mapToInt(QtCheckTask::getCheckNum).sum();
+            int goodsum = qtCheckTasks.stream().mapToInt(QtCheckTask::getGoodNum).sum();
+            BigDecimal checkBig = BigDecimal.valueOf((int) checksum);
+            BigDecimal goodBig = BigDecimal.valueOf((int) goodsum);
+            BigDecimal result = BigDecimalUtil.divide(goodBig, checkBig);
+            dayRate.add(result);
+
+            //获取白班的合格率
+             qtCheckTasks.stream().filter(f -> f.getClassesId()
+                     .equals(QtManagerConstant.morningWork)).forEach(q->{
+                 BigDecimal qCheckBig = BigDecimal.valueOf((int) q.getCheckNum());
+                 BigDecimal qGoodBig = BigDecimal.valueOf((int) q.getGoodNum());
+                 BigDecimal morningRate = BigDecimalUtil.divide(qGoodBig, qCheckBig);
+                 morningData.add(morningRate);
+             });
+            qtChartBarSeriesMorningVO.setName(QtManagerConstant.morningWorkName);
+            qtChartBarSeriesMorningVO.setData(morningData);
+            qtCheckTasks.stream().filter(f -> f.getClassesId()
+                    .equals(QtManagerConstant.nightWork)).forEach(q->{
+                BigDecimal qCheckBig = BigDecimal.valueOf((int) q.getCheckNum());
+                BigDecimal qGoodBig = BigDecimal.valueOf((int) q.getGoodNum());
+                BigDecimal morningRate = BigDecimalUtil.divide(qGoodBig, qCheckBig);
+                nightData.add(morningRate);
+            });
+            qtChartBarSeriesNightVO.setName(QtManagerConstant.nightWorkName);
+            qtChartBarSeriesNightVO.setData(nightData);
+
+        });
+        qtChartBarDecimalDataVO.setData(dayRate);
+        List<QtChartBarSeriesVO> qtChartBarSeriesVOS = new ArrayList<>();
+        qtChartBarSeriesVOS.add(qtChartBarSeriesNightVO);
+        Collections.addAll(qtChartBarSeriesVOS,qtChartBarSeriesMorningVO,qtChartBarSeriesNightVO);
+        //设置柱状图数据
+        qtChartBarVO.setSeries(qtChartBarSeriesVOS);
+        //设置折线图数据
+        qtChartBarVO.setMarkLine(qtChartBarDecimalDataVO);
+
+        return qtChartBarVO;
     }
 
     private Long currentMaxCode() {
@@ -980,6 +1138,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         return currentMax;
     }
+
+
 }
 
 

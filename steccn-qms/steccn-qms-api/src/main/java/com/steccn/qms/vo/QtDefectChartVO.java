@@ -4,7 +4,6 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtThirdPartyDefectContentDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

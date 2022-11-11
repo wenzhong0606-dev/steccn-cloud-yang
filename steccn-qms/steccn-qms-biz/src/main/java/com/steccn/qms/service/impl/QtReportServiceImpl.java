@@ -2,10 +2,11 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.read.listener.PageReadListener;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,18 +17,13 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.dto.PmExcelDTO;
-import com.steccn.pms.dto.PmProcessExcelDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
-import com.steccn.qms.util.SpcTimeUtil;
+import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,10 +34,8 @@ import org.springframework.util.Assert;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author 86178
@@ -222,19 +216,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId)
                 .orderByDesc(QtReport::getId));
         //List<Long> materialIds= qtReportList.stream().map(QtReport::getMaterialId).collect(Collectors.toList());
-        if (CollUtil.isEmpty(qtReportList)){
+        if (CollUtil.isEmpty(qtReportList)) {
             return qtReportChartVOlist;
         }
-        List<String> spcfilter =Lists.newArrayList();
+        List<String> spcfilter = Lists.newArrayList();
         Set<Long> measureIds = Sets.newHashSet();
-       //遍历查出来的集合封装数据
+        //遍历查出来的集合封装数据
         qtReportList.forEach(q -> {
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
             //根据物料id查询物料
             QtMaterial material = qtMaterialService.getById(q.getMaterialId());
             qtReportChartVO.setMaterialName(material.getName());
-           Collections.addAll(spcfilter,material.getName(),q.getCheckItemId().toString());
+            Collections.addAll(spcfilter, material.getName(), q.getCheckItemId().toString());
             qtReportChartVO.setSpcFilter(spcfilter);
             //根据检验项id去获取计量单位
             QtCheckItem qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
@@ -244,28 +238,37 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtReportChartVO.setMaterialName(measureName);
 
             //设置时间分片
-            Date start = LocalDateUtil.localDateTimeToDate(q.getTimeScopeStart());
-            Date end = LocalDateUtil.localDateTimeToDate(q.getTimeScopeEnd());
-            List<String> dates=Lists.newArrayList();
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())){
-                dates= getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
+            String start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATE_PATTERN);
+            String end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATE_PATTERN);
+            List<String> dates = Lists.newArrayList();
 
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())) {
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start, end);
+                dates.add(start);
             }
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())){
-                dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start,end);
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())) {
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start, end);
+                dates.add(start);
             }
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())){
-                dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start,end);
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())) {
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start, end);
+                dates.add(start);
             }
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())){
-                dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start,end);
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())) {
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start, end);
+                dates.add(start);
             }
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())){
-                dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start,end);
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())) {
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start, end);
+                dates.add(start);
             }
-            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())){
-                dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start,end);
+            if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())) {
+                start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATETIME_PATTERN);
+                end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATETIME_PATTERN);
+                dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
+                dates.add(start);
             }
+            dates = dates.stream().sorted().collect(Collectors.toList());
             qtReportChartVO.setXData(dates);
             //获取任务id列表
             List<Long> qtTaskIds = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
@@ -277,7 +280,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             ).stream().map(QtCheckTask::getId).collect(Collectors.toList());
 
             //获取任务结果
-            if (CollUtil.isEmpty(qtTaskIds)){
+            if (CollUtil.isEmpty(qtTaskIds)) {
                 throw new BusinessException("暂无任务");
             }
             List<String> result = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
@@ -289,6 +292,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReportChartVOlist;
     }
 
+    /**
+     * 根据分组id批量删除卡片
+     *
+     * @param id
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByGroupId(Integer id) {
@@ -374,11 +383,15 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
         //1.去任务表里面根据时间以及id构建获取已经完成的检验项并查询检验结果
 
-        if (CollUtil.isEmpty(taskIdList)){
+        if (CollUtil.isEmpty(taskIdList)) {
             throw new BusinessException("该检验项下没有检验任务");
         }
-        LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
-                .in(QtCheckTask::getId, taskIdList)
+        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>().select("any_value(type) as type," +
+                        "any_value(product_order) as product_order , any_value(product_batch) product_batch ,any_value(check_plan_id) as check_plan_id , " +
+                        "any_value(status) as status , any_value(check_num) as check_num ,any_value(good_num) as good_num , " +
+                        "any_value(bad_num) as bad_num , any_value(result) as result ,any_value(note) as note , any_value(supplier) as supplier , " +
+                        "any_value(customer) as customer")
+                .lambda().in(QtCheckTask::getId, taskIdList)
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
                 .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
@@ -413,29 +426,37 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
 
         //把时间范围分片
-        Date start = LocalDateUtil.localDateTimeToDate(report.getTimeScopeStart());
-        Date end = LocalDateUtil.localDateTimeToDate(report.getTimeScopeEnd());
-        List<String> dates=Lists.newArrayList();
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())){
-            dates= getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
-
+        String start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATE_PATTERN);
+        String end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATE_PATTERN);
+        List<String> dates = Lists.newArrayList();
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
+            start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATETIME_PATTERN);
+            end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATETIME_PATTERN);
+            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())){
-            dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start,end);
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start, end);
+            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())){
-            dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start,end);
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start, end);
+            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())){
-            dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start,end);
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start, end);
+            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())){
-            dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start,end);
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start, end);
+            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())){
-            dates=getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start,end);
+        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())) {
+            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start, end);
+            dates.add(start);
         }
-
+        //把时间排序
+        dates = dates.stream().sorted().collect(Collectors.toList());
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
@@ -484,19 +505,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
     /**
      * 获取时间分片
+     *
      * @param type
      * @param start
      * @param end
      * @return
      */
-    private List<String> getDateStringList (String type ,Date start,Date end){
-        List<String> dates= Lists.newArrayList();
-            try {
-                dates = SpcTimeUtil.findDates(type, start, end);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+    private List<String> getDateStringList(String type, String start, String end) {
+        List<String> dates = Lists.newArrayList();
+        try {
+            dates = ShardingTimeUtil.cutDate(type, start, end);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return dates;
     }
 }

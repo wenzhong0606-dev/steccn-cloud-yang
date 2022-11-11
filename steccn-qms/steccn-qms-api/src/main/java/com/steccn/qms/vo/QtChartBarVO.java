@@ -18,7 +18,7 @@ public class QtChartBarVO implements Serializable {
     /**
      * X轴数据
      */
-    private List<QtChartBarStringDataVO> xAis;
+    private List<String> xAis;
 
     /**
      * 折线图

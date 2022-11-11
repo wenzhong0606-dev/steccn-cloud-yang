@@ -87,9 +87,16 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
 
     /**
-     * 深加工/基片巡检合格率趋势
+     * 深加工/基片巡检合格率趋势明细
      * @param dto
      * @return
      */
-    QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto);
+    List<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 深加工或基片合格率图表
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto);
 }

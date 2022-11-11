@@ -10,8 +10,11 @@ import java.io.Serializable;
 import java.time.LocalDate;
 
 @Data
-@ApiModel("深加工或基片合格率")
+@ApiModel("深加工或基片合格率DTO")
 public class QtSubOrDeepAcceptabilityDTO implements Serializable {
+
+    @ApiModelProperty("深加工或者基片")
+    private String name;
 
     @ApiModelProperty("开始时间")
     private LocalDate dateStart;
@@ -23,19 +26,20 @@ public class QtSubOrDeepAcceptabilityDTO implements Serializable {
     private String compare;
 
     @ApiModelProperty("生产车间")
-    private QtBaseIdNameDTO productWorkshop;
+    private Integer productWorkShopId;
 
     @ApiModelProperty("产线")
-    private QtBaseIdNameDTO productLine;
+    private Integer productLineId;
 
     @ApiModelProperty("班次")
-    private String workingOrder;
+    private Integer workingOrder;
 
     @ApiModelProperty("物料id")
     private Integer materialId;
 
     @ApiModelProperty("客户")
-    private QtBaseIdNameDTO customer;
+    private Integer customer;
 
-
+    @ApiModelProperty("类型:0柱状图,1饼状图")
+    private Integer type;
 }

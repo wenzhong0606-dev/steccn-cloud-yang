@@ -117,6 +117,24 @@ public interface QtManagerConstant {
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
 
 
+    /**
+     * 车间名称
+     */
+    String DEEP_OFFICE_NAME = "深加工";
+    String DEEP_OFFICE_NAME_ONE = "深加工一车间";
+    String DEEP_OFFICE_NAME_TWO = "深加工二车间";
+    String DEEP_OFFICE_NAME_THREE = "深加工三车间";
+
+    String SUB_OFFICE_NAME="基片";
+    String SUB_OFFICE_NAME_ONE = "基片一车间";
+    String SUB_OFFICE_NAME_TWO = "基片二车间";
+
+    /**
+     * 班次
+     */
+    Integer DAY_SHIFT = 0;
+    Integer NIGHT_SHIFT =1;
+
 
     /**
      * beforeHour 代表早上8点
@@ -131,7 +149,8 @@ public interface QtManagerConstant {
      */
     final int morningWork = 0;
     final int nightWork = 1;
-
+    String morningWorkName="白班";
+    String nightWorkName ="夜班";
     /**
      * 日环比,周环比标志
      */

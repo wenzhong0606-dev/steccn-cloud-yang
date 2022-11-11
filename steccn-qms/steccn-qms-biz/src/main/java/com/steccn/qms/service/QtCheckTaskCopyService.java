@@ -14,6 +14,10 @@ import java.util.List;
 */
 public interface QtCheckTaskCopyService extends IService<QtCheckTaskCopy> {
 
+    /**
+     * 获取每个样本取样时间的最早时间,返回任务id以及取样时间
+     * @return
+     */
     List<QtCheckTaskCopyVO> getLocalDateList();
 
 }

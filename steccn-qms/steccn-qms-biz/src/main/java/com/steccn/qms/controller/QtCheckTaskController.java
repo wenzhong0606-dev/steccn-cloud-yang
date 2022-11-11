@@ -9,7 +9,6 @@ import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -127,4 +126,17 @@ public class QtCheckTaskController {
     public R<Page<QtCheckProduceTaskVO>> selectProductDetails(@RequestBody QtCheckaProductTaskListDTO dto){
         return R.success(qtCheckTaskService.pageProductOrder(dto));
     }
+
+    @PostMapping("/deeporsub/acceptability/detail")
+    @ApiOperation(value = "深加工或基片合格率趋势明细表")
+    public R<List<QtDeepOrSubAcceptabilityDetailVO>> getQtDeepOrSubAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(dto));
+    }
+
+    @PostMapping("/deeporsub/acceptability/chart")
+    @ApiOperation(value = "深加工或基片合格率趋势图表")
+    public R<QtChartBarVO> getQtChartDeepOrSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(dto));
+    }
+
 }
