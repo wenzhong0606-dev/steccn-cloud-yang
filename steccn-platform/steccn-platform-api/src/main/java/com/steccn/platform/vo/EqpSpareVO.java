@@ -6,6 +6,7 @@ import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 类说明
@@ -40,4 +41,21 @@ public class EqpSpareVO implements Serializable {
     @ApiModelProperty("采购类型名称")
     private String procurementTypeName;
 
+    @ApiModelProperty("长度单位")
+    private Long lengthUnitId;
+
+    @ApiModelProperty("长度")
+    private BigDecimal lengthQuantity;
+
+    @ApiModelProperty("高度单位")
+    private Long highUnitId;
+
+    @ApiModelProperty("高度")
+    private BigDecimal highQuantity;
+
+    @ApiModelProperty("宽度单位")
+    private Long wideUnitId;
+
+    @ApiModelProperty("宽度")
+    private BigDecimal wideQuantity;
 }

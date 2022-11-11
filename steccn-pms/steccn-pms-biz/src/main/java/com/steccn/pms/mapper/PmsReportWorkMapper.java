@@ -1,14 +1,12 @@
 package com.steccn.pms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,10 +33,12 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
     /**
      * 基片日报表行数据
      *
-     * @param dto dto
+     * @param productLineIdList 产线集合
+     * @param classesIdList     班次id
+     * @param date              指定日期
      * @return list
      */
-    List<SubstrateDataListVO> substrateReport(PmsDayReportDTO dto);
+    List<SubstrateDataListVO> substrateReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
 
     /**
      * 根据指定日期和产线获取产量
