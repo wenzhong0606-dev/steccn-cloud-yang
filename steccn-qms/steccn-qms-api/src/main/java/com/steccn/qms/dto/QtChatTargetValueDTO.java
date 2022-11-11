@@ -1,6 +1,6 @@
 package com.steccn.qms.dto;
 
-import com.sun.istack.internal.NotNull;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.io.Serializable;

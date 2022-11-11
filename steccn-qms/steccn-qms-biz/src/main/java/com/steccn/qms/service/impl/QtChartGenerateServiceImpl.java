@@ -2,26 +2,29 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.vo.R;
+import com.steccn.pms.dto.ProducePassRateDTO;
+import com.steccn.pms.feign.RemotePassRateFeignApi;
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckItem;
-import com.steccn.qms.domain.QtCheckTask;
-import com.steccn.qms.domain.QtCheckTaskDetail;
-import com.steccn.qms.domain.QtMaterial;
+import com.steccn.qms.domain.*;
+import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.service.*;
+import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.QtChartBarVO;
+import com.steccn.qms.vo.QtDefectChartVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.formula.functions.Count;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,24 +44,23 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final QtCheckItemService qtCheckItemService;
 
     private final QtMaterialService qtMaterialService;
+
+    private final RemotePassRateFeignApi remotePassRateFeignApi;
+
+    private final QtChartTargetValueService qtChartTargetValueService;
     /**
      * 生产基片损耗数据
      * @param dto
      * @return
      */
     @Override
-    public List<QtChartSubDetailDTO> generateSubstrateLoss(QtChartParamDTO dto) {
+    public List<QtChartSubDetailDTO> generateSubstrateLossData(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> result = new ArrayList<>();
         //转时间戳
         LocalDateTime startTime = dto.getDateStart().atTime(0,0,1);
         LocalDateTime endTime = dto.getDateEnd().atTime(23, 59,59);
         //准备数据
         //1、先根据已知条件查询任务表
-        List<Integer> taskTypeList = new ArrayList<>();
-        taskTypeList.add(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
-        taskTypeList.add(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode());
-        taskTypeList.add(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
-        taskTypeList.add(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED)
@@ -66,8 +68,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 .between(QtCheckTask::getFinishedTime,startTime,endTime)
                 //班次
                 .eq(dto.getWorkOrderId()!=null,QtCheckTask::getClassesId,dto.getWorkOrderId())
-                //只有化验抽检、首检、在线检、巡检有车间
-                .in(QtCheckTask::getTaskType,taskTypeList)
+                //只要巡检
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                 //车间
                 .apply(dto.getProductWorkShopId() != null, "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
@@ -200,7 +202,17 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                     }
                     //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                    //拉引时速/玻璃片长度
+                    BigDecimal divideLaGlass = new BigDecimal(0);
+                    if(glassLength.compareTo(BigDecimal.ZERO) > 0){
+                        divideLaGlass = avgLaItem.divide(glassLength);
+                    }
+                    //掰边损耗重量
+                    BigDecimal baiLossWeight = avgBaiItem.multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
+
                     //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                    BigDecimal laQuantity = avgDanItem.add(avgDanItem).multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
+
                 }
 
             }
@@ -209,4 +221,109 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         return null;
     }
+
+    /**
+     * 成品率概览
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtDefectChartVO generateSubstrateOverview(QtChartDateRangeDTO dto) {
+        QtDefectChartVO<String,String,String> vo = new QtDefectChartVO();
+        //获取生产系统数据
+        ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
+        R<List<ProducePassRateVO>> rResult = new R<>();
+        LocalDate pmsEndDate;
+        //最晚数据完整日期
+        LocalDateTime fullDate = calculateOrder(LocalDateTime.now());
+        LocalDate pmsStartDate = LocalDate.now();
+        //没传时间范围则是部门分析
+        if(dto == null){
+            //需要拿到7天的数据
+            pmsEndDate = fullDate.toLocalDate();
+            pmsStartDate = pmsEndDate.minusDays(6);
+            pmsDTO.setBeginDate(pmsStartDate);
+            pmsDTO.setEndDate(pmsEndDate);
+            rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        }else {
+            pmsDTO.setBeginDate(dto.getStartTime());
+            pmsDTO.setEndDate(dto.getEndTime());
+            rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        }
+        vo.setKey(1);
+        vo.setTitle("基片成品率");
+        if(dto == null){
+            vo.setTooltip(String.valueOf(pmsStartDate.getMonthValue()) + "-" + String.valueOf(pmsStartDate.getDayOfMonth()) + "所有基片车间的总成品率");
+        }else {
+            vo.setTooltip(String.valueOf(dto.getStartTime().getMonthValue()) + "-" + String.valueOf(dto.getEndTime().getDayOfMonth()) + "所有基片车间的总成品率");
+        }
+        List<String> xData = new ArrayList<>();
+        List<String> yData = new ArrayList<>();
+        if(CollUtil.isNotEmpty(rResult.getData())){
+            List<ProducePassRateVO> rList = rResult.getData();
+            //过滤基片车间
+            rList = rList.stream().filter(s->s.getWorkshopName().contains("基片")).collect(Collectors.toList());
+            //根据日期分组
+            Map<LocalDate,BigDecimal> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+            //遍历分组算值
+            for(Map.Entry<LocalDate,BigDecimal> entry:resultMap.entrySet()){
+                xData.add(entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                yData.add(new DecimalFormat("0.0%").format(entry.getValue()));
+            }
+            //算日环比
+            BigDecimal dayRate = resultMap.get(fullDate.toLocalDate()).subtract(resultMap.get(fullDate.toLocalDate().minusDays(1)));
+            if(dayRate.compareTo(BigDecimal.ZERO) < 0){
+                vo.setDayFlag(0);
+            }else {
+                vo.setDayFlag(1);
+            }
+            //如果为0，则显示为-
+            if(dayRate.compareTo(BigDecimal.ZERO) == 0){
+                vo.setDayValue("-");
+            }else {
+                vo.setDayValue(new DecimalFormat("0.0%").format(dayRate));
+            }
+            //算周同比
+            pmsDTO.setBeginDate(fullDate.minusDays(6).toLocalDate());
+            pmsDTO.setEndDate(fullDate.minusDays(6).toLocalDate());
+            R<List<ProducePassRateVO>> rResult2 = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+            BigDecimal weekRate = new BigDecimal(0);
+            if(CollUtil.isNotEmpty(rResult2.getData())){
+                if(rResult2.getData().get(0).getPassRate()!=null){
+                    weekRate = resultMap.get(fullDate.toLocalDate()).subtract(rResult2.getData().get(0).getPassRate());
+                }
+            }
+            if(weekRate.compareTo(BigDecimal.ZERO) == 0){
+                vo.setWeekValue("-");
+            }else {
+                vo.setWeekValue(new DecimalFormat("0.0%").format(weekRate));
+            }
+        }
+        vo.setXData(xData);
+        vo.setYData(yData);
+        vo.setValue(yData.get(yData.size()));
+        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getKey,1)).getValue();
+        if(targetValue == null) {
+            targetValue = BigDecimal.ZERO;
+        }
+        vo.setTargetValue(new DecimalFormat("0.0%").format(targetValue));
+        return vo;
+    }
+
+    /**
+     * 计算最晚数据完整日期
+     * @return
+     */
+    public LocalDateTime calculateOrder(LocalDateTime now){
+        //计算最晚数据完整日期 在区间 (当前日期（T）的8:00:00, 次日（T+1）的8:00:00]内访问系统，最晚数据完整日期为T-1
+        LocalDateTime classTimeStart = now.withHour(8).withMinute(0).withSecond(0);
+        LocalDateTime classTimeEnd = now.withHour(8).withMinute(0).withSecond(0).plusDays(1);
+        //最晚数据完整日期
+        LocalDateTime fullDate = now;
+        if(now.isAfter(classTimeStart) && now.isBefore(classTimeEnd)){
+            fullDate = now.minusDays(1);
+        }
+        return fullDate;
+    }
+
 }

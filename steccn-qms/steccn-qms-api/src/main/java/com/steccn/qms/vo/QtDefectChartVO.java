@@ -16,7 +16,7 @@ import java.util.Objects;
  */
 @Data
 @ApiModel("部门分析驾驶舱返回VO")
-public class QtDefectChartVO<K,V> {
+public class QtDefectChartVO<K,V,T> {
     /**
      * 部门分析驾驶舱概况的卡片名称
      */
@@ -67,7 +67,7 @@ public class QtDefectChartVO<K,V> {
     /**
      * 目标值
      */
-    private Integer targetValue;
+    private T targetValue;
 
     /**
      * 每个卡片提示的当天合格率或缺陷总数提示信息
