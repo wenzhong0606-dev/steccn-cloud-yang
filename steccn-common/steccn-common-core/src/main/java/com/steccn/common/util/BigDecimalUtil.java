@@ -154,8 +154,8 @@ public class BigDecimalUtil {
      */
     public static String format(BigDecimal value) {
         if (Objects.isNull(value)) {
-            return BigDecimal.ZERO.toString();
+            value = BigDecimal.ZERO;
         }
-        return value.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).toString();
+        return value.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
 }

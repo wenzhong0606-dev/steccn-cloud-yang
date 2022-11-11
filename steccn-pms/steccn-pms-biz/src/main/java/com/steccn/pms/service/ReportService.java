@@ -63,4 +63,11 @@ public interface ReportService {
      * @return
      */
     FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto);
+
+    /**
+     * 基片日报表-原料耗料
+     * @param dto dto
+     * @return list
+     */
+    List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto);
 }

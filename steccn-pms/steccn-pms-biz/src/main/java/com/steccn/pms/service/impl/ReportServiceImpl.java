@@ -312,7 +312,11 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public FurtherProduceReportVO furtherProduceDayReport(PmsDayReportDTO dto) {
+
         FurtherProduceReportVO vo = new FurtherProduceReportVO();
+        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+        vo.setSpecsNum(defaultSpecList.size());
+
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无报表信息");
@@ -416,21 +420,21 @@ public class ReportServiceImpl implements ReportService {
                         countIn(classEntry.getKey(), classCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), lineCountMap, orDefaultMap);
                         countIn(classEntry.getKey(), workshopCountMap, orDefaultMap);
-                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList);
+                        FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, defaultSpecList);
                         tableData.add(rowData);
                     }
                     //班次的合计
-                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO);
+                    FurtherProduceReportListVO classCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, classCountMap, sysDictVO, defaultSpecList);
                     tableData.add(classCountRow);
                 }
                 //产线的合计
-                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO());
+                FurtherProduceReportListVO lineCountRow = getFurtherProduceReportListVO(pmProcessList, productLine, lineCountMap, new SysDictVO(), defaultSpecList);
                 lineCountRow.setClassName("合计");
                 lineCountRow.setType(PmReportConstant.TYPE_2);
                 tableData.add(lineCountRow);
             }
             //车间的合计
-            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO());
+            FurtherProduceReportListVO workshopCountRow = getFurtherProduceReportListVO(pmProcessList, productLineList.get(0), workshopCountMap, new SysDictVO(), defaultSpecList);
             workshopCountRow.setClassName("合计");
             workshopCountRow.setProductLineName("合计");
             workshopCountRow.setType(PmReportConstant.TYPE_3);
@@ -444,11 +448,12 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public FurtherIngredientReportVO furtherIngredientDayReport(PmsDayReportDTO dto) {
         //定义默认规格
-        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
 
         //每一行数据是一个生产订单生产的主物料
         //定义返回vo
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
+        List<String> defaultSpecList = Arrays.asList("规格1", "规格2", "规格3");
+        vo.setSpecsNum(defaultSpecList.size());
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
@@ -566,6 +571,16 @@ public class ReportServiceImpl implements ReportService {
         return vo;
     }
 
+    @Override
+    public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
+        //根据条件确定生产订单
+
+        //
+
+
+        return null;
+    }
+
     /**
      * 构造FurtherIngredientReportListVO数据
      *
@@ -608,7 +623,7 @@ public class ReportServiceImpl implements ReportService {
      * @param sysDictVO     班次信息
      * @return 合计
      */
-    private FurtherProduceReportListVO getFurtherProduceReportListVO(List<PmProcess> pmProcessList, SysOfficeVO productLine, Map<Long, Map<Integer, BigDecimal>> classCountMap, SysDictVO sysDictVO) {
+    private FurtherProduceReportListVO getFurtherProduceReportListVO(List<PmProcess> pmProcessList, SysOfficeVO productLine, Map<Long, Map<Integer, BigDecimal>> classCountMap, SysDictVO sysDictVO, List<String> defaultSpecList) {
         List<FurtherValueStrVO> classCountModuleList = Lists.newArrayList();
         for (PmProcess pmProcess : pmProcessList) {
             List<String> classModuleList = Lists.newArrayList();
@@ -631,7 +646,7 @@ public class ReportServiceImpl implements ReportService {
         classInChildList.add(BigDecimalUtil.format(classInChildMap.get(2)));
         classCountModuleList.add(new FurtherValueStrVO(classCountChildList));
         classCountModuleList.add(new FurtherValueStrVO(classInChildList));
-        return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList);
+        return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList, defaultSpecList);
     }
 
     /**
@@ -688,8 +703,9 @@ public class ReportServiceImpl implements ReportService {
      * @param module   工序数据
      * @return vo
      */
-    private FurtherProduceReportListVO createFurtherProduceReportListVO(List<String> nameList, Integer type, List<FurtherValueStrVO> module) {
+    private FurtherProduceReportListVO createFurtherProduceReportListVO(List<String> nameList, Integer type, List<FurtherValueStrVO> module, List<String> specList) {
         FurtherProduceReportListVO row = new FurtherProduceReportListVO();
+        row.setSpecList(specList);
         row.setType(type);
         row.setWorkshopName(nameList.get(0));
         row.setProductLineName(nameList.get(1));

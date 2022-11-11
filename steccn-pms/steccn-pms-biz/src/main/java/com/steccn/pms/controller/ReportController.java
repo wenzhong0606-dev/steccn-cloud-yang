@@ -35,7 +35,7 @@ public class ReportController {
     @PostMapping("/sub/ingredient")
     @ApiOperation("基片日报表-原料耗料")
     public R<List<SubstrateIngredientVO>> subIngredientReport(@RequestBody PmsDayReportDTO dto) {
-        return R.success();
+        return R.success(reportService.subIngredientReport(dto));
     }
 
     @PostMapping("/fur/produce")

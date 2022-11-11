@@ -20,4 +20,7 @@ public class FurtherProduceReportVO implements Serializable {
     @ApiModelProperty("表头")
     private FurtherReportHeaderVO header;
 
+    @ApiModelProperty("规格数")
+    private Integer specsNum;
+
 }
