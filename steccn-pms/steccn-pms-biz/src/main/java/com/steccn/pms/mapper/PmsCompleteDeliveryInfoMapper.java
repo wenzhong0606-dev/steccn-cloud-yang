@@ -3,6 +3,7 @@ package com.steccn.pms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.dto.FeedQuantityDTO;
 import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,6 +26,13 @@ public interface PmsCompleteDeliveryInfoMapper extends BaseMapper<PmsCompleteDel
      * @return
      */
     Page<PmsCompleteDeliveryVO> listByOrderId(Page page, @Param("orderId") Long orderId);
+
+    /**
+     * 获取投料信息
+     * @param feedList
+     * @return
+     */
+    List<FeedQuantityDTO> listQuantity(@Param("feedList") List<FeedQuantityDTO> feedList);
 }
 
 

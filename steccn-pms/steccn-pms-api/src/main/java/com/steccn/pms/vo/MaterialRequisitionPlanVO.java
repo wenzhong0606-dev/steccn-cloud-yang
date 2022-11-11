@@ -1,10 +1,12 @@
 package com.steccn.pms.vo;
 
+import com.steccn.common.util.LocalDateUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * 领料计划VO
@@ -18,46 +20,64 @@ public class MaterialRequisitionPlanVO {
 
     @ApiModelProperty("主键")
     private Long id;
+
     @ApiModelProperty("批次送货量")
     private BigDecimal batchDeliveryQuantity;
+
     @ApiModelProperty("线边数量")
-    private String lineEdgeQuantity;
+    private BigDecimal lineEdgeQuantity;
+
     @ApiModelProperty("物料编码")
     private String materialCode;
+
     @ApiModelProperty("物料id")
-    private String materialId;
+    private Long materialId;
+
     @ApiModelProperty("物料名称")
     private String materialName;
 
     @ApiModelProperty("在途数量")
-    private String onPassageQuantity;
+    private BigDecimal onPassageQuantity;
 
     @ApiModelProperty("产线id")
-    private String productionLine;
+    private Long productionLine;
+
     @ApiModelProperty("产线名称")
     private String productionLineName;
 
     @ApiModelProperty("需求时间")
-    private String requireDate;
+    private LocalDate requireDate;
 
     @ApiModelProperty("需求数量")
-    private String requireQuantity;
+    private BigDecimal requireQuantity;
+
+    @ApiModelProperty("订单需求数量")
+    private BigDecimal orderQuantity;
 
     @ApiModelProperty("工位")
-    private String station;
+    private Long station;
+
+    @ApiModelProperty("工位编码")
+    private String stationCode;
 
     @ApiModelProperty("工位名称")
     private String stationName;
 
     @ApiModelProperty("单位id")
-    private String unitId;
+    private Long unitId;
 
     @ApiModelProperty("单位名称")
     private String unitName;
 
     @ApiModelProperty("车间id")
-    private String workshop;
+    private Long workshop;
 
     @ApiModelProperty("车间名称")
     private String workshopName;
+
+    @ApiModelProperty("订单id")
+    private Long produceOrderId;
+
+    @ApiModelProperty("工序id")
+    private Long processId;
 }

@@ -19,7 +19,10 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmsWorkOrderBom;
+import com.steccn.pms.domain.PmsWorkOrderCraftStation;
+import com.steccn.pms.dto.BomStationDTO;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.mapper.PmsWorkOrderBomMapper;
@@ -226,6 +229,12 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<BomStationDTO> listStation(Set<Long> bomIds) {
+        //1.自定义sql获取工位信息
+        return this.baseMapper.listStation(bomIds);
     }
 }
 

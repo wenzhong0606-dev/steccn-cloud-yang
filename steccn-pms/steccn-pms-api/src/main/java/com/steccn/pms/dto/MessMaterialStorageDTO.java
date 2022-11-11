@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author yequan
@@ -18,4 +19,7 @@ public class MessMaterialStorageDTO implements Serializable {
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;
+
+    @ApiModelProperty("货架code")
+    private List<String> shelfCodes;
 }

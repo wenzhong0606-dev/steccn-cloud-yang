@@ -69,8 +69,9 @@ public interface PmsMrpInfoService extends IService<PmsMrpInfo> {
      * @param mrpDate
      * @param planId
      * @param status
+     * @param mrpElement
      * @return
      */
-    PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status);
+    PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status,String mrpElement);
 
 }

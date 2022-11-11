@@ -4,7 +4,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.domain.PmsWorkOrderCraftStation;
+import com.steccn.pms.dto.BomStationDTO;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.vo.PmsProduceOrderCraftVO;
 import com.steccn.pms.vo.PmsWorkOrderBomVO;
 
@@ -67,4 +70,11 @@ public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
      * @return map
      */
     Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList);
+
+    /**
+     * 根据bomId 找到绑定的执行工位信息
+     * @param bomIds
+     * @return
+     */
+    List<BomStationDTO> listStation(Set<Long> bomIds);
 }

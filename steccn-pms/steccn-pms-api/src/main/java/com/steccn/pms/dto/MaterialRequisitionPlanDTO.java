@@ -19,5 +19,5 @@ public class MaterialRequisitionPlanDTO extends BasePageDTO {
 
 
     @ApiModelProperty("工位id")
-    private List<Long> station;
+    private List<Integer> station;
 }

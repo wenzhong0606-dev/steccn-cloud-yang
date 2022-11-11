@@ -24,8 +24,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id
-        ,module_id,quantity,
+        id,module_id,quantity,
         unit_id,process_id,fixed_quantity_flag,
         copruduct_flag,back_calculate_flag,joint_product_flag,
         work_produce_id,create_by,create_name,
@@ -49,5 +48,22 @@
             </foreach>
         </if>
         group by bom.module_id
+    </select>
+    <select id="listStation" resultType="com.steccn.pms.dto.BomStationDTO">
+        SELECT
+        a.module_id as materialId,
+        c.execute_station_id,
+        c.execute_station_name,
+        c.execute_station_code
+        FROM
+        pms_work_order_bom a
+        JOIN pm_process b ON a.process_id = b.id
+        JOIN pm_process_station c ON c.process_id = b.id
+        WHERE
+        c.del_flag = 0 and
+        a.id in
+        <foreach collection="bomIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 </mapper>

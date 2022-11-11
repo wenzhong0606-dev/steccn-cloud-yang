@@ -3,10 +3,17 @@ package com.steccn.pms.mapper;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.domain.PmsWorkOrderCraftStation;
+import com.steccn.pms.dto.BomStationDTO;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -16,6 +23,13 @@ import java.util.List;
 */
 @Mapper
 public interface PmsWorkOrderBomMapper extends BaseMapper<PmsWorkOrderBom> {
+
+    /**
+     * 根据bomId 获取绑定的工位信息
+     * @param bomIds
+     * @return
+     */
+    List<BomStationDTO> listStation(@Param("bomIds") Set<Long> bomIds);
 
     /**
      * 查看物料订单的工位，不区分物料

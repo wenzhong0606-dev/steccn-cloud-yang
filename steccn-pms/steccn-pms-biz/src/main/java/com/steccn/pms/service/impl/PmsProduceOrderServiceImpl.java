@@ -96,9 +96,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
         }
         //判断是否是计划转生产订单
-        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())){
+        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())) {
             try {
-                BeanUtil.copyProperties(model,dto);
+                BeanUtil.copyProperties(model, dto);
                 pmsProducePlanService.turnProduceOrder(dto);
             } catch (Exception e) {
             }
@@ -587,9 +587,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
             String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
-
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId()))).get();
-
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
@@ -667,7 +665,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
         Map<Integer, SysOfficeVO> productLineMap = remoteOfficeFeign.listById(new HashSet<>(dto.getProductLineList())).getData();
-        Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()),dto.getProductLineList());
+        Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()), dto.getProductLineList());
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
             BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
@@ -683,6 +681,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 根据生产订单号来查询当前正在执行中的记录
+     *
      * @param code
      * @return 生产订单信息
      */
@@ -691,14 +690,31 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据生产订单号来查询当前正在执行中的记录
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO));
         //2.校验数据
-        Assert.isNull(order,"该生产订单号不存在");
+        Assert.isNull(order, "该生产订单号不存在");
 
         //3.复制数据传入VO
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
-        BeanUtils.copyProperties(order,pmsProduceOrderVO);
+        BeanUtils.copyProperties(order, pmsProduceOrderVO);
 
         return pmsProduceOrderVO;
 
+    }
+
+    @Override
+    public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
+        //定义返回对象
+        List<PmsProduceOrderVO> list = Lists.newArrayList();
+        //查询产线正在执行的订单
+        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getProductionLineId, ids)
+                .notIn(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.ZERO.getCode(),
+                        PmManagerConstant.OrderStateEnum.SIX.getCode(),
+                        PmManagerConstant.OrderStateEnum.SEVEN.getCode())
+        );
+        if (CollUtil.isNotEmpty(orderList)) {
+            BeanUtil.copyProperties(orderList, Lists.newArrayList());
+        }
+        return list;
     }
 
     /**

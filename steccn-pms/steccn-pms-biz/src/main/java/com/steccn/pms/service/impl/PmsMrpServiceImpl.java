@@ -107,7 +107,6 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             //计算库存信息
             pmsMrpVO.setStockQuantity(inventoryCalculations.get(pmsMrpVO.getMaterialId()));
         });
-        page.setTotal(pmsMrpVOList.size());
         return page.setRecords(pmsMrpVOList);
     }
 
