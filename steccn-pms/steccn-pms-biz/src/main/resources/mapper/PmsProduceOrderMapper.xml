@@ -187,7 +187,7 @@
 
     <select id="selectCompleteStorageCount" resultType="com.steccn.pms.vo.CompleteStorageCountVO">
         SELECT
-	        c.classes_id classesId,
+	        c.class_group_id classGroupId,
 	        o.production_line_id productionLineId,
 	        sum( c.quantity ) quantity
         FROM
@@ -200,10 +200,10 @@
         GROUP BY
             <if test="group == 0">
                 o.production_line_id,
-                c.classes_id
+                c.class_group_id
             </if>
             <if test="group == 1">
-                c.clases_id,
+                c.class_group_id,
                 o.production_line_id
             </if>
     </select>

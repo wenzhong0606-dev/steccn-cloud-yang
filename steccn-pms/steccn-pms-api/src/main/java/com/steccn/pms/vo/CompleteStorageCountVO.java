@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Data
 public class CompleteStorageCountVO {
 
-    private Long classesId;
+    private Long classGroupId;
     private Integer productionLineId;
     private BigDecimal quantity;
 }

@@ -2,6 +2,7 @@ package com.steccn.pms.vo;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -11,7 +12,7 @@ import java.util.List;
 @Data
 public class OutputCountVO {
 
-    List<String> dx;
+    private List<String> dx;
 
-    List<OutputCountListVO> dataList;
+    private List<OutputCountListVO> dataList;
 }

@@ -160,6 +160,13 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             } else {
                 pmsPullForceDetailsVO.setProductLineId(sysOfficeVO.getId());
                 pmsPullForceDetailsVO.setProductLineName(sysOfficeVO.getOfficeName());
+                List<PmsPullForceClassQuantity> pullForceClassQuantityList = new ArrayList<>();
+                pmsPullForceDetailsVO.setPullForceClassQuantityList(pullForceClassQuantityList);
+                for (SysDictVO sysDictVO : sysDictVOList) {
+                    PmsPullForceClassQuantity pullForceClassQuantity = new PmsPullForceClassQuantity();
+                    pullForceClassQuantity.setClassId(sysDictVO.getId());
+                    pullForceClassQuantityList.add(pullForceClassQuantity);
+                }
                 pmsPullForceDetailsVOList.add(pmsPullForceDetailsVO);
             }
         }

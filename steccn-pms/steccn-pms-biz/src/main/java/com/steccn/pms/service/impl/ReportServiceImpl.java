@@ -767,8 +767,8 @@ public class ReportServiceImpl implements ReportService {
         sysOfficeParentDTO.setId(dto.getWorkshopId());
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
         List<SysOfficeVO> productLineList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
-        Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
+//        Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+//        List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
 
         //获取日期
         List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
@@ -778,7 +778,7 @@ public class ReportServiceImpl implements ReportService {
         if (PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode().equals(dto.getDataGaugeType())) {
             outputCountVO = productLineCount(productLineList, dateRangeList);
         } else {
-
+            outputCountVO = classGroupCount(productLineList, dateRangeList);
         }
 
         return outputCountVO;
@@ -787,7 +787,7 @@ public class ReportServiceImpl implements ReportService {
     private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList, List<SFunction<PmsReportWork, ?>> columnList) {
 
         return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
-                .select("classes_id as classesId,product_line_id as productLineId,sum(process_quantity) as processQuantity")
+                .select("class_group_id as classGroupId,product_line_id as productLineId,sum(process_quantity) as processQuantity")
                 .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
                 .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
                 .le(PmsReportWork::getCreateTime, dateRangeList.get(1)).groupBy(columnList));
@@ -798,13 +798,16 @@ public class ReportServiceImpl implements ReportService {
         //获取产线id和产线名称
         Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
+        //获取班次
+        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_team").getData();
+
 
         //添加分组字段获取数据
         List<SFunction<PmsReportWork, ?>> columnList = new ArrayList<>();
-        columnList.add(PmsReportWork::getClassesId);
+        columnList.add(PmsReportWork::getClassGroupId);
         columnList.add(PmsReportWork::getProductLineId);
         List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
-        Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassesId));
+        Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassGroupId));
 
         OutputCountVO outputCountVO = new OutputCountVO();
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
@@ -816,8 +819,11 @@ public class ReportServiceImpl implements ReportService {
         for (Map.Entry<Long, List<PmsReportWork>> entry : classGroup.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
             listVO.setDataType("产量");
+            Optional<SysDictVO> dictPresent = sysDictVOList.stream().filter(sysDictVO -> sysDictVO.getId().equals(entry.getKey())).findAny();
+            listVO.setDataName(dictPresent.get().getName());
+
             List<BigDecimal> quantityList = new ArrayList<>();
-            //获取该班次在产线的数量
+            //获取该班组在产线的数量
             for (SysOfficeVO sysOfficeVO : productLineList) {
                 Optional<PmsReportWork> present = entry.getValue().stream().filter(pmsReportWork -> pmsReportWork.getProductLineId().equals(sysOfficeVO.getId())).findAny();
                 if (present.isPresent()) {
@@ -836,12 +842,15 @@ public class ReportServiceImpl implements ReportService {
                 , dateRangeList.get(0)
                 , dateRangeList.get(1)
                 , PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode());
-        Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassesId));
+        Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassGroupId));
         for (Map.Entry<Long, List<CompleteStorageCountVO>> entry : completeMap.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
             listVO.setDataType("入库数");
+            Optional<SysDictVO> dictPresent = sysDictVOList.stream().filter(sysDictVO -> sysDictVO.getId().equals(entry.getKey())).findAny();
+            listVO.setDataName(dictPresent.get().getName());
+
             List<BigDecimal> quantityList = new ArrayList<>();
-            //获取该班次在产线的数量
+            //获取该班组在产线的数量
             for (SysOfficeVO sysOfficeVO : productLineList) {
                 Optional<CompleteStorageCountVO> present = entry.getValue().stream().filter(completeStorage -> completeStorage.getProductionLineId().equals(sysOfficeVO.getId())).findAny();
                 if (present.isPresent()) {
@@ -856,28 +865,48 @@ public class ReportServiceImpl implements ReportService {
         }
 
         //获取拉引量
+        for (SysDictVO sysDictVO : sysDictVOList) {
+            OutputCountListVO listVO = new OutputCountListVO();
+            listVO.setDataName(sysDictVO.getName());
+            listVO.setDataType("拉引量");
+            List<BigDecimal> quantityList = new ArrayList<>();
+            for (SysOfficeVO sysOfficeVO : productLineList) {
+                quantityList.add(BigDecimal.valueOf(10000));
+            }
+            listVO.setQuantityList(quantityList);
+
+            outputCountListVOList.add(listVO);
+        }
         return outputCountVO;
     }
 
-    private OutputCountVO classCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
-        //获取产线id和产线名称
+    private OutputCountVO classGroupCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
+        //获取产线id
         Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_team").getData();
+        //获取班组名称
+        List<String> classGroupNameList = sysDictVOList.stream().map(SysDictVO::getName).collect(Collectors.toList());
         //添加分组字段获取数据
         List<SFunction<PmsReportWork, ?>> columnList = new ArrayList<>();
         columnList.add(PmsReportWork::getProductLineId);
-        columnList.add(PmsReportWork::getClassesId);
+        columnList.add(PmsReportWork::getClassGroupId);
         List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
         Map<Integer, List<PmsReportWork>> productLineGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getProductLineId));
 
+        List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
+        OutputCountVO outputCountVO = new OutputCountVO();
+        outputCountVO.setDx(classGroupNameList);
+        outputCountVO.setDataList(outputCountListVOList);
         //获取产量数据
         for (Map.Entry<Integer, List<PmsReportWork>> entry : productLineGroup.entrySet()) {
             OutputCountListVO listVO = new OutputCountListVO();
-
             listVO.setDataType("产量");
+            Optional<SysOfficeVO> officePresent = productLineList.stream().filter(sysOfficeVO -> sysOfficeVO.getId().equals(entry.getKey())).findAny();
+            listVO.setDataName(officePresent.get().getOfficeName());
+
             List<BigDecimal> quantityList = new ArrayList<>();
-            //获取该班次在产线的数量
-            for (SysOfficeVO sysOfficeVO : productLineList) {
-                Optional<PmsReportWork> present = entry.getValue().stream().filter(pmsReportWork -> pmsReportWork.getProductLineId().equals(sysOfficeVO.getId())).findAny();
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                Optional<PmsReportWork> present = entry.getValue().stream().filter(pmsReportWork -> pmsReportWork.getClassGroupId().equals(sysDictVO.getId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getProcessQuantity());
                 } else {
@@ -885,10 +914,51 @@ public class ReportServiceImpl implements ReportService {
                 }
             }
             listVO.setQuantityList(quantityList);
+            outputCountListVOList.add(listVO);
+        }
+
+        //获取入库数
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList)
+                , dateRangeList.get(0)
+                , dateRangeList.get(1)
+                , PmReportConstant.DataGaugeTypeEnum.CLASS_GROUP.getCode());
+        Map<Integer, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getProductionLineId));
+        for (Map.Entry<Integer, List<CompleteStorageCountVO>> entry : completeMap.entrySet()) {
+            OutputCountListVO listVO = new OutputCountListVO();
+            listVO.setDataType("入库数");
+            Optional<SysOfficeVO> officePresent = productLineList.stream().filter(sysOfficeVO -> sysOfficeVO.getId().equals(entry.getKey())).findAny();
+            listVO.setDataName(officePresent.get().getOfficeName());
+
+            List<BigDecimal> quantityList = new ArrayList<>();
+            //获取该班次在产线的数量
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                Optional<CompleteStorageCountVO> present = entry.getValue().stream().filter(storageCountVO -> storageCountVO.getClassGroupId().equals(sysDictVO.getId())).findAny();
+                if (present.isPresent()) {
+                    quantityList.add(present.get().getQuantity());
+                } else {
+                    quantityList.add(BigDecimal.ZERO);
+                }
+            }
+            listVO.setQuantityList(quantityList);
+
+            outputCountListVOList.add(listVO);
+        }
+
+        //获取拉引量
+        for (SysOfficeVO sysOfficeVO : productLineList) {
+            OutputCountListVO listVO = new OutputCountListVO();
+            listVO.setDataType("拉引量");
+            listVO.setDataName(sysOfficeVO.getOfficeName());
+            List<BigDecimal> quantityList = new ArrayList<>();
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                quantityList.add(BigDecimal.valueOf(10000));
+            }
+            listVO.setQuantityList(quantityList);
+            outputCountListVOList.add(listVO);
 
         }
 
-        return null;
+        return outputCountVO;
     }
 
     /**
