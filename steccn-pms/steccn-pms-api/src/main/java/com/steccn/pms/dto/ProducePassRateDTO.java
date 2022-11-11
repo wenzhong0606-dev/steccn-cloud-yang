@@ -13,8 +13,8 @@ import java.util.List;
 @Data
 public class ProducePassRateDTO {
 
-    private LocalDateTime beginDate;
+    private LocalDate beginDate;
 
-    private LocalDateTime endDate;
+    private LocalDate endDate;
 
 }

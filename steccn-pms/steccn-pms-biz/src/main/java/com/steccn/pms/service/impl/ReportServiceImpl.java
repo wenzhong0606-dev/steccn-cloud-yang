@@ -776,8 +776,6 @@ public class ReportServiceImpl implements ReportService {
         sysOfficeParentDTO.setId(dto.getWorkshopId());
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
         List<SysOfficeVO> productLineList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
-//        Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-//        List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
 
         //获取日期
         List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
@@ -816,7 +814,6 @@ public class ReportServiceImpl implements ReportService {
         columnList.add(PmsReportWork::getClassGroupId);
         columnList.add(PmsReportWork::getProductLineId);
         List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
-//        Map<Long, List<PmsReportWork>> classGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getClassGroupId));
 
         OutputCountVO outputCountVO = new OutputCountVO();
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
@@ -836,7 +833,6 @@ public class ReportServiceImpl implements ReportService {
                 , dateRangeList.get(0)
                 , dateRangeList.get(1)
                 , PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode());
-//        Map<Long, List<CompleteStorageCountVO>> completeMap = completeStorageCount.stream().collect(Collectors.groupingBy(CompleteStorageCountVO::getClassGroupId));
         for (SysDictVO sysDictVO : sysDictVOList) {
             OutputCountListVO listVO = new OutputCountListVO();
             List<BigDecimal> quantityList = new ArrayList<>();
@@ -863,7 +859,7 @@ public class ReportServiceImpl implements ReportService {
             listVO.setDataType("拉引量");
             List<BigDecimal> quantityList = new ArrayList<>();
             for (SysOfficeVO sysOfficeVO : productLineList) {
-                quantityList.add(BigDecimal.valueOf(10000));
+                quantityList.add(BigDecimal.valueOf(100));
             }
             listVO.setQuantityList(quantityList);
 
@@ -883,7 +879,6 @@ public class ReportServiceImpl implements ReportService {
         columnList.add(PmsReportWork::getProductLineId);
         columnList.add(PmsReportWork::getClassGroupId);
         List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
-//        Map<Integer, List<PmsReportWork>> productLineGroup = pmsReportWorkList.stream().collect(Collectors.groupingBy(PmsReportWork::getProductLineId));
 
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
         OutputCountVO outputCountVO = new OutputCountVO();

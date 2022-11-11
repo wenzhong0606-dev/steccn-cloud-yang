@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,9 +51,12 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
     public List<ProducePassRateVO> getProducePassRateGroup(ProducePassRateDTO dto) {
 
         //获取日期
-        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate().toLocalDate(),dto.getEndDate().toLocalDate());
+        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate(),dto.getEndDate());
 
-        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(dto.getBeginDate(), dto.getEndDate());
+        LocalDateTime beginDateTime = LocalDateTime.of(dto.getBeginDate(), LocalTime.MIN);
+        LocalDateTime endDateTime = LocalDateTime.of(dto.getBeginDate(), LocalTime.MAX);
+
+        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime);
 
 
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
