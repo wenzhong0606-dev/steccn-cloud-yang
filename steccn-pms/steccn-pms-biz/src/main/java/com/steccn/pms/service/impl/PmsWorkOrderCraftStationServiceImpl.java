@@ -34,8 +34,8 @@ public class PmsWorkOrderCraftStationServiceImpl extends ServiceImpl<PmsWorkOrde
         Map<Long,List<PmsWorkOrderCraftStationVO>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(craftSet)) {
             List<PmsWorkOrderCraftStation> list = list(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
-                    .in(PmsWorkOrderCraftStation::getProduceOrderCraftId, craftSet)
-                    .groupBy(PmsWorkOrderCraftStation::getProduceOrderCraftId));
+                    .in(PmsWorkOrderCraftStation::getProduceOrderCraftId, craftSet));
+//                    .groupBy(PmsWorkOrderCraftStation::getProduceOrderCraftId));
             if (CollUtil.isNotEmpty(list)) {
                 Map<Long, List<PmsWorkOrderCraftStation>> collect = list.parallelStream()
                         .collect(Collectors.groupingBy(PmsWorkOrderCraftStation::getProduceOrderCraftId));

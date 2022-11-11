@@ -69,4 +69,8 @@ public class MaterialRequisitionController {
     public R<Boolean> approval(@Validated(UpdateGroup.class) @RequestBody MaterialRequisitionApprovalDTO dto) {
         return R.success(pmsMaterialRequisitionService.approval(dto));
     }
+//
+//    @ApiOperation("领料计划")
+//    @PostMapping("/plan/list")
+//    public R<Page<>>
 }
