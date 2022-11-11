@@ -4,6 +4,8 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -36,15 +38,13 @@ import java.util.stream.Collectors;
 @Service
 public class ProducePassRateServiceImpl implements ProducePassRateService {
 
-    private final PmsReportWorkService pmsReportWorkService;
-
     private final PmsPullForceService pmsPullForceService;
-
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final PmsReportWorkMapper pmsReportWorkMapper;
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
 
     @Override
@@ -107,52 +107,22 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 producePassRateVOList.add(producePassRateVO);
             }
 
-
         }
+        Set<Integer> sysOfficeIdSet = producePassRateVOList.stream().map(ProducePassRateVO::getWorkshopId).collect(Collectors.toSet());
+        Set<Integer> productLineIdList = producePassRateVOList.stream().map(ProducePassRateVO::getProductLineId).collect(Collectors.toSet());
+        Set<Long> classesIdList = producePassRateVOList.stream().map(ProducePassRateVO::getClassesId).collect(Collectors.toSet());
+        sysOfficeIdSet.addAll(productLineIdList);
+
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = remoteOfficeFeign.listById(sysOfficeIdSet).getData();
+        Map<Long, String> classesMap = remoteDictFeignApi.listByIdCh(classesIdList).getData();
+        producePassRateVOList.forEach(producePassRateVO -> {
+            producePassRateVO.setClassesName(classesMap.get(producePassRateVO.getClassesId()));
+            producePassRateVO.setWorkshopName(sysOfficeVOMap.get(producePassRateVO.getWorkshopId()).getOfficeName());
+            producePassRateVO.setProductLineName(sysOfficeVOMap.get(producePassRateVO.getProductLineId()).getOfficeName());
+        });
+
         return producePassRateVOList;
     }
-
-//    private Optional<PmsPullForce> getPullForce(List<PmsPullForce> pmsPullForceList,Integer groupType, PmsReportWorkGroupVO reportWorkGroupVO){
-//        Optional<PmsPullForce> pullForce;
-//        if (groupType.equals(0)) {
-//             pullForce = pmsPullForceList.stream().filter(pmsPullForce ->
-//                    pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getDate()) && pmsPullForce.getClassesId().equals(reportWorkGroupVO.getGroupId())
-//            ).findAny();
-//        } else if (groupType.equals(1)) {
-//            pullForce = pmsPullForceList.stream().filter(pmsPullForce ->
-//                    pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getDate()) && reportWorkGroupVO.getGroupId().equals(pmsPullForce.getProductLineId().longValue())
-//            ).findAny();
-//        } else {
-//            pullForce = pmsPullForceList.stream().filter(pmsPullForce ->
-//                    pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getDate()) && reportWorkGroupVO.getGroupId().equals(pmsPullForce.getWorkshopId().longValue())
-//            ).findAny();
-//        }
-//        return pullForce;
-//    }
-
-//    private List<PmsReportWorkGroupVO> groupWorkshopId(List<PmsReportWorkGroupVO> reportWorkGroupVOList){
-//        Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
-//        Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
-//        //根据产线id获取车间id
-//        for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkGroupVOList){
-//            reportWorkGroupVO.setWorkshopId(sysOfficeMap.get(reportWorkGroupVO.getProductLineId()).getParentId());
-//        }
-//        Map<Long, List<PmsReportWorkGroupVO>> groupBy = reportWorkGroupVOList.stream().collect(Collectors.groupingBy(PmsReportWorkGroupVO::getGroupId));
-//
-//        List<PmsReportWorkGroupVO> pmsReportWorkGroupVOList = new ArrayList<>();
-//        for (Map.Entry<Long, List<PmsReportWorkGroupVO>> entry : groupBy.entrySet()) {
-//            LocalDate date = entry.getValue().get(0).getDate();
-//            BigDecimal total = entry.getValue().stream().map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-//
-//            PmsReportWorkGroupVO reportWorkGroupVO = new PmsReportWorkGroupVO();
-//            reportWorkGroupVO.setGroupId(entry.getKey());
-//            reportWorkGroupVO.setDate(date);
-//            reportWorkGroupVO.setQuantity(total);
-//
-//            pmsReportWorkGroupVOList.add(reportWorkGroupVO);
-//        }
-//        return pmsReportWorkGroupVOList;
-//    }
 
     private QueryWrapper<PmsPullForce> getQueryWrapper(ProducePassRateDTO dto){
 
