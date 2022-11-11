@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
@@ -578,9 +579,16 @@ public class ReportServiceImpl implements ReportService {
     public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
         //根据条件确定生产订单
         List<SubstrateIngredientVO> dataList = completeDeliveryService.subIngredientReport(dto);
+        List<TupleDTO<Long, Long>> conditionList = Lists.newArrayList();
         dataList.forEach(ele -> {
             //根据订单和子物料查询工位信息【订单的子物料关联工序，工序关联可执行工位】
+            if (Objects.nonNull(ele.getMaterialId()) && CollUtil.isNotEmpty(ele.getProduceOrderIdSet())) {
+                for (Long poId : ele.getProduceOrderIdSet()) {
+                    conditionList.add(new TupleDTO<>(poId, ele.getMaterialId()));
+                }
+            }
         });
+        Map<Long, Set<Long>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
         return dataList;
     }
 

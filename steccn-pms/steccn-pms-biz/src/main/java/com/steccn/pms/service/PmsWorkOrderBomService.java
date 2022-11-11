@@ -1,5 +1,6 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -59,4 +60,11 @@ public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
      * @return key 工序id value 物料id + 物料名称
      */
     Map<Long, List<BaseSelectVO<Long>>> getProcessMaterial(Set<Long> produceOrderIdSet, Set<Long> processIdSet);
+
+    /**
+     * 订单物料找工位集合 不区分订单
+     * @param conditionList 条件
+     * @return map
+     */
+    Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList);
 }

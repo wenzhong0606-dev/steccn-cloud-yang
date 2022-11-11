@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -196,6 +198,32 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
                 }
                 resMap.put(k, resList);
             });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList) {
+        Map<Long, Set<Long>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(conditionList)) {
+            List<TupleDTO<Long, String>> dataList = this.baseMapper.materialOrderStation(conditionList);
+            if (CollUtil.isNotEmpty(dataList)) {
+                dataList.forEach(ele -> {
+                    String field2 = ele.getField2();
+                    if (StrUtil.isNotBlank(field2)) {
+                        String[] split = field2.split(",");
+                        Set<Long> resSet = Sets.newHashSet();
+                        try {
+                            for (String s : split) {
+                                resSet.add(Long.parseLong(s));
+                            }
+                        } catch (Exception e) {
+                            log.error(e.getLocalizedMessage());
+                        }
+                        resMap.put(ele.getField1(), resSet);
+                    }
+                });
+            }
         }
         return resMap;
     }

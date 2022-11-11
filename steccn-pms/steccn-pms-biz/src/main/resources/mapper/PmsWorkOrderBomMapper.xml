@@ -5,31 +5,49 @@
 <mapper namespace="com.steccn.pms.mapper.PmsWorkOrderBomMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsWorkOrderBom">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="moduleId" column="module_id" jdbcType="OTHER"/>
-            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
-            <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
-            <result property="processId" column="process_id" jdbcType="BIGINT"/>
-            <result property="fixedQuantityFlag" column="fixed_quantity_flag" jdbcType="TINYINT"/>
-            <result property="copruductFlag" column="copruduct_flag" jdbcType="TINYINT"/>
-            <result property="backCalculateFlag" column="back_calculate_flag" jdbcType="TINYINT"/>
-            <result property="jointProductFlag" column="joint_product_flag" jdbcType="TINYINT"/>
-            <result property="workProduceId" column="work_produce_id" jdbcType="BIGINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="moduleId" column="module_id" jdbcType="OTHER"/>
+        <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+        <result property="unitId" column="unit_id" jdbcType="BIGINT"/>
+        <result property="processId" column="process_id" jdbcType="BIGINT"/>
+        <result property="fixedQuantityFlag" column="fixed_quantity_flag" jdbcType="TINYINT"/>
+        <result property="backCalculateFlag" column="back_calculate_flag" jdbcType="TINYINT"/>
+        <result property="jointProductFlag" column="joint_product_flag" jdbcType="TINYINT"/>
+        <result property="workProduceId" column="work_produce_id" jdbcType="BIGINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,module_id,quantity,
+        id
+        ,module_id,quantity,
         unit_id,process_id,fixed_quantity_flag,
         copruduct_flag,back_calculate_flag,joint_product_flag,
         work_produce_id,create_by,create_name,
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+    <select id="materialOrderStation" resultType="com.steccn.common.dto.TupleDTO">
+        SELECT
+        bom.module_id as f1,
+        GROUP_CONCAT( DISTINCT pwocs.execute_station_id ) as f2
+        FROM
+        pms_work_order_craft_station pwocs
+        JOIN pms_produce_order_craft ppoc ON pwocs.id = pwocs.produce_order_craft_id
+        JOIN pms_work_order_bom bom ON bom.work_produce_id = ppoc.produce_order_id
+        WHERE
+        (pwocs.del_flag = 0 AND ppoc.del_flag = 0 AND bom.del_flag = 0)
+        <if test="conditionList !=null and conditionList.size > 0">
+            AND
+            <foreach collection="conditionList" item="condition" open="(" close=")" separator="or">
+                ( bom.module_id = #{condition.field2} AND bom.work_produce_id = #{condition.field1} )
+            </foreach>
+        </if>
+        group by bom.module_id
+    </select>
 </mapper>

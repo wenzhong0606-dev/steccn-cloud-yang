@@ -1,8 +1,12 @@
 package com.steccn.pms.mapper;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +17,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmsWorkOrderBomMapper extends BaseMapper<PmsWorkOrderBom> {
 
+    /**
+     * 查看物料订单的工位，不区分物料
+     * @param conditionList 条件
+     * @return
+     */
+    List<TupleDTO<Long, String>> materialOrderStation(@Param("conditionList") List<TupleDTO<Long, Long>> conditionList);
 }
 
 
