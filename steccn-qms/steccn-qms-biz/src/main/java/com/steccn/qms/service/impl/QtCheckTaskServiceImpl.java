@@ -1150,6 +1150,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return null;
     }
 
+
     private Long currentMaxCode() {
         //1.定义返回值
         Long currentMax = 0L;
