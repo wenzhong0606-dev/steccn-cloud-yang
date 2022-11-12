@@ -984,10 +984,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_TWO);
         }
 
-        //根据对比条件筛选
-        if (dto.getCompare().equals("班次")){
-
-        }
+//        //根据对比条件筛选
+//        if (dto.getCompare().equals("班次")){
+//
+//        }
         //根据完成时间筛选
         condition.ge(QtCheckTask::getFinishedTime, dto.getDateStart())
                 .le(QtCheckTask::getFinishedTime, dto.getDateEnd())
@@ -1025,12 +1025,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //判断是深加工车间还是基片车间
         if (dto.getName().equals(QtManagerConstant.DEEP_OFFICE_NAME)){
-            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_ONE).or()
-                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_TWO).or()
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_ONE)
+                    .or()
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_TWO)
+                    .or()
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.DEEP_OFFICE_NAME_THREE);
         }
         if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)){
-            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_ONE).or()
+            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_ONE)
+                    .or()
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))",  QtManagerConstant.SUB_OFFICE_NAME_TWO);
         }
         //根据完成时间筛选

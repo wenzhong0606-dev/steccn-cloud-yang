@@ -44,10 +44,28 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
 //            excelWriter.fill(data(), fillConfig, writeSheet);
 //            excelWriter.fill(data(), fillConfig, writeSheet);
             Map<String, Object> map = MapUtils.newHashMap();
-            map.put("workOrderCondition", "班次");
+            map.put("workOrderNameCondition", "班次");
             map.put("workShopCondition", "基片一车间");
             ImageData imageData = new ImageData();
 //            imageData.setImage();
+            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
+            map.put("img",imageData);
+            excelWriter.fill(map, writeSheet);
+        }
+    }
+
+    @Override
+    public void downloadDeepProcess(HttpServletResponse response) throws IOException{
+        //1、从服务器获取模板数据
+        InputStream modelIn = DownloadModelUtil.getModelInputStream(QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME);
+        //2、设置下载头
+        this.setDownloadHeader(response,QtManagerConstant.QT_CHART_DEEP_PROCESS_NAME);
+        try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+            Map<String, Object> map = MapUtils.newHashMap();
+            map.put("workOrderNameCondition", "班次");
+            map.put("workShopCondition", "基片一车间");
+            ImageData imageData = new ImageData();
             imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
             map.put("img",imageData);
             excelWriter.fill(map, writeSheet);

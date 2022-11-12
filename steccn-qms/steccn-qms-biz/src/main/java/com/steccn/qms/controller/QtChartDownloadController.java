@@ -48,4 +48,22 @@ public class QtChartDownloadController {
             response.getWriter().println(JSON.toJSONString(map));
         }
     }
+    @GetMapping("/deep/process")
+    @ApiOperation(value = "新建检验项")
+    @SysLog("下载基片成品率数据")
+    public void downloadDeepProcess(HttpServletResponse response) throws IOException {
+        try{
+            qtChartDownloadService.downloadDeepProcess(response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            response.reset();
+            response.setContentType("application/json");
+            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+            Map<String, String> map = MapUtils.newHashMap();
+            map.put("status", "failure");
+            map.put("message", "下载文件失败" + e.getMessage());
+            response.getWriter().println(JSON.toJSONString(map));
+        }
+    }
+
 }
