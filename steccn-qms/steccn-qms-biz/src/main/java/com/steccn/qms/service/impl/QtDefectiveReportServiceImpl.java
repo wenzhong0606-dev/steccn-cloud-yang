@@ -1,6 +1,5 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
@@ -8,25 +7,24 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtDefectiveItem;
-import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
-import com.steccn.qms.vo.QtChartBarSeriesVO;
-import com.steccn.qms.vo.QtChartBarVO;
-import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -61,11 +59,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-        List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.listByIds(categoryIdSet);
-        Map<Integer, String> categoryIdNameMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(qtItemCategoryList)) {
-            qtItemCategoryList.forEach(ele -> categoryIdNameMap.put(ele.getId(), ele.getName()));
-        }
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
         List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
         resVo.setSeries(series);
         resVo.setXAis(xAis);
@@ -184,5 +178,32 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         });
         return flatDefectiveList;
+    }
+
+    @Override
+    public QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartPieVO qtChartPieVO = new QtChartPieVO();
+        List<QtChartPieValueVO> dataList = Lists.newArrayList();
+
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Map<Integer, List<QtCheckTaskDetailReportVO>> defectDataMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+        //总缺陷数
+        int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        //遍历缺陷类别
+        defectDataMap.forEach((k, v) -> {
+            QtChartPieValueVO vo = new QtChartPieValueVO();
+            vo.setName(categoryIdNameMap.getOrDefault(k, Strings.EMPTY));
+            int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+            BigDecimal multiply = BigDecimal.valueOf(categorySum).multiply(BigDecimal.valueOf(100));
+            BigDecimal divide = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(sum), BigDecimalUtil.SCALE_2);
+            vo.setValue(divide);
+            dataList.add(vo);
+        });
+        qtChartPieVO.setData(dataList);
+        return qtChartPieVO;
     }
 }

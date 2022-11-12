@@ -6,6 +6,8 @@ import com.steccn.qms.dto.QtItemCategorySaveDTO;
 import com.steccn.qms.vo.QtItemCategoryVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -54,4 +56,11 @@ public interface QtItemCategoryService extends IService<QtItemCategory> {
      * @return 是否
      */
     Boolean existType(Integer id, Integer type);
+
+    /**
+     * 获取缺陷项类别中文
+     * @param categoryIdSet 缺陷项类别
+     * @return map
+     */
+    Map<Integer, String> listByIdCh(Set<Integer> categoryIdSet);
 }

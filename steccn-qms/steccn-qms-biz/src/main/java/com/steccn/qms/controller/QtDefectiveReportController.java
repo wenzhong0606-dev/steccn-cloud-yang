@@ -4,6 +4,7 @@ import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtDefectiveReportService;
 import com.steccn.qms.vo.QtChartBarVO;
+import com.steccn.qms.vo.QtChartPieVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,9 @@ public class QtDefectiveReportController {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryBar(dto));
     }
 
-//    @PostMapping("/deep/category/pie")
-//    @ApiOperation("深加工缺陷类别分布-饼图")
-//    public R<QtChartBarVO> deepDefectiveCategoryPie(@Valid @RequestBody QtChartParamDTO dto) {
-//        return R.success(qtDefectiveReportService.deepDefectiveCategoryBar(dto));
-//    }
+    @PostMapping("/deep/category/pie")
+    @ApiOperation("深加工缺陷类别分布-饼图")
+    public R<QtChartPieVO> deepDefectiveCategoryPie(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryPie(dto));
+    }
 }

@@ -20,6 +20,7 @@ public class BigDecimalUtil {
      */
     public static Integer DEFAULT_SCALE = 3;
     public static Integer SCALE_2 = 2;
+    public static Integer SCALE_4 = 4;
 
     /**
      * 格式化val 指定scale
