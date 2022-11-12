@@ -1,0 +1,35 @@
+package com.steccn.qms.controller;
+
+import com.steccn.common.vo.R;
+import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.service.QtDefectiveReportService;
+import com.steccn.qms.vo.QtChartBarVO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+
+/**
+ * @author yequan
+ */
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/qms/defective/report")
+@Slf4j
+@ApiModel("缺陷项报表控制器")
+public class QtDefectiveReportController {
+
+    private final QtDefectiveReportService qtDefectiveReportService;
+
+    @PostMapping("/deep/category")
+    @ApiOperation("深加工缺陷类别分布")
+    public R<QtChartBarVO> deepDefectiveCategory(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategory(dto));
+    }
+}

@@ -7,6 +7,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -99,4 +100,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 根据条件查询任务
+     *
+     * @param dto dto条件
+     * @return list
+     */
+    List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto);
 }
