@@ -147,4 +147,9 @@ public class QtCheckTaskController {
 
 
 
+    @PostMapping("/accessory/acceptability/detail")
+    @ApiOperation(value = "配料抽检合格率明细")
+    public R<List<QtAccessoryAcceptabilityDetailVO>> getQtAccessoryAcceptabilityDetailVO(@RequestBody QtAccessoryAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
+    }
 }

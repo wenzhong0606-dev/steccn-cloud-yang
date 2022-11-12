@@ -99,6 +99,4 @@ public class QtReportController {
     public void download(HttpServletResponse response) throws IOException {
         qtReportService.download(response);
     }
-
-
 }

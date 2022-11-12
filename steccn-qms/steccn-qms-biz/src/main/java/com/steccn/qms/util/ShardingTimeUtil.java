@@ -6,6 +6,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 时间分片工具类
+ */
 public class ShardingTimeUtil {
     public static void main(String[] args) {
         System.out.println(cutDate("H", "2022-4-29 00:00:00", "2022-10-17 00:00:00"));

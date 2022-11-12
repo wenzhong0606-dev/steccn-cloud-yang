@@ -147,10 +147,10 @@ public interface QtManagerConstant {
     /**
      * 班次 0早班 1晚班
      */
-    final int morningWork = 0;
-    final int nightWork = 1;
-    String morningWorkName="白班";
-    String nightWorkName ="夜班";
+    final int MORNINGWORK = 0;
+    final int NIGHTWORK = 1;
+    String MORNINGWORKNAME="白班";
+    String NIGHTWORKNAME ="夜班";
     /**
      * 日环比,周环比标志
      */

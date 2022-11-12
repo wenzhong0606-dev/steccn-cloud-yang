@@ -115,4 +115,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
+
+    /**
+     * 配料抽检合格率的明细
+     * @param dto
+     * @return
+     */
+    List<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto);
 }
