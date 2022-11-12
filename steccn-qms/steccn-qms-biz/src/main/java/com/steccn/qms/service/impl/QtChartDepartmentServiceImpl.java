@@ -453,10 +453,10 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
             rateDateVo.setStartDateTime(LocalDateTime.of(startDate, localTime));
             rateDateVo.setEndDateTime(LocalDateTime.of(endDate, localTime));
+            localDateList.remove(endDate);
             if (localDateList.size() == 1) {
                 localDateList.remove(startDate);
             }
-            localDateList.remove(endDate);
             passRateDateVoList.add(rateDateVo);
         }
 
