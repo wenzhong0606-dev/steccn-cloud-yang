@@ -1,8 +1,14 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Lists;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
@@ -13,6 +19,8 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
+import com.steccn.qms.vo.QtChartBarDecimalDataVO;
+import com.steccn.qms.vo.QtChartBarSeriesVO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +56,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemotePassRateFeignApi remotePassRateFeignApi;
 
     private final QtChartTargetValueService qtChartTargetValueService;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
     /**
      * 生产基片损耗数据
      * @param dto
@@ -232,11 +242,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         QtDefectChartVO<String,String,String> vo = new QtDefectChartVO();
         //获取生产系统数据
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
-        R<List<ProducePassRateVO>> rResult = new R<>();
+        R<List<ProducePassRateVO>> rResult;
         LocalDate pmsEndDate;
         //最晚数据完整日期
         LocalDateTime fullDate = calculateOrder(LocalDateTime.now());
-        LocalDate pmsStartDate = LocalDate.now();
+        LocalDate pmsStartDate;
         //没传时间范围则是部门分析
         if(dto == null){
             //需要拿到7天的数据
@@ -246,6 +256,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             pmsDTO.setEndDate(pmsEndDate);
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         }else {
+            pmsEndDate = dto.getEndTime();
+            pmsStartDate =dto.getStartTime();
             pmsDTO.setBeginDate(dto.getStartTime());
             pmsDTO.setEndDate(dto.getEndTime());
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
@@ -265,10 +277,17 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             rList = rList.stream().filter(s->s.getWorkshopName().contains("基片")).collect(Collectors.toList());
             //根据日期分组
             Map<LocalDate,BigDecimal> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
-            //遍历分组算值
-            for(Map.Entry<LocalDate,BigDecimal> entry:resultMap.entrySet()){
-                xData.add(entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                yData.add(new DecimalFormat("0.0%").format(entry.getValue()));
+            //根据时间范围算值
+            Long dateRange = pmsEndDate.toEpochDay() - pmsStartDate.toEpochDay();
+            for(int i = 0; i < dateRange; i++){
+                LocalDate tmpDate = pmsStartDate.plusDays(i);
+                xData.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                if(resultMap.get(tmpDate) == null){
+                    yData.add(new DecimalFormat("0.00%").format(BigDecimal.ZERO));
+                }else {
+                    yData.add(new DecimalFormat("0.00%").format(resultMap.get(tmpDate)));
+                }
+
             }
             //算日环比
             BigDecimal dayRate = resultMap.get(fullDate.toLocalDate()).subtract(resultMap.get(fullDate.toLocalDate().minusDays(1)));
@@ -281,7 +300,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             if(dayRate.compareTo(BigDecimal.ZERO) == 0){
                 vo.setDayValue("-");
             }else {
-                vo.setDayValue(new DecimalFormat("0.0%").format(dayRate));
+                vo.setDayValue(new DecimalFormat("0.00%").format(dayRate));
             }
             //算周同比
             pmsDTO.setBeginDate(fullDate.minusDays(6).toLocalDate());
@@ -296,7 +315,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             if(weekRate.compareTo(BigDecimal.ZERO) == 0){
                 vo.setWeekValue("-");
             }else {
-                vo.setWeekValue(new DecimalFormat("0.0%").format(weekRate));
+                vo.setWeekValue(new DecimalFormat("0.00%").format(weekRate));
             }
         }
         vo.setXData(xData);
@@ -306,8 +325,106 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if(targetValue == null) {
             targetValue = BigDecimal.ZERO;
         }
-        vo.setTargetValue(new DecimalFormat("0.0%").format(targetValue));
+        vo.setTargetValue(new DecimalFormat("0.00%").format(targetValue));
         return vo;
+    }
+
+    /**
+     * 生成成品率趋势图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartBarVO generateSubstrateTend(QtChartParamDTO dto) {
+        QtChartBarVO vo = new QtChartBarVO();
+        List<String> xAis = new ArrayList<>();
+        //折线图
+        QtChartBarDecimalDataVO markLine = new QtChartBarDecimalDataVO();
+        List<QtChartBarSeriesVO> series = new ArrayList<>();
+        List<String> markLineDataList = new ArrayList<>();
+        ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
+        pmsDTO.setBeginDate(dto.getDateStart());
+        pmsDTO.setEndDate(dto.getDateEnd());
+        R<List<ProducePassRateVO>> rResult = new R<>();
+        //调用数据生成全量数据表
+        rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        if(CollUtil.isNotEmpty(rResult.getData())){
+            //先过滤数据,只要基片车间
+            List<ProducePassRateVO> rList = rResult.getData();
+            //过滤基片车间
+            rList = rList.stream().filter(s->s.getWorkshopName().contains("基片")).collect(Collectors.toList());
+            //根据日期分组
+            Map<LocalDate,List<ProducePassRateVO>> groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
+            //根据班次、产线、车间分bar类型
+            Map<String,QtChartBarSeriesVO> barMap = MapUtil.newHashMap();
+            //若按照班次分则只有两个
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
+                List<String> bar1Data = Lists.newArrayList();
+                bar1.setData(bar1Data);
+                bar1.setName(QtManagerConstant.morningWorkName);
+                QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
+                List<String> bar2Data = Lists.newArrayList();
+                bar2.setData(bar2Data);
+                bar2.setName(QtManagerConstant.nightWorkName);
+                barMap.put(QtManagerConstant.morningWorkName,bar1);
+                barMap.put(QtManagerConstant.nightWorkName,bar2);
+            }else {
+                SysOfficeDTO officeDTO = new SysOfficeDTO();
+                officeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                    //产线
+                    officeDTO.setOfficeType(String.valueOf(9));
+                }else {
+                    //车间
+                    officeDTO.setOfficeType(String.valueOf(8));
+                }
+                R<List<SysOfficeVO>> rSysOfficeResult = remoteOfficeFeign.getByTypeAndLine(officeDTO);
+                if(CollUtil.isNotEmpty(rSysOfficeResult.getData())){
+                    rSysOfficeResult.getData().forEach(tmp -> {
+                        QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
+                        List<String> bar1Data = Lists.newArrayList();
+                        bar1.setData(bar1Data);
+                        bar1.setName(tmp.getOfficeName());
+                        barMap.put(tmp.getOfficeName(),bar1);
+                    });
+                }
+            }
+            //先放入x轴的数据和y轴数据
+            Long dateRange = dto.getDateEnd().toEpochDay() - dto.getDateStart().toEpochDay();
+            for(int i = 0; i < dateRange; i++){
+                LocalDate tmpDate = dto.getDateStart().plusDays(i);
+                xAis.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                List<ProducePassRateVO> groupByDateVO = groupByDate.get(tmpDate);
+                Map<String,BigDecimal> dataMap = MapUtil.newHashMap();
+                //若VO不为空
+                if(CollUtil.isNotEmpty(groupByDateVO)){
+                    //对markLine进行求和
+                    BigDecimal markLineData = groupByDateVO.stream().collect(CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate));
+                    markLineDataList.add(new DecimalFormat("0.00%").format(markLineData));
+                    //对比维度为班次
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }
+                    //对比维度为产线
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }
+                    //对比维度为车间
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }
+                    for(Map.Entry<String,QtChartBarSeriesVO> entry:barMap.entrySet()){
+                        if(dataMap.get(entry.getKey())==null){
+                            entry.getValue().getData().add("0.00%");
+                        }else {
+                            entry.getValue().getData().add(new DecimalFormat("0.00%").format(dataMap.get(entry.getKey())));
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

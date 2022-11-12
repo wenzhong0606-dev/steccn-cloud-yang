@@ -324,7 +324,7 @@ public interface QtManagerConstant {
     }
 
     /**
-     * 粒度
+     * 图表类型
      */
     @Getter
     @AllArgsConstructor
@@ -336,6 +336,21 @@ public interface QtManagerConstant {
         LLJHG(4,"来料检合格率"),
         JPXJHG(5,"基片巡检合格率"),
         SJGXJHG(6,"深加工巡检合格率");
+
+        private Integer code;
+        private String name;
+    }
+
+    /**
+     * 对比类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChartCompareEnum{
+        //班次 产线 车间
+        WORK(0,"班次"),
+        PRODUCTLINE(1,"产线"),
+        WORKSHOP(2,"车间");
 
         private Integer code;
         private String name;

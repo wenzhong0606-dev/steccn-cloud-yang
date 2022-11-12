@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
@@ -115,4 +116,10 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Map<Integer,SysOfficeVO> parentOfficeMap(List<Integer> childId);
+
+    /**
+     * 根据机构名字和类型查找
+     * @return
+     */
+    List<SysOfficeVO> findByTypeAndName(SysOfficeDTO dto);
 }

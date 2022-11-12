@@ -2,6 +2,7 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -140,4 +141,14 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/list/parentOffice")
     @ApiOperation("根据子id获取父级节点数据")
     R<Map<Integer, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Integer> childIdList);
+
+    /**
+     * 根据机构类型和名字查找数据
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/listByTypeAndLine")
+    @ApiOperation("根据机构类型和名字查找数据")
+    R<List<SysOfficeVO>> getByTypeAndLine(@RequestBody SysOfficeDTO dto);
 }

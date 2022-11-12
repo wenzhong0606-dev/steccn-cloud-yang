@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
@@ -299,6 +300,27 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }
         return resMap;
 
+    }
+
+    /**
+     * 根据office类型和名字查
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SysOfficeVO> findByTypeAndName(SysOfficeDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType,dto.getOfficeType())
+                .like(SysOffice::getOfficeName,dto.getOfficeName()));
+        if(CollUtil.isNotEmpty(officeList)){
+            officeList.forEach(tmp->{
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp,vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
     }
 
     /**

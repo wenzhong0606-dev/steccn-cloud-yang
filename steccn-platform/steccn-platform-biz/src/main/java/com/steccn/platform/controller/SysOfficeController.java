@@ -2,6 +2,7 @@ package com.steccn.platform.controller;
 
 
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.vo.StationLineVO;
@@ -88,5 +89,11 @@ public class SysOfficeController {
     @ApiOperation("根据车间编码列表选择产线")
     public R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentCodeDTO dto){
         return R.success(sysOfficeService.getListSysOfficeList(dto));
+    }
+
+    @PostMapping("/list/listByTypeAndLine")
+    @ApiOperation("根据车间编码列表选择产线")
+    public R<List<SysOfficeVO>> getListSysOfficeList(@RequestBody SysOfficeDTO dto){
+        return R.success(sysOfficeService.findByTypeAndName(dto));
     }
 }

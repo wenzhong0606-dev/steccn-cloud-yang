@@ -3,6 +3,7 @@ package com.steccn.platform.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.service.SysOfficeService;
@@ -106,5 +107,11 @@ public class SysOfficeFeignController {
     @ApiOperation("根据子id获取父级节点数据")
     public R<Map<Integer, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Integer> childIdList){
         return R.success(sysOfficeService.parentOfficeMap(childIdList));
+    }
+
+    @PostMapping("/list/listByTypeAndLine")
+    @ApiOperation("根据名字和类型选择")
+    public R<List<SysOfficeVO>> getListSysOfficeList(@RequestBody SysOfficeDTO dto){
+        return R.success(sysOfficeService.findByTypeAndName(dto));
     }
 }

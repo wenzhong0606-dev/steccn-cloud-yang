@@ -23,7 +23,12 @@ public interface QtChartGenerateService {
     List<QtChartSubDetailDTO> generateSubstrateLossData(QtChartParamDTO dto);
 
     /**
-     * 生成基片成品率图
+     * 生成基片成品率
      */
     QtDefectChartVO generateSubstrateOverview(QtChartDateRangeDTO dto);
+
+    /**
+     * 生产基片成品率趋势图
+     */
+    QtChartBarVO generateSubstrateTend(QtChartParamDTO dto);
 }

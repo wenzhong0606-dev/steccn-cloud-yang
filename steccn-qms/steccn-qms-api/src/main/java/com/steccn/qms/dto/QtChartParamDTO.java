@@ -38,9 +38,19 @@ public class QtChartParamDTO implements Serializable {
     private Integer productLineId;
 
     /**
+     * 产线名字
+     */
+    private String productLineName;
+
+    /**
      * 车间id
      */
     private Integer productWorkShopId;
+
+    /**
+     * 车间名字
+     */
+    private Integer productWorkShopName;
 
     /**
      * 班次id 0为早班 1为晚班 3为全部
