@@ -1,10 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
-import com.nimbusds.jose.util.IntegerUtils;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -25,7 +21,6 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -50,7 +45,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author AndrewLuo
@@ -1158,7 +1152,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
-        return null;
+        //根据已知条件查询任务表
+        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+                //任务完成
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                //完成时间范围
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getFinishedTime, dto.getStartTime(), dto.getEndTime())
+                //班次
+                .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
+                //只要巡检
+                .eq(Objects.nonNull(dto.getTaskType()), QtCheckTask::getTaskType, dto.getTaskType())
+                //车间
+                .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
+                //产线
+                .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
+                .orderByAsc(QtCheckTask::getFinishedTime);
+        return list(taskCondition);
     }
 
     @Override

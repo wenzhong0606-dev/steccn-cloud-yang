@@ -1,6 +1,8 @@
 package com.steccn.qms.vo;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -13,6 +15,8 @@ import java.util.List;
  * @date 2022/11/09
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class QtChartBarSeriesVO<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 

@@ -149,7 +149,7 @@ public interface QtManagerConstant {
      */
     final int MORNINGWORK = 0;
     final int NIGHTWORK = 1;
-    String MORNINGWORKNAME="白班";
+    String MORNINGWORKNAME ="白班";
     String NIGHTWORKNAME ="夜班";
     /**
      * 日环比,周环比标志
@@ -367,5 +367,32 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
+    }
+
+
+    /**
+     * 白班夜班
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtClassesEnum {
+        DAY(0, "白班"),
+        NIGHT(1, "夜班");
+        private Integer code;
+        private String name;
+
+        /**
+         * 根据code筛选白班夜班
+         * @param code
+         * @return
+         */
+        public static QtClassesEnum code(Integer code) {
+            for (QtClassesEnum ele : QtClassesEnum.values()) {
+                if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
     }
 }

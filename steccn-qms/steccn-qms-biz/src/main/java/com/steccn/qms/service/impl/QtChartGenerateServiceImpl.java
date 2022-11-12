@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
@@ -24,7 +23,6 @@ import com.steccn.qms.vo.QtChartBarSeriesVO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.formula.functions.Count;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -362,13 +360,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
                 List<String> bar1Data = Lists.newArrayList();
                 bar1.setData(bar1Data);
-                bar1.setName(QtManagerConstant.morningWorkName);
+                bar1.setName(QtManagerConstant.MORNINGWORKNAME);
                 QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
                 List<String> bar2Data = Lists.newArrayList();
                 bar2.setData(bar2Data);
-                bar2.setName(QtManagerConstant.nightWorkName);
-                barMap.put(QtManagerConstant.morningWorkName,bar1);
-                barMap.put(QtManagerConstant.nightWorkName,bar2);
+                bar2.setName(QtManagerConstant.NIGHTWORKNAME);
+                barMap.put(QtManagerConstant.MORNINGWORKNAME,bar1);
+                barMap.put(QtManagerConstant.NIGHTWORKNAME,bar2);
             }else {
                 SysOfficeDTO officeDTO = new SysOfficeDTO();
                 officeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);

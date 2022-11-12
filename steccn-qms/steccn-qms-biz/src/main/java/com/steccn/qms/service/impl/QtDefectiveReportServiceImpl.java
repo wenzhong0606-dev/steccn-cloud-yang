@@ -1,6 +1,5 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
@@ -11,19 +10,18 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtDefectiveItem;
+import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
-import com.steccn.qms.service.QtCheckTaskDetailService;
-import com.steccn.qms.service.QtCheckTaskService;
-import com.steccn.qms.service.QtDefectiveItemService;
-import com.steccn.qms.service.QtDefectiveReportService;
+import com.steccn.qms.service.*;
+import com.steccn.qms.vo.QtChartBarSeriesVO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
-import com.steccn.qms.vo.QtCheckTaskDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -47,11 +46,46 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final QtCheckTaskService qtCheckTaskService;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtDefectiveItemService qtDefectiveItemService;
+    private final QtItemCategoryService qtItemCategoryService;
 
     @Override
     public QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto) {
-        defectiveDataFlat(dto);
-        return null;
+        //定义返回vo
+        QtChartBarVO resVo = new QtChartBarVO();
+        List<QtChartBarSeriesVO> series = Lists.newArrayList();
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //对扁平化数据获取类别
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.listByIds(categoryIdSet);
+        Map<Integer, String> categoryIdNameMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(qtItemCategoryList)) {
+            qtItemCategoryList.forEach(ele -> categoryIdNameMap.put(ele.getId(), ele.getName()));
+        }
+        //对白班夜班分组
+        Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+        AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
+        List<String> xAis = Lists.newArrayList();
+        //对白班夜班
+        classesMap.forEach((classes, classesDataList) -> {
+            List<Integer> data = Lists.newArrayList();
+            //根据班次班组分成map
+            Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = classesDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+            categoryMap.forEach((cate, cateDataList) -> {
+                //每个类别下，每个班次的缺陷数之和
+                int sum = cateDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                data.add(sum);
+                if (!flag.get()) {
+                    xAis.add(categoryIdNameMap.get(cate));
+                }
+            });
+            flag.set(Boolean.TRUE);
+            QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
+            series.add(new QtChartBarSeriesVO(Objects.nonNull(classesEnum) ? classesEnum.getName() : Strings.EMPTY, data, "total"));
+        });
+        resVo.setSeries(series);
+        resVo.setXAis(xAis);
+        return resVo;
     }
 
     @Override
