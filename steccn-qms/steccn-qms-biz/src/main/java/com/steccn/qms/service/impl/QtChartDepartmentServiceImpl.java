@@ -435,7 +435,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         LocalTime localTime = LocalTime.of(8,0,0);
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
 
-        //获取开始日期和结束日期
+        //获取最近七天开始日期和结束日期
         if (LocalDateTime.now().getHour() < QtManagerConstant.beforeHour) {
             startLocalDate = LocalDate.now().minusDays(8);
             endLocalDate = LocalDate.now().minusDays(1);
@@ -444,7 +444,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             endLocalDate = LocalDate.now();
         }
 
-        //获取每天的完整日期时间
+        //获取最近7天的完整工作时间
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, endLocalDate);
         while (!CollectionUtils.isEmpty(localDateList)) {
             PassRateDateVo rateDateVo = new PassRateDateVo();
@@ -464,22 +464,27 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         List<BigDecimal> datePassList = new ArrayList<>();
         //获取最近7天和合格率
         passRateOverViewVO.setDatePassList(datePassList);
-        for (int i = 0; i < passRateDateVoList.size(); i++) {
+        for (PassRateDateVo passRateDateVo : passRateDateVoList) {
             List<QtCheckTask> checkTaskList;
             List<QtCheckTask> qtCheckTaskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
-                    .ge(QtCheckTask::getCreateTime, passRateDateVoList.get(i).getStartDateTime())
-                    .le(QtCheckTask::getCreateTime, passRateDateVoList.get(i).getEndDateTime()));
-            if (type.equals(0)) {
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(1)).collect(Collectors.toList());
-            } else if (type.equals(1)) {
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(4) && qtCheckTask.getMaterialWorkshopName().contains("基片")).collect(Collectors.toList());
+                    .ge(QtCheckTask::getCreateTime, passRateDateVo.getStartDateTime())
+                    .le(QtCheckTask::getCreateTime, passRateDateVo.getEndDateTime()));
+            if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)) {
+                //获取来料检数据
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())).collect(Collectors.toList());
+            } else if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
+                //获取基片寻检查数据
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                        && qtCheckTask.getMaterialWorkshopName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
             } else {
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(4) && qtCheckTask.getMaterialWorkshopName().contains("深加工")).collect(Collectors.toList());
+                //获取深加工寻检查数据
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                        && qtCheckTask.getMaterialWorkshopName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
             }
 
             Integer goodNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getGoodNum).sum();
             Integer checkNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getCheckNum).sum();
-            BigDecimal passRate = new BigDecimal(goodNumSum/checkNumSum).setScale(4,BigDecimal.ROUND_DOWN);
+            BigDecimal passRate = new BigDecimal(goodNumSum / checkNumSum).setScale(4, BigDecimal.ROUND_DOWN);
             datePassList.add(passRate);
         }
 
