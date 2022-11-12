@@ -32,7 +32,7 @@ public class QtChartDownloadController {
     private final QtChartDownloadService qtChartDownloadService;
 
     @GetMapping("/substrate")
-    @ApiOperation(value = "新建检验项")
+    @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
     public void downloadSubstrate(HttpServletResponse response) throws IOException {
         try{
@@ -49,7 +49,7 @@ public class QtChartDownloadController {
         }
     }
     @GetMapping("/deep/process")
-    @ApiOperation(value = "新建检验项")
+    @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
     public void downloadDeepProcess(HttpServletResponse response) throws IOException {
         try{

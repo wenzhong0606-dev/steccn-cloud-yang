@@ -225,7 +225,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Override
     public QtCheckItemListVO info(Integer id) {
         QtCheckItemListVO resVo = null;
-        QueryWrapper<QtCheckItem> byId = new QueryWrapper<QtCheckItem>().eq("id",id).orderByAsc("create_time");
+        QtCheckItem byId = getOne(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getId,id).orderByAsc(QtCheckItem::getCreateTime),false);
         if (Objects.nonNull(byId)) {
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);

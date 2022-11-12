@@ -113,12 +113,12 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Set<Long> classesIdList = producePassRateVOList.stream().map(ProducePassRateVO::getClassesId).collect(Collectors.toSet());
         sysOfficeIdSet.addAll(productLineIdList);
 
-        Map<Integer, SysOfficeVO> sysOfficeVOMap = remoteOfficeFeign.listById(sysOfficeIdSet).getData();
+        Map<Integer, SysOfficeVO> sysOfficeVoMap = remoteOfficeFeign.listById(sysOfficeIdSet).getData();
         Map<Long, String> classesMap = remoteDictFeignApi.listByIdCh(classesIdList).getData();
         producePassRateVOList.forEach(producePassRateVO -> {
             producePassRateVO.setClassesName(classesMap.get(producePassRateVO.getClassesId()));
-            producePassRateVO.setWorkshopName(sysOfficeVOMap.get(producePassRateVO.getWorkshopId()).getOfficeName());
-            producePassRateVO.setProductLineName(sysOfficeVOMap.get(producePassRateVO.getProductLineId()).getOfficeName());
+            producePassRateVO.setWorkshopName(sysOfficeVoMap.get(producePassRateVO.getWorkshopId()).getOfficeName());
+            producePassRateVO.setProductLineName(sysOfficeVoMap.get(producePassRateVO.getProductLineId()).getOfficeName());
         });
 
         return producePassRateVOList;
