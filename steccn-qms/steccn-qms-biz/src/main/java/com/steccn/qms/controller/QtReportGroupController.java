@@ -40,7 +40,7 @@ public class QtReportGroupController {
     public R<List<QtReportGroupVO>> getReportGroupVOlist(){
         return R.success(qtReportGroupService.getReportGroupVOlist());
     }
-    @PostMapping ("/{id}")
+    @GetMapping ("/{id}")
     @ApiOperation(value = "根据报表卡片分组ID去查询报表卡片图表")
     public R<List<QtReportChartVO>> getQtReportList(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.getQtReportList(id));

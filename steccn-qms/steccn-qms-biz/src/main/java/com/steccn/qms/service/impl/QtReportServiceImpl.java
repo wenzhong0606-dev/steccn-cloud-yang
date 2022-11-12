@@ -238,35 +238,33 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtReportChartVO.setMaterialName(measureName);
 
             //设置时间分片
-            String start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATE_PATTERN);
-            String end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATE_PATTERN);
+            String start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATETIME_PATTERN);
+            String end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATETIME_PATTERN);
             List<String> dates = Lists.newArrayList();
 
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())) {
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start, end);
-                dates.add(start);
+
             }
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())) {
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start, end);
-                dates.add(start);
             }
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())) {
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start, end);
-                dates.add(start);
             }
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())) {
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start, end);
-                dates.add(start);
+
             }
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())) {
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start, end);
-                dates.add(start);
+
             }
             if (q.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())) {
                 start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATETIME_PATTERN);
                 end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATETIME_PATTERN);
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
-                dates.add(start);
+
             }
             dates = dates.stream().sorted().collect(Collectors.toList());
             qtReportChartVO.setXData(dates);
