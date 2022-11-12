@@ -17,9 +17,11 @@ public class QtSubOrDeepAcceptabilityDTO implements Serializable {
     private String name;
 
     @ApiModelProperty("开始时间")
+    @NotNull(message = "开始时间不能为空")
     private LocalDate dateStart;
 
     @ApiModelProperty("结束时间")
+    @NotNull(message = "结束时间不能为空")
     private LocalDate dateEnd;
 
     @ApiModelProperty("对比")

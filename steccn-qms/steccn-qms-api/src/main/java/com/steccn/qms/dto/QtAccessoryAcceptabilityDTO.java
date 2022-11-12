@@ -2,6 +2,7 @@ package com.steccn.qms.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 @Data
@@ -9,6 +10,7 @@ public class QtAccessoryAcceptabilityDTO {
     /**
      * 检验完成时间在选中日期8:00 到20:00内的所有配料抽检任务
      */
+    @NotNull(message = "时间不能为空")
     private LocalDate dateTime;
 
     /**
@@ -19,7 +21,7 @@ public class QtAccessoryAcceptabilityDTO {
     /**
      * 物料使用车间
      */
-    private Integer productWorkShopId;
+    private Integer materialWorkshopId;
 
     /**
      * 区分柱状图饼状图的字段
