@@ -18,7 +18,7 @@ public interface QtDefectiveReportService {
      * @param dto dto
      * @return
      */
-    QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
+    QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto);
 
     /**
      * 根据条件获取缺陷扁平化数据

@@ -994,10 +994,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
 
         //判断是否筛选白班夜班
-        if (dto.getWorkingOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
-        condition.eq(QtCheckTask::getClassesId,QtManagerConstant.MORNINGWORK);
-        }else if (dto.getWorkingOrder().equals(QtManagerConstant.NIGHTWORK)){
-            condition.eq(QtCheckTask::getClassesId,QtManagerConstant.NIGHTWORK);
+        if (dto.getWorkingOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())) {
+            condition.eq(QtCheckTask::getClassesId, QtManagerConstant.MORNINGWORK);
+        } else if (dto.getWorkingOrder().equals(QtManagerConstant.NIGHTWORK)) {
+            condition.eq(QtCheckTask::getClassesId, QtManagerConstant.NIGHTWORK);
         }
 
 
@@ -1007,7 +1007,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .groupBy(QtCheckTask::getClassesId);
 
         List<QtCheckTask> qtCheckTasks = list(condition);
-        Assert.notEmpty(qtCheckTasks,"暂无数据");
+        Assert.notEmpty(qtCheckTasks, "暂无数据");
 
         //构建返回数据集合
         List<QtDeepOrSubAcceptabilityDetailVO> detailVOList = Lists.newArrayList();
@@ -1016,7 +1016,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             BeanUtils.copyProperties(qtCheckTask, vo);
             BigDecimal checkNum = new BigDecimal(qtCheckTask.getCheckNum());
             BigDecimal goodNum = new BigDecimal(qtCheckTask.getGoodNum());
-            vo.setAcceptability(BigDecimalUtil.divide(goodNum,checkNum,BigDecimalUtil.SCALE_2));
+            vo.setAcceptability(BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2));
             vo.setFinishedTime(LocalDateUtil.format(qtCheckTask.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
             vo.setClassesDate(LocalDateUtil.format(qtCheckTask.getCreateTime(), DatePattern.NORM_DATE_PATTERN));
             detailVOList.add(vo);
@@ -1158,52 +1158,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
-        List<Integer> classIds = Lists.newArrayList();
-        List<Integer> badnums = Lists.newArrayList();
-        QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
-        List<String> bar1Data = Lists.newArrayList();
-        bar1.setData(bar1Data);
-
-        QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
-        List<String> bar2Data = Lists.newArrayList();
-        bar2.setData(bar2Data);
-        if (dto.getType() == QtManagerConstant.QtChartType.HISTOGRAM.getCode()){
-        if (dto.getWorkOrderId()!=null) {
-            //查询时间范围为当天的8点到晚上八点
-            LocalDateTime start = LocalDateTime.of(dto.getStartTime().toLocalDate(), LocalTime.of(8, 0, 0));
-            LocalDateTime end = LocalDateTime.of(dto.getEndTime().toLocalDate(), LocalTime.of(20, 0, 0));
-            List<QtCheckTask> qtCheckTasks = list(new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getClassesId, dto.getWorkOrderId())
-                    .ge(QtCheckTask::getFinishedTime, start)
-                    .le(QtCheckTask::getFinishedTime, end)
-                    .groupBy(QtCheckTask::getClassesId));
-            for (QtCheckTask tem : qtCheckTasks) {
-                Integer classesId = tem.getClassesId();
-                Integer badNum = tem.getBadNum();
-                classIds.add(classesId);
-                badnums.add(badNum);
-
-
-            }
-            //柱状图
-            if (dto.getWorkOrderId()==QtManagerConstant.QtChartType.HISTOGRAM.getCode()){
-                bar1.setName(QtManagerConstant.QtChartType.HISTOGRAM.getName());
-            }
-            //饼状图
-            else  {
-                bar2.setName(QtManagerConstant.QtChartType.PIECHART.getName());
-            }
-            /*qtCheckTasks.stream().filter(v -> v.getClassesId().equals(dto.getWorkOrderId()));{
-
-            }*/
-
-        }
-
-
-        }
-
-        return null;
         //根据已知条件查询任务表
-       /* LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
@@ -1216,8 +1172,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
                 .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
-                .orderByAsc(QtCheckTask::getFinishedTime);*/
-        //return list(taskCondition);
+                .orderByAsc(QtCheckTask::getFinishedTime);
+        return list(taskCondition);
     }
 
     @Override
@@ -1241,16 +1197,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //根据条件查询
         LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())
-                .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .ge(QtCheckTask::getFinishedTime, start)
                 .le(QtCheckTask::getFinishedTime, end);
         List<QtCheckTask> qtCheckTasks = list(condition);
 
         //创建返回数据的类
-      List<QtAccessoryAcceptabilityDetailVO> vos= Lists.newArrayList();
-        qtCheckTasks.forEach(q->{
+        List<QtAccessoryAcceptabilityDetailVO> vos = Lists.newArrayList();
+        qtCheckTasks.forEach(q -> {
             QtAccessoryAcceptabilityDetailVO vo = new QtAccessoryAcceptabilityDetailVO();
-            BeanUtils.copyProperties(q,vo);
+            BeanUtils.copyProperties(q, vo);
 
             vo.setFinishedTime(LocalDateUtil.format(q.getFinishedTime(), "yyyy-MM-dd HH:mm"));
             vos.add(vo);

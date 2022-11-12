@@ -53,7 +53,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
-    public QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto) {
+    public QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto) {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
