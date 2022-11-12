@@ -355,4 +355,17 @@ public interface QtManagerConstant {
         private Integer code;
         private String name;
     }
+
+    /**
+     * 柱状图或饼状图常量
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChartType{
+        HISTOGRAM(0,"柱状图"),
+        PIECHART(1,"饼状图");
+
+        private Integer code;
+        private String name;
+    }
 }
