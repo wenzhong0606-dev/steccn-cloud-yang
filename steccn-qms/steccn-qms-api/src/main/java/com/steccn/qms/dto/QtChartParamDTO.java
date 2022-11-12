@@ -61,4 +61,6 @@ public class QtChartParamDTO implements Serializable {
      * 类型 0为柱状图 1为饼状图
      */
     private Integer type;
+
+    private String productWorkName;
 }

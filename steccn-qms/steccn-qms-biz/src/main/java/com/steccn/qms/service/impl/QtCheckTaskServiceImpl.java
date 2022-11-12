@@ -1145,6 +1145,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return list(taskCondition);
     }
 
+    @Override
+    public QtChartDefectVO getPictureJPFB(QtChartParamDTO dto) {
+        return null;
+    }
+
     private Long currentMaxCode() {
         //1.定义返回值
         Long currentMax = 0L;

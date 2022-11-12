@@ -108,4 +108,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return list
      */
     List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto);
+
+    /**
+     * 缺陷项图表柱状图和饼状图
+     * @param dto
+     * @return
+     */
+    QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
 }

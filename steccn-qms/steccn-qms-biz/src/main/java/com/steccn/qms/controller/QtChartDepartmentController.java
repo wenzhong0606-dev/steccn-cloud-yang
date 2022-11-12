@@ -7,9 +7,11 @@ import com.steccn.qms.dto.QtChatDepartmentDTO;
 import com.steccn.qms.service.QtChartDepartmentService;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.vo.QtChartBarVO;
+import com.steccn.qms.vo.QtChartDefectVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 import com.steccn.qms.vo.PassRateOverViewVO;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,12 @@ public class QtChartDepartmentController {
     public R<QtDefectChartVO> getChartDepartmentInfoSJG(@RequestBody QtChatDepartmentDTO dto) {
         return R.success(qtChartDepartmentService.getChartDepartmentInfoSJG(dto));
     }
+
+   /* @PostMapping("/picture/jpfb")
+    @ApiOperation(value = "基片缺陷分布柱状图和饼状图")
+    public R<QtChartDefectVO> getPictureJPFB(QtChartParamDTO dto){
+        return R.success(qtChartDepartmentService.getPictureJPFB(dto));
+    }*/
 
 //    /**
 //     * 基片成品率概览领导

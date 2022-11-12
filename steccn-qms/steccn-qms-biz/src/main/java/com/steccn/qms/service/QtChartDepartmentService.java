@@ -28,4 +28,5 @@ public interface QtChartDepartmentService {
     PassRateOverViewVO passRateOverview(Integer type);
 
 
+     //QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
 }

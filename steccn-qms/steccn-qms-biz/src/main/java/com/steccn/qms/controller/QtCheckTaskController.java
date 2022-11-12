@@ -139,4 +139,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(dto));
     }
 
+    @PostMapping("/chart/defect/picture/jpfb")
+    @ApiOperation(value = "基片缺陷分布柱状图和饼状图")
+    public R<QtChartDefectVO> getPictureJPFB(QtChartParamDTO dto){
+        return R.success(qtCheckTaskService.getPictureJPFB(dto));
+    }
+
+
+
 }

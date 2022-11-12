@@ -29,6 +29,7 @@ import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,26 +46,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtCheckPlan>
         implements QtCheckPlanService {
-
-    private final QtCheckPlanGroupService qtCheckPlanGroupService;
-
-    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
-
-    private final QtCheckItemService qtCheckItemService;
-
-    private final RemoteDictFeignApi remoteDictFeign;
-
-    private final QtDefectiveItemService qtDefectiveItemService;
-
-    private final RemoteOfficeFeign remoteOfficeFeign;
-
-    private final QtCheckTaskDetailService qtCheckTaskDetailService;
-
-    private final QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
-
-    private final QtCheckPlanMapper qtCheckPlanMapper;
-
-    private final QtItemCategoryService qtItemCategoryService;
+    @Autowired
+    private QtCheckPlanGroupService qtCheckPlanGroupService;
+    @Autowired
+    private QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
+    @Autowired
+    private QtCheckItemService qtCheckItemService;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeign;
+    @Autowired
+    private QtDefectiveItemService qtDefectiveItemService;
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private QtCheckTaskDetailService qtCheckTaskDetailService;
+    @Autowired
+    private QtMaterialLinkCheckPlanService qtMaterialLinkCheckPlanService;
+    @Autowired
+    private QtCheckPlanMapper qtCheckPlanMapper;
+    @Autowired
+    private QtItemCategoryService qtItemCategoryService;
 
     /**
      * 新增检验计划
