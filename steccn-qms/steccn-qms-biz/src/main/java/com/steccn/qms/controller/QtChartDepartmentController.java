@@ -8,6 +8,7 @@ import com.steccn.qms.service.QtChartDepartmentService;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtDefectChartVO;
+import com.steccn.qms.vo.PassRateOverViewVO;
 import io.swagger.annotations.ApiModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,5 +64,10 @@ public class QtChartDepartmentController {
 //    public R<QtChartBarVO> generateChatBarVO(@RequestBody QtChartParamDTO dto){
 //        return R.success(qtChartGenerateService.generateSubstrateTend(dto));
 //    }
+
+    @GetMapping("/passRateOverview")
+     public R<PassRateOverViewVO> passRateOverview(@RequestParam Integer type) {
+        return R.success(qtChartDepartmentService.passRateOverview(type));
+    }
 
 }
