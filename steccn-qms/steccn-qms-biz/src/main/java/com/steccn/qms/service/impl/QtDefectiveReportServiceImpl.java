@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
@@ -100,11 +101,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         }
         AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
         List<String> xAis = Lists.newArrayList();
-        //对白班夜班
         Map<Integer, String> finalIdNameMap = idNameMap;
+        //遍历目标map
         targetMap.forEach((t, tDataList) -> {
             List<Integer> data = Lists.newArrayList();
-            //根据班次班组分成map
+            //根据类别分组map
             Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
             categoryMap.forEach((cate, cateDataList) -> {
                 //每个类别下，每个班次的缺陷数之和

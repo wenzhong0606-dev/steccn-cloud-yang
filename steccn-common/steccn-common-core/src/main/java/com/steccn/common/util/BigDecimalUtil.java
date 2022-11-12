@@ -2,6 +2,7 @@ package com.steccn.common.util;
 
 
 import com.google.common.collect.Maps;
+import io.swagger.models.auth.In;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,9 +16,10 @@ import java.util.Objects;
 public class BigDecimalUtil {
 
     /**
-     * 默认精度
+     * 精度
      */
     public static Integer DEFAULT_SCALE = 3;
+    public static Integer SCALE_2 = 2;
 
     /**
      * 格式化val 指定scale
@@ -74,13 +76,14 @@ public class BigDecimalUtil {
 
 
     /**
-     * 除法val1 / val2保留3位小数
+     * 除法val1 / val2保留scale位小数
      *
-     * @param val1 值1
-     * @param val2 值2
-     * @return 数值，四舍五入模式下保留3位小数
+     * @param val1  值1
+     * @param val2  值2
+     * @param scale 保留几位小数
+     * @return 数值，四舍五入模式下保留scale位小数
      */
-    public static BigDecimal divide(BigDecimal val1, BigDecimal val2) {
+    public static BigDecimal divide(BigDecimal val1, BigDecimal val2, int scale) {
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
@@ -88,9 +91,20 @@ public class BigDecimalUtil {
             val2 = BigDecimal.ZERO;
         }
         if (BigDecimal.ZERO.compareTo(val2) != 0) {
-            return val1.divide(val2, DEFAULT_SCALE, RoundingMode.HALF_UP);
+            return val1.divide(val2, scale, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
+    }
+
+    /**
+     * 除法val1 / val2保留3位小数
+     *
+     * @param val1 值1
+     * @param val2 值2
+     * @return 数值，四舍五入模式下保留3位小数
+     */
+    public static BigDecimal divide(BigDecimal val1, BigDecimal val2) {
+        return divide(val1, val2, DEFAULT_SCALE);
     }
 
 

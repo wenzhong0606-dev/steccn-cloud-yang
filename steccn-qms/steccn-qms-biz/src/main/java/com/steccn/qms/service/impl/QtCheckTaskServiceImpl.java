@@ -1,7 +1,11 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -10,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
+import com.nimbusds.jose.util.IntegerUtils;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -21,6 +26,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -34,6 +40,7 @@ import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -987,11 +994,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
 
         //判断是否筛选白班夜班
-        if (dto.getWorkingOrder().equals(QtManagerConstant.MORNINGWORK)){
+        if (dto.getWorkingOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
         condition.eq(QtCheckTask::getClassesId,QtManagerConstant.MORNINGWORK);
         }else if (dto.getWorkingOrder().equals(QtManagerConstant.NIGHTWORK)){
             condition.eq(QtCheckTask::getClassesId,QtManagerConstant.NIGHTWORK);
         }
+
 
         //根据完成时间筛选
         condition.ge(QtCheckTask::getFinishedTime, dto.getDateStart())
@@ -999,20 +1007,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .groupBy(QtCheckTask::getClassesId);
 
         List<QtCheckTask> qtCheckTasks = list(condition);
+        Assert.notEmpty(qtCheckTasks,"暂无数据");
 
-        if (CollUtil.isEmpty(qtCheckTasks)) {
-            throw new BusinessException("暂无数据");
-        }
         //构建返回数据集合
         List<QtDeepOrSubAcceptabilityDetailVO> detailVOList = Lists.newArrayList();
         qtCheckTasks.forEach(qtCheckTask -> {
             QtDeepOrSubAcceptabilityDetailVO vo = new QtDeepOrSubAcceptabilityDetailVO();
             BeanUtils.copyProperties(qtCheckTask, vo);
-            BigDecimal checkNum = new BigDecimal(Integer.parseInt(qtCheckTask.getCheckNum().toString()));
-            BigDecimal goodNum = new BigDecimal(Integer.parseInt(qtCheckTask.getGoodNum().toString()));
-            vo.setAcceptability(goodNum.divide(checkNum, 2, BigDecimal.ROUND_HALF_UP));
-            vo.setFinishedTime(LocalDateUtil.format(qtCheckTask.getFinishedTime(), "YYYY-MM-DD hh:mm"));
-            vo.setClassesDate(LocalDateUtil.format(qtCheckTask.getCreateTime(), "YYYY-MM-DD"));
+            BigDecimal checkNum = new BigDecimal(qtCheckTask.getCheckNum());
+            BigDecimal goodNum = new BigDecimal(qtCheckTask.getGoodNum());
+            vo.setAcceptability(BigDecimalUtil.divide(goodNum,checkNum,BigDecimalUtil.SCALE_2));
+            vo.setFinishedTime(LocalDateUtil.format(qtCheckTask.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+            vo.setClassesDate(LocalDateUtil.format(qtCheckTask.getCreateTime(), DatePattern.NORM_DATE_PATTERN));
             detailVOList.add(vo);
         });
 
@@ -1152,8 +1158,52 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto) {
+        List<Integer> classIds = Lists.newArrayList();
+        List<Integer> badnums = Lists.newArrayList();
+        QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
+        List<String> bar1Data = Lists.newArrayList();
+        bar1.setData(bar1Data);
+
+        QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
+        List<String> bar2Data = Lists.newArrayList();
+        bar2.setData(bar2Data);
+        if (dto.getType() == QtManagerConstant.QtChartType.HISTOGRAM.getCode()){
+        if (dto.getWorkOrderId()!=null) {
+            //查询时间范围为当天的8点到晚上八点
+            LocalDateTime start = LocalDateTime.of(dto.getStartTime().toLocalDate(), LocalTime.of(8, 0, 0));
+            LocalDateTime end = LocalDateTime.of(dto.getEndTime().toLocalDate(), LocalTime.of(20, 0, 0));
+            List<QtCheckTask> qtCheckTasks = list(new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getClassesId, dto.getWorkOrderId())
+                    .ge(QtCheckTask::getFinishedTime, start)
+                    .le(QtCheckTask::getFinishedTime, end)
+                    .groupBy(QtCheckTask::getClassesId));
+            for (QtCheckTask tem : qtCheckTasks) {
+                Integer classesId = tem.getClassesId();
+                Integer badNum = tem.getBadNum();
+                classIds.add(classesId);
+                badnums.add(badNum);
+
+
+            }
+            //柱状图
+            if (dto.getWorkOrderId()==QtManagerConstant.QtChartType.HISTOGRAM.getCode()){
+                bar1.setName(QtManagerConstant.QtChartType.HISTOGRAM.getName());
+            }
+            //饼状图
+            else  {
+                bar2.setName(QtManagerConstant.QtChartType.PIECHART.getName());
+            }
+            /*qtCheckTasks.stream().filter(v -> v.getClassesId().equals(dto.getWorkOrderId()));{
+
+            }*/
+
+        }
+
+
+        }
+
+        return null;
         //根据已知条件查询任务表
-        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+       /* LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
@@ -1166,8 +1216,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
                 .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
-                .orderByAsc(QtCheckTask::getFinishedTime);
-        return list(taskCondition);
+                .orderByAsc(QtCheckTask::getFinishedTime);*/
+        //return list(taskCondition);
     }
 
     @Override
