@@ -24,7 +24,7 @@ public class QtChartDepartmentController {
 
     private final QtChartDepartmentService qtChartDepartmentService;
 
-    private final QtChartGenerateService qtChartGenerateService;
+//    private final QtChartGenerateService qtChartGenerateService;
 
     @PostMapping("/info/jp")
     public R<QtDefectChartVO> getChartDepartmentInfo(@RequestBody QtChatDepartmentDTO dto) {
@@ -36,32 +36,32 @@ public class QtChartDepartmentController {
         return R.success(qtChartDepartmentService.getChartDepartmentInfoSJG(dto));
     }
 
-    /**
-     * 基片成品率概览领导
-     * @param dto
-     * @return
-     */
-    @PostMapping("/sub/overview")
-    public R<QtDefectChartVO> generateSubstrateOverview(@RequestBody QtChartDateRangeDTO dto){
-        return R.success(qtChartGenerateService.generateSubstrateOverview(dto));
-    }
-
-    /**
-     * 基片成品率概览
-     * @return
-     */
-    @GetMapping("/sub/overview")
-    public R<QtDefectChartVO> generateSubstrateOverview(){
-        return R.success(qtChartGenerateService.generateSubstrateOverview(null));
-    }
-
-    /**
-     * 基片成品率趋势
-     * @return
-     */
-    @PostMapping("/sub/yield")
-    public R<QtChartBarVO> generateChatBarVO(@RequestBody QtChartParamDTO dto){
-        return R.success(qtChartGenerateService.generateSubstrateTend(dto));
-    }
+//    /**
+//     * 基片成品率概览领导
+//     * @param dto
+//     * @return
+//     */
+//    @PostMapping("/sub/overview")
+//    public R<QtDefectChartVO> generateSubstrateOverview(@RequestBody QtChartDateRangeDTO dto){
+//        return R.success(qtChartGenerateService.generateSubstrateOverview(dto));
+//    }
+//
+//    /**
+//     * 基片成品率概览
+//     * @return
+//     */
+//    @GetMapping("/sub/overview")
+//    public R<QtDefectChartVO> generateSubstrateOverview(){
+//        return R.success(qtChartGenerateService.generateSubstrateOverview(null));
+//    }
+//
+//    /**
+//     * 基片成品率趋势
+//     * @return
+//     */
+//    @PostMapping("/sub/yield")
+//    public R<QtChartBarVO> generateChatBarVO(@RequestBody QtChartParamDTO dto){
+//        return R.success(qtChartGenerateService.generateSubstrateTend(dto));
+//    }
 
 }
