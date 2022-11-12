@@ -29,4 +29,6 @@ public class QtChartBarVO implements Serializable {
      * 柱状图
      */
     private List<QtChartBarSeriesVO> series;
+
+
 }

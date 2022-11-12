@@ -112,6 +112,10 @@ public interface QtManagerConstant {
 
     String QT_CHART_DEEP_PROCESS_NAME = "深加工巡检合格率趋势";
 
+    String QT_CHART_SUB_PROCESS_NAME ="基片巡检合格率";
+
+    String QT_CHART_ACCESSORY_PROCESS_NAME ="配料抽检合格率";
+
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
@@ -144,13 +148,7 @@ public interface QtManagerConstant {
     final int afterHour = 20;
     final long hourSpace = 2;
 
-    /**
-     * 班次 0早班 1晚班
-     */
-    final int MORNINGWORK = 0;
-    final int NIGHTWORK = 1;
-    String MORNINGWORKNAME ="白班";
-    String NIGHTWORKNAME ="夜班";
+
     /**
      * 日环比,周环比标志
      */

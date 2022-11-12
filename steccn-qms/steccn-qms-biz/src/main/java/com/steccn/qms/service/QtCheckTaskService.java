@@ -122,4 +122,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     List<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto);
+
+    /**
+     * 配料抽检合格率的柱状图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getAccessoryChartDefectVO(QtAccessoryAcceptabilityDTO dto);
 }

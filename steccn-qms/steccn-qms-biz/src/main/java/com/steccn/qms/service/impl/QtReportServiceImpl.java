@@ -266,7 +266,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
 
             }
-            dates = dates.stream().sorted().collect(Collectors.toList());
+
             qtReportChartVO.setXData(dates);
             //获取任务id列表
             List<Long> qtTaskIds = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
@@ -379,11 +379,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()))
                     .stream().map(QtCheckTaskDetail::getTaskId).collect(Collectors.toList());
         }
-        //1.去任务表里面根据时间以及id构建获取已经完成的检验项并查询检验结果
+        //1.去任务表里面根据时间以及id获取已经完成的检验项并查询检验结果
 
         if (CollUtil.isEmpty(taskIdList)) {
-            throw new BusinessException("该检验项下没有检验任务");
+            throw new BusinessException("该分组及其检验项下没有检验任务");
         }
+        //设置查询条件
         LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>().select("any_value(type) as type," +
                         "any_value(product_order) as product_order , any_value(product_batch) product_batch ,any_value(check_plan_id) as check_plan_id , " +
                         "any_value(status) as status , any_value(check_num) as check_num ,any_value(good_num) as good_num , " +
@@ -424,37 +425,40 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
 
         //把时间范围分片
-        String start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATE_PATTERN);
-        String end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATE_PATTERN);
+        String start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATETIME_PATTERN);
+        String end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATETIME_PATTERN);
+       List<String> dateAll= Lists.newArrayList();
         List<String> dates = Lists.newArrayList();
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.HOUR.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getEname(), start, end);
-            start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATETIME_PATTERN);
-            end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATETIME_PATTERN);
-            dates.add(start);
+            dateAll.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.DAY.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.DAY.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getEname(), start, end);
-            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.WEEK.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.WEEK.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getEname(), start, end);
-            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.MONTH.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.MONTH.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getEname(), start, end);
-            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getEname(), start, end);
-            dates.add(start);
         }
-        if (report.getGranularity().equals(QtManagerConstant.QtSPCGranularityEnum.YEAR.getName())) {
+        if (QtManagerConstant.QtSPCGranularityEnum.YEAR.getName().equals(report.getGranularity())) {
             dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getEname(), start, end);
-            dates.add(start);
         }
-        //把时间排序
-        dates = dates.stream().sorted().collect(Collectors.toList());
+
+        //把初始时间添加进dateAll
+        if (QtManagerConstant.QtSPCGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
+            dateAll.add(start);
+        }else {
+            String startFormat = LocalDateUtil.localDateFormat(report.getTimeScopeStart().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
+            dateAll.add(startFormat);
+        }
+        dates.forEach(d->{
+            dateAll.add(d);
+        });
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
@@ -464,18 +468,36 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Map<Long, String> data = mapR.getData();
         String measureUnitName = data.get(qtCheckItem.getMeasureUnit());
 
-        //找出检验项目下的任务完成时间在
-        qtCheckTasks.forEach(q -> {
-            QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
-            BeanUtils.copyProperties(q, qtSpcReportDetailVO);
-            qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
-            qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
-            qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
-            qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
-            qtSpcReportDetailVO.setDownLimit(report.getDowmLimit());
 
-            qtSpcReportDetailVOList.add(qtSpcReportDetailVO);
+        //按照时间分片把任务的明细放在该时间段内
+        dateAll.forEach(d->{
+            //TODO
+            //如果是小时按小时的最小时间到最大时间分片
+            //如果是天按天的最小时到最大时分
+            //如果是月按天月的最小时到最大时分
+            //如果是季度按天季度的最小时到最大时分
+            //如果是按年按年的最小时间到最大时间分
+
+            //设置返回的数据
+            qtCheckTasks.forEach(q -> {
+                QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+                QtSpcReportDetailTaskVO qtSpcReportDetailTaskVO = new QtSpcReportDetailTaskVO();
+                BeanUtils.copyProperties(q, qtSpcReportDetailVO);
+                //设置检验项名称
+                qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+                //设置计量单位名称
+                qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+                //设置标准值
+                qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
+                //设置上限
+                qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
+                //设置下限
+                qtSpcReportDetailVO.setDownLimit(report.getDowmLimit());
+
+                qtSpcReportDetailVOList.add(qtSpcReportDetailVO);
+            });
         });
+
         return page.setRecords(qtSpcReportDetailVOList);
     }
 

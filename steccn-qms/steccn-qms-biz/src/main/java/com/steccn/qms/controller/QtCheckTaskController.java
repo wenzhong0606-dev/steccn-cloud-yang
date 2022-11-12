@@ -134,7 +134,7 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/deeporsub/acceptability/chart")
-    @ApiOperation(value = "深加工或基片合格率趋势图表")
+    @ApiOperation(value = "深加工或基片合格率趋势柱状图")
     public R<QtChartBarVO> getQtChartDeepOrSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto){
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(dto));
     }
@@ -151,5 +151,11 @@ public class QtCheckTaskController {
     @ApiOperation(value = "配料抽检合格率明细")
     public R<List<QtAccessoryAcceptabilityDetailVO>> getQtAccessoryAcceptabilityDetailVO(@RequestBody QtAccessoryAcceptabilityDTO dto){
         return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
+    }
+
+    @PostMapping("/accessory/acceptability/detail")
+    @ApiOperation(value = "配料抽检合格率柱状图")
+    public R<QtChartBarVO> getAccessoryChartDefectVO(@RequestBody QtAccessoryAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
     }
 }
