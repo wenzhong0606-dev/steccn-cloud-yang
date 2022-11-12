@@ -423,8 +423,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
                 }
             }
+            for(Map.Entry<String,QtChartBarSeriesVO> entry:barMap.entrySet()){
+                series.add(entry.getValue());
+            }
         }
-        return null;
+        markLine.setData(markLineDataList);
+        vo.setXAis(xAis);
+        vo.setMarkLine(markLine);
+        vo.setSeries(series);
+        return vo;
     }
 
     /**

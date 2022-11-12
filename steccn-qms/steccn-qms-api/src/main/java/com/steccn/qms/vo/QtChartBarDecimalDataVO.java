@@ -13,11 +13,11 @@ import java.util.List;
  * @date 2022/11/09
  */
 @Data
-public class QtChartBarDecimalDataVO implements Serializable {
+public class QtChartBarDecimalDataVO<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * BigDecimal数据
      */
-    private List<BigDecimal> data;
+    private List<T> data;
 }
