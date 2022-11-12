@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.vo.QtChartBarVO;
+import com.steccn.qms.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 
 import java.time.LocalDateTime;
@@ -18,17 +19,28 @@ import java.util.List;
 public interface QtChartGenerateService {
     /**
      * 生成基片损耗全量数据表
+     * @param dto
      * @return
      */
     List<QtChartSubDetailDTO> generateSubstrateLossData(QtChartParamDTO dto);
 
     /**
      * 生成基片成品率
+     * @param dto
+     * @return
      */
     QtDefectChartVO generateSubstrateOverview(QtChartDateRangeDTO dto);
 
     /**
-     * 生产基片成品率趋势图
+     * 生产基片成品率柱状趋势图
+     * @param dto
+     * @return
      */
-    QtChartBarVO generateSubstrateTend(QtChartParamDTO dto);
+    QtChartBarVO generateSubstrateBarTend(QtChartParamDTO dto);
+
+    /**
+     * 生成基片成品率饼状趋势图
+     * @return
+     */
+    QtChartPieVO generateSubstratePieTend(QtChartParamDTO dto);
 }

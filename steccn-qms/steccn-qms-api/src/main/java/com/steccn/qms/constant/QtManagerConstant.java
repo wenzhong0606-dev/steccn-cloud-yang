@@ -102,7 +102,7 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
 
-    String QT_CHART_EXCEL_MODEL_NAME = "JPCP.xlsx";
+    String QT_CHART_EXCEL_MODEL_NAME_JPCP = "JPCP.xlsx";
 
     String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 

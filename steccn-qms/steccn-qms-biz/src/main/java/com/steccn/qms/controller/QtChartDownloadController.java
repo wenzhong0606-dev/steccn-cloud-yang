@@ -6,6 +6,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.service.QtChartDownloadService;
 import io.swagger.annotations.ApiOperation;
@@ -34,18 +35,12 @@ public class QtChartDownloadController {
     @GetMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
-    public void downloadSubstrate(HttpServletResponse response) throws IOException {
+    public void downloadSubstrate(@Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtChartDownloadService.downloadSubstrate(response);
+            qtChartDownloadService.downloadSubstrate(response,dto);
         } catch (Exception e) {
             // 若有异常则重置response
-            response.reset();
-            response.setContentType("application/json");
-            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
-            Map<String, String> map = MapUtils.newHashMap();
-            map.put("status", "failure");
-            map.put("message", "下载文件失败" + e.getMessage());
-            response.getWriter().println(JSON.toJSONString(map));
+            this.exceptionResponse(response,e);
         }
     }
     @GetMapping("/deep/process")
@@ -56,14 +51,23 @@ public class QtChartDownloadController {
             qtChartDownloadService.downloadDeepProcess(response);
         } catch (Exception e) {
             // 若有异常则重置response
-            response.reset();
-            response.setContentType("application/json");
-            response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
-            Map<String, String> map = MapUtils.newHashMap();
-            map.put("status", "failure");
-            map.put("message", "下载文件失败" + e.getMessage());
-            response.getWriter().println(JSON.toJSONString(map));
+            this.exceptionResponse(response,e);
         }
+    }
+
+    /**
+     * 对响应异常进行封装
+     * @param response
+     * @throws IOException
+     */
+    protected void exceptionResponse(HttpServletResponse response ,Exception e) throws IOException{
+        response.reset();
+        response.setContentType("application/json");
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        Map<String, String> map = MapUtils.newHashMap();
+        map.put("status", "failure");
+        map.put("message", "下载文件失败" + e.getMessage());
+        response.getWriter().println(JSON.toJSONString(map));
     }
 
 }

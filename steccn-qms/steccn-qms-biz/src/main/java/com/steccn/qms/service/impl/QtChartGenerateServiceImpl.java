@@ -18,14 +18,12 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
-import com.steccn.qms.vo.QtChartBarDecimalDataVO;
-import com.steccn.qms.vo.QtChartBarSeriesVO;
-import com.steccn.qms.vo.QtChartBarVO;
-import com.steccn.qms.vo.QtDefectChartVO;
+import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.rmi.MarshalledObject;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -333,7 +331,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      * @return
      */
     @Override
-    public QtChartBarVO generateSubstrateTend(QtChartParamDTO dto) {
+    public QtChartBarVO generateSubstrateBarTend(QtChartParamDTO dto) {
         QtChartBarVO vo = new QtChartBarVO();
         List<String> xAis = new ArrayList<>();
         //折线图
@@ -429,6 +427,36 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         vo.setXAis(xAis);
         vo.setMarkLine(markLine);
         vo.setSeries(series);
+        return vo;
+    }
+
+    /**
+     * 基片趋势饼状图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartPieVO generateSubstratePieTend(QtChartParamDTO dto) {
+        //准备变量
+        QtChartPieVO<String> vo = new QtChartPieVO();
+        List<QtChartPieValueVO<String>> data = Lists.newArrayList();
+        //调用数据生成全量数据表
+        ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
+        pmsDTO.setBeginDate(dto.getDateStart());
+        pmsDTO.setEndDate(dto.getDateEnd());
+        R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);;
+        Map<LocalDate,BigDecimal> groupByDate = MapUtil.newHashMap();
+        if(CollUtil.isNotEmpty(rResult.getData())){
+            //根据日期分组
+            groupByDate = rResult.getData().stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+            for(Map.Entry<LocalDate,BigDecimal> entry:groupByDate.entrySet()){
+                QtChartPieValueVO<String> pieValue = new QtChartPieValueVO<>();
+                pieValue.setName(entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                pieValue.setValue(new DecimalFormat("0.00%").format(entry.getValue()));
+                data.add(pieValue);
+            }
+        }
+        vo.setData(data);
         return vo;
     }
 

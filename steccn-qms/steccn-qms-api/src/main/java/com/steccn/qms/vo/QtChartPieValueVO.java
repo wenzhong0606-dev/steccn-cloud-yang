@@ -12,11 +12,11 @@ import java.math.BigDecimal;
  * @date 2022/11/09
  */
 @Data
-public class QtChartPieValueVO implements Serializable {
+public class QtChartPieValueVO<T> implements Serializable {
     /**
      * 数值
      */
-    private BigDecimal value;
+    private T value;
 
     /**
      * 名字
