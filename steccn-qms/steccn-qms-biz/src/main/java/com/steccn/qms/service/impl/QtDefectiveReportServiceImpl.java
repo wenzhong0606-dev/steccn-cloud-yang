@@ -6,6 +6,8 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
@@ -47,6 +49,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtDefectiveItemService qtDefectiveItemService;
     private final QtItemCategoryService qtItemCategoryService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto) {
@@ -62,15 +65,47 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if (CollUtil.isNotEmpty(qtItemCategoryList)) {
             qtItemCategoryList.forEach(ele -> categoryIdNameMap.put(ele.getId(), ele.getName()));
         }
-        //对白班夜班分组
-        Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
+        resVo.setSeries(series);
+        resVo.setXAis(xAis);
+        return resVo;
+    }
+
+    /**
+     * 班次对比
+     *
+     * @param compare
+     * @param series
+     * @param flatDataList
+     * @param categoryIdNameMap
+     * @return
+     */
+    private List<String> compare(Integer compare, List<QtChartBarSeriesVO> series, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> categoryIdNameMap) {
+        //对比项目分组
+        Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap;
+        Map<Integer, String> idNameMap;
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
+            Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
+            Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
+        } else {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            idNameMap = Maps.newHashMap();
+            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
+            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+        }
         AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
         List<String> xAis = Lists.newArrayList();
         //对白班夜班
-        classesMap.forEach((classes, classesDataList) -> {
+        Map<Integer, String> finalIdNameMap = idNameMap;
+        targetMap.forEach((t, tDataList) -> {
             List<Integer> data = Lists.newArrayList();
             //根据班次班组分成map
-            Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = classesDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+            Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
             categoryMap.forEach((cate, cateDataList) -> {
                 //每个类别下，每个班次的缺陷数之和
                 int sum = cateDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
@@ -80,12 +115,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }
             });
             flag.set(Boolean.TRUE);
-            QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
-            series.add(new QtChartBarSeriesVO(Objects.nonNull(classesEnum) ? classesEnum.getName() : Strings.EMPTY, data, "total"));
+            series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
         });
-        resVo.setSeries(series);
-        resVo.setXAis(xAis);
-        return resVo;
+        return xAis;
     }
 
     @Override
