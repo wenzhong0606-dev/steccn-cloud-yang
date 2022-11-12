@@ -22,6 +22,7 @@ public class PassRateOverViewVO {
     @ApiModelProperty("日环比")
     private String dayValue;
 
+
     /**
      * 周同比%
      */
