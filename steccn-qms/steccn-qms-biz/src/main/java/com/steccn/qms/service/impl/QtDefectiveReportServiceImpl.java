@@ -54,12 +54,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         return null;
     }
 
-    /**
-     * 获取缺陷扁平化数据
-     *
-     * @param dto
-     */
-    private void defectiveDataFlat(QtChartParamDTO dto) {
+    @Override
+    public List<QtCheckTaskDetailReportVO> defectiveDataFlat(QtChartParamDTO dto) {
         //查询符合条件的检验任务
         QtCheckTaskConditionDTO condition = QtCheckTaskConditionDTO.builder()
                 .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
@@ -120,5 +116,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 });
             }
         });
+        return flatDefectiveList;
     }
 }

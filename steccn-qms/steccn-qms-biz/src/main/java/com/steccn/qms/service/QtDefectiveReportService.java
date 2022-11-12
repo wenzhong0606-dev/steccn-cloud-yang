@@ -2,6 +2,8 @@ package com.steccn.qms.service;
 
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.vo.QtChartBarVO;
+import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import java.util.List;
 
 /**
  * @author yequan
@@ -10,7 +12,6 @@ import com.steccn.qms.vo.QtChartBarVO;
  */
 public interface QtDefectiveReportService {
 
-
     /**
      * 深加工缺陷类别分布
      *
@@ -18,4 +19,12 @@ public interface QtDefectiveReportService {
      * @return
      */
     QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
+
+    /**
+     * 根据条件获取缺陷扁平化数据
+     *
+     * @param dto dto
+     * @return 分组数据
+     */
+    List<QtCheckTaskDetailReportVO> defectiveDataFlat(QtChartParamDTO dto);
 }
