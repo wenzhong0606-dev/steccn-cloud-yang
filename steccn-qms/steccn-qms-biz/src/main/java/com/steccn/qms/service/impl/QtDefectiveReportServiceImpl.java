@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
@@ -24,12 +25,10 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -148,7 +147,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //获取缺陷项id集合
         Assert.notEmpty(defectiveIdSet, "深加工缺陷项集合为空，暂无报表");
 
-
         //缺陷项类别与类别的创建时间
         Map<Integer, QtDefectiveItemVO> defectiveItemMap = qtDefectiveItemService.categoryMap(defectiveIdSet);
         QtDefectiveItemVO defaultQtDefectiveItemVO = new QtDefectiveItemVO();
@@ -177,6 +175,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                         vo.setClassId(qtCheckTask.getClassesId());
                         vo.setClassesDate(ele.getCreateTime().toLocalDate());
+                        vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
+                        vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
                         flatDefectiveList.add(vo);
                     }
                 });
@@ -210,5 +210,54 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         });
         qtChartPieVO.setData(dataList);
         return qtChartPieVO;
+    }
+
+    @Override
+    public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto) {
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+
+
+        //定义数据集合
+        List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
+        //班次日期分组
+        Map<LocalDate, List<QtCheckTaskDetailReportVO>> classesDateMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassesDate));
+        classesDateMap.forEach((classDate, classDateData) -> {
+
+
+            Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            classesMap.forEach((classes, classesData) -> {
+                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
+
+                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
+                workshopMap.forEach((ws, wsData) -> {
+                    Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
+                    lineMap.forEach((line, lineData) -> {
+                        Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+                        categoryMap.forEach((cate, cateData) -> {
+                            DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
+                            countVo.setClassId(classes);
+                            pageList.add(countVo);
+                        });
+                    });
+                });
+            });
+        });
+
+        //排序+逻辑分页
+        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
+//        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
+        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
+        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
+        resPage.setTotal(pageList.size());
+        resPage.setRecords(records);
+        return resPage;
     }
 }
