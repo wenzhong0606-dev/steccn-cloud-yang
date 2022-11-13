@@ -7,6 +7,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -18,6 +19,9 @@ public class DeepDefectiveCategoryDetailVO implements Serializable {
 
     @ApiModelProperty("缺陷项id")
     private Integer defectId;
+
+    @ApiModelProperty("缺陷项id")
+    private String defectName;
 
     @ApiModelProperty("缺陷项创建时间")
     private LocalDateTime defectCreateTime;
@@ -45,5 +49,8 @@ public class DeepDefectiveCategoryDetailVO implements Serializable {
 
     @ApiModelProperty("班次名字")
     private String classesName;
+
+    @ApiModelProperty("明细list")
+    private List<DeepDefectiveCategoryDetailListVO> detailList;
 
 }

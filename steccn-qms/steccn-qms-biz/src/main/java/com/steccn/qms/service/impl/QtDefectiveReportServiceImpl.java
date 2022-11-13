@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -156,7 +158,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(defectiveIdSet, "深加工缺陷项集合为空，暂无报表");
 
         //缺陷项类别与类别的创建时间
-        Map<Integer,Integer> categoryMap = Maps.newHashMap();
+        Map<Integer, Integer> categoryMap = Maps.newHashMap();
         List<QtDefectiveItem> qtDefectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
         QtDefectiveItemVO defaultQtDefectiveItemVO = new QtDefectiveItemVO();
         Assert.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
@@ -231,14 +233,20 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-        Set<Integer> categoryIdSet = Sets.newHashSet();
         Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Integer> defectIdSet = Sets.newHashSet();
         flatDataList.forEach(ele -> {
-            categoryIdSet.add(ele.getDefectCategory());
+            defectIdSet.add(ele.getDefectId());
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
         Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, QtDefectiveItem> defectItemMap = Maps.newHashMap();
+        List<QtDefectiveItem> qtDefectiveItems = qtDefectiveItemService.listByIds(defectIdSet);
+        QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();
+        if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+            qtDefectiveItems.forEach(ele -> defectItemMap.put(ele.getId(), ele));
+        }
 
         //定义数据集合
         List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
@@ -264,7 +272,19 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             countVo.setProductLineId(line);
                             countVo.setProductLineName(officeChMap.get(line));
                             countVo.setDefectId(defectId);
-                            countVo.setDefectCreateTime(LocalDateTime.now());
+                            QtDefectiveItem qtDefectiveItem = defectItemMap.getOrDefault(defectId, defaultQtDefectiveItem);
+                            countVo.setDefectName(qtDefectiveItem.getName());
+                            countVo.setDefectCreateTime(qtDefectiveItem.getCreateTime());
+                            //明细
+                            List<DeepDefectiveCategoryDetailListVO> detailList = Lists.newArrayList();
+                            defectData.forEach(ele -> {
+                                DeepDefectiveCategoryDetailListVO listVO = new DeepDefectiveCategoryDetailListVO();
+                                BeanUtils.copyProperties(ele, listVO);
+                                listVO.setDefectName(qtDefectiveItem.getName());
+                                listVO.setResultSource("人工检验");
+                                detailList.add(listVO);
+                            });
+                            countVo.setDetailList(detailList);
                             pageList.add(countVo);
                         });
                     });
