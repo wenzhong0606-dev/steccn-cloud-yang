@@ -74,4 +74,55 @@ public interface QtDefectiveReportService {
      * @return
      */
     QtChartPieVO deepDefectiveCategoryJPie(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项类别趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryTrend(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO substrateDefectiveCategoryTrend(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryInfoTrend(QtChartParamDTO dto);
+
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryInfoDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工类别趋势明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryInfoTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryTrendDetail(QtChartParamDTO dto);
 }

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.List;
 
 /**
  * @author yequan
@@ -67,9 +66,15 @@ public class QtDefectiveReportController {
      * @return
      */
     @PostMapping("/deep/category/info/pie")
-    @ApiOperation("深加工缺陷分布")
+    @ApiOperation("深加工缺陷分布-饼图")
     public R<QtChartPieVO> deepDefectiveCategoryByInfoCategoryPie(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryByInfoCategoryPie(dto));
+    }
+
+    @PostMapping("/deep/category/info/detail")
+    @ApiOperation("深加工缺陷分布-明细")
+    public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryInfoDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryInfoDetail(dto));
     }
 
     /**
@@ -77,7 +82,7 @@ public class QtDefectiveReportController {
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/jpqx")
+    @PostMapping("/substrate/category/bar")
     @ApiOperation("基片缺陷项分布")
     public R<QtChartBarVO> deepDefectiveCategoryJPFB(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepBasePlateCategory(dto));
@@ -88,31 +93,84 @@ public class QtDefectiveReportController {
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/jpqx/pie")
-    @ApiOperation("基片缺陷项分布")
+    @PostMapping("/substrate/category/pie")
+    @ApiOperation("基片缺陷项分布-饼图")
     public R<QtChartPieVO> deepDefectiveCategoryJPie(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryJPie(dto));
     }
 
+    @PostMapping("/substrate/category/detail")
+    @ApiOperation("基片缺陷项分布-明细")
+    public R<Page<DeepDefectiveCategoryDetailVO>> substrateDefectiveCategoryDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.substrateDefectiveCategoryDetail(dto));
+    }
+
+
     /**
-     * 深加工缺陷项类别趋势
+     * 深加工缺陷项类别趋势-折线图
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/picture/info")
-    @ApiOperation("深加工缺陷分布")
-    public R<QtChartBarVO> deepDefectiveCategorySJG(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategory(dto));
+    @PostMapping("/deep/category/trend")
+    @ApiOperation("深加工缺陷项类别趋势")
+    public R<QtChartBarVO> deepDefectiveCategoryTrend(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryTrend(dto));
     }
 
     /**
-     * 深加工缺陷项趋势
+     * 深加工缺陷项趋势-折线图
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/picture/sjg")
-    @ApiOperation("深加工缺陷分布")
-    public R<QtChartBarVO> deepDefectiveCategoryFB(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategory(dto));
+    @PostMapping("/deep/category/info/trend")
+    @ApiOperation("深加工缺陷项趋势-折线图")
+    public R<QtChartBarVO> deepDefectiveCategoryInfoTrend(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryInfoTrend(dto));
     }
+
+    /**
+     * 基片缺陷项趋势-折线图
+     * @param dto
+     * @return
+     */
+    @PostMapping("/substrate/trend")
+    @ApiOperation("基片缺陷项趋势-折线图")
+    public R<QtChartBarVO> substrateDefectiveCategoryTrend(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.substrateDefectiveCategoryTrend(dto));
+    }
+//todo
+    /**
+     * 深加工缺陷项类别趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deep/category/trend/detail")
+    @ApiOperation("深加工缺陷项类别趋势-折线图-明细")
+    public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryTrendDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryTrendDetail(dto));
+    }
+
+    /**
+     * 深加工缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    @PostMapping("/deep/category/info/trend/detail")
+    @ApiOperation("深加工缺陷项趋势-折线图-明细")
+    public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryInfoTrendDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryInfoTrendDetail(dto));
+    }
+
+    /**
+     * 基片缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    @PostMapping("/substrate/trend/detail")
+    @ApiOperation("基片缺陷项趋势-折线图-明细")
+    public R<Page<DeepDefectiveCategoryDetailVO>> substrateDefectiveCategoryTrendDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.substrateDefectiveCategoryTrendDetail(dto));
+    }
+
+
 }

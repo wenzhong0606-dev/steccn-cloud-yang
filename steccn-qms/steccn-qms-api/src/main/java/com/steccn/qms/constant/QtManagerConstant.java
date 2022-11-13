@@ -325,10 +325,11 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtChartCompareEnum{
-        //班次 产线 车间
+        //班次 产线 车间 缺陷类别
         WORK(0,"班次"),
         PRODUCTLINE(1,"产线"),
-        WORKSHOP(2,"车间");
+        WORKSHOP(2,"车间"),
+        DEFECTCATEGORY(3,"缺陷类别");
 
         private Integer code;
         private String name;
