@@ -44,4 +44,34 @@ public interface QtDefectiveReportService {
      * @return 分页数据
      */
     Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryByInfo(QtChartParamDTO dto);
+
+    /**
+     * 深加工基片缺陷分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepBasePlateCategory(QtChartParamDTO dto);
+
+    QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO deepDefectiveCategoryByInfoCategoryPie(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO deepDefectiveCategoryJPie(QtChartParamDTO dto);
 }

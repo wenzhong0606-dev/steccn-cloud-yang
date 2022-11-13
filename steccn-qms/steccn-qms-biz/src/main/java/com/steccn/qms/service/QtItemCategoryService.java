@@ -63,4 +63,6 @@ public interface QtItemCategoryService extends IService<QtItemCategory> {
      * @return map
      */
     Map<Integer, String> listByIdCh(Set<Integer> categoryIdSet);
+
+
 }

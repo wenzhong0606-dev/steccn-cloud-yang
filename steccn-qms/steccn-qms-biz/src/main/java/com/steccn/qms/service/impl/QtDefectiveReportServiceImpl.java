@@ -48,6 +48,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteOfficeFeign remoteOfficeFeign;
 
+    /**
+     * 深加工缺陷类别分布
+     * @param dto dto
+     * @return
+     */
     @Override
     public QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto) {
         //定义返回vo
@@ -185,6 +190,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         return flatDefectiveList;
     }
 
+    /**
+     * 深加工类别分布-饼图
+     * @param dto dto
+     * @return
+     */
     @Override
     public QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto) {
         //定义返回vo
@@ -260,4 +270,128 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         resPage.setRecords(records);
         return resPage;
     }
+
+    @Override
+    public QtChartBarVO deepDefectiveCategoryByInfo(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartBarVO resVo = new QtChartBarVO();
+        List<QtChartBarSeriesVO> series = Lists.newArrayList();
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //对扁平化数据获取类别
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
+        resVo.setSeries(series);
+        resVo.setXAis(xAis);
+        return resVo;
+    }
+
+    /**
+     * 基片缺陷分布-柱状图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartBarVO deepBasePlateCategory(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartBarVO resVo = new QtChartBarVO();
+        List<QtChartBarSeriesVO> series = Lists.newArrayList();
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //对扁平化数据获取类别
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
+        resVo.setSeries(series);
+        resVo.setXAis(xAis);
+        return resVo;
+    }
+
+    /**
+     * 深加工缺陷项分布
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartBarVO resVo = new QtChartBarVO();
+        List<QtChartBarSeriesVO> series = Lists.newArrayList();
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //对扁平化数据获取类别
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
+        resVo.setSeries(series);
+        resVo.setXAis(xAis);
+        return resVo;
+    }
+
+    /**
+     * 深加工缺陷项分布饼图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartPieVO deepDefectiveCategoryByInfoCategoryPie(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartPieVO qtChartPieVO = new QtChartPieVO();
+        List<QtChartPieValueVO> dataList = Lists.newArrayList();
+
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Map<Integer, List<QtCheckTaskDetailReportVO>> defectDataMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId));
+        //总缺陷数
+        int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        //遍历缺陷类别
+        defectDataMap.forEach((k, v) -> {
+            QtChartPieValueVO vo = new QtChartPieValueVO();
+            vo.setName(categoryIdNameMap.getOrDefault(k, Strings.EMPTY));
+            int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+            BigDecimal multiply = BigDecimal.valueOf(categorySum).multiply(BigDecimal.valueOf(100));
+            BigDecimal divide = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(sum), BigDecimalUtil.SCALE_2);
+            vo.setValue(divide);
+            dataList.add(vo);
+        });
+        qtChartPieVO.setData(dataList);
+        return qtChartPieVO;
+    }
+
+    /**
+     * 基片缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartPieVO deepDefectiveCategoryJPie(QtChartParamDTO dto) {
+        //定义返回vo
+        QtChartPieVO qtChartPieVO = new QtChartPieVO();
+        List<QtChartPieValueVO> dataList = Lists.newArrayList();
+
+        //扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Map<Integer, List<QtCheckTaskDetailReportVO>> defectDataMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId));
+        //总缺陷数
+        int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        //遍历缺陷类别
+        defectDataMap.forEach((k, v) -> {
+            QtChartPieValueVO vo = new QtChartPieValueVO();
+            vo.setName(categoryIdNameMap.getOrDefault(k, Strings.EMPTY));
+            int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+            BigDecimal multiply = BigDecimal.valueOf(categorySum).multiply(BigDecimal.valueOf(100));
+            BigDecimal divide = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(sum), BigDecimalUtil.SCALE_2);
+            vo.setValue(divide);
+            dataList.add(vo);
+        });
+        qtChartPieVO.setData(dataList);
+        return qtChartPieVO;
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package com.steccn.qms.dto;
 
 import com.steccn.common.dto.BasePageDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -64,4 +65,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private Integer type;
 
     private String productWorkName;
+
+    @ApiModelProperty("检验项id")
+    private Integer taskId;
 }
