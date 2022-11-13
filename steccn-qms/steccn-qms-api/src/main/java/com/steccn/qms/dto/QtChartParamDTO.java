@@ -1,6 +1,7 @@
 package com.steccn.qms.dto;
 
 import com.steccn.common.dto.BasePageDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -29,7 +30,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private LocalDate dateEnd;
 
     /**
-     * 对比 0为班次 1为产线 2为车间
+     * 对比 0为班次 1为产线 2为车间 3为缺陷类别
      */
     private Integer compare;
 
@@ -64,4 +65,20 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private Integer type;
 
     private String productWorkName;
+
+    @ApiModelProperty("检验项id")
+    private Integer taskId;
+
+    /**
+     * 缺陷项id
+     */
+    private Integer defectId;
+
+    /**
+     * 缺陷项类型
+     */
+    private String defectType;
+
+    @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
+    private String granularity;
 }

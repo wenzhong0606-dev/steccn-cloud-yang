@@ -173,6 +173,18 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         }
         return resMap;
     }
+
+    @Override
+    public Map<Integer, QtItemCategory> listById(Set<Integer> categoryIdSet) {
+        Map<Integer, QtItemCategory> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(categoryIdSet)) {
+            List<QtItemCategory> dataList = listByIds(categoryIdSet);
+            if (CollUtil.isNotEmpty(dataList)) {
+                dataList.forEach(ele -> resMap.put(ele.getId(), ele));
+            }
+        }
+        return resMap;
+    }
 }
 
 

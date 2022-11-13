@@ -75,10 +75,4 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      */
     Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList);
 
-    /**
-     * 缺陷项map
-     * @param defectiveIdSet 缺陷项id集合
-     * @return map
-     */
-    Map<Integer, QtDefectiveItemVO> categoryMap(Set<Integer> defectiveIdSet);
 }

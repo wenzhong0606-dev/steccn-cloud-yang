@@ -65,40 +65,6 @@ public interface QtManagerConstant {
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
     String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME ="finishedTime";
-    /**
-     * 动态时间
-     */
-    String DYNAMIC_TIME_TODAY = "今天";
-
-    String DYNAMIC_TIME_TOMORROW = "昨天";
-
-    String DYNAMIC_TIME_THIS_WEEK = "本周";
-
-    String DYNAMIC_TIME_LAST_WEEK = "上周";
-
-    String DYNAMIC_TIME_THIS_MONTH = "本月";
-
-    String DYNAMIC_TIME_LAST_MONTH = "上月";
-
-    String DYNAMIC_TIME_THIS_QUARTER = "本季度";
-
-    String DYNAMIC_TIME_LAST_QUARTER = "上季度";
-
-    String DYNAMIC_TIME_THIS_YEAR = "今年";
-
-    String DYNAMIC_TIME_LAST_YEAR = "去年";
-
-    String DYNAMIC_TIME_PAST_SEVEN_DAYS = "过去7天";
-
-    String DYNAMIC_TIME_PAST_FOURTEEN_DAYS = "过去14天";
-
-    String DYNAMIC_TIME_PAST_THIRTY_DAYS = "过去30天";
-
-    String DYNAMIC_TIME_PAST_NINETY_DAYS = "过去90天";
-
-    String DYNAMIC_TIME_PAST_ONE_HUNDRED_EIGHTY_DAYS = "过去180天";
-
-    String DYNAMIC_TIME_LAST_THREE_HUNDRED_SIXTY_FIVE_DAYS = "过去365天";
 
     String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
 
@@ -120,12 +86,11 @@ public interface QtManagerConstant {
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
 
-    /**
-     * 早班晚班
-     */
-    String MORNINGWORKNAME = "早班";
 
-    String NIGHTWORKNAME = "晚班";
+    /**
+     * 机构类型为车间的编码
+     */
+    String OFFICE_WORKSHOP_TYPE ="8";
 
     /**
      * 车间名称
@@ -313,7 +278,7 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtSPCGranularityEnum{
+    enum QtGranularityEnum{
         //粒度 小时 天 周 月 季度 年
         HOUR(0,"小时","H"),
         DAY(1,"天","D"),
@@ -324,7 +289,16 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
-        private String ename;
+        private String type;
+
+        public static QtGranularityEnum getByName(String name){
+            for (QtGranularityEnum value : QtGranularityEnum.values()) {
+                if(value.getName().equals(name)){
+                    return value;
+                }
+            }
+            return null;
+        }
     }
 
     /**
@@ -351,10 +325,11 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtChartCompareEnum{
-        //班次 产线 车间
+        //班次 产线 车间 缺陷类别
         WORK(0,"班次"),
         PRODUCTLINE(1,"产线"),
-        WORKSHOP(2,"车间");
+        WORKSHOP(2,"车间"),
+        DEFECTCATEGORY(3,"缺陷类别");
 
         private Integer code;
         private String name;
@@ -397,6 +372,24 @@ public interface QtManagerConstant {
                 }
             }
             return null;
+        }
+
+        /**
+         * 样本概览枚举
+         */
+        @Getter
+        @AllArgsConstructor
+        enum SAMPLEINFOLIST{
+            SAMPLENUM("sampleNum","样本编号"),
+            LICENSEPLATE("licensePlate","车牌号"),
+            ANALYST("analyst","分析人"),
+            ANALYSTNAME("analystName","分析人名"),
+            SAMPLINGTIME("samplingTime","取样时间"),
+            ANALYSTIME("analystTime","分析时间"),
+            INGREDIENTNUM("ingredientNum","配料付数");
+
+            private String code;
+            private String name;
         }
     }
 }

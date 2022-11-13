@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
  * @date 2022/11/12 13:46
  */
 @Data
-public class PassRateOverViewVO {
+public class PassRateOverViewVO implements Serializable {
 
     @ApiModelProperty("合格率")
     private String passRate;

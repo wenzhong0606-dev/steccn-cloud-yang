@@ -1,9 +1,9 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.vo.QtChartBarVO;
-import com.steccn.qms.vo.QtChartPieVO;
-import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.*;
+
 import java.util.List;
 
 /**
@@ -35,4 +35,99 @@ public interface QtDefectiveReportService {
      * @return vo
      */
     QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷类别分布-明细
+     * @param dto 分页查询条件
+     * @return 分页数据
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveItem(QtChartParamDTO dto);
+
+    /**
+     * 深加工基片缺陷分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO substratePlateBar(QtChartParamDTO dto);
+
+    QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO deepDefectiveItemPie(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO substrateCategoryJPie(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项类别趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryTrend(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO substrateDefectiveCategoryTrend(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项趋势-折线图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryInfoTrend(QtChartParamDTO dto);
+
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工类别趋势明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryInfoTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项趋势-折线图-明细
+     * @param dto
+     * @return
+     */
+    Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷类别趋势-折线图
+     * @param dto 筛选条件
+     * @return vo
+     */
+    QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto);
 }

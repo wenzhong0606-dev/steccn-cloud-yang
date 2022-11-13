@@ -58,6 +58,12 @@ public class QtCheckTask implements Serializable {
             select = false)
     private String productWorkshopName;
 
+    @TableField(value = "product_workshop ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productWorkshopId;
+
     /**
      * 产线
      */

@@ -17,7 +17,7 @@ public class QtAccessoryAcceptabilityDTO implements Serializable {
     /**
      * 对比
      */
-    private String compare;
+    private Integer compare;
 
     /**
      * 物料使用车间

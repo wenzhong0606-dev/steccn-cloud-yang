@@ -247,32 +247,6 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
-    @Override
-    public Map<Integer, QtDefectiveItemVO> categoryMap(Set<Integer> defectiveIdSet) {
-        Map<Integer, QtDefectiveItemVO> defectiveItemMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(defectiveIdSet)) {
-            List<QtDefectiveItem> defectiveItemList = listByIds(defectiveIdSet);
-            Map<Integer, LocalDateTime> categoryDateMap = Maps.newHashMap();
-            if (CollUtil.isNotEmpty(defectiveItemList)) {
-                List<QtDefectiveItemVO> qtDefectiveItemVOList = BeanUtil.copyToList(defectiveItemList, QtDefectiveItemVO.class);
-                Set<Integer> categoryIdSet = qtDefectiveItemVOList.stream().map(QtDefectiveItemVO::getCategoryId).collect(Collectors.toSet());
-                if (CollUtil.isNotEmpty(categoryIdSet)) {
-                    List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.listByIds(categoryIdSet);
-                    if (CollUtil.isNotEmpty(qtItemCategoryList)) {
-                        qtItemCategoryList.forEach(ele -> {
-                            categoryDateMap.put(ele.getId(), ele.getCreateTime());
-                        });
-                    }
-                }
-                qtDefectiveItemVOList.forEach(ele -> {
-                    ele.setCategoryDateTime(categoryDateMap.getOrDefault(ele.getCategoryId(), LocalDateTime.MIN));
-                    defectiveItemMap.put(ele.getId(), ele);
-                });
-            }
-        }
-        return defectiveItemMap;
-    }
-
     /**
      * 同类别下名称是否重复
      *

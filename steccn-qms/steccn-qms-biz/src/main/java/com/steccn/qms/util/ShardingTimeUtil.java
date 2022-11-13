@@ -1,5 +1,10 @@
 package com.steccn.qms.util;
 
+import cn.hutool.core.date.DatePattern;
+import com.steccn.qms.constant.QtManagerConstant;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -9,10 +14,8 @@ import java.util.List;
 /**
  * 时间分片工具类
  */
+@Slf4j
 public class ShardingTimeUtil {
-    public static void main(String[] args) {
-        System.out.println(cutDate("H", "2022-4-29 00:00:00", "2022-10-17 00:00:00"));
-    }
 
     /**
      * 切割時間段
@@ -24,14 +27,14 @@ public class ShardingTimeUtil {
      */
     public static List<String> cutDate(String dateType, String start, String end) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat sdf = new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN);
             Date dBegin = sdf.parse(start);
             Date dEnd = sdf.parse(end);
             return findDates(dateType, dBegin, dEnd);
         } catch (Exception e) {
-            System.out.println(e);
+            log.error(e.getLocalizedMessage());
         }
-        return null;
+        return Lists.newArrayList();
     }
 
     public static List<String> findDates(String dateType, Date dBegin, Date dEnd) throws Exception {
@@ -74,17 +77,17 @@ public class ShardingTimeUtil {
                     break;
             }
             if (calEnd.after(calBegin)) {
-                if (dateType.equals("H")) {
-                    listDate.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calBegin.getTime()));
+                if (QtManagerConstant.QtGranularityEnum.HOUR.getType().equals(dateType)) {
+                    listDate.add(new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN).format(calBegin.getTime()));
                 } else {
-                    listDate.add(new SimpleDateFormat("yyyy-MM-dd").format(calBegin.getTime()));
+                    listDate.add(new SimpleDateFormat(DatePattern.NORM_DATE_PATTERN).format(calBegin.getTime()));
                 }
 
             } else {
-                if (dateType.equals("H")) {
-                    listDate.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calEnd.getTime()));
+                if (QtManagerConstant.QtGranularityEnum.HOUR.getType().equals(dateType)) {
+                    listDate.add(new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN).format(calEnd.getTime()));
                 } else {
-                    listDate.add(new SimpleDateFormat("yyyy-MM-dd").format(calEnd.getTime()));
+                    listDate.add(new SimpleDateFormat(DatePattern.NORM_DATE_PATTERN).format(calEnd.getTime()));
                 }
             }
         }
