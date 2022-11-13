@@ -58,4 +58,9 @@ public class QtCheckTaskCopyDetailsDTO implements Serializable {
      *
      */
     private Boolean sampleFlag;
+
+    /**
+     * 标识是哪个样本字段
+     */
+    private String id;
 }

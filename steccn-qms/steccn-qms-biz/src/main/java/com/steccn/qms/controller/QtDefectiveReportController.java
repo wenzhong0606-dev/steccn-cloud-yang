@@ -57,10 +57,10 @@ public class QtDefectiveReportController {
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/info")
+    @PostMapping("/deep/item/info")
     @ApiOperation("深加工缺陷分布")
     public R<QtChartBarVO> deepDefectiveCategoryByInfo(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategoryByInfo(dto));
+        return R.success(qtDefectiveReportService.deepDefectiveItem(dto));
     }
 
     /**
@@ -68,16 +68,16 @@ public class QtDefectiveReportController {
      * @param dto
      * @return
      */
-    @PostMapping("/deep/category/info/pie")
+    @PostMapping("/deep/item/info/pie")
     @ApiOperation("深加工缺陷分布-饼图")
     public R<QtChartPieVO> deepDefectiveCategoryByInfoCategoryPie(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategoryByInfoCategoryPie(dto));
+        return R.success(qtDefectiveReportService.deepDefectiveItemPie(dto));
     }
 
-    @PostMapping("/deep/category/info/detail")
+    @PostMapping("/deep/item/info/detail")
     @ApiOperation("深加工缺陷分布-明细")
     public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryInfoDetail(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategoryInfoDetail(dto));
+        return R.success(qtDefectiveReportService.deepDefectiveItemDetail(dto));
     }
 
     /**
@@ -88,7 +88,7 @@ public class QtDefectiveReportController {
     @PostMapping("/substrate/category/bar")
     @ApiOperation("基片缺陷项分布")
     public R<QtChartBarVO> deepDefectiveCategoryJPFB(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepBasePlateCategory(dto));
+        return R.success(qtDefectiveReportService.substratePlateBar(dto));
     }
 
     /**
@@ -99,7 +99,7 @@ public class QtDefectiveReportController {
     @PostMapping("/substrate/category/pie")
     @ApiOperation("基片缺陷项分布-饼图")
     public R<QtChartPieVO> deepDefectiveCategoryJPie(@Valid @RequestBody QtChartParamDTO dto) {
-        return R.success(qtDefectiveReportService.deepDefectiveCategoryJPie(dto));
+        return R.success(qtDefectiveReportService.substrateCategoryJPie(dto));
     }
 
     @PostMapping("/substrate/category/detail")

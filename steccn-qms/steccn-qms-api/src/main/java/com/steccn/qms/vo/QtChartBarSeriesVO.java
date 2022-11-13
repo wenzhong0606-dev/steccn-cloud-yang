@@ -34,4 +34,19 @@ public class QtChartBarSeriesVO<T> implements Serializable {
      * 堆叠的盏
      */
     private String stack;
+
+    /**
+     * 折线图类型,固定值
+     */
+    private String type;
+
+    /**
+     * 年 YYYY
+     */
+    private String year;
+
+    /**
+     * 图例
+     */
+    private String legendData;
 }

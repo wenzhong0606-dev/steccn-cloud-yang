@@ -373,5 +373,23 @@ public interface QtManagerConstant {
             }
             return null;
         }
+
+        /**
+         * 样本概览枚举
+         */
+        @Getter
+        @AllArgsConstructor
+        enum SAMPLEINFOLIST{
+            SAMPLENUM("sampleNum","样本编号"),
+            LICENSEPLATE("licensePlate","车牌号"),
+            ANALYST("analyst","分析人"),
+            ANALYSTNAME("analystName","分析人名"),
+            SAMPLINGTIME("samplingTime","取样时间"),
+            ANALYSTIME("analystTime","分析时间"),
+            INGREDIENTNUM("ingredientNum","配料付数");
+
+            private String code;
+            private String name;
+        }
     }
 }

@@ -319,7 +319,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     }
 
     @Override
-    public QtChartBarVO deepDefectiveCategoryByInfo(QtChartParamDTO dto) {
+    public QtChartBarVO deepDefectiveItem(QtChartParamDTO dto) {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
@@ -341,7 +341,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartBarVO deepBasePlateCategory(QtChartParamDTO dto) {
+    public QtChartBarVO substratePlateBar(QtChartParamDTO dto) {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
@@ -385,7 +385,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartPieVO deepDefectiveCategoryByInfoCategoryPie(QtChartParamDTO dto) {
+    public QtChartPieVO deepDefectiveItemPie(QtChartParamDTO dto) {
         //定义返回vo
         QtChartPieVO qtChartPieVO = new QtChartPieVO();
         List<QtChartPieValueVO> dataList = Lists.newArrayList();
@@ -418,7 +418,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartPieVO deepDefectiveCategoryJPie(QtChartParamDTO dto) {
+    public QtChartPieVO substrateCategoryJPie(QtChartParamDTO dto) {
         //定义返回vo
         QtChartPieVO qtChartPieVO = new QtChartPieVO();
         List<QtChartPieValueVO> dataList = Lists.newArrayList();
@@ -630,7 +630,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryInfoDetail(QtChartParamDTO dto) {
+    public Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");

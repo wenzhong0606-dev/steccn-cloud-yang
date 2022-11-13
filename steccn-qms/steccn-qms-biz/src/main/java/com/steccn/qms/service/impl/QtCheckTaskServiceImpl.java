@@ -513,23 +513,43 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTaskDetailService.removeByMap(valueCondition);
         //处理样本概况数据
         //样本概况在来料捡,化验抽捡,配料抽检时显示
-       /* if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())){
+        if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())||tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())){
             if (CollUtil.isNotEmpty(dto.getSampleInfoList())){
                 QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
                 Map<String, Object> deleteCondition = new HashMap<>();
+                List<QtCheckTaskCopy> qtCheckTaskCopies = Lists.newArrayList();
+                deleteCondition.put("task_id", dto.getId());
+                //先删除可能暂存的值
+                qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                 dto.getSampleInfoList().forEach(sampleInfo -> {
-                    if (StringUtils.isNotBlank(sampleInfo.getSampleNum()) && sampleInfo.getSampleNum().equals(true)){
-                        for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-
-
-
-
+                    //遍历Map
+                    for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
+                        if ("sampleNum".equals(sampleInfo.getId())) {
+                            sampleInfo.setSampleNum(entry.getValue());
+                        } else if ("licensePlate".equals(sampleInfo.getId())) {
+                            sampleInfo.setLicensePlate(entry.getValue());
+                        }else if ("analyst".equals(sampleInfo.getId())) {
+                            sampleInfo.setAnalyst(entry.getValue()!=null?Integer.valueOf(entry.getValue()):null);
+                        }else if ("analystName".equals(sampleInfo.getId())) {
+                            sampleInfo.setAnalystName(entry.getValue());
+                        }else if ("samplingTime".equals(sampleInfo.getId())) {
+                            if (entry.getValue()!=null){
+                                sampleInfo.setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
+                            }
+                        }else if ("analystTime".equals(sampleInfo.getId())) {
+                            sampleInfo.setAnalystTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
+                        }else if ("ingredientNum".equals(sampleInfo.getId())) {
+                            sampleInfo.setIngredientNum(entry.getValue() != null && !"".equals(entry.getValue())?Integer.valueOf(entry.getValue()):null);
                         }
-
-                        }
+                    }
+                    BeanUtils.copyProperties(sampleInfo,copyDetailModel);
+                    copyDetailModel.setTaskId(dto.getId());
+                    qtCheckTaskCopies.add(copyDetailModel);
                         });
+                //往样品概况表塞值
+                qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies);
             }
-        }*/
+        }
 
         //处理数据
         if (CollUtil.isNotEmpty(dto.getCheckGroup())) {
