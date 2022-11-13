@@ -77,14 +77,14 @@ public class ShardingTimeUtil {
                     break;
             }
             if (calEnd.after(calBegin)) {
-                if (QtManagerConstant.QtSPCGranularityEnum.HOUR.getType().equals(dateType)) {
+                if (QtManagerConstant.QtGranularityEnum.HOUR.getType().equals(dateType)) {
                     listDate.add(new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN).format(calBegin.getTime()));
                 } else {
                     listDate.add(new SimpleDateFormat(DatePattern.NORM_DATE_PATTERN).format(calBegin.getTime()));
                 }
 
             } else {
-                if (dateType.equals("H")) {
+                if (QtManagerConstant.QtGranularityEnum.HOUR.getType().equals(dateType)) {
                     listDate.add(new SimpleDateFormat(DatePattern.NORM_DATETIME_PATTERN).format(calEnd.getTime()));
                 } else {
                     listDate.add(new SimpleDateFormat(DatePattern.NORM_DATE_PATTERN).format(calEnd.getTime()));

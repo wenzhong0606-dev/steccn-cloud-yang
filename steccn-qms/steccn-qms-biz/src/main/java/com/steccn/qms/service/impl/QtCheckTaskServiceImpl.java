@@ -1158,7 +1158,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //加上初始时间
         String startDay = LocalDateUtil.localDateFormat(startTime, DatePattern.NORM_DATE_PATTERN);
         dateList.add(startDay);
-        List<String> cutDate = ShardingTimeUtil.cutDate(QtManagerConstant.QtSPCGranularityEnum.DAY.getType(), start, end);
+        List<String> cutDate = ShardingTimeUtil.cutDate(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
         cutDate.stream().forEach(p -> {
             dateList.add(p);
         });
@@ -1324,11 +1324,8 @@ return null;
         QtChartBarVO qtChartBarVO = new QtChartBarVO();
         //用来封装折线图数据
         QtChartBarDecimalDataVO qtChartBarDecimalDataVO = new QtChartBarDecimalDataVO();
-        qtCheckTasks.forEach(q->{
-
-        });
-
         List<BigDecimal> data = Lists.newArrayList();
+
         //用来封装柱状图数据
         List<QtChartBarSeriesVO> qtChartBarSeriesVOS = Lists.newArrayList();
         //根据遍历时间根据时间段lou数据
@@ -1350,14 +1347,31 @@ return null;
             if (Objects.isNull(dto.getProductWorkshopId())) {
                 Collections.addAll(qtChartBarSeriesVOS, subOneChartBarSeriesVO, subTwoChartBarSeriesVO);
             }
+            int checkSum = qtCheckTasks.stream()
+                    //大于今天的开始时间
+                    .filter(s -> s.getFinishedTime().isAfter(startTimeOfDay))
+                    //小于今天的最晚时间
+                    .filter(s -> s.getFinishedTime().isBefore(endTimeOfDay))
+                    .mapToInt(QtCheckTask::getCheckNum).sum();
 
+            int goodSum = qtCheckTasks.stream()
+                    //大于今天的开始时间
+                    .filter(s -> s.getFinishedTime().isAfter(startTimeOfDay))
+                    //小于今天的最晚时间
+                    .filter(s -> s.getFinishedTime().isBefore(endTimeOfDay))
+                    .mapToInt(QtCheckTask::getGoodNum).sum();
+            BigDecimal checkBig = BigDecimal.valueOf(checkSum);
+            BigDecimal goodBig = BigDecimal.valueOf(goodSum);
+
+            data.add( BigDecimalUtil.divide(goodBig,checkBig,BigDecimalUtil.SCALE_2));
         });
-
+        qtChartBarDecimalDataVO.setData(data);
         //封装x轴数据
         qtChartBarVO.setXAis(dateList);
         //封装柱状图数据
         qtChartBarVO.setSeries(qtChartBarSeriesVOS);
         //封装折线图数据
+        qtChartBarVO.setMarkLine(qtChartBarDecimalDataVO);
 
         return qtChartBarVO;
     }
