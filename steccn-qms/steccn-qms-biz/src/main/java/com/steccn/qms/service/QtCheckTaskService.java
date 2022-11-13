@@ -129,4 +129,18 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     QtChartBarVO getAccessoryChartDefectVO(QtAccessoryAcceptabilityDTO dto);
+
+    /**
+     * 基片化验抽检合格率趋势明细
+     * @param dto
+     * @return
+     */
+    List<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto);
+
+    /**
+     * 基片化验抽检合格率趋势的柱状图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtSubLaboratoryChartVO(QtSubLaboratoryAcceptabilityDTO dto);
 }

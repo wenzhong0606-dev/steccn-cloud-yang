@@ -159,7 +159,15 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
     }
 
-//    @PostMapping("/sub/acceptability/detail")
-//    @ApiOperation(value = "基片化验抽检合格率趋势")
-//    public R<L>
+    @PostMapping("/sub/acceptability/detail")
+    @ApiOperation(value = "基片化验抽检合格率趋势")
+    public R<List<QtSubLaboratoryAcceptabilityDetailVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubLaboratoryAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
+    }
+
+    @PostMapping("/sub/acceptability/chart")
+    @ApiOperation(value = "基片化验抽检合格率趋势")
+    public R<QtChartBarVO> getQtSubLaboratoryChartVO(@RequestBody QtSubLaboratoryAcceptabilityDTO dto){
+        return R.success(qtCheckTaskService.getQtSubLaboratoryChartVO(dto));
+    }
 }

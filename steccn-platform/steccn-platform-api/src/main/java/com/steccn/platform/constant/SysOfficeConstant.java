@@ -24,4 +24,9 @@ public interface SysOfficeConstant {
      * 产线类型
      */
     String PRODUCT_LINE="9";
+
+    /**
+     * 车间类型
+     */
+    String WORKSHOP = "8";
 }

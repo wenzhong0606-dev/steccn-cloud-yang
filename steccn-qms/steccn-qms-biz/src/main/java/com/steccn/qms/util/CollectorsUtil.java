@@ -1,7 +1,7 @@
 package com.steccn.qms.util;
 
 /**
- * BigDecimal求和工具类
+ * BigDecimal工具类
  *
  * @author AndrewLuo
  * @date 2022/11/11
@@ -93,5 +93,15 @@ public class CollectorsUtil {
             return a;
         }, a -> a[0], CH_NOID);
     }
+
+    //求平均值  null不计数
+    public static <T> Collector<T, ?, BigDecimal> averagingBigDecimal(ToBigDecimalFunction<? super T> mapper, int newScale, int roundingMode) {
+        return new CollectorImpl<>(
+                () -> new BigDecimal[]{BigDecimal.ZERO,BigDecimal.ZERO},
+                (a, t) -> { a[0] = a[0].add(mapper.applyAsBigDecimal(t)); a[1] = a[1].add(BigDecimal.ONE); },
+                (a, b) -> { a[0] = a[0].add(b[0]) ; return a; },
+                a -> a[0].divide(a[1],BigDecimal.ROUND_HALF_UP).setScale(newScale, roundingMode), CH_NOID);
+    }
+
 }
 

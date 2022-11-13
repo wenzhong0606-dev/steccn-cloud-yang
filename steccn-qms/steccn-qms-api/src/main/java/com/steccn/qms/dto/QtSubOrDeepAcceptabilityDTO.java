@@ -25,7 +25,7 @@ public class QtSubOrDeepAcceptabilityDTO implements Serializable {
     private LocalDate dateEnd;
 
     @ApiModelProperty("对比")
-    private String compare;
+    private Integer compare;
 
     @ApiModelProperty("生产车间")
     private Integer productWorkShopId;

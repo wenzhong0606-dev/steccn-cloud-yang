@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -151,4 +152,8 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/list/listByTypeAndLine")
     @ApiOperation("根据机构类型和名字查找数据")
     R<List<SysOfficeVO>> getByTypeAndLine(@RequestBody SysOfficeDTO dto);
+
+    @PostMapping("/list/listByTypeAndKey")
+    @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
+     R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
 }

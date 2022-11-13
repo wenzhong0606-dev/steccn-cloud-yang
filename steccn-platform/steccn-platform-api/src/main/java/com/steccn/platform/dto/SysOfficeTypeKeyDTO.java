@@ -27,7 +27,7 @@ public class SysOfficeTypeKeyDTO implements Serializable {
     /**
      * type 根据某个机构的类型获取该类型下的所有机构信息 例如(8)获取所有车间
      */
-   private List<Integer> type;
+   private List<String> type;
 
     /**
      * key  输入模糊查询的关键字

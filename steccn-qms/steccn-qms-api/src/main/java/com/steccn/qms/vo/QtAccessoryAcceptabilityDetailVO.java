@@ -3,13 +3,14 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
  * 配料抽检合格率明细表返回数据
  */
 @Data
-public class QtAccessoryAcceptabilityDetailVO {
+public class QtAccessoryAcceptabilityDetailVO implements Serializable {
     /**
      * 检验任务单号
      */

@@ -3,10 +3,11 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 @Data
-public class QtSpcReportDetailTaskVO {
+public class QtSpcReportDetailTaskVO implements Serializable {
     /**
      * 检验任务单号
      */
