@@ -14,6 +14,7 @@ import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -313,6 +314,27 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
                 .eq(SysOffice::getOfficeType,dto.getOfficeType())
                 .like(SysOffice::getOfficeName,dto.getOfficeName()));
+        if(CollUtil.isNotEmpty(officeList)){
+            officeList.forEach(tmp->{
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp,vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
+    /**
+     * 根据机构类型以及关键字返回SysOfficeVO集合信息
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeType,dto.getType())
+                .like(SysOffice::getOfficeName,dto.getKey()));
         if(CollUtil.isNotEmpty(officeList)){
             officeList.forEach(tmp->{
                 SysOfficeVO vo = new SysOfficeVO();

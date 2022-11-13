@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -122,4 +123,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> findByTypeAndName(SysOfficeDTO dto);
+
+    /**
+     * 根据机构类型以及关键字返回SysOfficeVO集合信息
+     * @param dto
+     * @return
+     */
+    List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto);
 }
