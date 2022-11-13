@@ -12,7 +12,6 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
-import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
@@ -148,10 +147,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         });
         //获取缺陷项id集合
         Assert.notEmpty(defectiveIdSet, "深加工缺陷项集合为空，暂无报表");
-        Map<Integer, Integer> defectiveItemMap = Maps.newHashMap();
-        List<QtDefectiveItem> defectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
-        Assert.notEmpty(defectiveItemList, "深加工缺陷集合为空，暂无报表");
-        defectiveItemList.forEach(ele -> defectiveItemMap.put(ele.getId(), ele.getCategoryId()));
+
+
+        //缺陷项类别与类别的创建时间
+        Map<Integer, QtDefectiveItemVO> defectiveItemMap = qtDefectiveItemService.categoryMap(defectiveIdSet);
+        QtDefectiveItemVO defaultQtDefectiveItemVO = new QtDefectiveItemVO();
+        Assert.notEmpty(defectiveItemMap, "深加工缺陷集合为空，暂无报表");
+
         //遍历缺陷项集合
         List<QtCheckTaskDetailReportVO> flatDefectiveList = Lists.newArrayList();
         detailList.forEach(ele -> {
@@ -160,11 +162,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             if (CollUtil.isNotEmpty(ele.getDefectNum())) {
                 String numString = JSON.toJSONString(ele.getDefectNum());
                 List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString, QtOnlineCheckDefectDTO.class);
-                defectNumList.forEach(de -> {
+                defectNumList.stream().filter(v -> Objects.nonNull(v.getDefectId())).forEach(de -> {
                     if (Objects.nonNull(de.getDefectId())) {
                         QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
                         vo.setDefectId(de.getDefectId());
-                        vo.setDefectCategory(defectiveItemMap.get(de.getDefectId()));
+                        QtDefectiveItemVO orDefault = defectiveItemMap.getOrDefault(de.getDefectId(), defaultQtDefectiveItemVO);
+                        vo.setDefectCategory(orDefault.getCategoryId());
+                        vo.setDefectCategoryCreateTime(orDefault.getCreateTime());
                         vo.setDefectNum(Objects.nonNull(de.getDefectNum()) ? de.getDefectNum() : 0);
                         vo.setId(ele.getId());
                         vo.setTaskId(ele.getTaskId());
@@ -172,6 +176,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                         vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                         vo.setClassId(qtCheckTask.getClassesId());
+                        vo.setClassesDate(ele.getCreateTime().toLocalDate());
                         flatDefectiveList.add(vo);
                     }
                 });

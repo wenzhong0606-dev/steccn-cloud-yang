@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -33,7 +34,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -243,6 +247,31 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
+    @Override
+    public Map<Integer, QtDefectiveItemVO> categoryMap(Set<Integer> defectiveIdSet) {
+        Map<Integer, QtDefectiveItemVO> defectiveItemMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(defectiveIdSet)) {
+            List<QtDefectiveItem> defectiveItemList = listByIds(defectiveIdSet);
+            Map<Integer, LocalDateTime> categoryDateMap = Maps.newHashMap();
+            if (CollUtil.isNotEmpty(defectiveItemList)) {
+                List<QtDefectiveItemVO> qtDefectiveItemVOList = BeanUtil.copyToList(defectiveItemList, QtDefectiveItemVO.class);
+                Set<Integer> categoryIdSet = qtDefectiveItemVOList.stream().map(QtDefectiveItemVO::getCategoryId).collect(Collectors.toSet());
+                if (CollUtil.isNotEmpty(categoryIdSet)) {
+                    List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.listByIds(categoryIdSet);
+                    if (CollUtil.isNotEmpty(qtItemCategoryList)) {
+                        qtItemCategoryList.forEach(ele -> {
+                            categoryDateMap.put(ele.getId(), ele.getCreateTime());
+                        });
+                    }
+                }
+                qtDefectiveItemVOList.forEach(ele -> {
+                    ele.setCategoryDateTime(categoryDateMap.getOrDefault(ele.getCategoryId(), LocalDateTime.MIN));
+                    defectiveItemMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return defectiveItemMap;
+    }
 
     /**
      * 同类别下名称是否重复

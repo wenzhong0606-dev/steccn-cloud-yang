@@ -39,4 +39,10 @@ public class QtDefectiveReportController {
     public R<QtChartPieVO> deepDefectiveCategoryPie(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryPie(dto));
     }
+
+    @PostMapping("/deep/category/detail")
+    @ApiOperation("深加工缺陷类别分布-明细")
+    public R<QtChartPieVO> deepDefectiveCategoryDetail(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryPie(dto));
+    }
 }

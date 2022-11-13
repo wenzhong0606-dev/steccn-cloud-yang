@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -13,7 +14,7 @@ import java.time.LocalDate;
  * @date 2022/11/10
  */
 @Data
-public class QtChartParamDTO implements Serializable {
+public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     /**
      * 开始时间
