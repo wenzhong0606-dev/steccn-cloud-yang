@@ -19,7 +19,7 @@ public class QtChartSubDetailDTO implements Serializable {
     /**
      * 班次时间
      */
-    private LocalDate workOrderTime;
+    private String workOrderTime;
 
     /**
      * 班次
@@ -54,11 +54,11 @@ public class QtChartSubDetailDTO implements Serializable {
     /**
      * 损耗重量
      */
-    private BigDecimal lossWeight;
+    private String lossWeight;
 
     /**
      * 拉引量
      */
-    private BigDecimal pullAmount;
+    private String pullAmount;
 
 }

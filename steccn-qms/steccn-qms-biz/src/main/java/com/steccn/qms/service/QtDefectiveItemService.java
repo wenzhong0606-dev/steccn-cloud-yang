@@ -11,6 +11,7 @@ import com.steccn.qms.vo.QtDefectiveItemVO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -73,4 +74,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map key为旧检验项id value为新检验项id
      */
     Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList);
+
+    /**
+     * 缺陷项map
+     * @param defectiveIdSet 缺陷项id集合
+     * @return map
+     */
+    Map<Integer, QtDefectiveItemVO> categoryMap(Set<Integer> defectiveIdSet);
 }

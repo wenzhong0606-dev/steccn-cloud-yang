@@ -120,6 +120,12 @@ public interface QtManagerConstant {
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
 
+    /**
+     * 早班晚班
+     */
+    String MORNINGWORKNAME = "早班";
+
+    String NIGHTWORKNAME = "晚班";
 
     /**
      * 车间名称

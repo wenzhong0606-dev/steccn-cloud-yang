@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -40,6 +42,16 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("产线id")
     private Integer productLineId;
 
+    @ApiModelProperty("班次日期")
+    private LocalDate classesDate;
+
     @ApiModelProperty("班次")
     private Integer classId;
+
+    @ApiModelProperty("缺陷记录开始时间")
+    private LocalDateTime defectStartTime;
+
+    @ApiModelProperty("缺陷记录结束时间")
+    private LocalDateTime defectEndTime;
+
 }

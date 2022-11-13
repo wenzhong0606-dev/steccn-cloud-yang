@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.vo.DeepDefectiveCategoryDetailVO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
@@ -35,4 +37,41 @@ public interface QtDefectiveReportService {
      * @return vo
      */
     QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷类别分布-明细
+     * @param dto 分页查询条件
+     * @return 分页数据
+     */
+    Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepDefectiveCategoryByInfo(QtChartParamDTO dto);
+
+    /**
+     * 深加工基片缺陷分布
+     * @param dto
+     * @return
+     */
+    QtChartBarVO deepBasePlateCategory(QtChartParamDTO dto);
+
+    QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO deepDefectiveCategoryByInfoCategoryPie(QtChartParamDTO dto);
+
+    /**
+     * 基片缺陷项分布-饼图
+     * @param dto
+     * @return
+     */
+    QtChartPieVO deepDefectiveCategoryJPie(QtChartParamDTO dto);
 }

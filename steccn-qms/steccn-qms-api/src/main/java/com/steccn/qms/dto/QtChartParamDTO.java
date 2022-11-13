@@ -1,5 +1,7 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -13,7 +15,7 @@ import java.time.LocalDate;
  * @date 2022/11/10
  */
 @Data
-public class QtChartParamDTO implements Serializable {
+public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     /**
      * 开始时间
@@ -63,4 +65,7 @@ public class QtChartParamDTO implements Serializable {
     private Integer type;
 
     private String productWorkName;
+
+    @ApiModelProperty("检验项id")
+    private Integer taskId;
 }
