@@ -238,8 +238,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, QtItemCategory> categoryIdNameMap = qtItemCategoryService.listById(categoryIdSet);
-        QtItemCategory defaultQtItemCategory = new QtItemCategory();
         Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
 
         //定义数据集合
@@ -254,21 +252,19 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 workshopMap.forEach((ws, wsData) -> {
                     Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
                     lineMap.forEach((line, lineData) -> {
-                        Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
-                        categoryMap.forEach((cate, cateData) -> {
+                        Map<Integer, List<QtCheckTaskDetailReportVO>> defectMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId));
+                        defectMap.forEach((defectId, defectData) -> {
                             DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
                             countVo.setClassesDate(classDate);
                             countVo.setClassId(classes);
                             countVo.setClassesName(classesEnum.getName());
-                            countVo.setDefectCategory(cate);
-                            QtItemCategory qtItemCategory = categoryIdNameMap.getOrDefault(cate, defaultQtItemCategory);
-                            countVo.setDefectCategoryName(qtItemCategory.getName());
-                            countVo.setDefectCategoryCreateTime(qtItemCategory.getCreateTime());
-                            countVo.setDefectNum(cateData.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum());
+                            countVo.setDefectNum(defectData.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum());
                             countVo.setProductWorkshopId(ws);
                             countVo.setProductWorkshopName(officeChMap.get(ws));
                             countVo.setProductLineId(line);
                             countVo.setProductLineName(officeChMap.get(line));
+                            countVo.setDefectId(defectId);
+                            countVo.setDefectCreateTime(LocalDateTime.now());
                             pageList.add(countVo);
                         });
                     });
@@ -282,7 +278,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCreateTime))));
         List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
         Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
         resPage.setTotal(pageList.size());
