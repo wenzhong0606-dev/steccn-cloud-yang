@@ -278,7 +278,7 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtSPCGranularityEnum{
+    enum QtGranularityEnum{
         //粒度 小时 天 周 月 季度 年
         HOUR(0,"小时","H"),
         DAY(1,"天","D"),
@@ -291,8 +291,8 @@ public interface QtManagerConstant {
         private String name;
         private String type;
 
-        public static QtSPCGranularityEnum getByName(String name){
-            for (QtSPCGranularityEnum value : QtSPCGranularityEnum.values()) {
+        public static QtGranularityEnum getByName(String name){
+            for (QtGranularityEnum value : QtGranularityEnum.values()) {
                 if(value.getName().equals(name)){
                     return value;
                 }

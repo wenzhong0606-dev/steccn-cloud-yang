@@ -243,7 +243,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<String> dates = Lists.newArrayList();
 
             //
-            QtManagerConstant.QtSPCGranularityEnum byName = QtManagerConstant.QtSPCGranularityEnum.getByName(q.getGranularity());
+            QtManagerConstant.QtGranularityEnum byName = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
             dates = ShardingTimeUtil.cutDate(byName.getType(), start, end);
 
             qtReportChartVO.setXData(dates);
@@ -408,28 +408,28 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         String end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATETIME_PATTERN);
        List<String> dateAll= Lists.newArrayList();
         List<String> dates = Lists.newArrayList();
-        if (QtManagerConstant.QtSPCGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.HOUR.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.HOUR.getType(), start, end);
             dateAll.add(start);
         }
-        if (QtManagerConstant.QtSPCGranularityEnum.DAY.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.DAY.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.DAY.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
         }
-        if (QtManagerConstant.QtSPCGranularityEnum.WEEK.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.WEEK.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.WEEK.getType(), start, end);
         }
-        if (QtManagerConstant.QtSPCGranularityEnum.MONTH.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.MONTH.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
         }
-        if (QtManagerConstant.QtSPCGranularityEnum.QUARTER.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.QUARTER.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.QUARTER.getType(), start, end);
         }
-        if (QtManagerConstant.QtSPCGranularityEnum.YEAR.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtSPCGranularityEnum.YEAR.getType(), start, end);
+        if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(report.getGranularity())) {
+            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.YEAR.getType(), start, end);
         }
 
         //把初始时间添加进dateAll
-        if (QtManagerConstant.QtSPCGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
+        if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
             dateAll.add(start);
         }else {
             String startFormat = LocalDateUtil.localDateFormat(report.getTimeScopeStart().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
