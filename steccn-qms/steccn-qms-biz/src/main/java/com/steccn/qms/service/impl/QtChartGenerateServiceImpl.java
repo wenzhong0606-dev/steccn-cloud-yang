@@ -61,7 +61,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      */
     @Override
     public List<QtChartSubDetailDTO> generateSubstrateLossData(QtChartParamDTO dto) {
-        List<QtChartSubDetailDTO> result = new ArrayList<>();
+        List<QtChartSubDetailDTO> resultList = new ArrayList<>();
         //转时间戳
         LocalDateTime startTime = dto.getDateStart().atTime(0,0,1);
         LocalDateTime endTime = dto.getDateEnd().atTime(23, 59,59);
@@ -128,16 +128,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     laItems.forEach(tmp->{
                         laItemIds.add(tmp.getId());
                     });
-                    BigDecimal totalBaiItem = new BigDecimal(0);
-                    BigDecimal totalBaiItemCount = new BigDecimal(0);
-                    BigDecimal totalDanItem = new BigDecimal(0);
-                    BigDecimal totalDanItemCount = new BigDecimal(0);
-                    BigDecimal totalLaItem = new BigDecimal(0);
-                    BigDecimal totalLaItemCount = new BigDecimal(0);
                     //根据产线进行分组
                     Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
                     //遍历产线
                     for(Map.Entry<Integer,List<QtCheckTask>> entry3:groupByProductLine.entrySet()){
+                        BigDecimal totalBaiItem = new BigDecimal(0);
+                        BigDecimal totalBaiItemCount = new BigDecimal(0);
+                        BigDecimal totalDanItem = new BigDecimal(0);
+                        BigDecimal totalDanItemCount = new BigDecimal(0);
+                        BigDecimal totalLaItem = new BigDecimal(0);
+                        BigDecimal totalLaItemCount = new BigDecimal(0);
                         //准备产线下taskId
                         List<QtCheckTask> checkTaskProductLineList = entry3.getValue();
                         List<Long> taskIds = new ArrayList<>();
@@ -183,47 +183,54 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                             }
                         }
-                    }
-                    //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
-                    BigDecimal avgBaiItem = new BigDecimal(0);
-                    if(totalBaiItem.intValue()!=0){
-                        avgBaiItem = totalBaiItem.divide(totalBaiItemCount);
-                    }
-                    //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
-                    BigDecimal avgDanItem = new BigDecimal(0);
-                    if(totalDanItem.intValue()!=0){
-                        avgDanItem = totalDanItem.divide(totalDanItemCount);
-                    }
-                    //拉引时速：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“拉引速度”（需提前配置好“拉引速度”检验项）取平均值，单位为m/h
-                    BigDecimal avgLaItem = new BigDecimal(0);
-                    if(totalDanItem.intValue()!=0){
-                        avgLaItem = totalLaItem.divide(totalLaItemCount);
-                    }
-                    //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
-                    BigDecimal glassLength = new BigDecimal(0);
-                    if(flag){
-                        QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
-                        if(material.getLengthQuantity()!=null){
-                            glassLength.add(material.getLengthQuantity());
+                        //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
+                        BigDecimal avgBaiItem = new BigDecimal(0);
+                        if(totalBaiItem.intValue()!=0){
+                            avgBaiItem = totalBaiItem.divide(totalBaiItemCount);
                         }
-                    }
-                    //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
-                    //拉引时速/玻璃片长度
-                    BigDecimal divideLaGlass = new BigDecimal(0);
-                    if(glassLength.compareTo(BigDecimal.ZERO) > 0){
-                        divideLaGlass = avgLaItem.divide(glassLength);
-                    }
-                    //掰边损耗重量
-                    BigDecimal baiLossWeight = avgBaiItem.multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
+                        //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
+                        BigDecimal avgDanItem = new BigDecimal(0);
+                        if(totalDanItem.intValue()!=0){
+                            avgDanItem = totalDanItem.divide(totalDanItemCount);
+                        }
+                        //拉引时速：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“拉引速度”（需提前配置好“拉引速度”检验项）取平均值，单位为m/h
+                        BigDecimal avgLaItem = new BigDecimal(0);
+                        if(totalDanItem.intValue()!=0){
+                            avgLaItem = totalLaItem.divide(totalLaItemCount);
+                        }
+                        //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
+                        BigDecimal glassLength = new BigDecimal(0);
+                        if(flag){
+                            QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
+                            if(material.getLengthQuantity()!=null){
+                                glassLength.add(material.getLengthQuantity());
+                            }
+                        }
+                        //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                        //拉引时速/玻璃片长度
+                        BigDecimal divideLaGlass = new BigDecimal(0);
+                        if(glassLength.compareTo(BigDecimal.ZERO) > 0){
+                            divideLaGlass = avgLaItem.divide(glassLength);
+                        }
+                        //掰边损耗重量
+                        BigDecimal baiLossWeight = avgBaiItem.multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
 
-                    //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
-                    BigDecimal laQuantity = avgDanItem.add(avgDanItem).multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
+                        //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                        BigDecimal laQuantity = avgDanItem.add(avgDanItem).multiply(divideLaGlass).multiply(new BigDecimal(12)).divide(new BigDecimal(1000000));
 
+                        QtChartSubDetailDTO result = new QtChartSubDetailDTO();
+                        result.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
+                        result.setLossWeight(new DecimalFormat("0.00").format(baiLossWeight));
+                        result.setReason("掰边损耗");
+                        result.setWorkOrderTime(entry.getKey());
+//                        result.setWorkOrder();
+//                        result.setProductLineName(entry3.getKey());
+                    }
                 }
 
             }
         }else {
-            return result;
+            return null;
         }
         return null;
     }
