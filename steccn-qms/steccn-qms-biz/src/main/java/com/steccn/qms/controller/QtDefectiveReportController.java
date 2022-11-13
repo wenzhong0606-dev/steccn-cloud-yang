@@ -127,7 +127,7 @@ public class QtDefectiveReportController {
      */
     @PostMapping("/deep/category/info/trend")
     @ApiOperation("深加工缺陷项趋势-折线图")
-    public R<QtChartBarVO> deepDefectiveCategoryInfoTrend(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarVO> deepDefectiveCategoryInfoTrend(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryInfoTrend(dto));
     }
 
@@ -138,7 +138,7 @@ public class QtDefectiveReportController {
      */
     @PostMapping("/substrate/trend")
     @ApiOperation("基片缺陷项趋势-折线图")
-    public R<QtChartBarVO> substrateDefectiveCategoryTrend(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarVO> substrateDefectiveCategoryTrend(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateDefectiveCategoryTrend(dto));
     }
 //todo

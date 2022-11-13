@@ -612,15 +612,152 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartBarVO substrateDefectiveCategoryTrend(QtChartParamDTO dto) {
+    public QtLineChartBarVO substrateDefectiveCategoryTrend(QtChartParamDTO dto) {
+        //获取扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //获取粒度枚举
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
+                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
+        //查询基片车间
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
 
-        return null;
+        //定义返回数据
+        QtLineChartBarVO<String> resVo = new QtLineChartBarVO();
+        List<QtSeriesDataVO> seriesDataVO = Lists.newArrayList();
+        //确定数据范围
+        Map<Integer, List<String>> dataMap = Maps.newHashMap();
+        Map<Integer, QtSeriesDataVO> serialDataMap = Maps.newHashMap();
+        List<String> legendData = Lists.newArrayList();
+        List<String> xData = Lists.newArrayList();
+        boolean flag = Boolean.TRUE;
+        for (int i = 1; i < cutDate.size(); i++) {
+            LocalDateTime start = cutDate.get(i - 1);
+            LocalDateTime end = cutDate.get(i);
+            List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+
+            xData.add(start.toString());
+            //类别
+            for (Map.Entry<Integer, String> entry : categoryIdNameMap.entrySet()) {
+                Integer k = entry.getKey();
+                QtSeriesDataVO qtSeriesDataVO = serialDataMap.get(k);
+                if (!dataMap.containsKey(k)) {
+                    dataMap.put(k, Lists.newArrayList());
+                }
+                List<String> dataList = dataMap.get(k);
+                List<QtCheckTaskDetailReportVO> categoryDataList = conditionDataList.stream().filter(ele -> k.equals(ele.getDefectCategory())).collect(Collectors.toList());
+                int categorySum = categoryDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                dataList.add(String.valueOf(categorySum));
+                if (flag) {
+                    legendData.add(categoryIdNameMap.get(k));
+                }
+                if (Objects.isNull(qtSeriesDataVO)) {
+                    qtSeriesDataVO = new QtSeriesDataVO();
+                    qtSeriesDataVO.setData(dataList);
+                    qtSeriesDataVO.setName(categoryIdNameMap.get(k));
+                    qtSeriesDataVO.setType("line");
+                    qtSeriesDataVO.setStack("total");
+                    seriesDataVO.add(qtSeriesDataVO);
+                    serialDataMap.put(k, qtSeriesDataVO);
+                }
+            }
+            flag = Boolean.FALSE;
+            resVo.setSeriesDataVO(seriesDataVO);
+        }
+        resVo.setXData(xData);
+        resVo.setYear(String.valueOf(LocalDate.now().getYear()));
+        resVo.setName(legendData);
+        return resVo;
     }
 
+    /**
+     * 深加工缺陷项
+     * @param dto
+     * @return
+     */
     @Override
-    public QtChartBarVO deepDefectiveCategoryInfoTrend(QtChartParamDTO dto) {
-        return null;
+    public QtLineChartBarVO deepDefectiveCategoryInfoTrend(QtChartParamDTO dto) {
+        //获取扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //获取粒度枚举
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
+                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
+
+        //查询基片车间
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+
+        //定义返回数据
+        QtLineChartBarVO<String> resVo = new QtLineChartBarVO();
+        List<QtSeriesDataVO> seriesDataVO = Lists.newArrayList();
+        //确定数据范围
+        Map<Integer, List<String>> dataMap = Maps.newHashMap();
+        Map<Integer, QtSeriesDataVO> serialDataMap = Maps.newHashMap();
+        List<String> legendData = Lists.newArrayList();
+        List<String> xData = Lists.newArrayList();
+        boolean flag = Boolean.TRUE;
+        for (int i = 1; i < cutDate.size(); i++) {
+            LocalDateTime start = cutDate.get(i - 1);
+            LocalDateTime end = cutDate.get(i);
+            List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+
+            xData.add(start.toString());
+            //类别
+            for (Map.Entry<Integer, String> entry : categoryIdNameMap.entrySet()) {
+                Integer k = entry.getKey();
+                QtSeriesDataVO qtSeriesDataVO = serialDataMap.get(k);
+                if (!dataMap.containsKey(k)) {
+                    dataMap.put(k, Lists.newArrayList());
+                }
+                List<String> dataList = dataMap.get(k);
+                List<QtCheckTaskDetailReportVO> categoryDataList = conditionDataList.stream().filter(ele -> k.equals(ele.getDefectCategory())).collect(Collectors.toList());
+                int categorySum = categoryDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                dataList.add(String.valueOf(categorySum));
+                if (flag) {
+                    legendData.add(categoryIdNameMap.get(k));
+                }
+                if (Objects.isNull(qtSeriesDataVO)) {
+                    qtSeriesDataVO = new QtSeriesDataVO();
+                    qtSeriesDataVO.setData(dataList);
+                    qtSeriesDataVO.setName(categoryIdNameMap.get(k));
+                    qtSeriesDataVO.setType("line");
+                    qtSeriesDataVO.setStack("total");
+                    seriesDataVO.add(qtSeriesDataVO);
+                    serialDataMap.put(k, qtSeriesDataVO);
+                }
+            }
+            flag = Boolean.FALSE;
+            resVo.setSeriesDataVO(seriesDataVO);
+        }
+        resVo.setXData(xData);
+        resVo.setYear(String.valueOf(LocalDate.now().getYear()));
+        resVo.setName(legendData);
+        return resVo;
     }
 
     /**
