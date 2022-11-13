@@ -16,15 +16,6 @@ import java.time.LocalDateTime;
 @ApiModel("深加工缺陷类别分布-明细")
 public class DeepDefectiveCategoryDetailVO implements Serializable {
 
-    @ApiModelProperty("任务id")
-    private Long taskId;
-
-    @ApiModelProperty("任务code")
-    private String taskCode;
-
-    @ApiModelProperty("缺陷项id")
-    private Integer defectId;
-
     @ApiModelProperty("缺陷项类别")
     private Integer defectCategory;
 

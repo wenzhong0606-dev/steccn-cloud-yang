@@ -33,17 +33,11 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("缺陷项类别")
     private Integer defectCategory;
 
-    @ApiModelProperty("缺陷项类别创建时间")
-    private LocalDateTime defectCategoryCreateTime;
-
     @ApiModelProperty("缺陷项数量")
     private Integer defectNum;
 
     @ApiModelProperty("生产车间id")
     private Integer productWorkshopId;
-
-    @ApiModelProperty("生产车间名字")
-    private String productWorkshopName;
 
     @ApiModelProperty("产线id")
     private Integer productLineId;

@@ -13,6 +13,8 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.domain.QtDefectiveItem;
+import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
@@ -50,6 +52,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷类别分布
+     *
      * @param dto dto
      * @return
      */
@@ -153,9 +156,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(defectiveIdSet, "深加工缺陷项集合为空，暂无报表");
 
         //缺陷项类别与类别的创建时间
-        Map<Integer, QtDefectiveItemVO> defectiveItemMap = qtDefectiveItemService.categoryMap(defectiveIdSet);
+        Map<Integer,Integer> categoryMap = Maps.newHashMap();
+        List<QtDefectiveItem> qtDefectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
         QtDefectiveItemVO defaultQtDefectiveItemVO = new QtDefectiveItemVO();
-        Assert.notEmpty(defectiveItemMap, "深加工缺陷集合为空，暂无报表");
+        Assert.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
+        qtDefectiveItemList.forEach(ele -> categoryMap.put(ele.getId(), ele.getCategoryId()));
 
         //遍历缺陷项集合
         List<QtCheckTaskDetailReportVO> flatDefectiveList = Lists.newArrayList();
@@ -169,9 +174,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     if (Objects.nonNull(de.getDefectId())) {
                         QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
                         vo.setDefectId(de.getDefectId());
-                        QtDefectiveItemVO orDefault = defectiveItemMap.getOrDefault(de.getDefectId(), defaultQtDefectiveItemVO);
-                        vo.setDefectCategory(orDefault.getCategoryId());
-                        vo.setDefectCategoryCreateTime(orDefault.getCreateTime());
+                        vo.setDefectCategory(categoryMap.get(de.getDefectId()));
                         vo.setDefectNum(Objects.nonNull(de.getDefectNum()) ? de.getDefectNum() : 0);
                         vo.setId(ele.getId());
                         vo.setTaskId(ele.getTaskId());
@@ -192,6 +195,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工类别分布-饼图
+     *
      * @param dto dto
      * @return
      */
@@ -227,21 +231,25 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-
+        Set<Integer> categoryIdSet = Sets.newHashSet();
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        flatDataList.forEach(ele -> {
+            categoryIdSet.add(ele.getDefectCategory());
+            officeIdSet.add(ele.getProductWorkshopId());
+            officeIdSet.add(ele.getProductLineId());
+        });
+        Map<Integer, QtItemCategory> categoryIdNameMap = qtItemCategoryService.listById(categoryIdSet);
+        QtItemCategory defaultQtItemCategory = new QtItemCategory();
+        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
 
         //定义数据集合
         List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
         //班次日期分组
         Map<LocalDate, List<QtCheckTaskDetailReportVO>> classesDateMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassesDate));
         classesDateMap.forEach((classDate, classDateData) -> {
-
-
             Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
             classesMap.forEach((classes, classesData) -> {
                 QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
-
                 Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
                 workshopMap.forEach((ws, wsData) -> {
                     Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
@@ -249,7 +257,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
                         categoryMap.forEach((cate, cateData) -> {
                             DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
+                            countVo.setClassesDate(classDate);
                             countVo.setClassId(classes);
+                            countVo.setClassesName(classesEnum.getName());
+                            countVo.setDefectCategory(cate);
+                            QtItemCategory qtItemCategory = categoryIdNameMap.getOrDefault(cate, defaultQtItemCategory);
+                            countVo.setDefectCategoryName(qtItemCategory.getName());
+                            countVo.setDefectCategoryCreateTime(qtItemCategory.getCreateTime());
+                            countVo.setDefectNum(cateData.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum());
+                            countVo.setProductWorkshopId(ws);
+                            countVo.setProductWorkshopName(officeChMap.get(ws));
+                            countVo.setProductLineId(line);
+                            countVo.setProductLineName(officeChMap.get(line));
                             pageList.add(countVo);
                         });
                     });
@@ -259,11 +278,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         //排序+逻辑分页
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-//        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
         List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
         Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
         resPage.setTotal(pageList.size());
@@ -289,6 +308,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 基片缺陷分布-柱状图
+     *
      * @param dto
      * @return
      */
@@ -310,6 +330,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷项分布
+     *
      * @param dto
      * @return
      */
@@ -331,6 +352,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷项分布饼图
+     *
      * @param dto
      * @return
      */
@@ -363,6 +385,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 基片缺陷项分布-饼图
+     *
      * @param dto
      * @return
      */
