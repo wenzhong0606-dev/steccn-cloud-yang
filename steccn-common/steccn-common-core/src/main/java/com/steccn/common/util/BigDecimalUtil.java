@@ -173,4 +173,22 @@ public class BigDecimalUtil {
         }
         return value.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
+
+    /**
+     * val1 x val2
+     * @param val1
+     * @param val2
+     * @return
+     */
+    public static BigDecimal multiply(BigDecimal val1, BigDecimal val2) {
+        if (Objects.isNull(val1)) {
+            val1 = BigDecimal.ZERO;
+        }
+        if (Objects.isNull(val2)) {
+            val2 = BigDecimal.ZERO;
+        }
+        BigDecimal res = val1.multiply(val2);
+        res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
+        return res;
+    }
 }

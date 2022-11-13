@@ -24,7 +24,7 @@ public class QtChartTargetValue implements Serializable {
     /**
      * 1基片成品率 2基片缺陷总数 3深加工缺陷总数 4来料检合格率 5基片巡检合格率 6深加工巡检合格率
      */
-    private Integer key;
+    private Integer target;
 
     /**
      * 值

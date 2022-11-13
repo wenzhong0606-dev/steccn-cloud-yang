@@ -25,9 +25,9 @@ public class QtChartTargetValueServiceImpl extends ServiceImpl<QtChatTargetValue
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtChatTargetValueDTO dto) {
         //先删除key相关数据
-        remove(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getKey,dto.getKey()));
+        remove(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,dto.getTarget()));
         //校验 如果是基片缺陷总数 深加工缺陷总数 数值为自然数
-        if(dto.getKey().equals(QtManagerConstant.QtChatTargetValue.JPQX.getCode()) || dto.getKey().equals(QtManagerConstant.QtChatTargetValue.SJGQX.getCode())){
+        if(dto.getTarget().equals(QtManagerConstant.QtChatTargetValue.JPQX.getCode()) || dto.getTarget().equals(QtManagerConstant.QtChatTargetValue.SJGQX.getCode())){
             if(dto.getValue().scale()!=0){
                 throw new BusinessException("请输入自然数");
             }
