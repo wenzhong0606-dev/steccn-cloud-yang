@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtDefectiveReportService;
-import com.steccn.qms.vo.DeepDefectiveCategoryDetailVO;
-import com.steccn.qms.vo.QtChartBarVO;
-import com.steccn.qms.vo.QtChartPieVO;
-import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +44,12 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷类别分布-明细")
     public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryDetail(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryDetail(dto));
+    }
+
+    @PostMapping("/deep/category/line")
+    @ApiOperation("深加工缺陷类别趋势-折线图")
+    public R<QtLineChartBarVO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
+        return R.success(qtDefectiveReportService.deepDefectiveCategoryLine(dto));
     }
 
     /**

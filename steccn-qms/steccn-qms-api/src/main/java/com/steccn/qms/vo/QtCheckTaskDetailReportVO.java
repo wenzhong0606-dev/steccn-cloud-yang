@@ -54,4 +54,6 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("缺陷记录结束时间")
     private LocalDateTime defectEndTime;
 
+    @ApiModelProperty("完成时间")
+    private LocalDateTime finishedTime;
 }

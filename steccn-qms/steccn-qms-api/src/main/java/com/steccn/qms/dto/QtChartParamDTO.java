@@ -2,7 +2,6 @@ package com.steccn.qms.dto;
 
 import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -79,4 +78,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
      * 缺陷项类型
      */
     private String defectType;
+
+    @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
+    private String granularity;
 }

@@ -2,10 +2,8 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.vo.DeepDefectiveCategoryDetailVO;
-import com.steccn.qms.vo.QtChartBarVO;
-import com.steccn.qms.vo.QtChartPieVO;
-import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.*;
+
 import java.util.List;
 
 /**
@@ -125,4 +123,11 @@ public interface QtDefectiveReportService {
      * @return
      */
     Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryTrendDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷类别趋势-折线图
+     * @param dto 筛选条件
+     * @return vo
+     */
+    QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto);
 }

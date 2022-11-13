@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,6 +11,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
@@ -20,6 +22,7 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
+import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -193,6 +196,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setClassesDate(ele.getCreateTime().toLocalDate());
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
+                        vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         flatDefectiveList.add(vo);
                     }
                 });
@@ -440,6 +444,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 基片缺陷分布明细
+     *
      * @param dto
      * @return
      */
@@ -450,7 +455,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-
 
         //定义数据集合
         List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
@@ -493,8 +497,32 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     }
 
+    @Override
+    public QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto) {
+        //获取扁平化数据
+        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //根据粒度，获取划分时间范围
+        LocalDateTime startTimeOfDayStr = LocalDateUtil.getStartTimeOfDayStr(dto.getDateStart());
+        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(dto.getDateEnd());
+        String start = LocalDateUtil.format(startTimeOfDayStr, DatePattern.NORM_DATETIME_PATTERN);
+        String end = LocalDateUtil.format(endTimeOfDayStr, DatePattern.NORM_DATETIME_PATTERN);
+
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        List<String> cutDate = ShardingTimeUtil.cutDate(granularityEnum.getType(), start, end);
+
+        //基于时间去分组
+        for (int i = 1; i < cutDate.size(); i++) {
+
+        }
+
+        return null;
+    }
+
+
     /**
      * 深加工缺陷项趋势-折线图
+     *
      * @param dto
      * @return
      */
@@ -529,6 +557,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 基片缺陷项趋势-折线图
+     *
      * @param dto
      * @return
      */
@@ -546,6 +575,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷分布明细
+     *
      * @param dto
      * @return
      */
@@ -601,6 +631,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工类别趋势明细
+     *
      * @param dto
      * @return
      */
@@ -655,6 +686,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷项趋势-折线图-明细
+     *
      * @param dto
      * @return
      */
@@ -709,6 +741,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 基片缺陷项趋势-折线图-明细
+     *
      * @param dto
      * @return
      */
@@ -797,11 +830,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 data.add(sum);
                 if (!flag.get()) {
                     xAis.add(categoryIdNameMap.get(cate));
-                   // xAis.add()
+                    // xAis.add()
                 }
             });
             flag.set(Boolean.TRUE);
-           // series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
+            // series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
         });
         return xAis;
     }
