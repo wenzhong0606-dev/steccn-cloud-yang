@@ -365,13 +365,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
                 List<String> bar1Data = Lists.newArrayList();
                 bar1.setData(bar1Data);
-                bar1.setName(QtManagerConstant.MORNINGWORKNAME);
+                bar1.setName(QtManagerConstant.QtClassesEnum.DAY.getName());
                 QtChartBarSeriesVO<String> bar2 = new QtChartBarSeriesVO<>();
                 List<String> bar2Data = Lists.newArrayList();
                 bar2.setData(bar2Data);
-                bar2.setName(QtManagerConstant.NIGHTWORKNAME);
-                barMap.put(QtManagerConstant.MORNINGWORKNAME,bar1);
-                barMap.put(QtManagerConstant.NIGHTWORKNAME,bar2);
+                bar2.setName(QtManagerConstant.QtClassesEnum.NIGHT.getName());
+                barMap.put(QtManagerConstant.QtClassesEnum.DAY.getName(),bar1);
+                barMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getName(), bar2);
             }else {
                 SysOfficeDTO officeDTO = new SysOfficeDTO();
                 officeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);

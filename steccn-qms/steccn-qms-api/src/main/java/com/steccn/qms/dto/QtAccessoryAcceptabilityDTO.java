@@ -3,10 +3,11 @@ package com.steccn.qms.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Data
-public class QtAccessoryAcceptabilityDTO {
+public class QtAccessoryAcceptabilityDTO implements Serializable {
     /**
      * 检验完成时间在选中日期8:00 到20:00内的所有配料抽检任务
      */

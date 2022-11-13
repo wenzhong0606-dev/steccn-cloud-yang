@@ -28,6 +28,9 @@ public class QtDefectiveItemVO implements Serializable {
     @ApiModelProperty("缺陷项类别id")
     private Integer categoryId;
 
+    @ApiModelProperty("缺陷项类别id")
+    private LocalDateTime categoryDateTime;
+
     @ApiModelProperty("状态：0停用  1启用")
     private Integer status;
 
