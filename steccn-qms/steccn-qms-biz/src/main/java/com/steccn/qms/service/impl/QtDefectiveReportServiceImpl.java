@@ -22,12 +22,14 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
+import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -501,24 +503,72 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
-        //根据粒度，获取划分时间范围
-        LocalDateTime startTimeOfDayStr = LocalDateUtil.getStartTimeOfDayStr(dto.getDateStart());
-        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(dto.getDateEnd());
-        String start = LocalDateUtil.format(startTimeOfDayStr, DatePattern.NORM_DATETIME_PATTERN);
-        String end = LocalDateUtil.format(endTimeOfDayStr, DatePattern.NORM_DATETIME_PATTERN);
-
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //获取粒度枚举
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
-        List<String> cutDate = ShardingTimeUtil.cutDate(granularityEnum.getType(), start, end);
+        //将时间范围根据粒度分片
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
+                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
-        //基于时间去分组
+        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+
+        //定义返回数据
+        QtLineChartBarVO<String> resVo = new QtLineChartBarVO();
+        List<QtSeriesDataVO> seriesDataVO = Lists.newArrayList();
+        //确定数据范围
+        Map<Integer, List<String>> dataMap = Maps.newHashMap();
+        Map<Integer, QtSeriesDataVO> serialDataMap = Maps.newHashMap();
+        List<String> legendData = Lists.newArrayList();
+        List<String> xData = Lists.newArrayList();
+        boolean flag = Boolean.TRUE;
         for (int i = 1; i < cutDate.size(); i++) {
+            LocalDateTime start = cutDate.get(i - 1);
+            LocalDateTime end = cutDate.get(i);
+            List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
 
+            xData.add(start.toString());
+            //类别
+            for (Map.Entry<Integer, String> entry : categoryIdNameMap.entrySet()) {
+                Integer k = entry.getKey();
+                QtSeriesDataVO qtSeriesDataVO = serialDataMap.get(k);
+                if (!dataMap.containsKey(k)) {
+                    dataMap.put(k, Lists.newArrayList());
+                }
+                List<String> dataList = dataMap.get(k);
+                List<QtCheckTaskDetailReportVO> categoryDataList = conditionDataList.stream().filter(ele -> k.equals(ele.getDefectCategory())).collect(Collectors.toList());
+                int categorySum = categoryDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                dataList.add(String.valueOf(categorySum));
+                if (flag) {
+                    legendData.add(categoryIdNameMap.get(k));
+                }
+                if (Objects.isNull(qtSeriesDataVO)) {
+                    qtSeriesDataVO = new QtSeriesDataVO();
+                    qtSeriesDataVO.setData(dataList);
+                    qtSeriesDataVO.setName(categoryIdNameMap.get(k));
+                    qtSeriesDataVO.setType("line");
+                    qtSeriesDataVO.setStack("total");
+                    seriesDataVO.add(qtSeriesDataVO);
+                    serialDataMap.put(k, qtSeriesDataVO);
+                }
+            }
+            flag = Boolean.FALSE;
+            resVo.setSeriesDataVO(seriesDataVO);
         }
-
-        return null;
+        resVo.setXData(xData);
+        resVo.setYear(String.valueOf(LocalDate.now().getYear()));
+        resVo.setName(legendData);
+        return resVo;
     }
-
 
     /**
      * 深加工缺陷项趋势-折线图
