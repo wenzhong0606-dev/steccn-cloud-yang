@@ -48,13 +48,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -447,11 +443,11 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
             startLocalDate = selectDate.minusDays(8);
             endLocalDate = selectDate.minusDays(1);
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(8), LocalDate.now().minusDays(2));
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2));
         } else {
             startLocalDate = selectDate.minusDays(7);
             endLocalDate = selectDate;
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(7), LocalDate.now().minusDays(1));
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1));
         }
 
         //获取最近7天的完整工作时间
@@ -469,6 +465,9 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             }
             passRateDateVoList.add(rateDateVo);
         }
+
+        passRateDateVoList.sort(Comparator.comparing(PassRateDateVo::getStartDateTime));
+
 
         PassRateOverViewVO passRateOverViewVO = new PassRateOverViewVO();
         List<BigDecimal> datePassList = new ArrayList<>();
@@ -507,33 +506,38 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             datePassList.add(passRate);
         }
 
-        if (CollectionUtils.isEmpty(datePassList)) {
+        if (CollectionUtils.isNotEmpty(datePassList)) {
             DecimalFormat decimalFormat = new DecimalFormat("0.00%");
             //最后一天的合格率
-            BigDecimal endDatePassRate = datePassList.get(0);
+            BigDecimal endDatePassRate = datePassList.get(datePassList.size() - 1);
             //获取第一天的合格率
-            BigDecimal startDatePassRate = datePassList.get(datePassList.size() - 1);
+            BigDecimal startDatePassRate = datePassList.get(0);
             //获取合格率
-            passRateOverViewVO.setPassRate(endDatePassRate.toString());
+            passRateOverViewVO.setPassRate(decimalFormat.format(endDatePassRate));
             //获取日环比
-            if (endDatePassRate.subtract(datePassList.get(1)).compareTo(BigDecimal.ZERO) < 0) {
+            if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) < 0) {
                 passRateOverViewVO.setDayFlag(0);
-                passRateOverViewVO.setDayValue(decimalFormat.format(datePassList.get(1).subtract(endDatePassRate)));
-            } else if (endDatePassRate.subtract(datePassList.get(1)).compareTo(BigDecimal.ZERO) == 0) {
+                passRateOverViewVO.setDayValue(decimalFormat.format(datePassList.get(datePassList.size() - 2).subtract(endDatePassRate)));
+            } else if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) == 0) {
                 passRateOverViewVO.setDayFlag(2);
             } else {
                 passRateOverViewVO.setDayFlag(1);
-                passRateOverViewVO.setDayValue(decimalFormat.format(endDatePassRate.subtract(datePassList.get(1))));
+                passRateOverViewVO.setDayValue(decimalFormat.format(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2))));
             }
             //获取周同比
-            BigDecimal weekValue = endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
-            if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
-                weekValue = startDatePassRate.subtract(endDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
+            BigDecimal weekValue = BigDecimal.ZERO;
+            if (startDatePassRate.equals(BigDecimal.ZERO)) {
                 passRateOverViewVO.setWeekFlag(0);
-            } else if (weekValue.compareTo(BigDecimal.ZERO) == 0){
-                passRateOverViewVO.setWeekFlag(2);
-            }else {
-                passRateOverViewVO.setWeekFlag(1);
+            } else {
+                weekValue = endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
+                if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
+                    weekValue = startDatePassRate.subtract(endDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
+                    passRateOverViewVO.setWeekFlag(0);
+                } else if (weekValue.compareTo(BigDecimal.ZERO) == 0){
+                    passRateOverViewVO.setWeekFlag(2);
+                }else {
+                    passRateOverViewVO.setWeekFlag(1);
+                }
             }
             passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
         }
