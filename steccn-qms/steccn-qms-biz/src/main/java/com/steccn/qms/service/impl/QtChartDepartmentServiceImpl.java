@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -21,6 +22,7 @@ import com.steccn.qms.domain.QtChartTargetValue;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtMaterial;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChatDepartmentDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
@@ -482,15 +484,19 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             } else if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
                 //获取基片寻检查数据
                 checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
-                        && qtCheckTask.getMaterialWorkshopName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
+                        && Objects.nonNull(qtCheckTask.getProductWorkshop())
+                        && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
+                        && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
             } else {
                 //获取深加工寻检查数据
                 checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
-                        && qtCheckTask.getMaterialWorkshopName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
+                        && Objects.nonNull(qtCheckTask.getProductWorkshop())
+                        && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
+                        && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
             }
 
-            Integer goodNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getGoodNum).sum();
-            Integer checkNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getCheckNum).sum();
+            Integer goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
+            Integer checkNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
             BigDecimal passRate;
             if (checkNumSum.equals(0)) {
                 passRate = BigDecimal.ZERO;
@@ -512,6 +518,8 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             if (endDatePassRate.subtract(datePassList.get(1)).compareTo(BigDecimal.ZERO) < 0) {
                 passRateOverViewVO.setDayFlag(0);
                 passRateOverViewVO.setDayValue(decimalFormat.format(datePassList.get(1).subtract(endDatePassRate)));
+            } else if (endDatePassRate.subtract(datePassList.get(1)).compareTo(BigDecimal.ZERO) == 0) {
+                passRateOverViewVO.setDayFlag(2);
             } else {
                 passRateOverViewVO.setDayFlag(1);
                 passRateOverViewVO.setDayValue(decimalFormat.format(endDatePassRate.subtract(datePassList.get(1))));
@@ -521,7 +529,9 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
                 weekValue = startDatePassRate.subtract(endDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
                 passRateOverViewVO.setWeekFlag(0);
-            } else {
+            } else if (weekValue.compareTo(BigDecimal.ZERO) == 0){
+                passRateOverViewVO.setWeekFlag(2);
+            }else {
                 passRateOverViewVO.setWeekFlag(1);
             }
             passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
