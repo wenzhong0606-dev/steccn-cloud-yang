@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -7,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class QtSubLaboratoryAcceptabilityDTO implements Serializable {
+public class QtSubLaboratoryAcceptabilityDTO extends BasePageDTO implements Serializable {
     /**
      * 开始时间
      */

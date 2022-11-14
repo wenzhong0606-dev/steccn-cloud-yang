@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 深加工合格率趋势明细表
@@ -19,7 +20,7 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     private String code;
 
     /**
-     * 合格率
+     * 平均 合格率
      */
     private BigDecimal acceptability;
 
@@ -62,5 +63,10 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
      * 客户
      */
     private QtBaseIdNameDTO customer;
+
+    /**
+     * 检验任务详情
+     */
+    private List<QtSubOrDeepFPYTaskDetailsVO> taskDetails;
 
 }

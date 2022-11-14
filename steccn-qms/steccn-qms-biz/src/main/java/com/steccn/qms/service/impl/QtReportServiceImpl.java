@@ -22,6 +22,7 @@ import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
+import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ import org.springframework.util.Assert;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -226,33 +229,50 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
             //根据物料id查询物料
-            QtMaterial material = qtMaterialService.getById(q.getMaterialId());
+            QtMaterial material=new QtMaterial();
+            if (Objects.nonNull(q.getMaterialId())){
+                 material= qtMaterialService.getById(q.getMaterialId());
+            }
+            //设置物料名称
             qtReportChartVO.setMaterialName(material.getName());
-            Collections.addAll(spcfilter, material.getName(), q.getCheckItemId().toString());
+            QtCheckItem qtCheckItem = new QtCheckItem();
+            if (Objects.nonNull(q.getCheckItemId())){
+                 qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
+            }
+            Collections.addAll(spcfilter,material.getName(), qtCheckItem.getName());
             qtReportChartVO.setSpcFilter(spcfilter);
             //根据检验项id去获取计量单位
-            QtCheckItem qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
             measureIds.add(qtCheckItem.getMeasureUnit());
             R<Map<Long, String>> mapR = remoteDictFeignApi.listByIdCh(measureIds);
             String measureName = mapR.getData().get(qtCheckItem.getMeasureUnit());
-            qtReportChartVO.setMaterialName(measureName);
+            qtReportChartVO.setMeasureUnit(measureName);
 
+            //设置开始结束时间
+            qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
+            qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
             //设置时间分片
-            String start = LocalDateUtil.format(q.getTimeScopeStart(),DatePattern.NORM_DATETIME_PATTERN);
-            String end = LocalDateUtil.format(q.getTimeScopeEnd(),DatePattern.NORM_DATETIME_PATTERN);
             List<String> dates = Lists.newArrayList();
-
-            //
-            QtManagerConstant.QtGranularityEnum byName = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-            dates = ShardingTimeUtil.cutDate(byName.getType(), start, end);
-
+            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
+            Assert.notNull(granularityEnum,"粒度不存在");
+            //将时间范围根据粒度分片
+            List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                    , q.getTimeScopeStart()
+                    , q.getTimeScopeEnd());
+            for (int i = 1; i < localDateTimes.size(); i++) {
+                LocalDateTime start = localDateTimes.get(i - 1);
+                LocalDateTime end = localDateTimes.get(i);
+//                LocalDateUtil.format(start,)
+                dates.add(start.toString());
+            }
             qtReportChartVO.setXData(dates);
             //获取任务id列表
             List<Long> qtTaskIds = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
                             .eq(QtCheckTask::getMaterialId, q.getMaterialId())
                             .eq(QtCheckTask::getTaskType, q.getCheckType())
-                            .gt(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                            .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                            .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
                             .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
+                            .orderByAsc(QtCheckTask::getFinishedTime)
                     //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
             ).stream().map(QtCheckTask::getId).collect(Collectors.toList());
 
@@ -373,6 +393,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
                 .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
+
         //2.解析排序规则
         if ((QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME.equals(dto.getSortField()))) {
             if (dto.getAscFlag()) {
@@ -403,81 +424,77 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtSpcReportDetailVO> qtSpcReportDetailVOList = Lists.newArrayList();
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
 
-        //把时间范围分片
-        String start = LocalDateUtil.format(report.getTimeScopeStart(), DatePattern.NORM_DATETIME_PATTERN);
-        String end = LocalDateUtil.format(report.getTimeScopeEnd(), DatePattern.NORM_DATETIME_PATTERN);
-       List<String> dateAll= Lists.newArrayList();
-        List<String> dates = Lists.newArrayList();
-        if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.HOUR.getType(), start, end);
-            dateAll.add(start);
-        }
-        if (QtManagerConstant.QtGranularityEnum.DAY.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.DAY.getType(), start, end);
-        }
-        if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.WEEK.getType(), start, end);
-        }
-        if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.MONTH.getType(), start, end);
-        }
-        if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.QUARTER.getType(), start, end);
-        }
-        if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(report.getGranularity())) {
-            dates = getDateStringList(QtManagerConstant.QtGranularityEnum.YEAR.getType(), start, end);
-        }
-
-        //把初始时间添加进dateAll
-        if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(report.getGranularity())) {
-            dateAll.add(start);
-        }else {
-            String startFormat = LocalDateUtil.localDateFormat(report.getTimeScopeStart().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
-            dateAll.add(startFormat);
-        }
-        dates.forEach(d->{
-            dateAll.add(d);
-        });
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
         Set<Long> ids = Sets.newHashSet();
         ids.add(qtCheckItem.getMeasureUnit());
-        R<Map<Long, String>> mapR = remoteDictFeignApi.listByIdCh(ids);
-        Map<Long, String> data = mapR.getData();
-        String measureUnitName = data.get(qtCheckItem.getMeasureUnit());
+        Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+        //获取单位名称
+        String measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
 
+        //设置物料名称
+        QtMaterial qtMaterial=new QtMaterial();
+        if (Objects.nonNull(report.getMaterialId())) {
+            qtMaterial= qtMaterialService.getById(report.getMaterialId());
+        }
+        String name = qtMaterial.getName();
+        //设置时间分片
+        List<String> dates = Lists.newArrayList();
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(report.getGranularity());
+        Assert.notNull(granularityEnum,"粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , report.getTimeScopeStart()
+                , report.getTimeScopeEnd());
+        for (int i = 1; i < localDateTimes.size(); i++) {
 
-        //按照时间分片把任务的明细放在该时间段内
-        dateAll.forEach(d->{
-            //TODO
-            //如果是小时按小时的最小时间到最大时间分片
-            //如果是天按天的最小时到最大时分
-            //如果是月按天月的最小时到最大时分
-            //如果是季度按天季度的最小时到最大时分
-            //如果是按年按年的最小时间到最大时间分
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+            dates.add(start.toString());
+            List<QtCheckTask> conditionDataList = qtCheckTasks.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+
+            //设置返回数据类型对象
+            QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+            //设置开始结束分片范围
+            qtSpcReportDetailVO.setStartTime(start);
+            qtSpcReportDetailVO.setEndTime(end);
+            //设置检验项名称
+            qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+            //设置计量单位名称
+            qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+            //设置标准值
+            qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
+            //设置上限
+            qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
+            //设置下限
+            qtSpcReportDetailVO.setDownLimit(report.getDowmLimit());
+
+            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
 
             //设置返回的数据
-            qtCheckTasks.forEach(q -> {
-                QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+            conditionDataList.forEach(q -> {
+
                 QtSpcReportDetailTaskVO qtSpcReportDetailTaskVO = new QtSpcReportDetailTaskVO();
                 BeanUtils.copyProperties(q, qtSpcReportDetailVO);
-                //设置检验项名称
-                qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
-                //设置计量单位名称
-                qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
-                //设置标准值
-                qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
-                //设置上限
-                qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
-                //设置下限
-                qtSpcReportDetailVO.setDownLimit(report.getDowmLimit());
+                qtSpcReportDetailTaskVO.setMaterialName(name);
+                qtSpcReportDetailTaskVOS.add(qtSpcReportDetailTaskVO);
 
-                qtSpcReportDetailVOList.add(qtSpcReportDetailVO);
             });
-        });
+            // 设置每个检验项下面的检验任务根据分片时间分好片的任务详情
+            qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
 
-        return page.setRecords(qtSpcReportDetailVOList);
+            qtSpcReportDetailVOList.add(qtSpcReportDetailVO);
+        }
+
+         page.setRecords(qtSpcReportDetailVOList);
+         return page;
     }
 
     /**
@@ -510,7 +527,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param end
      * @return
      */
-    private List<String> getDateStringList(String type, String start, String end) {
+  /*  private List<String> getDateStringList(String type, String start, String end) {
         List<String> dates = Lists.newArrayList();
         try {
             dates = ShardingTimeUtil.cutDate(type, start, end);
@@ -518,7 +535,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             e.printStackTrace();
         }
         return dates;
-    }
+    }*/
 }
 
 

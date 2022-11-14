@@ -7,6 +7,7 @@ import org.apache.poi.ss.formula.functions.T;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 @Data
@@ -88,7 +89,7 @@ public class QtReportChartVO implements Serializable {
     /**
      * 计量单位
      */
-    private Long measureUnit;
+    private String measureUnit;
 
     /**
      * 横坐标数据

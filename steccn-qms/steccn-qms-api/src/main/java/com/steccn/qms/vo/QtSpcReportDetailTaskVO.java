@@ -11,7 +11,7 @@ public class QtSpcReportDetailTaskVO implements Serializable {
     /**
      * 检验任务单号
      */
-    private Integer checkTaskId;
+    private String code;
 
     /**
      * 检验完成时间

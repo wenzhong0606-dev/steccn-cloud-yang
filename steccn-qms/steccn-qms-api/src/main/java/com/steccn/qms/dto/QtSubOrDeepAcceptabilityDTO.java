@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -11,7 +12,7 @@ import java.time.LocalDate;
 
 @Data
 @ApiModel("深加工或基片合格率DTO")
-public class QtSubOrDeepAcceptabilityDTO implements Serializable {
+public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("深加工或者基片")
     private String name;

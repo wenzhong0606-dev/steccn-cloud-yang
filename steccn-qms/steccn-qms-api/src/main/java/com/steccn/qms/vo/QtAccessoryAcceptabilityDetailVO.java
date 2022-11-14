@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 配料抽检合格率明细表返回数据
@@ -35,4 +36,9 @@ public class QtAccessoryAcceptabilityDetailVO implements Serializable {
      * 物料使用车间
      */
     private QtBaseIdNameDTO materialWorkshop;
+
+    /**
+     * 配料抽检检验任务详情
+     */
+    private List<QtAccessoryAcceptablityCopyVO> accessoryDetail;
 }

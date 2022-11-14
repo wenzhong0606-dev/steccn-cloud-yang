@@ -13,14 +13,14 @@ import java.util.List;
 public class QtSpcReportDetailVO implements Serializable {
 
     /**
-     * 任务开始时间
+     * 时间分片开始时间
      */
     private LocalDateTime startTime;
 
     /**
-     * 任务完成时间
+     * 时间分片结束时间
      */
-    private LocalDateTime finishedTime;
+    private LocalDateTime endTime;
 
 
     /**
@@ -54,7 +54,7 @@ public class QtSpcReportDetailVO implements Serializable {
     private BigDecimal downLimit;
 
     /**
-     * 每个检验项下面的检验任务
+     * 每个检验项下面的检验任务根据分片时间分好片的任务详情
      */
    private List<QtSpcReportDetailTaskVO> reportDetailTaskVOList;
 

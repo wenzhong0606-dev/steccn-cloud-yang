@@ -67,4 +67,14 @@ public class ShardTimeUtil {
         }
         return listDate;
     }
+
+
+//    public static void main(String[] args) {
+//        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 10, 8), LocalTime.MIN);
+//        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MIN);
+//        List<LocalDateTime> resList = cutDateRange("D", start, end);
+//        resList.forEach(ele -> {
+//            log.info("{}", ele);
+//        });
+//    }
 }

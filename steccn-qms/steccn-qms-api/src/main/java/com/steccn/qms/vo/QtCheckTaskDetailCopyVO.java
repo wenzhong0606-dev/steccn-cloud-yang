@@ -14,7 +14,7 @@ import java.util.List;
  * @date 2022/09/17
  */
 @Data
-public class QtCheckTaskDetailCopyVO implements Serializable {
+public class  QtCheckTaskDetailCopyVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**

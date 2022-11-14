@@ -88,11 +88,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
 
     /**
-     * 深加工/基片巡检合格率趋势明细
+     * 深加工/基片巡检合格率趋势明细分页
      * @param dto
      * @return
      */
-    List<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
+    Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
 
     /**
      * 深加工或基片合格率图表
@@ -117,11 +117,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
 
     /**
-     * 配料抽检合格率的明细
+     * 配料抽检合格率的明细分页
      * @param dto
      * @return
      */
-    List<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto);
+    Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto);
 
     /**
      * 配料抽检合格率的柱状图
@@ -131,11 +131,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     QtChartBarVO getAccessoryChartDefectVO(QtAccessoryAcceptabilityDTO dto);
 
     /**
-     * 基片化验抽检合格率趋势明细
+     * 基片化验抽检合格率趋势明细分页
      * @param dto
      * @return
      */
-    List<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto);
+    Page<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto);
 
     /**
      * 基片化验抽检合格率趋势的柱状图
@@ -143,4 +143,18 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     QtChartBarVO getQtSubLaboratoryChartVO(QtSubLaboratoryAcceptabilityDTO dto);
+
+    /**
+     * 来料检合格率明细分页
+     * @param dto
+     * @return
+     */
+    Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto);
+
+    /**
+     *来料检合格率柱状图表
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtIQCAcceptabilityChartVO(QtIQCAcceptabilityDTO dto);
 }
