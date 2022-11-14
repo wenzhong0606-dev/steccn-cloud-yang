@@ -501,7 +501,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             if (checkNumSum.equals(0)) {
                 passRate = BigDecimal.ZERO;
             } else {
-                passRate = new BigDecimal(goodNumSum / checkNumSum);
+                passRate = BigDecimal.valueOf(goodNumSum).divide(BigDecimal.valueOf(checkNumSum),4,BigDecimal.ROUND_DOWN);
             }
             datePassList.add(passRate);
         }
@@ -513,7 +513,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             //获取第一天的合格率
             BigDecimal startDatePassRate = datePassList.get(0);
             //获取合格率
-            passRateOverViewVO.setPassRate(decimalFormat.format(endDatePassRate));
+            passRateOverViewVO.setValue(decimalFormat.format(endDatePassRate));
             //获取日环比
             if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) < 0) {
                 passRateOverViewVO.setDayFlag(0);
