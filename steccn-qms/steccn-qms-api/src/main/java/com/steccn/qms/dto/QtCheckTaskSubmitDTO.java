@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.qms.vo.QtCheckTaskDestoryInfoVO;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -30,4 +31,9 @@ public class QtCheckTaskSubmitDTO implements Serializable {
      * 在线检
      */
     private List<QtOnlineCheckItemDTO> onlineItem;
+
+    /**
+     * 落板明细信息
+     */
+    private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
 }

@@ -131,9 +131,14 @@ public class QtCheckTaskListDTO extends BasePageDTO implements Serializable {
     private Integer stationId;
 
     /**
-     * 工位
+     * 工位名称
      */
-    private String station;
+    private String stationName;
+
+    /**
+     * 工位JSON
+     */
+    private QtBaseIdNameDTO station;
 
     /**
      * 班次

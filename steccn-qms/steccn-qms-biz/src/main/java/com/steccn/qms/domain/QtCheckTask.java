@@ -318,4 +318,19 @@ public class QtCheckTask implements Serializable {
     @TableField(exist = false)
     private Integer productLineId;
 
+    /**
+     * 工位
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO station;
+
+    /**
+     * 工位名称
+     */
+    @TableField(value = "station ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = true)
+    private String stationName;
+
 }

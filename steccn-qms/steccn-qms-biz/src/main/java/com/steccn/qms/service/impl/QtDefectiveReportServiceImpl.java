@@ -1,8 +1,6 @@
 package com.steccn.qms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,19 +9,16 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtDefectiveItem;
-import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.ShardTimeUtil;
-import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,14 +63,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
+        QtChartBarDecimalDataVO markLine = new QtChartBarDecimalDataVO();
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
+        List<String> xAis = compareAndMarkline(dto.getCompare(), series, flatDataList, categoryIdNameMap,markLine);
         resVo.setSeries(series);
         resVo.setXAis(xAis);
+        resVo.setMarkLine( markLine);
         return resVo;
     }
 
@@ -127,7 +124,53 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }
             });
             flag.set(Boolean.TRUE);
-            //series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
+            series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
+        });
+        return xAis;
+    }
+    private List<String> compareAndMarkline(Integer compare, List<QtChartBarSeriesVO> series, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> categoryIdNameMap, QtChartBarDecimalDataVO markLine) {
+        //对比项目分组
+        Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap;
+        Map<Integer, String> idNameMap;
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
+            Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
+            Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
+        } else if (QtManagerConstant.QtChartCompareEnum.DEFECTCATEGORY.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+            Set<Integer> defectCategorySet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(defectCategorySet)).get();
+        } else {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            idNameMap = Maps.newHashMap();
+            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
+            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+        }
+        AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
+        List<String> xAis = Lists.newArrayList();
+        Map<Integer, String> finalIdNameMap = idNameMap;
+        //遍历目标map
+        targetMap.forEach((t, tDataList) -> {
+            List<Integer> data = Lists.newArrayList();
+            //根据类别分组map
+            Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+           // Map<Integer, List<QtCheckTask>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+            categoryMap.forEach((cate, cateDataList) -> {
+                //每个类别下，每个班次的缺陷数之和
+                int sum = cateDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                //int goodSum = cateDataList.stream().mapToInt(QtCheckTask::getGoodNum).sum();
+                data.add(sum);
+                if (!flag.get()) {
+                    xAis.add(categoryIdNameMap.get(cate));
+                }
+            });
+            flag.set(Boolean.TRUE);
+            series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
+            //markLine.setData();
         });
         return xAis;
     }

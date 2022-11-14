@@ -212,9 +212,14 @@ public class QtCheckTaskListVO implements Serializable {
     private Integer stationId;
 
     /**
+     * 工位名称
+     */
+    private String stationName;
+
+    /**
      * 工位
      */
-    private String station;
+    private QtBaseIdNameDTO station;
 
     /**
      * 班次

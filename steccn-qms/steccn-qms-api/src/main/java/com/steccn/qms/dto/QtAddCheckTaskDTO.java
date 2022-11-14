@@ -139,11 +139,16 @@ public class QtAddCheckTaskDTO implements Serializable {
     /**
      * 工位名称
      */
-    private Long stationName;
+    private String stationName;
 
     /**
      * 工位id
      */
     private Long stationId;
+
+    /**
+     * 工位JSON
+     */
+    private QtBaseIdNameDTO station;
 
 }

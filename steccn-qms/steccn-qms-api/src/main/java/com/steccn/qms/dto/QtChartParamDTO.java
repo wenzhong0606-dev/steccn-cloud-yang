@@ -30,7 +30,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private LocalDate dateEnd;
 
     /**
-     * 对比 0为班次 1为产线 2为车间 3为缺陷类别
+     * 对比 0为班次 1为产线 2为车间
      */
     private Integer compare;
 
