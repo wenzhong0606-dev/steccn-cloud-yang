@@ -86,8 +86,8 @@
 	        INNER JOIN sys_office b ON a.parent_code = b.office_code
         WHERE
 	        a.id IN
-        <foreach collection="codes" item="code" open="(" close=")" separator=",">
-            #{code}
+        <foreach collection="childIdList" item="id" open="(" close=")" separator=",">
+            #{id}
         </foreach>
     </select>
 </mapper>
