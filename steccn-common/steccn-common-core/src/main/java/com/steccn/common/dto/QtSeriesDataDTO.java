@@ -15,13 +15,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class QtSeriesDataDTO<T> implements Serializable {
+public class QtSeriesDataDTO<T1,T2> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * 缺陷项名称或类型名称
      */
-    private String name;
+    private T1 name;
 
     /**
      * 固定值line
@@ -36,5 +36,5 @@ public class QtSeriesDataDTO<T> implements Serializable {
     /**
      * 缺陷数量
      */
-    private List<T> data;
+    private List<T2> data;
 }

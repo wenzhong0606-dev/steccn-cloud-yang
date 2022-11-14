@@ -9,8 +9,9 @@ import java.util.List;
 
 /**
  * 折线图VO
- * @author 王志雄
+ *
  * @param
+ * @author 王志雄
  */
 @Data
 @NoArgsConstructor
@@ -29,7 +30,7 @@ public class QtLineChartBarDTO<T> implements Serializable {
     private List<String> name;
 
     /**
-     *第二层数据
+     * 第二层数据
      */
-    private List<List<QtSeriesDataDTO>> seriesDataVO;
+    private List<QtSeriesDataDTO> seriesDataVO;
 }
