@@ -39,6 +39,9 @@ public class MaterialRequisitionInfoPlanDTO {
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
     private List<Integer> organization;
 
+    @ApiModelProperty("车间id")
+    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
+    private Integer workshopId;
 
     @ApiModelProperty("需求数量")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "需求数量不能为空")

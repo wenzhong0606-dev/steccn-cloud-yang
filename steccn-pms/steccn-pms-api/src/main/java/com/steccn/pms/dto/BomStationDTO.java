@@ -21,7 +21,7 @@ public class BomStationDTO {
     private String executeStationCode;
 
     @ApiModelProperty("执行工位id")
-    private Long executeStationId;
+    private Integer executeStationId;
 
     @ApiModelProperty("执行工位名称")
     private String executeStationName;

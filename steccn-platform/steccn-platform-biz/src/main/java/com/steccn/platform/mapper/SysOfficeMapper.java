@@ -39,6 +39,13 @@ public interface SysOfficeMapper extends BaseMapper<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByChildIds(@Param("childIdList") List<Integer> childIdList);
+
+    /**
+     * 获取父节点信息
+     * @param childIdList
+     * @return
+     */
+    List<SysOfficeVO> listParentInfo(@Param("childIdList") Set<Integer> childIdList);
 }
 
 

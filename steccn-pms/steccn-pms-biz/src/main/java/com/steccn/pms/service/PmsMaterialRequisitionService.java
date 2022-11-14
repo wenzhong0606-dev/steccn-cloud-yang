@@ -70,5 +70,5 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @param list
      * @return
      */
-    Boolean create( List<MaterialRequisitionInfoPlanDTO> list);
+    String create( List<MaterialRequisitionInfoPlanDTO> list);
 }

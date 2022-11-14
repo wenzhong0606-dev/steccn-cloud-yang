@@ -73,6 +73,15 @@ public interface PmManagerConstant {
     String SYS_TEAM = "sys_team";
 
     /**
+     * 领料类型
+     */
+    String MATERIAL_REQUISITION =  "material_requisition";
+
+    /**
+     * 生产领料
+     */
+    String PRODUCE_PICK =  "produce_pick";
+    /**
      * 班次
      */
     String SYS_SHIFT = "sys_shift";

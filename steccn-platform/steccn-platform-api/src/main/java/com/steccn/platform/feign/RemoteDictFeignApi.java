@@ -43,6 +43,10 @@ public interface RemoteDictFeignApi {
 
     /**
      * 根据编码类型查询数据字典的值
+     *
+     * @param code
+     * @param type
+     * @return
      */
     @GetMapping("/feign/platform/sys/dict/getByCode")
     @ApiOperation("根据编码类型查询数据字典的值")

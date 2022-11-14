@@ -40,7 +40,7 @@ public class MaterialRequisitionPlanVO {
     private BigDecimal onPassageQuantity;
 
     @ApiModelProperty("产线id")
-    private Long productionLine;
+    private Integer productionLine;
 
     @ApiModelProperty("产线名称")
     private String productionLineName;
@@ -51,11 +51,8 @@ public class MaterialRequisitionPlanVO {
     @ApiModelProperty("需求数量")
     private BigDecimal requireQuantity;
 
-    @ApiModelProperty("订单需求数量")
-    private BigDecimal orderQuantity;
-
     @ApiModelProperty("工位")
-    private Long station;
+    private Integer station;
 
     @ApiModelProperty("工位编码")
     private String stationCode;
@@ -70,7 +67,7 @@ public class MaterialRequisitionPlanVO {
     private String unitName;
 
     @ApiModelProperty("车间id")
-    private Long workshop;
+    private Integer workshop;
 
     @ApiModelProperty("车间名称")
     private String workshopName;

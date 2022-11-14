@@ -702,8 +702,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
-        //定义返回对象
-        List<PmsProduceOrderVO> list = Lists.newArrayList();
         //查询产线正在执行的订单
         List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
                 .in(PmsProduceOrder::getProductionLineId, ids)
@@ -711,10 +709,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         PmManagerConstant.OrderStateEnum.SIX.getCode(),
                         PmManagerConstant.OrderStateEnum.SEVEN.getCode())
         );
-        if (CollUtil.isNotEmpty(orderList)) {
-            BeanUtil.copyProperties(orderList, Lists.newArrayList());
+        return BeanUtil.copyToList(orderList, PmsProduceOrderVO.class);
+    }
+
+    @Override
+    public Map<Long, PmsProduceOrder> orderList(List<Long> orderIds) {
+        Map<Long, PmsProduceOrder> map = Maps.newHashMap();
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIds));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(order ->
+                    map.put(order.getId(), order)
+            );
         }
-        return list;
+        return map;
     }
 
     /**
