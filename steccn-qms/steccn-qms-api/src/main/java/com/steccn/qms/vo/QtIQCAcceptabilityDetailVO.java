@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class QtIQCAcceptabilityDetailVO implements Serializable {
@@ -48,4 +49,10 @@ public class QtIQCAcceptabilityDetailVO implements Serializable {
      * 供应商
      */
     private QtBaseIdNameDTO supplier;
+
+
+    /**
+     * 来料检合格率明细表样本明细
+     */
+    private List<QtIQCAcceptabilityCopyVO> detail;
 }

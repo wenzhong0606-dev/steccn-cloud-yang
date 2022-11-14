@@ -1525,7 +1525,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的数据
-        List<QtSpcReportDetailVO> qtSpcReportDetailVOList = Lists.newArrayList();
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
 
         //创建返回明细的集合
@@ -1634,7 +1633,70 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto) {
-        return null;
+        MPJLambdaWrapper<QtCheckTask> condition= getQtIQCCondition(dto);
+        //3.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //4.查询分页数据
+        IPage<QtCheckTask> resPage = page(page, condition);
+        //5.拷贝page信息
+        BeanUtils.copyProperties(resPage, page);
+        //6.拷贝返回的数据
+        List<QtIQCAcceptabilityDetailVO> qtIQCAcceptabilityDetailVOS = Lists.newArrayList();
+        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
+
+        qtCheckTasks.forEach(q->{
+
+            QtIQCAcceptabilityDetailVO qtIQCAcceptabilityDetailVO = new QtIQCAcceptabilityDetailVO();
+            List<QtIQCAcceptabilityCopyVO> qtIQCAcceptabilityCopyVOS =Lists.newArrayList();
+            List<QtCheckTaskCopy> checkTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, q.getId()));
+            checkTaskCopies.forEach(checkTaskCopy->{
+                QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
+                BeanUtils.copyProperties(checkTaskCopy,qtIQCAcceptabilityCopyVO);
+                qtIQCAcceptabilityCopyVOS.add(qtIQCAcceptabilityCopyVO);
+            });
+            qtIQCAcceptabilityDetailVO.setDetail(qtIQCAcceptabilityCopyVOS);
+            BeanUtils.copyProperties(q,qtIQCAcceptabilityDetailVO);
+            BigDecimal checkNum = new BigDecimal(q.getCheckNum());
+            BigDecimal goodNum = new BigDecimal(q.getGoodNum());
+            BigDecimal result = BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2);
+            qtIQCAcceptabilityDetailVO.setAcceptability(result);
+            qtIQCAcceptabilityDetailVOS.add(qtIQCAcceptabilityDetailVO);
+        });
+        page.setRecords(qtIQCAcceptabilityDetailVOS);
+        return page;
+    }
+
+    private MPJLambdaWrapper<QtCheckTask> getQtIQCCondition(QtIQCAcceptabilityDTO dto) {
+        //1、配置分页信息
+        MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
+                .selectAll(QtCheckTask.class)
+                //关联表映射
+                .selectAs(QtCheckTaskCopy::getTaskId, QtCheckTaskListVO::getId)
+                //json映射
+                .selectAs(QtCheckTask::getMaterialWorkshopName, QtCheckTaskListVO::getMaterialWorkshopName)
+                .selectAs(QtCheckTask::getProductWorkshopName, QtCheckTaskListVO::getProductWorkshopName)
+                .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
+                .selectAs(QtCheckTask::getSupplierName, QtCheckTaskListVO::getSupplierName)
+                .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
+                //关联
+                .leftJoin(QtCheckTaskCopy.class, QtCheckTaskCopy::getTaskId, QtCheckTask::getId)
+                //查询
+                .and(Objects.nonNull(dto.getSamplingTime()), wrapper->wrapper.eq(QtCheckTaskCopy::getSamplingTime, dto.getSamplingTime()))
+                .and(Objects.nonNull(dto.getMaterialId()), wrapper->wrapper.eq(QtCheckTask::getMaterialId, dto.getMaterialId()))
+                .and(Objects.nonNull(dto.getMaterialWorkshopId()), wrapper->wrapper.eq(QtCheckTask::getMaterialWorkshopId, dto.getMaterialWorkshopId()))
+                .and(Objects.nonNull(dto.getSupplierId()), wrapper->wrapper.eq(QtCheckTask::getSupplierId, dto.getSupplierId()));
+
+        if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.equals(dto.getCompare())){
+            condition.groupBy(QtCheckTask::getMaterialWorkshopId);
+        }else
+        if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.equals(dto.getCompare())){
+            condition.groupBy(QtCheckTaskCopy::getSamplingTime);
+        }
+        condition.groupBy(QtCheckTask::getSupplierId)
+                .gt(QtCheckTask::getFinishedTime,LocalDateUtil.getStartTimeOfDayStr(dto.getDateTime()))
+                .le(QtCheckTask::getFinishedTime,LocalDateUtil.getEndTimeOfDayStr(dto.getDateTime()))
+                .orderByAsc(QtCheckTaskCopy::getCopy);
+        return condition;
     }
 
     /**
@@ -1693,9 +1755,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<String> officeNames = listByTypeAndKey.getData().stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
 
         //根据条件查询
-        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>().select("any_value(code) code , any_value(result) result , " +
-                        "any_value(finished_time) finished_time , any_value(product_workshop) product_workshop , " +
-                        "any_value(material_workshop) material_workshop")
+        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>().select("any_value(type) type , any_value(material_id) material_id , " +
+                        "any_value(material_workshop) material_workshop , any_value(product_line) product_line , any_value(product_order) product_order , " +
+                        "any_value(product_batch) product_batch , any_value(check_plan_id) check_plan_id , any_value(status) status , any_value(check_num) check_num , " +
+                        "any_value(good_num) good_num , any_value(bad_num) bad_num , any_value(result) result , any_value(del_flag) del_flag , " +
+                        "any_value(supplier) supplier , any_value(customer) customer , any_value(deliver_order) deliver_order , any_value(task_type) task_type ," +
+                        "any_value(deliver_num) deliver_num , any_value(product_workshop) product_workshop , any_value(classes_id) classes_id")
                 .lambda()
                 //找出所有基片车间的数据
                 .in(QtCheckTask::getMaterialWorkshopName,officeNames)
