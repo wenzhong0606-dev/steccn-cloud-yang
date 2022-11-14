@@ -78,10 +78,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             Set<Integer> officeIdSet = Sets.newHashSet();
             //3.2 处理字典数据
             Set<Long> dictIdSet = Sets.newHashSet();
+            Set<Long> ids = Sets.newHashSet();
             page.getRecords().forEach(materialRequisitionVO -> {
                 dictIdSet.add(materialRequisitionVO.getStatus());
                 dictIdSet.add(materialRequisitionVO.getTypeId());
                 officeIdSet.add(materialRequisitionVO.getDepartmentId());
+                officeIdSet.add(materialRequisitionVO.getWarehouseId());
+                ids.add(materialRequisitionVO.getId());
             });
             //3.3 获取字典以及部门数据
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
@@ -90,8 +93,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
                 materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
                 materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+                materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
             });
-            remoteOfficeFeign.listByIdCh(officeIdSet);
+            //3.4获取总数量
+            Map<Long,BigDecimal> quantityMap  = pmsMaterialRequisitionInfoService.getTotalQuantity(ids);
+            BigDecimal zero = BigDecimal.ZERO;
+            page.getRecords().forEach(materialRequisitionVO->{
+                BigDecimal quantity = quantityMap.getOrDefault(materialRequisitionVO.getId(), zero);
+                materialRequisitionVO.setQuantity(quantity);
+            });
         }
         return page;
     }
@@ -379,7 +389,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             //排序+逻辑分页
             Integer skip = (dto.getCurrent() - 1) * dto.getSize();
             //排序
-            List<MaterialRequisitionPlanVO> collect = resBomList.stream().skip(skip).collect(Collectors.toList()).stream().limit(dto.getSize()).collect(Collectors.toList());
+            List<MaterialRequisitionPlanVO> collect = resBomList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
             resPage.setTotal(resBomList.size());
             resPage.setRecords(collect);
         }

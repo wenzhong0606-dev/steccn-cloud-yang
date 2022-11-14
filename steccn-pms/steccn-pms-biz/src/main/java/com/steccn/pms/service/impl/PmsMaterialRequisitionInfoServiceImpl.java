@@ -3,19 +3,20 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
-import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
-import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.mapper.PmsMaterialRequisitionInfoMapper;
+import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -48,9 +49,23 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
         //3.删除其他多余的数据
         remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
                 .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, materialRequisitionDTO.getId())
-                .notIn(CollUtil.isNotEmpty(idSet),PmsMaterialRequisitionInfo::getId, idSet));
+                .notIn(CollUtil.isNotEmpty(idSet), PmsMaterialRequisitionInfo::getId, idSet));
         //4.批量修改新增
         return saveOrUpdateBatch(list);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getTotalQuantity(Set<Long> ids) {
+        Map<Long, BigDecimal> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(ids)) {
+            List<PmsMaterialRequisitionInfo> list = list(new QueryWrapper<PmsMaterialRequisitionInfo>().select("sum(quantity) as quantity,material_requisition_id").lambda()
+                    .in(PmsMaterialRequisitionInfo::getMaterialRequisitionId, ids)
+                    .groupBy(PmsMaterialRequisitionInfo::getMaterialRequisitionId));
+            if (CollUtil.isNotEmpty(list)) {
+                    list.forEach( info -> map.put(info.getMaterialRequisitionId(),info.getQuantity()));
+            }
+        }
+        return map;
     }
 }
 
