@@ -25,19 +25,19 @@ public class StackGraphUtil {
 
     private static Random random = new Random();
 
-    public static void main(String[] args) {
-        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        dataList.add(getStackGraphDTO("2022-09-15"));
-        dataList.add(getStackGraphDTO("2022-09-16"));
-        dataList.add(getStackGraphDTO("2022-09-17"));
-        dataList.add(getStackGraphDTO("2022-09-18"));
-        dataList.add(getStackGraphDTO("2022-09-19"));
-        dataList.forEach(ele -> {
-            log.info("{}", ele);
-        });
-        QtLineChartBarDTO qtLineChartBarDTO = convertData(dataList);
-        log.info("{}", qtLineChartBarDTO);
-    }
+//    public static void main(String[] args) {
+//        List<StackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+//        dataList.add(getStackGraphDTO("2022-09-15"));
+//        dataList.add(getStackGraphDTO("2022-09-16"));
+//        dataList.add(getStackGraphDTO("2022-09-17"));
+//        dataList.add(getStackGraphDTO("2022-09-18"));
+//        dataList.add(getStackGraphDTO("2022-09-19"));
+//        dataList.forEach(ele -> {
+//            log.info("{}", ele);
+//        });
+//        QtLineChartBarDTO qtLineChartBarDTO = convertData(dataList);
+//        log.info("{}", qtLineChartBarDTO);
+//    }
 
     public static QtLineChartBarDTO convertData(List<StackGraphDTO<String, BigDecimal>> dataList) {
 
