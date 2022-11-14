@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -75,4 +76,10 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      */
     Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList);
 
+    /**
+     *
+     * @param id
+     * @return
+     */
+    List<QtBaseIdNameDTO> selectItemIds(Integer id);
 }

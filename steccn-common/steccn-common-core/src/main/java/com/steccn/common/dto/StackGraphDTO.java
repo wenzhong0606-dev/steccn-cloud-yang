@@ -23,6 +23,6 @@ public class StackGraphDTO<E1, E2> implements Serializable {
      * 如果x轴对应的只有一个堆叠图，则data只有一个元素，且E1为堆叠类型，E2为堆叠的数据
      */
     @ApiModelProperty("元素集合")
-    private List<TupleDTO<E1, E2>> data;
+    private List<List<TupleDTO<E1, E2>>> data;
 
 }

@@ -114,11 +114,12 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         sysOfficeIdSet.addAll(productLineIdList);
 
         Map<Integer, SysOfficeVO> sysOfficeVoMap = remoteOfficeFeign.listById(sysOfficeIdSet).getData();
+        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
         Map<Long, String> classesMap = remoteDictFeignApi.listByIdCh(classesIdList).getData();
         producePassRateVOList.forEach(producePassRateVO -> {
             producePassRateVO.setClassesName(classesMap.get(producePassRateVO.getClassesId()));
-            producePassRateVO.setWorkshopName(sysOfficeVoMap.get(producePassRateVO.getWorkshopId()).getOfficeName());
-            producePassRateVO.setProductLineName(sysOfficeVoMap.get(producePassRateVO.getProductLineId()).getOfficeName());
+            producePassRateVO.setWorkshopName(sysOfficeVoMap.getOrDefault(producePassRateVO.getWorkshopId(),defaultSysOfficeVO).getOfficeName());
+            producePassRateVO.setProductLineName(sysOfficeVoMap.getOrDefault(producePassRateVO.getProductLineId(),defaultSysOfficeVO).getOfficeName());
         });
 
         return producePassRateVOList;
@@ -127,7 +128,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
     private QueryWrapper<PmsPullForce> getQueryWrapper(ProducePassRateDTO dto){
 
         QueryWrapper<PmsPullForce> queryWrapper = new QueryWrapper<PmsPullForce>();
-        queryWrapper.select("pull_force_date as date,workshop_id as workshopId,production_line_id as productionLineId,classes_id as classesId, sum(quantity) as quantity");
+        queryWrapper.select("pull_force_date as date,workshop_id as workshopId,product_line_id ,classes_id as classesId, sum(quantity) as quantity");
 
         List<SFunction<PmsPullForce,?>> sFunctionList = new ArrayList<>();
         sFunctionList.add(PmsPullForce::getPullForceDate);
