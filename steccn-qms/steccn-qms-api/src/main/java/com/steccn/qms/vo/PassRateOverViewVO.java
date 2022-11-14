@@ -16,7 +16,7 @@ import java.util.List;
 public class PassRateOverViewVO implements Serializable {
 
     @ApiModelProperty("合格率")
-    private String passRate;
+    private String value;
 
     /**
      * 日环比%
