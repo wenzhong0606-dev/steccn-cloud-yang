@@ -432,42 +432,14 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
     @Override
     public PassRateOverViewVO passRateOverview(Integer type,LocalDateTime selectDateTime) {
-        LocalDate startLocalDate;
-        LocalDate endLocalDate;
-        LocalTime localTime = LocalTime.of(8,0,0);
+
+        //最近7天完整工作日
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
+        //很坐标
+        List<LocalDate> dxData = new ArrayList<>();
 
-        List<LocalDate> dxData;
-        LocalDate selectDate = selectDateTime.toLocalDate();
-        //获取最近七天开始日期和结束日期
-        if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
-            startLocalDate = selectDate.minusDays(8);
-            endLocalDate = selectDate.minusDays(1);
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2));
-        } else {
-            startLocalDate = selectDate.minusDays(7);
-            endLocalDate = selectDate;
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1));
-        }
-
-        //获取最近7天的完整工作时间
-        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, endLocalDate);
-        while (!CollectionUtils.isEmpty(localDateList)) {
-            PassRateDateVo rateDateVo = new PassRateDateVo();
-            LocalDate endDate = localDateList.get(localDateList.size() - 1);
-            LocalDate startDate = localDateList.get(localDateList.size() - 2);
-
-            rateDateVo.setStartDateTime(LocalDateTime.of(startDate, localTime));
-            rateDateVo.setEndDateTime(LocalDateTime.of(endDate, localTime));
-            localDateList.remove(endDate);
-            if (localDateList.size() == 1) {
-                localDateList.remove(startDate);
-            }
-            passRateDateVoList.add(rateDateVo);
-        }
-
-        passRateDateVoList.sort(Comparator.comparing(PassRateDateVo::getStartDateTime));
-
+        //获取横坐标和最近7天完整工作日
+        getPassRateDateVoList(selectDateTime,dxData,passRateDateVoList);
 
         PassRateOverViewVO passRateOverViewVO = new PassRateOverViewVO();
         List<BigDecimal> datePassList = new ArrayList<>();
@@ -495,7 +467,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                         && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
             }
 
-            Integer goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
+            int goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
             Integer checkNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
             BigDecimal passRate;
             if (checkNumSum.equals(0)) {
@@ -506,6 +478,31 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             datePassList.add(passRate);
         }
 
+        //获取合格率、日环比、周同比
+        getPassRateOverViewVO(passRateOverViewVO,datePassList);
+        //获取横坐标
+        passRateOverViewVO.setXData(dxData);
+
+        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
+        if(targetValue == null) {
+            targetValue = BigDecimal.ZERO;
+        }
+        //获取目标值
+        passRateOverViewVO.setTargetValue(targetValue);
+        passRateOverViewVO.setKey(type);
+
+        if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPXJHG.getName());
+        } else if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)){
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.LLJHG.getName());
+        } else {
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.SJGXJHG.getName());
+        }
+
+        return passRateOverViewVO;
+    }
+
+    private void getPassRateOverViewVO(PassRateOverViewVO passRateOverViewVO, List<BigDecimal> datePassList){
         if (CollectionUtils.isNotEmpty(datePassList)) {
             DecimalFormat decimalFormat = new DecimalFormat("0.00%");
             //最后一天的合格率
@@ -541,26 +538,42 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             }
             passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
         }
-        //获取横坐标
-        passRateOverViewVO.setXData(dxData);
+    }
 
-        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
-        if(targetValue == null) {
-            targetValue = BigDecimal.ZERO;
-        }
-        //获取目标值
-        passRateOverViewVO.setTargetValue(targetValue);
-        passRateOverViewVO.setKey(type);
+    private void getPassRateDateVoList(LocalDateTime selectDateTime, List<LocalDate> dxData, List<PassRateDateVo> passRateDateVoList) {
+        LocalDate startLocalDate;
+        LocalDate endLocalDate;
+        LocalTime localTime = LocalTime.of(8,0,0);
 
-        if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
-            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPXJHG.getName());
-        } else if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)){
-            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.LLJHG.getName());
+        LocalDate selectDate = selectDateTime.toLocalDate();
+        //获取最近七天开始日期和结束日期
+        if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
+            startLocalDate = selectDate.minusDays(8);
+            endLocalDate = selectDate.minusDays(1);
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2));
         } else {
-            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.SJGXJHG.getName());
+            startLocalDate = selectDate.minusDays(7);
+            endLocalDate = selectDate;
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1));
         }
 
-        return passRateOverViewVO;
+        //获取最近7天的完整工作时间
+        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, endLocalDate);
+        while (!CollectionUtils.isEmpty(localDateList)) {
+            PassRateDateVo rateDateVo = new PassRateDateVo();
+            LocalDate endDate = localDateList.get(localDateList.size() - 1);
+            LocalDate startDate = localDateList.get(localDateList.size() - 2);
+
+            rateDateVo.setStartDateTime(LocalDateTime.of(startDate, localTime));
+            rateDateVo.setEndDateTime(LocalDateTime.of(endDate, localTime));
+            localDateList.remove(endDate);
+            if (localDateList.size() == 1) {
+                localDateList.remove(startDate);
+            }
+            passRateDateVoList.add(rateDateVo);
+        }
+        //日期升序排
+        passRateDateVoList.sort(Comparator.comparing(PassRateDateVo::getStartDateTime));
     }
 
 
