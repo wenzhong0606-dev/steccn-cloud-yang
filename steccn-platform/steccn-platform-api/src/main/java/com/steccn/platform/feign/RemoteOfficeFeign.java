@@ -144,6 +144,17 @@ public interface RemoteOfficeFeign {
     R<Map<Integer, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Integer> childIdList);
 
     /**
+     * 根据子节点id 获取父级详情信息
+     *
+     * @param childIdList
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/parentInfo")
+    @ApiOperation("根据子id获取父级节点数据")
+    R<Map<Integer, SysOfficeVO>> parentInfo(@RequestBody List<Integer> childIdList);
+
+
+    /**
      * 根据机构类型和名字查找数据
      *
      * @param dto

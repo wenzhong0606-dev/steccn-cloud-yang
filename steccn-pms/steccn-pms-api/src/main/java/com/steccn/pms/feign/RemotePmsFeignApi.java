@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,10 +49,21 @@ public interface RemotePmsFeignApi {
 
     /**
      * 根据生产订单号查询正在执行中任务的产线,批次,车间信息
+     *
      * @param code
      * @return
      */
     @ApiOperation("根据生产订单号查询正在执行中任务的产线,批次,车间信息")
     @GetMapping("/feign/pms/produce/order/code")
     R<PmsProduceOrderVO> code(@ApiParam("生产订单号") @RequestParam("code") String code);
+
+    /**
+     * 根据物料查询当前正在执行订单信息
+     *
+     * @param materialIds
+     * @return
+     */
+    @PostMapping("/material/ids")
+    @ApiOperation("根据物料查询当前正在执行订单信息")
+    R<Map<Long, List<PmsProduceOrderVO>>> listByMaterialIds(@RequestBody Set<Long> materialIds);
 }

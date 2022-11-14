@@ -49,6 +49,9 @@ public class SysOfficeVO implements Serializable {
     @ApiModelProperty("父节点名称")
     private String parentName;
 
+    @ApiModelProperty("子级节点id(根据该id 获取父级节点)")
+    private Integer childrenId;
+
     @ApiModelProperty("子级节点")
     private List<SysOfficeVO> children;
 

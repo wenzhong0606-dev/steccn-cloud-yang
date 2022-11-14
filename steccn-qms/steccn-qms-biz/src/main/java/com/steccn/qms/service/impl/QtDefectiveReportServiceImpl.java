@@ -311,7 +311,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
+        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
         resPage.setTotal(pageList.size());
         resPage.setRecords(records);

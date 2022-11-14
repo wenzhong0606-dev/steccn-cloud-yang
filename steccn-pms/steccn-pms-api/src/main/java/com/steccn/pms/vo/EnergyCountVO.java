@@ -25,4 +25,7 @@ public class EnergyCountVO implements Serializable {
 
     @ApiModelProperty("水、电、油、气")
     private EnergySeriesDataVO seriesData;
+
+    @ApiModelProperty("维度总计-如果分组是班组，则三条。如果分组是产线，则条数为产线总数")
+    private List<List<BigDecimal>> reactive;
 }

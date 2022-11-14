@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.db.sql.Order;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -664,6 +665,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getProductLineList())) {
+            Page<ProduceOrderTrackReportVO> page = new Page<>();
+            page.setSize(dto.getSize());
+            page.setCurrent(dto.getCurrent());
+            return page;
+        }
         Map<Integer, SysOfficeVO> productLineMap = remoteOfficeFeign.listById(new HashSet<>(dto.getProductLineList())).getData();
         Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()), dto.getProductLineList());
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
@@ -702,8 +709,6 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
-        //定义返回对象
-        List<PmsProduceOrderVO> list = Lists.newArrayList();
         //查询产线正在执行的订单
         List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
                 .in(PmsProduceOrder::getProductionLineId, ids)
@@ -711,10 +716,37 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                         PmManagerConstant.OrderStateEnum.SIX.getCode(),
                         PmManagerConstant.OrderStateEnum.SEVEN.getCode())
         );
-        if (CollUtil.isNotEmpty(orderList)) {
-            BeanUtil.copyProperties(orderList, Lists.newArrayList());
+        return BeanUtil.copyToList(orderList, PmsProduceOrderVO.class);
+    }
+
+    @Override
+    public Map<Long, PmsProduceOrder> orderList(List<Long> orderIds) {
+        Map<Long, PmsProduceOrder> map = Maps.newHashMap();
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIds));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(order ->
+                    map.put(order.getId(), order)
+            );
         }
-        return list;
+        return map;
+    }
+
+    @Override
+    public Map<Long, List<PmsProduceOrderVO>> listByMaterialIds(Set<Long> materialIds) {
+        Map<Long, List<PmsProduceOrderVO>> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(materialIds)) {
+            return map;
+        }
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getMaterialId, materialIds));
+        if (CollUtil.isNotEmpty(list)) {
+            Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
+            collect.forEach((key, value) -> {
+                List<PmsProduceOrderVO> orderVOList = BeanUtil.copyToList(value, PmsProduceOrderVO.class);
+                map.put(key, orderVOList);
+            });
+        }
+        return map;
     }
 
     /**

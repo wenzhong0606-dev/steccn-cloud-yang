@@ -765,7 +765,6 @@ public class ReportServiceImpl implements ReportService {
 
         //定义返回vo
         EnergyCountVO resVo = null;
-
         //根据产线id查询分组数据
         List<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toList());
         List<EnergyGroupListVO> energyGroupList = pmsReportWorkConsumeService.energyGroup(productLineIdList, dateRangeList);
@@ -1028,10 +1027,29 @@ public class ReportServiceImpl implements ReportService {
             oil.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.OIL, 2, classGroupList));
             gas.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.GAS, 3, classGroupList));
         }
+
         seriesDataVO.setElectric(electric);
         seriesDataVO.setWater(water);
         seriesDataVO.setOil(oil);
         seriesDataVO.setGas(gas);
+
+        List<List<BigDecimal>> reactiveList = Lists.newArrayList();
+
+        LinkedHashMap<Integer, BigDecimal> waterSumMap = lineSum(seriesDataVO.getWater());
+        LinkedHashMap<Integer, BigDecimal> electricSumMap = lineSum(seriesDataVO.getElectric());
+        LinkedHashMap<Integer, BigDecimal> oilSumMap = lineSum(seriesDataVO.getOil());
+        LinkedHashMap<Integer, BigDecimal> gasSumMap = lineSum(seriesDataVO.getGas());
+
+        for (int i = 0; i < dxList.size(); i++) {
+            List<BigDecimal> dataList = Lists.newArrayList();
+            dataList.add(waterSumMap.get(i));
+            dataList.add(electricSumMap.get(i));
+            dataList.add(oilSumMap.get(i));
+            dataList.add(gasSumMap.get(i));
+            reactiveList.add(dataList);
+        }
+        resVo.setReactive(reactiveList);
+
         resVo.setSeriesData(seriesDataVO);
         resVo.setDx(dxList);
         resVo.setPullForceList(pullForceList);
@@ -1083,9 +1101,46 @@ public class ReportServiceImpl implements ReportService {
         seriesDataVO.setOil(oil);
         seriesDataVO.setGas(gas);
         resVo.setSeriesData(seriesDataVO);
+
+        List<List<BigDecimal>> reactiveList = Lists.newArrayList();
+
+        LinkedHashMap<Integer, BigDecimal> waterSumMap = lineSum(seriesDataVO.getWater());
+        LinkedHashMap<Integer, BigDecimal> electricSumMap = lineSum(seriesDataVO.getElectric());
+        LinkedHashMap<Integer, BigDecimal> oilSumMap = lineSum(seriesDataVO.getOil());
+        LinkedHashMap<Integer, BigDecimal> gasSumMap = lineSum(seriesDataVO.getGas());
+
+        for (int i = 0; i < dxList.size(); i++) {
+            List<BigDecimal> dataList = Lists.newArrayList();
+            dataList.add(waterSumMap.get(i));
+            dataList.add(electricSumMap.get(i));
+            dataList.add(oilSumMap.get(i));
+            dataList.add(gasSumMap.get(i));
+            reactiveList.add(dataList);
+        }
+        resVo.setReactive(reactiveList);
         resVo.setDx(dxList);
         resVo.setPullForceList(pullForceList);
         return resVo;
+    }
+
+    /**
+     * 产线求和-用于汇总能耗统计
+     * @param data data
+     * @return
+     */
+    private LinkedHashMap<Integer, BigDecimal> lineSum(List<EnergyCountListVO> data) {
+        LinkedHashMap<Integer, BigDecimal> sumMap = new LinkedHashMap<>();
+        //获取所有的产线数据
+        List<List<BigDecimal>> collect = data.stream().map(v -> v.getData()).collect(Collectors.toList());
+        for (int i = 0; i < collect.size(); i++) {
+            List<BigDecimal> coList = collect.get(i);
+            for (int j = 0; j < coList.size(); j++) {
+                //j代表产线
+                BigDecimalUtil.accumulate(sumMap, j, coList.get(j));
+            }
+        }
+        return sumMap;
+
     }
 
     /**
@@ -1098,7 +1153,8 @@ public class ReportServiceImpl implements ReportService {
      * @param productGroup    累计分组结果
      * @return
      */
-    private EnergyCountListVO countProductLineGauge(List<SysDictVO> sysDictVOList, String productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup) {
+    private EnergyCountListVO countProductLineGauge(List<SysDictVO> sysDictVOList, String
+            productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup) {
         EnergyCountListVO vo = new EnergyCountListVO();
         vo.setName(productLineName);
         vo.setStack(typeName);
@@ -1129,16 +1185,17 @@ public class ReportServiceImpl implements ReportService {
      * @param productGroup    累计分组结果
      * @return
      */
-    private EnergyCountListVO countClassGroupGauge(List<SysOfficeVO> productLineList, String name, String typeName, Integer type, List<EnergyGroupListVO> productGroup) {
+    private EnergyCountListVO countClassGroupGauge(List<SysOfficeVO> productLineList, String name, String
+            typeName, Integer type, List<EnergyGroupListVO> productGroup) {
         EnergyCountListVO vo = new EnergyCountListVO();
         vo.setName(name);
         vo.setStack(typeName);
         vo.setType(PmReportConstant.STR_BAR);
-        Map<Long, BigDecimal> dataMap = Maps.newHashMap();
+        Map<Integer, BigDecimal> dataMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(productGroup)) {
             productGroup.forEach(ele -> {
                 if (type.equals(ele.getType())) {
-                    dataMap.put(ele.getClassGroupId(), ele.getQuantity());
+                    dataMap.put(ele.getProductLineId(), ele.getQuantity());
                 }
             });
         }

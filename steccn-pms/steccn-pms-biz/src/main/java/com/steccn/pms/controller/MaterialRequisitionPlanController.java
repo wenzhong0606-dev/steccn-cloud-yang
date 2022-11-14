@@ -39,7 +39,7 @@ public class MaterialRequisitionPlanController {
 
     @ApiOperation("创建领用单")
     @PostMapping
-    public R<Boolean> create(@RequestBody List<MaterialRequisitionInfoPlanDTO> dtoList) {
+    public R<String> create(@RequestBody List<MaterialRequisitionInfoPlanDTO> dtoList) {
         return R.success(pmsMaterialRequisitionService.create(dtoList));
     }
 

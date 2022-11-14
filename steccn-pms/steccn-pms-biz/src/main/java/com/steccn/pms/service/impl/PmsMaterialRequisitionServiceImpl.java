@@ -78,10 +78,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             Set<Integer> officeIdSet = Sets.newHashSet();
             //3.2 处理字典数据
             Set<Long> dictIdSet = Sets.newHashSet();
+            Set<Long> ids = Sets.newHashSet();
             page.getRecords().forEach(materialRequisitionVO -> {
                 dictIdSet.add(materialRequisitionVO.getStatus());
                 dictIdSet.add(materialRequisitionVO.getTypeId());
                 officeIdSet.add(materialRequisitionVO.getDepartmentId());
+                officeIdSet.add(materialRequisitionVO.getWarehouseId());
+                ids.add(materialRequisitionVO.getId());
             });
             //3.3 获取字典以及部门数据
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
@@ -90,8 +93,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
                 materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
                 materialRequisitionVO.setDepartmentName(officeMap.get(materialRequisitionVO.getDepartmentId()));
+                materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
             });
-            remoteOfficeFeign.listByIdCh(officeIdSet);
+            //3.4获取总数量
+            Map<Long,BigDecimal> quantityMap  = pmsMaterialRequisitionInfoService.getTotalQuantity(ids);
+            BigDecimal zero = BigDecimal.ZERO;
+            page.getRecords().forEach(materialRequisitionVO->{
+                BigDecimal quantity = quantityMap.getOrDefault(materialRequisitionVO.getId(), zero);
+                materialRequisitionVO.setQuantity(quantity);
+            });
         }
         return page;
     }
@@ -257,99 +267,177 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     public Page<MaterialRequisitionPlanVO> planPageList(MaterialRequisitionPlanDTO dto) {
-        Page<MaterialRequisitionPlanVO> page = new Page<>(dto.getCurrent(), dto.getSize());
-        //1.根据工位id获取上级的产线数据
-        Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.getParentOfficeMap(dto.getStation())).get();
-        //2.获取产线id
-        List<Integer> lineIds = Lists.newArrayList();
-        officeMap.values().stream().collect(Collectors.toList()).forEach(officeVO -> {
-            lineIds.add(officeVO.getId());
-        });
-        //3.根据产线获取产线下的订单的信息
-        List<PmsProduceOrderVO> list = produceOrderService.executionOfOrder(Sets.newHashSet(lineIds));
-        List<MaterialRequisitionPlanVO> resBomList = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(list)) {
-            List<Long> orderIds = Lists.newArrayList();
-            list.forEach(pmsProduceOrderVO -> orderIds.add(pmsProduceOrderVO.getId()));
-            //3.1 根据订单id获取订单的物料组件信息
-            List<PmsWorkOrderBom> bomList = pmsWorkOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>().in(PmsWorkOrderBom::getWorkProduceId, orderIds));
-            //3.2 获取bom 的工序下的工位绑定的线边仓货架编码
-            Set<Long> bomIds = Sets.newHashSet();
-            bomList.forEach(bom -> bomIds.add(bom.getId()));
-            List<BomStationDTO> stationList = pmsWorkOrderBomService.listStation(bomIds);
-            //处理 工位信息
-            List<MessMaterialStorageDTO> inventoryDTOList = Lists.newArrayList();
-            Map<Long, List<BomStationDTO>> map = stationList.stream().collect(Collectors.groupingBy(BomStationDTO::getMaterialId));
-            List<MaterialRequisitionPlanVO> splitBomList = Lists.newArrayList();
-            //处理工位与物料
-            Map<PmsWorkOrderBom, List<BomStationDTO>> bomMap = Maps.newHashMap();
-            map.forEach((materialId, bomStationDTOList) -> {
-                for (PmsWorkOrderBom pmsWorkOrderBom : bomList) {
-                    if (materialId.equals(pmsWorkOrderBom.getModuleId())) {
-                        bomMap.put(pmsWorkOrderBom, bomStationDTOList);
+        Page<MaterialRequisitionPlanVO> resPage = new Page(dto.getCurrent(), dto.getSize());
+        if (CollUtil.isNotEmpty(dto.getStation())) {
+            //1.根据工位id获取上级的产线数据
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.parentInfo(dto.getStation())).get();
+            SysOfficeVO sysOfficeVO = new SysOfficeVO();
+            //2.获取产线id
+            List<Integer> lineIds = Lists.newArrayList();
+            officeMap.values().stream().collect(Collectors.toList()).forEach(officeVO -> {
+                lineIds.add(officeVO.getId());
+            });
+            //3.根据产线获取产线下的订单的信息
+            List<PmsProduceOrderVO> list = produceOrderService.executionOfOrder(Sets.newHashSet(lineIds));
+            List<MaterialRequisitionPlanVO> resBomList = Lists.newArrayList();
+            if (CollUtil.isNotEmpty(list)) {
+                List<Long> orderIds = Lists.newArrayList();
+                list.forEach(pmsProduceOrderVO -> orderIds.add(pmsProduceOrderVO.getId()));
+                //根据订单id 获取订单信息
+                Map<Long, PmsProduceOrder> orderMap = produceOrderService.orderList(orderIds);
+                PmsProduceOrder order = new PmsProduceOrder();
+                //3.1 根据订单id获取订单的物料组件信息
+                List<PmsWorkOrderBom> bomList = pmsWorkOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                        .in(PmsWorkOrderBom::getWorkProduceId, orderIds));
+                //3.2 获取bom 的工序下的工位绑定的线边仓货架编码
+                Set<Long> bomIds = Sets.newHashSet();
+                bomList.forEach(bom -> bomIds.add(bom.getId()));
+                List<BomStationDTO> stationList = pmsWorkOrderBomService.listStation(bomIds);
+                //处理 工位信息
+                List<MessMaterialStorageDTO> inventoryDTOList = Lists.newArrayList();
+                Map<Long, List<BomStationDTO>> map = stationList.stream().collect(Collectors.groupingBy(BomStationDTO::getMaterialId));
+                List<MaterialRequisitionPlanVO> splitBomList = Lists.newArrayList();
+                //处理工位与物料
+                Map<PmsWorkOrderBom, List<BomStationDTO>> bomMap = Maps.newHashMap();
+                map.forEach((materialId, bomStationDTOList) -> {
+                    for (PmsWorkOrderBom pmsWorkOrderBom : bomList) {
+                        if (materialId.equals(pmsWorkOrderBom.getModuleId())) {
+                            bomMap.put(pmsWorkOrderBom, bomStationDTOList);
+                        }
                     }
-                }
-            });
-            //拆分数据
-            //获取物料的投料信息
-            List<FeedQuantityDTO> feedList = Lists.newArrayList();
-            Map<FeedQuantityDTO, BigDecimal> feedQuantityMap = pmsCompleteDeliveryInfoService.listQuantity(feedList);
-            BigDecimal quantity = BigDecimal.ZERO;
-            bomMap.forEach((bom, stations) -> {
-                int size = stations.size();
-                BigDecimal bigDecimalSize = BigDecimal.valueOf(size);
-                FeedQuantityDTO feedQuantityDTO = new FeedQuantityDTO();
-                feedQuantityDTO.setProduceOrderId(bom.getWorkProduceId());
-                feedQuantityDTO.setMaterialId(bom.getModuleId());
-                feedQuantityDTO.setProcessId(bom.getProcessId());
-                BigDecimal orDefault = feedQuantityMap.getOrDefault(feedQuantityDTO, quantity);
-                for (BomStationDTO station : stations) {
-                    MaterialRequisitionPlanVO materialRequisitionPlanVO = new MaterialRequisitionPlanVO();
-                    materialRequisitionPlanVO.setMaterialId(bom.getModuleId());
-                    //四舍五入，保留三位小数的除法
-                    BigDecimal divide = BigDecimalUtil.divide(bom.getQuantity(), bigDecimalSize);
-                    materialRequisitionPlanVO.setRequireQuantity(divide);
-                    materialRequisitionPlanVO.setStationName(station.getExecuteStationName());
-                    materialRequisitionPlanVO.setStation(station.getExecuteStationId());
-                    materialRequisitionPlanVO.setStationCode(station.getExecuteStationCode());
-                    materialRequisitionPlanVO.setOnPassageQuantity(BigDecimal.ZERO);
-                    materialRequisitionPlanVO.setProduceOrderId(bom.getWorkProduceId());
-                    materialRequisitionPlanVO.setProcessId(bom.getProcessId());
-                    //需求数量（Bom 需求数量 -已投入数量）/ 工位个数
-                    BigDecimal requiredQuantity = bom.getQuantity().subtract(orDefault);
-                    BigDecimal requireQuantity = BigDecimalUtil.divide(requiredQuantity, bigDecimalSize);
-                    materialRequisitionPlanVO.setRequireQuantity(requireQuantity);
-                    splitBomList.add(materialRequisitionPlanVO);
-                    //处理物料线边库存数据
-                    MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
-                    storageDTO.setMaterialId(bom.getModuleId());
-                    List<String> codes = Lists.newArrayList();
-                    codes.add(materialRequisitionPlanVO.getStationCode());
-                    storageDTO.setShelfCodes(codes);
-                    inventoryDTOList.add(storageDTO);
-                }
-            });
-            // 获取物料绑定的线边仓库存数据
-            Map<Long, BigDecimal> inventoryMap = remoteMessFeignApi.listMaterialInventory(inventoryDTOList);
-            BigDecimal zero = BigDecimal.ZERO;
-            splitBomList.forEach(bom -> {
-                BigDecimal orDefault = inventoryMap.getOrDefault(bom, zero);
-                if (bom.getRequireQuantity().subtract(orDefault).compareTo(BigDecimal.ZERO) > 0) {
-                    resBomList.add(bom);
-                }
-            });
+                });
+                //拆分数据
+                //获取物料的投料信息
+                List<FeedQuantityDTO> feedList = Lists.newArrayList();
+                Map<FeedQuantityDTO, BigDecimal> feedQuantityMap = pmsCompleteDeliveryInfoService.listQuantity(feedList);
+                BigDecimal quantity = BigDecimal.ZERO;
+                Set<Long> dictList = Sets.newHashSet();
+                Set<Integer> officeId = Sets.newHashSet();
+                List<Long> materialIds = Lists.newArrayList();
+                bomMap.forEach((bom, stations) -> {
+                    int size = stations.size();
+                    BigDecimal bigDecimalSize = BigDecimal.valueOf(size);
+                    FeedQuantityDTO feedQuantityDTO = new FeedQuantityDTO();
+                    feedQuantityDTO.setProduceOrderId(bom.getWorkProduceId());
+                    feedQuantityDTO.setMaterialId(bom.getModuleId());
+                    feedQuantityDTO.setProcessId(bom.getProcessId());
+                    BigDecimal orDefault = feedQuantityMap.getOrDefault(feedQuantityDTO, quantity);
+                    PmsProduceOrder orderInfo = orderMap.getOrDefault(bom.getWorkProduceId(), order);
+                    for (BomStationDTO station : stations) {
+                        SysOfficeVO sysOffice = officeMap.getOrDefault(station.getExecuteStationId(), sysOfficeVO);
+                        MaterialRequisitionPlanVO materialRequisitionPlanVO = new MaterialRequisitionPlanVO();
+                        materialRequisitionPlanVO.setMaterialId(bom.getModuleId());
+                        //四舍五入，保留三位小数的除法
+                        BigDecimal divide = BigDecimalUtil.divide(bom.getQuantity(), bigDecimalSize);
+                        materialRequisitionPlanVO.setRequireQuantity(divide);
+                        materialRequisitionPlanVO.setStationName(station.getExecuteStationName());
+                        materialRequisitionPlanVO.setStation(station.getExecuteStationId());
+                        materialRequisitionPlanVO.setStationCode(station.getExecuteStationCode());
+                        materialRequisitionPlanVO.setOnPassageQuantity(BigDecimal.ZERO);
+                        materialRequisitionPlanVO.setProduceOrderId(bom.getWorkProduceId());
+                        materialRequisitionPlanVO.setProcessId(bom.getProcessId());
+                        materialRequisitionPlanVO.setProductionLine(sysOffice.getId());
+                        materialRequisitionPlanVO.setProductionLineName(sysOffice.getOfficeName());
+                        materialRequisitionPlanVO.setWorkshop(sysOffice.getParentId());
+                        materialRequisitionPlanVO.setWorkshopName(sysOffice.getParentName());
+                        materialRequisitionPlanVO.setUnitId(bom.getUnitId());
+                        //需求时间
+                        LocalDateTime planStartTime = orderInfo.getPlanStartTime();
+                        LocalDate date = planStartTime.toLocalDate();
+                        materialRequisitionPlanVO.setRequireDate(date);
+                        dictList.add(bom.getUnitId());
+                        officeId.add(station.getExecuteStationId());
+                        materialIds.add(bom.getModuleId());
+//                    materialRequisitionPlanVO.setRequireDate();
+                        //需求数量（Bom 需求数量 -已投入数量）/ 工位个数
+                        BigDecimal requiredQuantity = bom.getQuantity().subtract(orDefault);
+                        BigDecimal requireQuantity = BigDecimalUtil.divide(requiredQuantity, bigDecimalSize);
+                        materialRequisitionPlanVO.setRequireQuantity(requireQuantity);
+                        splitBomList.add(materialRequisitionPlanVO);
+                        //处理物料线边库存数据
+                        MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
+                        storageDTO.setMaterialId(bom.getModuleId());
+                        List<String> codes = Lists.newArrayList();
+                        codes.add(materialRequisitionPlanVO.getStationCode());
+                        storageDTO.setShelfCodes(codes);
+                        inventoryDTOList.add(storageDTO);
+                    }
+                });
+                //获取单位数据以及车间产线数据
+                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
+                // 获取物料绑定的线边仓库存数据
+                Map<Long, BigDecimal> inventoryMap = remoteMessFeignApi.listMaterialInventory(inventoryDTOList);
+                // 获取物料的数据
+                EqpSpareVO eqpSpareVO = new EqpSpareVO();
+                Map<Long, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+                BigDecimal zero = BigDecimal.ZERO;
+                splitBomList.forEach(bom -> {
+                    EqpSpareVO spareVO = spareMap.getOrDefault(bom.getMaterialId(), eqpSpareVO);
+                    bom.setUnitName(dictMap.get(bom.getUnitId()));
+                    bom.setMaterialName(spareVO.getName());
+                    bom.setMaterialCode(spareVO.getCode());
+                    BigDecimal orDefault = inventoryMap.getOrDefault(bom, zero);
+                    //线边数量
+                    bom.setLineEdgeQuantity(orDefault);
+                    //批次数量
+                    bom.setBatchDeliveryQuantity(BigDecimal.ZERO);
+                    if (bom.getRequireQuantity().subtract(orDefault).compareTo(BigDecimal.ZERO) > 0) {
+                        resBomList.add(bom);
+                    }
+                });
+            }
+            //排序+逻辑分页
+            Integer skip = (dto.getCurrent() - 1) * dto.getSize();
+            //排序
+            List<MaterialRequisitionPlanVO> collect = resBomList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+            resPage.setTotal(resBomList.size());
+            resPage.setRecords(collect);
         }
-        return page.setRecords(resBomList);
+        return resPage;
     }
 
     @Override
-    public Boolean create(List<MaterialRequisitionInfoPlanDTO> list) {
-//        if (CollUtil.isNotEmpty(list)){
-//            MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
-//            list.forEach();
-//        }
-        return null;
+    public String create(List<MaterialRequisitionInfoPlanDTO> list) {
+        MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
+        List<MaterialRequisitionInfoDTO> infoList = Lists.newArrayList();
+        list.forEach(info -> {
+            MaterialRequisitionInfoDTO materialRequisitionInfoDTO = new MaterialRequisitionInfoDTO();
+            BeanUtil.copyProperties(info, materialRequisitionInfoDTO);
+            infoList.add(materialRequisitionInfoDTO);
+        });
+        materialRequisitionDTO.setList(infoList);
+        //获取部门
+        SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(list.get(0).getWorkshopId())).get();
+        materialRequisitionDTO.setDepartmentId(sysOfficeVO.getId());
+        //获取类型
+        SysDictVO dictVO = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.PRODUCE_PICK, PmManagerConstant.MATERIAL_REQUISITION)).get();
+        materialRequisitionDTO.setTypeId(dictVO.getId());
+        return createOrder(materialRequisitionDTO);
     }
+
+    private String createOrder(MaterialRequisitionDTO materialRequisitionDTO) {
+        //处理数据
+        PmsMaterialRequisition model = new PmsMaterialRequisition();
+        BeanUtil.copyProperties(materialRequisitionDTO, model);
+        model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+        //获取创建状态在字典中的id
+        Long status = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
+                PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId();
+        model.setStatus(status);
+        save(model);
+        if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
+            List<PmsMaterialRequisitionInfo> list = Lists.newArrayList();
+            materialRequisitionDTO.getList().forEach(materialRequisitionInfoDTO -> {
+                PmsMaterialRequisitionInfo materialRequisitionInfo = new PmsMaterialRequisitionInfo();
+                BeanUtil.copyProperties(materialRequisitionInfoDTO, materialRequisitionInfo);
+                materialRequisitionInfo.setMaterialRequisitionId(model.getId());
+                list.add(materialRequisitionInfo);
+            });
+            pmsMaterialRequisitionInfoService.saveBatch(list);
+        }
+        return "领料单" + model.getCode() + "创建完成";
+    }
+
 
     /**
      * 当前最大的code值

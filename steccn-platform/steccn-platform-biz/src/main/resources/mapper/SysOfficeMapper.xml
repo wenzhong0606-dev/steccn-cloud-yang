@@ -86,8 +86,28 @@
 	        INNER JOIN sys_office b ON a.parent_code = b.office_code
         WHERE
 	        a.id IN
-        <foreach collection="codes" item="code" open="(" close=")" separator=",">
-            #{code}
+        <foreach collection="childIdList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="listParentInfo" resultType="com.steccn.platform.vo.SysOfficeVO">
+        SELECT
+        a.id as childrenId,
+        b.id id,
+        b.office_code,
+        b.office_name,
+        b.office_type,
+        c.id as parentId,
+        c.office_code as parentCode,
+        c.office_name as parentName
+        FROM
+        sys_office a
+        INNER JOIN sys_office b ON a.parent_code = b.office_code
+        INNER JOIN sys_office c ON b.parent_code = c.office_code
+        WHERE
+        a.id IN
+        <foreach collection="childIdList" item="id" open="(" close=")" separator=",">
+            #{id}
         </foreach>
     </select>
 </mapper>

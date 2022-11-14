@@ -275,15 +275,15 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         //1.自定义sql查询数据
         List<SysOfficeVO> list = baseMapper.listByParentCode(dto.getOfficeParentCodes(), SysOfficeConstant.PRODUCT_LINE);
 
-        List<SysOfficeParentVO> sysOfficeParentVOS =Lists.newArrayList();
-        if (CollUtil.isNotEmpty(list)){
-        list.stream().forEach(s->{
-            SysOfficeParentVO sysOfficeParentVO = new SysOfficeParentVO();
-            sysOfficeParentVO.setOfficeName(s.getOfficeName());
-            sysOfficeParentVO.setId(s.getId());
-            sysOfficeParentVOS.add(sysOfficeParentVO);
-        });
-        return sysOfficeParentVOS;
+        List<SysOfficeParentVO> sysOfficeParentVOS = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            list.stream().forEach(s -> {
+                SysOfficeParentVO sysOfficeParentVO = new SysOfficeParentVO();
+                sysOfficeParentVO.setOfficeName(s.getOfficeName());
+                sysOfficeParentVO.setId(s.getId());
+                sysOfficeParentVOS.add(sysOfficeParentVO);
+            });
+            return sysOfficeParentVOS;
         }
         return null;
     }
@@ -305,6 +305,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     /**
      * 根据office类型和名字查
+     *
      * @param dto
      * @return
      */
@@ -312,12 +313,12 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     public List<SysOfficeVO> findByTypeAndName(SysOfficeDTO dto) {
         List<SysOfficeVO> vos = new ArrayList<>();
         List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
-                .eq(SysOffice::getOfficeType,dto.getOfficeType())
-                .like(SysOffice::getOfficeName,dto.getOfficeName()));
-        if(CollUtil.isNotEmpty(officeList)){
-            officeList.forEach(tmp->{
+                .eq(SysOffice::getOfficeType, dto.getOfficeType())
+                .like(SysOffice::getOfficeName, dto.getOfficeName()));
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();
-                BeanUtils.copyProperties(tmp,vo);
+                BeanUtils.copyProperties(tmp, vo);
                 vos.add(vo);
             });
         }
@@ -326,6 +327,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     /**
      * 根据机构类型以及关键字返回SysOfficeVO集合信息
+     *
      * @param dto
      * @return
      */
@@ -333,16 +335,31 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
         List<SysOfficeVO> vos = new ArrayList<>();
         List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
-                .in(SysOffice::getOfficeType,dto.getType())
-                .like(SysOffice::getOfficeName,dto.getKey()));
-        if(CollUtil.isNotEmpty(officeList)){
-            officeList.forEach(tmp->{
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(SysOffice::getOfficeName, dto.getKey()));
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();
-                BeanUtils.copyProperties(tmp,vo);
+                BeanUtils.copyProperties(tmp, vo);
                 vos.add(vo);
             });
         }
         return vos;
+    }
+
+    @Override
+    public Map<Integer, SysOfficeVO> parentInfo(Set<Integer> childIdList) {
+
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
+
+        List<SysOfficeVO> sysOfficeVOList = this.baseMapper.listParentInfo(childIdList);
+        if (CollUtil.isNotEmpty(sysOfficeVOList)) {
+            for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+                resMap.put(sysOfficeVO.getChildrenId(), sysOfficeVO);
+            }
+        }
+        return resMap;
+
     }
 
     /**

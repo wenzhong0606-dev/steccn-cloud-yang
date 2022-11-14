@@ -82,7 +82,7 @@ public interface RemoteMessFeignApi {
      * @param list
      * @return
      */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory//list/materialInventory")
+    @PostMapping(value = "/web/eqp/eqpSpareInventory/list/materialInventory")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     Map<Long, BigDecimal> listMaterialInventory(@RequestBody List<MessMaterialStorageDTO> list);

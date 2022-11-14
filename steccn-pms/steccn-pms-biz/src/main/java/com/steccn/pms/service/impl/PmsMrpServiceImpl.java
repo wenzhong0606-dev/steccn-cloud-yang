@@ -91,12 +91,15 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         typeCodes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
         typeCodes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
         Map<String, SysDictVO> typeMap = FeignOptional.of(remoteDictFeignApi.listByCodes(typeCodes)).get();
-        LambdaQueryWrapper<PmsMrpInfo> pmsMrpInfoLambdaQueryWrapper = new QueryWrapper<PmsMrpInfo>().select("material_id,sum(quantity) as quantity").lambda()
-                .in(PmsMrpInfo::getMaterialId, materialIds)
-                .in(PmsMrpInfo::getMrpTypeId, typeMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId(), typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId())
-                .eq(PmsMrpInfo::getStatus, PmManagerConstant.OrderStateEnum.ZERO.getCode())
-                .groupBy(PmsMrpInfo::getMaterialId);
-        List<PmsMrpInfo> list = pmsMrpInfoService.list(pmsMrpInfoLambdaQueryWrapper);
+        List<PmsMrpInfo> list = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(materialIds)) {
+            LambdaQueryWrapper<PmsMrpInfo> pmsMrpInfoLambdaQueryWrapper = new QueryWrapper<PmsMrpInfo>().select("material_id,sum(quantity) as quantity").lambda()
+                    .in(PmsMrpInfo::getMaterialId, materialIds)
+                    .in(PmsMrpInfo::getMrpTypeId, typeMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId(), typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId())
+                    .eq(PmsMrpInfo::getStatus, PmManagerConstant.OrderStateEnum.ZERO.getCode())
+                    .groupBy(PmsMrpInfo::getMaterialId);
+            list = pmsMrpInfoService.list(pmsMrpInfoLambdaQueryWrapper);
+        }
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));
         PmsMrpInfo pmsMrpInfo = new PmsMrpInfo();
         Map<Long, BigDecimal> inventoryCalculations = inventoryCalculations(materialIds);
@@ -119,59 +122,61 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
     Map<Long, BigDecimal> inventoryCalculations(Set<Long> materialIds) {
         Map<Long, BigDecimal> resMap = Maps.newHashMap();
         //获取物料的库存
-        List<PmsMrpInfo> list = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().in(PmsMrpInfo::getMaterialId, materialIds));
-        if (CollUtil.isNotEmpty(list)) {
-            Set<String> codes = Sets.newHashSet();
-            codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
-            codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
-            codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
-            Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
-            //获取独立需求类型id
-            Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
-            //获取订单需求类型id
-            Long mrpRequirmentId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
-            Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
-            MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
-            inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
-            Map<Long, List<PmsMrpInfo>> infoMap = list.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
-            infoMap.forEach((id, infoList) -> {
-                BigDecimal availableQuantity = inventoryDTOMap.getOrDefault(id, inventoryDTO).getAvailableQuantity();
-                List<PmsMrpInfo> sortedList = infoList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
-                LinkedHashMap<LocalDate, List<PmsMrpInfo>> dateMap = sortedList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMrpDate, LinkedHashMap::new, Collectors.toList()));
-                //进行mrp计算
-                for (Map.Entry<LocalDate, List<PmsMrpInfo>> entry : dateMap.entrySet()) {
-                    //需求库存
-                    BigDecimal demandQuantity = BigDecimal.ZERO;
-                    //供给库存
-                    BigDecimal supplyQuantity = BigDecimal.ZERO;
-                    for (PmsMrpInfo pmsMrpInfo : entry.getValue()) {
-                        //独立需求 或订单需求
-                        if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId) || pmsMrpInfo.getMrpTypeId().equals(mrpRequirmentId)) {
-                            demandQuantity = demandQuantity.add(pmsMrpInfo.getQuantity());
-                        } else {
-                            supplyQuantity = supplyQuantity.add(pmsMrpInfo.getQuantity());
+        if (CollUtil.isNotEmpty(materialIds)) {
+            List<PmsMrpInfo> list = pmsMrpInfoService.list(new LambdaQueryWrapper<PmsMrpInfo>().in(PmsMrpInfo::getMaterialId, materialIds));
+            if (CollUtil.isNotEmpty(list)) {
+                Set<String> codes = Sets.newHashSet();
+                codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
+                codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
+                codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
+                Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
+                //获取独立需求类型id
+                Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
+                //获取订单需求类型id
+                Long mrpRequirmentId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+                Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
+                MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
+                inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
+                Map<Long, List<PmsMrpInfo>> infoMap = list.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
+                infoMap.forEach((id, infoList) -> {
+                    BigDecimal availableQuantity = inventoryDTOMap.getOrDefault(id, inventoryDTO).getAvailableQuantity();
+                    List<PmsMrpInfo> sortedList = infoList.stream().sorted(Comparator.comparing(PmsMrpInfo::getMrpDate)).collect(Collectors.toList());
+                    LinkedHashMap<LocalDate, List<PmsMrpInfo>> dateMap = sortedList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMrpDate, LinkedHashMap::new, Collectors.toList()));
+                    //进行mrp计算
+                    for (Map.Entry<LocalDate, List<PmsMrpInfo>> entry : dateMap.entrySet()) {
+                        //需求库存
+                        BigDecimal demandQuantity = BigDecimal.ZERO;
+                        //供给库存
+                        BigDecimal supplyQuantity = BigDecimal.ZERO;
+                        for (PmsMrpInfo pmsMrpInfo : entry.getValue()) {
+                            //独立需求 或订单需求
+                            if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId) || pmsMrpInfo.getMrpTypeId().equals(mrpRequirmentId)) {
+                                demandQuantity = demandQuantity.add(pmsMrpInfo.getQuantity());
+                            } else {
+                                supplyQuantity = supplyQuantity.add(pmsMrpInfo.getQuantity());
+                            }
+                        }
+                        //如果供给小于需求，则考虑库存
+                        if (supplyQuantity.compareTo(demandQuantity) < 0) {
+                            //如果库存小于需求减去供给
+                            if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) < 0) {
+                                // 计划订单数量 库存+供给-需求
+                                //计算生成计划订单的数量
+                                availableQuantity = BigDecimal.ZERO;
+                            } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
+                                //如果库存大于需求减去供给
+                                availableQuantity = availableQuantity.subtract(demandQuantity.subtract(supplyQuantity));
+                            } else {
+                                availableQuantity = BigDecimal.ZERO;
+                            }
+                        } else if (supplyQuantity.compareTo(demandQuantity) > 0) {
+                            //计算库存数量  库存 +（供给-需求）
+                            availableQuantity = availableQuantity.add(supplyQuantity.subtract(demandQuantity));
                         }
                     }
-                    //如果供给小于需求，则考虑库存
-                    if (supplyQuantity.compareTo(demandQuantity) < 0) {
-                        //如果库存小于需求减去供给
-                        if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) < 0) {
-                            // 计划订单数量 库存+供给-需求
-                            //计算生成计划订单的数量
-                            availableQuantity = BigDecimal.ZERO;
-                        } else if (availableQuantity.compareTo(demandQuantity.subtract(supplyQuantity)) > 0) {
-                            //如果库存大于需求减去供给
-                            availableQuantity = availableQuantity.subtract(demandQuantity.subtract(supplyQuantity));
-                        } else {
-                            availableQuantity = BigDecimal.ZERO;
-                        }
-                    } else if (supplyQuantity.compareTo(demandQuantity) > 0) {
-                        //计算库存数量  库存 +（供给-需求）
-                        availableQuantity = availableQuantity.add(supplyQuantity.subtract(demandQuantity));
-                    }
-                }
-                resMap.put(id, availableQuantity);
-            });
+                    resMap.put(id, availableQuantity);
+                });
+            }
         }
         return resMap;
     }

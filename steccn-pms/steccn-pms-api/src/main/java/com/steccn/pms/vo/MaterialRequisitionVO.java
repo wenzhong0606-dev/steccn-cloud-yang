@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -54,7 +56,19 @@ public class MaterialRequisitionVO implements Serializable {
     private String createName;
 
     @ApiModelProperty("创建时间")
-    private String createTime;
+    private LocalDateTime createTime;
+
+    @ApiModelProperty("修改人名称")
+    private String updateName;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime updateTime;
+
+    @ApiModelProperty("数量")
+    private BigDecimal quantity;
+
+    @ApiModelProperty("备注")
+    private String note;
 
     @ApiModelProperty("详情信息")
     private List<MaterialRequisitionInfoVO> list;
