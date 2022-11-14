@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -58,7 +60,7 @@ public class ReportController {
 
     @PostMapping("/outputCount")
     @ApiOperation("产量统计")
-    public R<OutputCountVO> outputCount(@RequestBody EnergyCountDTO dto) {
+    public R<OutputCountVO> outputCount(@Valid @RequestBody EnergyCountDTO dto) {
         return R.success(reportService.outputCount(dto));
     }
 }
