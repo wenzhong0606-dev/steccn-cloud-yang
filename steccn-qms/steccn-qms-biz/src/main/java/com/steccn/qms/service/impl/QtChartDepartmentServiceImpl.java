@@ -527,7 +527,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             //获取周同比
             BigDecimal weekValue = BigDecimal.ZERO;
             if (startDatePassRate.equals(BigDecimal.ZERO)) {
-                passRateOverViewVO.setWeekFlag(0);
+                passRateOverViewVO.setWeekFlag(2);
             } else {
                 weekValue = endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
                 if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
