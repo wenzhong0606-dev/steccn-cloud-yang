@@ -435,21 +435,22 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
     }
 
     @Override
-    public PassRateOverViewVO passRateOverview(Integer type) {
+    public PassRateOverViewVO passRateOverview(Integer type,LocalDateTime selectDateTime) {
         LocalDate startLocalDate;
         LocalDate endLocalDate;
         LocalTime localTime = LocalTime.of(8,0,0);
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
 
         List<LocalDate> dxData;
+        LocalDate selectDate = selectDateTime.toLocalDate();
         //获取最近七天开始日期和结束日期
-        if (LocalDateTime.now().getHour() < QtManagerConstant.beforeHour) {
-            startLocalDate = LocalDate.now().minusDays(8);
-            endLocalDate = LocalDate.now().minusDays(1);
+        if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
+            startLocalDate = selectDate.minusDays(8);
+            endLocalDate = selectDate.minusDays(1);
             dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(8), LocalDate.now().minusDays(2));
         } else {
-            startLocalDate = LocalDate.now().minusDays(7);
-            endLocalDate = LocalDate.now();
+            startLocalDate = selectDate.minusDays(7);
+            endLocalDate = selectDate;
             dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(7), LocalDate.now().minusDays(1));
         }
 

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -48,20 +49,20 @@ public class QtChartDepartmentController {
 
     @ApiOperation("来料检卡片")
     @GetMapping("/llJhg")
-     public R<PassRateOverViewVO> llJhg() {
-        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.LLJHG.getCode()));
+     public R<PassRateOverViewVO> llJhg(@RequestParam("selectDateTime")LocalDateTime selectDateTime) {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.LLJHG.getCode(),selectDateTime));
     }
 
     @ApiOperation("基片巡检卡片")
     @GetMapping("/jpxJhg")
-    public R<PassRateOverViewVO> jpxJhg() {
-        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.JPXJHG.getCode()));
+    public R<PassRateOverViewVO> jpxJhg(@RequestParam("selectDateTime")LocalDateTime selectDateTime) {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.JPXJHG.getCode(),selectDateTime));
     }
 
     @ApiOperation("深加工巡检卡片")
     @GetMapping("/sjgJhg")
-    public R<PassRateOverViewVO> sjgJhg() {
-        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode()));
+    public R<PassRateOverViewVO> sjgJhg(@RequestParam("selectDateTime")LocalDateTime selectDateTime) {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode(),selectDateTime));
     }
 
 }

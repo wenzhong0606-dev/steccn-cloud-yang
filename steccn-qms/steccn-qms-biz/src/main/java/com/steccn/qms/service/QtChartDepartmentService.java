@@ -8,6 +8,7 @@ import com.steccn.qms.vo.QtDefectChartVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ public interface QtChartDepartmentService {
      * @param type
      * @return
      */
-    PassRateOverViewVO passRateOverview(Integer type);
+    PassRateOverViewVO passRateOverview(Integer type, LocalDateTime selectDateTime);
 
 
      //QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);

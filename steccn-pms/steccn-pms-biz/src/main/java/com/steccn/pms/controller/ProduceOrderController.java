@@ -159,8 +159,6 @@ public class ProduceOrderController {
     @PostMapping("/track/report/list")
     @ApiOperation("订单跟踪计划列表")
     public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto){
-        Assert.notNull(dto.getProductLineList(), "产线不能为空");
-
         return R.success(pmsProduceOrderService.trackReportList(dto));
     }
 }
