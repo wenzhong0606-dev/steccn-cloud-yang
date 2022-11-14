@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,6 +47,12 @@ public class PmsProduceOrderFeignController {
     @GetMapping("/code")
     public R<PmsProduceOrderVO> code(@ApiParam("订单号") @RequestParam("code") String code) {
         return R.success(pmsProduceOrderService.code(code));
+    }
+
+    @PostMapping("/material/ids")
+    @ApiOperation("根据物料查询当前正在执行订单信息")
+    public R<Map<Long, List<PmsProduceOrderVO>>> listByMaterialIds(@RequestBody Set<Long> materialIds) {
+        return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
     }
 
 }

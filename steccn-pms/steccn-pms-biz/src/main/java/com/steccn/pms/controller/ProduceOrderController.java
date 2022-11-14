@@ -161,4 +161,12 @@ public class ProduceOrderController {
     public R<Page<ProduceOrderTrackReportVO>> trackReportList(@RequestBody ProduceOrderTrackReportDTO dto){
         return R.success(pmsProduceOrderService.trackReportList(dto));
     }
+
+
+    @PostMapping("/material/ids")
+    @ApiOperation("根据物料查询订单信息")
+    public R<Map<Long, List<PmsProduceOrderVO>>> listByMaterialIds(@RequestBody Set<Long> materialIds){
+        return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
+    }
+
 }

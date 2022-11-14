@@ -731,6 +731,24 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return map;
     }
 
+    @Override
+    public Map<Long, List<PmsProduceOrderVO>> listByMaterialIds(Set<Long> materialIds) {
+        Map<Long, List<PmsProduceOrderVO>> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(materialIds)) {
+            return map;
+        }
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getMaterialId, materialIds));
+        if (CollUtil.isNotEmpty(list)) {
+            Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
+            collect.forEach((key, value) -> {
+                List<PmsProduceOrderVO> orderVOList = BeanUtil.copyToList(value, PmsProduceOrderVO.class);
+                map.put(key, orderVOList);
+            });
+        }
+        return map;
+    }
+
     /**
      * 查询订单
      */

@@ -189,4 +189,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Map<Long, PmsProduceOrder> orderList(List<Long> orderIds);
+
+    /**
+     * 根据物料查询订单信息
+     * @param materialIds
+     * @return
+     */
+    Map<Long, List<PmsProduceOrderVO>> listByMaterialIds(Set<Long> materialIds);
 }
