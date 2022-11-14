@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChatDepartmentDTO;
@@ -45,9 +46,22 @@ public class QtChartDepartmentController {
         return R.success(qtChartDepartmentService.getPictureJPFB(dto));
     }*/
 
-    @GetMapping("/passRateOverview")
-     public R<PassRateOverViewVO> passRateOverview(@RequestParam Integer type) {
-        return R.success(qtChartDepartmentService.passRateOverview(type));
+    @ApiOperation("来料检卡片")
+    @GetMapping("/llJhg")
+     public R<PassRateOverViewVO> llJhg() {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.LLJHG.getCode()));
+    }
+
+    @ApiOperation("基片巡检卡片")
+    @GetMapping("/jpxJhg")
+    public R<PassRateOverViewVO> jpxJhg() {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.JPXJHG.getCode()));
+    }
+
+    @ApiOperation("深加工巡检卡片")
+    @GetMapping("/sjgJhg")
+    public R<PassRateOverViewVO> sjgJhg() {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode()));
     }
 
 }

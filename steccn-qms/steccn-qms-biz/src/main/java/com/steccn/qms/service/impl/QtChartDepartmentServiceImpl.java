@@ -17,6 +17,7 @@ import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtChartTargetValue;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtMaterial;
@@ -25,6 +26,7 @@ import com.steccn.qms.dto.QtChatDepartmentDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.QtChartDepartmentService;
+import com.steccn.qms.service.QtChartTargetValueService;
 import com.steccn.qms.vo.PassRateDateVo;
 import com.steccn.qms.vo.PassRateOverViewVO;
 import com.steccn.qms.vo.QtDefectChartVO;
@@ -68,6 +70,8 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
     private final RemotePassRateFeignApi remotePassRateFeignApi;
 
     private final QtCheckTaskService qtCheckTaskService;
+
+    private final QtChartTargetValueService qtChartTargetValueService;
 
     @Override
     public QtDefectChartVO getChartDepartmentInfo(QtChatDepartmentDTO dto) {
@@ -435,13 +439,16 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         LocalTime localTime = LocalTime.of(8,0,0);
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
 
+        List<LocalDate> dxData;
         //获取最近七天开始日期和结束日期
         if (LocalDateTime.now().getHour() < QtManagerConstant.beforeHour) {
             startLocalDate = LocalDate.now().minusDays(8);
             endLocalDate = LocalDate.now().minusDays(1);
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(8), LocalDate.now().minusDays(2));
         } else {
             startLocalDate = LocalDate.now().minusDays(7);
             endLocalDate = LocalDate.now();
+            dxData = LocalDateUtil.getLocalDateByStartEndDate(LocalDate.now().minusDays(7), LocalDate.now().minusDays(1));
         }
 
         //获取最近7天的完整工作时间
@@ -463,7 +470,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         PassRateOverViewVO passRateOverViewVO = new PassRateOverViewVO();
         List<BigDecimal> datePassList = new ArrayList<>();
         //获取最近7天和合格率
-        passRateOverViewVO.setDatePassList(datePassList);
+        passRateOverViewVO.setYData(datePassList);
         for (PassRateDateVo passRateDateVo : passRateDateVoList) {
             List<QtCheckTask> checkTaskList;
             List<QtCheckTask> qtCheckTaskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
@@ -484,11 +491,17 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
             Integer goodNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getGoodNum).sum();
             Integer checkNumSum = checkTaskList.stream().mapToInt(QtCheckTask::getCheckNum).sum();
-            BigDecimal passRate = new BigDecimal(goodNumSum / checkNumSum).setScale(4, BigDecimal.ROUND_DOWN);
+            BigDecimal passRate;
+            if (checkNumSum.equals(0)) {
+                passRate = BigDecimal.ZERO;
+            } else {
+                passRate = new BigDecimal(goodNumSum / checkNumSum);
+            }
             datePassList.add(passRate);
         }
 
         if (CollectionUtils.isEmpty(datePassList)) {
+            DecimalFormat decimalFormat = new DecimalFormat("0.00%");
             //最后一天的合格率
             BigDecimal endDatePassRate = datePassList.get(0);
             //获取第一天的合格率
@@ -496,9 +509,40 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             //获取合格率
             passRateOverViewVO.setPassRate(endDatePassRate.toString());
             //获取日环比
-            passRateOverViewVO.setDayValue(endDatePassRate.subtract(datePassList.get(1)).toString());
+            if (endDatePassRate.subtract(datePassList.get(1)).compareTo(BigDecimal.ZERO) < 0) {
+                passRateOverViewVO.setDayFlag(0);
+                passRateOverViewVO.setDayValue(decimalFormat.format(datePassList.get(1).subtract(endDatePassRate)));
+            } else {
+                passRateOverViewVO.setDayFlag(1);
+                passRateOverViewVO.setDayValue(decimalFormat.format(endDatePassRate.subtract(datePassList.get(1))));
+            }
             //获取周同比
-            passRateOverViewVO.setWeekValue(endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN).toString());
+            BigDecimal weekValue = endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
+            if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
+                weekValue = startDatePassRate.subtract(endDatePassRate).divide(startDatePassRate,4,BigDecimal.ROUND_DOWN);
+                passRateOverViewVO.setWeekFlag(0);
+            } else {
+                passRateOverViewVO.setWeekFlag(1);
+            }
+            passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
+        }
+        //获取横坐标
+        passRateOverViewVO.setXData(dxData);
+
+        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
+        if(targetValue == null) {
+            targetValue = BigDecimal.ZERO;
+        }
+        //获取目标值
+        passRateOverViewVO.setTargetValue(targetValue);
+        passRateOverViewVO.setKey(type);
+
+        if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPXJHG.getName());
+        } else if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)){
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.LLJHG.getName());
+        } else {
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.SJGXJHG.getName());
         }
 
         return passRateOverViewVO;

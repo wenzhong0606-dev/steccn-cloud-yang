@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -34,5 +35,29 @@ public class PassRateOverViewVO implements Serializable {
      * 最近7天合格率
      */
     @ApiModelProperty("最近7天合格率")
-    private List<BigDecimal> datePassList;
+    private List<BigDecimal> yData;
+
+    /**
+     * 横坐标
+     */
+    private List<LocalDate> xData;
+
+    @ApiModelProperty("目标值")
+    private BigDecimal targetValue;
+
+    /**
+     * 日环比  0 下降
+     *        1 上升
+     */
+    private Integer dayFlag;
+
+    /**
+     * 周同比 0 下降
+     *       1 上升
+     */
+    private Integer weekFlag;
+
+    private Integer key;
+
+    private String title;
 }
