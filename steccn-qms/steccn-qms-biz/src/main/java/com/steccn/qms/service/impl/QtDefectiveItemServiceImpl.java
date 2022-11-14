@@ -16,6 +16,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -245,6 +246,40 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             resMap.put(v.getId(), qtDefectiveItem.getId());
         });
         return resMap;
+    }
+
+    /**
+     * 根据缺陷项类别id查询缺陷项列表
+     * @param id
+     * @return
+     */
+    @Override
+    public List<QtBaseIdNameDTO> selectItemIds(Integer id) {
+        //如果类别不传，返回所有的缺陷项
+        List<QtBaseIdNameDTO> qtBaseIdNameDTOS = Lists.newArrayList();
+        List<QtDefectiveItem> qtDefectiveItems = Lists.newArrayList();
+        QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
+        if (id == null){
+            qtDefectiveItems = list();
+            if (!qtDefectiveItems.isEmpty()) {
+                for (QtDefectiveItem tem : qtDefectiveItems) {
+                    qtBaseIdNameDTO.setId(tem.getId());
+                    qtBaseIdNameDTO.setName(tem.getName());
+                    qtBaseIdNameDTOS.add(qtBaseIdNameDTO);
+                }
+            }
+        }else {
+            qtDefectiveItems = list(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getCategoryId,id));
+            if (!qtDefectiveItems.isEmpty()){
+                for (int i = 0; i < qtDefectiveItems.size() ; i++) {
+                    QtBaseIdNameDTO tmp = new QtBaseIdNameDTO();
+                    tmp.setId(qtDefectiveItems.get(i).getId());
+                    tmp.setName(qtDefectiveItems.get(i).getName());
+                    qtBaseIdNameDTOS.add(tmp);
+                }
+                }
+            }
+        return qtBaseIdNameDTOS;
     }
 
     /**
