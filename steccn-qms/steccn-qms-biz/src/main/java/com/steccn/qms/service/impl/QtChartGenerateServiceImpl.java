@@ -232,9 +232,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             baiResult.setReason("掰边损耗");
                             baiResult.setWorkOrderTime(entry.getKey());
                             if(entry2.getKey().equals(0)){
-                                baiResult.setWorkOrder(QtManagerConstant.MORNINGWORKNAME);
+                                baiResult.setWorkOrder(QtManagerConstant.QtClassesEnum.DAY.getName());
                             }else {
-                                baiResult.setWorkOrder(QtManagerConstant.NIGHTWORKNAME);
+                                baiResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                             }
                             String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
                             baiResult.setProductLineName(productLineName);
@@ -326,9 +326,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 defectResult.setReason(defectEntry.getKey());
                                 defectResult.setWorkOrderTime(entry.getKey());
                                 if(entry2.getKey().equals(0)){
-                                    defectResult.setWorkOrder(QtManagerConstant.MORNINGWORKNAME);
+                                    defectResult.setWorkOrder(QtManagerConstant.QtClassesEnum.DAY.getName());
                                 }else {
-                                    defectResult.setWorkOrder(QtManagerConstant.NIGHTWORKNAME);
+                                    defectResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                                 }
                                 defectResult.setProductLineName(productLineName);
                                 defectResult.setProductWorkShopName(productWorkShopName);
@@ -356,9 +356,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     luoResult.setReason(info.getDestoryReason());
                                     luoResult.setWorkOrderTime(entry.getKey());
                                     if(entry2.getKey().equals(0)){
-                                        luoResult.setWorkOrder(QtManagerConstant.MORNINGWORKNAME);
+                                        luoResult.setWorkOrder(QtManagerConstant.QtClassesEnum.DAY.getName());
                                     }else {
-                                        luoResult.setWorkOrder(QtManagerConstant.NIGHTWORKNAME);
+                                        luoResult.setWorkOrder(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                                     }
                                     luoResult.setProductLineName(productLineName);
                                     luoResult.setProductWorkShopName(productWorkShopName);
