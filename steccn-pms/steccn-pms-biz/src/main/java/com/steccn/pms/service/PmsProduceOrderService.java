@@ -195,5 +195,5 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @param materialIds
      * @return
      */
-    Map<Long, List<PmsProduceOrderVO>> listByMaterialIds(Set<Long> materialIds);
+    Map<Long, PmsProduceOrderVO> listByMaterialIds(Set<Long> materialIds);
 }

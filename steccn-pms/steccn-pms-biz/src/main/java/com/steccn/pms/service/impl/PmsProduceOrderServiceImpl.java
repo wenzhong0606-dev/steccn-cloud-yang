@@ -732,18 +732,21 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public Map<Long, List<PmsProduceOrderVO>> listByMaterialIds(Set<Long> materialIds) {
-        Map<Long, List<PmsProduceOrderVO>> map = Maps.newHashMap();
+    public Map<Long, PmsProduceOrderVO> listByMaterialIds(Set<Long> materialIds) {
+        Map<Long, PmsProduceOrderVO> map = Maps.newHashMap();
         if (CollUtil.isEmpty(materialIds)) {
             return map;
         }
         List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .in(PmsProduceOrder::getMaterialId, materialIds));
+                .in(PmsProduceOrder::getMaterialId, materialIds)
+                .isNotNull(PmsProduceOrder::getActualEndTime));
         if (CollUtil.isNotEmpty(list)) {
             Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
             collect.forEach((key, value) -> {
-                List<PmsProduceOrderVO> orderVOList = BeanUtil.copyToList(value, PmsProduceOrderVO.class);
-                map.put(key, orderVOList);
+                Collections.sort(value,Comparator.nullsFirst(Comparator.comparing(PmsProduceOrder::getActualEndTime).reversed()));
+                PmsProduceOrderVO vo = new PmsProduceOrderVO();
+                BeanUtils.copyProperties(value.get(0), vo);
+                map.put(key, vo);
             });
         }
         return map;

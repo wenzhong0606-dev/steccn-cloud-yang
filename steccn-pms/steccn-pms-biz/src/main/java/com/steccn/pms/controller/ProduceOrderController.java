@@ -165,7 +165,7 @@ public class ProduceOrderController {
 
     @PostMapping("/material/ids")
     @ApiOperation("根据物料查询订单信息")
-    public R<Map<Long, List<PmsProduceOrderVO>>> listByMaterialIds(@RequestBody Set<Long> materialIds){
+    public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds){
         return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
     }
 

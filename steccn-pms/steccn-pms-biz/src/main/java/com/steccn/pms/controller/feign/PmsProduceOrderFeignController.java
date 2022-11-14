@@ -51,7 +51,7 @@ public class PmsProduceOrderFeignController {
 
     @PostMapping("/material/ids")
     @ApiOperation("根据物料查询当前正在执行订单信息")
-    public R<Map<Long, List<PmsProduceOrderVO>>> listByMaterialIds(@RequestBody Set<Long> materialIds) {
+    public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds) {
         return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
     }
 
