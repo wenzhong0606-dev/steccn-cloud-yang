@@ -129,11 +129,13 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     public Map<Long, String> listByIdCh(Set<Long> idList) {
         Map<Long, String> resMap = Maps.newHashMap();
-        List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getId, idList).select(SysDict::getId, SysDict::getName));
-        if (CollUtil.isNotEmpty(sysDictList)) {
-            List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
-            for (SysDictVO sysDictVO : sysDictVOList) {
-                resMap.put(sysDictVO.getId(), sysDictVO.getName());
+        if (CollUtil.isNotEmpty(idList)) {
+            List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getId, idList).select(SysDict::getId, SysDict::getName));
+            if (CollUtil.isNotEmpty(sysDictList)) {
+                List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+                for (SysDictVO sysDictVO : sysDictVOList) {
+                    resMap.put(sysDictVO.getId(), sysDictVO.getName());
+                }
             }
         }
         return resMap;
