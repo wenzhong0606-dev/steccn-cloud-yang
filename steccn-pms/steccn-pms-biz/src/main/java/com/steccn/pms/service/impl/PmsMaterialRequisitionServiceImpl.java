@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -400,7 +401,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     }
 
     @Override
-    public String create(List<MaterialRequisitionInfoPlanDTO> list) {
+    public R<String> create(List<MaterialRequisitionInfoPlanDTO> list) {
+        R<String> r = new R<>();
         MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
         List<MaterialRequisitionInfoDTO> infoList = Lists.newArrayList();
         list.forEach(info -> {
@@ -415,7 +417,10 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //获取类型
         SysDictVO dictVO = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.PRODUCE_PICK, PmManagerConstant.MATERIAL_REQUISITION)).get();
         materialRequisitionDTO.setTypeId(dictVO.getId());
-        return createOrder(materialRequisitionDTO);
+        String order = createOrder(materialRequisitionDTO);
+        r.setCode(1);
+        r.setData(order);
+        return r;
     }
 
     private String createOrder(MaterialRequisitionDTO materialRequisitionDTO) {
@@ -438,7 +443,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             });
             pmsMaterialRequisitionInfoService.saveBatch(list);
         }
-        return "领料单" + model.getCode() + "创建完成";
+        return model.getCode();
     }
 
 

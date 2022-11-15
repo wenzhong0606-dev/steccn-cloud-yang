@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
@@ -70,5 +71,5 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @param list
      * @return
      */
-    String create( List<MaterialRequisitionInfoPlanDTO> list);
+    R<String> create(List<MaterialRequisitionInfoPlanDTO> list);
 }

@@ -40,7 +40,7 @@ public class MaterialRequisitionPlanController {
     @ApiOperation("创建领用单")
     @PostMapping
     public R<String> create(@RequestBody List<MaterialRequisitionInfoPlanDTO> dtoList) {
-        return R.success(pmsMaterialRequisitionService.create(dtoList));
+        return pmsMaterialRequisitionService.create(dtoList);
     }
 
 }
