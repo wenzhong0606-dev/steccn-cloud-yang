@@ -341,5 +341,5 @@ public class QtCheckTask implements Serializable {
     /**
      * 班次时间
      */
-    private LocalDate classTime;
+    private LocalDateTime classTime;
 }
