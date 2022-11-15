@@ -37,5 +37,10 @@ public class  QtCheckTaskDetailCopyVO implements Serializable {
      */
     private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
 
+    /**
+     * 备注
+     */
+    private String destoryInfoRemark;
+
 
 }

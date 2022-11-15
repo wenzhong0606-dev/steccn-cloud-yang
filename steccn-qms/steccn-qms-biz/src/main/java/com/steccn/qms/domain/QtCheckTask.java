@@ -42,13 +42,13 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "material_workshop ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String materialWorkshopId;
 
     @TableField(value = "material_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String materialWorkshopName;
 
     /**
@@ -60,13 +60,13 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "product_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String productWorkshopName;
 
     @TableField(value = "product_workshop ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String productWorkshopId;
 
     /**
@@ -78,7 +78,7 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "product_line ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String productLineName;
 
 
