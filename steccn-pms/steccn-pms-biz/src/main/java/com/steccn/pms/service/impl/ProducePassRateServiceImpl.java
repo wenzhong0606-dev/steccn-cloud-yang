@@ -78,6 +78,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             List<PmsReportWorkGroupVO> reportWorkList = reportWorkGroupVOList.stream()
                     .filter(workGroupVO -> workGroupVO.getDate().equals(localDate)).collect(Collectors.toList());
 
+
             if (CollectionUtils.isEmpty(reportWorkList)) {
                 ProducePassRateVO producePassRateVO = new ProducePassRateVO();
                 producePassRateVO.setDate(localDate);

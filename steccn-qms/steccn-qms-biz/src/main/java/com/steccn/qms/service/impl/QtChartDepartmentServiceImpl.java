@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
@@ -435,14 +436,16 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
         //最近7天完整工作日
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
-        //很坐标
         List<LocalDate> dxData = new ArrayList<>();
+
 
         //获取横坐标和最近7天完整工作日
         getPassRateDateVoList(selectDateTime,dxData,passRateDateVoList);
 
         PassRateOverViewVO passRateOverViewVO = new PassRateOverViewVO();
         List<BigDecimal> datePassList = new ArrayList<>();
+        //获取横坐标
+        passRateOverViewVO.setXData(dxData);
         //获取最近7天和合格率
         passRateOverViewVO.setYData(datePassList);
         for (PassRateDateVo passRateDateVo : passRateDateVoList) {
@@ -479,9 +482,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         }
 
         //获取合格率、日环比、周同比
-        getPassRateOverViewVO(passRateOverViewVO,datePassList);
-        //获取横坐标
-        passRateOverViewVO.setXData(dxData);
+        getPassRateOverViewVO(passRateOverViewVO,datePassList, type);
 
         BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
         if(targetValue == null) {
@@ -502,7 +503,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         return passRateOverViewVO;
     }
 
-    private void getPassRateOverViewVO(PassRateOverViewVO passRateOverViewVO, List<BigDecimal> datePassList){
+    private void getPassRateOverViewVO(PassRateOverViewVO passRateOverViewVO, List<BigDecimal> datePassList, Integer type){
         if (CollectionUtils.isNotEmpty(datePassList)) {
             DecimalFormat decimalFormat = new DecimalFormat("0.00%");
             //最后一天的合格率
@@ -537,6 +538,21 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                 }
             }
             passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
+
+            String tooltip;
+            LocalDate endDate = passRateOverViewVO.getXData().get(passRateOverViewVO.getXData().size() -1);
+            if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)) {
+                tooltip = String.format("%s所有来料检的平均合格率",LocalDateUtil.localDateFormat(passRateOverViewVO.getXData().get(passRateOverViewVO.getXData().size() -1), DatePattern.NORM_DATE_PATTERN));
+            } else if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)){
+                tooltip = String.format("%s白班、夜班所有%s巡检的平均合格率",
+                        LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN),
+                        QtManagerConstant.SUB_OFFICE_NAME);
+            } else {
+                tooltip = String.format("%s白班、夜班所有%s巡检的平均合格率",
+                        LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN),
+                        QtManagerConstant.DEEP_OFFICE_NAME);
+            }
+            passRateOverViewVO.setTooltip(tooltip);
         }
     }
 
@@ -550,11 +566,11 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
             startLocalDate = selectDate.minusDays(8);
             endLocalDate = selectDate.minusDays(1);
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2));
+            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2)));
         } else {
             startLocalDate = selectDate.minusDays(7);
             endLocalDate = selectDate;
-            dxData = LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1));
+            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1)));
         }
 
         //获取最近7天的完整工作时间

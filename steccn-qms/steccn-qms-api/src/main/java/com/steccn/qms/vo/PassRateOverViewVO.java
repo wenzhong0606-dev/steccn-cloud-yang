@@ -60,4 +60,6 @@ public class PassRateOverViewVO implements Serializable {
     private Integer key;
 
     private String title;
+
+    private String tooltip;
 }
