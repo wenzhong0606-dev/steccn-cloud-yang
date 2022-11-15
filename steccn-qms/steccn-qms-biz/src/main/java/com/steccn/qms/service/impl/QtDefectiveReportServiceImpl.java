@@ -34,7 +34,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -264,10 +266,39 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         });
         Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        Map<Integer, QtItemCategory> defectItemMap = qtItemCategoryService.listById(categoryIdSet);
-        QtItemCategory defaultQtDefectiveItem = new QtItemCategory();
+        Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(categoryIdSet);
+        QtItemCategory defaultQtItemCategory = new QtItemCategory();
 
+        List<DeepDefectiveCategoryDetailVO> pageList = detailCategoryAndItem(flatDataList, officeChMap, defectIdNameMap, defectCategoryMap, lineData -> lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory)), (defectId, countVo) -> {
+            QtItemCategory qtItemCategory = defectCategoryMap.getOrDefault(defectId, defaultQtItemCategory);
+            countVo.setName(qtItemCategory.getName());
+            countVo.setCreateTime(qtItemCategory.getCreateTime());
+        });
+        //排序+逻辑分页
+        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
+        resPage.setTotal(pageList.size());
+        resPage.setRecords(records);
+        return resPage;
+    }
 
+    /**
+     * 缺陷类别或者缺陷项的项
+     * @param flatDataList 数据
+     * @param officeChMap 机构信息
+     * @param defectIdNameMap 缺陷项id信息
+     * @param defectCategoryMap 缺陷类别信息
+     * @param function 函数
+     * @param consumer 消费者
+     * @return
+     */
+    private List<DeepDefectiveCategoryDetailVO> detailCategoryAndItem(List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> officeChMap, Map<Integer, String> defectIdNameMap, Map<Integer, QtItemCategory> defectCategoryMap, Function<List<QtCheckTaskDetailReportVO>, Map<Integer, List<QtCheckTaskDetailReportVO>>> function, BiConsumer<Integer, DeepDefectiveCategoryDetailVO> consumer) {
         //定义数据集合
         List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
         //班次日期分组
@@ -280,7 +311,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 workshopMap.forEach((ws, wsData) -> {
                     Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
                     lineMap.forEach((line, lineData) -> {
-                        Map<Integer, List<QtCheckTaskDetailReportVO>> defectMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+                        Map<Integer, List<QtCheckTaskDetailReportVO>> defectMap = function.apply(lineData);
                         defectMap.forEach((defectId, defectData) -> {
                             DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
                             countVo.setClassesDate(classDate);
@@ -291,10 +322,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             countVo.setProductWorkshopName(officeChMap.get(ws));
                             countVo.setProductLineId(line);
                             countVo.setProductLineName(officeChMap.get(line));
-                            countVo.setDefectCategory(defectId);
-                            QtItemCategory qtItemCategory = defectItemMap.getOrDefault(defectId, defaultQtDefectiveItem);
-                            countVo.setDefectCategoryName(qtItemCategory.getName());
-                            countVo.setDefectCreateTime(qtItemCategory.getCreateTime());
+                            countVo.setId(defectId);
+                            consumer.accept(defectId, countVo);
                             //明细
                             List<DeepDefectiveCategoryDetailListVO> detailList = Lists.newArrayList();
                             defectData.forEach(ele -> {
@@ -311,20 +340,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 });
             });
         });
-
-        //排序+逻辑分页
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
-        resPage.setTotal(pageList.size());
-        resPage.setRecords(records);
-        return resPage;
+        return pageList;
     }
+
 
     @Override
     public QtChartBarVO deepDefectiveItem(QtChartParamDTO dto) {
@@ -400,48 +418,38 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-
-        //定义数据集合
-        List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
-        //班次日期分组
-        Map<LocalDate, List<QtCheckTaskDetailReportVO>> classesDateMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassesDate));
-        classesDateMap.forEach((classDate, classDateData) -> {
-
-
-            Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-            classesMap.forEach((classes, classesData) -> {
-                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
-
-                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
-                workshopMap.forEach((ws, wsData) -> {
-                    Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
-                    lineMap.forEach((line, lineData) -> {
-                        Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
-                        categoryMap.forEach((cate, cateData) -> {
-                            DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
-                            countVo.setClassId(classes);
-                            pageList.add(countVo);
-                        });
-                    });
-                });
-            });
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Integer> categoryIdSet = Sets.newHashSet();
+        Set<Integer> defectIdSet = Sets.newHashSet();
+        flatDataList.forEach(ele -> {
+            defectIdSet.add(ele.getDefectId());
+            categoryIdSet.add(ele.getDefectCategory());
+            officeIdSet.add(ele.getProductWorkshopId());
+            officeIdSet.add(ele.getProductLineId());
+        });
+        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
+        Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
+        QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();
+        Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(categoryIdSet);
+        List<DeepDefectiveCategoryDetailVO> pageList = detailCategoryAndItem(flatDataList, officeChMap, defectIdNameMap, defectCategoryMap, lineData -> lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId)), (defectId, countVo) -> {
+            QtDefectiveItem item = defectIdMap.getOrDefault(defectId, defaultQtDefectiveItem);
+            countVo.setName(item.getName());
+            countVo.setCreateTime(item.getCreateTime());
         });
 
         //排序+逻辑分页
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-//        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
         resPage.setTotal(pageList.size());
         resPage.setRecords(records);
         return resPage;
-
     }
 
     @Override
@@ -717,49 +725,38 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
-        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-
-
-        //定义数据集合
-        List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
-        //班次日期分组
-        Map<LocalDate, List<QtCheckTaskDetailReportVO>> classesDateMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassesDate));
-        classesDateMap.forEach((classDate, classDateData) -> {
-
-
-            Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-            classesMap.forEach((classes, classesData) -> {
-                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
-
-                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
-                workshopMap.forEach((ws, wsData) -> {
-                    Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
-                    lineMap.forEach((line, lineData) -> {
-                        Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId));
-                        categoryMap.forEach((cate, cateData) -> {
-                            DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
-                            countVo.setClassId(classes);
-                            pageList.add(countVo);
-                        });
-                    });
-                });
-            });
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Integer> categoryIdSet = Sets.newHashSet();
+        Set<Integer> defectIdSet = Sets.newHashSet();
+        flatDataList.forEach(ele -> {
+            defectIdSet.add(ele.getDefectId());
+            categoryIdSet.add(ele.getDefectCategory());
+            officeIdSet.add(ele.getProductWorkshopId());
+            officeIdSet.add(ele.getProductLineId());
+        });
+        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
+        Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
+        QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();
+        Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(categoryIdSet);
+        List<DeepDefectiveCategoryDetailVO> pageList = detailCategoryAndItem(flatDataList, officeChMap, defectIdNameMap, defectCategoryMap, lineData -> lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectId)), (defectId, countVo) -> {
+            QtDefectiveItem item = defectIdMap.getOrDefault(defectId, defaultQtDefectiveItem);
+            countVo.setName(item.getName());
+            countVo.setCreateTime(item.getCreateTime());
         });
 
         //排序+逻辑分页
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-//        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-//                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getDefectCategoryCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).collect(Collectors.toList());
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
         resPage.setTotal(pageList.size());
         resPage.setRecords(records);
         return resPage;
-
     }
 
     /**
