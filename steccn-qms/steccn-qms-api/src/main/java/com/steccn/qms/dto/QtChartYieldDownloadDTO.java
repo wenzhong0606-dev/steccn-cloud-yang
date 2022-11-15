@@ -23,9 +23,19 @@ public class QtChartYieldDownloadDTO implements Serializable {
     private String workShopName;
 
     /**
+     * 车间id
+     */
+    private Integer workShopId;
+
+    /**
      * 产线名字
      */
     private String workLineName;
+
+    /**
+     * 产线id
+     */
+    private Integer workLineId;
 
     /**
      * 班次名字
@@ -33,9 +43,14 @@ public class QtChartYieldDownloadDTO implements Serializable {
     private String className;
 
     /**
+     * 班次id
+     */
+    private Integer classId;
+
+    /**
      * 对比维度
      */
-    private String compare;
+    private Integer compare;
 
     /**
      * 图表的filter
@@ -54,5 +69,8 @@ public class QtChartYieldDownloadDTO implements Serializable {
     @NotNull(message = "结束时间不能为空")
     private LocalDate endTime;
 
+    /**
+     * 图表base64
+     */
     private String base64;
 }

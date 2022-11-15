@@ -659,7 +659,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         List<String> markLineDataList = new ArrayList<>();
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
-        pmsDTO.setEndDate(dto.getDateEnd());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = new R<>();
         //调用数据生成全量数据表
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
@@ -762,7 +762,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //调用数据生成全量数据表
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
-        pmsDTO.setEndDate(dto.getDateEnd());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         Map<LocalDate, BigDecimal> groupByDate = MapUtil.newHashMap();
         if (CollUtil.isNotEmpty(rResult.getData())) {
