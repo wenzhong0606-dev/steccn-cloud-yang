@@ -90,29 +90,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
-        //对比项目分组
-        Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap;
         List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
-        //图例名字
-        Map<Integer, String> idNameMap;
-        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
-            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
-            Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
-        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
-            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
-            Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
-        } else if (QtManagerConstant.QtChartCompareEnum.DEFECTCATEGORY.getCode().equals(compare)) {
-            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
-            Set<Integer> defectCategorySet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(defectCategorySet)).get();
-        } else {
-            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-            idNameMap = Maps.newHashMap();
-            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
-            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
-        }
+        //对比项目分组
+        TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(compare, flatDataList);
+        Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap = mapMapTupleDTO.getField1();
+        Map<Integer, String> idNameMap = mapMapTupleDTO.getField2();
         AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
         List<String> xAis = Lists.newArrayList();
         Map<Integer, String> finalIdNameMap = idNameMap;
