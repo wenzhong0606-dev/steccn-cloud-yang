@@ -31,10 +31,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -192,10 +189,15 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                     data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
                 }
             }
-            //根据分页
+            //先排序
+            data = data.stream().sorted(Comparator.comparing(ProducePassRateVO::getDate).thenComparing(ProducePassRateVO::getProductLineName).thenComparing(ProducePassRateVO::getProductLineName).thenComparing(ProducePassRateVO::getClassesId)).collect(Collectors.toList());
+            //分页
+            data = data.stream().sorted().skip((dto.getCurrent() -1) * dto.getSize())
+                    .limit(dto.getSize())
+                    .collect(Collectors.toList());
         }
 
-        return null;
+        return data;
     }
 
     /**
