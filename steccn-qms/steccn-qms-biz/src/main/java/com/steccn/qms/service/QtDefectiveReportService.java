@@ -57,8 +57,6 @@ public interface QtDefectiveReportService {
      */
     QtChartBarVO substratePlateBar(QtChartParamDTO dto);
 
-    QtChartBarVO deepDefectiveCategory(QtChartParamDTO dto);
-
     /**
      * 深加工缺陷项分布-饼图
      * @param dto

@@ -96,7 +96,7 @@ public class QtDefectiveReportController {
      * @param dto
      * @return
      */
-    @PostMapping("/substrate/category/pie")
+    @PostMapping("/substrate/item/info/pie")
     @ApiOperation("基片缺陷项分布-饼图")
     public R<QtChartPieVO> deepDefectiveCategoryJPie(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateCategoryJPie(dto));

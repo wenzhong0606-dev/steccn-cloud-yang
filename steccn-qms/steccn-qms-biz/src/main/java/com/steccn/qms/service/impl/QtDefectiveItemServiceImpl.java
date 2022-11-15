@@ -282,6 +282,21 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return qtBaseIdNameDTOS;
     }
 
+    @Override
+    public Map<Integer, String> listByIdCh(Set<Integer> defectIdSet) {
+        Map<Integer, String> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(defectIdSet)){
+            List<QtDefectiveItem> qtDefectiveItems = listByIds(defectIdSet);
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getId(), ele.getName());
+                });
+            }
+        }
+        return resMap;
+
+    }
+
     /**
      * 同类别下名称是否重复
      *

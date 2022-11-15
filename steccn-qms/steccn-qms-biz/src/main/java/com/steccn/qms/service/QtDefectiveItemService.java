@@ -82,4 +82,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return
      */
     List<QtBaseIdNameDTO> selectItemIds(Integer id);
+
+    /**
+     * 根据缺陷项，获取id名字
+     * @param defectIdSet 缺陷项id集合
+     * @return map
+     */
+    Map<Integer, String> listByIdCh(Set<Integer> defectIdSet);
 }
