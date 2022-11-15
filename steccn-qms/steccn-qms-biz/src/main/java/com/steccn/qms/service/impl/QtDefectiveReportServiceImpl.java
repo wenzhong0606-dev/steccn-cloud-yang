@@ -169,7 +169,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //缺陷项类别与类别的创建时间
         Map<Integer, Integer> categoryMap = Maps.newHashMap();
         List<QtDefectiveItem> qtDefectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
-        QtDefectiveItemVO defaultQtDefectiveItemVO = new QtDefectiveItemVO();
         Assert.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
         qtDefectiveItemList.forEach(ele -> categoryMap.put(ele.getId(), ele.getCategoryId()));
 
