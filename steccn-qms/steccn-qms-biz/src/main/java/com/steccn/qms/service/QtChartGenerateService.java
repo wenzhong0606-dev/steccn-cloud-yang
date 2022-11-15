@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
+import com.steccn.qms.dto.QtTimeDTO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
@@ -29,7 +30,7 @@ public interface QtChartGenerateService {
      * @param dto
      * @return
      */
-    QtDefectChartVO generateSubstrateOverview(QtChartDateRangeDTO dto);
+    QtDefectChartVO generateSubstrateOverview(QtTimeDTO dto);
 
     /**
      * 生产基片成品率柱状趋势图

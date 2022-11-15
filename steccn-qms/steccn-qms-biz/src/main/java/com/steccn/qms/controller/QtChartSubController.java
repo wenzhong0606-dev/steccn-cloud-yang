@@ -3,6 +3,7 @@ package com.steccn.qms.controller;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtTimeDTO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.qms.vo.QtDefectChartVO;
@@ -31,7 +32,7 @@ public class QtChartSubController {
      * @return
      */
     @PostMapping("/sub/overview")
-    public R<QtDefectChartVO> generateSubstrateOverview(@RequestBody QtChartDateRangeDTO dto){
+    public R<QtDefectChartVO> generateSubstrateOverview(@RequestBody QtTimeDTO dto){
         return R.success(qtChartGenerateService.generateSubstrateOverview(dto));
     }
 
