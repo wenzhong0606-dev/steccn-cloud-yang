@@ -133,7 +133,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
                 //获取独立需求类型id
                 Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
                 //获取订单需求类型id
-                Long mrpRequirmentId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+                Long mrpRequirementId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
                 Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
                 MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
                 inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
@@ -150,7 +150,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
                         BigDecimal supplyQuantity = BigDecimal.ZERO;
                         for (PmsMrpInfo pmsMrpInfo : entry.getValue()) {
                             //独立需求 或订单需求
-                            if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId) || pmsMrpInfo.getMrpTypeId().equals(mrpRequirmentId)) {
+                            if (pmsMrpInfo.getMrpTypeId().equals(mrpDemandId) || pmsMrpInfo.getMrpTypeId().equals(mrpRequirementId)) {
                                 demandQuantity = demandQuantity.add(pmsMrpInfo.getQuantity());
                             } else {
                                 supplyQuantity = supplyQuantity.add(pmsMrpInfo.getQuantity());
