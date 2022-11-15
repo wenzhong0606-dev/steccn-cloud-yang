@@ -62,10 +62,11 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
         //根据产线id获取车间id
-        for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkGroupVOList){
-            reportWorkGroupVO.setWorkshopId(sysOfficeMap.get(reportWorkGroupVO.getProductLineId()).getParentId());
+        if (Objects.nonNull(sysOfficeMap)) {
+            for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkGroupVOList){
+                reportWorkGroupVO.setWorkshopId(sysOfficeMap.get(reportWorkGroupVO.getProductLineId()).getParentId());
+            }
         }
-
 
         QueryWrapper<PmsPullForce> queryWrapper = getQueryWrapper(dto);
         List<PmsPullForce> pmsPullForceList = pmsPullForceService.list(queryWrapper);
