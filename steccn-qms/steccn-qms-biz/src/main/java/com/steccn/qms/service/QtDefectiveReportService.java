@@ -96,27 +96,6 @@ public interface QtDefectiveReportService {
     Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto);
 
     /**
-     * 深加工类别趋势明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> deepCategoryTrendDetail(QtChartParamDTO dto);
-
-    /**
-     * 深加工缺陷项趋势-折线图-明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> deepItemTrendDetail(QtChartParamDTO dto);
-
-    /**
-     * 基片缺陷项趋势-折线图-明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> substrateItemTrendDetail(QtChartParamDTO dto);
-
-    /**
      * 深加工缺陷类别趋势-折线图
      * @param dto 筛选条件
      * @return vo
