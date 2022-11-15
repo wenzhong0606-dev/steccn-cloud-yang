@@ -35,7 +35,7 @@ public class QtChartDownloadController {
     @PostMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
-    public void downloadSubstrate(@Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
+    public void downloadSubstrate(@RequestBody QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
         try{
             qtChartDownloadService.downloadSubstrate(response,dto);
         } catch (Exception e) {

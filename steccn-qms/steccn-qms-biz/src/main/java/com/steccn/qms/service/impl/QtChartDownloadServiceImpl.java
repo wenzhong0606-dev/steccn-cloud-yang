@@ -104,7 +104,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             }
         }
         //封装的下载
-        this.downloadTemplate(response,QtManagerConstant.QT_CHART_JPCP_NAME,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPCP,map,data,dto.getBase64());
+        this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPCP,QtManagerConstant.QT_CHART_JPCP_NAME,map,data,dto.getBase64());
     }
 
     @Override
