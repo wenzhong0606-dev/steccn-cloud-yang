@@ -1,5 +1,6 @@
 package com.steccn.qms.service;
 
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
@@ -44,4 +45,12 @@ public interface QtChartGenerateService {
      * @return
      */
     QtChartPieVO generateSubstratePieTend(QtChartParamDTO dto);
+
+    /**
+     * 对list进行过滤
+     * @param rList
+     * @param dto
+     * @return
+     */
+    public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
 }

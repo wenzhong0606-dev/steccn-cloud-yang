@@ -1,6 +1,8 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.EnumUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.metadata.data.ImageData;
@@ -12,10 +14,13 @@ import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.service.QtChartDownloadService;
+import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.util.DownloadModelUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Decoder;
 
@@ -43,53 +48,58 @@ import java.util.stream.Collectors;
 public class QtChartDownloadServiceImpl implements QtChartDownloadService {
     private final RemotePassRateFeignApi remotePassRateFeignApi;
 
+    private final QtChartGenerateService qtChartGenerateService;
+
     @Override
     public void downloadSubstrate(HttpServletResponse response, QtChartYieldDownloadDTO dto) throws IOException {
         Map<String, Object> map = MapUtils.newHashMap();
+        //筛选dto数据
+        if(StrUtil.isBlank(dto.getWorkOrderName())){
+            dto.setWorkOrderName("");
+        }
+        if(StrUtil.isBlank(dto.getProductWorkShopName())){
+            dto.setProductWorkShopName("");
+        }
+        if(StrUtil.isBlank(dto.getProductLineName())){
+            dto.setProductLineName("");
+        }
         //根据自己的模版put数据
-        map.put("workOrderNameCondition", dto.getClassName());
-        map.put("workShopCondition", dto.getWorkShopName());
-        map.put("workLineCondition",dto.getWorkLineName());
+        map.put("workOrderNameCondition", dto.getWorkOrderName());
+        map.put("workShopCondition", dto.getProductWorkShopName());
+        map.put("workLineCondition",dto.getProductLineName());
         map.put("dateStart",dto.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("dateEnd",dto.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("workOrderCondition",dto.getCompare());
+        map.put("dateEnd",dto.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+        }
         //对全量数据表进行筛选
         ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getStartTime());
-        pmsDTO.setEndDate(dto.getEndTime());
+        pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         List<ProducePassRateVO> data = new ArrayList<>();
         if(CollUtil.isNotEmpty(rResult.getData())){
             data = rResult.getData();
-            //多次过滤数据
-            if(dto.getWorkShopName()!=null){
-                data = data.stream().filter(t->t.getWorkshopName().equals(dto.getWorkShopName())).collect(Collectors.toList());
-            }
-            if(dto.getWorkLineName()!=null){
-                data = data.stream().filter(t->t.getWorkshopName().equals(dto.getWorkLineName())).collect(Collectors.toList());
-            }
-            //如果折线图中传了班次
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getName())){
-                if(CollUtil.isNotEmpty(dto.getFilters())){
-                    for(String tmp:dto.getFilters()){
-                        data = data.stream().filter(t->t.getClassesName().equals(tmp)).collect(Collectors.toList());
-                    }
+            QtChartParamDTO param = new QtChartParamDTO();
+            BeanUtils.copyProperties(dto,param);
+            //过滤筛选数据
+            data = qtChartGenerateService.rListFilter(data,param);
+            //过滤图表数据
+            if(CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())){
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
                 }
-            }
-            //传了车间
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName())){
-                if(CollUtil.isNotEmpty(dto.getFilters())){
-                    for(String tmp:dto.getFilters()){
-                        data = data.stream().filter(t->t.getWorkshopName().equals(tmp)).collect(Collectors.toList());
-                    }
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
                 }
-            }
-            //传了产线
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName())){
-                if(CollUtil.isNotEmpty(dto.getFilters())){
-                    for(String tmp:dto.getFilters()){
-                        data = data.stream().filter(t->t.getProductLineName().equals(tmp)).collect(Collectors.toList());
-                    }
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
                 }
             }
         }

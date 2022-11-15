@@ -32,7 +32,7 @@ import java.util.Map;
 public class QtChartDownloadController {
     private final QtChartDownloadService qtChartDownloadService;
 
-    @GetMapping("/substrate")
+    @PostMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
     public void downloadSubstrate(@Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {

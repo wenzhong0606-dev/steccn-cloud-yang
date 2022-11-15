@@ -804,6 +804,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      * @param rList
      * @return
      */
+    @Override
     public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList,QtChartParamDTO dto){
         rList.forEach(tmp->{
             if(tmp.getWorkshopName() == null){
