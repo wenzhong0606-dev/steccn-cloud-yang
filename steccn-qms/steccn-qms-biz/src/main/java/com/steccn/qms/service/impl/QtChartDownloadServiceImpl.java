@@ -150,8 +150,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             map.put("workShopCondition", "基片一车间");
             ImageData imageData = new ImageData();
 //            imageData.setImage();
-            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
-            map.put("img",imageData);
+//            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
+//            map.put("img",imageData);
             excelWriter.fill(map, writeSheet);
         }
 
@@ -167,7 +167,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
      * @param base64 图片base64编码
      * @throws IOException
      */
-    public void downloadTemplate(HttpServletResponse response,String modelName,String downloadName, Map<String, Object> fixMap, List dataList,String base64) throws IOException {
+    public void downloadTemplate(HttpServletResponse response,String modelName,String downloadName, Map<String, Object> fixMap, List<?> dataList,String base64) throws IOException {
         //1、从服务器获取模板数据
         InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
         //2、设置下载头
@@ -180,11 +180,13 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             // 如果数据量大 list不是最后一行 参照下一个
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
             excelWriter.fill(dataList, fillConfig, writeSheet);
-            excelWriter.fill(dataList, fillConfig, writeSheet);
-            ImageData imageData = new ImageData();
-            imageData.setImage(Base64.getDecoder().decode(base64));
-            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
-            fixMap.put("img",imageData);
+//            excelWriter.fill(dataList, fillConfig, writeSheet);
+            if(StrUtil.isNotBlank(base64)){
+//            ImageData imageData = new ImageData();
+//            imageData.setImage(Base64.getDecoder().decode(base64));
+//            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
+//            fixMap.put("img",imageData);
+            }
             excelWriter.fill(fixMap, writeSheet);
         }
     }
