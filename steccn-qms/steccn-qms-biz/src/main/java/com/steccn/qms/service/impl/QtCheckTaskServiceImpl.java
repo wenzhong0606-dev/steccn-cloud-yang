@@ -500,19 +500,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         statusDTO.setStatus(dto.getStatus());
         //组装落板记录详情数据
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
-            List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
-            QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
-            QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
             QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-
+            List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
                 if (dto.getId()!=null){
-                    qtCheckTaskDestoryInfoDTO.setCopy(qtCheckTaskDetailService.getById(dto.getId()).getCopy());
+                    QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
+                    QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
+                    if (qtCheckTaskDetailService.getById(dto.getId()) != null) {
+                        qtCheckTaskDestoryInfoDTO.setCopy(qtCheckTaskDetailService.getById(dto.getId()).getCopy());
+                    }
                     qtCheckTaskDestoryInfoDTO.setTaskId(dto.getId());
                     qtCheckTaskDestoryInfoDTO.setDestoryDetail(destoryInfoVO.getDestoryDetail());
                     qtCheckTaskDestoryInfoDTO.setDestoryReason(destoryInfoVO.getDestoryReason());
                     qtCheckTaskDestoryInfoDTO.setDelFlag(0);
-                    qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(destoryInfoVO.getDestoryInfoRemark());
+                    qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(dto.getDestoryInfoRemark());
                     qtCheckTaskDestoryInfoDTO.setCreateBy(SecurityUtils.getUser().getUserId());
                     qtCheckTaskDestoryInfoDTO.setDestoryStartTime(destoryInfoVO.getDestoryStartTime());
                     qtCheckTaskDestoryInfoDTO.setDestoryEndTime(destoryInfoVO.getDestoryEndTime());
@@ -520,15 +521,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     if (qtCheckTaskCopyService.getById(dto.getId())!=null) {
                         qtCheckTaskDestoryInfoDTO.setSampleNum(qtCheckTaskCopyService.getById(dto.getId()).getSampleNum());
                     }
-
+                    BeanUtils.copyProperties(qtCheckTaskDestoryInfoDTO,qtCheckTaskDestoryInfo);
+                    qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
                 }
-                qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(destoryInfoVO.getDestoryInfoRemark());
-                BeanUtils.copyProperties(qtCheckTaskDestoryInfoDTO,qtCheckTaskDestoryInfo);
-                qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
         }
-
         return updateStatus(statusDTO);
     }
 
@@ -647,11 +645,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //组装落板记录详情数据
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
-            QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
-            QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
             QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
+                QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
+                QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
                 if (dto.getId()!=null){
                     qtCheckTaskDestoryInfoDTO.setCopy(qtCheckTaskDetailService.getById(dto.getId()).getCopy());
                     qtCheckTaskDestoryInfoDTO.setTaskId(dto.getId());
@@ -668,7 +665,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     }
 
                 }
-                qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(destoryInfoVO.getDestoryInfoRemark());
+                qtCheckTaskDestoryInfoDTO.setDestoryInfoRemark(dto.getDestoryInfoRemark());
                 BeanUtils.copyProperties(qtCheckTaskDestoryInfoDTO,qtCheckTaskDestoryInfo);
                 qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
             });

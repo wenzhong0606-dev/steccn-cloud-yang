@@ -72,7 +72,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<String> xAis = compareAndMarkline(dto.getCompare(), series, flatDataList, categoryIdNameMap,markLine);
         resVo.setSeries(series);
         resVo.setXAis(xAis);
-        resVo.setMarkLine( markLine);
+        //resVo.setMarkLine( markLine);
         return resVo;
     }
 
@@ -170,7 +170,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             });
             flag.set(Boolean.TRUE);
             series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
-            //markLine.setData();
+           // markLine.setData();
         });
         return xAis;
     }

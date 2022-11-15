@@ -109,8 +109,8 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 备注
      */
-    @TableField(value = "remark")
-    private String remark;
+    @TableField(value = "destory_info_remark")
+    private String destoryInfoRemark;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
