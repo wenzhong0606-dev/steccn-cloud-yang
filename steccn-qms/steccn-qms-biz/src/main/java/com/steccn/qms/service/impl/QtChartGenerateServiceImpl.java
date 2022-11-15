@@ -559,13 +559,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             pmsEndDate = fullDate;
             pmsStartDate = pmsEndDate.minusDays(6);
             pmsDTO.setBeginDate(pmsStartDate);
-            pmsDTO.setEndDate(pmsEndDate);
+            pmsDTO.setEndDate(pmsEndDate.plusDays(1));
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         }else {
             pmsEndDate = dto.getEndTime();
             pmsStartDate = dto.getStartTime();
             pmsDTO.setBeginDate(dto.getStartTime());
-            pmsDTO.setEndDate(dto.getEndTime());
+            pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
             fullDate = pmsEndDate;
         }
