@@ -23,13 +23,16 @@ public class StackGraphUtil {
 
     private static Random random = new Random();
 
+    private static final String STR_STACK = "Total";
+    private static final String STR_GRAPH = "line";
+
     /**
      * 单只柱子转换数据
      *
      * @param dataList 数据集合
      * @return
      */
-    public static <T1,T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList) {
+    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList) {
         List<BiStackGraphDTO<T1, T2>> biDataList = Lists.newArrayList();
         //适配biConvertData
         for (StackGraphDTO<T1, T2> data : dataList) {
@@ -54,7 +57,7 @@ public class StackGraphUtil {
      * @param dataList
      * @return
      */
-    public static <T1,T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList) {
+    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList) {
         QtLineChartBiBarDTO qtLineChartBarDTO = new QtLineChartBiBarDTO();
         qtLineChartBarDTO.setXData(dataList.stream().map(v -> v.getXAxis()).collect(Collectors.toList()));
         //存放x轴的map
@@ -92,8 +95,8 @@ public class StackGraphUtil {
                 QtSeriesDataDTO<T1, T2> qtSeriesDataDTO = new QtSeriesDataDTO();
                 qtSeriesDataDTO.setName(entryIn.getKey());
                 qtSeriesDataDTO.setData(entryIn.getValue());
-                qtSeriesDataDTO.setStack("stack");
-                qtSeriesDataDTO.setType("graph");
+                qtSeriesDataDTO.setStack(STR_STACK);
+                qtSeriesDataDTO.setType(STR_GRAPH);
                 seriesDataVOList.add(qtSeriesDataDTO);
                 if (flag.get()) {
                     nameList.add(entryIn.getKey());
@@ -107,39 +110,39 @@ public class StackGraphUtil {
         return qtLineChartBarDTO;
     }
 
-    private static BiStackGraphDTO<String, BigDecimal> getStackGraphDTO(String x) {
-        BiStackGraphDTO<String, BigDecimal> stackGraphDTO = new BiStackGraphDTO();
-        stackGraphDTO.setXAxis(x);
-        List<List<TupleDTO<String, BigDecimal>>> data1 = Lists.newArrayList();
-        List<TupleDTO<String, BigDecimal>> dataList1 = Lists.newArrayList();
-        dataList1.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
-        dataList1.add(new TupleDTO<>("乙班", BigDecimal.valueOf(random.nextInt(100))));
-        dataList1.add(new TupleDTO<>("丙班", BigDecimal.valueOf(random.nextInt(100))));
-        data1.add(dataList1);
+//    private static BiStackGraphDTO<String, BigDecimal> getStackGraphDTO(String x) {
+//        BiStackGraphDTO<String, BigDecimal> stackGraphDTO = new BiStackGraphDTO();
+//        stackGraphDTO.setXAxis(x);
+//        List<List<TupleDTO<String, BigDecimal>>> data1 = Lists.newArrayList();
+//        List<TupleDTO<String, BigDecimal>> dataList1 = Lists.newArrayList();
+//        dataList1.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
+//        dataList1.add(new TupleDTO<>("乙班", BigDecimal.valueOf(random.nextInt(100))));
+//        dataList1.add(new TupleDTO<>("丙班", BigDecimal.valueOf(random.nextInt(100))));
+//        data1.add(dataList1);
+//
+//        List<TupleDTO<String, BigDecimal>> dataList2 = Lists.newArrayList();
+//        dataList2.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
+//        dataList2.add(new TupleDTO<>("乙班", BigDecimal.valueOf(random.nextInt(100))));
+//        dataList2.add(new TupleDTO<>("丙班", BigDecimal.valueOf(random.nextInt(100))));
+//        data1.add(dataList2);
+//
+//        stackGraphDTO.setData(data1);
+//        return stackGraphDTO;
+//    }
 
-        List<TupleDTO<String, BigDecimal>> dataList2 = Lists.newArrayList();
-        dataList2.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
-        dataList2.add(new TupleDTO<>("乙班", BigDecimal.valueOf(random.nextInt(100))));
-        dataList2.add(new TupleDTO<>("丙班", BigDecimal.valueOf(random.nextInt(100))));
-        data1.add(dataList2);
-
-        stackGraphDTO.setData(data1);
-        return stackGraphDTO;
-    }
-
-    public static void main(String[] args) {
-        List<BiStackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
-        dataList.add(getStackGraphDTO("2022-09-15"));
-        dataList.add(getStackGraphDTO("2022-09-16"));
-        dataList.add(getStackGraphDTO("2022-09-17"));
-        dataList.add(getStackGraphDTO("2022-09-18"));
-        dataList.add(getStackGraphDTO("2022-09-19"));
-        dataList.forEach(ele -> {
-            log.info("{}", ele);
-        });
-//        QtLineChartBarDTO qtLineChartBarDTO = biConvertData(dataList);
-        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(dataList);
-        log.info("{}", qtLineChartBiBarDTO);
-    }
+//    public static void main(String[] args) {
+//        List<BiStackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+//        dataList.add(getStackGraphDTO("2022-09-15"));
+//        dataList.add(getStackGraphDTO("2022-09-16"));
+//        dataList.add(getStackGraphDTO("2022-09-17"));
+//        dataList.add(getStackGraphDTO("2022-09-18"));
+//        dataList.add(getStackGraphDTO("2022-09-19"));
+//        dataList.forEach(ele -> {
+//            log.info("{}", ele);
+//        });
+////        QtLineChartBarDTO qtLineChartBarDTO = biConvertData(dataList);
+//        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(dataList);
+//        log.info("{}", qtLineChartBiBarDTO);
+//    }
 
 }
