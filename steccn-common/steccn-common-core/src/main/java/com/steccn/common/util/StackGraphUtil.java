@@ -41,7 +41,7 @@ public class StackGraphUtil {
         }
         QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(biDataList);
         QtLineChartBarDTO resDto = new QtLineChartBarDTO();
-        resDto.setName(qtLineChartBiBarDTO.getName());
+        resDto.setMarkLine(qtLineChartBiBarDTO.getName());
         resDto.setXData(qtLineChartBiBarDTO.getXData());
         resDto.setSeriesDataVO((List<QtSeriesDataDTO>) qtLineChartBiBarDTO.getSeriesDataVO().get(0));
         return resDto;
