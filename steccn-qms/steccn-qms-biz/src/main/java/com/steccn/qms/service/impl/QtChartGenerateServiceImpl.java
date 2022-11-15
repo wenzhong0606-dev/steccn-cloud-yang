@@ -549,7 +549,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      */
     @Override
     public QtDefectChartVO generateSubstrateOverview(QtTimeDTO dto) {
-        QtDefectChartVO<String, String, String> vo = new QtDefectChartVO();
+        QtDefectChartVO<String, BigDecimal, String> vo = new QtDefectChartVO();
         //获取生产系统数据
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         R<List<ProducePassRateVO>> rResult;
@@ -572,7 +572,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         vo.setTooltip(String.valueOf(pmsEndDate.getMonthValue()) + "-" + String.valueOf(pmsEndDate.getDayOfMonth()) + "所有基片车间的总成品率");
 
         List<String> xData = new ArrayList<>();
-        List<String> yData = new ArrayList<>();
+        List<BigDecimal> yData = new ArrayList<>();
         if (CollUtil.isNotEmpty(rResult.getData())) {
             List<ProducePassRateVO> rList = rResult.getData();
             //避免车间为空,报空指针异常
@@ -591,9 +591,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 LocalDate tmpDate = pmsStartDate.plusDays(i);
                 xData.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 if (resultMap.get(tmpDate) == null) {
-                    yData.add(new DecimalFormat("0.00%").format(BigDecimal.ZERO));
+                    yData.add(BigDecimal.ZERO);
                 } else {
-                    yData.add(new DecimalFormat("0.00%").format(resultMap.get(tmpDate)));
+                    yData.add(resultMap.get(tmpDate));
                 }
 
             }
@@ -633,7 +633,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (yData.size() == 0) {
             vo.setValue("0.00%");
         } else {
-            vo.setValue(yData.get(yData.size() - 1));
+            vo.setValue(new DecimalFormat("0.00%").format(yData.get(yData.size() - 1)));
         }
         BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1)).getValue();
         if (targetValue == null) {
