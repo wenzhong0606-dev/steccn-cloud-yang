@@ -47,4 +47,11 @@ public class QtCheckTaskDetailVO implements Serializable {
      * 设置落板概况模块
      */
     private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
+
+    /**
+     * 落板备注
+     */
+    private String destoryInfoRemark;
+
+
 }

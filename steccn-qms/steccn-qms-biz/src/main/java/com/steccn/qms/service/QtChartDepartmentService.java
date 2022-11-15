@@ -16,9 +16,9 @@ import java.util.List;
  */
 public interface QtChartDepartmentService {
 
-    public QtDefectChartVO getChartDepartmentInfo(QtChatDepartmentDTO qtChatDepartmentDTO);
+    //public QtDefectChartVO getChartDepartmentInfo(LocalDateTime selectDateTime);
 
-    public QtDefectChartVO getChartDepartmentInfoSJG(QtChatDepartmentDTO qtChatDepartmentDTO);
+    //public QtDefectChartVO getChartDepartmentInfoSJG(LocalDateTime selectDateTime);
 
     /**
      * 根据类型获取合格率
