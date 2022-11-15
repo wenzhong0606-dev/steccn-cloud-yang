@@ -5,6 +5,7 @@ import org.apache.poi.ss.formula.functions.T;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author chenhuan
@@ -13,7 +14,9 @@ import java.time.LocalDate;
 @Data
 public class PmsReportWorkGroupVO {
 
-    private LocalDate date;
+    private LocalDateTime date;
+
+    private LocalDate groupDate;
 
     private BigDecimal quantity;
 
