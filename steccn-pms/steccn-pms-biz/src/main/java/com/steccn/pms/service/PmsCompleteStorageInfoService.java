@@ -7,6 +7,8 @@ import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
 
     /**
      * 根据订单id获取数据详情分页
+     *
      * @param dto
      * @return
      */
@@ -37,15 +40,26 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
 
     /**
      * 根据订单id获取完工数量单位
+     *
      * @param orderSet
      * @return
      */
-    Map<Long,PmsCompleteStorageNumDTO> numByOrderId(Set<Long> orderSet);
+    Map<Long, PmsCompleteStorageNumDTO> numByOrderId(Set<Long> orderSet);
 
     /**
      * 根据完成订单入库单号获取箱号编码
+     *
      * @param id
      * @return
      */
-    List<String> getCaseNo (Long id);
+    List<String> getCaseNo(Long id);
+
+    /**
+     * 查询物料的入库
+     *
+     * @param materialSet 物料集合
+     * @param date 指定日期
+     * @return map key为物料id value 【key为班次id，value为数量】
+     */
+    Map<Long, Map<Long, BigDecimal>> materialMap(Set<Long> materialSet , LocalDate date);
 }

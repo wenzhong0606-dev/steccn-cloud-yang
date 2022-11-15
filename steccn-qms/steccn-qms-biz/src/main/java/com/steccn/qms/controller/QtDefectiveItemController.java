@@ -72,4 +72,15 @@ public class QtDefectiveItemController implements Serializable {
     public R<List<QtDefectiveItemTreeVo>> selectItemList() {
         return R.success(qtDefectiveItemService.selectItemList());
     }
+
+    /**
+     * 根据缺陷项类别返回缺陷项
+     * @param id
+     * @return
+     */
+    @GetMapping("/select/item/{id}")
+    @ApiOperation(value = "根据缺陷类别查询缺陷项")
+    public R<List<QtBaseIdNameDTO>> selectItemIds(@PathVariable("id") Integer id) {
+        return R.success(qtDefectiveItemService.selectItemIds(id));
+    }
 }

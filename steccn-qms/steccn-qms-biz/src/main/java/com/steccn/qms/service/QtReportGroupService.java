@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.steccn.qms.domain.QtReportGroup;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtReportGroupDTO;
+import com.steccn.qms.vo.QtReportChartVO;
 import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 
@@ -22,7 +23,7 @@ public interface QtReportGroupService extends IService<QtReportGroup> {
      * @param id
      * @return
      */
-    List<QtReportVO> getQtReportList(Integer id);
+    List<QtReportChartVO> getQtReportList(Integer id);
 
     /**
      * 查询分组以及该分组下的卡片
@@ -36,4 +37,11 @@ public interface QtReportGroupService extends IService<QtReportGroup> {
      * @return
      */
     Boolean deletQtReportGroup(Integer id);
+
+    /**
+     * 编辑报表分组
+     * @param dto
+     * @return
+     */
+    Boolean edit(QtReportGroupDTO dto);
 }

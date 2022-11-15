@@ -18,6 +18,7 @@ import com.steccn.qms.vo.QtCheckTaskDefectVO;
 import com.steccn.qms.vo.QtTaskDefectVO;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -30,13 +31,13 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-02 08:54:09
  */
 @Service
-@RequiredArgsConstructor
 public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGroupItemMapper, QtCheckPlanGroupItem>
         implements QtCheckPlanGroupItemService {
+    @Autowired
+    private QtDefectiveItemService qtDefectiveItemService;
 
-    private final QtDefectiveItemService qtDefectiveItemService;
-
-    private final QtItemCategoryService qtItemCategoryService;
+    @Autowired
+    private QtItemCategoryService qtItemCategoryService;
 
     @Override
     public Set<Integer> inUseCheckItem() {

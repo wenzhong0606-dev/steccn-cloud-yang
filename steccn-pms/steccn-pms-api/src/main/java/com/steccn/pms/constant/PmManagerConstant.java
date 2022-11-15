@@ -63,10 +63,24 @@ public interface PmManagerConstant {
     String MRP_MANUFACTURE_REQUIRMENT = "mrp_manufacture_requirment";
 
     /**
+     * 生产订单
+     */
+    String MRP_PRODUCE_ORDER ="mrp_produce_order";
+
+    /**
      * 班组
      */
     String SYS_TEAM = "sys_team";
 
+    /**
+     * 领料类型
+     */
+    String MATERIAL_REQUISITION =  "material_requisition";
+
+    /**
+     * 生产领料
+     */
+    String PRODUCE_PICK =  "produce_pick";
     /**
      * 班次
      */

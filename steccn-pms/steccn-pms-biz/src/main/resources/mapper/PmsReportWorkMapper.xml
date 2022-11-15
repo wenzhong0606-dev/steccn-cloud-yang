@@ -90,35 +90,162 @@
     <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
         SELECT
             0 AS type,
-            ppo.production_line_id,
+            ppo.production_line_id as productLineId,
             ppo.material_id,
-            ppo.material_code,
-            ppo.material_name,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
             prw.classes_id,
             sum( prw.process_quantity ) AS quantity,
-            prw.unit_id
+            any_value(prw.unit_id)
         FROM
             pms_report_work prw
                 JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        WHERE
+            prw.del_flag = 0 AND ppo.del_flag = 0
+        <if test="classesIdList !=null and classesIdList.size > 0">
+            AND prw.classes_id in
+            <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                #{classesId}
+            </foreach>
+        </if>
+        <if test="productLineIdList !=null and productLineIdList.size > 0">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+          AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
         GROUP BY
+            prw.produce_order_id,
             ppo.production_line_id,
             ppo.material_id,
-            prw.classes_id UNION ALL
+            prw.classes_id
+        UNION ALL
         SELECT
             1 AS type,
-            ppo.production_line_id,
+            ppo.production_line_id as productLineId,
             ppo.material_id,
-            ppo.material_code,
-            ppo.material_name,
+            any_value(ppo.material_code),
+            any_value(ppo.material_name),
             pcsi.classes_id,
             sum( pcsi.quantity ) AS quantity,
-            pcsi.unit_id
+            any_value(pcsi.unit_id)
         FROM
             pms_complete_storage_info pcsi
                 JOIN pms_produce_order ppo ON pcsi.produce_order_id = ppo.id
+        WHERE
+        pcsi.del_flag = 0 AND ppo.del_flag = 0
+        <if test="classesIdList !=null and classesIdList.size > 0">
+            AND pcsi.classes_id in
+            <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                #{classesId}
+            </foreach>
+        </if>
+        <if test="productLineIdList !=null and productLineIdList.size > 0">
+            AND ppo.production_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+        AND DATE_FORMAT(pcsi.create_time, '%Y-%m-%d' ) = #{date}
         GROUP BY
+            ppo.id,
             ppo.production_line_id,
             ppo.material_id,
             pcsi.classes_id
+    </select>
+    <select id="dateProductNum" resultType="com.steccn.pms.domain.PmsReportWork">
+        SELECT
+            classes_id , sum(process_quantity) as process_quantity
+        FROM
+            pms_report_work
+        where product_line_id = #{productLineId}
+          AND DATE_FORMAT(create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            classes_id
+    </select>
+    <select id="furtherProduceReport" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
+        SELECT
+            prw.product_line_id,
+            prw.classes_id,
+            prw.process_id,
+            ppo.material_id,
+            sum( prw.process_quantity ) as process_quantity,
+            sum( prw.badness_quantity ) as badness_quantity
+        FROM
+            pms_report_work prw
+                JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        WHERE
+        prw.del_flag = 0 AND ppo.del_flag = 0
+        <if test="classesIdList != null and classesIdList != ''">
+            AND prw.classes_id in
+            <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                #{classesId}
+            </foreach>
+        </if>
+        <if test="productLineIdList != null and productLineIdList != ''">
+            AND prw.product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
+          AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            prw.produce_order_id,
+            prw.product_line_id,
+            prw.classes_id,
+            prw.process_id,
+            ppo.material_id
+
+
+
+    </select>
+
+    <select id="selectAllGroupByDate" resultType="com.steccn.pms.vo.PmsReportWorkGroupVO">
+        SELECT
+            DATE_FORMAT(create_time,'%Y-%m-%d') date,
+            classes_id classesId,
+            product_line_id productLineId,
+            sum(process_quantity) quantity
+        FROM
+            pms_report_work c
+        WHERE
+            c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
+        GROUP BY
+            DATE_FORMAT(create_time,'%Y-%m-%d'),product_line_id,classes_id
+
+    </select>
+    <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">
+        SELECT
+            ppo.id as produceOrderId,
+            ppo.material_id,
+            prw.process_id,
+            prw.product_line_id,
+            prw.classes_id
+        FROM
+            pms_report_work prw
+                JOIN pms_produce_order ppo ON ppo.id = prw.produce_order_id
+        WHERE
+            prw.del_flag = 0 AND ppo.del_flag = 0
+            <if test="classesIdList != null and classesIdList != ''">
+                AND prw.classes_id in
+                <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
+                    #{classesId}
+                </foreach>
+            </if>
+            <if test="productLineIdList != null and productLineIdList != ''">
+                AND prw.product_line_id in
+                <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                    #{productLineId}
+                </foreach>
+            </if>
+            AND DATE_FORMAT(prw.create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            ppo.id,
+            prw.product_line_id,
+            prw.classes_id,
+            ppo.material_id,
+            prw.process_id
+
     </select>
 </mapper>

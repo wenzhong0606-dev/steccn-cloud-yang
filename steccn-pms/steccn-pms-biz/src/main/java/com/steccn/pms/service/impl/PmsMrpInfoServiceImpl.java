@@ -1,32 +1,36 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmsMrp;
-import com.steccn.pms.domain.PmsMrpInfo;
-import com.steccn.pms.domain.PmsProducePlan;
-import com.steccn.pms.dto.MesMaterialInventoryDTO;
-import com.steccn.pms.dto.PmsProducePlanDTO;
-import com.steccn.pms.dto.PmsProducePlanDetailsDTO;
-import com.steccn.pms.dto.PmsProducePlanOrderDTO;
+import com.steccn.pms.domain.*;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.mapper.PmsProducePlanMapper;
 import com.steccn.pms.service.PmsMrpInfoService;
 import com.steccn.pms.mapper.PmsMrpInfoMapper;
+import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.vo.PmsMrpInfoVO;
+import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -89,14 +93,13 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
                 BigDecimal availableQuantity = materialInventory.getOrDefault(key, inventoryDTO).getAvailableQuantity();
                 for (PmsMrpInfo pmsMrpInfo : list) {
                     availableQuantity = availableQuantity.subtract(pmsMrpInfo.getQuantity());
-                    pmsMrpInfo.setAvailableQuantity(availableQuantity);
                     pmsMrpInfo.setStatus(PmManagerConstant.OrderStateEnum.ZERO.getCode());
                     // 库存小于0，则创建计划订单数据
-                    if (pmsMrpInfo.getAvailableQuantity().compareTo(BigDecimal.ZERO) < 0) {
+                    if (availableQuantity.compareTo(BigDecimal.ZERO) < 0) {
                         pmsMrpInfos.add(create(PmManagerConstant.MRP_PLANNED_ORDER, pmsMrpInfo.getAvailableQuantity().negate(),
                                 BigDecimal.ZERO, pmsMrpInfo.getMaterialId(), pmsMrpInfo.getMrpDate(),
-                                pmsMrpInfo.getPlanId(),PmManagerConstant.OrderStateEnum.ZERO.getCode()));
-                        pmsMrpInfo.setAvailableQuantity(BigDecimal.ZERO);
+                                pmsMrpInfo.getPlanId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(),null));
+//                        pmsMrpInfo.setAvailableQuantity(BigDecimal.ZERO);
                         availableQuantity = BigDecimal.ZERO;
                     }
                 }
@@ -116,7 +119,8 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
             producePlanList.forEach(pmsProducePlan -> {
                 //新增独立需求计划 todo 暂不计算安全库存
                 list.add(create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(),
-                        BigDecimal.ZERO, pmsProducePlan.getMaterialId(), pmsProducePlan.getPlanDate(), pmsProducePlan.getId(),PmManagerConstant.OrderStateEnum.ONE.getCode()));
+                        BigDecimal.ZERO, pmsProducePlan.getMaterialId(), pmsProducePlan.getPlanDate(),
+                        pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ONE.getCode(),null));
                 planIds.add(pmsProducePlan.getId());
             });
             //清除已生成的独立需求计划
@@ -124,6 +128,138 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         }
         //处理数据
         return saveBatch(list);
+    }
+
+    @Override
+    public Page<PmsMrpInfoVO> infoPage(PmsMrpInfoPageDTO dto) {
+        //1.获取库存信息以及安全库存信息
+        Set<Long> materialIds = Sets.newHashSet();
+        materialIds.add(dto.getId());
+        Map<Long, MesMaterialInventoryDTO> materialInventory = remoteMessFeignApi.materialInventory(materialIds);
+        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
+        mesMaterialInventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
+        MesMaterialInventoryDTO orDefault = materialInventory.getOrDefault(dto.getId(), mesMaterialInventoryDTO);
+        //2.创建库存信息
+        PmsMrpInfo pmsMrpInfo = create(PmManagerConstant.MRP_INVENTORY, null, orDefault.getAvailableQuantity(), dto.getId(),
+                LocalDate.now(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode(),null);
+        PmsMrpInfoVO infoVO = BeanUtil.copyProperties(pmsMrpInfo, PmsMrpInfoVO.class);
+        //3.处理安全库存以及分页逻辑问题
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getCurrent())) {
+            //需考虑安全库存动态配置 todo 获取安全库存 没有则不显示
+            dto.setSize(dto.getSize() - PmManagerConstant.OrderStateEnum.ONE.getCode());
+        }
+        //4.自定义查询条件获取分页数据
+        LambdaQueryWrapper<PmsMrpInfo> eq = new LambdaQueryWrapper<PmsMrpInfo>()
+                .eq(Objects.nonNull(dto.getId()), PmsMrpInfo::getMaterialId, dto.getId())
+                .orderByAsc(PmsMrpInfo::getMrpDate);
+        //5.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //6.查询分页数据
+        IPage resPage = page(page, eq);
+        //7.拷贝page信息
+        BeanUtil.copyProperties(resPage, page);
+        //8.拷贝返回的信息
+        List<PmsMrpInfoVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsMrpInfoVO.class);
+        //9.处理数据
+        Set<Long> typeIds = Sets.newHashSet();
+        typeIds.add(infoVO.getMrpTypeId());
+        //进行mrp计算
+        Set<String> codes = org.apache.commons.compress.utils.Sets.newHashSet();
+        codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
+        codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
+        codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
+        Map<String, SysDictVO> dictMapId = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
+        //获取独立需求类型id
+        Long mrpDemandId = dictMapId.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
+        //获取订单需求类型id
+        Long mrpRequirmentId = dictMapId.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
+        BigDecimal availableQuantity = orDefault.getAvailableQuantity();
+        res.forEach(pmsMrpInfoVO -> {
+            typeIds.add(pmsMrpInfoVO.getMrpTypeId());
+        });
+        //获取字典数据
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeIds)).get();
+        res.forEach(pmsMrpInfoVO -> {
+            pmsMrpInfoVO.setMrpTypeName(dictMap.get(pmsMrpInfoVO.getMrpTypeId()));
+        });
+        List<PmsMrpInfoVO> infoVOList = Lists.newArrayList();
+        for (PmsMrpInfoVO info : res) {
+            if (info.getMrpTypeId().equals(mrpDemandId) || info.getMrpTypeId().equals(mrpRequirmentId)) {
+                availableQuantity = availableQuantity.subtract(info.getQuantity());
+                info.setAvailableQuantity(availableQuantity);
+            } else {
+                availableQuantity = availableQuantity.add(info.getQuantity());
+                info.setAvailableQuantity(availableQuantity);
+            }
+            infoVOList.add(info);
+        }
+        infoVO.setMrpTypeName(dictMap.get(infoVO.getMrpTypeId()));
+        infoVOList.add(PmManagerConstant.OrderStateEnum.ZERO.getCode(), infoVO);
+        page.setSize(infoVOList.size());
+        page.setTotal(page.getTotal() + PmManagerConstant.OrderStateEnum.ONE.getCode());
+        return page.setRecords(infoVOList);
+    }
+
+
+    @Override
+    public void turnProduceOrder(PmsProduceOrderDTO model) {
+        //获取Mrp的计划订单数据
+        PmsMrpInfo planInfo = getById(model.getMrpId());
+        Assert.notNull(planInfo, "计划订单不存在");
+        //创建生产计划数据
+        PmsMrpInfo produceInfo = create(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, model.getQuantity(),
+                planInfo.getAvailableQuantity(), model.getMaterialId(), planInfo.getMrpDate()
+                , model.getMrpId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(),null);
+        //判断当前的计划订单需求数量是否大于生产订单
+        if (planInfo.getQuantity().compareTo(produceInfo.getQuantity()) > 0) {
+            planInfo.setQuantity(planInfo.getQuantity().subtract(planInfo.getQuantity()));
+        }
+        if (planInfo.getQuantity().compareTo(produceInfo.getQuantity()) < 0) {
+//            produceInfo.setAvailableQuantity(produceInfo.getQuantity().subtract(planInfo.getQuantity()));
+            //对当日之后的计划订单数据重新进行mrp计算
+            //获取当前日期的下一天
+            LocalDate date = produceInfo.getMrpDate().plusDays(1);
+            //获取当前月的最后一天
+            LocalDate with = produceInfo.getMrpDate().with(TemporalAdjusters.lastDayOfMonth());
+            //获取当日以后的所有mrp数据(计划订单，独立需求，生产订单)
+            List<PmsMrpInfo> list = list(new LambdaQueryWrapper<PmsMrpInfo>()
+                    .eq(PmsMrpInfo::getMaterialId, model.getMaterialId())
+                    .between(PmsMrpInfo::getMrpDate, date, with)
+                    .orderByAsc(PmsMrpInfo::getMrpDate));
+            BigDecimal availableQuantity = produceInfo.getQuantity().subtract(planInfo.getQuantity());
+            Set<String> codeSet = Sets.newHashSet();
+            codeSet.add(PmManagerConstant.MRP_PLANNED_ORDER);
+            codeSet.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
+            codeSet.add(PmManagerConstant.MRP_PURCHASE_REQUEST);
+            Set<Long> ids = Sets.newHashSet();
+            Map<String, SysDictVO> typeMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codeSet)).get();
+            ids.add(typeMap.get(PmManagerConstant.MRP_PLANNED_ORDER).getId());
+            ids.add(typeMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId());
+            ids.add(typeMap.get(PmManagerConstant.MRP_PURCHASE_REQUEST).getId());
+            for (PmsMrpInfo pmsMrpInfo : list) {
+                availableQuantity = availableQuantity.subtract(pmsMrpInfo.getQuantity());
+                pmsMrpInfo.setStatus(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+                // 库存小于0，则创建计划订单数据
+                if (availableQuantity.compareTo(BigDecimal.ZERO) < 0) {
+                    //获取当天的计划订单以及生产订单以及采购申请的数量 todo:采购申请的数据暂无
+                    List<PmsMrpInfo> supplyInfo = list(new LambdaQueryWrapper<PmsMrpInfo>().eq(PmsMrpInfo::getMaterialId, pmsMrpInfo.getMaterialId())
+                            .eq(PmsMrpInfo::getMrpDate, pmsMrpInfo.getMrpDate())
+                            .in(PmsMrpInfo::getMrpTypeId, ids));
+                    for (PmsMrpInfo mrpInfo : supplyInfo) {
+//                        mrpInfo
+                    }
+//                    pmsMrpInfos.add(create(PmManagerConstant.MRP_PLANNED_ORDER, pmsMrpInfo.getAvailableQuantity().negate(),
+//                            BigDecimal.ZERO, pmsMrpInfo.getMaterialId(), pmsMrpInfo.getMrpDate(),
+//                            pmsMrpInfo.getPlanId(), PmManagerConstant.OrderStateEnum.ZERO.getCode()));
+                    pmsMrpInfo.setAvailableQuantity(BigDecimal.ZERO);
+                    availableQuantity = BigDecimal.ZERO;
+                }
+            }
+        }
+        if (planInfo.getQuantity().compareTo(produceInfo.getQuantity()) == 0) {
+            removeById(planInfo.getId());
+        }
+
     }
 
     /**
@@ -138,7 +274,8 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
      * @param status
      * @return
      */
-    PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId,Integer status) {
+    @Override
+    public PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status,String mrpElement) {
         SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(type, PmManagerConstant.MRP_TYPE)).get();
         PmsMrpInfo planOrder = new PmsMrpInfo();
         planOrder.setMrpTypeId(safetyType.getId());
@@ -148,8 +285,10 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         planOrder.setMrpDate(mrpDate);
         planOrder.setPlanId(planId);
         planOrder.setStatus(status);
+        planOrder.setMrpElement(mrpElement);
         return planOrder;
     }
+
 }
 
 

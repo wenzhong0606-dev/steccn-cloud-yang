@@ -3,6 +3,7 @@ package com.steccn.qms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -11,6 +12,7 @@ import com.steccn.qms.vo.QtDefectiveItemVO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -73,4 +75,25 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map key为旧检验项id value为新检验项id
      */
     Map<Integer, Integer> defectiveItemSnapshot(List<Integer> defectiveItemIdList);
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    List<QtBaseIdNameDTO> selectItemIds(Integer id);
+
+    /**
+     * 根据缺陷项，获取id名字
+     * @param defectIdSet 缺陷项id集合
+     * @return map
+     */
+    Map<Integer, String> listByIdCh(Set<Integer> defectIdSet);
+
+    /**
+     * 根据缺陷项，获取id对象
+     * @param defectIdSet 缺陷项id集合
+     * @return map
+     */
+    Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet);
 }

@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.qms.vo.QtCheckTaskDestoryInfoVO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -65,4 +66,18 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      */
     private List<QtOnlineCheckItemDTO> onlineItem;
 
+    /**
+     * 样本概况信息
+     */
+    private List<QtCheckTaskCopyDetailsDTO> sampleInfoList;
+
+    /**
+     * 落板明细信息
+     */
+    private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
+
+    /**
+     * 落板信息备注
+     */
+    private String destoryInfoRemark;
 }

@@ -52,4 +52,15 @@
                  JOIN pms_complete_delivery b ON a.complete_delivery_id = b.id
         WHERE b.produce_order_id = #{orderId}
     </select>
+    <select id="listQuantity" resultType="com.steccn.pms.dto.FeedQuantityDTO">
+        select a.material_id, a.process_id,a.quantity,b.produce_order_id
+        from pms_complete_delivery_info a join
+        pms_complete_delivery b on a.complete_delivery_id = b.id
+        where
+        a.del_flag = 0
+        <foreach collection="feedList" item="feed" open="(" separator="or" close=")">
+            AND a.material_id = #{feed.materialId} AND a.process_id = #{feed.processId} AND b.produce_order_id =
+            #{feed.produceOrderId}
+        </foreach>
+    </select>
 </mapper>

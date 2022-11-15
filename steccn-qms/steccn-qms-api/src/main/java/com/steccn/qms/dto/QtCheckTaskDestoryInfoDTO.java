@@ -86,7 +86,7 @@ public class QtCheckTaskDestoryInfoDTO implements Serializable {
     /**
      * 备注
      */
-    private String remark;
+    private String destoryInfoRemark;
 
     private static final long serialVersionUID = 1L;
 }

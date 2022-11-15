@@ -1,11 +1,13 @@
 package com.steccn.common.util;
 
 import com.steccn.common.constant.LocalDateEnum;
+import lombok.Data;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,6 +15,7 @@ import java.util.Objects;
  * @author chenhuan
  * @date 2022/11/1 14:47
  */
+@Data
 public class LocalDateUtil {
 
 
@@ -27,6 +30,23 @@ public class LocalDateUtil {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
         return dateTimeFormatter.format(localDateTime);
     }
+
+    /**
+     * LocalDateTime转为日期
+     *
+     * @param localDateTime LocalDateTime
+     * @return 日期
+     */
+    public static Date localDateTimeToDate(final LocalDateTime localDateTime) {
+        if (null == localDateTime) {
+            return null;
+        }
+        final ZoneId zoneId = ZoneId.systemDefault();
+        final ZonedDateTime zdt = localDateTime.atZone(zoneId);
+        final Date date = Date.from(zdt.toInstant());
+        return date;
+    }
+
 
     /**
      * 获取日期时间字符串
@@ -166,6 +186,19 @@ public class LocalDateUtil {
         return localDateList;
     }
 
+    /**
+     * 根据开始结束日期获取所有天数
+     *
+     * @return
+     */
+    public static List<LocalDate> getLocalDateByStartEndDate(LocalDate startDate, LocalDate endDate) {
+
+        List<LocalDate> localDateList = new ArrayList<>();
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            localDateList.add(d);
+        }
+        return  localDateList;
+    }
 
     /**
      * 根据类型获取开始和结束时间
@@ -193,6 +226,12 @@ public class LocalDateUtil {
         }
 
         return firstAndLastDateList;
+    }
+
+    public static String getWeekDay(){
+        LocalDate localDate = LocalDate.now();
+        String k = String.valueOf(localDate.getDayOfWeek());
+        return k;
     }
 
 }

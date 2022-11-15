@@ -39,6 +39,11 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private QtBaseIdNameDTO materialWorkshop;
+    @TableField(value = "material_workshop ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String materialWorkshopId;
 
     @TableField(value = "material_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
@@ -57,6 +62,12 @@ public class QtCheckTask implements Serializable {
             updateStrategy = FieldStrategy.NEVER,
             select = false)
     private String productWorkshopName;
+
+    @TableField(value = "product_workshop ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String productWorkshopId;
 
     /**
      * 产线
@@ -148,6 +159,12 @@ public class QtCheckTask implements Serializable {
             select = false)
     private String supplierName;
 
+    @TableField(value = "supplier ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String supplierId;
+
     /**
      * 客户id
      */
@@ -211,6 +228,7 @@ public class QtCheckTask implements Serializable {
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
+
     private LocalDateTime createTime;
 
     /**
@@ -281,4 +299,47 @@ public class QtCheckTask implements Serializable {
      */
     private String sendOrder;
 
+    /**
+     * 班次
+     * 早班 0
+     * 晚班 1
+     */
+    private Integer classesId;
+
+    /**
+     * 工位id
+     */
+    private Long stationId;
+
+    /**
+     * 处理把localDateTime转成String
+     */
+    @TableField(exist = false)
+    private String date;
+
+    /**
+     * 产线id
+     */
+    @TableField(exist = false)
+    private Integer productLineId;
+
+    /**
+     * 工位
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO station;
+
+    /**
+     * 工位名称
+     */
+    @TableField(value = "station ->> '$.name'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = true)
+    private String stationName;
+
+    /**
+     * 班次时间
+     */
+    private LocalDateTime classTime;
 }

@@ -44,4 +44,22 @@
         WHERE
             a.produce_order_id = #{orderId}
     </select>
+    <select id="materialList" resultType="com.steccn.pms.vo.FurtherProduceReportDataVO">
+        SELECT
+            pbp.material_id,
+            pbp.classes_id,
+            sum( si.quantity) as processQuantity
+        FROM
+            `pms_complete_storage_info` si
+                JOIN pms_barcode_print pbp ON pbp.case_no = si.case_no
+        WHERE
+            pbp.material_id in(
+            <foreach collection="materialSet" item="id"  open="(" close=")" separator=",">
+                #{id}
+            </foreach>)
+            AND DATE_FORMAT( si.create_time, '%Y-%m-%d' ) = #{date}
+        GROUP BY
+            pbp.material_id,pbp.classes_id
+
+    </select>
 </mapper>

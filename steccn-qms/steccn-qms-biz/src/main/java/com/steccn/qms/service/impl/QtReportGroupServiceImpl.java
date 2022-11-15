@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.qms.domain.QtReport;
 import com.steccn.qms.domain.QtReportGroup;
 import com.steccn.qms.dto.QtReportGroupDTO;
 import com.steccn.qms.service.QtReportGroupService;
 import com.steccn.qms.mapper.QtReportGroupMapper;
 import com.steccn.qms.service.QtReportService;
+import com.steccn.qms.vo.QtReportChartVO;
 import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 import lombok.RequiredArgsConstructor;
@@ -39,15 +41,21 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         QtReportGroup reportGroup = new QtReportGroup();
         BeanUtils.copyProperties(dto, reportGroup);
         QtReportGroup qtReportGroup = getOne(new LambdaQueryWrapper<QtReportGroup>().eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
-        Assert.isNull(qtReportGroup, "该报表卡片类型已存在,请勿重复创建!");
+        Assert.isNull(qtReportGroup, "该报表卡片分组已存在,请勿重复创建!");
         this.save(reportGroup);
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据分组id查询报表卡片列表
+     * @param id
+     * @return
+     */
     @Override
-    public List<QtReportVO> getQtReportList(Integer id) {
-        List<QtReportVO> qtReportList = qtReportService.getQtReportList(id);
-        return qtReportList;
+    public List<QtReportChartVO> getQtReportList(Integer id) {
+        List<QtReportChartVO> qtReportChartVOS = qtReportService.getQtReportList(id);
+
+        return qtReportChartVOS;
     }
 
     @Override
@@ -71,9 +79,31 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         if (Objects.isNull(id)){
             throw new BusinessException("分组id不能为空");
         }
+        QtReportGroup reportGroup = getById(id);
+        if (Objects.isNull(reportGroup)){
+            throw new BusinessException("该分组不存在");
+        }
         removeById(id);
-        qtReportService.deleteByGroupId(id);
-        return null;
+        //查询报表卡片列表如果改分组下有卡片才去删卡片
+        List<QtReport> qtReports = qtReportService.list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, id));
+        if (Objects.nonNull(qtReports)){
+            qtReportService.deleteByGroupId(id);
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean edit(QtReportGroupDTO dto) {
+        QtReportGroup qtReportGroup = getById(dto.getId());
+        if (Objects.isNull(qtReportGroup)){
+            throw new BusinessException("改分组不存在,无法编辑");
+        }
+        QtReportGroup reportGroup = new QtReportGroup();
+        BeanUtils.copyProperties(dto, reportGroup);
+        updateById(reportGroup);
+        return Boolean.TRUE;
     }
 }
 

@@ -2,7 +2,9 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -121,4 +123,48 @@ public interface RemoteOfficeFeign {
     @ApiOperation("根据孩子id获取父亲节点数据")
     @GetMapping("/feign/platform/sys/office/parent/{id}")
     R<SysOfficeVO> parent(@PathVariable("id") Integer id);
+
+    /**
+     * 查询工位列表
+     * @param typeList
+     * @return
+     */
+    @ApiOperation("下拉选项")
+    @GetMapping("/feign/platform/sys/office/shelf/warehouse")
+    R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList);
+
+    /**
+     * 根据子id获取父级节点数据
+     *
+     * @param childIdList
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/parentOffice")
+    @ApiOperation("根据子id获取父级节点数据")
+    R<Map<Integer, SysOfficeVO>> getParentOfficeMap(@RequestBody List<Integer> childIdList);
+
+    /**
+     * 根据子节点id 获取父级详情信息
+     *
+     * @param childIdList
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/parentInfo")
+    @ApiOperation("根据子id获取父级节点数据")
+    R<Map<Integer, SysOfficeVO>> parentInfo(@RequestBody List<Integer> childIdList);
+
+
+    /**
+     * 根据机构类型和名字查找数据
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/listByTypeAndLine")
+    @ApiOperation("根据机构类型和名字查找数据")
+    R<List<SysOfficeVO>> getByTypeAndLine(@RequestBody SysOfficeDTO dto);
+
+    @PostMapping("/list/listByTypeAndKey")
+    @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
+     R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
 }

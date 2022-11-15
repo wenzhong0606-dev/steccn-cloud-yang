@@ -38,7 +38,7 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
 
 
         LambdaQueryWrapper<SysStationWarehouse> queryWrapper = new LambdaQueryWrapper<SysStationWarehouse>();
-        queryWrapper.eq(SysStationWarehouse::getStationId, dto.getStationId());
+        queryWrapper.eq(SysStationWarehouse::getStationId, dto.getOrganId()).eq(SysStationWarehouse::getOrganType, dto.getOrganType());
         Page<SysStationWarehouse> page = page(new Page<>(dto.getCurrent(), dto.getSize()), queryWrapper);
         Page<SysStationWarehouseVO> voPage = new Page<>();
         BeanUtils.copyProperties(page,voPage);
@@ -62,6 +62,9 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
             sysStationWarehouseVO.setId(sysStationWarehouse.getId());
             sysStationWarehouseVO.setWarehouseName(warehouse.getOfficeName());
             sysStationWarehouseVO.setShelfName(shelf.getOfficeName());
+            sysStationWarehouseVO.setNote(sysStationWarehouse.getNote());
+            sysStationWarehouseVO.setShelfId(sysStationWarehouse.getShelfId());
+            sysStationWarehouseVO.setWarehouseId(sysStationWarehouse.getWarehouseId());
             sysStationWarehouseVOList.add(sysStationWarehouseVO);
         }
         voPage.setRecords(sysStationWarehouseVOList);
@@ -79,6 +82,7 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
         }
         SysStationWarehouse sysStationWarehouse = new SysStationWarehouse();
         BeanUtils.copyProperties(dto, sysStationWarehouse);
+        sysStationWarehouse.setStationId(dto.getOrganId());
         return save(sysStationWarehouse);
     }
 

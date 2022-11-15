@@ -178,10 +178,33 @@
         FROM
 	        pms_produce_order o
 	    LEFT JOIN pms_complete_storage_info c ON o.id = c.produce_order_id
-	    where o.production_line_id in(
+	    where o.production_line_id in
         <foreach collection="productionLineIdList" item="id"  open="(" close=")" separator=",">
             #{id}
-        </foreach>)
+        </foreach>
 	    GROUP BY o.id
+    </select>
+
+    <select id="selectCompleteStorageCount" resultType="com.steccn.pms.vo.CompleteStorageCountVO">
+        SELECT
+	        c.class_group_id classGroupId,
+	        o.production_line_id productionLineId,
+	        sum( c.quantity ) quantity
+        FROM
+	        pms_produce_order o
+	        LEFT JOIN pms_complete_storage_info c ON o.id = c.produce_order_id
+        where o.production_line_id in
+        <foreach collection="productionLineIdList" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach> and (c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime})
+        GROUP BY
+            <if test="group == 0">
+                o.production_line_id,
+                c.class_group_id
+            </if>
+            <if test="group == 1">
+                c.class_group_id,
+                o.production_line_id
+            </if>
     </select>
 </mapper>

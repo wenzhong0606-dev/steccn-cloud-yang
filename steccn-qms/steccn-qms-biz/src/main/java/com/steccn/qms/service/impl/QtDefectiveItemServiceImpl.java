@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,6 +16,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtDefectiveItemSaveDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -33,7 +35,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -243,6 +248,68 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
+    /**
+     * 根据缺陷项类别id查询缺陷项列表
+     * @param id
+     * @return
+     */
+    @Override
+    public List<QtBaseIdNameDTO> selectItemIds(Integer id) {
+        //如果类别不传，返回所有的缺陷项
+        List<QtBaseIdNameDTO> qtBaseIdNameDTOS = Lists.newArrayList();
+        List<QtDefectiveItem> qtDefectiveItems = Lists.newArrayList();
+        QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
+        if (id == null){
+            qtDefectiveItems = list();
+            if (!qtDefectiveItems.isEmpty()) {
+                for (QtDefectiveItem tem : qtDefectiveItems) {
+                    qtBaseIdNameDTO.setId(tem.getId());
+                    qtBaseIdNameDTO.setName(tem.getName());
+                    qtBaseIdNameDTOS.add(qtBaseIdNameDTO);
+                }
+            }
+        }else {
+            qtDefectiveItems = list(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getCategoryId,id));
+            if (!qtDefectiveItems.isEmpty()){
+                for (int i = 0; i < qtDefectiveItems.size() ; i++) {
+                    QtBaseIdNameDTO tmp = new QtBaseIdNameDTO();
+                    tmp.setId(qtDefectiveItems.get(i).getId());
+                    tmp.setName(qtDefectiveItems.get(i).getName());
+                    qtBaseIdNameDTOS.add(tmp);
+                }
+                }
+            }
+        return qtBaseIdNameDTOS;
+    }
+
+    @Override
+    public Map<Integer, String> listByIdCh(Set<Integer> defectIdSet) {
+        Map<Integer, String> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(defectIdSet)){
+            List<QtDefectiveItem> qtDefectiveItems = listByIds(defectIdSet);
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getId(), ele.getName());
+                });
+            }
+        }
+        return resMap;
+
+    }
+
+    @Override
+    public Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet) {
+        Map<Integer, QtDefectiveItem> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(defectIdSet)){
+            List<QtDefectiveItem> qtDefectiveItems = listByIds(defectIdSet);
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
 
     /**
      * 同类别下名称是否重复

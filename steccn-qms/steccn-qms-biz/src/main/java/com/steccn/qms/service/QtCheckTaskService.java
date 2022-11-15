@@ -7,6 +7,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -87,9 +88,73 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
 
     /**
-     * 深加工/基片巡检合格率趋势
+     * 深加工/基片巡检合格率趋势明细分页
      * @param dto
      * @return
      */
-    QtChartAcceptabilityVO getSubOrDeepProcess(QtSubOrDeepAcceptabilityDTO dto);
+    Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 深加工或基片合格率图表
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 根据条件查询任务
+     *
+     * @param dto dto条件
+     * @return list
+     */
+    List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto);
+
+    /**
+     * 缺陷项图表柱状图和饼状图
+     * @param dto
+     * @return
+     */
+    QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
+
+    /**
+     * 配料抽检合格率的明细分页
+     * @param dto
+     * @return
+     */
+    Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto);
+
+    /**
+     * 配料抽检合格率的柱状图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getAccessoryChartDefectVO(QtAccessoryAcceptabilityDTO dto);
+
+    /**
+     * 基片化验抽检合格率趋势明细分页
+     * @param dto
+     * @return
+     */
+    Page<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto);
+
+    /**
+     * 基片化验抽检合格率趋势的柱状图
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtSubLaboratoryChartVO(QtSubLaboratoryAcceptabilityDTO dto);
+
+    /**
+     * 来料检合格率明细分页
+     * @param dto
+     * @return
+     */
+    Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto);
+
+    /**
+     *来料检合格率柱状图表
+     * @param dto
+     * @return
+     */
+    QtChartBarVO getQtIQCAcceptabilityChartVO(QtIQCAcceptabilityDTO dto);
 }

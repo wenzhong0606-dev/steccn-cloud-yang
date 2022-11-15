@@ -28,12 +28,12 @@ public class SubstrateDayReportListVO implements Serializable {
     private List<String> specList;
 
     @ApiModelProperty("早班")
-    private ProduceQuantityVO morning;
+    private List<String> morning;
 
     @ApiModelProperty("夜班")
-    private ProduceQuantityVO night;
+    private List<String> night;
 
     @ApiModelProperty("总计")
-    private ProduceQuantityVO total;
+    private List<String> total;
 
 }

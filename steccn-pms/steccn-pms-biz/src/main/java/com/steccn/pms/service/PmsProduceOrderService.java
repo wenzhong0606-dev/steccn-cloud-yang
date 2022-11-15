@@ -175,4 +175,25 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     PmsProduceOrderVO code(String code);
+
+    /**
+     * 根据产线获取下达以后完成之前的数据
+     * @param ids
+     * @return
+     */
+    List<PmsProduceOrderVO>  executionOfOrder(Set<Integer> ids);
+
+    /**
+     * 获取订单的信息
+     * @param orderIds
+     * @return
+     */
+    Map<Long, PmsProduceOrder> orderList(List<Long> orderIds);
+
+    /**
+     * 根据物料查询订单信息
+     * @param materialIds
+     * @return
+     */
+    Map<Long, PmsProduceOrderVO> listByMaterialIds(Set<Long> materialIds);
 }

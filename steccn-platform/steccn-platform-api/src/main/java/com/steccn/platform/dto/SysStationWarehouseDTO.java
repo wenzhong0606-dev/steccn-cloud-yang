@@ -25,9 +25,12 @@ public class SysStationWarehouseDTO extends BasePageDTO implements Serializable 
     @ApiModelProperty("货架id")
     private Integer shelfId;
 
-    @NotNull(groups = {UpdateGroup.class}, message = "工位不能为空")
-    @ApiModelProperty("工位id")
-    private Long stationId;
+
+    @ApiModelProperty("组织架构id")
+    private Long organId;
+
+    @ApiModelProperty("组织架构类型")
+    private Integer organType;
 
     @NotNull(groups = {UpdateGroup.class}, message = "仓库不能为空")
     @ApiModelProperty("仓库id")

@@ -2,8 +2,10 @@ package com.steccn.qms.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class QtReportGroupVO {
+public class QtReportGroupVO implements Serializable {
     /**
      * 分组id
      */

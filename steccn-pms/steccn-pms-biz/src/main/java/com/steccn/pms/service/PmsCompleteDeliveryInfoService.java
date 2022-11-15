@@ -3,10 +3,13 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.FeedQuantityDTO;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -24,4 +27,10 @@ public interface PmsCompleteDeliveryInfoService extends IService<PmsCompleteDeli
     Page<PmsCompleteDeliveryVO> listByOrderId(PmsCompleteDeliveryDTO pmsCompleteDeliveryDTO);
 
 
+    /**
+     * 获取投料数量信息
+     * @param feedList
+     * @return
+     */
+    Map<FeedQuantityDTO, BigDecimal> listQuantity(List<FeedQuantityDTO> feedList);
 }

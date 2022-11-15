@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
@@ -25,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -66,7 +69,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         //1.去数据库查询是否存在[编辑传id，新增不传id]
         long count = count(new LambdaQueryWrapper<QtItemCategory>()
                 .ne(Objects.nonNull(dto.getId()), QtItemCategory::getId, dto.getId())
-                .eq(QtItemCategory::getShowFlag,MpConstant.YES)
+                .eq(QtItemCategory::getShowFlag, MpConstant.YES)
                 .eq(QtItemCategory::getName, dto.getName())
                 .eq(QtItemCategory::getType, dto.getType()));
         //2.如果存在则抛异常
@@ -76,9 +79,9 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
             throw new BusinessException(eleByType.getName() + "类别名称不能重复");
         }
         //未查询到数据，视为新增
-        if(Objects.nonNull(dto.getId())){
+        if (Objects.nonNull(dto.getId())) {
             QtItemCategory byId = getById(dto.getId());
-            if(Objects.isNull(byId)){
+            if (Objects.isNull(byId)) {
                 dto.setId(null);
             }
         }
@@ -123,7 +126,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
         if (QtManagerConstant.QtItemCategoryEnum.CHECK.getType().equals(model.getType())) {
             long count = qtCheckItemService.count(new LambdaQueryWrapper<QtCheckItem>()
                     .eq(QtCheckItem::getCategoryId, id)
-                    .eq(QtCheckItem::getShowFlag,MpConstant.YES));
+                    .eq(QtCheckItem::getShowFlag, MpConstant.YES));
             if (count > 0) {
                 throw new BusinessException("该类别包含至少1个检验项，不允许删除");
             }
@@ -157,6 +160,30 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<Integer, String> listByIdCh(Set<Integer> categoryIdSet) {
+        Map<Integer, String> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(categoryIdSet)) {
+            List<QtItemCategory> dataList = listByIds(categoryIdSet);
+            if (CollUtil.isNotEmpty(dataList)) {
+                dataList.forEach(ele -> resMap.put(ele.getId(), ele.getName()));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Integer, QtItemCategory> listById(Set<Integer> categoryIdSet) {
+        Map<Integer, QtItemCategory> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(categoryIdSet)) {
+            List<QtItemCategory> dataList = listByIds(categoryIdSet);
+            if (CollUtil.isNotEmpty(dataList)) {
+                dataList.forEach(ele -> resMap.put(ele.getId(), ele));
+            }
+        }
+        return resMap;
     }
 }
 

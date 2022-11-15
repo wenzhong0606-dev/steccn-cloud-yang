@@ -1,12 +1,14 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsMaterialRequisition;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
-import com.steccn.pms.dto.MaterialRequisitionDTO;
-import com.steccn.pms.dto.MaterialRequisitionPageDTO;
+import com.steccn.pms.dto.*;
+import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -56,4 +58,18 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @return
      */
     Boolean approval(MaterialRequisitionApprovalDTO dto);
+
+    /**
+     * 领料计划
+     * @param dto
+     * @return
+     */
+    Page<MaterialRequisitionPlanVO> planPageList(MaterialRequisitionPlanDTO dto);
+
+    /**
+     * 领料计划创建领料单
+     * @param list
+     * @return
+     */
+    R<String> create(List<MaterialRequisitionInfoPlanDTO> list);
 }

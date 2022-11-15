@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.db.sql.Order;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -58,10 +59,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsWorkOrderCraftStationService pmsWorkOrderCraftStationService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
-    private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsBarcodePrintService pmsBarcodePrintService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmCraftRouteService pmCraftRouteService;
+    private final PmsProducePlanService pmsProducePlanService;
 
     /**
      * 新增生产订单信息
@@ -94,6 +95,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //4.3保存物料信息
         if (CollUtil.isNotEmpty(dto.getMaterialList())) {
             pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
+        }
+        //判断是否是计划转生产订单
+        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())) {
+            try {
+                BeanUtil.copyProperties(model, dto);
+                pmsProducePlanService.turnProduceOrder(dto);
+            } catch (Exception e) {
+            }
         }
         return true;
     }
@@ -579,9 +588,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
             String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
-
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId()))).get();
-
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
@@ -658,10 +665,18 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     @Override
     public Page<ProduceOrderTrackReportVO> trackReportList(ProduceOrderTrackReportDTO dto) {
-        Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()),dto.getProductLineList());
+        if (CollectionUtils.isEmpty(dto.getProductLineList())) {
+            Page<ProduceOrderTrackReportVO> page = new Page<>();
+            page.setSize(dto.getSize());
+            page.setCurrent(dto.getCurrent());
+            return page;
+        }
+        Map<Integer, SysOfficeVO> productLineMap = remoteOfficeFeign.listById(new HashSet<>(dto.getProductLineList())).getData();
+        Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()), dto.getProductLineList());
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
             BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
+            produceOrderTrackReportVO.setProductionLineName(productLineMap.get(produceOrderTrackReportVO.getProductionLineId()).getOfficeName());
             if (Objects.isNull(completeQuantity)) {
                 produceOrderTrackReportVO.setShortfallQuantity(planQuantity);
             } else {
@@ -673,6 +688,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
     /**
      * 根据生产订单号来查询当前正在执行中的记录
+     *
      * @param code
      * @return 生产订单信息
      */
@@ -681,14 +697,59 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据生产订单号来查询当前正在执行中的记录
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO));
         //2.校验数据
-        Assert.isNull(order,"该生产订单号不存在");
+        Assert.isNull(order, "该生产订单号不存在");
 
         //3.复制数据传入VO
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
-        BeanUtils.copyProperties(order,pmsProduceOrderVO);
+        BeanUtils.copyProperties(order, pmsProduceOrderVO);
 
         return pmsProduceOrderVO;
 
+    }
+
+    @Override
+    public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
+        //查询产线正在执行的订单
+        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getProductionLineId, ids)
+                .notIn(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.ZERO.getCode(),
+                        PmManagerConstant.OrderStateEnum.SIX.getCode(),
+                        PmManagerConstant.OrderStateEnum.SEVEN.getCode())
+        );
+        return BeanUtil.copyToList(orderList, PmsProduceOrderVO.class);
+    }
+
+    @Override
+    public Map<Long, PmsProduceOrder> orderList(List<Long> orderIds) {
+        Map<Long, PmsProduceOrder> map = Maps.newHashMap();
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIds));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(order ->
+                    map.put(order.getId(), order)
+            );
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, PmsProduceOrderVO> listByMaterialIds(Set<Long> materialIds) {
+        Map<Long, PmsProduceOrderVO> map = Maps.newHashMap();
+        if (CollUtil.isEmpty(materialIds)) {
+            return map;
+        }
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .in(PmsProduceOrder::getMaterialId, materialIds)
+                .isNotNull(PmsProduceOrder::getActualEndTime));
+        if (CollUtil.isNotEmpty(list)) {
+            Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
+            collect.forEach((key, value) -> {
+                Collections.sort(value,Comparator.nullsFirst(Comparator.comparing(PmsProduceOrder::getActualEndTime).reversed()));
+                PmsProduceOrderVO vo = new PmsProduceOrderVO();
+                BeanUtils.copyProperties(value.get(0), vo);
+                map.put(key, vo);
+            });
+        }
+        return map;
     }
 
     /**

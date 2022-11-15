@@ -5,6 +5,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.dto.QtCheckItemPageDTO;
 import com.steccn.qms.dto.QtItemStatusDTO;
@@ -79,8 +80,8 @@ public class QtCheckItemController {
 
     @PostMapping("/select/station")
     @ApiOperation(value = "查询工位列表")
-    public R<List<QtRangeArrayVO>> selectStationList() {
-        return R.success(qtCheckItemService.selectStationList());
+    public R<List<SysOfficeVO>> selectStationList(@RequestBody List<String> typeList) {
+        return qtCheckItemService.selectStationList(typeList);
     }
 
 

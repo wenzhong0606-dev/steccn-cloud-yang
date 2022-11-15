@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,11 +17,12 @@ import java.util.Set;
  * @author yequan
  * @desc mess系统服务接口
  */
-@FeignClient(name = "remoteMessFeignApi",url = "10.1.103.230:8081",decode404 = true)
+@FeignClient(name = "remoteMessFeignApi", url = "10.1.103.230:8081", decode404 = true)
 public interface RemoteMessFeignApi {
 
     /**
      * 获取物料库存信息
+     *
      * @param list 物料集合
      * @return
      */
@@ -32,6 +34,7 @@ public interface RemoteMessFeignApi {
 
     /**
      * 获取物料可用库存
+     *
      * @param materialIds
      * @return
      */
@@ -42,6 +45,7 @@ public interface RemoteMessFeignApi {
 
     /**
      * 生成入库单
+     *
      * @param messDto 物料集合
      * @return
      */
@@ -52,6 +56,7 @@ public interface RemoteMessFeignApi {
 
     /**
      * 生成出库单
+     *
      * @param messDto 物料集合
      * @return
      */
@@ -62,6 +67,7 @@ public interface RemoteMessFeignApi {
 
     /**
      * 获取箱子位置
+     *
      * @param caseNoSet 箱子位置
      * @return
      */
@@ -69,5 +75,16 @@ public interface RemoteMessFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
+
+    /**
+     * 获取物料在货架中的库存数量
+     *
+     * @param list
+     * @return
+     */
+    @PostMapping(value = "/web/eqp/eqpSpareInventory/list/materialInventory")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Map<Long, BigDecimal> listMaterialInventory(@RequestBody List<MessMaterialStorageDTO> list);
 
 }

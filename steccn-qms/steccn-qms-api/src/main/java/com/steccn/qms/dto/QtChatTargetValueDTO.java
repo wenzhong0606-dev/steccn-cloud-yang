@@ -1,6 +1,6 @@
 package com.steccn.qms.dto;
 
-import com.sun.istack.internal.NotNull;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,7 +18,7 @@ public class QtChatTargetValueDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @NotNull
-    private Integer key;
+    private Integer target;
 
     @NotNull
     private BigDecimal value;

@@ -84,4 +84,9 @@ public class QtCheckProduceTaskVO implements Serializable {
      */
     private String note;
 
+    /**
+     * 任务单号
+     */
+    private String code;
+
 }

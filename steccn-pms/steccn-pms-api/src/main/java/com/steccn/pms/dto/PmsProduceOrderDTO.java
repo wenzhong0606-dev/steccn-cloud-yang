@@ -33,6 +33,12 @@ public class PmsProduceOrderDTO {
     @NotNull(groups = UpdateGroup.class, message = "编辑数据时主键不能为空")
     private Long id;
 
+    @ApiModelProperty("计划转生产标识")
+    private Integer planFlag;
+
+    @ApiModelProperty("Mrp主键")
+    private Long mrpId;
+
     @ApiModelProperty("类型id")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "类型不能为空")
     private Long typeId;

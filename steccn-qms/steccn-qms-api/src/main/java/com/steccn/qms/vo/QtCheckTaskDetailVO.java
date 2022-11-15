@@ -1,5 +1,7 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtCheckTaskCopyDetailsDTO;
+import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -35,4 +37,14 @@ public class QtCheckTaskDetailVO implements Serializable {
      * pc返回值
      */
     private List<QtCheckPlanGroupVO> checkGroup;
+
+    /**
+     * pc返回样本概况模块值
+     */
+    private List<QtCheckTaskCopyDetailsDTO> sampleInfoList;
+
+    /**
+     * 设置落板概况模块
+     */
+    private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
 }

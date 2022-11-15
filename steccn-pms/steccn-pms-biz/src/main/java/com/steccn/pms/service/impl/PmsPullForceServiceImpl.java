@@ -1,12 +1,13 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -17,12 +18,14 @@ import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.mapper.PmsPullForceMapper;
+import com.steccn.pms.vo.PmsPullForceClassQuantity;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -84,7 +87,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
-        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate+"-01", ISO_DATE));
+        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate + "-01", ISO_DATE));
 
         List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {
@@ -111,14 +114,15 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         //根据产线分组
         Map<Integer, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
         Set<Integer> productLineIdSet = pmsPullForceList.stream().map(PmsPullForce::getProductLineId).collect(Collectors.toSet());
-        Set<Long> classIdSet = pmsPullForceList.stream().map(PmsPullForce::getClassesId).collect(Collectors.toSet());
 
         Map<Integer, SysOfficeVO> map = remoteOfficeFeign.listById(productLineIdSet).getData();
-        Map<Long, SysDictVO> classIdMap = remoteDictFeignApi.listById(new ArrayList<>(classIdSet)).getData();
+        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workshopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
         List<SysOfficeVO> sysOfficeVOList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
+        Assert.notNull(sysOfficeVOList, "车间下暂无产线");
+
 
         List<PmsPullForceDetailsVO> pullForceDetailsVOList = new ArrayList<>();
         for (Map.Entry<Integer, List<PmsPullForce>> entry : groupBy.entrySet()) {
@@ -127,20 +131,26 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             PmsPullForceDetailsVO pullForceDetailsVO = new PmsPullForceDetailsVO();
             pullForceDetailsVO.setProductLineId(entry.getKey());
             pullForceDetailsVO.setProductLineName(map.get(entry.getKey()).getOfficeName());
-            pullForceDetailsVO.setId(entry.getValue().get(0).getId());
             pullForceDetailsVO.setTotal(total);
             pullForceDetailsVO.setUnitName(PmManagerConstant.UNIT_T);
 
             //获取白班夜班数量
-            for (PmsPullForce pmsPullForce : entry.getValue()) {
-                String classCode = classIdMap.get(pmsPullForce.getClassesId()).getCode();
-                if (SysDictConstant.CODE_0.equals(classCode)) {
-                    pullForceDetailsVO.setDayClassQuantity(pmsPullForce.getQuantity());
+            List<PmsPullForceClassQuantity> pullForceClassQuantityList = new ArrayList<>();
+            for (SysDictVO sysDictVO : sysDictVOList) {
+                PmsPullForceClassQuantity pullForceClassQuantity = new PmsPullForceClassQuantity();
+
+                Optional<PmsPullForce> present = entry.getValue().stream().filter(pmsPullForce -> pmsPullForce.getClassesId().equals(sysDictVO.getId())).findAny();
+                if (present.isPresent()) {
+                    pullForceClassQuantity.setId(present.get().getId());
+                    pullForceClassQuantity.setClassId(present.get().getClassesId());
+                    pullForceClassQuantity.setQuantity(present.get().getQuantity());
                 } else {
-                    pullForceDetailsVO.setNightClassQuantity(pmsPullForce.getQuantity());
+                    pullForceClassQuantity.setClassId(sysDictVO.getId());
                 }
+                pullForceClassQuantityList.add(pullForceClassQuantity);
             }
 
+            pullForceDetailsVO.setPullForceClassQuantityList(pullForceClassQuantityList);
             pullForceDetailsVOList.add(pullForceDetailsVO);
         }
 
@@ -153,6 +163,13 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             } else {
                 pmsPullForceDetailsVO.setProductLineId(sysOfficeVO.getId());
                 pmsPullForceDetailsVO.setProductLineName(sysOfficeVO.getOfficeName());
+                List<PmsPullForceClassQuantity> pullForceClassQuantityList = new ArrayList<>();
+                pmsPullForceDetailsVO.setPullForceClassQuantityList(pullForceClassQuantityList);
+                for (SysDictVO sysDictVO : sysDictVOList) {
+                    PmsPullForceClassQuantity pullForceClassQuantity = new PmsPullForceClassQuantity();
+                    pullForceClassQuantity.setClassId(sysDictVO.getId());
+                    pullForceClassQuantityList.add(pullForceClassQuantity);
+                }
                 pmsPullForceDetailsVOList.add(pmsPullForceDetailsVO);
             }
         }
@@ -188,6 +205,20 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             }
         }
         return true;
+    }
+
+    @Override
+    public Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date) {
+        Map<Long, PmsPullForce> resMap = Maps.newHashMap();
+        if (Objects.nonNull(productLineId) && Objects.nonNull(date)) {
+            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getProductLineId, productLineId).eq(PmsPullForce::getPullForceDate, date));
+            if (CollUtil.isNotEmpty(list)) {
+                for (PmsPullForce pmsPullForce : list) {
+                    resMap.put(pmsPullForce.getClassesId(), pmsPullForce);
+                }
+            }
+        }
+        return resMap;
     }
 }
 

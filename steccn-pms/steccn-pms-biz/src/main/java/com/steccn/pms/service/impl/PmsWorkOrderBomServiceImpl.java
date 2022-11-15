@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,6 +10,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -16,7 +19,10 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmProcess;
 import com.steccn.pms.domain.PmsWorkOrderBom;
+import com.steccn.pms.domain.PmsWorkOrderCraftStation;
+import com.steccn.pms.dto.BomStationDTO;
 import com.steccn.pms.dto.PmsWorkOrderBomDTO;
+import com.steccn.pms.dto.PmsWorkOrderCraftStationDTO;
 import com.steccn.pms.service.PmProcessService;
 import com.steccn.pms.service.PmsWorkOrderBomService;
 import com.steccn.pms.mapper.PmsWorkOrderBomMapper;
@@ -173,6 +179,62 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             return remove(new LambdaQueryWrapper<PmsWorkOrderBom>().notIn(PmsWorkOrderBom::getId, idSet).eq(PmsWorkOrderBom::getWorkProduceId, id));
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<Long, List<BaseSelectVO<Long>>> getProcessMaterial(Set<Long> produceOrderIdSet, Set<Long> processIdSet) {
+        Map<Long, List<BaseSelectVO<Long>>> resMap = Maps.newHashMap();
+        List<PmsWorkOrderBom> dbList = list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                .in(PmsWorkOrderBom::getWorkProduceId, produceOrderIdSet)
+                .in(PmsWorkOrderBom::getProcessId, processIdSet));
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取子物料的集合
+            Set<Long> moduleSet = dbList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
+            //获取物料数据
+            Map<Long, String> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(moduleSet)).get();
+
+            Map<Long, List<PmsWorkOrderBom>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsWorkOrderBom::getProcessId));
+            dbMap.forEach((k, v) -> {
+                List<BaseSelectVO<Long>> resList = Lists.newArrayList();
+                for (PmsWorkOrderBom pmsWorkOrderBom : v) {
+                    resList.add(new BaseSelectVO<>(pmsWorkOrderBom.getModuleId(), spareVOMap.get(pmsWorkOrderBom.getModuleId())));
+                }
+                resMap.put(k, resList);
+            });
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList) {
+        Map<Long, Set<Long>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(conditionList)) {
+            List<TupleDTO<Long, String>> dataList = this.baseMapper.materialOrderStation(conditionList);
+            if (CollUtil.isNotEmpty(dataList)) {
+                dataList.forEach(ele -> {
+                    String field2 = ele.getField2();
+                    if (StrUtil.isNotBlank(field2)) {
+                        String[] split = field2.split(",");
+                        Set<Long> resSet = Sets.newHashSet();
+                        try {
+                            for (String s : split) {
+                                resSet.add(Long.parseLong(s));
+                            }
+                        } catch (Exception e) {
+                            log.error(e.getLocalizedMessage());
+                        }
+                        resMap.put(ele.getField1(), resSet);
+                    }
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public List<BomStationDTO> listStation(Set<Long> bomIds) {
+        //1.自定义sql获取工位信息
+        return this.baseMapper.listStation(bomIds);
     }
 }
 

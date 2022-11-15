@@ -2,10 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsProducePlan;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.PmExcelDTO;
-import com.steccn.pms.dto.PmsProducePlanDTO;
-import com.steccn.pms.dto.PmsProducePlanExcelDTO;
-import com.steccn.pms.dto.PmsProducePlanOrderDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.ProducePlanImportVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,10 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
-* @author yequan
-* @description 针对表【pms_produce_plan(生产月计划)】的数据库操作Service
-* @createDate 2022-11-02 10:10:08
-*/
+ * @author yequan
+ * @description 针对表【pms_produce_plan(生产月计划)】的数据库操作Service
+ * @createDate 2022-11-02 10:10:08
+ */
 public interface PmsProducePlanService extends IService<PmsProducePlan> {
 
     /**
@@ -55,6 +52,7 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
 
     /**
      * 下达
+     *
      * @param dto
      * @return
      */
@@ -66,4 +64,12 @@ public interface PmsProducePlanService extends IService<PmsProducePlan> {
      * @param response
      */
     void download(HttpServletResponse response);
+
+
+    /**
+     * 对订单进行mrp 计算
+     *
+     * @param model
+     */
+    void turnProduceOrder(PmsProduceOrderDTO model);
 }

@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author W10
@@ -26,8 +27,26 @@ public interface SysOfficeMapper extends BaseMapper<SysOffice> {
      * @return
      */
     List<SysOfficeVO> listByParentId(@Param("id") Integer id, @Param("officeType") String officeType);
-}
 
+
+    List<SysOfficeVO> listByParentCode(@Param("codes") List<String> codes, @Param("officeType") String officeType);
+
+
+    /**
+     * 根据子id查询父id
+     *
+     * @param childIdList 子id集合
+     * @return
+     */
+    List<SysOfficeVO> listByChildIds(@Param("childIdList") List<Integer> childIdList);
+
+    /**
+     * 获取父节点信息
+     * @param childIdList
+     * @return
+     */
+    List<SysOfficeVO> listParentInfo(@Param("childIdList") Set<Integer> childIdList);
+}
 
 
 

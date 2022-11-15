@@ -3,36 +3,25 @@ package com.steccn.qms.vo;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class QtSpcReportDetailVO {
-    /**
-     * 主键id
-     */
-     private Integer id;
+public class QtSpcReportDetailVO implements Serializable {
 
     /**
-     * 报表卡片名称
+     * 时间分片开始时间
      */
-    private String name;
-    
-    /**
-     * 开始时间
-     */
-    private LocalDate timeScopeStart;
+    private LocalDateTime startTime;
 
     /**
-     * 结束时间
+     * 时间分片结束时间
      */
-    private LocalDate timeScopeEnd;
+    private LocalDateTime endTime;
 
-    /**
-     * 检验项id
-     */
-    private Integer checkItemId;
 
     /**
      * 检验项名称
@@ -42,7 +31,7 @@ public class QtSpcReportDetailVO {
     /**
      * 计量单位
      */
-    private Long measureUnit;
+    private String measureUnit;
 
     /**
      * 检验结果平均值
@@ -65,34 +54,9 @@ public class QtSpcReportDetailVO {
     private BigDecimal downLimit;
 
     /**
-     * 检验任务单号
+     * 每个检验项下面的检验任务根据分片时间分好片的任务详情
      */
-    private Integer checkTaskId;
-
-    /**
-     * 检验完成时间
-     */
-    private LocalDate finishedTime;
-
-    /**
-     * 检验结果
-     */
-    private Integer result;
-
-    /**
-     * 物料名称
-     */
-    private String materialName;
-
-    /**
-     * 生产产线
-     */
-    private List<QtBaseIdNameDTO> productLine;
-
-    /**
-     * 客户
-     */
-    private List<QtBaseIdNameDTO> customer;
+   private List<QtSpcReportDetailTaskVO> reportDetailTaskVOList;
 
 
 }

@@ -2,10 +2,12 @@ package com.steccn.qms.controller;
 
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.domain.QtReportGroup;
 import com.steccn.qms.dto.QtReportGroupDTO;
 import com.steccn.qms.service.QtReportGroupService;
+import com.steccn.qms.vo.QtReportChartVO;
 import com.steccn.qms.vo.QtReportGroupVO;
 import com.steccn.qms.vo.QtReportVO;
 import io.swagger.annotations.ApiOperation;
@@ -38,9 +40,9 @@ public class QtReportGroupController {
     public R<List<QtReportGroupVO>> getReportGroupVOlist(){
         return R.success(qtReportGroupService.getReportGroupVOlist());
     }
-    @PostMapping ("/{id}")
-    @ApiOperation(value = "根据报表卡片分组ID去查询报表卡片列表")
-    public R<List<QtReportVO>> getQtReportList(@PathVariable("id") Integer id){
+    @GetMapping ("/{id}")
+    @ApiOperation(value = "根据报表卡片分组ID去查询报表卡片图表")
+    public R<List<QtReportChartVO>> getQtReportList(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.getQtReportList(id));
     }
 
@@ -49,5 +51,12 @@ public class QtReportGroupController {
     @SysLog("根据id删除Spc卡片分组任务")
     public R<Boolean> deletQtReportGroup(@PathVariable("id") Integer id){
         return R.success(qtReportGroupService.deletQtReportGroup(id));
+    }
+
+    @PutMapping("/edit")
+    @ApiOperation(value = "编辑报表分组")
+    @SysLog("编辑报表分组行为")
+    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtReportGroupDTO dto){
+        return R.success(qtReportGroupService.edit(dto));
     }
 }

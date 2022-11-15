@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 出库详情
+ *
  * @author mengle
  * @TableName pms_complete_delivery_info
  */
-@TableName(value ="pms_complete_delivery_info")
+@TableName(value = "pms_complete_delivery_info")
 @Data
 public class PmsCompleteDeliveryInfo implements Serializable {
     /**
@@ -56,6 +58,11 @@ public class PmsCompleteDeliveryInfo implements Serializable {
      * 装箱数量
      */
     private BigDecimal quantity;
+
+    /**
+     * 可用数量
+     */
+    private BigDecimal avaQuantity;
 
     /**
      * 单位id

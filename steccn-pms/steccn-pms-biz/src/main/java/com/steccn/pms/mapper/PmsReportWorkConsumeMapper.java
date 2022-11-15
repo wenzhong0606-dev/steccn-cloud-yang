@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +28,14 @@ public interface PmsReportWorkConsumeMapper extends BaseMapper<PmsReportWorkCons
      * @return list
      */
     List<EnergyGroupListVO> energyGroup(@Param("productLineIdList") List<Integer> productLineIdList, @Param("dateRangeList") List<LocalDateTime> dateRangeList);
+
+    /**
+     * 基片日报表
+     * @param productLineId 产线id
+     * @param date 日期
+     * @return 数据
+     */
+    List<EnergyGroupListVO> substrateEnergy(@Param("productLineId") Integer productLineId,@Param("date") LocalDate date);
 }
 
 

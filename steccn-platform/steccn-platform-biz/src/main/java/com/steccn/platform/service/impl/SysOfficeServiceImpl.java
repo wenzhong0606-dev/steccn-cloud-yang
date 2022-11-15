@@ -4,14 +4,19 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysOfficeParentCodeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.StationLineVO;
+import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.service.SysOfficeService;
@@ -262,6 +267,99 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             return list;
         }
         return null;
+    }
+
+    @Override
+    public List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto) {
+
+        //1.自定义sql查询数据
+        List<SysOfficeVO> list = baseMapper.listByParentCode(dto.getOfficeParentCodes(), SysOfficeConstant.PRODUCT_LINE);
+
+        List<SysOfficeParentVO> sysOfficeParentVOS = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(list)) {
+            list.stream().forEach(s -> {
+                SysOfficeParentVO sysOfficeParentVO = new SysOfficeParentVO();
+                sysOfficeParentVO.setOfficeName(s.getOfficeName());
+                sysOfficeParentVO.setId(s.getId());
+                sysOfficeParentVOS.add(sysOfficeParentVO);
+            });
+            return sysOfficeParentVOS;
+        }
+        return null;
+    }
+
+    @Override
+    public Map<Integer, SysOfficeVO> parentOfficeMap(List<Integer> childId) {
+
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
+
+        List<SysOfficeVO> sysOfficeVOList = this.baseMapper.listByChildIds(new ArrayList<>(childId));
+        if (CollUtil.isNotEmpty(sysOfficeVOList)) {
+            for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+                resMap.put(sysOfficeVO.getId(), sysOfficeVO);
+            }
+        }
+        return resMap;
+
+    }
+
+    /**
+     * 根据office类型和名字查
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SysOfficeVO> findByTypeAndName(SysOfficeDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, dto.getOfficeType())
+                .like(SysOffice::getOfficeName, dto.getOfficeName()));
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp, vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
+    /**
+     * 根据机构类型以及关键字返回SysOfficeVO集合信息
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(SysOffice::getOfficeName, dto.getKey()));
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp, vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
+    @Override
+    public Map<Integer, SysOfficeVO> parentInfo(Set<Integer> childIdList) {
+
+        Map<Integer, SysOfficeVO> resMap = Maps.newHashMap();
+
+        List<SysOfficeVO> sysOfficeVOList = this.baseMapper.listParentInfo(childIdList);
+        if (CollUtil.isNotEmpty(sysOfficeVOList)) {
+            for (SysOfficeVO sysOfficeVO : sysOfficeVOList) {
+                resMap.put(sysOfficeVO.getChildrenId(), sysOfficeVO);
+            }
+        }
+        return resMap;
+
     }
 
     /**
