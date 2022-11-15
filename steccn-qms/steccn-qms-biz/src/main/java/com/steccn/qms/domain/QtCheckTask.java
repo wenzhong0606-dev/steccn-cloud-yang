@@ -338,4 +338,8 @@ public class QtCheckTask implements Serializable {
             select = true)
     private String stationName;
 
+    /**
+     * 班次时间
+     */
+    private LocalDate classTime;
 }

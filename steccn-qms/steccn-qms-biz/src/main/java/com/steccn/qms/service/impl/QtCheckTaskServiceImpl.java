@@ -1802,7 +1802,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return currentMax;
     }
 
-
+    public LocalDateTime calculateDateTime(LocalDateTime time){
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime zao = LocalDateTime.now();
+        LocalDateTime wan = LocalDateTime.now();
+//        if(time.isAfter())
+        return null;
+    }
 }
 
 
