@@ -4,6 +4,7 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -11,7 +12,7 @@ public class QtIQCAcceptabilityDTO extends BasePageDTO implements Serializable {
     /**
      * 日期
      */
-    private LocalDateTime dateTime;
+    private LocalDate dateTime;
 
     /**
      * 对比
@@ -21,7 +22,7 @@ public class QtIQCAcceptabilityDTO extends BasePageDTO implements Serializable {
     /**
      * 筛选的取样时间
      */
-    private LocalDateTime samplingTime;
+    private LocalDate samplingTime;
 
     /**
      * 筛选的物料

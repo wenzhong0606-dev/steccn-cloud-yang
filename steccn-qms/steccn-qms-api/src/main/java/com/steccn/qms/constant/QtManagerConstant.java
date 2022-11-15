@@ -331,7 +331,10 @@ public interface QtManagerConstant {
         WORK(0,"班次"),
         PRODUCTLINE(1,"产线"),
         WORKSHOP(2,"车间"),
-        DEFECTCATEGORY(3,"缺陷类别");
+        DEFECTCATEGORY(3,"缺陷类别"),
+        SAMPLINGTIME(4,"取样日期"),
+        MATERIALWORKSHOP(5,"物料使用车间"),
+        SUPPLIER(6,"供应商");
 
         private Integer code;
         private String name;

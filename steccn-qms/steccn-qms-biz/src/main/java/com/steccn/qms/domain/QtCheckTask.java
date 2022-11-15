@@ -39,6 +39,11 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private QtBaseIdNameDTO materialWorkshop;
+    @TableField(value = "material_workshop ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String materialWorkshopId;
 
     @TableField(value = "material_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
