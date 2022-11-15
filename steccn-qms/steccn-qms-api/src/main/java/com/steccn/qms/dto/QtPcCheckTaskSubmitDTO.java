@@ -75,4 +75,9 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      * 落板明细信息
      */
     private List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfo;
+
+    /**
+     * 落板信息备注
+     */
+    private String destoryInfoRemark;
 }
