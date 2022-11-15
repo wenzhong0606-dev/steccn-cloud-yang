@@ -1,6 +1,5 @@
 package com.steccn.common.dto;
 
-import cn.hutool.core.lang.Tuple;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -23,6 +22,6 @@ public class StackGraphDTO<E1, E2> implements Serializable {
      * 如果x轴对应的只有一个堆叠图，则data只有一个元素，且E1为堆叠类型，E2为堆叠的数据
      */
     @ApiModelProperty("元素集合")
-    private List<List<TupleDTO<E1, E2>>> data;
+    private List<TupleDTO<E1, E2>> data;
 
 }
