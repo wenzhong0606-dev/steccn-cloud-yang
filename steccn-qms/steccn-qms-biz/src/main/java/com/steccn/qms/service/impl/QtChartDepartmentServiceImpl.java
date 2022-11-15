@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,7 +73,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
     private final QtChartTargetValueService qtChartTargetValueService;
 
-    @Override
+/*    @Override
     public QtDefectChartVO getChartDepartmentInfo(QtChatDepartmentDTO dto) {
 
         QtDefectChartVO qtDefectChartVO = new QtDefectChartVO();
@@ -85,9 +86,9 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             //基片车间
             defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ1.getWorkShopName());
             defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ2.getWorkShopName());
-            /*defectList.add(QtManagerConstant.WORKSHOP.SJGCJ1.getWorkShopName());
+            *//*defectList.add(QtManagerConstant.WORKSHOP.SJGCJ1.getWorkShopName());
             defectList.add(QtManagerConstant.WORKSHOP.SJGCJ2.getWorkShopName());
-            defectList.add(QtManagerConstant.WORKSHOP.SJGCJ3.getWorkShopName());*/
+            defectList.add(QtManagerConstant.WORKSHOP.SJGCJ3.getWorkShopName());*//*
             //判断当前时间是否小于早上八点，若小于，则取前一天
             if (LocalDateTime.now().getHour() < QtManagerConstant.beforeHour || LocalDateTime.now().getHour() > QtManagerConstant.afterHour){
                 LocalDateTime now = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.MIN);
@@ -149,11 +150,11 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         return qtDefectChartVO;
     }
 
-    /**
+    *//**
      * 深加工缺陷项分布图
      * @param dto
      * @return
-     */
+     *//*
     @Override
     public QtDefectChartVO getChartDepartmentInfoSJG(QtChatDepartmentDTO dto) {
 
@@ -226,7 +227,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             qtDefectChartVO.setKey(QtManagerConstant.QtChatTargetValue.SJGQX.getCode());
         }
         return qtDefectChartVO;
-    }
+    }*/
 
     /**
      * 深加工缺陷项分布图
@@ -448,6 +449,9 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         passRateOverViewVO.setXData(dxData);
         //获取最近7天和合格率
         passRateOverViewVO.setYData(datePassList);
+        //初始化缺陷数量
+        int badNum = 0;
+        List<BigDecimal> badNumS = Lists.newArrayList();
         for (PassRateDateVo passRateDateVo : passRateDateVoList) {
             List<QtCheckTask> checkTaskList;
             List<QtCheckTask> qtCheckTaskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
@@ -462,17 +466,40 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                         && Objects.nonNull(qtCheckTask.getProductWorkshop())
                         && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                         && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
-            } else {
+            } else if (QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode().equals(type)){
                 //获取深加工寻检查数据
                 checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                         && Objects.nonNull(qtCheckTask.getProductWorkshop())
                         && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                         && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
+            } else if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type)) {
+                //获取基片缺陷总数
+                List<String> defectJPList = Lists.newArrayList();
+                defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ1.getWorkShopName());
+                defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ2.getWorkShopName());
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> defectJPList.contains(qtCheckTask.getProductWorkshop().getName())).collect(Collectors.toList());
+                badNum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getBadNum()) ? 0 : qtCheckTask.getBadNum()).sum();
+                Integer checkNumSum2 = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
+                BigDecimal passRate = BigDecimal.ZERO;
+                datePassList.add(passRate);
+                badNumS.add(BigDecimal.valueOf(badNum));
+            } else {
+                //获取深加工缺陷总数
+                List<String> defectSJGList = Lists.newArrayList();
+                defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ1.getWorkShopName());
+                defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ2.getWorkShopName());
+                defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ3.getWorkShopName());
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> defectSJGList.contains(qtCheckTask.getProductWorkshop().getName())).collect(Collectors.toList());
+                BigDecimal passRate = BigDecimal.ZERO;
+                badNum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getBadNum()) ? 0 : qtCheckTask.getBadNum()).sum();
+                Integer checkNumSum2 = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
+                datePassList.add(passRate);
+                badNumS.add(BigDecimal.valueOf(badNum));
             }
-
             int goodNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getGoodNum()) ? 0 : qtCheckTask.getGoodNum()).sum();
             Integer checkNumSum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
             BigDecimal passRate;
+
             if (checkNumSum.equals(0)) {
                 passRate = BigDecimal.ZERO;
             } else {
@@ -480,24 +507,33 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             }
             datePassList.add(passRate);
         }
-
-        //获取合格率、日环比、周同比
-        getPassRateOverViewVO(passRateOverViewVO,datePassList, type);
-
-        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
-        if(targetValue == null) {
-            targetValue = BigDecimal.ZERO;
+        if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type) || QtManagerConstant.QtChatTargetValue.SJGQX.getCode().equals(type)){
+            //获取合格率、日环比、周同比
+            getPassRateOverViewVO(passRateOverViewVO, datePassList, type);
+            passRateOverViewVO.setYData(badNumS);
+        }else {
+            //获取合格率、日环比、周同比
+            getPassRateOverViewVO(passRateOverViewVO, datePassList, type);
         }
-        //获取目标值
-        passRateOverViewVO.setTargetValue(targetValue);
-        passRateOverViewVO.setKey(type);
-
+        if (qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type)) != null) {
+            BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type)).getValue();
+            if (targetValue == null) {
+                targetValue = BigDecimal.ZERO;
+            }
+            //获取目标值
+            passRateOverViewVO.setTargetValue(targetValue);
+            passRateOverViewVO.setKey(type);
+        }
         if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
             passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPXJHG.getName());
         } else if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)){
             passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.LLJHG.getName());
-        } else {
+        } else if (QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode().equals(type)){
             passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.SJGXJHG.getName());
+        }else if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type)){
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPQX.getName());
+        }else if (QtManagerConstant.QtChatTargetValue.SJGQX.getCode().equals(type)){
+            passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.SJGQX.getName());
         }
 
         return passRateOverViewVO;
@@ -547,10 +583,12 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                 tooltip = String.format("%s白班、夜班所有%s巡检的平均合格率",
                         LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN),
                         QtManagerConstant.SUB_OFFICE_NAME);
-            } else {
-                tooltip = String.format("%s白班、夜班所有%s巡检的平均合格率",
-                        LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN),
-                        QtManagerConstant.DEEP_OFFICE_NAME);
+            } else if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type)){
+                tooltip = String.format("%s白班、夜班记录的基片车间缺陷数加总",
+                        LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN));
+            }else {
+                tooltip = String.format("%s白班、夜班记录的深加工车间缺陷数加总",
+                        LocalDateUtil.localDateFormat(endDate, DatePattern.NORM_DATE_PATTERN));
             }
             passRateOverViewVO.setTooltip(tooltip);
         }

@@ -57,7 +57,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
 
         QueryWrapper<PmsPullForce> queryWrapper = getQueryWrapper(dto);
         List<PmsPullForce> pmsPullForceList = pmsPullForceService.list(queryWrapper);
-
+        localDateList.remove(localDateList.size() -1);
         List<ProducePassRateVO> producePassRateVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {
             //过滤出指定日期的产量
@@ -137,8 +137,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         LocalDateTime beginDateTime = LocalDateTime.of(dto.getBeginDate(),localTime);
         LocalDateTime endDateTime = LocalDateTime.of(dto.getEndDate(),localTime);
 
+        List<LocalDate> dateList = new ArrayList<>(localDateList);
         Map<LocalDate, PassRateDateVo> dateMap = Maps.newHashMap();
-        while (!CollectionUtils.isEmpty(localDateList)) {
+        while (!CollectionUtils.isEmpty(dateList)) {
             PassRateDateVo rateDateVo = new PassRateDateVo();
             LocalDate endDate = localDateList.get(localDateList.size() - 1);
             LocalDate startDate = localDateList.get(localDateList.size() - 2);

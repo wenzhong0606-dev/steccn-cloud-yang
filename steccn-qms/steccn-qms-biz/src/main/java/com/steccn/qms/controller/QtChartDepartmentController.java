@@ -32,13 +32,13 @@ public class QtChartDepartmentController {
 //    private final QtChartGenerateService qtChartGenerateService;
 
     @PostMapping("/info/jp")
-    public R<QtDefectChartVO> getChartDepartmentInfo(@RequestBody QtChatDepartmentDTO dto) {
-        return R.success(qtChartDepartmentService.getChartDepartmentInfo(dto));
+    public R<PassRateOverViewVO> getChartDepartmentInfo(@RequestBody LocalDateTime selectDateTime) {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.JPQX.getCode(),selectDateTime));
     }
 
     @PostMapping("/info/sjg")
-    public R<QtDefectChartVO> getChartDepartmentInfoSJG(@RequestBody QtChatDepartmentDTO dto) {
-        return R.success(qtChartDepartmentService.getChartDepartmentInfoSJG(dto));
+    public R<PassRateOverViewVO> getChartDepartmentInfoSJG(@RequestBody LocalDateTime selectDateTime) {
+        return R.success(qtChartDepartmentService.passRateOverview(QtManagerConstant.QtChatTargetValue.SJGQX.getCode(),selectDateTime));
     }
 
    /* @PostMapping("/picture/jpfb")

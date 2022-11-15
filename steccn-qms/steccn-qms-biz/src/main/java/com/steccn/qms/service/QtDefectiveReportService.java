@@ -84,14 +84,14 @@ public interface QtDefectiveReportService {
      * @param dto
      * @return
      */
-    QtLineChartBarVO substrateItemLine(QtChartParamDTO dto);
+    QtLineChartBarDTO substrateItemLine(QtChartParamDTO dto);
 
     /**
      * 深加工缺陷项趋势-折线图
      * @param dto
      * @return
      */
-    QtLineChartBarVO deepItemLine(QtChartParamDTO dto);
+    QtLineChartBarDTO deepItemLine(QtChartParamDTO dto);
 
     Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto);
 

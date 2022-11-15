@@ -66,6 +66,8 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME ="finishedTime";
 
+    String QT_CHECK_TASK_COPY__SORT_FIELD="samplingTime";
+
     String QT_CHECK_TASK_SORT_FIELD_CLASS_ID="classId";
 
     String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
@@ -105,6 +107,33 @@ public interface QtManagerConstant {
     String SUB_OFFICE_NAME="基片";
     String SUB_OFFICE_NAME_ONE = "基片一车间";
     String SUB_OFFICE_NAME_TWO = "基片二车间";
+
+    /**
+     * 产线名称
+     */
+    String DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_ONE = "深加工一车间一产线";
+    String DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_TWO = "深加工一车间二产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_ONE = "深加工二车间一产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_TWO = "深加工二车间二产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_THREE = "深加工二车间三产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR = "深加工二车间四产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE = "深加工二车间五产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SIX = "深加工二车间六产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN = "深加工二车间七产线";
+    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT = "深加工二车间八产线";
+    String DEEP_OFFICE_NAME_THREE_PRODUCT_LINE_ONE = "深加工三车间一产线";
+
+    String SUB_OFFICE_NAME_ONE_PRODUCT_LINE_ONE = "基片一车间一产线";
+    String SUB_OFFICE_NAME_ONE_PRODUCT_LINE_TWO = "基片一车间二产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_ONE = "基片二车间一产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_TWO = "基片二车间二产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_THREE = "基片二车间三产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR = "基片二车间四产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE = "基片二车间五产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SIX = "基片二车间六产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN = "基片二车间七产线";
+    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT = "基片二车间八产线";
+
 
     /**
      * 班次
@@ -334,7 +363,8 @@ public interface QtManagerConstant {
         DEFECTCATEGORY(3,"缺陷类别"),
         SAMPLINGTIME(4,"取样日期"),
         MATERIALWORKSHOP(5,"物料使用车间"),
-        SUPPLIER(6,"供应商");
+        SUPPLIER(6,"供应商"),
+        MATERIAL(7,"物料名称");
 
         private Integer code;
         private String name;
