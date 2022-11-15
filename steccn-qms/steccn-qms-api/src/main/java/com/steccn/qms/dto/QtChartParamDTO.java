@@ -74,6 +74,9 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
      */
     private Integer defectId;
 
+    @ApiModelProperty("缺陷项类别id")
+    private Integer defectCategory;
+
     /**
      * 缺陷项类型
      */
