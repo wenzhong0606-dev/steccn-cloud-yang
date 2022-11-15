@@ -96,9 +96,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 materialRequisitionVO.setWarehouseName(officeMap.get(materialRequisitionVO.getWarehouseId()));
             });
             //3.4获取总数量
-            Map<Long,BigDecimal> quantityMap  = pmsMaterialRequisitionInfoService.getTotalQuantity(ids);
+            Map<Long, BigDecimal> quantityMap = pmsMaterialRequisitionInfoService.getTotalQuantity(ids);
             BigDecimal zero = BigDecimal.ZERO;
-            page.getRecords().forEach(materialRequisitionVO->{
+            page.getRecords().forEach(materialRequisitionVO -> {
                 BigDecimal quantity = quantityMap.getOrDefault(materialRequisitionVO.getId(), zero);
                 materialRequisitionVO.setQuantity(quantity);
             });
@@ -386,10 +386,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     }
                 });
             }
+            List<Integer> stationList = dto.getStation();
+            //过滤数据 只返回在当前工位上的物料信息
+            List<MaterialRequisitionPlanVO> res = resBomList.stream().filter(plan -> stationList.contains(plan.getStation())).collect(Collectors.toList());
             //排序+逻辑分页
             Integer skip = (dto.getCurrent() - 1) * dto.getSize();
             //排序
-            List<MaterialRequisitionPlanVO> collect = resBomList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+            List<MaterialRequisitionPlanVO> collect = res.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
             resPage.setTotal(resBomList.size());
             resPage.setRecords(collect);
         }
