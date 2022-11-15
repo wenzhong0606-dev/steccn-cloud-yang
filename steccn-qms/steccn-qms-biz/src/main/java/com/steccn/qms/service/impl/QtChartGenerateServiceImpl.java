@@ -666,7 +666,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(rResult.getData())) {
             List<ProducePassRateVO> rList = rResult.getData();
             //先过滤数据
-            rList = this.rListfilter(rList,dto);
+            rList = this.rListFilter(rList,dto);
             //根据日期分组
             Map<LocalDate, List<ProducePassRateVO>> groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
             //根据班次、产线、车间分bar类型
@@ -757,22 +757,24 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtChartPieVO generateSubstratePieTend(QtChartParamDTO dto) {
         //准备变量
-        QtChartPieVO<String> vo = new QtChartPieVO();
-        List<QtChartPieValueVO<String>> data = Lists.newArrayList();
+        QtChartPieVO<BigDecimal> vo = new QtChartPieVO();
+        List<QtChartPieValueVO<BigDecimal>> data = Lists.newArrayList();
         //调用数据生成全量数据表
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
         pmsDTO.setEndDate(dto.getDateEnd());
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
-        ;
         Map<LocalDate, BigDecimal> groupByDate = MapUtil.newHashMap();
         if (CollUtil.isNotEmpty(rResult.getData())) {
+            List<ProducePassRateVO> rList = rResult.getData();
+            //先过滤数据
+            rList = this.rListFilter(rResult.getData(),dto);
             //根据日期分组
-            groupByDate = rResult.getData().stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+            groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
             for (Map.Entry<LocalDate, BigDecimal> entry : groupByDate.entrySet()) {
-                QtChartPieValueVO<String> pieValue = new QtChartPieValueVO<>();
+                QtChartPieValueVO<BigDecimal> pieValue = new QtChartPieValueVO<>();
                 pieValue.setName(entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                pieValue.setValue(new DecimalFormat("0.00%").format(entry.getValue()));
+                pieValue.setValue(entry.getValue());
                 data.add(pieValue);
             }
         }
@@ -802,7 +804,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      * @param rList
      * @return
      */
-    public List<ProducePassRateVO> rListfilter(List<ProducePassRateVO> rList,QtChartParamDTO dto){
+    public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList,QtChartParamDTO dto){
         rList.forEach(tmp->{
             if(tmp.getWorkshopName() == null){
                 tmp.setWorkshopName("");
