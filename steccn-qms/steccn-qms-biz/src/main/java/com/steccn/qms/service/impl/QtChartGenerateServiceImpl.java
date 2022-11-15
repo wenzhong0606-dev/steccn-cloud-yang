@@ -315,12 +315,18 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
                             //平均单片掰边重量 * （拉引时速 / 玻璃片长度)
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem,divideLaGlass);
-                            BigDecimal laDivideGlass12 = BigDecimalUtil.multiply(laDivideGlass,new BigDecimal(12));
                             if(flag){
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laDivideGlass12,new BigDecimal(1000000));
+                                BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass,new BigDecimal(12));
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12,new BigDecimal(1000000));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight,oneBaiLossWeight);
                             }else {
-
+                                BigDecimal produceTime = new BigDecimal(6);
+                                if(materialProduceTime.get(materialEntry.getKey()) != null){
+                                    produceTime = materialProduceTime.get(materialEntry.getKey());
+                                }
+                                BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass,produceTime);
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime,new BigDecimal(1000000));
+                                baiLossWeight = BigDecimalUtil.add(baiLossWeight,oneBaiLossWeight);
                             }
 
                             //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
@@ -334,7 +340,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12,new BigDecimal(1000000));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne,laQuantity);
                             }else {
-
+                                BigDecimal produceTime = new BigDecimal(6);
+                                if(materialProduceTime.get(materialEntry.getKey()) != null){
+                                    produceTime = materialProduceTime.get(materialEntry.getKey());
+                                }
+                                BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi,produceTime);
+                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime,new BigDecimal(1000000));
+                                laQuantity = BigDecimalUtil.add(laQuantityOne,laQuantity);
                             }
 
                             //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
