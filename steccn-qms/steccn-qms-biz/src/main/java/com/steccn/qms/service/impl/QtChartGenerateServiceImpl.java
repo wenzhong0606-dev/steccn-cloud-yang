@@ -549,7 +549,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      */
     @Override
     public QtDefectChartVO generateSubstrateOverview(QtTimeDTO dto) {
-        QtDefectChartVO<String, BigDecimal, String> vo = new QtDefectChartVO();
+        QtDefectChartVO<String, BigDecimal, BigDecimal> vo = new QtDefectChartVO();
         //获取生产系统数据
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         R<List<ProducePassRateVO>> rResult;
@@ -639,7 +639,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (targetValue == null) {
             targetValue = BigDecimal.ZERO;
         }
-        vo.setTargetValue(new DecimalFormat("0.00%").format(targetValue));
+        vo.setTargetValue(targetValue);
         return vo;
     }
 
@@ -664,45 +664,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //调用数据生成全量数据表
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         if (CollUtil.isNotEmpty(rResult.getData())) {
-            //先过滤数据,只要基片车间
             List<ProducePassRateVO> rList = rResult.getData();
-            //避免null值报错
-            rList.forEach(tmp->{
-                if(tmp.getWorkshopName() == null){
-                    tmp.setWorkshopName("");
-                }
-                if(tmp.getProductLineId() == null){
-                    tmp.setProductLineId(-1);
-                }
-                if(tmp.getWorkshopId() == null){
-                    tmp.setWorkshopId(-1);
-                }
-                if(tmp.getClassesName()== null){
-                    tmp.setClassesName("");
-                }
-            });
-            //过滤基片车间
-            rList = rList.stream().filter(s -> s.getWorkshopName().contains("基片")).collect(Collectors.toList());
-            //根据接收的值过滤
-            //车间
-            if(dto.getProductWorkShopId()!=null){
-                rList = rList.stream().filter(s -> s.getWorkshopId().equals(dto.getProductWorkShopId())).collect(Collectors.toList());
-            }
-            //产线
-            if(dto.getProductLineId()!=null){
-                rList = rList.stream().filter(s -> s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
-            }
-            //班次
-            if(dto.getWorkOrderId()!=null){
-                //早班
-                if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
-                    rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).collect(Collectors.toList());
-                }else {
-                    //晚班
-                    rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).collect(Collectors.toList());
-                }
-
-            }
+            //先过滤数据
+            rList = this.rListfilter(rList,dto);
             //根据日期分组
             Map<LocalDate, List<ProducePassRateVO>> groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
             //根据班次、产线、车间分bar类型
@@ -764,12 +728,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
                     }
-                    for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
-                        if (dataMap.get(entry.getKey()) == null) {
-                            entry.getValue().getData().add("0.00%");
-                        } else {
-                            entry.getValue().getData().add(new DecimalFormat("0.00%").format(dataMap.get(entry.getKey())));
-                        }
+                }
+                for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
+                    if (dataMap.get(entry.getKey()) == null) {
+                        entry.getValue().getData().add(new BigDecimal(0));
+                    } else {
+                        entry.getValue().getData().add(dataMap.get(entry.getKey()));
                     }
                 }
             }
@@ -833,4 +797,48 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         return fullDate;
     }
 
+    /**
+     * 过滤rList
+     * @param rList
+     * @return
+     */
+    public List<ProducePassRateVO> rListfilter(List<ProducePassRateVO> rList,QtChartParamDTO dto){
+        rList.forEach(tmp->{
+            if(tmp.getWorkshopName() == null){
+                tmp.setWorkshopName("");
+            }
+            if(tmp.getProductLineId() == null){
+                tmp.setProductLineId(-1);
+            }
+            if(tmp.getWorkshopId() == null){
+                tmp.setWorkshopId(-1);
+            }
+            if(tmp.getClassesName()== null){
+                tmp.setClassesName("");
+            }
+        });
+        //过滤基片车间
+        rList = rList.stream().filter(s -> s.getWorkshopName().contains("基片")).collect(Collectors.toList());
+        //根据接收的值过滤
+        //车间
+        if(dto.getProductWorkShopId()!=null){
+            rList = rList.stream().filter(s -> s.getWorkshopId().equals(dto.getProductWorkShopId())).collect(Collectors.toList());
+        }
+        //产线
+        if(dto.getProductLineId()!=null){
+            rList = rList.stream().filter(s -> s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
+        }
+        //班次
+        if(dto.getWorkOrderId()!=null){
+            //早班
+            if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).collect(Collectors.toList());
+            }else {
+                //晚班
+                rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).collect(Collectors.toList());
+            }
+
+        }
+        return rList;
+    }
 }
