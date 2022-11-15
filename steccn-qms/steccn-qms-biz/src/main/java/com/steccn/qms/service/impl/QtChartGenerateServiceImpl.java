@@ -580,6 +580,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         List<String> yData = new ArrayList<>();
         if(CollUtil.isNotEmpty(rResult.getData())){
             List<ProducePassRateVO> rList = rResult.getData();
+            //避免车间为空,报空指针异常
+            rList.forEach(tmp -> {
+                if(tmp.getWorkshopName() == null){
+                    tmp.setWorkshopName("");
+                }
+            });
             //过滤基片车间
             rList = rList.stream().filter(s->s.getWorkshopName().contains("基片")).collect(Collectors.toList());
             //根据日期分组
@@ -597,7 +603,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
             }
             //算日环比
-            BigDecimal dayRate = BigDecimalUtil.subtract(resultMap.get(fullDate),resultMap.get(fullDate.minusDays(1)));
+            BigDecimal dayRate = BigDecimalUtil.subtract(resultMap.get(fullDate),resultMap.get(fullDate.minusDays(1)),4);
             if(dayRate.compareTo(BigDecimal.ZERO) < 0){
                 vo.setDayFlag(0);
             }else if(dayRate.compareTo(BigDecimal.ZERO)>0){
