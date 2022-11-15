@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -54,7 +55,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate(),dto.getEndDate());
 
         LocalDateTime beginDateTime = LocalDateTime.of(dto.getBeginDate(), LocalTime.MIN);
-        LocalDateTime endDateTime = LocalDateTime.of(dto.getBeginDate(), LocalTime.MAX);
+        LocalDateTime endDateTime = LocalDateTime.of(dto.getEndDate(), LocalTime.MAX);
 
         List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime);
 
@@ -95,10 +96,11 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                     Optional<PmsPullForce> optional = pmsPullForceList.stream()
                             .filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(reportWorkGroupVO.getDate())
                                     && pmsPullForce.getClassesId().equals(reportWorkGroupVO.getClassesId())
+                                    && Objects.nonNull(reportWorkGroupVO.getWorkshopId())
                                     && pmsPullForce.getWorkshopId().equals(reportWorkGroupVO.getWorkshopId())
                                     && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
                     if (optional.isPresent()) {
-                        producePassRateVO.setPassRate(reportWorkGroupVO.getQuantity().divide(optional.get().getQuantity()));
+                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(),optional.get().getQuantity()));
                     } else {
                         producePassRateVO.setPassRate(BigDecimal.ZERO);
                     }
@@ -129,7 +131,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
     private QueryWrapper<PmsPullForce> getQueryWrapper(ProducePassRateDTO dto){
 
         QueryWrapper<PmsPullForce> queryWrapper = new QueryWrapper<PmsPullForce>();
-        queryWrapper.select("pull_force_date as date,workshop_id as workshopId,product_line_id ,classes_id as classesId, sum(quantity) as quantity");
+        queryWrapper.select("pull_force_date as pullForceDate,workshop_id as workshopId,product_line_id ,classes_id as classesId, sum(quantity) as quantity");
 
         List<SFunction<PmsPullForce,?>> sFunctionList = new ArrayList<>();
         sFunctionList.add(PmsPullForce::getPullForceDate);
