@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -15,7 +16,7 @@ import java.util.Set;
  * @date 2022/11/13
  */
 @Data
-public class QtChartYieldDownloadDTO implements Serializable {
+public class QtChartYieldDownloadDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -74,4 +75,5 @@ public class QtChartYieldDownloadDTO implements Serializable {
      * 过滤条件
      */
     private Set<String> filters;
+
 }

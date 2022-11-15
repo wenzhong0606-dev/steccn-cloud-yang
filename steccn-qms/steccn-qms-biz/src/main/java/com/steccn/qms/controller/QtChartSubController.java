@@ -57,4 +57,5 @@ public class QtChartSubController {
             return R.success(qtChartGenerateService.generateSubstratePieTend(dto));
         }
     }
+
 }

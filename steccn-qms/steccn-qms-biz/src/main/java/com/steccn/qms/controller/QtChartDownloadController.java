@@ -35,7 +35,7 @@ public class QtChartDownloadController {
     @PostMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
-    public void downloadSubstrate(@RequestBody QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
+    public void downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
         try{
             qtChartDownloadService.downloadSubstrate(response,dto);
         } catch (Exception e) {
@@ -69,5 +69,17 @@ public class QtChartDownloadController {
         map.put("message", "下载文件失败" + e.getMessage());
         response.getWriter().println(JSON.toJSONString(map));
     }
+
+//    @PostMapping("/substrate/details")
+//    @ApiOperation(value = "下载基片成品率数据详情")
+//    @SysLog("下载基片成品率数据")
+//    public void downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto) throws IOException {
+//        try{
+//            qtChartDownloadService.downloadSubstrate(response,dto);
+//        } catch (Exception e) {
+//            // 若有异常则重置response
+//            this.exceptionResponse(response,e);
+//        }
+//    }
 
 }

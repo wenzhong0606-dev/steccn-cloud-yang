@@ -45,4 +45,6 @@ public class ProducePassRateVO {
     private String productLineName;
 
     private BigDecimal passRate;
+
+    private String dateString;
 }

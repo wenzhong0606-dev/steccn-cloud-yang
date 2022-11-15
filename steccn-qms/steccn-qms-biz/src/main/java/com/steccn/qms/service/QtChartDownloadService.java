@@ -1,9 +1,11 @@
 package com.steccn.qms.service;
 
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * 图形下载excelService
@@ -27,4 +29,11 @@ public interface QtChartDownloadService {
      * 下载深加工缺陷项类别分布
      */
     void downloadDefectSubstrate(HttpServletResponse response) throws IOException;
+
+    /**
+     *
+     * @param dto
+     * @return
+     */
+    List<ProducePassRateVO> details(QtChartYieldDownloadDTO dto);
 }
