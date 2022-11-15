@@ -37,9 +37,11 @@ public class DeepDefectiveCategoryDetailListVO implements Serializable {
     @ApiModelProperty("缺陷项类别")
     private Integer defectCategory;
 
+    @ApiModelProperty("缺陷项类别")
+    private String defectCategoryName;
+
     @ApiModelProperty("缺陷项数量")
     private Integer defectNum;
-
 
     @ApiModelProperty("缺陷记录开始时间")
     private LocalDateTime defectStartTime;
