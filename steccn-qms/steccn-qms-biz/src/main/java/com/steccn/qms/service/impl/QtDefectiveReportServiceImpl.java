@@ -345,7 +345,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
 
     @Override
-    public QtChartBarVO deepDefectiveItem(QtChartParamDTO dto) {
+    public QtChartBarVO deepDefectiveItemBar(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //对扁平化数据获取类别
@@ -361,7 +361,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartBarVO substratePlateBar(QtChartParamDTO dto) {
+    public QtChartBarVO substrateItemBar(QtChartParamDTO dto) {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
@@ -395,7 +395,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartPieVO substrateCategoryJPie(QtChartParamDTO dto) {
+    public QtChartPieVO substrateItemPie(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无图表");
@@ -414,7 +414,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryDetail(QtChartParamDTO dto) {
+    public Page<DeepDefectiveCategoryDetailVO> substrateItemDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
@@ -524,48 +524,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     }
 
     /**
-     * 深加工缺陷项趋势-折线图
-     *
-     * @param dto
-     * @return
-     */
-    @Override
-    public QtChartBarVO deepDefectiveCategoryTrend(QtChartParamDTO dto) {
-        //定义返回vo
-        QtChartBarVO resVo = new QtChartBarVO();
-        List<QtChartBarSeriesVO> series = Lists.newArrayList();
-        List<String> lgendData = Lists.newArrayList();
-        //扁平化数据
-        List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
-        //对扁平化数据获取类别
-        Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-        List<String> xAis = compareTrend(dto.getDefectId(), series, flatDataList, categoryIdNameMap);
-        resVo.setSeries(series);
-        resVo.setXAis(xAis);
-        return resVo;
-
-        /*for (QtCheckTaskDetailReportVO tem:flatDataList) {
-            resVo.setSeries();String.valueOf(tem.getDefectCategoryCreateTime().getYear());
-        }
-        Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-
-
-
-        List<String> xAis = compare(categoryIdSet.stream().filter(dto.getDateStart()), series, flatDataList, categoryIdNameMap);
-        resVo.setSeries(series);
-        resVo.setXAis(xAis);
-        return resVo;*/
-    }
-
-    /**
      * 基片缺陷项趋势-折线图
      *
      * @param dto
      * @return
      */
     @Override
-    public QtLineChartBarVO substrateDefectiveCategoryTrend(QtChartParamDTO dto) {
+    public QtLineChartBarVO substrateItemLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
@@ -643,7 +608,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtLineChartBarVO deepDefectiveCategoryInfoTrend(QtChartParamDTO dto) {
+    public QtLineChartBarVO deepItemLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
@@ -766,7 +731,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryTrendDetail(QtChartParamDTO dto) {
+    public Page<DeepDefectiveCategoryDetailVO> deepCategoryTrendDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
@@ -821,7 +786,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryInfoTrendDetail(QtChartParamDTO dto) {
+    public Page<DeepDefectiveCategoryDetailVO> deepItemTrendDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
@@ -876,7 +841,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public Page<DeepDefectiveCategoryDetailVO> substrateDefectiveCategoryTrendDetail(QtChartParamDTO dto) {
+    public Page<DeepDefectiveCategoryDetailVO> substrateItemTrendDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
