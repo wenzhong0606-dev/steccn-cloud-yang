@@ -551,22 +551,23 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         R<List<ProducePassRateVO>> rResult;
         LocalDate pmsEndDate;
         //最晚数据完整日期
-        LocalDateTime fullDate = calculateOrder(LocalDateTime.now());
+        LocalDate fullDate = calculateOrder(LocalDateTime.now()).toLocalDate();
         LocalDate pmsStartDate;
         //没传时间范围则是部门分析
         if(dto == null){
             //需要拿到7天的数据
-            pmsEndDate = fullDate.toLocalDate();
+            pmsEndDate = fullDate;
             pmsStartDate = pmsEndDate.minusDays(6);
             pmsDTO.setBeginDate(pmsStartDate);
             pmsDTO.setEndDate(pmsEndDate);
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         }else {
             pmsEndDate = dto.getEndTime();
-            pmsStartDate =dto.getStartTime();
+            pmsStartDate = dto.getStartTime();
             pmsDTO.setBeginDate(dto.getStartTime());
             pmsDTO.setEndDate(dto.getEndTime());
             rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+            fullDate = pmsEndDate;
         }
         vo.setKey(1);
         vo.setTitle("基片成品率");
@@ -585,7 +586,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             Map<LocalDate,BigDecimal> resultMap = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate,CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
             //根据时间范围算值
             Long dateRange = pmsEndDate.toEpochDay() - pmsStartDate.toEpochDay();
-            for(int i = 0; i < dateRange; i++){
+            for(int i = 0; i < dateRange + 1; i++){
                 LocalDate tmpDate = pmsStartDate.plusDays(i);
                 xData.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 if(resultMap.get(tmpDate) == null){
@@ -596,30 +597,32 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
             }
             //算日环比
-            BigDecimal dayRate = resultMap.get(fullDate.toLocalDate()).subtract(resultMap.get(fullDate.toLocalDate().minusDays(1)));
+            BigDecimal dayRate = BigDecimalUtil.subtract(resultMap.get(fullDate),resultMap.get(fullDate.minusDays(1)));
             if(dayRate.compareTo(BigDecimal.ZERO) < 0){
                 vo.setDayFlag(0);
-            }else {
+            }else if(dayRate.compareTo(BigDecimal.ZERO)>0){
                 vo.setDayFlag(1);
+            }else {
+                vo.setDayFlag(2);
             }
             //如果为0，则显示为-
             if(dayRate.compareTo(BigDecimal.ZERO) == 0){
-                vo.setDayValue("-");
+                vo.setDayValue("");
             }else {
-                vo.setDayValue(new DecimalFormat("0.00%").format(dayRate));
+                vo.setDayValue(new DecimalFormat("0.00%").format(dayRate.abs()));
             }
             //算周同比
-            pmsDTO.setBeginDate(fullDate.minusDays(6).toLocalDate());
-            pmsDTO.setEndDate(fullDate.minusDays(6).toLocalDate());
+            pmsDTO.setBeginDate(fullDate.minusDays(6));
+            pmsDTO.setEndDate(fullDate.minusDays(6));
             R<List<ProducePassRateVO>> rResult2 = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
             BigDecimal weekRate = new BigDecimal(0);
             if(CollUtil.isNotEmpty(rResult2.getData())){
                 if(rResult2.getData().get(0).getPassRate()!=null){
-                    weekRate = resultMap.get(fullDate.toLocalDate()).subtract(rResult2.getData().get(0).getPassRate());
+                    weekRate = resultMap.get(fullDate).subtract(rResult2.getData().get(0).getPassRate());
                 }
             }
             if(weekRate.compareTo(BigDecimal.ZERO) == 0){
-                vo.setWeekValue("-");
+                vo.setWeekValue("");
             }else {
                 vo.setWeekValue(new DecimalFormat("0.00%").format(weekRate));
             }
@@ -629,7 +632,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if(yData.size() == 0){
             vo.setValue("0.00%");
         }else {
-            vo.setValue(yData.get(yData.size()));
+            vo.setValue(yData.get(yData.size()-1));
         }
         BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget,1)).getValue();
         if(targetValue == null) {

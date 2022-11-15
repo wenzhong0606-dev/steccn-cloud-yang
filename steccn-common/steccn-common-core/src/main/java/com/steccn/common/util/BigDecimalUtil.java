@@ -64,6 +64,17 @@ public class BigDecimalUtil {
      * @return 和
      */
     public static BigDecimal subtract(BigDecimal val1, BigDecimal val2) {
+        return subtract(val1, val2, DEFAULT_SCALE);
+    }
+
+    /**
+     * 将val1 - val2
+     *
+     * @param val1 val1
+     * @param val2 val2
+     * @return 和
+     */
+    public static BigDecimal subtract(BigDecimal val1, BigDecimal val2, int scale) {
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
@@ -71,7 +82,7 @@ public class BigDecimalUtil {
             val2 = BigDecimal.ZERO;
         }
         BigDecimal res = val1.subtract(val2);
-        res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
+        res = res.setScale(scale, RoundingMode.HALF_UP);
         return res;
     }
 
@@ -176,6 +187,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 x val2
+     *
      * @param val1
      * @param val2
      * @return

@@ -100,7 +100,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                                     && pmsPullForce.getWorkshopId().equals(reportWorkGroupVO.getWorkshopId())
                                     && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
                     if (optional.isPresent()) {
-                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(),optional.get().getQuantity()));
+                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(),optional.get().getQuantity(),4));
                     } else {
                         producePassRateVO.setPassRate(BigDecimal.ZERO);
                     }
