@@ -5,7 +5,11 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -484,8 +488,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                         }
                         QtChartSubDetailDTO baiResult = new QtChartSubDetailDTO();
-                        baiResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                        baiResult.setLossWeight(new DecimalFormat("0.00").format(baiLossWeight));
+                        baiResult.setPullAmount(laQuantity);
+                        baiResult.setLossWeight(baiLossWeight);
                         baiResult.setReason("掰边损耗");
                         baiResult.setWorkOrderTime(entry.getKey());
                         if (entry2.getKey().equals(0)) {
@@ -501,8 +505,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //放入缺陷项的值
                         for (Map.Entry<String, BigDecimal> defectEntry : defectLossWeightMap.entrySet()) {
                             QtChartSubDetailDTO defectResult = new QtChartSubDetailDTO();
-                            defectResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                            defectResult.setLossWeight(new DecimalFormat("0.00").format(defectEntry.getValue()));
+                            defectResult.setPullAmount(laQuantity);
+                            defectResult.setLossWeight(defectEntry.getValue());
                             defectResult.setReason(defectEntry.getKey());
                             defectResult.setWorkOrderTime(entry.getKey());
                             if (entry2.getKey().equals(0)) {
@@ -518,8 +522,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //落板
                         for (Map.Entry<String, BigDecimal> luoEntry : luoLossWeightMap.entrySet()) {
                             QtChartSubDetailDTO luoResult = new QtChartSubDetailDTO();
-                            luoResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                            luoResult.setLossWeight(new DecimalFormat("0.00").format(luoEntry.getValue()));
+                            luoResult.setPullAmount(laQuantity);
+                            luoResult.setLossWeight(luoEntry.getValue());
                             luoResult.setReason(luoEntry.getKey());
                             luoResult.setWorkOrderTime(entry.getKey());
                             if (entry2.getKey().equals(0)) {
@@ -540,6 +544,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         return resultList;
     }
+
+
 
     /**
      * 成品率概览
@@ -844,4 +850,169 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         return rList;
     }
+
+    /**
+     * 生成基片损耗柱状图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
+        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        BigDecimal laAmount = BigDecimal.ZERO;
+        for(QtChartSubDetailDTO tmp:data){
+            laAmount = BigDecimalUtil.add(laAmount,tmp.getPullAmount());
+        }
+        if(CollUtil.isNotEmpty(data)){
+            //若对比维度为空
+            if(dto.getCompare()==null){
+                Map<String,BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, true);
+                List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
+                List<String> legend = Lists.newArrayList();
+                for(Map.Entry<String, BigDecimal> reasonEntry:orderByLossWeight.entrySet()){
+                    //一根柱子
+                    StackGraphDTO graphDTO = new StackGraphDTO();
+                    graphDTO.setXAxis(reasonEntry.getKey());
+                    //柱子里的堆叠图
+                    TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+                    tupleDTO.setField1(reasonEntry.getKey());
+                    tupleDTO.setField2(reasonEntry.getValue());
+                    List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                    //只堆叠一次
+                    tupleDTOList.add(tupleDTO);
+                    graphDTO.setData(tupleDTOList);
+                    stackGraphDTOS.add(graphDTO);
+                    //算折线图
+                    BigDecimal sunRate = BigDecimal.ZERO;
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(),laAmount);
+                    legend.add(new DecimalFormat("0.0%").format(sunRate));
+                }
+                QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
+                resultDTO.setLegend(legend);
+                return resultDTO;
+            }else {
+                //所有数据按照先按照损耗原因进行分组
+                Map<String,List<QtChartSubDetailDTO>> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason));
+
+                Map<String,BigDecimal> sumByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(sumByReason, true);
+                //根据损耗重量分组
+                for(Map.Entry<String, BigDecimal> reasonEntry:orderByLossWeight.entrySet()){
+                    //拿到损耗原因的所有值
+                    List<QtChartSubDetailDTO> reasonList = groupByReason.get(reasonEntry.getKey());
+                    Map<String,List<QtChartSubDetailDTO>> groupByCompare = MapUtil.newHashMap();
+                    Map<String,List<QtChartSubDetailDTO>> orderCompare = MapUtil.newHashMap();
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getWorkOrder));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getProductLineName));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getProductWorkShopName));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    //所有的柱子
+                    List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
+                    //折线图
+                    List<String> legend = Lists.newArrayList();
+                    for(Map.Entry<String, List<QtChartSubDetailDTO>> orderEntry:orderCompare.entrySet()){
+                        //一根柱子
+                        StackGraphDTO graphDTO = new StackGraphDTO();
+                        graphDTO.setXAxis(orderEntry.getKey());
+                        //柱子里的堆叠图
+                        List<QtChartSubDetailDTO> duiValue = orderEntry.getValue();
+                        List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        BigDecimal sunAmount = BigDecimal.ZERO;
+                        for(QtChartSubDetailDTO tmp:duiValue){
+                            BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+                            TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                                tupleDTO.setField1(tmp.getWorkOrder());
+                            }
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                                tupleDTO.setField1(tmp.getProductWorkShopName());
+                            }
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                                tupleDTO.setField1(tmp.getProductLineName());
+                            }
+                            tupleDTO.setField2(tmp.getLossWeight());
+                            tupleDTOList.add(tupleDTO);
+                        }
+                        //堆叠多次
+                        graphDTO.setData(tupleDTOList);
+                        stackGraphDTOS.add(graphDTO);
+                        //算折线图
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
+                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                    }
+                    QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
+                    resultDTO.setLegend(legend);
+                    return resultDTO;
+                }
+            }
+
+        }
+        return null;
+    }
+
+    /**
+     * 生成基片损耗饼图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
+        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        QtChartPieVO result = new QtChartPieVO();
+        List<QtChartPieValueVO<BigDecimal>> pieList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(data)){
+            //拉引量
+            BigDecimal laAmount = BigDecimal.ZERO;
+            //损耗总重量
+            BigDecimal sunAmount = BigDecimal.ZERO;
+            //算所有的拉引量
+            for(QtChartSubDetailDTO tmp:data){
+                laAmount = BigDecimalUtil.add(laAmount,tmp.getPullAmount());
+                sunAmount = BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+            }
+            //若拉引量为0，饼状图显示为暂无数据图片
+            if(laAmount.compareTo(BigDecimal.ZERO) == 0){
+                return result;
+            }
+            //对所有损耗数据原因进行加总分析
+            Map<String,BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+
+            //损耗原因按损耗重量降序排序，成品排在所有损耗原因之后，显示格式：#损耗原因#: #损耗重量#吨(#损耗率#)、成品: #成品重量#吨(#成品率#)
+            Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, true);
+            //成品重量 = 拉引量 - 损耗总重量，单位为吨
+            BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount,sunAmount);
+            //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
+            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight,laAmount);
+            QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
+            onePie.setName("成品");
+            onePie.setValue(chengRate);
+            pieList.add(onePie);
+
+            //遍历损耗原因分组
+            for(Map.Entry<String,BigDecimal> reasonEntry:orderByReason.entrySet()){
+                QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
+                tmp.setName(reasonEntry.getKey());
+                tmp.setValue(BigDecimalUtil.divide(reasonEntry.getValue(),laAmount));
+                pieList.add(tmp);
+            }
+            result.setData(pieList);
+            return result;
+        }else {
+            return result;
+        }
+    }
+
+
 }

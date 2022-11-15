@@ -1,5 +1,6 @@
 package com.steccn.qms.service;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.dto.QtChartDateRangeDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
@@ -53,4 +54,18 @@ public interface QtChartGenerateService {
      * @return
      */
     public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
+
+    /**
+     * 生成基片损耗柱状图
+     * @param dto
+     * @return
+     */
+    public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto);
+
+    /**
+     * 生成基片损耗饼图
+     * @param dto
+     * @return
+     */
+    public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
 }

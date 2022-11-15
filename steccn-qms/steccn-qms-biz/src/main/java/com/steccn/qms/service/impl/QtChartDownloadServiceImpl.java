@@ -196,7 +196,6 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                     .limit(dto.getSize())
                     .collect(Collectors.toList());
         }
-
         return data;
     }
 
