@@ -17,14 +17,14 @@ import java.util.List;
 @ApiModel("深加工缺陷类别分布-明细")
 public class DeepDefectiveCategoryDetailVO implements Serializable {
 
-    @ApiModelProperty("缺陷项类别")
-    private Integer defectCategory;
+    @ApiModelProperty("缺陷项&缺陷类别 id")
+    private Integer id;
 
-    @ApiModelProperty("缺陷项类别")
-    private String defectCategoryName;
+    @ApiModelProperty("缺陷项&缺陷类别 id")
+    private String name;
 
-    @ApiModelProperty("缺陷项创建时间")
-    private LocalDateTime defectCreateTime;
+    @ApiModelProperty("缺陷项&缺陷类别 创建时间")
+    private LocalDateTime createTime;
 
     @ApiModelProperty("缺陷项数量")
     private Integer defectNum;

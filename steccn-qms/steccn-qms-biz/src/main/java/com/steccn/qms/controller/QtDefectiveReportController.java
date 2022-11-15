@@ -102,7 +102,7 @@ public class QtDefectiveReportController {
         return R.success(qtDefectiveReportService.substrateCategoryJPie(dto));
     }
 
-    @PostMapping("/substrate/category/detail")
+    @PostMapping("/substrate/item/detail")
     @ApiOperation("基片缺陷项分布-明细")
     public R<Page<DeepDefectiveCategoryDetailVO>> substrateDefectiveCategoryDetail(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateDefectiveCategoryDetail(dto));
@@ -174,6 +174,4 @@ public class QtDefectiveReportController {
     public R<Page<DeepDefectiveCategoryDetailVO>> substrateDefectiveCategoryTrendDetail(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateDefectiveCategoryTrendDetail(dto));
     }
-
-
 }

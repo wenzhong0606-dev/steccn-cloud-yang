@@ -297,6 +297,20 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
 
     }
 
+    @Override
+    public Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet) {
+        Map<Integer, QtDefectiveItem> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(defectIdSet)){
+            List<QtDefectiveItem> qtDefectiveItems = listByIds(defectIdSet);
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                qtDefectiveItems.forEach(ele -> {
+                    resMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 同类别下名称是否重复
      *
