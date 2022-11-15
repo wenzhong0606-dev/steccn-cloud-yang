@@ -1,6 +1,7 @@
 package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtDefectiveReportService;
@@ -47,7 +48,7 @@ public class QtDefectiveReportController {
 
     @PostMapping("/deep/category/line")
     @ApiOperation("深加工缺陷类别趋势-折线图")
-    public R<QtLineChartBarVO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarDTO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryLine(dto));
     }
 

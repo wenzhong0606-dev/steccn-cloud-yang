@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.vo.*;
 
@@ -120,5 +121,5 @@ public interface QtDefectiveReportService {
      * @param dto 筛选条件
      * @return vo
      */
-    QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto);
+    QtLineChartBarDTO deepDefectiveCategoryLine(QtChartParamDTO dto);
 }

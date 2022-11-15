@@ -27,7 +27,7 @@ public class QtLineChartBarDTO<T> implements Serializable {
     /**
      * 图例
      */
-    private List<String> markLine;
+    private List<String> legend;
 
     /**
      * 第二层数据
