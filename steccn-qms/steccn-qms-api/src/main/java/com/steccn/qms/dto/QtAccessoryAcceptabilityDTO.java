@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 配料抽检合格率DTO
+ */
 @Data
 public class QtAccessoryAcceptabilityDTO extends BasePageDTO implements Serializable {
     /**
