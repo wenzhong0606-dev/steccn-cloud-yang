@@ -185,7 +185,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
-        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap);
+        //获取需要修改的物料信息
+        HashMap<String, Long> updateMap = getUpdateMap(dtoList, codeList);
+
+        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, updateMap);
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -199,8 +202,6 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlan> addList = new ArrayList<>();
         List<PmsProducePlan> updateList = new ArrayList<>();
 
-        //获取需要修改的物料信息
-        HashMap<String, Long> updateMap = getUpdateMap(dtoList, codeList);
 
         for (PmsProducePlanExcelDTO excelDTO : dtoList) {
             if (updateFlag.equals(0)) {
@@ -642,7 +643,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 //        return pmsMrpInfoService.mrpAdd(dto);
 //    }
 
-    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map) {
+    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, HashMap<String, Long> updateMap) {
 
         List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
 
@@ -658,6 +659,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
             if (Objects.isNull(map.get(excelDTO.getMaterialCode()))) {
                 errorMsgList.add("物料信息不存在");
+            }
+            if (updateFlag.equals(0) && Objects.nonNull(updateMap.get(excelDTO.getMaterialCode()))) {
+                errorMsgList.add("物料计划数据库已存在");
             }
             //过滤出同一个月编码重复的数据
             //过滤出本行以外的重复数据
