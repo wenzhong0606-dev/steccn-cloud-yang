@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -63,31 +62,30 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //定义返回vo
         QtChartBarVO resVo = new QtChartBarVO();
         List<QtChartBarSeriesVO> series = Lists.newArrayList();
-        QtChartBarDecimalDataVO markLine = new QtChartBarDecimalDataVO();
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-        List<String> xAis = compareAndMarkline(dto.getCompare(), series, flatDataList, categoryIdNameMap,markLine);
+        List<String> xAis = compare(dto.getCompare(), series, flatDataList, categoryIdNameMap);
         resVo.setSeries(series);
         resVo.setXAis(xAis);
-        //resVo.setMarkLine( markLine);
         return resVo;
     }
 
     /**
      * 班次对比
      *
-     * @param compare
-     * @param series
-     * @param flatDataList
-     * @param categoryIdNameMap
+     * @param compare           对比维度
+     * @param series            保存数据
+     * @param flatDataList      扁平数据
+     * @param categoryIdNameMap 类别id-name
      * @return
      */
     private List<String> compare(Integer compare, List<QtChartBarSeriesVO> series, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> categoryIdNameMap) {
         //对比项目分组
         Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap;
+        List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
         Map<Integer, String> idNameMap;
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
@@ -111,23 +109,25 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<String> xAis = Lists.newArrayList();
         Map<Integer, String> finalIdNameMap = idNameMap;
         //遍历目标map
-        targetMap.forEach((t, tDataList) -> {
+        for (Map.Entry<Integer, String> entry1 : finalIdNameMap.entrySet()) {
+            List<QtCheckTaskDetailReportVO> tDataList = targetMap.getOrDefault(entry1.getKey(), defaultReportVoList);
             List<Integer> data = Lists.newArrayList();
-            //根据类别分组map
-            Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
-            categoryMap.forEach((cate, cateDataList) -> {
+            for (Map.Entry<Integer, String> entry2 : categoryIdNameMap.entrySet()) {
+                List<QtCheckTaskDetailReportVO> cateDataList = tDataList.stream().filter(v -> v.getDefectCategory().equals(entry2.getKey())).collect(Collectors.toList());
                 //每个类别下，每个班次的缺陷数之和
                 int sum = cateDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                 data.add(sum);
                 if (!flag.get()) {
-                    xAis.add(categoryIdNameMap.get(cate));
+                    xAis.add(entry2.getValue());
                 }
-            });
+            }
             flag.set(Boolean.TRUE);
-            series.add(new QtChartBarSeriesVO(finalIdNameMap.getOrDefault(t, Strings.EMPTY), data, "total"));
-        });
+            series.add(new QtChartBarSeriesVO(entry1.getValue(), data, "total"));
+        }
         return xAis;
     }
+
+
     private List<String> compareAndMarkline(Integer compare, List<QtChartBarSeriesVO> series, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> categoryIdNameMap, QtChartBarDecimalDataVO markLine) {
         //对比项目分组
         Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap;
@@ -158,7 +158,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             List<Integer> data = Lists.newArrayList();
             //根据类别分组map
             Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
-           // Map<Integer, List<QtCheckTask>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+            // Map<Integer, List<QtCheckTask>> categoryMap = tDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
             categoryMap.forEach((cate, cateDataList) -> {
                 //每个类别下，每个班次的缺陷数之和
                 int sum = cateDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
@@ -728,6 +728,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 深加工缺陷项
+     *
      * @param dto
      * @return
      */
