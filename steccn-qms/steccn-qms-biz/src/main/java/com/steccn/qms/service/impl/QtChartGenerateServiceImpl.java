@@ -666,8 +666,43 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(rResult.getData())) {
             //先过滤数据,只要基片车间
             List<ProducePassRateVO> rList = rResult.getData();
+            //避免null值报错
+            rList.forEach(tmp->{
+                if(tmp.getWorkshopName() == null){
+                    tmp.setWorkshopName("");
+                }
+                if(tmp.getProductLineId() == null){
+                    tmp.setProductLineId(-1);
+                }
+                if(tmp.getWorkshopId() == null){
+                    tmp.setWorkshopId(-1);
+                }
+                if(tmp.getClassesName()== null){
+                    tmp.setClassesName("");
+                }
+            });
             //过滤基片车间
             rList = rList.stream().filter(s -> s.getWorkshopName().contains("基片")).collect(Collectors.toList());
+            //根据接收的值过滤
+            //车间
+            if(dto.getProductWorkShopId()!=null){
+                rList = rList.stream().filter(s -> s.getWorkshopId().equals(dto.getProductWorkShopId())).collect(Collectors.toList());
+            }
+            //产线
+            if(dto.getProductLineId()!=null){
+                rList = rList.stream().filter(s -> s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
+            }
+            //班次
+            if(dto.getWorkOrderId()!=null){
+                //早班
+                if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                    rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).collect(Collectors.toList());
+                }else {
+                    //晚班
+                    rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).collect(Collectors.toList());
+                }
+
+            }
             //根据日期分组
             Map<LocalDate, List<ProducePassRateVO>> groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
             //根据班次、产线、车间分bar类型

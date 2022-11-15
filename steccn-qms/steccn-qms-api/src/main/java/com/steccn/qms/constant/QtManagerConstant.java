@@ -360,8 +360,8 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtClassesEnum {
-        DAY(0, "白班"),
-        NIGHT(1, "夜班");
+        DAY(0, "早班"),
+        NIGHT(1, "晚班");
         private Integer code;
         private String name;
 
