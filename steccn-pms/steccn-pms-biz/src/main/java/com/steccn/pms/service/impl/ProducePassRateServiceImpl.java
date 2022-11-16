@@ -161,9 +161,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             LocalDateTime dateTime = pmsReportWorkGroupVO.getDate();
             for (Map.Entry<LocalDate, PassRateDateVo> entry : dateMap.entrySet()) {
                 LocalDateTime startTime = entry.getValue().getStartDateTime();
-                LocalDateTime endTime = entry.getValue().getStartDateTime();
-                boolean bool = dateTime.isBefore(startTime) || dateTime.isEqual(startTime);
-                if (bool && dateTime.isAfter(endTime)) {
+                LocalDateTime endTime = entry.getValue().getEndDateTime();
+                boolean bool = dateTime.isAfter(startTime) || dateTime.isEqual(startTime);
+                if (bool && dateTime.isBefore(endTime)) {
                     pmsReportWorkGroupVO.setGroupDate(entry.getKey());
                 }
             }
