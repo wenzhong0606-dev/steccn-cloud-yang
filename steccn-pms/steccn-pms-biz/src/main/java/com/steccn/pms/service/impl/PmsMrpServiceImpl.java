@@ -99,6 +99,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         }
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));
         PmsMrpInfo pmsMrpInfo = new PmsMrpInfo();
+        pmsMrpInfo.setQuantity(BigDecimal.ZERO);
         Map<Long, BigDecimal> inventoryCalculations = inventoryCalculations(materialIds);
         BigDecimal quantity =  BigDecimal.ZERO;
         //获取库存信息
