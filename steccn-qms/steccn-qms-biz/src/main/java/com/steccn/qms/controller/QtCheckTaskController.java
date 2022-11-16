@@ -120,7 +120,7 @@ public class QtCheckTaskController {
 
     @GetMapping ("/productOrder/by/{id}")
     @ApiOperation(value = "根据产线查询生产订单号")
-    public R<QtProduceOrderLineVO> selectProductOrder(@PathVariable Integer id) {
+    public R<QtProduceOrderLineVO> selectProductOrder(@PathVariable("id") Integer id) {
         return R.success(qtCheckTaskService.selectProductOrder(id));
     }
 
