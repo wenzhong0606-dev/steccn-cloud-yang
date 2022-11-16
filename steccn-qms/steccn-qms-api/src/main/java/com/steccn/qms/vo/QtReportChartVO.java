@@ -18,6 +18,11 @@ public class QtReportChartVO implements Serializable {
     private Integer id;
 
     /**
+     * 报表卡片类型
+     */
+    private String reportCardType;
+
+    /**
      * 控制图卡片名称
      */
     private String name;
@@ -35,6 +40,11 @@ public class QtReportChartVO implements Serializable {
      * 筛选条件
      */
    private List<String> spcFilter;
+
+    /**
+     * 物料id
+     */
+    private Integer materialId;
 
     /**
      * 物料名称
@@ -66,6 +76,7 @@ public class QtReportChartVO implements Serializable {
      * 检验项名称
      */
     private String  checkItemName;
+
     /**
      * 生产车间
      */

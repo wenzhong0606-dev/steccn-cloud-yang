@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -12,7 +11,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentCodeDTO;
+import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.StationLineVO;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author MongKnife
@@ -270,10 +268,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
-    public List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto) {
+    public List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentIdsDTO dto) {
 
         //1.自定义sql查询数据
-        List<SysOfficeVO> list = baseMapper.listByParentCode(dto.getOfficeParentCodes(), SysOfficeConstant.PRODUCT_LINE);
+        List<SysOfficeVO> list = baseMapper.listByParentIds(dto.getOfficeParentIds(), SysOfficeConstant.PRODUCT_LINE);
 
         List<SysOfficeParentVO> sysOfficeParentVOS = Lists.newArrayList();
         if (CollUtil.isNotEmpty(list)) {
