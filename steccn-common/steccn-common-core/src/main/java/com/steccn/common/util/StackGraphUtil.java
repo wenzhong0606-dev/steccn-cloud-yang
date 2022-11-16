@@ -6,10 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -52,12 +49,24 @@ public class StackGraphUtil {
     }
 
     /**
+     * 转换 默认为纵向图例
+     * @param dataList 数据集
+     * @param <T1>
+     * @param <T2>
+     * @return
+     */
+    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList){
+       return biConvertData(dataList,Boolean.TRUE);
+    }
+
+    /**
      * 多只柱子转换
      *
      * @param dataList
+     * @param legend 横向图例还是纵向图例 是标识纵向图例，否标识横向图例
      * @return
      */
-    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList) {
+    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList ,boolean legend) {
         QtLineChartBiBarDTO qtLineChartBarDTO = new QtLineChartBiBarDTO();
         qtLineChartBarDTO.setXData(dataList.stream().map(v -> v.getXAxis()).collect(Collectors.toList()));
         //存放x轴的map
@@ -98,10 +107,17 @@ public class StackGraphUtil {
                 qtSeriesDataDTO.setStack(STR_STACK);
                 qtSeriesDataDTO.setType(STR_GRAPH);
                 seriesDataVOList.add(qtSeriesDataDTO);
-                if (flag.get()) {
+                if (flag.get() && legend) {
+                    //纵向图例
                     nameList.add(entryIn.getKey());
                 }
             }
+            if(!legend){
+                //横向图例
+                Optional<Map.Entry<T1, List<T2>>> first = entry.getValue().entrySet().stream().findFirst();
+                nameList.add(first.get().getKey());
+            }
+
             flag.set(Boolean.FALSE);
             resDataVoList.add(seriesDataVOList);
         }

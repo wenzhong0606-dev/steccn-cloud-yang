@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -14,13 +15,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.BiStackGraphDTO;
+import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -1234,161 +1237,125 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto) {
-//        //先根据开始时间和结束时间查出这段时间内所有完成的符合条件的检验项
-//        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>().select("any_value(type) type , any_value(material_id) material_id , " +
-//                        "any_value(material_workshop) material_workshop , any_value(product_line) product_line , any_value(product_order) product_order , " +
-//                        "any_value(product_batch) product_batch , any_value(check_plan_id) check_plan_id , any_value(status) status , sum(check_num) check_num , " +
-//                        "sum(good_num) good_num , sum(bad_num) bad_num , any_value(result) result , any_value(del_flag) del_flag , " +
-//                        "any_value(supplier) supplier , any_value(customer) customer , any_value(deliver_order) deliver_order , any_value(task_type) task_type ," +
-//                        "any_value(deliver_num) deliver_num , any_value(product_workshop) product_workshop , any_value(classes_id) classes_id , any_value ( code ) code ").lambda()
-//                //车间
-//                .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
-//                //产线
-//                .apply(Objects.nonNull(dto.getProductLineId()), "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
-//
-//                //物料
-//                .and(Objects.nonNull(dto.getMaterialId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialId, dto.getMaterialId()))
-//                //客户
-//                .apply(Objects.nonNull(dto.getCustomer()), "JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))", dto.getCustomer());
-//
-//        //判断是深加工车间还是基片车间
-//        if (dto.getName().equals(QtManagerConstant.DEEP_OFFICE_NAME)) {
-//            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_ONE)
-//                    .or()
-//                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_TWO)
-//                    .or()
-//                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_THREE)
-//                    .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.DEEP_OFFICE_NAME);
-//
-//        }
-//        if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)) {
-//            condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_ONE)
-//                    .or()
-//                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_TWO)
-//                    .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.SUB_OFFICE_NAME);
-//        }
-//
-//        //根据什么对比
-//        if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())){
-//            condition.groupBy(QtCheckTask::getProductLineId);
-//        }else if(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())){
-//            condition.groupBy(QtCheckTask::getProductWorkshopId);
-//        }else {
-//            condition.groupBy(QtCheckTask::getClassesId);
-//        }
-//        //2.解析排序规则
-//        condition.orderByAsc(QtCheckTask::getCode);
-//
-//        //创建返回数据的对象
-//        QtChartBarVO qtChartBarVO = new QtChartBarVO();
-//        //设置时间分片的集合
-//        List<String> dates = Lists.newArrayList();
-//        //设置BigDecimal集合储存每天平均合格率设置折线图合格率
-//        List<BigDecimal> dayRate = Lists.newArrayList();
-//        //获取查询条件的结果集合
-//        List<QtCheckTask> qtCheckTasks = list(condition);
-//        //柱状图柱子集合
-//        List<QtChartBarSeriesVO> qtChartBarSeriesVOS = new ArrayList<>();
-//        //柱状图折线图vo对象
-//        QtChartBarDecimalDataVO qtChartBarDecimalDataVO = new QtChartBarDecimalDataVO();
-//
-//        //将时间范围根据粒度分片
-//        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(QtManagerConstant.QtGranularityEnum.DAY.getType()
-//                , LocalDateUtil.getStartTimeOfDayStr(dto.getDateStart())
-//                , LocalDateUtil.getEndTimeOfDayStr(dto.getDateEnd()));
-//        for (int i = 1; i < localDateTimes.size(); i++) {
-//
-//            LocalDate start = localDateTimes.get(i - 1).toLocalDate();
-//            LocalDate end = localDateTimes.get(i).toLocalDate();
-//            //当天班次的早班开始时间
-//            LocalDateTime startTimeOfDay = LocalDateTime.of(start, LocalTime.of(8, 0, 0));
-//            //当天班次的晚班结束时间
-//            LocalDateTime endTimeOfDay = LocalDateTime.of(end.plusDays(1), LocalTime.of(8, 0, 0));
-//            //过滤出时间分片内的数据
-//            List<QtCheckTask> conditionDataList = qtCheckTasks.stream().filter(v->Objects.nonNull(v.getFinishedTime())).filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
-//                //数据范围应该是大于等于开始时间  小于结束时间
-//                if ((startTimeOfDay.isBefore(v.getFinishedTime()) || startTimeOfDay.isEqual(v.getFinishedTime())) && endTimeOfDay.isAfter(v.getFinishedTime())) {
-//                    return Boolean.TRUE;
-//                }
-//                return Boolean.FALSE;
-//            }).collect(Collectors.toList());
-//
-//            dates.add(start.toString());
-//
-//            //获取检验任务每天合格率的平均值
-//            int checksum = conditionDataList.stream().filter(s->Objects.nonNull(s.getCheckNum())).mapToInt(QtCheckTask::getCheckNum).sum();
-//            int goodsum = conditionDataList.stream().filter(s->Objects.nonNull(s.getGoodNum())).mapToInt(QtCheckTask::getGoodNum).sum();
-//            BigDecimal checkBig = BigDecimal.valueOf((int) checksum);
-//            BigDecimal goodBig = BigDecimal.valueOf((int) goodsum);
-//            BigDecimal result = BigDecimalUtil.divide(goodBig, checkBig);
-//            dayRate.add(result);
-//            qtChartBarDecimalDataVO.setData(dayRate);
-//
-//            //设置柱状图柱子对象 白班 夜班 、车间1 车间2 、产线1产线2
-//
-//            if (QtManagerConstant.QtChartCompareEnum.WORK.getCode()==dto.getCompare()){
-//                getCharBarByWork(qtChartBarSeriesVOS, conditionDataList);
-//            }else if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode()==dto.getCompare()){
-//                if (QtManagerConstant.DEEP_OFFICE_NAME.equals(dto.getName())){
-//                    //深加工车间每天数据柱子
-//                    QtChartBarSeriesVO qtChartBarSeriesWorkshopVO = getQtChartBarSeriesWorkshopVO(conditionDataList,QtManagerConstant.DEEP_OFFICE_NAME_ONE);
-//                    QtChartBarSeriesVO qtChartBarSeriesWorkshopVO1 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO);
-//                    QtChartBarSeriesVO qtChartBarSeriesWorkshopVO2 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_THREE);
-//
-//                    Collections.addAll(qtChartBarSeriesVOS,qtChartBarSeriesWorkshopVO,qtChartBarSeriesWorkshopVO1,qtChartBarSeriesWorkshopVO2);
-//                }else if (QtManagerConstant.SUB_OFFICE_NAME.equals(dto.getName())){
-//                    //基片车间每天数据柱子
-//                    QtChartBarSeriesVO vo = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_ONE);
-//                    QtChartBarSeriesVO vo1 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO);
-//                    Collections.addAll(qtChartBarSeriesVOS,vo,vo1);
-//                }
-//
-//            }else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode()==dto.getCompare()){
-//                if (QtManagerConstant.DEEP_OFFICE_NAME.equals(dto.getName())){
-//                    QtChartBarSeriesVO v1 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_ONE);
-//                    QtChartBarSeriesVO v2 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_TWO);
-//                    QtChartBarSeriesVO v3 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_ONE);
-//                    QtChartBarSeriesVO v4 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_TWO);
-//                    QtChartBarSeriesVO v5 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_THREE);
-//                    QtChartBarSeriesVO v6 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR);
-//                    QtChartBarSeriesVO v7 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE);
-//                    QtChartBarSeriesVO v8 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SIX);
-//                    QtChartBarSeriesVO v9 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN);
-//                    QtChartBarSeriesVO v10 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT);
-//                    QtChartBarSeriesVO v11= getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.DEEP_OFFICE_NAME_THREE_PRODUCT_LINE_ONE);
-//                    Collections.addAll(qtChartBarSeriesVOS,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11);
-//                }else if (QtManagerConstant.SUB_OFFICE_NAME.equals(dto.getName())){
-//                    QtChartBarSeriesVO v1 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_ONE_PRODUCT_LINE_ONE);
-//                    QtChartBarSeriesVO v2 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_ONE_PRODUCT_LINE_TWO);
-//                    QtChartBarSeriesVO v3 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_ONE);
-//                    QtChartBarSeriesVO v4 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_TWO);
-//                    QtChartBarSeriesVO v5 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_THREE);
-//                    QtChartBarSeriesVO v6 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR);
-//                    QtChartBarSeriesVO v7 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE);
-//                    QtChartBarSeriesVO v8 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SIX);
-//                    QtChartBarSeriesVO v9 = getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN);
-//                    QtChartBarSeriesVO v10= getQtChartBarSeriesWorkshopVO(conditionDataList, QtManagerConstant.SUB_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT);
-//                    Collections.addAll(qtChartBarSeriesVOS,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10);
-//                }
-//            }
-//        }
-//        //设置分片时间数据
-//        qtChartBarVO.setXAis(dates);
-//        //设置折线图
-//       qtChartBarVO.setMarkLine(qtChartBarDecimalDataVO);
-//       //设置柱状图
-//        qtChartBarVO.setSeries(qtChartBarSeriesVOS);
+    public QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        List<QtCheckTask> rateDataList = rateDataList(null, dto);
+        Assert.notEmpty(rateDataList, "数据为空，暂无报表");
 
-        List<QtCheckTask> rateDataList = rateDataList("深加工", dto);
-        Assert.notEmpty(rateDataList,"数据为空，暂无报表");
+        List<QtCheckTaskReportVO> flatDataList = copyQtCheckTask(rateDataList);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //定义数据集合
+        List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
 
-        List<BiStackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
+        //将时间范围根据粒度分片
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(QtManagerConstant.QtGranularityEnum.DAY.getType()
+                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
+                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
-        //时间分片
+        //考虑对比
+        TupleDTO<Map<Integer, List<QtCheckTaskReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
+        //获取对比数据集和对比维度
+        Map<Integer, List<QtCheckTaskReportVO>> contrastDataMap = mapMapTupleDTO.getField1();
+        Map<Integer, String> idNameMap = mapMapTupleDTO.getField2();
 
-        return null;
+        for (int i = 1; i < cutDate.size(); i++) {
+            LocalDateTime start = cutDate.get(i - 1);
+            LocalDateTime end = cutDate.get(i);
+            //获取时间范围的集合
+            List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+            BiStackGraphDTO<String, BigDecimal> biStackGraphDTO = new BiStackGraphDTO<>();
+            biStackGraphDTO.setXAxis(LocalDateTimeUtil.format(start, DatePattern.NORM_DATE_PATTERN));
+            biStackGraphDTO.setData(Lists.newArrayList());
+
+            //默认集合
+            List<QtCheckTaskReportVO> defaultQtCheckTaskList = Lists.newArrayList();
+            //对比的结果
+            for (Map.Entry<Integer, String> entry : idNameMap.entrySet()) {
+                //获取对比数据
+                List<QtCheckTaskReportVO> contrastData = contrastDataMap.getOrDefault(entry.getKey(), defaultQtCheckTaskList);
+                Set<Long> conditionIdList = conditionDataList.stream().map(QtCheckTaskReportVO::getId).collect(Collectors.toSet());
+                contrastData = contrastData.stream().filter(v -> conditionIdList.contains(v.getId())).collect(Collectors.toList());
+                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(contrastData, entry.getValue());
+                biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
+            }
+            stackGraphDTOList.add(biStackGraphDTO);
+        }
+        //自定义转换工具
+        QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
+        return qtLineChartBiBarDTO;
     }
+
+    /**
+     * 拷贝数据
+     *
+     * @param sourceData 原始数据
+     * @return
+     */
+    private List<QtCheckTaskReportVO> copyQtCheckTask(List<QtCheckTask> sourceData) {
+        List<QtCheckTaskReportVO> resList = Lists.newArrayList();
+        sourceData.forEach(ele -> {
+            QtCheckTaskReportVO vo = new QtCheckTaskReportVO();
+            BeanUtils.copyProperties(ele, vo);
+            if(Objects.nonNull(vo.getProductLine())){
+                vo.setProductLineId(ele.getProductLine().getId());
+            }
+            if(Objects.nonNull(ele.getProductWorkshop())){
+                vo.setProductWorkshopId(ele.getProductWorkshop().getId());
+            }
+            resList.add(vo);
+        });
+        return resList;
+    }
+
+
+    /**
+     * 公共分组
+     *
+     * @param compare      对比
+     * @param flatDataList 数据集合
+     */
+    private TupleDTO<Map<Integer, List<QtCheckTaskReportVO>>, Map<Integer, String>> commonGroup(Integer compare, List<QtCheckTaskReportVO> flatDataList) {
+        Map<Integer, List<QtCheckTaskReportVO>> targetMap;
+        Map<Integer, String> idNameMap;
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductWorkshopId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductWorkshopId));
+            Set<Integer> workshopIdSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductWorkshopId())).map(QtCheckTaskReportVO::getProductWorkshopId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductLineId));
+            Set<Integer> lineIdSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).map(QtCheckTaskReportVO::getProductLineId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
+        } else {
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassesId));
+            idNameMap = Maps.newHashMap();
+            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
+            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+        }
+        return new TupleDTO<>(targetMap, idNameMap);
+    }
+
+    /**
+     * 求和，返回二元组数据
+     *
+     * @param tDataList 原始数据
+     * @param key       元素显示
+     * @return
+     */
+    private TupleDTO<String, BigDecimal> getTupleDTO(List<QtCheckTaskReportVO> tDataList, String key) {
+        int checkSum = tDataList.stream().filter(v -> Objects.nonNull(v.getCheckNum())).mapToInt(QtCheckTaskReportVO::getCheckNum).sum();
+        int goodSum = tDataList.stream().filter(v -> Objects.nonNull(v.getGoodNum())).mapToInt(QtCheckTaskReportVO::getGoodNum).sum();
+        BigDecimal divide = BigDecimalUtil.divide(BigDecimal.valueOf(goodSum), BigDecimal.valueOf(checkSum), BigDecimalUtil.SCALE_4);
+        return new TupleDTO<>(key, BigDecimalUtil.multiply(divide,BigDecimal.valueOf(100)));
+    }
+
 
     /**
      * 获取合格率基础数据集合
@@ -1413,7 +1380,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * 获取各车间按条件筛选的柱状图柱子
      * @param conditionDataList
      * @param name
-     * @param productWorkshopName
      * @return
      */
     private QtChartBarSeriesVO getQtChartBarSeriesWorkshopVO(List<QtCheckTask> conditionDataList,String name) {
