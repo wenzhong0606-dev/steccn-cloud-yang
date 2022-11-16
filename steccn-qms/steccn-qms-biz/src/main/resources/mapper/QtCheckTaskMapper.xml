@@ -86,6 +86,7 @@
                      (product_line ->> '$.id' =  #{lineId})
                 </foreach>
             </if>
+            AND task_type = #{dto.taskType}
             AND finished_time &gt;= #{dto.dateTimeStart}
             AND finished_time &lt;= #{dto.dateTimeEnd}
             AND status = 2

@@ -1240,7 +1240,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
         dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
-        List<QtCheckTask> rateDataList = rateDataList(null, dto);
+        List<QtCheckTask> rateDataList = rateDataList(keyword, dto);
         Assert.notEmpty(rateDataList, "数据为空，暂无报表");
 
         List<QtCheckTaskReportVO> flatDataList = copyQtCheckTask(rateDataList);
