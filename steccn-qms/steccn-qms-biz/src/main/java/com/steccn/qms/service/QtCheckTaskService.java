@@ -113,13 +113,6 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     List<QtCheckTask> conditionTaskList(QtCheckTaskConditionDTO dto);
 
     /**
-     * 缺陷项图表柱状图和饼状图
-     * @param dto
-     * @return
-     */
-    QtChartDefectVO getPictureJPFB(QtChartParamDTO dto);
-
-    /**
      * 配料抽检合格率的明细分页
      * @param dto
      * @return
@@ -141,13 +134,6 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     Page<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto);
 
     /**
-     * 基片化验抽检合格率趋势的柱状图
-     * @param dto
-     * @return
-     */
-    QtChartBarVO getQtSubLaboratoryChartVO(QtSubLaboratoryAcceptabilityDTO dto);
-
-    /**
      * 来料检合格率明细分页
      * @param dto
      * @return
@@ -159,5 +145,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    QtLineChartBiBarDTO getQtIQCAcceptabilityChartVO(QtSubOrDeepAcceptabilityDTO dto);
+    QtLineChartBiBarDTO accessoryChart(QtSubOrDeepAcceptabilityDTO dto);
+
+
+    /**
+     * 来料检合格率
+     * @param dto dto
+     * @return 柱状图
+     */
+    QtLineChartBiBarDTO getQtIQCAcceptabilityChart(QtSubOrDeepAcceptabilityDTO dto);
 }

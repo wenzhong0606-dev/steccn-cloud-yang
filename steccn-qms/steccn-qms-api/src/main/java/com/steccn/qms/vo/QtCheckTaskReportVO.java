@@ -114,5 +114,14 @@ public class QtCheckTaskReportVO implements Serializable {
     @ApiModelProperty("任务完成时间")
     private LocalDateTime finishedTime;
 
+    @ApiModelProperty("取样时间")
+    private LocalDateTime samplingTime;
+
+    @ApiModelProperty("供应商名字")
+    private String supplierName;
+
+    @ApiModelProperty("供应商id")
+    private Integer supplierId;
+
     private static final long serialVersionUID = 1L;
 }

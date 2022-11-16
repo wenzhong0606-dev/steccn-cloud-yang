@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -31,6 +32,7 @@ public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMappe
 
     @Override
     public List<QtCheckTaskCopyVO> getLocalDateList() {
+        List<QtCheckTaskCopyVO> qtCheckTaskCopyVOS = Lists.newArrayList();
         List<QtCheckTaskCopy> qtCheckTaskCopies = list(new QueryWrapper<QtCheckTaskCopy>()
                 .select("task_id ,sum(copy) as copy , any_value(id) as id , any_value(sample_num) as sample_num," +
                         " any_value(license_plate) as license_plate ,any_value(analyst) as analyst , any_value(analyst_name) analyst_name ," +
@@ -39,16 +41,17 @@ public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMappe
                         "any_value(update_name) update_name , any_value(del_flag) as del_flag , any_value(create_time) as create_time , " +
                         "any_value(update_time) as update_time")
                 .lambda().groupBy(QtCheckTaskCopy::getTaskId).orderByAsc(QtCheckTaskCopy::getSamplingTime));
-        List<QtCheckTaskCopy> collect = qtCheckTaskCopies.stream().collect(
-                Collectors.collectingAndThen(Collectors.toCollection(
-                        () -> new TreeSet<>(Comparator.comparing(p -> p.getTaskId()))), ArrayList::new)
-        );
-        List<QtCheckTaskCopyVO> qtCheckTaskCopyVOS = Lists.newArrayList();
-        collect.stream().forEach(p->{
-            QtCheckTaskCopyVO qtCheckTaskCopyVO = new QtCheckTaskCopyVO();
-            BeanUtils.copyProperties(p,qtCheckTaskCopyVO);
-            qtCheckTaskCopyVOS.add(qtCheckTaskCopyVO);
-        });
+        if(CollUtil.isNotEmpty(qtCheckTaskCopies)){
+            List<QtCheckTaskCopy> collect = qtCheckTaskCopies.stream().collect(
+                    Collectors.collectingAndThen(Collectors.toCollection(
+                            () -> new TreeSet<>(Comparator.comparing(p -> p.getTaskId()))), ArrayList::new)
+            );
+            collect.stream().forEach(p->{
+                QtCheckTaskCopyVO qtCheckTaskCopyVO = new QtCheckTaskCopyVO();
+                BeanUtils.copyProperties(p,qtCheckTaskCopyVO);
+                qtCheckTaskCopyVOS.add(qtCheckTaskCopyVO);
+            });
+        }
         return qtCheckTaskCopyVOS;
     }
 }
