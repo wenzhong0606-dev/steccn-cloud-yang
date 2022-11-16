@@ -3,6 +3,7 @@ package com.steccn.qms.dto;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -23,6 +24,7 @@ public class QtCheckTaskSimpleDTO implements Serializable {
     /**
      * 定义样本概况数据结构
      */
-    private Map<String,Map<String,Object>> simpleMap;
+    private Map<String,Object> result;
+
 
 }
