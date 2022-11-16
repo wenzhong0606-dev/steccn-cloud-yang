@@ -230,6 +230,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
 //            fixMap.put("img",imageData);
             }
             excelWriter.fill(fixMap, writeSheet);
+            response.getOutputStream().flush();
         }
     }
 

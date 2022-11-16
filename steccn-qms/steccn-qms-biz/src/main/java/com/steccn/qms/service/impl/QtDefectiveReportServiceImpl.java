@@ -13,9 +13,10 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -72,6 +72,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+        Assert.notEmpty(flatDataList,"数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
@@ -158,7 +164,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .endTime(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX))
                 .workOrderId(dto.getWorkOrderId())
                 .productWorkShopId(dto.getProductWorkShopId())
-                .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
                 .defectId(dto.getDefectId())
                 .build();
@@ -233,6 +238,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtChartPieVO deepDefectiveCategoryPie(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
         Assert.notEmpty(flatDataList, "数据为空，暂无图表");
         //总缺陷数
         int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
@@ -259,9 +269,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             QtChartPieValueVO vo = new QtChartPieValueVO();
             vo.setName(idNameMap.getOrDefault(k, Strings.EMPTY));
             int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-            BigDecimal multiply = BigDecimal.valueOf(categorySum).multiply(BigDecimal.valueOf(100));
-            BigDecimal divide = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(sum), BigDecimalUtil.SCALE_2);
-            vo.setValue(divide);
+            vo.setValue(categorySum);
             dataList.add(vo);
         });
         qtChartPieVO.setData(dataList);
@@ -272,6 +280,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Integer> categoryIdSet = Sets.newHashSet();
@@ -369,10 +384,30 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtChartBarVO deepDefectiveItemBar(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         return compareCategoryAndItem(dto.getCompare(), flatDataList, idNameMap, (tDataList, key) -> tDataList.stream().filter(v -> v.getDefectId().equals(key)).collect(Collectors.toList()));
+    }
+
+    /**
+     * 根据深加工或基片来获取产线
+     * @param keyword 深加工 || 基片
+     * @return 产线集合
+     */
+    private Set<Integer> conditionProduceLine(String keyword){
+        SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
+        sysOfficeDTO.setOfficeName(keyword);
+        sysOfficeDTO.setOfficeType(QtManagerConstant.OFFICE_PRODUCE_LINE_TYPE);
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO)).get();
+        Assert.notEmpty(sysOfficeVOList,"产线集合不能为空");
+        return sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
     }
 
     /**
@@ -384,6 +419,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     @Override
     public QtChartBarVO substrateItemBar(QtChartParamDTO dto) {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.SUB_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+        Assert.notEmpty(flatDataList, "数据为空，暂无明细");
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
@@ -400,6 +441,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtChartPieVO deepDefectiveItemPie(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
         Assert.notEmpty(flatDataList, "数据为空，暂无图表");
         //总缺陷数
         int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
@@ -419,6 +465,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtChartPieVO substrateItemPie(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.SUB_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
         Assert.notEmpty(flatDataList, "数据为空，暂无图表");
         //总缺陷数
         int sum = flatDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
@@ -438,6 +489,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public Page<DeepDefectiveCategoryDetailVO> substrateItemDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.SUB_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Integer> categoryIdSet = Sets.newHashSet();
@@ -477,6 +533,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtLineChartBarDTO deepDefectiveCategoryLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+
         //如果类别不为空，则过滤类别
         if (Objects.nonNull(dto.getDefectCategory())) {
             flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
@@ -517,6 +580,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtLineChartBarDTO substrateItemLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+
         //如果类别不为空，则过滤类别
         if (Objects.nonNull(dto.getDefectCategory())) {
             flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
@@ -550,6 +620,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public QtLineChartBarDTO deepItemLine(QtChartParamDTO dto) {
         //获取扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+
         //如果类别不为空，则过滤类别
         if (Objects.nonNull(dto.getDefectCategory())) {
             flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
@@ -633,6 +710,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+
+        if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
+            //默认给深加工产线
+            Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
+            flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
+        }
+
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Integer> categoryIdSet = Sets.newHashSet();
