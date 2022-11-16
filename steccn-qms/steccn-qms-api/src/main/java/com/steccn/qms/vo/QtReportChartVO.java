@@ -37,14 +37,14 @@ public class QtReportChartVO implements Serializable {
     private LocalDate timeScopeEnd;
 
     /**
-     * 筛选条件
+     * 粒度:小时、天、周、月、季度、年
      */
-   private List<String> spcFilter;
+    private String granularity;
 
     /**
      * 物料id
      */
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料名称
@@ -56,6 +56,15 @@ public class QtReportChartVO implements Serializable {
      */
     private Integer checkType;
 
+    /**
+     * 检验分组id
+     */
+    private Integer checkGroupId;
+
+    /**
+     * 检验项：为选中检验分组当前快照下所有数值、百分比、自动计算类型的检验项
+     */
+    private Integer checkItemId;
 
     /**
      * 标准值
@@ -101,6 +110,11 @@ public class QtReportChartVO implements Serializable {
      * 供应商
      */
     private List<QtBaseIdNameDTO> supplier;
+
+    /**
+     * 备注
+     */
+    private String note;
 
     /**
      * 计量单位

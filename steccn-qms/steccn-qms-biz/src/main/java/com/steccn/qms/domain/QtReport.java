@@ -95,7 +95,7 @@ public class QtReport implements Serializable {
      * 下限
      */
     @TableField(value = "dowm_limit")
-    private BigDecimal dowmLimit;
+    private BigDecimal downLimit;
 
     /**
      * 生产车间

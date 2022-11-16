@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 @Data
@@ -21,7 +22,7 @@ public class QtSpcReportDetailTaskVO implements Serializable {
     /**
      * 检验结果
      */
-    private Integer result;
+    private String checkResult;
 
     /**
      * 物料名称
@@ -31,10 +32,10 @@ public class QtSpcReportDetailTaskVO implements Serializable {
     /**
      * 生产产线
      */
-    private List<QtBaseIdNameDTO> productLine;
+    private QtBaseIdNameDTO productLine;
 
     /**
      * 客户
      */
-    private List<QtBaseIdNameDTO> customer;
+    private QtBaseIdNameDTO customer;
 }

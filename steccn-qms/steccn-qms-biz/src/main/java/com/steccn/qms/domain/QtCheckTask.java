@@ -44,7 +44,7 @@ public class QtCheckTask implements Serializable {
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
             select = true)
-    private String materialWorkshopId;
+    private Integer materialWorkshopId;
 
     @TableField(value = "material_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
@@ -172,7 +172,7 @@ public class QtCheckTask implements Serializable {
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
             select = false)
-    private String supplierId;
+    private Integer supplierId;
 
     /**
      * 客户id
@@ -190,7 +190,7 @@ public class QtCheckTask implements Serializable {
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
             select = false)
-    private String customerId;
+    private Integer customerId;
 
     /**
      * 缺陷总数

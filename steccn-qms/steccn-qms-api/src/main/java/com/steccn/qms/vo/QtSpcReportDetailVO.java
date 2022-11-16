@@ -34,7 +34,7 @@ public class QtSpcReportDetailVO implements Serializable {
     private String measureUnit;
 
     /**
-     * 检验结果平均值
+     * 检验结果
      */
     private BigDecimal checkItemResultAverage;
 
