@@ -147,7 +147,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             rateDateVo.setStartDateTime(LocalDateTime.of(startDate, localTime));
             rateDateVo.setEndDateTime(LocalDateTime.of(endDate, localTime));
             dateList.remove(endDate);
-            if (localDateList.size() == 1) {
+            if (dateList.size() == 1) {
                 dateList.remove(startDate);
             }
             dateMap.put(startDate,rateDateVo);
