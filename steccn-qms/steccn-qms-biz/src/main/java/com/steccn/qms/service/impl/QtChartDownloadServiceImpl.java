@@ -9,6 +9,8 @@ import com.alibaba.excel.metadata.data.ImageData;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
@@ -169,7 +171,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
      * @return
      */
     @Override
-    public List<ProducePassRateVO> details(QtChartYieldDownloadDTO dto) {
+    public Page<ProducePassRateVO> details(QtChartYieldDownloadDTO dto) {
         ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getStartTime());
         pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
@@ -195,12 +197,19 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             }
             //先排序
             data = data.stream().sorted(Comparator.comparing(ProducePassRateVO::getDate).thenComparing(ProducePassRateVO::getProductLineName).thenComparing(ProducePassRateVO::getProductLineName).thenComparing(ProducePassRateVO::getClassesId)).collect(Collectors.toList());
-            //分页
-            data = data.stream().sorted().skip((dto.getCurrent() -1) * dto.getSize())
-                    .limit(dto.getSize())
-                    .collect(Collectors.toList());
         }
-        return data;
+        //分页
+        int pageSize = dto.getSize();
+        int current = dto.getCurrent() - 1;
+        int total = data.size();
+        data = data.stream().skip(current * pageSize)
+                .limit(dto.getSize())
+                .collect(Collectors.toList());
+        Page<ProducePassRateVO> page = new Page<>(dto.getCurrent(), dto.getSize());
+        page.setRecords(data);
+        page.setTotal(data.size());
+        int pageSum = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+        return page;
     }
 
     /**

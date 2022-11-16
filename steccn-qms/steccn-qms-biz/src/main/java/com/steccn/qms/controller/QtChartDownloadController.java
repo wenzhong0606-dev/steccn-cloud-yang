@@ -2,9 +2,11 @@ package com.steccn.qms.controller;
 
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,16 +73,10 @@ public class QtChartDownloadController {
         response.getWriter().println(JSON.toJSONString(map));
     }
 
-//    @PostMapping("/substrate/details")
-//    @ApiOperation(value = "下载基片成品率数据详情")
-//    @SysLog("下载基片成品率数据")
-//    public void downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto) throws IOException {
-//        try{
-//            qtChartDownloadService.downloadSubstrate(response,dto);
-//        } catch (Exception e) {
-//            // 若有异常则重置response
-//            this.exceptionResponse(response,e);
-//        }
-//    }
+    @PostMapping("/substrate/detail")
+    @ApiOperation(value = "基片成品率详情")
+    public R<Page<ProducePassRateVO>> downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
+        return R.success(qtChartDownloadService.details(dto));
+    }
 
 }

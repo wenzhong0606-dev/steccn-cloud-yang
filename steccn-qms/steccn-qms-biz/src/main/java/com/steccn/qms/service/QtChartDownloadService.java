@@ -1,7 +1,9 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
+import com.steccn.qms.vo.QtCheckTaskListVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -35,5 +37,5 @@ public interface QtChartDownloadService {
      * @param dto
      * @return
      */
-    List<ProducePassRateVO> details(QtChartYieldDownloadDTO dto);
+    Page<ProducePassRateVO>  details(QtChartYieldDownloadDTO dto);
 }
