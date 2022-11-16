@@ -37,4 +37,57 @@
 <!--        create_name,create_time,update_by,-->
 <!--        update_name,update_time,del_flag-->
 <!--    </sql>-->
+    <select id="rateDataList" resultType="com.steccn.qms.domain.QtCheckTask">
+        SELECT
+            type type,
+            material_id material_id,
+            material_workshop material_workshop,
+            product_line product_line,
+            product_order product_order,
+            product_batch product_batch,
+            check_plan_id check_plan_id,
+            STATUS STATUS,
+            check_num check_num,
+            good_num good_num,
+            bad_num bad_num,
+            result result,
+            del_flag del_flag,
+            supplier supplier,
+            customer customer,
+            deliver_order deliver_order,
+            task_type task_type,
+            deliver_num deliver_num,
+            product_workshop product_workshop,
+            classes_id classes_id,
+            CODE CODE
+        FROM
+            qt_check_task
+        WHERE
+            del_flag = 0
+            <if test="dto.productWorkShopId != null and dto.productWorkShopId != ''">
+                AND (product_workshop ->> '$.id' =  #{dto.productWorkShopId})
+            </if>
+            <if test="dto.productLineId != null and dto.productLineId != ''">
+                AND (product_line ->> '$.id' =  #{dto.productLineId})
+            </if>
+            <if test="dto.customer != null and dto.customer != ''">
+                AND (customer ->> '$.id' =  #{dto.customer})
+            </if>
+            <if test="dto.materialId != null and dto.materialId != ''">
+                AND material_id = #{dto.materialId}
+            </if>
+            <if test="dto.workingOrder != null and dto.workingOrder != ''">
+                AND classes_id = #{dto.workingOrder}
+            </if>
+            <if test="line != null and line.size > 0">
+                AND
+                <foreach collection="line" item="lineId" open="(" close=")" separator="or">
+                     (product_line ->> '$.id' =  #{lineId})
+                </foreach>
+            </if>
+            AND finished_time &gt;= #{dto.dateTimeStart}
+            AND finished_time &lt;= #{dto.dateTimeEnd}
+            AND status = 2
+        ORDER BY CODE ASC
+    </select>
 </mapper>
