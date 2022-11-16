@@ -153,6 +153,12 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         }
         if (CollectionUtils.isNotEmpty(addProducePlanList)) {
+            List<LocalDate> localDateList = addProducePlanList.stream().map(PmsProducePlan::getPlanDate).collect(Collectors.toList());
+            List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>().eq(PmsProducePlan::getMaterialId, dto.getMaterialId())
+                    .in(PmsProducePlan::getPlanDate,localDateList));
+            if (CollectionUtils.isNotEmpty(list)) {
+                throw new BusinessException("该物料已存在生产计划，新增失败");
+            }
             if (!saveBatch(addProducePlanList)) {
                 throw new BusinessException("生产月计划新增失败");
             }
