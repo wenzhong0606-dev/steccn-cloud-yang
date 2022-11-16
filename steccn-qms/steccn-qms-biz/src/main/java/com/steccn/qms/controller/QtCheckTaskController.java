@@ -2,7 +2,6 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
-import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
@@ -157,11 +156,18 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
     }
 
-    @PostMapping("/iqc/acceptability/chart")
+    @PostMapping("/accessory/acceptability/chart")
     @ApiOperation(value = "配料抽检合格率")
-    public R<QtLineChartBiBarDTO> getQtIQCAcceptabilityChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+    public R<QtLineChartBiBarDTO> accessoryChart(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode());
-        return R.success(qtCheckTaskService.getQtIQCAcceptabilityChartVO(dto));
+        return R.success(qtCheckTaskService.accessoryChart(dto));
+    }
+
+    @PostMapping("/iqc/acceptability/rate/chart")
+    @ApiOperation(value = "来料检合格率")
+    public R<QtLineChartBiBarDTO> getQtIQCAcceptabilityChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode());
+        return R.success(qtCheckTaskService.getQtIQCAcceptabilityChart(dto));
     }
 
     @PostMapping("/accessory/acceptability/detail")
@@ -170,11 +176,11 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
     }
 
-    @PostMapping("/accessory/acceptability/chart")
-    @ApiOperation(value = "配料抽检合格率柱状图")
-    public R<QtChartBarVO> getAccessoryChartDefectVO(@RequestBody QtAccessoryAcceptabilityDTO dto) {
-        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
-    }
+//    @PostMapping("/accessory/acceptability/chart")
+//    @ApiOperation(value = "配料抽检合格率柱状图")
+//    public R<QtChartBarVO> getAccessoryChartDefectVO(@RequestBody QtAccessoryAcceptabilityDTO dto) {
+//        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
+//    }
 
     @PostMapping("/sub/acceptability/detail")
     @ApiOperation(value = "基片化验抽检合格率趋势明细分页")

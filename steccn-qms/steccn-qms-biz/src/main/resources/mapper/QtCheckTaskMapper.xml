@@ -11,6 +11,7 @@
             <result property="productWorkshop" column="product_workshop" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="productLine" column="product_line" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="materialWorkshop" column="material_workshop" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="supplier" column="supplier" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="productWorkshopId" column="workshop_id" jdbcType="INTEGER"/>
             <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
             <result property="productOrder" column="product_order" jdbcType="VARCHAR"/>
@@ -48,6 +49,7 @@
             product_line product_line,
             product_order product_order,
             material_workshop,
+            supplier,
             product_batch product_batch,
             STATUS STATUS,
             check_num check_num,
