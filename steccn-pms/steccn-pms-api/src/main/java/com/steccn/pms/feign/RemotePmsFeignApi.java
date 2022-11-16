@@ -63,7 +63,7 @@ public interface RemotePmsFeignApi {
      * @param materialIds
      * @return
      */
-    @PostMapping("/material/ids")
+    @PostMapping("/feign/pms/produce/order/material/ids")
     @ApiOperation("根据物料查询当前正在执行订单信息")
     R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds);
 }

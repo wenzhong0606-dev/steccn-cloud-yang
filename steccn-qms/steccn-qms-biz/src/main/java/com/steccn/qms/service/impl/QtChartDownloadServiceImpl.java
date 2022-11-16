@@ -17,6 +17,7 @@ import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.service.QtChartDownloadService;
 import com.steccn.qms.service.QtChartGenerateService;
@@ -50,6 +51,12 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
 
     private final QtChartGenerateService qtChartGenerateService;
 
+    /**
+     * 下载基片详情
+     * @param response
+     * @param dto
+     * @throws IOException
+     */
     @Override
     public void downloadSubstrate(HttpServletResponse response, QtChartYieldDownloadDTO dto) throws IOException {
         Map<String, Object> map = MapUtils.newHashMap();
@@ -201,14 +208,56 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         //分页
         int pageSize = dto.getSize();
         int current = dto.getCurrent() - 1;
-        int total = data.size();
         data = data.stream().skip(current * pageSize)
                 .limit(dto.getSize())
                 .collect(Collectors.toList());
         Page<ProducePassRateVO> page = new Page<>(dto.getCurrent(), dto.getSize());
         page.setRecords(data);
         page.setTotal(data.size());
-        int pageSum = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+        return page;
+    }
+
+    /**
+     * 基片损耗详情数据
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<QtChartSubDetailDTO> LossDetails(QtChartYieldDownloadDTO dto) {
+        QtChartParamDTO paramDTO = new QtChartParamDTO();
+        BeanUtils.copyProperties(dto,paramDTO);
+        List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(paramDTO);
+        //过滤图表数据
+        if(CollUtil.isNotEmpty(qtChartSubDetailDTOS)&&CollUtil.isNotEmpty(dto.getFilters())){
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                //对班次进行处理
+                List<Integer> workOrderCode = new ArrayList<>();
+                if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.NIGHT.getName())){
+                    workOrderCode.add(QtManagerConstant.QtClassesEnum.NIGHT.getCode());
+                }
+                if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.DAY.getName())){
+                    workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getCode());
+                }
+                qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
+            }
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+            }
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductWorkShopName())).collect(Collectors.toList());
+            }
+        }
+        //先排序
+        qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().sorted(Comparator.comparing(QtChartSubDetailDTO::getWorkOrderTime).thenComparing(QtChartSubDetailDTO::getProductLineName).thenComparing(QtChartSubDetailDTO::getProductLineName).thenComparing(QtChartSubDetailDTO::getWorkOrder)).collect(Collectors.toList());
+        //分页
+        int pageSize = dto.getSize();
+        int current = dto.getCurrent() - 1;
+        qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().skip(current * pageSize)
+                .limit(dto.getSize())
+                .collect(Collectors.toList());
+        Page<QtChartSubDetailDTO> page = new Page<>(dto.getCurrent(), dto.getSize());
+        page.setRecords(qtChartSubDetailDTOS);
+        page.setTotal(qtChartSubDetailDTOS.size());
         return page;
     }
 
@@ -253,6 +302,77 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             excelWriter.fill(fixMap, writeSheet);
             response.getOutputStream().flush();
         }
+    }
+
+    /**
+     * 下载基片损耗详情
+     * @param response
+     * @param dto
+     * @throws IOException
+     */
+    @Override
+    public void downloadSubstrateLoss(HttpServletResponse response, QtChartYieldDownloadDTO dto) throws IOException {
+        Map<String, Object> map = MapUtils.newHashMap();
+        //筛选dto数据
+        if(StrUtil.isBlank(dto.getWorkOrderName())){
+            dto.setWorkOrderName("");
+        }
+        if(StrUtil.isBlank(dto.getProductWorkShopName())){
+            dto.setProductWorkShopName("");
+        }
+        if(StrUtil.isBlank(dto.getProductLineName())){
+            dto.setProductLineName("");
+        }
+        //根据自己的模版put数据
+        map.put("workOrderNameCondition", dto.getWorkOrderName());
+        map.put("workShopCondition", dto.getProductWorkShopName());
+        map.put("workLineCondition",dto.getProductLineName());
+        map.put("dateStart",dto.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+        }
+        //对全量数据表进行筛选
+        ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
+        pmsDTO.setBeginDate(dto.getStartTime());
+        pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
+        R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
+        List<ProducePassRateVO> data = new ArrayList<>();
+        if(CollUtil.isNotEmpty(rResult.getData())){
+            data = rResult.getData();
+            QtChartParamDTO param = new QtChartParamDTO();
+            BeanUtils.copyProperties(dto,param);
+            //过滤筛选数据
+            data = qtChartGenerateService.rListFilter(data,param);
+            //过滤图表数据
+            if(CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())){
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
+                }
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+                }
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                    data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
+                }
+            }
+            data.forEach(tmp->{
+                if(tmp.getDate()!=null){
+                    tmp.setDateString(tmp.getDate().toString());
+                }
+                if(tmp.getPassRate()!=null){
+                    tmp.setPassRateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
+                }
+            });
+        }
+        //封装的下载
+        this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPCP,QtManagerConstant.QT_CHART_JPCP_NAME,map,data,dto.getBase64());
     }
 
     /**

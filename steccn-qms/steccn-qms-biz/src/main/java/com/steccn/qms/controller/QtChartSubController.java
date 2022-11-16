@@ -58,4 +58,17 @@ public class QtChartSubController {
         }
     }
 
+    /**
+     * 基片损耗分布
+     * @return
+     */
+    @PostMapping("/sub/loss")
+    public R generateLossChatBarVO(@RequestBody QtChartParamDTO dto){
+        if(dto.getType().equals(0)){
+            return R.success(qtChartGenerateService.generateSubstrateBarLoss(dto));
+        }else {
+            return R.success(qtChartGenerateService.generateSubstratePieLoss(dto));
+        }
+    }
+
 }

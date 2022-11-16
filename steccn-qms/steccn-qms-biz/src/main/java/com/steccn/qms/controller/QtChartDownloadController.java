@@ -8,6 +8,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
 import com.steccn.qms.service.QtChartDownloadService;
@@ -58,6 +59,18 @@ public class QtChartDownloadController {
         }
     }
 
+    @PostMapping("/substrate/detail")
+    @ApiOperation(value = "基片成品率详情")
+    public R<Page<ProducePassRateVO>> substrateDetails(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
+        return R.success(qtChartDownloadService.details(dto));
+    }
+
+    @PostMapping("/substrate/loss/detail")
+    @ApiOperation(value = "基片损耗率详情")
+    public R<Page<QtChartSubDetailDTO>> substrateLossDetails(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
+        return R.success(qtChartDownloadService.LossDetails(dto));
+    }
+
     /**
      * 对响应异常进行封装
      * @param response
@@ -71,12 +84,6 @@ public class QtChartDownloadController {
         map.put("status", "failure");
         map.put("message", "下载文件失败" + e.getMessage());
         response.getWriter().println(JSON.toJSONString(map));
-    }
-
-    @PostMapping("/substrate/detail")
-    @ApiOperation(value = "基片成品率详情")
-    public R<Page<ProducePassRateVO>> downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
-        return R.success(qtChartDownloadService.details(dto));
     }
 
 }
