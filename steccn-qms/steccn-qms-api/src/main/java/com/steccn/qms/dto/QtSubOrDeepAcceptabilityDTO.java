@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @ApiModel("深加工或基片合格率DTO")
@@ -21,9 +22,15 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
     @NotNull(message = "开始时间不能为空")
     private LocalDate dateStart;
 
+    @ApiModelProperty(value = "开始时间",hidden = true)
+    private LocalDateTime dateTimeStart;
+
     @ApiModelProperty("结束时间")
     @NotNull(message = "结束时间不能为空")
     private LocalDate dateEnd;
+
+    @ApiModelProperty(value = "结束时间",hidden = true)
+    private LocalDateTime dateTimeEnd;
 
     @ApiModelProperty("对比")
     private Integer compare;
@@ -38,7 +45,7 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
     private Integer workingOrder;
 
     @ApiModelProperty("物料id")
-    private Integer materialId;
+    private Long materialId;
 
     @ApiModelProperty("客户")
     private Integer customer;
