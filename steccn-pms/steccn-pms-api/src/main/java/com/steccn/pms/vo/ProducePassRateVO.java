@@ -46,5 +46,13 @@ public class ProducePassRateVO {
 
     private BigDecimal passRate;
 
+    /**
+     * 日期类字符串
+     */
     private String dateString;
+
+    /**
+     * 成品率字符串
+     */
+    private String passRateString;
 }

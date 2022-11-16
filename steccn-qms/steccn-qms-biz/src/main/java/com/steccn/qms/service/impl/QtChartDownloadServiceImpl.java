@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -102,6 +103,9 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             data.forEach(tmp->{
                 if(tmp.getDate()!=null){
                     tmp.setDateString(tmp.getDate().toString());
+                }
+                if(tmp.getPassRate()!=null){
+                    tmp.setPassRateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
                 }
             });
         }
@@ -220,14 +224,22 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             // forceNewRow 如果设置了true,有个缺点 就是他会把所有的数据都放到内存了，所以慎用
             // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
             // 如果数据量大 list不是最后一行 参照下一个
-            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             excelWriter.fill(dataList, fillConfig, writeSheet);
 //            excelWriter.fill(dataList, fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
-//            ImageData imageData = new ImageData();
-//            imageData.setImage(Base64.getDecoder().decode(base64));
-//            imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
-//            fixMap.put("img",imageData);
+                ImageData imageData = new ImageData();
+                BASE64Decoder decoder = new BASE64Decoder();
+                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        // 调整异常数据
+                        bytes[i] += 1024;
+                    }
+                }
+//                imageData.setImage(bytes);
+//                imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
+                fixMap.put("img",bytes);
             }
             excelWriter.fill(fixMap, writeSheet);
             response.getOutputStream().flush();
