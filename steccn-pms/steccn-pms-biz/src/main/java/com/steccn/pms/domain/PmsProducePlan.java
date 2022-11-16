@@ -35,6 +35,7 @@ public class PmsProducePlan implements Serializable {
     /**
      * 数量
      */
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal quantity;
 
     /**
