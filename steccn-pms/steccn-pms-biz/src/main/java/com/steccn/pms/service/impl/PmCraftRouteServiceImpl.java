@@ -114,40 +114,50 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //5.拷贝返回的信息
         List<PmCraftRouteVO> res = BeanUtil.copyToList(resPage.getRecords(), PmCraftRouteVO.class);
         //6.处理数据
-        Set<Long> ids = Sets.newHashSet();
-        List<Long> processIds = Lists.newArrayList();
-        List<Long> spareIDs = Lists.newArrayList();
-        res.forEach(craftRouteVO -> {
-            //6.1 处理物料组件数据
-            LambdaQueryWrapper<PmCraftRouteModule> wrapper = new LambdaQueryWrapper<PmCraftRouteModule>().eq(PmCraftRouteModule::getCraftRouteId, craftRouteVO.getId());
-            List<PmCraftRouteModule> list = pmCraftRouteModuleService.list(wrapper);
-            craftRouteVO.setList(BeanUtil.copyToList(list, PmCraftRouteModuleVO.class));
-            craftRouteVO.getList().forEach(craftRouteModuleVO -> {
-                spareIDs.add(craftRouteModuleVO.getMaterialId());
-                ids.add(craftRouteModuleVO.getUnitId());
-                processIds.add(craftRouteModuleVO.getProcessId());
-
-            });
-            //6.2 处理工序数据
-            craftRouteVO.setProcessList(pmCraftRouteProcessService.list(craftRouteVO.getId()));
-        });
-        //获取字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
-        //获取物料数据
-        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(spareIDs)).get();
-        //获取工序数据
-        Map<Long, String> processNameMap = processService.listByIdsCh(processIds);
-        //将数据处理返回
-        res.forEach(craftRouteVO -> {
-                    craftRouteVO.getList().forEach(moduleVO -> {
-                        EqpSpareVO eqpSpareVO = spareVOMap.get(moduleVO.getMaterialId());
-                        moduleVO.setUnit(dictMap.get(moduleVO.getUnitId()));
-                        moduleVO.setMaterialCode(eqpSpareVO.getCode());
-                        moduleVO.setMaterialName(eqpSpareVO.getName());
-                        moduleVO.setProcessName(processNameMap.get(moduleVO.getProcessId()));
+        if (CollUtil.isNotEmpty(res)) {
+            Set<Long> ids = Sets.newHashSet();
+            List<Long> processIds = Lists.newArrayList();
+            List<Long> spareIDs = Lists.newArrayList();
+            Set<Long> materialIdS = Sets.newHashSet();
+            res.forEach(pmCraftRouteVO -> materialIdS.add(pmCraftRouteVO.getId()));
+            //处理物料组件数据
+            LambdaQueryWrapper<PmCraftRouteModule> wrapper = new LambdaQueryWrapper<PmCraftRouteModule>().in(PmCraftRouteModule::getCraftRouteId, materialIdS);
+            List<PmCraftRouteModule> moduleList = pmCraftRouteModuleService.list(wrapper);
+            Map<Long, List<PmCraftRouteModule>> collect = moduleList.stream().collect(Collectors.groupingBy(PmCraftRouteModule::getMaterialId));
+            res.forEach(craftRouteVO -> {
+                List<PmCraftRouteModule> craftRouteModuleList = collect.get(craftRouteVO.getMaterialId());
+                List<PmCraftRouteModuleVO> pmCraftRouteModuleVOS = BeanUtil.copyToList(craftRouteModuleList, PmCraftRouteModuleVO.class);
+                if (CollUtil.isNotEmpty(pmCraftRouteModuleVOS)) {
+                    pmCraftRouteModuleVOS.forEach(craftRouteModuleVO -> {
+                        spareIDs.add(craftRouteModuleVO.getMaterialId());
+                        ids.add(craftRouteModuleVO.getUnitId());
+                        processIds.add(craftRouteModuleVO.getProcessId());
                     });
                 }
-        );
+                craftRouteVO.setList(pmCraftRouteModuleVOS);
+                //6.2 处理工序数据
+                craftRouteVO.setProcessList(pmCraftRouteProcessService.list(craftRouteVO.getId()));
+            });
+            //获取字典数据
+            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+            //获取物料数据
+            Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(spareIDs)).get();
+            //获取工序数据
+            Map<Long, String> processNameMap = processService.listByIdsCh(processIds);
+            //将数据处理返回
+            res.forEach(craftRouteVO -> {
+                        if (CollUtil.isNotEmpty(craftRouteVO.getList())) {
+                            craftRouteVO.getList().forEach(moduleVO -> {
+                                EqpSpareVO eqpSpareVO = spareVOMap.get(moduleVO.getMaterialId());
+                                moduleVO.setUnit(dictMap.get(moduleVO.getUnitId()));
+                                moduleVO.setMaterialCode(eqpSpareVO.getCode());
+                                moduleVO.setMaterialName(eqpSpareVO.getName());
+                                moduleVO.setProcessName(processNameMap.get(moduleVO.getProcessId()));
+                            });
+                        }
+                    }
+            );
+        }
         //7.返回数据
         return page.setRecords(res);
     }
@@ -255,24 +265,24 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //1.自定义sql获取该工艺路线下的可执行工位
         List<PmProcessStationDTO> list = this.baseMapper.stations(craftRouteId);
         List<SysOfficeVO> officeVOList = Lists.newArrayList();
-        List<SysOfficeVO> collect =Lists.newArrayList();
+        List<SysOfficeVO> collect = Lists.newArrayList();
         if (CollUtil.isNotEmpty(list)) {
             //2.获取产线下的工位信息
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
             sysOfficeParentDTO.setId(productLineId);
             sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
             List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
-            if (CollUtil.isNotEmpty(officeVOS)){
-                list.forEach( stations ->{
+            if (CollUtil.isNotEmpty(officeVOS)) {
+                list.forEach(stations -> {
                     officeVOS.forEach(
-                            officeVO->{
-                                if (stations.getExecuteStationId().equals(officeVO.getId())){
+                            officeVO -> {
+                                if (stations.getExecuteStationId().equals(officeVO.getId())) {
                                     officeVOList.add(officeVO);
                                 }
                             }
                     );
                 });
-               collect = officeVOList.stream().collect(Collectors.collectingAndThen(
+                collect = officeVOList.stream().collect(Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(
                                 Comparator.comparing(SysOfficeVO::getId))), ArrayList::new));
             }
