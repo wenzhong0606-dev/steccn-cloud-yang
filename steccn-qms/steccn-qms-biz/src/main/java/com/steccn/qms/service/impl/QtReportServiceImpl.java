@@ -14,14 +14,17 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
+import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
@@ -34,11 +37,13 @@ import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author 86178
@@ -228,6 +233,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         qtReportList.forEach(q -> {
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
+            qtReportChartVO.setId(q.getId());
             //根据物料id查询物料
             QtMaterial material=new QtMaterial();
             if (Objects.nonNull(q.getMaterialId())){
@@ -247,6 +253,21 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             String measureName = mapR.getData().get(qtCheckItem.getMeasureUnit());
             qtReportChartVO.setMeasureUnit(measureName);
 
+            //根据条件查出所有的任务
+            List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
+                            .eq(QtCheckTask::getMaterialId, q.getMaterialId())
+                            .eq(QtCheckTask::getTaskType, q.getCheckType())
+                            .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                            .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                            .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
+                            .orderByAsc(QtCheckTask::getFinishedTime)
+                    //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
+            );
+            //获取任务结果
+            if (CollUtil.isEmpty(qtCheckTasks)) {
+                throw new BusinessException("暂无任务");
+            }
+
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
             qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
@@ -258,32 +279,45 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
                     , q.getTimeScopeStart()
                     , q.getTimeScopeEnd());
+            //设置折线图数据
+            List<String> itemValue = new ArrayList<>();
             for (int i = 1; i < localDateTimes.size(); i++) {
                 LocalDateTime start = localDateTimes.get(i - 1);
                 LocalDateTime end = localDateTimes.get(i);
 //                LocalDateUtil.format(start,)
+                //过滤出时间分片内的数据
+                List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
+                    //数据范围应该是大于等于开始时间  小于结束时间
+                    if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
+                List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+              //如果id集合为空该时间段下没有
+                if (CollUtil.isEmpty(taskids)){
+                    itemValue.add("0");
+                }else {
+                    List<String> stringList = qtCheckTaskDetailService
+                            .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                    .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
+                            .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                    List<BigDecimal> bigDecimals = Lists.newArrayList();
+
+                    stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                        BigDecimal bigDecimal = new BigDecimal(s);
+                        bigDecimals.add(bigDecimal);
+                    });
+
+                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                    itemValue.add(average.toString());
+                }
                 dates.add(start.toString());
             }
             qtReportChartVO.setXData(dates);
-            //获取任务id列表
-            List<Long> qtTaskIds = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
-                            .eq(QtCheckTask::getMaterialId, q.getMaterialId())
-                            .eq(QtCheckTask::getTaskType, q.getCheckType())
-                            .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                            .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
-                            .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
-                            .orderByAsc(QtCheckTask::getFinishedTime)
-                    //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
-            ).stream().map(QtCheckTask::getId).collect(Collectors.toList());
+            qtReportChartVO.setItemValue(itemValue);
 
-            //获取任务结果
-            if (CollUtil.isEmpty(qtTaskIds)) {
-                throw new BusinessException("暂无任务");
-            }
-            List<String> result = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                            .in(QtCheckTaskDetail::getTaskId, qtTaskIds)).stream()
-                    .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-            qtReportChartVO.setItemValue(result);
             qtReportChartVOlist.add(qtReportChartVO);
         });
         return qtReportChartVOlist;
@@ -301,6 +335,102 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<Integer> ids = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, id))
                 .stream().map(QtReport::getId).collect(Collectors.toList());
         return removeByIds(ids);
+    }
+
+    @Override
+    public QtReportChartVO getQtReportChartVO(Integer id) {
+        QtReportChartVO qtReportChartVO = new QtReportChartVO();
+        if (Objects.isNull(id)){
+            throw new BusinessException("卡片id不能为空");
+        }
+        QtReport q = getById(id);
+        BeanUtils.copyProperties(q, qtReportChartVO);
+        //根据物料id查询物料
+        QtMaterial material=new QtMaterial();
+        if (Objects.nonNull(q.getMaterialId())){
+            material= qtMaterialService.getById(q.getMaterialId());
+        }
+        //设置物料名称
+        qtReportChartVO.setMaterialName(material.getName());
+        QtCheckItem qtCheckItem = new QtCheckItem();
+        if (Objects.nonNull(q.getCheckItemId())){
+            qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
+        }
+        List<String> spcfilter = Lists.newArrayList();
+        Collections.addAll(spcfilter,material.getName(), qtCheckItem.getName());
+        qtReportChartVO.setSpcFilter(spcfilter);
+        //根据检验项id去获取计量单位
+        Set<Long> measureIds = Sets.newHashSet();
+        measureIds.add(qtCheckItem.getMeasureUnit());
+        R<Map<Long, String>> mapR = remoteDictFeignApi.listByIdCh(measureIds);
+        String measureName = mapR.getData().get(qtCheckItem.getMeasureUnit());
+        qtReportChartVO.setMeasureUnit(measureName);
+
+        //根据条件查出所有的任务
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
+                        .eq(QtCheckTask::getMaterialId, q.getMaterialId())
+                        .eq(QtCheckTask::getTaskType, q.getCheckType())
+                        .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                        .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                        .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
+                        .orderByAsc(QtCheckTask::getFinishedTime)
+                //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
+        );
+        //获取任务结果
+        if (CollUtil.isEmpty(qtCheckTasks)) {
+            throw new BusinessException("该时间段下暂无完成的此物料检验任务");
+        }
+
+        //设置开始结束时间
+        qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
+        qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
+        //设置时间分片
+        List<String> dates = Lists.newArrayList();
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
+        Assert.notNull(granularityEnum,"粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , q.getTimeScopeStart()
+                , q.getTimeScopeEnd());
+        //设置折线图数据
+        List<String> itemValue = new ArrayList<>();
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+//                LocalDateUtil.format(start,)
+            //过滤出时间分片内的数据
+            List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+            List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+            //如果id集合为空该时间段下没有
+            if (CollUtil.isEmpty(taskids)){
+                itemValue.add("0");
+            }else {
+                List<String> stringList = qtCheckTaskDetailService
+                        .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
+                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                List<BigDecimal> bigDecimals = Lists.newArrayList();
+
+                stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                    BigDecimal bigDecimal = new BigDecimal(s);
+                    bigDecimals.add(bigDecimal);
+                });
+
+                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                itemValue.add(average.toString());
+            }
+            dates.add(start.toString());
+        }
+        qtReportChartVO.setXData(dates);
+        qtReportChartVO.setItemValue(itemValue);
+        return qtReportChartVO;
     }
 
 

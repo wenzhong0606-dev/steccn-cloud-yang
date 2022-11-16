@@ -177,6 +177,12 @@ public class QtCheckTask implements Serializable {
             select = false)
     private String customerName;
 
+    @TableField(value = "customer ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private String customerId;
+
     /**
      * 缺陷总数
      */

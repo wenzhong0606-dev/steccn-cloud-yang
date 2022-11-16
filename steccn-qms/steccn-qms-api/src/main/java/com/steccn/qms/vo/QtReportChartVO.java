@@ -13,6 +13,11 @@ import java.util.Map;
 @Data
 public class QtReportChartVO implements Serializable {
     /**
+     * 控制图卡片id
+     */
+    private Integer id;
+
+    /**
      * 控制图卡片名称
      */
     private String name;

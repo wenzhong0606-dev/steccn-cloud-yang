@@ -99,4 +99,10 @@ public class QtReportController {
     public void download(HttpServletResponse response) throws IOException {
         qtReportService.download(response);
     }
+
+    @GetMapping("/select/spcchart/{id}")
+    @ApiOperation(value = "根据卡片id查询spc图表")
+    public R<QtReportChartVO> getQtReportChartVO(@PathVariable("id") Integer id){
+        return R.success(qtReportService.getQtReportChartVO(id));
+    }
 }

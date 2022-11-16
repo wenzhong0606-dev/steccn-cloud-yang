@@ -38,4 +38,9 @@ public class QtIQCAcceptabilityDTO extends BasePageDTO implements Serializable {
      * 筛选供应商
      */
     private Integer supplierId;
+
+    /**
+     * 区分柱状图饼状图的字段
+     */
+    private Integer type;
 }

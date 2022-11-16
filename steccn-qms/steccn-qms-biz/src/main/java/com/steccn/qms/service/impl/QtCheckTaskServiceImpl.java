@@ -1171,11 +1171,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_TWO)
                     .or()
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_THREE);
+                    //.like(QtCheckTask::getProductWorkshopName,QtManagerConstant.DEEP_OFFICE_NAME);
         }
         if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)) {
             condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_ONE)
                     .or()
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_TWO);
+                   // .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.SUB_OFFICE_NAME);
         }
 
         //判断是否筛选白班夜班
@@ -1255,15 +1257,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     .or()
                     .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_TWO)
                     .or()
-                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_THREE)
-                    .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.DEEP_OFFICE_NAME);
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.DEEP_OFFICE_NAME_THREE);
+                    //.like(QtCheckTask::getProductWorkshopName,QtManagerConstant.DEEP_OFFICE_NAME);
 
         }
         if (dto.getName().equals(QtManagerConstant.SUB_OFFICE_NAME)) {
             condition.apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_ONE)
                     .or()
-                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_TWO)
-                    .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.SUB_OFFICE_NAME);
+                    .apply(Objects.nonNull(dto.getProductWorkShopId()), "JSON_CONTAINS(product_workshop, JSON_OBJECT('name', {0}))", QtManagerConstant.SUB_OFFICE_NAME_TWO);
+                   // .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.SUB_OFFICE_NAME);
         }
 
         //根据什么对比
@@ -1779,6 +1781,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return page;
     }
 
+    /**
+     * 来料检合格率查询条件
+     * @param dto
+     * @return
+     */
     private MPJLambdaWrapper<QtCheckTask> getQtIQCCondition(QtIQCAcceptabilityDTO dto) {
         //1、配置分页信息
         MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
@@ -1799,15 +1806,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .and(Objects.nonNull(dto.getSamplingTime()), wrapper -> wrapper.eq(QtCheckTaskCopy::getSamplingTime, dto.getSamplingTime()))
                 .and(Objects.nonNull(dto.getMaterialId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialId, dto.getMaterialId()))
                 .and(Objects.nonNull(dto.getMaterialWorkshopId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialWorkshopId, dto.getMaterialWorkshopId()))
-                .and(Objects.nonNull(dto.getSupplierId()), wrapper -> wrapper.eq(QtCheckTask::getSupplierId, dto.getSupplierId()));
+                .and(Objects.nonNull(dto.getSupplierId()), wrapper -> wrapper.eq(QtCheckTask::getSupplierId, dto.getSupplierId()))
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode());
 
         if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(dto.getCompare())){
             condition.groupBy(QtCheckTask::getMaterialId);
-        }else
-        if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.getCode().equals(dto.getCompare())){
+        }else if(QtManagerConstant.QtChartCompareEnum.SUPPLIER.getCode().equals(dto.getCompare())){
+            condition.groupBy(QtCheckTask::getSupplierId);
+        }
+        else {
             condition.groupBy(QtCheckTaskCopy::getSamplingTime);
         }
-        condition.groupBy(QtCheckTask::getSupplierId)
+        condition
                 .gt(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime(),LocalTime.of(8,0,0)))
                 .le(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime().plusDays(1),LocalTime.of(8,0,0)));
        //2.解析排序规则
@@ -1840,6 +1850,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public QtChartBarVO getQtIQCAcceptabilityChartVO(QtIQCAcceptabilityDTO dto) {
         //获取根据查询条件筛选的task
         List<QtCheckTask> qtCheckTasks = list(getQtIQCCondition(dto));
+
+        //创建返回图表数据对象
+        QtChartBarVO qtChartBarVO = new QtChartBarVO();
+        List<Long> materialIds = qtCheckTasks.stream().map(QtCheckTask::getMaterialId).collect(Collectors.toList());
+        qtMaterialService.list(new LambdaQueryWrapper<QtMaterial>().in(QtMaterial::getId,materialIds)).stream().map(QtMaterial::getName);
+
 
         return null;
     }
@@ -1902,6 +1918,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .in(QtCheckTask::getMaterialWorkshopName, officeNames)
                 //任务类型为化验检
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
+                //模糊查询基片车间
+                .like(QtCheckTask::getProductWorkshopName,QtManagerConstant.SUB_OFFICE_NAME)
                 //任务状态为完成的
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode());
 

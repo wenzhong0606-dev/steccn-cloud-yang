@@ -5,9 +5,11 @@ import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collector;
 
 /**
  * @author yequan
@@ -203,4 +205,5 @@ public class BigDecimalUtil {
         res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
         return res;
     }
+
 }

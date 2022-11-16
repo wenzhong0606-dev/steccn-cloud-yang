@@ -45,24 +45,45 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     private Integer classId;
 
     /**
-     * 生产车间
+     * 生产车间id
      */
-    private QtBaseIdNameDTO productWorkshop;
+    private Integer productWorkshopId;
+    /**
+     * 生产车间名称
+     */
+    private String productWorkshopName;
 
     /**
-     * 生产产线
+     * 生产产线id
      */
-    private QtBaseIdNameDTO productLine;
+    private Integer productLineId;
 
     /**
-     * 物料
+     * 生产产线名称
      */
-    private QtBaseIdNameDTO materialWorkshop;
+    private String productLineName;
+
+    /**
+     *物料id
+     */
+    private Integer materialWorkshopId;
+
+    /**
+     * 物料名称
+     */
+    private String materialWorkshopName;
+
+
 
     /**
      * 客户
      */
-    private QtBaseIdNameDTO customer;
+    private Integer customerId;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
 
     /**
      * 检验任务详情

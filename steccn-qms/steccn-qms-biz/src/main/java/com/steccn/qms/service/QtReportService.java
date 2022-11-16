@@ -109,4 +109,10 @@ public interface QtReportService extends IService<QtReport> {
      */
     Boolean deleteByGroupId(Integer id);
 
+    /**
+     * 根据报表id查询图表详情
+     * @param id
+     * @return
+     */
+    QtReportChartVO getQtReportChartVO(Integer id);
 }
