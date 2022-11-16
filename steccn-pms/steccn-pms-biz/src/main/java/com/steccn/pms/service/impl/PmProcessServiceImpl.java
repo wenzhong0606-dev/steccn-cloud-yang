@@ -275,13 +275,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
         List<PmProcess> processList = listByIds(processIds);
         if (CollUtil.isNotEmpty(processList)) {
             processList.forEach(process -> {
-                processIds.forEach(
-                        processId -> {
-                            if (processId.equals(process.getId())) {
-                                map.put(processId, process.getName());
-                            }
-                        }
-                );
+                map.put(process.getId(),process.getName());
             });
         }
             return map;
