@@ -141,14 +141,14 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Map<LocalDate, PassRateDateVo> dateMap = Maps.newHashMap();
         while (!CollectionUtils.isEmpty(dateList)) {
             PassRateDateVo rateDateVo = new PassRateDateVo();
-            LocalDate endDate = localDateList.get(localDateList.size() - 1);
-            LocalDate startDate = localDateList.get(localDateList.size() - 2);
+            LocalDate endDate = localDateList.get(dateList.size() - 1);
+            LocalDate startDate = localDateList.get(dateList.size() - 2);
 
             rateDateVo.setStartDateTime(LocalDateTime.of(startDate, localTime));
             rateDateVo.setEndDateTime(LocalDateTime.of(endDate, localTime));
-            localDateList.remove(endDate);
+            dateList.remove(endDate);
             if (localDateList.size() == 1) {
-                localDateList.remove(startDate);
+                dateList.remove(startDate);
             }
             dateMap.put(startDate,rateDateVo);
         }
