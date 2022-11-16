@@ -81,10 +81,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().like(PmsProducePlan::getPlanDate, monthDate + "%"));
         List<PmsProducePlanVO> producePlanVOList = new ArrayList<>();
         List<Long> materialId = producePlanList.stream().map(PmsProducePlan::getMaterialId).collect(Collectors.toList());
-
         Map<Long, EqpSpareVO> map = remoteSpareFeignApi.listById(materialId).getData();
+        EqpSpareVO spare = new EqpSpareVO();
         for (PmsProducePlan pmsProducePlan : producePlanList) {
-            EqpSpareVO spareVO = map.get(pmsProducePlan.getMaterialId());
+            EqpSpareVO spareVO = map.getOrDefault(pmsProducePlan.getMaterialId(),spare);
             PmsProducePlanVO producePlanVO = new PmsProducePlanVO();
             BeanUtils.copyProperties(pmsProducePlan, producePlanVO);
             producePlanVO.setMaterialCode(spareVO.getCode());

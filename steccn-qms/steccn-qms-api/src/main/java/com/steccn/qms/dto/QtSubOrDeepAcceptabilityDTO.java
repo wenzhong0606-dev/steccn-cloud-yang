@@ -52,4 +52,7 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
 
     @ApiModelProperty("类型:0柱状图,1饼状图")
     private Integer type;
+
+    @ApiModelProperty(value = "任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7", hidden = true)
+    private Integer taskType;
 }

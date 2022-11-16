@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
@@ -96,10 +98,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 深加工或基片合格率图表
-     * @param dto
+     * @param keyword 深加工 || 基片
+     * @param dto dto
      * @return
      */
-    QtChartBarVO getQtChartDeepOrSubBarVO(QtSubOrDeepAcceptabilityDTO dto);
+    QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword,QtSubOrDeepAcceptabilityDTO dto);
 
     /**
      * 根据条件查询任务

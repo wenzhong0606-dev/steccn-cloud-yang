@@ -2,8 +2,11 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckTaskService;
@@ -133,10 +136,25 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(dto));
     }
 
-    @PostMapping("/deeporsub/acceptability/chart")
-    @ApiOperation(value = "深加工或基片合格率趋势柱状图")
-    public R<QtChartBarVO> getQtChartDeepOrSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
-        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(dto));
+    @PostMapping("/deep/acceptability/chart")
+    @ApiOperation(value = "深加工合格率趋势柱状图")
+    public R<QtLineChartBiBarDTO> getQtChartDeepBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null, dto));
+    }
+
+    @PostMapping("/sub/acceptability/chart")
+    @ApiOperation(value = "基片合格率趋势柱状图")
+    public R<QtLineChartBiBarDTO> getQtChartSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null, dto));
+    }
+
+    @PostMapping("/sub/spot/acceptability/chart")
+    @ApiOperation(value = "基片化验抽检合格率趋势")
+    public R<QtLineChartBiBarDTO> getQtSubLaboratoryChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
     }
 
     @PostMapping("/chart/defect/picture/jpfb")
@@ -144,7 +162,6 @@ public class QtCheckTaskController {
     public R<QtChartDefectVO> getPictureJPFB(QtChartParamDTO dto) {
         return R.success(qtCheckTaskService.getPictureJPFB(dto));
     }
-
 
     @PostMapping("/accessory/acceptability/detail")
     @ApiOperation(value = "配料抽检合格率明细分页")
@@ -162,12 +179,6 @@ public class QtCheckTaskController {
     @ApiOperation(value = "基片化验抽检合格率趋势明细分页")
     public R<Page<QtSubLaboratoryAcceptabilityDetailVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubLaboratoryAcceptabilityDTO dto) {
         return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
-    }
-
-    @PostMapping("/sub/acceptability/chart")
-    @ApiOperation(value = "基片化验抽检合格率趋势图表")
-    public R<QtChartBarVO> getQtSubLaboratoryChartVO(@RequestBody QtSubLaboratoryAcceptabilityDTO dto) {
-        return R.success(qtCheckTaskService.getQtSubLaboratoryChartVO(dto));
     }
 
     @PostMapping("/iqc/acceptability/detail")

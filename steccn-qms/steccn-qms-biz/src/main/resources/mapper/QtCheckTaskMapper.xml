@@ -4,29 +4,31 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.qms.mapper.QtCheckTaskMapper">
 
-<!--    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTask">-->
-<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
-<!--            <result property="type" column="type" jdbcType="TINYINT"/>-->
-<!--            <result property="materialId" column="material_id" jdbcType="INTEGER"/>-->
-<!--            <result property="workshopId" column="workshop_id" jdbcType="INTEGER"/>-->
-<!--            <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>-->
-<!--            <result property="productOrder" column="product_order" jdbcType="VARCHAR"/>-->
-<!--            <result property="productBatch" column="product_batch" jdbcType="VARCHAR"/>-->
-<!--            <result property="checkPlanId" column="check_plan_id" jdbcType="INTEGER"/>-->
-<!--            <result property="status" column="status" jdbcType="TINYINT"/>-->
-<!--            <result property="checkNum" column="check_num" jdbcType="INTEGER"/>-->
-<!--            <result property="goodNum" column="good_num" jdbcType="INTEGER"/>-->
-<!--            <result property="badNum" column="bad_num" jdbcType="INTEGER"/>-->
-<!--            <result property="result" column="result" jdbcType="VARCHAR"/>-->
-<!--            <result property="note" column="note" jdbcType="VARCHAR"/>-->
-<!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
-<!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
-<!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
-<!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
-<!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
-<!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
-<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
-<!--    </resultMap>-->
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTask">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="type" column="type" jdbcType="TINYINT"/>
+            <result property="materialId" column="material_id" jdbcType="INTEGER"/>
+            <result property="productWorkshop" column="product_workshop" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="productLine" column="product_line" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="productWorkshopId" column="workshop_id" jdbcType="INTEGER"/>
+            <result property="productLineId" column="product_line_id" jdbcType="INTEGER"/>
+            <result property="productOrder" column="product_order" jdbcType="VARCHAR"/>
+            <result property="productBatch" column="product_batch" jdbcType="VARCHAR"/>
+            <result property="checkPlanId" column="check_plan_id" jdbcType="INTEGER"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="checkNum" column="check_num" jdbcType="INTEGER"/>
+            <result property="goodNum" column="good_num" jdbcType="INTEGER"/>
+            <result property="badNum" column="bad_num" jdbcType="INTEGER"/>
+            <result property="result" column="result" jdbcType="VARCHAR"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
 
 <!--    <sql id="Base_Column_List">-->
 <!--        id,type,material_id,-->
@@ -37,21 +39,19 @@
 <!--        create_name,create_time,update_by,-->
 <!--        update_name,update_time,del_flag-->
 <!--    </sql>-->
-    <select id="rateDataList" resultType="com.steccn.qms.domain.QtCheckTask">
+    <select id="rateDataList" resultMap="BaseResultMap">
         SELECT
+            id,
             type type,
             material_id material_id,
-            material_workshop material_workshop,
             product_line product_line,
             product_order product_order,
             product_batch product_batch,
-            check_plan_id check_plan_id,
             STATUS STATUS,
             check_num check_num,
             good_num good_num,
             bad_num bad_num,
             result result,
-            del_flag del_flag,
             supplier supplier,
             customer customer,
             deliver_order deliver_order,
@@ -59,7 +59,8 @@
             deliver_num deliver_num,
             product_workshop product_workshop,
             classes_id classes_id,
-            CODE CODE
+            CODE CODE,
+            finished_time
         FROM
             qt_check_task
         WHERE
@@ -85,6 +86,7 @@
                      (product_line ->> '$.id' =  #{lineId})
                 </foreach>
             </if>
+            AND task_type = #{dto.taskType}
             AND finished_time &gt;= #{dto.dateTimeStart}
             AND finished_time &lt;= #{dto.dateTimeEnd}
             AND status = 2
