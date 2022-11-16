@@ -339,40 +339,12 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
         }
         //对全量数据表进行筛选
-        ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
-        pmsDTO.setBeginDate(dto.getStartTime());
-        pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
-        R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
-        List<ProducePassRateVO> data = new ArrayList<>();
-        if(CollUtil.isNotEmpty(rResult.getData())){
-            data = rResult.getData();
-            QtChartParamDTO param = new QtChartParamDTO();
-            BeanUtils.copyProperties(dto,param);
-            //过滤筛选数据
-            data = qtChartGenerateService.rListFilter(data,param);
-            //过滤图表数据
-            if(CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())){
-                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
-                }
-                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
-                }
-                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
-                }
-            }
-            data.forEach(tmp->{
-                if(tmp.getDate()!=null){
-                    tmp.setDateString(tmp.getDate().toString());
-                }
-                if(tmp.getPassRate()!=null){
-                    tmp.setPassRateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
-                }
-            });
+        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.LossDetails(dto);
+        List<QtChartSubDetailDTO> records = qtChartSubDetailDTOPage.getRecords();
+        if(CollUtil.isNotEmpty(records)){
+            //封装的下载
+            this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPCP,QtManagerConstant.QT_CHART_JPSH_NAME,map,records,dto.getBase64());
         }
-        //封装的下载
-        this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPCP,QtManagerConstant.QT_CHART_JPCP_NAME,map,data,dto.getBase64());
     }
 
     /**

@@ -47,6 +47,19 @@ public class QtChartDownloadController {
             this.exceptionResponse(response,e);
         }
     }
+
+    @PostMapping("/substrate/loss")
+    @ApiOperation(value = "下载基片损耗率数据")
+    @SysLog("下载基片损耗率数据")
+    public void downloadSubstrateLoss(@RequestBody @Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            qtChartDownloadService.downloadSubstrateLoss(response,dto);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     @GetMapping("/deep/process")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")

@@ -74,11 +74,15 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_JPCP = "JPCP.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
+
     String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     String QT_CHART_EXCEL_ENCODE = "UTF-8";
 
     String QT_CHART_JPCP_NAME = "基片成品趋势";
+
+    String QT_CHART_JPSH_NAME = "基片损耗分布";
 
     String QT_CHART_DEEP_PROCESS_NAME = "深加工巡检合格率趋势";
 
