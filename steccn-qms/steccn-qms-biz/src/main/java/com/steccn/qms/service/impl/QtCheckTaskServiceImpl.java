@@ -43,6 +43,7 @@ import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.hssf.record.DVALRecord;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1348,7 +1349,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Assert.notEmpty(rateDataList, "数据为空，暂无报表");
 
         List<QtCheckTaskReportVO> flatDataList = copyQtCheckTask(rateDataList);
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //定义数据集合
         List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
 
@@ -1414,11 +1414,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if(Objects.nonNull(ele.getProductWorkshop())){
                 vo.setProductWorkshopId(ele.getProductWorkshop().getId());
             }
+            if(Objects.nonNull(ele.getMaterialWorkshop())){
+                vo.setMaterialWorkshopId(ele.getMaterialWorkshop().getId());
+            }
             resList.add(vo);
         });
         return resList;
     }
-
 
     /**
      * 公共分组
@@ -1437,7 +1439,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductLineId));
             Set<Integer> lineIdSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).map(QtCheckTaskReportVO::getProductLineId).collect(Collectors.toSet());
             idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
-        } else {
+        } else if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(compare)) {
+            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialWorkshopId));
+            Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).map(QtCheckTaskReportVO::getMaterialWorkshopId).collect(Collectors.toSet());
+            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+        }else {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassesId));
             idNameMap = Maps.newHashMap();
             idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
@@ -1936,13 +1942,69 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public QtChartBarVO getQtIQCAcceptabilityChartVO(QtIQCAcceptabilityDTO dto) {
-        //获取根据查询条件筛选的task
-        List<QtCheckTask> qtCheckTasks = list(getQtIQCCondition(dto));
+    public QtLineChartBiBarDTO getQtIQCAcceptabilityChartVO(QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        List<QtCheckTask> rateDataList = rateDataList(null, dto);
+        Assert.notEmpty(rateDataList, "数据为空，暂无报表");
 
-        return null;
+        List<QtCheckTaskReportVO> flatDataList = copyQtCheckTask(rateDataList);
+
+        //定义数据集合
+        List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
+
+        flatDataList = flatDataList.stream().sorted(Comparator.comparing(QtCheckTaskReportVO::getFinishedTime).reversed()).collect(Collectors.toList());
+        LinkedHashMap<LocalDateTime, List<QtCheckTaskReportVO>> linkedMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getFinishedTime, LinkedHashMap::new, Collectors.toList()));
+
+        //考虑对比
+        Map<Integer, List<QtCheckTaskReportVO>> contrastDataMap = Maps.newHashMap();
+        Map<Integer, String> idNameMap = Maps.newHashMap();
+        if(Objects.nonNull(dto.getCompare())){
+             TupleDTO<Map<Integer, List<QtCheckTaskReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
+             //获取对比数据集和对比维度
+             contrastDataMap = mapMapTupleDTO.getField1();
+             idNameMap = mapMapTupleDTO.getField2();
+             if(CollUtil.isEmpty(idNameMap)) return null;
+        }
+        //次数
+        int idx = 1;
+        for (Map.Entry<LocalDateTime, List<QtCheckTaskReportVO>> entry : linkedMap.entrySet()) {
+            //获取时间范围的集合
+            List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if (entry.getKey().isEqual(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+
+            BiStackGraphDTO<String, BigDecimal> biStackGraphDTO = new BiStackGraphDTO<>();
+            biStackGraphDTO.setXAxis("第" + idx + "抽检");
+            biStackGraphDTO.setData(Lists.newArrayList());
+
+            //默认集合
+            List<QtCheckTaskReportVO> defaultQtCheckTaskList = Lists.newArrayList();
+            //对比的结果
+            if(Objects.nonNull(dto.getCompare())){
+                for (Map.Entry<Integer, String> entry1 : idNameMap.entrySet()) {
+                    //获取对比数据
+                    List<QtCheckTaskReportVO> contrastData = contrastDataMap.getOrDefault(entry1.getKey(), defaultQtCheckTaskList);
+                    Set<Long> conditionIdList = conditionDataList.stream().map(QtCheckTaskReportVO::getId).collect(Collectors.toSet());
+                    contrastData = contrastData.stream().filter(v -> conditionIdList.contains(v.getId())).collect(Collectors.toList());
+                    TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(contrastData, entry1.getValue());
+                    biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
+                }
+            }else{
+                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(entry.getValue(), "第" + idx + "抽检");
+                biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
+            }
+            stackGraphDTOList.add(biStackGraphDTO);
+            idx++;
+        }
+        //自定义转换工具
+        QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
+        return qtLineChartBiBarDTO;
     }
-
 
     private QtChartBarSeriesVO getQtChartBarSeriesVO(LocalDateTime start, LocalDateTime end, String officeNme,
                                                      List<QtCheckTask> qtCheckTasks) {

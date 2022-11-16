@@ -157,10 +157,11 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
     }
 
-    @PostMapping("/chart/defect/picture/jpfb")
-    @ApiOperation(value = "基片缺陷分布柱状图和饼状图")
-    public R<QtChartDefectVO> getPictureJPFB(QtChartParamDTO dto) {
-        return R.success(qtCheckTaskService.getPictureJPFB(dto));
+    @PostMapping("/iqc/acceptability/chart")
+    @ApiOperation(value = "配料抽检合格率")
+    public R<QtLineChartBiBarDTO> getQtIQCAcceptabilityChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode());
+        return R.success(qtCheckTaskService.getQtIQCAcceptabilityChartVO(dto));
     }
 
     @PostMapping("/accessory/acceptability/detail")
@@ -185,11 +186,5 @@ public class QtCheckTaskController {
     @ApiOperation(value = "来料检合格率明细分页")
     public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtIQCAcceptabilityDTO dto) {
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetailVO(dto));
-    }
-
-    @PostMapping("/iqc/acceptability/chart")
-    @ApiOperation(value = "来料检合格率柱状图")
-    public R<QtChartBarVO> getQtIQCAcceptabilityChartVO(@RequestBody QtIQCAcceptabilityDTO dto) {
-        return R.success(qtCheckTaskService.getQtIQCAcceptabilityChartVO(dto));
     }
 }

@@ -159,5 +159,5 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    QtChartBarVO getQtIQCAcceptabilityChartVO(QtIQCAcceptabilityDTO dto);
+    QtLineChartBiBarDTO getQtIQCAcceptabilityChartVO(QtSubOrDeepAcceptabilityDTO dto);
 }
