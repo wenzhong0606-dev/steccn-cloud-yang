@@ -1,6 +1,7 @@
 package com.steccn.qms.vo;
 
 import com.steccn.qms.dto.QtBaseIdNameDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -37,12 +38,15 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     /**
      * 班次日期
      */
-    private String classesDate;
+    private LocalDate classesDate;
 
     /**
      * 班次
      */
     private Integer classId;
+
+    @ApiModelProperty("班次名称")
+    private String className;
 
     /**
      * 生产车间id
@@ -74,6 +78,8 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     private String materialWorkshopName;
 
 
+    @ApiModelProperty("物料名称")
+    private String materialName;
 
     /**
      * 客户

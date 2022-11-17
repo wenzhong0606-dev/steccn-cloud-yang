@@ -24,6 +24,8 @@ public class BigDecimalUtil {
     public static Integer SCALE_2 = 2;
     public static Integer SCALE_4 = 4;
 
+    public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+
     /**
      * 格式化val 指定scale
      *

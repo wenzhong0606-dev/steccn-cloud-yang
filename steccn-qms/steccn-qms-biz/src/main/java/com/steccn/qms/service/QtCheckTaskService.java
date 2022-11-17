@@ -104,7 +104,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
+    Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(String keyword, QtSubOrDeepAcceptabilityDTO dto);
 
     /**
      * 深加工或基片合格率图表

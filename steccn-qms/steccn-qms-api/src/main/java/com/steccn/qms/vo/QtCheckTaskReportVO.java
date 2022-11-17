@@ -79,7 +79,7 @@ public class QtCheckTaskReportVO implements Serializable {
     private String customerName;
 
     @ApiModelProperty("客户id")
-    private String customerId;
+    private Integer customerId;
 
     @ApiModelProperty("缺陷总数")
     private Integer defectNum;
@@ -122,6 +122,9 @@ public class QtCheckTaskReportVO implements Serializable {
 
     @ApiModelProperty("供应商id")
     private Integer supplierId;
+
+    @ApiModelProperty("结果判定")
+    private String result;
 
     private static final long serialVersionUID = 1L;
 }
