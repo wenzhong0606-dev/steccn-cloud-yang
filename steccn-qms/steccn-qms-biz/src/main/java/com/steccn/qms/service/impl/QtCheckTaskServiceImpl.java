@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1724,6 +1725,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getFilters()!=null){
             flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
         }
+        //计算每条任务的合格率
+        flatDataList.forEach(tmp->{
+            BigDecimal result = BigDecimalUtil.divide(new BigDecimal(tmp.getGoodNum()),new BigDecimal(tmp.getCheckNum()));
+            tmp.setPassRate(new DecimalFormat("0.00%").format(result));
+        });
+
+        //根据检验完成时间升序排列
+        flatDataList = flatDataList.stream().sorted(Comparator.comparing(QtCheckTaskReportVO::getFinishedTime)).collect(Collectors.toList());
+
         //分页
         int pageSize = dto.getSize();
         int current = dto.getCurrent() - 1;

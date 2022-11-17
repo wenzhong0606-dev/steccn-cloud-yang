@@ -157,6 +157,13 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
     }
 
+    @PostMapping("/sub/chemical/acceptability/detail")
+    @ApiOperation(value = "基片化验抽检合格率趋势明细分页")
+    public R<Page<QtCheckTaskReportVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
+        return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
+    }
+
     @PostMapping("/accessory/acceptability/chart")
     @ApiOperation(value = "配料抽检合格率")
     public R<QtLineChartBiBarDTO> accessoryChart(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
@@ -177,18 +184,13 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
     }
 
+
 //    @PostMapping("/accessory/acceptability/chart")
 //    @ApiOperation(value = "配料抽检合格率柱状图")
 //    public R<QtChartBarVO> getAccessoryChartDefectVO(@RequestBody QtAccessoryAcceptabilityDTO dto) {
 //        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
-//    }
 
-    @PostMapping("/sub/chemical/acceptability/detail")
-    @ApiOperation(value = "基片化验抽检合格率趋势明细分页")
-    public R<Page<QtCheckTaskReportVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
-        return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
-    }
+//    }
 
     @PostMapping("/iqc/acceptability/detail")
     @ApiOperation(value = "来料检合格率明细分页")

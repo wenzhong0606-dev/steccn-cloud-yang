@@ -123,5 +123,8 @@ public class QtCheckTaskReportVO implements Serializable {
     @ApiModelProperty("供应商id")
     private Integer supplierId;
 
+    @ApiModelProperty("合格率")
+    private String passRate;
+
     private static final long serialVersionUID = 1L;
 }

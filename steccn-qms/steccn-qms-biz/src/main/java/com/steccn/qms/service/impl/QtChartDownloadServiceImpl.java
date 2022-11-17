@@ -5,8 +5,12 @@ import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.context.WriteContext;
+import com.alibaba.excel.metadata.data.ClientAnchorData;
 import com.alibaba.excel.metadata.data.ImageData;
+import com.alibaba.excel.util.FileTypeUtils;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.excel.util.StyleUtil;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,6 +27,7 @@ import com.steccn.qms.service.QtChartDownloadService;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.util.DownloadModelUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Decoder;
@@ -284,9 +289,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             // 如果数据量大 list不是最后一行 参照下一个
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             excelWriter.fill(dataList, fillConfig, writeSheet);
-//            excelWriter.fill(dataList, fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
-                ImageData imageData = new ImageData();
                 BASE64Decoder decoder = new BASE64Decoder();
                 byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
@@ -295,11 +298,33 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                         bytes[i] += 1024;
                     }
                 }
-//                imageData.setImage(bytes);
-//                imageData.setImageType(ImageData.ImageType.PICTURE_TYPE_JPEG);
-                fixMap.put("img",bytes);
+                if (bytes != null) {
+                    //拿到context数据
+                    WriteContext writeContext = excelWriter.writeContext();
+                    Workbook workbook = writeContext.writeWorkbookHolder().getWorkbook();
+                    Sheet sheet = writeContext.writeSheetHolder().getCachedSheet();
+                    Drawing<?> drawing = sheet.getDrawingPatriarch();
+                    if (drawing == null) {
+                        drawing = sheet.createDrawingPatriarch();
+                    }
+                    CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+                    int index = workbook.addPicture(bytes,
+                            FileTypeUtils.getImageTypeFormat(bytes));
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setDx2(-StyleUtil.getCoordinate(5));
+                    anchor.setDx1(StyleUtil.getCoordinate(5));
+                    // 图片位置设置代码
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 4));
+                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 7));
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 16) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 14) + 1);
+                    anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
+                    drawing.createPicture(anchor, index);
+                }
             }
             excelWriter.fill(fixMap, writeSheet);
+            // bytes为要导出的图像文件字节数组
+
             response.getOutputStream().flush();
         }
     }
