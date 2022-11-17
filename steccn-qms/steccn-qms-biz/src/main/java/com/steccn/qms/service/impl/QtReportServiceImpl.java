@@ -19,6 +19,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -126,15 +127,20 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Override
     public List<QtCheckItemSPCVO> getQtCheckItemList(Integer groupid) {
+        if (Objects.isNull(groupid)){
+            throw new BusinessException("分组id不能为空");
+        }
         //获取检验项id集合
         List<QtCheckPlanGroupItem> qtCheckPlanGroupItems = qtCheckPlanGroupItemService.list(new LambdaQueryWrapper<QtCheckPlanGroupItem>().
                 eq(QtCheckPlanGroupItem::getGroupId, groupid));
-        List<Integer> checkItemIds = qtCheckPlanGroupItems.stream().map(QtCheckPlanGroupItem::getCheckItemId).collect(Collectors.toList());
-        if (CollUtil.isEmpty(checkItemIds)) {
-            throw new BusinessException("该检验分组下没有检验项");
-        }
+        //取得检验项id的集合
+        List<Integer> checkItemIds = qtCheckPlanGroupItems.stream().map(QtCheckPlanGroupItem::getCheckItemId)
+                .filter(s->Objects.nonNull(s)).collect(Collectors.toList());
         //创建返回检验项的集合
         List<QtCheckItemSPCVO> qtCheckItemSPCVOS = Lists.newArrayList();
+        if (CollUtil.isEmpty(checkItemIds)) {
+            throw new BusinessException("该检验分组下没有检验项,请先配置");
+        }
         List<QtCheckItem> qtCheckItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getId, checkItemIds));
         //添加检验项的id或名称
         qtCheckItems.forEach(q -> {
@@ -219,8 +225,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Override
     public List<QtReportChartVO> getQtReportList(Integer reportGroupId) {
+        List<QtReportChartVO> qtReportChartVOlist=Lists.newArrayList();
+        if (Objects.isNull(reportGroupId)){
+            return qtReportChartVOlist;
+        }
         //创建返回前端的集合
-        List<QtReportChartVO> qtReportChartVOlist = Lists.newArrayList();
+
         if (Objects.isNull(reportGroupId)) {
             return qtReportChartVOlist;
         }
@@ -230,7 +240,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (CollUtil.isEmpty(qtReportList)) {
             return qtReportChartVOlist;
         }
-        List<String> spcfilter = Lists.newArrayList();
         Set<Long> measureIds = Sets.newHashSet();
         //遍历查出来的集合封装数据`
         qtReportList.forEach(q -> {
@@ -239,6 +248,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtReportChartVO.setReportCardType(q.getReportCardType());
             qtReportChartVO.setId(q.getId());
             qtReportChartVO.setMaterialId(q.getMaterialId());
+
             //根据物料id查询物料
             QtMaterial material=new QtMaterial();
             if (Objects.nonNull(q.getMaterialId())){
@@ -250,7 +260,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             if (Objects.nonNull(q.getCheckItemId())){
                  qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
             }
-            Collections.addAll(spcfilter,material.getName(), qtCheckItem.getName());
+            qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+            //设置检验项的数据类型
+            Long dataType = qtCheckItem.getDataType();
+            List<Long> ids = Lists.newArrayList();
+            ids.add(dataType);
+            R<Map<Long, SysDictVO>> mapR1 = remoteDictFeignApi.listById(ids);
+            Map<Long, SysDictVO> data = mapR1.getData();
+            SysDictVO sysDictVO = data.get(dataType);
+            if(Objects.nonNull(sysDictVO)){
+                qtReportChartVO.setDataTypeId(dataType);
+                qtReportChartVO.setDataTypeName(sysDictVO.getName());
+            }
+
             //根据检验项id去获取计量单位
             measureIds.add(qtCheckItem.getMeasureUnit());
             R<Map<Long, String>> mapR = remoteDictFeignApi.listByIdCh(measureIds);
@@ -267,7 +289,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .orderByAsc(QtCheckTask::getFinishedTime)
                     //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
             );
-
 
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
@@ -363,6 +384,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         QtCheckItem qtCheckItem = new QtCheckItem();
         if (Objects.nonNull(q.getCheckItemId())){
             qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
+        }
+        qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+        //设置检验项的数据类型
+        Long dataType = qtCheckItem.getDataType();
+        List<Long> ids = Lists.newArrayList();
+        ids.add(dataType);
+        R<Map<Long, SysDictVO>> mapR1 = remoteDictFeignApi.listById(ids);
+        Map<Long, SysDictVO> data = mapR1.getData();
+        SysDictVO sysDictVO = data.get(dataType);
+        if (Objects.nonNull(sysDictVO)) {
+            qtReportChartVO.setDataTypeId(dataType);
+            qtReportChartVO.setDataTypeName(sysDictVO.getName());
         }
 //        List<String> spcfilter = Lists.newArrayList();
 //        Collections.addAll(spcfilter,material.getName(), qtCheckItem.getName());
@@ -503,6 +536,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     public Page<QtSpcReportDetailVO> pageList(QtSpcReportDetailPageDTO dto) {
         //根据报表卡片id先查找到spc数据库中的报表数据
         QtReport report = getById(dto.getId());
+        if (Objects.isNull(report)){
+            throw new BusinessException("该报表卡片不存在");
+        }
         //设置查询条件
         LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
 
@@ -588,15 +624,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             conditionDataList.forEach(ele ->{
                 QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
                 BeanUtils.copyProperties(ele,taskVO);
-                taskVO.setFinishedTime(ele.getFinishedTime().toLocalDate());
+                taskVO.setFinishedTime(LocalDateUtil.format(ele.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                 taskVO.setMaterialName(name);
-//                QtCheckTaskDetail qtCheckTaskDetail = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-//                        .eq(QtCheckTaskDetail::getTaskId, ele.getId())
-//                        .eq(QtCheckTaskDetail::getGroupId, report.getCheckGroupId())
-//                        .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()));
-//                taskVO.setCheckResult(qtCheckTaskDetail.getCheckResult());
+                QtCheckTaskDetail qtCheckTaskDetail = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, ele.getId())
+                        .eq(QtCheckTaskDetail::getGroupId, report.getCheckGroupId())
+                        .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()));
+                if (Objects.nonNull(qtCheckTaskDetail)){
+                    taskVO.setCheckResult(qtCheckTaskDetail.getCheckResult());
+                }
                 taskVO.setId(ele.getId());
                 taskVO.setCustomer(ele.getCustomer());
+                taskVO.setTaskType(ele.getTaskType());
                  qtSpcReportDetailTaskVOS1.add(taskVO);
             });
 
@@ -625,9 +664,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
             qtSpcReportDetailVO.setCheckItemResultAverage(average);
 
+            //设置主键id
+            qtSpcReportDetailVO.setId(i);
             //设置开始结束分片范围
             qtSpcReportDetailVO.setStartTime(start);
             qtSpcReportDetailVO.setEndTime(end);
+            //检验项id
+            qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
             //设置检验项名称
             qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
             //设置计量单位名称

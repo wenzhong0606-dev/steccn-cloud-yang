@@ -9,8 +9,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * spc任务明细表
+ */
 @Data
 public class QtSpcReportDetailVO implements Serializable {
+
+    /**
+     * 用来标记表的主键id
+     */
+    private Integer id;
 
     /**
      * 时间分片开始时间
@@ -22,6 +30,10 @@ public class QtSpcReportDetailVO implements Serializable {
      */
     private LocalDateTime endTime;
 
+    /**
+     * 检验项id
+     */
+    private Integer checkItemId;
 
     /**
      * 检验项名称

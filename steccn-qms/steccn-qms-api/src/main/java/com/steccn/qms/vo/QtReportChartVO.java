@@ -67,6 +67,21 @@ public class QtReportChartVO implements Serializable {
     private Integer checkItemId;
 
     /**
+     * 检验项名称
+     */
+    private String checkItemName;
+
+    /**
+     * 数据类型编码
+     */
+    private Long dataTypeId;
+
+    /**
+     * 检验项数据的类型 计量还是百分数
+     */
+    private String dataTypeName;
+
+    /**
      * 标准值
      */
     private BigDecimal standardValue;
@@ -80,11 +95,6 @@ public class QtReportChartVO implements Serializable {
      * 下限
      */
     private BigDecimal downLimit;
-
-    /**
-     * 检验项名称
-     */
-    private String  checkItemName;
 
     /**
      * 生产车间
