@@ -372,19 +372,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                             for (QtCheckTaskCopy qtCheckTaskCopy : qtCheckTaskCopies) {
                                 //qtCheckTaskSimpleDTO.setResult();
                                 Map<String, Map<String, Object>> result = new HashMap<>();
-                                if ("sampleNum".equals(s)){
+                                if (QtManagerConstant.SAMPLENUM.equals(s)){
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSampleNum());
-                                } else if ("licensePlate".equals(s)) {
+                                } else if (QtManagerConstant.LICENSEPLATE.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getLicensePlate());
-                                } else if ("analyst".equals(s)) {
+                                } /*else if ("analyst".equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalyst());
-                                } else if ("analystTime".equals(s)) {
+                                } */else if (QtManagerConstant.ANALYSTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystTime());
-                                } else if ("analystName".equals(s)) {
+                                } else if (QtManagerConstant.ANALYSTNAME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystName());
-                                } else if ("ingredientNum".equals(s)) {
-                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getLicensePlate());
-                                } else if ("samplingTime".equals(s)) {
+                                } else if (QtManagerConstant.INGREDIENTNUM.equals(s)) {
+                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
+                                } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
                                 }
                             }
@@ -394,6 +394,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         }
                         qtCheckTaskDetailVo.setSampleInfoList(qtCheckTaskSimpleDTOS);
                     }
+                    //样本概况模块返回数据设置完成
                 } else {
                     qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
                 }
@@ -623,48 +624,50 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
                         QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
                         if (Objects.nonNull(objectMap.get(entry.getKey()))) {
-                            if ("sampleNum".equals(sampleInfo.getId())) {
+                            if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setSampleNum(entry.getValue());
-                            } else if ("licensePlate".equals(sampleInfo.getId())) {
+                            } else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setLicensePlate(entry.getValue());
-                            }else if ("analyst".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(entry.getValue()));
                                 }
-                            }else if ("analystName".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setAnalystName(entry.getValue());
-                            }else if ("samplingTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
                                 }
-                            }else if ("analystTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setAnalystTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
                                 }
-                            }else if ("ingredientNum".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
                                 }
                             }
                             objectMap.get(entry.getKey()).setLicensePlate(entry.getValue());
                         } else {
-                            if ("sampleNum".equals(sampleInfo.getId())) {
+                            if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setSampleNum(entry.getValue());
-                            }else if ("licensePlate".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setLicensePlate(entry.getValue());
-                            }else if ("analyst".equals(sampleInfo.getId())) {
-                                qtCheckTaskCopy.setLicensePlate(entry.getValue());
-                            }else if ("analystName".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
+                                if (entry.getKey() != null) {
+                                    qtCheckTaskCopy.setAnalyst(Integer.valueOf(entry.getValue()));
+                                }
+                            }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setAnalystName(entry.getValue());
-                            }else if ("samplingTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
                                 }
-                            }else if ("analystTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setAnalystTime(LocalDateTime.parse(entry.getValue()));
                                 }
-                            }else if ("ingredientNum".equals(sampleInfo.getId())){
+                            }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())){
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
                                 }
@@ -685,51 +688,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskCopies2.add(qtCheckTaskCopy1);
                 });
                 qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies2);
-
-                    /*if ("sampleNum".equals(sampleInfo.getId())) {
-                        for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-                            QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
-                            qtCheckTaskCopy.setSampleNum(entry.getValue());
-                        }
-                    }
-
-
-                    for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-                        if ("sampleNum".equals(sampleInfo.getId())) {
-
-//                            for (int m = 0; m <= sampleInfo.getResult().keySet().size(); m++) {
-//                                QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
-//                                qtCheckTaskCopy.setSampleNum(sampleInfo.getResult().get(m));
-//
-//
-//
-//
-//                            }
-                            sampleInfo.setSampleNum(entry.getValue());
-                        } else if ("licensePlate".equals(sampleInfo.getId())) {
-                            sampleInfo.setLicensePlate(entry.getValue());
-                        } else if ("analyst".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalyst(entry.getValue() != null ? Integer.valueOf(entry.getValue()) : null);
-                        } else if ("analystName".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalystName(entry.getValue());
-                        } else if ("samplingTime".equals(sampleInfo.getId())) {
-                            if (entry.getValue() != null) {
-                                sampleInfo.setSamplingTime(LocalDateTime.parse(entry.getValue(), DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
-                            }
-                        } else if ("analystTime".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalystTime(LocalDateTime.parse(entry.getValue(), DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
-                        } else if ("ingredientNum".equals(sampleInfo.getId())) {
-                            sampleInfo.setIngredientNum(entry.getValue() != null && !"".equals(entry.getValue()) ? Integer.valueOf(entry.getValue()) : null);
-                        }
-                    }
-                    BeanUtils.copyProperties(sampleInfo, copyDetailModel);
-                    copyDetailModel.setTaskId(dto.getId());
-                    qtCheckTaskCopies.add(copyDetailModel);
-                });
-                //往样品概况表塞值
-                qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies);*/
             }
         }
+        //往样本概况表设置数据完成
 
         //处理数据
         if (CollUtil.isNotEmpty(dto.getCheckGroup())) {
