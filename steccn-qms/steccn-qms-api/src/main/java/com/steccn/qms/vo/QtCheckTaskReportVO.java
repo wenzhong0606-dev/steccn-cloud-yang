@@ -7,6 +7,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -131,6 +132,11 @@ public class QtCheckTaskReportVO implements Serializable {
 
     @ApiModelProperty("合格率")
     private String passRate;
+
+    /**
+     * 动态子表格内容
+     */
+    private List<QtIQCAcceptabilityCopyVO> list;
 
     private static final long serialVersionUID = 1L;
 }

@@ -1571,6 +1571,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
         qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());
+        Set<Long> taskIds = qtCheckTasks.stream().map(QtCheckTask::getId).collect(Collectors.toSet());
+        Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
+        List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
 
         //创建返回数据的类
         List<QtAccessoryAcceptabilityDetailVO> vos = Lists.newArrayList();
@@ -1581,15 +1584,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             BigDecimal qGoodBig = BigDecimal.valueOf(Objects.isNull(q.getGoodNum())?0:q.getGoodNum());
             BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig,4);
             BeanUtils.copyProperties(q, vo);
-            List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>()
-                    .eq(QtCheckTaskCopy::getTaskId, q.getId()));
-            List<QtAccessoryAcceptablityCopyVO> qtAccessoryAcceptablityCopyVOS = Lists.newArrayList();
-            qtCheckTaskCopies.forEach(qtCheckTaskCopy -> {
-                QtAccessoryAcceptablityCopyVO copyVO = new QtAccessoryAcceptablityCopyVO();
-                BeanUtils.copyProperties(qtCheckTaskCopy, copyVO);
-                qtAccessoryAcceptablityCopyVOS.add(copyVO);
-            });
-            vo.setAccessoryDetail(qtAccessoryAcceptablityCopyVOS);
+//            List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>()
+//                    .eq(QtCheckTaskCopy::getTaskId, q.getId()));
+//            List<QtAccessoryAcceptablityCopyVO> qtAccessoryAcceptablityCopyVOS = Lists.newArrayList();
+//            qtCheckTaskCopies.forEach(qtCheckTaskCopy -> {
+//                QtAccessoryAcceptablityCopyVO copyVO = new QtAccessoryAcceptablityCopyVO();
+//                BeanUtils.copyProperties(qtCheckTaskCopy, copyVO);
+//                qtAccessoryAcceptablityCopyVOS.add(copyVO);
+//            });
+            List<QtIQCAcceptabilityCopyVO> orDefault = taskInfoMap.getOrDefault(q.getId(), orCopyList);
+            vo.setAccessoryDetail(orDefault);
             vo.setAcceptability(rate);
             vo.setFinishedTime(LocalDateUtil.format(q.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
             vos.add(vo);
@@ -1739,15 +1743,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //根据检验完成时间升序排列
         flatDataList = flatDataList.stream().sorted(Comparator.comparing(QtCheckTaskReportVO::getFinishedTime)).collect(Collectors.toList());
 
+        Set<Long> taskIds = flatDataList.stream().map(QtCheckTaskReportVO::getId).collect(Collectors.toSet());
+        Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
+
         //分页
-        int pageSize = dto.getSize();
-        int current = dto.getCurrent() - 1;
-        flatDataList = flatDataList.stream().skip(current * pageSize)
-                .limit(dto.getSize())
-                .collect(Collectors.toList());
-        Page<QtCheckTaskReportVO> page = new Page<>(dto.getCurrent(), dto.getSize());
-        page.setRecords(flatDataList);
-        page.setTotal(flatDataList.size());
+//        int pageSize = dto.getSize();
+//        int current = dto.getCurrent() - 1;
+//        flatDataList = flatDataList.stream().skip(current * pageSize)
+//                .limit(dto.getSize())
+//                .collect(Collectors.toList());
+//        Page<QtCheckTaskReportVO> page = new Page<>(dto.getCurrent(), dto.getSize());
+//        page.setRecords(flatDataList);
+//        page.setTotal(flatDataList.size());
+        Page<QtCheckTaskReportVO> page = LogicalPageUtil.page(flatDataList, dto.getCurrent(), dto.getSize());
+        page.getRecords().forEach(flatData ->{
+            flatData.setList(taskInfoMap.get(flatData.getId()));
+        });
         return page;
     }
 

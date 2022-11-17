@@ -40,5 +40,5 @@ public class QtAccessoryAcceptabilityDetailVO implements Serializable {
     /**
      * 配料抽检检验任务详情
      */
-    private List<QtAccessoryAcceptablityCopyVO> accessoryDetail;
+    private List<QtIQCAcceptabilityCopyVO> accessoryDetail;
 }
