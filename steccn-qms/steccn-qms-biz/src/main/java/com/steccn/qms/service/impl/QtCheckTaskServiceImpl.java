@@ -34,6 +34,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -351,7 +352,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     if (qtCheckTask.getStation() != null) {
                         qtCheckTask.setStationId(qtCheckTask.getStationId());
                         qtCheckTask.setStationName(qtCheckTask.getStationName());
-                        qtCheckTaskListVo.setStationId(Math.toIntExact(qtCheckTask.getStationId()));
+                        if(qtCheckTask.getStationId() != null){
+                            qtCheckTaskListVo.setStationId(Math.toIntExact(qtCheckTask.getStationId()));
+                        }
                         qtCheckTaskListVo.setStationName(qtCheckTask.getStation().getName());
                         qtCheckTaskListVo.setStation(qtCheckTask.getStation());
                     }
@@ -1708,36 +1711,29 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public Page<QtSubLaboratoryAcceptabilityDetailVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubLaboratoryAcceptabilityDTO dto) {
-        //获取根据时间范围已经其他条件按生产车间分组的任务
-        LambdaQueryWrapper<QtCheckTask> condition = getQtCheckTaskSubLaboratoryCondition(dto);
-
-        //3.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //4.查询分页数据
-        IPage<QtCheckTask> resPage = page(page, condition);
-        //5.拷贝page信息
-        BeanUtils.copyProperties(resPage, page);
-        //6.拷贝返回的数据
-        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-
-        //创建返回明细的集合
-        List<QtSubLaboratoryAcceptabilityDetailVO> vos = Lists.newArrayList();
-        qtCheckTasks.forEach(q -> {
-            QtSubLaboratoryAcceptabilityDetailVO vo = new QtSubLaboratoryAcceptabilityDetailVO();
-            BigDecimal qCheckBig = BigDecimal.valueOf((int) q.getCheckNum());
-            BigDecimal qGoodBig = BigDecimal.valueOf((int) q.getGoodNum());
-            BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig);
-            BeanUtils.copyProperties(q, vo);
-            vo.setAcceptability(rate);
-            //把localdatetime转成localdate再封装
-            LocalDate finishedLocalDate = q.getFinishedTime().toLocalDate();
-            vo.setFinishedTime(LocalDateUtil.localDateFormat(finishedLocalDate, DatePattern.NORM_DATE_PATTERN));
-            //返回封装好的数据
-            vos.add(vo);
-        });
-        page.setTotal(vos.size());
-        return page.setRecords(vos);
+    public Page<QtCheckTaskReportVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //筛选车间
+        if(dto.getProductLineId()!=null){
+            flatDataList = flatDataList.stream().filter(s->s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
+        }
+        //筛选filters
+        if(dto.getFilters()!=null){
+            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+        }
+        //分页
+        int pageSize = dto.getSize();
+        int current = dto.getCurrent() - 1;
+        flatDataList = flatDataList.stream().skip(current * pageSize)
+                .limit(dto.getSize())
+                .collect(Collectors.toList());
+        Page<QtCheckTaskReportVO> page = new Page<>(dto.getCurrent(), dto.getSize());
+        page.setRecords(flatDataList);
+        page.setTotal(flatDataList.size());
+        return page;
     }
 
     /**

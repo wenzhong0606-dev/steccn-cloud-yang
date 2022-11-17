@@ -183,9 +183,10 @@ public class QtCheckTaskController {
 //        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
 //    }
 
-    @PostMapping("/sub/acceptability/detail")
+    @PostMapping("/sub/chemical/acceptability/detail")
     @ApiOperation(value = "基片化验抽检合格率趋势明细分页")
-    public R<Page<QtSubLaboratoryAcceptabilityDetailVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubLaboratoryAcceptabilityDTO dto) {
+    public R<Page<QtCheckTaskReportVO>> getQtSubLaboratoryAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
         return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
     }
 
