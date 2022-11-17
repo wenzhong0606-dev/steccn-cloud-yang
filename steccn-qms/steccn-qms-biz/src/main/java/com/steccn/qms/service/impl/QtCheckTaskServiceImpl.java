@@ -24,7 +24,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.LogicalPageUtil;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -36,7 +36,6 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -44,12 +43,10 @@ import com.steccn.qms.mapper.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.util.ShardTimeUtil;
-import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.poi.hssf.record.DVALRecord;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,9 +55,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -1258,7 +1253,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             }
         }
-
         //分页
         Page<QtDeepOrSubAcceptabilityDetailVO> page1 = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
         return page1;

@@ -1,4 +1,4 @@
-package com.steccn.common.util;
+package com.steccn.platform.util;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
