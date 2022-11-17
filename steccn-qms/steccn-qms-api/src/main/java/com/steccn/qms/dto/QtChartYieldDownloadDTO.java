@@ -58,13 +58,13 @@ public class QtChartYieldDownloadDTO extends BasePageDTO implements Serializable
      * 开始时间
      */
     @NotNull(message = "开始时间不能为空")
-    private LocalDate startTime;
+    private LocalDate dateStart;
 
     /**
      * 结束时间
      */
     @NotNull(message = "结束时间不能为空")
-    private LocalDate endTime;
+    private LocalDate dateEnd;
 
     /**
      * 图表base64

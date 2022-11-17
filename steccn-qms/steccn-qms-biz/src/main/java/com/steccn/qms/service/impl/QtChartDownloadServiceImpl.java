@@ -74,8 +74,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         map.put("workOrderNameCondition", dto.getWorkOrderName());
         map.put("workShopCondition", dto.getProductWorkShopName());
         map.put("workLineCondition",dto.getProductLineName());
-        map.put("dateStart",dto.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("dateEnd",dto.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
             map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
         }
@@ -87,8 +87,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         }
         //对全量数据表进行筛选
         ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
-        pmsDTO.setBeginDate(dto.getStartTime());
-        pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
+        pmsDTO.setBeginDate(dto.getDateStart());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         List<ProducePassRateVO> data = new ArrayList<>();
         if(CollUtil.isNotEmpty(rResult.getData())){
@@ -180,8 +180,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
     @Override
     public Page<ProducePassRateVO> details(QtChartYieldDownloadDTO dto) {
         ProducePassRateDTO pmsDTO =new ProducePassRateDTO();
-        pmsDTO.setBeginDate(dto.getStartTime());
-        pmsDTO.setEndDate(dto.getEndTime().plusDays(1));
+        pmsDTO.setBeginDate(dto.getDateStart());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         List<ProducePassRateVO> data = new ArrayList<>();
         if(CollUtil.isNotEmpty(rResult.getData())){
@@ -327,8 +327,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         map.put("workOrderNameCondition", dto.getWorkOrderName());
         map.put("workShopCondition", dto.getProductWorkShopName());
         map.put("workLineCondition",dto.getProductLineName());
-        map.put("dateStart",dto.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("dateEnd",dto.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
             map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
         }
