@@ -6,6 +6,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -1540,27 +1541,39 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto) {
+    public Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDetailDTO dto) {
         //查询时间范围为当天的8点到晚上八点
         LocalDateTime start = LocalDateTime.of(dto.getDateTime(), LocalTime.of(8, 0, 0));
         LocalDateTime end = LocalDateTime.of(dto.getDateTime(), LocalTime.of(20, 0, 0));
-        LambdaQueryWrapper<QtCheckTask> condition = accessoryAcceptabilityQtCheckTasks(dto, start, end);
+//        LambdaQueryWrapper<QtCheckTask> condition = accessoryAcceptabilityQtCheckTasks(dto, start, end);
+
 
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
+
+        if (CollectionUtils.isEmpty(dto.getWorkshopIdList())) {
+            return page;
+        }
         //4.查询分页数据
-        IPage<QtCheckTask> resPage = page(page, condition);
+        IPage<QtCheckTask> resPage = page(page, new LambdaQueryWrapper<QtCheckTask>()
+                .ge(QtCheckTask::getFinishedTime, start)
+                .le(QtCheckTask::getFinishedTime, end)
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()));
+
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
+        qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());
+
         //创建返回数据的类
         List<QtAccessoryAcceptabilityDetailVO> vos = Lists.newArrayList();
         qtCheckTasks.forEach(q -> {
             QtAccessoryAcceptabilityDetailVO vo = new QtAccessoryAcceptabilityDetailVO();
-            BigDecimal qCheckBig = BigDecimal.valueOf((int) q.getCheckNum());
-            BigDecimal qGoodBig = BigDecimal.valueOf((int) q.getGoodNum());
-            BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig);
+
+            BigDecimal qCheckBig = BigDecimal.valueOf(Objects.isNull(q.getCheckNum())?0:q.getCheckNum());
+            BigDecimal qGoodBig = BigDecimal.valueOf(Objects.isNull(q.getGoodNum())?0:q.getGoodNum());
+            BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig,4);
             BeanUtils.copyProperties(q, vo);
             List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>()
                     .eq(QtCheckTaskCopy::getTaskId, q.getId()));
