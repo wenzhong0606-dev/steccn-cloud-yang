@@ -25,4 +25,9 @@ public class QtIQCAcceptabilityCopyVO {
      * 动态子表格内容
      */
     private List<QtSubtableVO> list;
+
+    /**
+     * 配料附数
+     */
+    private Integer ingredientNum;
 }

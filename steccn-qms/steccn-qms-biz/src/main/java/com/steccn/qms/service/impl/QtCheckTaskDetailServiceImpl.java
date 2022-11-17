@@ -51,6 +51,7 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
                             QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
                             qtIQCAcceptabilityCopyVO.setSampleNum(qtSubtableVO.getSampleNum());
                             qtIQCAcceptabilityCopyVO.setLicensePlate(qtSubtableVO.getLicensePlate());
+                            qtIQCAcceptabilityCopyVO.setIngredientNum(qtSubtableVO.getIngredientNum());
                             qtIQCAcceptabilityCopyVO.setList(orDefault);
                             copyVOList.add(qtIQCAcceptabilityCopyVO);
                         }

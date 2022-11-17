@@ -1,6 +1,7 @@
 package com.steccn.qms.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -54,4 +55,10 @@ public class QtSubtableVO implements Serializable {
      */
     @JsonIgnore
     private String licensePlate;
+
+    /**
+     * 配料附数
+     */
+    @JsonIgnore
+    private Integer ingredientNum;
 }

@@ -32,7 +32,8 @@
         a.copy,
         a.task_id,
         c.sample_num,
-        c.license_plate
+        c.license_plate,
+        c.ingredient_num
         FROM
         qt_check_task_detail a
         JOIN qt_check_item b ON a.item_id = b.id
