@@ -164,7 +164,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             return qtCheckItemUnitVO;
         }
         //根据检验项id去check_plan_group_item数据库中查询
-        QtCheckPlanGroupItem qtCheckPlanGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+        QtCheckPlanGroupItem qtCheckPlanGroupItem = qtCheckPlanGroupItemService
+                .getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
                 .eq(QtCheckPlanGroupItem::getCheckItemId, itemId)
                 .eq(QtCheckPlanGroupItem::getGroupId, groupId));
         //根据id查询检验项
@@ -174,6 +175,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureUnitSet)).get();
         String measureName = dictData.get(qtCheckItem.getMeasureUnit());
         qtCheckItemUnitVO.setMeasureUnitName(measureName);
+//        qtCheckItemUnitVO.setLowerValue(qtCheckItem.get);
         if (Objects.isNull(qtCheckPlanGroupItem)) {
             return qtCheckItemUnitVO;
         } else {
@@ -220,7 +222,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //创建返回前端的集合
         List<QtReportChartVO> qtReportChartVOlist = Lists.newArrayList();
         if (Objects.isNull(reportGroupId)) {
-            throw new BusinessException("分组id不能为空");
+            return qtReportChartVOlist;
         }
         List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId)
                 .orderByDesc(QtReport::getId));
@@ -481,15 +483,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean edit(QtReportDTO qtReportDTO) {
-        LambdaQueryWrapper<QtReport> eq = new LambdaQueryWrapper<QtReport>().eq(QtReport::getId, qtReportDTO.getId());
+    public Boolean edit(QtReportDTO dto) {
+        LambdaQueryWrapper<QtReport> eq = new LambdaQueryWrapper<QtReport>().eq(QtReport::getId, dto.getId());
         QtReport report = new QtReport();
         if (Objects.nonNull(eq)) {
-            BeanUtils.copyProperties(qtReportDTO, report);
+            BeanUtils.copyProperties(dto, report);
         }
-        report.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(qtReportDTO.getTimeScopeStart()));
-        report.setTimeScopeEnd(LocalDateUtil.getEndTimeOfDayStr(qtReportDTO.getTimeScopeEnd()));
-        return updateById(report);
+        report.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
+        report.setTimeScopeEnd(LocalDateUtil.getEndTimeOfDayStr(dto.getTimeScopeEnd()));
+        lambdaUpdate().set(QtReport::getStandardValue,dto.getStandardValue())
+                .set(QtReport::getUpLimit,dto.getUpLimit());
+         updateById(report);
+         return Boolean.TRUE;
     }
 
     /**
@@ -502,19 +507,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     public Page<QtSpcReportDetailVO> pageList(QtSpcReportDetailPageDTO dto) {
         //根据报表卡片id先查找到spc数据库中的报表数据
         QtReport report = getById(dto.getId());
-        //通过检验分组id以及检验项id去任务明细表里面获取任务id集合
-    /*    List<Long> taskIdList = Lists.newArrayList();
-        if (Objects.nonNull(report)) {
-            taskIdList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                            .eq(QtCheckTaskDetail::getGroupId, report.getCheckGroupId())
-                            .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()))
-                    .stream().map(QtCheckTaskDetail::getTaskId).collect(Collectors.toList());
-        }
-        //1.去任务表里面根据时间以及id获取已经完成的检验项并查询检验结果
-
-        if (CollUtil.isEmpty(taskIdList)) {
-            throw new BusinessException("该分组及其检验项下没有检验任务");
-        }*/
         //设置查询条件
         LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
 
@@ -601,6 +593,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
                 BeanUtils.copyProperties(ele,taskVO);
                 taskVO.setFinishedTime(ele.getFinishedTime().toLocalDate());
+                taskVO.setMaterialName(name);
+//                QtCheckTaskDetail qtCheckTaskDetail = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+//                        .eq(QtCheckTaskDetail::getTaskId, ele.getId())
+//                        .eq(QtCheckTaskDetail::getGroupId, report.getCheckGroupId())
+//                        .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()));
+//                taskVO.setCheckResult(qtCheckTaskDetail.getCheckResult());
+                taskVO.setId(ele.getId());
+                taskVO.setCustomer(ele.getCustomer());
                  qtSpcReportDetailTaskVOS1.add(taskVO);
             });
 
