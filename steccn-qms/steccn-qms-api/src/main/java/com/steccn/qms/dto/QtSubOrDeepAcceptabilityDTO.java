@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @ApiModel("深加工或基片合格率DTO")
@@ -55,4 +56,7 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
 
     @ApiModelProperty(value = "任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7", hidden = true)
     private Integer taskType;
+
+    @ApiModelProperty(value = "图表的过滤条件")
+    private List<String> filters;
 }
