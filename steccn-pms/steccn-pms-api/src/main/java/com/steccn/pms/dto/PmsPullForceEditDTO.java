@@ -5,6 +5,9 @@ import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,5 +39,7 @@ public class PmsPullForceEditDTO {
 
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "数量不能为空")
     @ApiModelProperty("数量")
+    @DecimalMax(value="99999.999",message="数量大小应小于99999.999")
+    @Digits(integer = 5,fraction = 3,message = "整数位上限为5位，小数位上限位3位")
     private BigDecimal quantity;
 }
