@@ -94,6 +94,15 @@ public interface QtManagerConstant {
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
 
+    //质量管控模块样本概况字段常量
+    String SAMPLENUM = "sampleNum"; //样本编号
+    String LICENSEPLATE = "licensePlate"; //车牌号
+    String ANALYST = "analyst"; //分析人
+    String ANALYSTNAME = "analystName"; //分析人名
+    String SAMPLINGTIME = "samplingTime"; //取样时间
+    String ANALYSTIME = "analystTime"; //分析时间
+    String INGREDIENTNUM = "ingredientNum"; //配料付数
+
 
     /**
      * 机构类型为车间的编码

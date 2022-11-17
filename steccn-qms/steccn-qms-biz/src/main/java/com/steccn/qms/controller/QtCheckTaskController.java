@@ -130,10 +130,18 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.pageProductOrder(dto));
     }
 
-    @PostMapping("/deeporsub/acceptability/detail")
-    @ApiOperation(value = "深加工或基片合格率趋势明细表分页")
-    public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtDeepOrSubAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
-        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(dto));
+    @PostMapping("/deep/acceptability/detail")
+    @ApiOperation(value = "深加工合格率趋势明细表分页")
+    public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtDeepAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(null,dto));
+    }
+
+    @PostMapping("/sub/acceptability/detail")
+    @ApiOperation(value = "基片合格率趋势明细表分页")
+    public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtSubAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(null,dto));
     }
 
     @PostMapping("/deep/acceptability/chart")
@@ -180,7 +188,7 @@ public class QtCheckTaskController {
 
     @PostMapping("/accessory/acceptability/detail")
     @ApiOperation(value = "配料抽检合格率明细分页")
-    public R<Page<QtAccessoryAcceptabilityDetailVO>> getQtAccessoryAcceptabilityDetailVO(@RequestBody QtAccessoryAcceptabilityDTO dto) {
+    public R<Page<QtAccessoryAcceptabilityDetailVO>> getQtAccessoryAcceptabilityDetailVO(@RequestBody QtAccessoryAcceptabilityDetailDTO dto) {
         return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
     }
 

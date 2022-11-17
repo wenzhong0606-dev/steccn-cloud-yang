@@ -6,6 +6,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -16,6 +17,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -23,6 +25,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -34,7 +37,6 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -42,11 +44,10 @@ import com.steccn.qms.mapper.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.util.ShardTimeUtil;
-import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.poi.hssf.record.DVALRecord;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +57,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,6 +67,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtCheckTask>
         implements QtCheckTaskService {
 
@@ -373,19 +374,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                             for (QtCheckTaskCopy qtCheckTaskCopy : qtCheckTaskCopies) {
                                 //qtCheckTaskSimpleDTO.setResult();
                                 Map<String, Map<String, Object>> result = new HashMap<>();
-                                if ("sampleNum".equals(s)){
+                                if (QtManagerConstant.SAMPLENUM.equals(s)){
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSampleNum());
-                                } else if ("licensePlate".equals(s)) {
+                                } else if (QtManagerConstant.LICENSEPLATE.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getLicensePlate());
-                                } else if ("analyst".equals(s)) {
+                                } /*else if ("analyst".equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalyst());
-                                } else if ("analystTime".equals(s)) {
+                                } */else if (QtManagerConstant.ANALYSTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystTime());
-                                } else if ("analystName".equals(s)) {
+                                } else if (QtManagerConstant.ANALYSTNAME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystName());
-                                } else if ("ingredientNum".equals(s)) {
-                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getLicensePlate());
-                                } else if ("samplingTime".equals(s)) {
+                                } else if (QtManagerConstant.INGREDIENTNUM.equals(s)) {
+                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
+                                } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
                                 }
                             }
@@ -395,6 +396,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         }
                         qtCheckTaskDetailVo.setSampleInfoList(qtCheckTaskSimpleDTOS);
                     }
+                    //样本概况模块返回数据设置完成
                 } else {
                     qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
                 }
@@ -624,48 +626,50 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
                         QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
                         if (Objects.nonNull(objectMap.get(entry.getKey()))) {
-                            if ("sampleNum".equals(sampleInfo.getId())) {
+                            if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setSampleNum(entry.getValue());
-                            } else if ("licensePlate".equals(sampleInfo.getId())) {
+                            } else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setLicensePlate(entry.getValue());
-                            }else if ("analyst".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(entry.getValue()));
                                 }
-                            }else if ("analystName".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                                 objectMap.get(entry.getKey()).setAnalystName(entry.getValue());
-                            }else if ("samplingTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
                                 }
-                            }else if ("analystTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setAnalystTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
                                 }
-                            }else if ("ingredientNum".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
                                 }
                             }
                             objectMap.get(entry.getKey()).setLicensePlate(entry.getValue());
                         } else {
-                            if ("sampleNum".equals(sampleInfo.getId())) {
+                            if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setSampleNum(entry.getValue());
-                            }else if ("licensePlate".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setLicensePlate(entry.getValue());
-                            }else if ("analyst".equals(sampleInfo.getId())) {
-                                qtCheckTaskCopy.setLicensePlate(entry.getValue());
-                            }else if ("analystName".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
+                                if (entry.getKey() != null) {
+                                    qtCheckTaskCopy.setAnalyst(Integer.valueOf(entry.getValue()));
+                                }
+                            }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setAnalystName(entry.getValue());
-                            }else if ("samplingTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
                                 }
-                            }else if ("analystTime".equals(sampleInfo.getId())) {
+                            }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setAnalystTime(LocalDateTime.parse(entry.getValue()));
                                 }
-                            }else if ("ingredientNum".equals(sampleInfo.getId())){
+                            }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())){
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
                                 }
@@ -686,51 +690,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskCopies2.add(qtCheckTaskCopy1);
                 });
                 qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies2);
-
-                    /*if ("sampleNum".equals(sampleInfo.getId())) {
-                        for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-                            QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
-                            qtCheckTaskCopy.setSampleNum(entry.getValue());
-                        }
-                    }
-
-
-                    for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-                        if ("sampleNum".equals(sampleInfo.getId())) {
-
-//                            for (int m = 0; m <= sampleInfo.getResult().keySet().size(); m++) {
-//                                QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
-//                                qtCheckTaskCopy.setSampleNum(sampleInfo.getResult().get(m));
-//
-//
-//
-//
-//                            }
-                            sampleInfo.setSampleNum(entry.getValue());
-                        } else if ("licensePlate".equals(sampleInfo.getId())) {
-                            sampleInfo.setLicensePlate(entry.getValue());
-                        } else if ("analyst".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalyst(entry.getValue() != null ? Integer.valueOf(entry.getValue()) : null);
-                        } else if ("analystName".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalystName(entry.getValue());
-                        } else if ("samplingTime".equals(sampleInfo.getId())) {
-                            if (entry.getValue() != null) {
-                                sampleInfo.setSamplingTime(LocalDateTime.parse(entry.getValue(), DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
-                            }
-                        } else if ("analystTime".equals(sampleInfo.getId())) {
-                            sampleInfo.setAnalystTime(LocalDateTime.parse(entry.getValue(), DatePattern.NORM_DATETIME_FORMAT.getDateTimeFormatter()));
-                        } else if ("ingredientNum".equals(sampleInfo.getId())) {
-                            sampleInfo.setIngredientNum(entry.getValue() != null && !"".equals(entry.getValue()) ? Integer.valueOf(entry.getValue()) : null);
-                        }
-                    }
-                    BeanUtils.copyProperties(sampleInfo, copyDetailModel);
-                    copyDetailModel.setTaskId(dto.getId());
-                    qtCheckTaskCopies.add(copyDetailModel);
-                });
-                //往样品概况表塞值
-                qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies);*/
             }
         }
+        //往样本概况表设置数据完成
 
         //处理数据
         if (CollUtil.isNotEmpty(dto.getCheckGroup())) {
@@ -1128,7 +1090,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
         PmsProduceOrderVO pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id).getData();
+        Assert.notNull(pmsProduceOrderVO,"该条产线下面没有正在执行中的订单");
         BeanUtils.copyProperties(pmsProduceOrderVO, qtProduceOrderLineVO);
+
         return qtProduceOrderLineVO;
     }
 
@@ -1218,61 +1182,84 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
-        LambdaQueryWrapper<QtCheckTask> condition = getQtDeepOrSubAcceptabilityWrapper(dto);
-
-        //3.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //4.查询分页数据
-        IPage<QtCheckTask> resPage = page(page, condition);
-        //5.拷贝page信息
-        BeanUtils.copyProperties(resPage, page);
-        //6.拷贝返回的数据
-        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-       if (CollUtil.isEmpty(qtCheckTasks)){
-           throw new BusinessException("暂无数据");
-       }
-
-        //将时间范围根据粒度分片
-        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(QtManagerConstant.QtGranularityEnum.DAY.getType()
-                , LocalDateUtil.getStartTimeOfDayStr(dto.getDateStart())
-                , LocalDateUtil.getEndTimeOfDayStr(dto.getDateEnd()));
-        //构建返回数据集合
-        List<QtDeepOrSubAcceptabilityDetailVO> detailVOList = Lists.newArrayList();
-        for (int i = 1; i < localDateTimes.size(); i++) {
-
-            LocalDateTime start = localDateTimes.get(i - 1);
-            LocalDateTime end = localDateTimes.get(i);
-
-            //过滤出时间分片内的数据
-            List<QtCheckTask> conditionDataList = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
-                //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
-                    return Boolean.TRUE;
-                }
-                return Boolean.FALSE;
-            }).collect(Collectors.toList());
-
-            conditionDataList.stream().filter(v->Objects.nonNull(v.getFinishedTime())).forEach(qtCheckTask -> {
-                QtDeepOrSubAcceptabilityDetailVO vo = new QtDeepOrSubAcceptabilityDetailVO();
-                BeanUtils.copyProperties(qtCheckTask, vo);
-                if (Objects.nonNull(qtCheckTask.getCheckNum())&&Objects.nonNull(qtCheckTask.getGoodNum())) {
-                    BigDecimal checkNum = new BigDecimal((int) qtCheckTask.getCheckNum());
-                    BigDecimal goodNum = new BigDecimal((int) qtCheckTask.getGoodNum());
-                    vo.setAcceptability(BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2));
-                }
-                if (Objects.nonNull(qtCheckTask.getFinishedTime())){
-                vo.setFinishedTime(LocalDateUtil.format(qtCheckTask.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));}
-                if (Objects.nonNull(qtCheckTask.getClassTime())) {
-                    vo.setClassesDate(LocalDateUtil.localDateFormat(qtCheckTask.getClassTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN));
-                }
-                detailVOList.add(vo);
-            });
+    public Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
+        Page<QtDeepOrSubAcceptabilityDetailVO> page = new Page<>(dto.getCurrent(), dto.getSize());
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        //根据条件获取数据
+        List<QtCheckTaskReportVO> rateDataList = rateDataList(keyword, dto);
+        rateDataList = rateDataList.stream().filter(v -> Objects.nonNull(v.getClassesId()) &&
+                Objects.nonNull(v.getClassTime()) &&
+                Objects.nonNull(v.getProductWorkshopId()) &&
+                Objects.nonNull(v.getProductLineId()) &&
+                Objects.nonNull(v.getMaterialId()) &&
+                Objects.nonNull(v.getCustomerId())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(rateDataList)) {
+            page.setTotal(0L);
+            page.setRecords(Lists.newArrayList());
+            return page;
         }
+        //车间，产线，物料名称，客户
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        rateDataList.forEach(ele -> {
+            officeIdSet.add(ele.getProductWorkshopId());
+            officeIdSet.add(ele.getProductLineId());
+            officeIdSet.add(ele.getCustomerId());
+            materialIdSet.add(ele.getMaterialId());
+        });
+        Map<Integer, String> officeIdNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
 
-        page.setTotal(detailVOList.size());
-        page.setRecords(detailVOList);
-        return page;
+        Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime().toLocalDate()));
+        //定义返回的集合
+        List<QtDeepOrSubAcceptabilityDetailVO> resList = Lists.newArrayList();
+
+        for (Map.Entry<LocalDate, List<QtCheckTaskReportVO>> classDateEntry : classDateMap.entrySet()) {
+            Map<Integer, List<QtCheckTaskReportVO>> classMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassesId));
+            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> classEntry : classMap.entrySet()) {
+                Map<Integer, List<QtCheckTaskReportVO>> produceWorkshopMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductWorkshopId));
+                for (Map.Entry<Integer, List<QtCheckTaskReportVO>> pwsEntry : produceWorkshopMap.entrySet()) {
+                    Map<Integer, List<QtCheckTaskReportVO>> lineMap = pwsEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductLineId));
+                    for (Map.Entry<Integer, List<QtCheckTaskReportVO>> lineEntry : lineMap.entrySet()) {
+                        Map<Long, List<QtCheckTaskReportVO>> materialMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialId));
+                        for (Map.Entry<Long, List<QtCheckTaskReportVO>> materialEntry : materialMap.entrySet()) {
+                            Map<Integer, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
+                            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
+                                QtDeepOrSubAcceptabilityDetailVO resVO = new QtDeepOrSubAcceptabilityDetailVO();
+                                resVO.setClassesDate(classDateEntry.getKey());
+                                QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classEntry.getKey());
+                                resVO.setClassName(Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+                                resVO.setProductWorkshopName(officeIdNameMap.getOrDefault(pwsEntry.getKey(), Strings.EMPTY));
+                                resVO.setProductLineName(officeIdNameMap.getOrDefault(lineEntry.getKey(), Strings.EMPTY));
+                                resVO.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), Strings.EMPTY));
+                                resVO.setCustomerName(officeIdNameMap.getOrDefault(customerEntry.getKey(), Strings.EMPTY));
+                                List<QtSubOrDeepFPYTaskDetailsVO> taskDetails = Lists.newArrayList();
+                                List<BigDecimal> rateList = Lists.newArrayList();
+                                customerEntry.getValue().forEach(ele -> {
+                                    QtSubOrDeepFPYTaskDetailsVO detail = new QtSubOrDeepFPYTaskDetailsVO();
+                                    detail.setCode(ele.getCode());
+                                    detail.setDetailAcceptability(BigDecimalUtil.divide(BigDecimal.valueOf(ele.getGoodNum()).multiply(BigDecimalUtil.HUNDRED), BigDecimal.valueOf(ele.getCheckNum())));
+                                    detail.setFinishedTime(ele.getFinishedTime());
+                                    detail.setCode(ele.getCode());
+                                    detail.setResult(ele.getResult());
+                                    rateList.add(detail.getDetailAcceptability());
+                                    taskDetails.add(detail);
+                                });
+                                BigDecimal reduce = rateList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                                BigDecimal divide = BigDecimalUtil.divide(reduce, BigDecimal.valueOf(rateList.size()), 2);
+                                resVO.setAcceptability(divide);
+                                resVO.setTaskDetails(taskDetails);
+                                resList.add(resVO);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //分页
+        Page<QtDeepOrSubAcceptabilityDetailVO> page1 = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+        return page1;
     }
 
     private LambdaQueryWrapper<QtCheckTask> getQtDeepOrSubAcceptabilityWrapper(QtSubOrDeepAcceptabilityDTO dto) {
@@ -1437,6 +1424,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if(Objects.nonNull(ele.getSupplier())){
                 vo.setSupplierId(ele.getSupplier().getId());
             }
+            if(Objects.nonNull(ele.getCustomer())){
+                vo.setCustomerId(ele.getCustomer().getId());
+            }
             resList.add(vo);
         });
         return resList;
@@ -1554,27 +1544,39 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDTO dto) {
+    public Page<QtAccessoryAcceptabilityDetailVO> getQtAccessoryAcceptabilityDetailVO(QtAccessoryAcceptabilityDetailDTO dto) {
         //查询时间范围为当天的8点到晚上八点
         LocalDateTime start = LocalDateTime.of(dto.getDateTime(), LocalTime.of(8, 0, 0));
         LocalDateTime end = LocalDateTime.of(dto.getDateTime(), LocalTime.of(20, 0, 0));
-        LambdaQueryWrapper<QtCheckTask> condition = accessoryAcceptabilityQtCheckTasks(dto, start, end);
+//        LambdaQueryWrapper<QtCheckTask> condition = accessoryAcceptabilityQtCheckTasks(dto, start, end);
+
 
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
+
+        if (CollectionUtils.isEmpty(dto.getWorkshopIdList())) {
+            return page;
+        }
         //4.查询分页数据
-        IPage<QtCheckTask> resPage = page(page, condition);
+        IPage<QtCheckTask> resPage = page(page, new LambdaQueryWrapper<QtCheckTask>()
+                .ge(QtCheckTask::getFinishedTime, start)
+                .le(QtCheckTask::getFinishedTime, end)
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()));
+
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
+        qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());
+
         //创建返回数据的类
         List<QtAccessoryAcceptabilityDetailVO> vos = Lists.newArrayList();
         qtCheckTasks.forEach(q -> {
             QtAccessoryAcceptabilityDetailVO vo = new QtAccessoryAcceptabilityDetailVO();
-            BigDecimal qCheckBig = BigDecimal.valueOf((int) q.getCheckNum());
-            BigDecimal qGoodBig = BigDecimal.valueOf((int) q.getGoodNum());
-            BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig);
+
+            BigDecimal qCheckBig = BigDecimal.valueOf(Objects.isNull(q.getCheckNum())?0:q.getCheckNum());
+            BigDecimal qGoodBig = BigDecimal.valueOf(Objects.isNull(q.getGoodNum())?0:q.getGoodNum());
+            BigDecimal rate = BigDecimalUtil.divide(qGoodBig, qCheckBig,4);
             BeanUtils.copyProperties(q, vo);
             List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>()
                     .eq(QtCheckTaskCopy::getTaskId, q.getId()));
