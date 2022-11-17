@@ -57,6 +57,24 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
     @ApiModelProperty(value = "任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7", hidden = true)
     private Integer taskType;
 
+    @ApiModelProperty("取样日期")
+    private LocalDate samplingTime;
+
+    @ApiModelProperty("取样开始时间")
+    private LocalDateTime samplingStartTime;
+
+    @ApiModelProperty("取样结束时间")
+    private LocalDateTime samplingEndTime;
+
+    @ApiModelProperty("物料使用车间id")
+    private Integer materialWorkshopId;
+
+    @ApiModelProperty("供应商id")
+    private Long supplierId;
+
+    @ApiModelProperty("对比内容")
+    private List<String> compareContent;
+
     @ApiModelProperty(value = "图表的过滤条件")
     private List<String> filters;
 }

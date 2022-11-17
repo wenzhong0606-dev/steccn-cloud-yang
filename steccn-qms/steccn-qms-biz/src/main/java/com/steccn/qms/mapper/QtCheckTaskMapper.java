@@ -1,9 +1,11 @@
 package com.steccn.qms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
+import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -38,6 +40,14 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return list 基础数据表
      */
     List<QtCheckTask> rateDataList(@Param("line") Set<Integer> produceLineSet, @Param("dto") QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 获取合格来料检合格率数据
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<QtIQCAcceptabilityDetailVO> pageList(@Param("page") Page page,@Param("dto") QtSubOrDeepAcceptabilityDTO dto);
 }
 
 

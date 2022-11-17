@@ -202,7 +202,7 @@ public class QtCheckTaskController {
 
     @PostMapping("/iqc/acceptability/detail")
     @ApiOperation(value = "来料检合格率明细分页")
-    public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtIQCAcceptabilityDTO dto) {
+    public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetailVO(dto));
     }
 

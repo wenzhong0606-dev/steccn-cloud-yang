@@ -58,6 +58,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -92,7 +93,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyService qtCheckTaskCopyService;
 
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
-
+    
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
@@ -1750,98 +1751,189 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return page;
     }
 
-    /**
-     * 来料检合格率明细分页
-     *
-     * @param dto
-     * @return
-     */
     @Override
-    public Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto) {
-        MPJLambdaWrapper<QtCheckTask> condition = getQtIQCCondition(dto);
-        //3.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //4.查询分页数据
-        IPage<QtCheckTask> resPage = page(page, condition);
-        //5.拷贝page信息
-        BeanUtils.copyProperties(resPage, page);
-        //6.拷贝返回的数据
-        List<QtIQCAcceptabilityDetailVO> qtIQCAcceptabilityDetailVOS = Lists.newArrayList();
-        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-
-        qtCheckTasks.forEach(q -> {
-
-            QtIQCAcceptabilityDetailVO qtIQCAcceptabilityDetailVO = new QtIQCAcceptabilityDetailVO();
-            List<QtIQCAcceptabilityCopyVO> qtIQCAcceptabilityCopyVOS = Lists.newArrayList();
-            List<QtCheckTaskCopy> checkTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, q.getId()));
-            checkTaskCopies.forEach(checkTaskCopy -> {
-                QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
-                BeanUtils.copyProperties(checkTaskCopy, qtIQCAcceptabilityCopyVO);
-                qtIQCAcceptabilityCopyVOS.add(qtIQCAcceptabilityCopyVO);
-            });
-            qtIQCAcceptabilityDetailVO.setDetail(qtIQCAcceptabilityCopyVOS);
-            BeanUtils.copyProperties(q, qtIQCAcceptabilityDetailVO);
-            BigDecimal checkNum = new BigDecimal(q.getCheckNum());
-            BigDecimal goodNum = new BigDecimal(q.getGoodNum());
-            BigDecimal result = BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2);
-            qtIQCAcceptabilityDetailVO.setAcceptability(result);
-            qtIQCAcceptabilityDetailVOS.add(qtIQCAcceptabilityDetailVO);
-        });
-        page.setRecords(qtIQCAcceptabilityDetailVOS);
-        page.setTotal(qtIQCAcceptabilityDetailVOS.size());
-        return page;
-    }
-
-    private MPJLambdaWrapper<QtCheckTask> getQtIQCCondition(QtIQCAcceptabilityDTO dto) {
-        //1、配置分页信息
-        MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
-                .selectAll(QtCheckTask.class)
-                //关联表映射
-                .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
-                .selectAs(QtCheckTaskCopy::getTaskId, QtCheckTaskListVO::getId)
-                //json映射
-                .selectAs(QtCheckTask::getMaterialWorkshopName, QtCheckTaskListVO::getMaterialWorkshopName)
-                .selectAs(QtCheckTask::getProductWorkshopName, QtCheckTaskListVO::getProductWorkshopName)
-                .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
-                .selectAs(QtCheckTask::getSupplierName, QtCheckTaskListVO::getSupplierName)
-                .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
-                //关联
-                .leftJoin(QtCheckTaskCopy.class, QtCheckTaskCopy::getTaskId, QtCheckTask::getId)
-                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
-                //查询
-                .and(Objects.nonNull(dto.getSamplingTime()), wrapper -> wrapper.eq(QtCheckTaskCopy::getSamplingTime, dto.getSamplingTime()))
-                .and(Objects.nonNull(dto.getMaterialId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialId, dto.getMaterialId()))
-                .and(Objects.nonNull(dto.getMaterialWorkshopId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialWorkshopId, dto.getMaterialWorkshopId()))
-                .and(Objects.nonNull(dto.getSupplierId()), wrapper -> wrapper.eq(QtCheckTask::getSupplierId, dto.getSupplierId()));
-
-        if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(dto.getCompare())){
-            condition.groupBy(QtCheckTask::getMaterialId);
-        }else
-        if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.getCode().equals(dto.getCompare())){
-            condition.groupBy(QtCheckTaskCopy::getSamplingTime);
+    public Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
+        //1.处理时间数据
+        if (Objects.nonNull(dto.getDateStart())) {
+            dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
         }
-        condition.groupBy(QtCheckTask::getSupplierId)
-                .gt(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime(),LocalTime.of(8,0,0)))
-                .le(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime().plusDays(1),LocalTime.of(8,0,0)));
-       //2.解析排序规则
-        if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
-            if (dto.getAscFlag()) {
-                condition.last("ORDER BY CONVERT(name using gbk) ASC");
-            } else {
-                condition.last("ORDER BY CONVERT(name using gbk) DESC");
+        if (Objects.nonNull(dto.getDateEnd())) {
+            dto.setDateTimeStart(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
+        }
+        if (Objects.nonNull(dto.getSamplingTime())) {
+            dto.setSamplingStartTime(LocalDateTime.of(dto.getSamplingTime(), LocalTime.MIN));
+            dto.setSamplingEndTime(LocalDateTime.of(dto.getSamplingTime(), LocalTime.MAX));
+        }
+        //2.自定义sql查询数据
+        Page<QtIQCAcceptabilityDetailVO> resPage = this.baseMapper.pageList(new Page<>(dto.getCurrent(), dto.getSize()), dto);
+        //3.处理数据
+        Set<Long> taskIds = Sets.newHashSet();
+        Set<Long> materialIds = Sets.newHashSet();
+        List<QtIQCAcceptabilityDetailVO> resList = resPage.getRecords();
+        resList.forEach(task -> {
+                    //处理时间
+//            task.setFinishedTime(LocalDate.from(task.getFinishedTime()));
+//            task.setSamplingTime(LocalDateTime.from(task.get));
+                    taskIds.add(task.getId());
+                    materialIds.add(task.getMaterialId());
+                    //计算合格
+                    BigDecimal checkNum = new BigDecimal(task.getCheckNum());
+                    BigDecimal goodNum = new BigDecimal(task.getGoodNum());
+                    task.setAcceptability(BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2));
+                }
+        );
+        List<QtIQCAcceptabilityDetailVO> voList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(resList)) {
+            List<QtIQCAcceptabilityDetailVO> filterList = resList;
+            //根据对比类型过滤数据
+            if (Objects.nonNull(dto.getCompare())) {
+                filterList = resList.stream().filter(predicate(dto.getCompare(), dto.getCompareContent(), resList)).collect(Collectors.toList());
             }
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME.equals(dto.getSortField())) {
-            condition.orderBy(true, !dto.getAscFlag(), QtCheckTask::getFinishedTime);
-        } else if (QtManagerConstant.QT_CHECK_TASK_COPY__SORT_FIELD.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckTaskCopy::getSamplingTime);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME.equals(dto.getSortField())) {
-            condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getMaterialWorkshopName);
-        } else {
-            //默认按创建时间降序排列
-            condition.orderBy(true, false, QtCheckTask::getSupplierName);
+            //获取物料数据
+            Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+            //获取详情数据
+            Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
+            List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
+            //处理详情数据
+            filterList.forEach(task -> {
+                List<QtIQCAcceptabilityCopyVO> orDefault = taskInfoMap.getOrDefault(task.getId(), orCopyList);
+                task.setDetail(orDefault);
+                task.setMaterialName(materialMap.get(task.getMaterialId()));
+            });
+            //根据规则排序
+            voList = filterList.stream().sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName,Comparator.nullsLast(String::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getFinishedTime,Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getSamplingTime,Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
+                    .collect(Collectors.toList());
         }
-        return condition;
+        return resPage.setRecords(voList);
     }
+
+//    /**
+//     * 来料检合格率明细分页
+//     *
+//     * @param dto
+//     * @return
+//     */
+//    @Override
+//    public Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto) {
+//        MPJLambdaWrapper<QtCheckTask> condition = getQtIQCCondition(dto);
+//        //3.定义分页对象
+//        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+//        //4.查询分页数据
+//        IPage<QtCheckTask> resPage = page(page, condition);
+//        //5.拷贝page信息
+//        BeanUtils.copyProperties(resPage, page);
+//        //6.拷贝返回的数据
+//        List<QtIQCAcceptabilityDetailVO> qtIQCAcceptabilityDetailVOS = Lists.newArrayList();
+//        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
+//
+//        qtCheckTasks.forEach(q -> {
+//
+//            QtIQCAcceptabilityDetailVO qtIQCAcceptabilityDetailVO = new QtIQCAcceptabilityDetailVO();
+//            List<QtIQCAcceptabilityCopyVO> qtIQCAcceptabilityCopyVOS = Lists.newArrayList();
+//            List<QtCheckTaskCopy> checkTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, q.getId()));
+//            checkTaskCopies.forEach(checkTaskCopy -> {
+//                QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
+//                BeanUtils.copyProperties(checkTaskCopy, qtIQCAcceptabilityCopyVO);
+//                qtIQCAcceptabilityCopyVOS.add(qtIQCAcceptabilityCopyVO);
+//            });
+//            qtIQCAcceptabilityDetailVO.setDetail(qtIQCAcceptabilityCopyVOS);
+//            BeanUtils.copyProperties(q, qtIQCAcceptabilityDetailVO);
+//            BigDecimal checkNum = new BigDecimal(q.getCheckNum());
+//            BigDecimal goodNum = new BigDecimal(q.getGoodNum());
+//            BigDecimal result = BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2);
+//            qtIQCAcceptabilityDetailVO.setAcceptability(result);
+//            qtIQCAcceptabilityDetailVOS.add(qtIQCAcceptabilityDetailVO);
+//        });
+//        page.setRecords(qtIQCAcceptabilityDetailVOS);
+//        page.setTotal(qtIQCAcceptabilityDetailVOS.size());
+//        return page;
+//    }
+
+//        MPJLambdaWrapper<QtCheckTask> condition = getQtIQCCondition(dto);
+//        //3.定义分页对象
+//        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+//        //4.查询分页数据
+//        IPage<QtCheckTask> resPage = page(page, condition);
+//        //5.拷贝page信息
+//        BeanUtils.copyProperties(resPage, page);
+//        //6.拷贝返回的数据
+//        List<QtIQCAcceptabilityDetailVO> qtIQCAcceptabilityDetailVOS = Lists.newArrayList();
+//        List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
+//        qtCheckTasks.forEach(q -> {
+//            QtIQCAcceptabilityDetailVO qtIQCAcceptabilityDetailVO = new QtIQCAcceptabilityDetailVO();
+//            List<QtIQCAcceptabilityCopyVO> qtIQCAcceptabilityCopyVOS = Lists.newArrayList();
+//            List<QtCheckTaskCopy> checkTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, q.getId()));
+//            checkTaskCopies.forEach(checkTaskCopy -> {
+//                QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
+//                BeanUtils.copyProperties(checkTaskCopy, qtIQCAcceptabilityCopyVO);
+//                qtIQCAcceptabilityCopyVOS.add(qtIQCAcceptabilityCopyVO);
+//            });
+//            qtIQCAcceptabilityDetailVO.setDetail(qtIQCAcceptabilityCopyVOS);
+//            BeanUtils.copyProperties(q, qtIQCAcceptabilityDetailVO);
+//            BigDecimal checkNum = new BigDecimal(q.getCheckNum());
+//            BigDecimal goodNum = new BigDecimal(q.getGoodNum());
+//            BigDecimal result = BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2);
+//            qtIQCAcceptabilityDetailVO.setAcceptability(result);
+//            qtIQCAcceptabilityDetailVOS.add(qtIQCAcceptabilityDetailVO);
+//        });
+//        page.setRecords(qtIQCAcceptabilityDetailVOS);
+//        return page;
+//    }
+
+//    private MPJLambdaWrapper<QtCheckTask> getQtIQCCondition(QtSubOrDeepAcceptabilityDTO dto) {
+//        //1、配置分页信息
+//        MPJLambdaWrapper<QtCheckTask> condition = new MPJLambdaWrapper<QtCheckTask>()
+//                .selectAll(QtCheckTask.class)
+//                //关联表映射
+//                .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
+//                .selectAs(QtCheckTaskCopy::getTaskId, QtCheckTaskListVO::getId)
+//                //json映射
+//                .selectAs(QtCheckTask::getMaterialWorkshopName, QtCheckTaskListVO::getMaterialWorkshopName)
+//                .selectAs(QtCheckTask::getProductWorkshopName, QtCheckTaskListVO::getProductWorkshopName)
+//                .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
+//                .selectAs(QtCheckTask::getSupplierName, QtCheckTaskListVO::getSupplierName)
+//                .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
+//                //关联
+//                .leftJoin(QtCheckTaskCopy.class, QtCheckTaskCopy::getTaskId, QtCheckTask::getId)
+//                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
+//                //查询
+//                .and(Objects.nonNull(dto.getSamplingTime()), wrapper -> wrapper.eq(QtCheckTaskCopy::getSamplingTime, dto.getSamplingTime()))
+//                .and(Objects.nonNull(dto.getMaterialId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialId, dto.getMaterialId()))
+//                .and(Objects.nonNull(dto.getMaterialWorkshopId()), wrapper -> wrapper.eq(QtCheckTask::getMaterialWorkshopId, dto.getMaterialWorkshopId()))
+//                .and(Objects.nonNull(dto.getSupplierId()), wrapper -> wrapper.eq(QtCheckTask::getSupplierId, dto.getSupplierId()));
+//
+//        if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(dto.getCompare())){
+//            condition.groupBy(QtCheckTask::getMaterialId);
+//        }else
+//        if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.getCode().equals(dto.getCompare())){
+//            condition.groupBy(QtCheckTaskCopy::getSamplingTime);
+//        }
+//        condition.groupBy(QtCheckTask::getSupplierId)
+//                .gt(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime(),LocalTime.of(8,0,0)))
+//                .le(QtCheckTask::getFinishedTime,LocalDateTime.of(dto.getDateTime().plusDays(1),LocalTime.of(8,0,0)));
+//       //2.解析排序规则
+//        if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
+//            if (dto.getAscFlag()) {
+//                condition.last("ORDER BY CONVERT(name using gbk) ASC");
+//            } else {
+//                condition.last("ORDER BY CONVERT(name using gbk) DESC");
+//            }
+//        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME.equals(dto.getSortField())) {
+//            condition.orderBy(true, !dto.getAscFlag(), QtCheckTask::getFinishedTime);
+//        } else if (QtManagerConstant.QT_CHECK_TASK_COPY__SORT_FIELD.equals(dto.getSortField())) {
+//            condition.orderBy(true, dto.getAscFlag(), QtCheckTaskCopy::getSamplingTime);
+//        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_WORKSHOP_NAME.equals(dto.getSortField())) {
+//            condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getMaterialWorkshopName);
+//        } else {
+//            //默认按创建时间降序排列
+//            condition.orderBy(true, false, QtCheckTask::getSupplierName);
+//        }
+//        return condition;
+//    }
 
     /**
      * 来料检合格率柱状图表
@@ -2088,6 +2180,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         return result;
     }
+
+    private static Predicate<QtIQCAcceptabilityDetailVO> predicate(Integer compare, List<String> filterList, List<QtIQCAcceptabilityDetailVO> list) {
+        Predicate<QtIQCAcceptabilityDetailVO> predicate = new Predicate<QtIQCAcceptabilityDetailVO>() {
+            @Override
+            public boolean test(QtIQCAcceptabilityDetailVO o) {
+                List<QtIQCAcceptabilityDetailVO> resList = null;
+                if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.equals(compare)) {
+                    resList = list.stream().filter(v -> filterList.contains(v.getProductWorkshop().getName())).collect(Collectors.toList());
+                } else {
+                    resList = list;
+                }
+                return Boolean.TRUE;
+            }
+        };
+        return predicate;
+    }
+
 }
 
 

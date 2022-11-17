@@ -153,7 +153,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto);
+    Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto);
 
     /**
      * 来料检合格率柱状图表

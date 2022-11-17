@@ -2,6 +2,11 @@ package com.steccn.qms.service;
 
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.vo.QtIQCAcceptabilityCopyVO;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -10,4 +15,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtCheckTaskDetailService extends IService<QtCheckTaskDetail> {
 
+    /**
+     * 根据任务id 获取任务的详情信息
+     * @param taskIds
+     * @return
+     */
+    Map<Long, List<QtIQCAcceptabilityCopyVO>> listByTaskId(Set<Long> taskIds);
 }

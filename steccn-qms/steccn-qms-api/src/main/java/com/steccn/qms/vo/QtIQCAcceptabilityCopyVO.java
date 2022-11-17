@@ -2,10 +2,12 @@ package com.steccn.qms.vo;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class QtIQCAcceptabilityCopyVO {
     /**
-     *样本序号
+     * 样本序号
      */
     private String sampleNum;
 
@@ -15,19 +17,12 @@ public class QtIQCAcceptabilityCopyVO {
     private String licensePlate;
 
     /**
-     * 水份
+     * 任务id
      */
-
-
-    /**
-     * 铁含量
-     */
+    private Long taskId;
 
     /**
-     * 20目以上颗粒度
+     * 动态子表格内容
      */
-
-    /**
-     * 150目以下颗粒度
-     */
+    private List<QtSubtableVO> list;
 }
