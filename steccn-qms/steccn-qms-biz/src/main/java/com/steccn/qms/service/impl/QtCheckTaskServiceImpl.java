@@ -1091,6 +1091,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         PmsProduceOrderVO pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id).getData();
         Assert.notNull(pmsProduceOrderVO,"该条产线下面没有正在执行中的订单");
         BeanUtils.copyProperties(pmsProduceOrderVO, qtProduceOrderLineVO);
+
         return qtProduceOrderLineVO;
     }
 
