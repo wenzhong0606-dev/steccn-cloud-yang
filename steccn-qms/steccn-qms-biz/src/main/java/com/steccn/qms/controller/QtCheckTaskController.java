@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -150,7 +151,7 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/sub/spot/acceptability/chart")
-    @ApiOperation(value = "基片化验抽检合格率趋势")
+    @ApiOperation(value = "基片化验抽检合格率趋势图表")
     public R<QtLineChartBiBarDTO> getQtSubLaboratoryChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
         return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
@@ -193,4 +194,5 @@ public class QtCheckTaskController {
     public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtIQCAcceptabilityDTO dto) {
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetailVO(dto));
     }
+
 }

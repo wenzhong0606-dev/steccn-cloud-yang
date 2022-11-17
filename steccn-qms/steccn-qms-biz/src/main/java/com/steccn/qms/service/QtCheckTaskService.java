@@ -20,6 +20,7 @@ import java.util.List;
 public interface QtCheckTaskService extends IService<QtCheckTask> {
     /**
      * 新增巡检任务
+     *
      * @param dto
      * @return
      */
@@ -27,6 +28,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 巡检列表Vo
+     *
      * @param dto
      * @return
      */
@@ -34,13 +36,15 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 巡检详情
+     *
      * @param id
      * @return
      */
-    QtCheckTaskDetailVO taskDetail(Long id,Boolean isPc);
+    QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc);
 
     /**
      * 修改任务状态
+     *
      * @param dto 任务状态 0待检验 1检验中 2已检验 3已取消 4暂存
      * @return
      */
@@ -48,6 +52,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 加入值
+     *
      * @param dto
      * @return
      */
@@ -55,6 +60,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * pc加入值
+     *
      * @param dto
      * @return
      */
@@ -62,6 +68,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 完成
+     *
      * @param dto
      * @return
      */
@@ -69,6 +76,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 复检任务
+     *
      * @param dto
      * @return
      */
@@ -76,6 +84,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 通过类型查询任务
+     *
      * @return
      */
     List<QtCheckTaskTypeCountVO> countTaskByType();
@@ -91,6 +100,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 深加工/基片巡检合格率趋势明细分页
+     *
      * @param dto
      * @return
      */
@@ -98,11 +108,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 深加工或基片合格率图表
+     *
      * @param keyword 深加工 || 基片
-     * @param dto dto
+     * @param dto     dto
      * @return
      */
-    QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword,QtSubOrDeepAcceptabilityDTO dto);
+    QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword, QtSubOrDeepAcceptabilityDTO dto);
 
     /**
      * 根据条件查询任务
@@ -114,6 +125,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 配料抽检合格率的明细分页
+     *
      * @param dto
      * @return
      */
@@ -121,6 +133,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 配料抽检合格率的柱状图
+     *
      * @param dto
      * @return
      */
@@ -128,6 +141,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 基片化验抽检合格率趋势明细分页
+     *
      * @param dto
      * @return
      */
@@ -135,13 +149,15 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 来料检合格率明细分页
+     *
      * @param dto
      * @return
      */
     Page<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetailVO(QtIQCAcceptabilityDTO dto);
 
     /**
-     *来料检合格率柱状图表
+     * 来料检合格率柱状图表
+     *
      * @param dto
      * @return
      */
@@ -150,8 +166,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
 
     /**
      * 来料检合格率
+     *
      * @param dto dto
      * @return 柱状图
      */
     QtLineChartBiBarDTO getQtIQCAcceptabilityChart(QtSubOrDeepAcceptabilityDTO dto);
 }
+
+

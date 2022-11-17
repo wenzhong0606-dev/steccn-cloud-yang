@@ -89,7 +89,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyService qtCheckTaskCopyService;
 
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
-    
+
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
@@ -1266,6 +1266,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             });
         }
 
+        page.setTotal(detailVOList.size());
         page.setRecords(detailVOList);
         return page;
     }
@@ -1584,7 +1585,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             vo.setFinishedTime(LocalDateUtil.format(q.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
             vos.add(vo);
         });
-
+        page.setTotal(vos.size());
         return page.setRecords(vos);
     }
 
@@ -1735,7 +1736,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //返回封装好的数据
             vos.add(vo);
         });
-
+        page.setTotal(vos.size());
         return page.setRecords(vos);
     }
 
@@ -1777,6 +1778,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtIQCAcceptabilityDetailVOS.add(qtIQCAcceptabilityDetailVO);
         });
         page.setRecords(qtIQCAcceptabilityDetailVOS);
+        page.setTotal(qtIQCAcceptabilityDetailVOS.size());
         return page;
     }
 
