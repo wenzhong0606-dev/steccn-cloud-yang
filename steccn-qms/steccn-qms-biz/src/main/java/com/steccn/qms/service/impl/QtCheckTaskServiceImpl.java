@@ -1243,6 +1243,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     detail.setFinishedTime(ele.getFinishedTime());
                                     detail.setCode(ele.getCode());
                                     detail.setResult(ele.getResult());
+                                    detail.setTaskId(ele.getTaskId());
                                     rateList.add(detail.getDetailAcceptability());
                                     taskDetails.add(detail);
                                 });
@@ -1427,6 +1428,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             if(Objects.nonNull(ele.getCustomer())){
                 vo.setCustomerId(ele.getCustomer().getId());
             }
+            vo.setTaskId(ele.getId());
             resList.add(vo);
         });
         return resList;

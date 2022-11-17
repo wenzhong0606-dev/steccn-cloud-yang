@@ -96,6 +96,9 @@ public class QtCheckTaskReportVO implements Serializable {
     @ApiModelProperty("任务单号")
     private String code;
 
+    @ApiModelProperty("任务id")
+    private Long taskId;
+
     @ApiModelProperty("处理把localDateTime转成String")
     private String date;
 

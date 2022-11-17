@@ -84,4 +84,6 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
     private String granularity;
+
+//    private Integer
 }

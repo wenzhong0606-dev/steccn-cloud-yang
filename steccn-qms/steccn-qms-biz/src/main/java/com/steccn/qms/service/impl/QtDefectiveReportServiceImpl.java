@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -77,7 +78,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
             flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
         }
-        Assert.notEmpty(flatDataList,"数据为空，暂无报表");
+        Assert.isTrue(CollUtil.isNotEmpty(flatDataList),"数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
@@ -168,7 +169,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .defectId(dto.getDefectId())
                 .build();
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.conditionTaskList(condition);
-        Assert.notEmpty(qtCheckTasks, "缺陷类别分布暂无数据");
+        SteccnAssertUtil.notEmpty(qtCheckTasks,"缺陷类别分布暂无数据");
         //获取检验项类别
         Map<Long, QtCheckTask> taskMap = Maps.newHashMap();
         qtCheckTasks.forEach(ele -> taskMap.put(ele.getId(), ele));

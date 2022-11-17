@@ -54,6 +54,18 @@ public class SteccnExceptionControllerAdvice {
     }
 
     /**
+     * 图表异常捕获
+     *
+     * @param chartException 图表异常
+     * @return
+     */
+    @ExceptionHandler(value = SteccnChartException.class)
+    public R handleRuntimeException(SteccnChartException chartException) {
+        log.error("错误：", chartException);
+        return R.success();
+    }
+
+    /**
      * 异常捕获
      *
      * @param runtimeException

@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,6 +12,10 @@ import java.time.LocalDateTime;
  */
 @Data
 public class QtSubOrDeepFPYTaskDetailsVO implements Serializable {
+
+   @ApiModelProperty("任务id")
+   private Long taskId;
+
     /**
      * 检验任务单号
      */
