@@ -489,10 +489,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(eq)) {
             BeanUtils.copyProperties(dto, report);
         }
-        report.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
-        report.setTimeScopeEnd(LocalDateUtil.getEndTimeOfDayStr(dto.getTimeScopeEnd()));
-        lambdaUpdate().set(QtReport::getStandardValue,dto.getStandardValue())
-                .set(QtReport::getUpLimit,dto.getUpLimit());
          updateById(report);
          return Boolean.TRUE;
     }

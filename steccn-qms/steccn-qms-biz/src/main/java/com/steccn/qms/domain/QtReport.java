@@ -82,19 +82,19 @@ public class QtReport implements Serializable {
     /**
      * 标准值
      */
-    @TableField(value = "standard_value")
+    @TableField(value = "standard_value",updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal standardValue;
 
     /**
      * 上限
      */
-    @TableField(value = "up_limit")
+    @TableField(value = "up_limit",updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal upLimit;
 
     /**
      * 下限
      */
-    @TableField(value = "dowm_limit")
+    @TableField(value = "dowm_limit",updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal downLimit;
 
     /**
