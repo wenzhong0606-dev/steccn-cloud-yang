@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtItemCategory;
@@ -305,6 +307,40 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             if (CollUtil.isNotEmpty(qtDefectiveItems)) {
                 qtDefectiveItems.forEach(ele -> {
                     resMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, TupleDTO<Integer, Integer>> firstSnapshotData(Set<String> defectiveCodeSet) {
+        Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(defectiveCodeSet)) {
+            //根据code获取最小的id
+            List<QtDefectiveItem> dataList = list(new QueryWrapper<QtDefectiveItem>().select("code, min(id) as id ,  any_value (category_id) as category_id").lambda()
+                    .in(QtDefectiveItem::getCode, defectiveCodeSet)
+                    .eq(QtDefectiveItem::getShowFlag, MpConstant.NO)
+                    .groupBy(QtDefectiveItem::getCode));
+            if (CollUtil.isNotEmpty(dataList)) {
+                Set<Integer> categoryIdSet = dataList.stream().map(QtDefectiveItem::getCategoryId).collect(Collectors.toSet());
+                Map<Integer, QtItemCategory> categoryAllMap = qtItemCategoryService.listById(categoryIdSet);
+                Set<String> categoryName = categoryAllMap.values().stream().map(QtItemCategory::getName).collect(Collectors.toSet());
+                List<QtItemCategory> categoryList = qtItemCategoryService.list(new QueryWrapper<QtItemCategory>().select("name , min(id) as id").lambda()
+                        .in(QtItemCategory::getName, categoryName)
+                        .eq(QtItemCategory::getShowFlag, MpConstant.NO)
+                        .groupBy(QtItemCategory::getName));
+
+                Map<String, Integer> categoryMap = Maps.newHashMap();
+                categoryList.forEach(ele -> {
+                    categoryMap.put(ele.getName(), ele.getId());
+                });
+
+                dataList.forEach(ele -> {
+                    QtItemCategory qtItemCategory = categoryAllMap.get(ele.getCategoryId());
+                    if (Objects.nonNull(qtItemCategory)) {
+                        resMap.put(ele.getCode(), new TupleDTO<>(ele.getId(), categoryMap.get(qtItemCategory.getName())));
+                    }
                 });
             }
         }

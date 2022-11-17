@@ -78,7 +78,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
             flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
         }
-        Assert.isTrue(CollUtil.isNotEmpty(flatDataList),"数据为空，暂无报表");
+        SteccnAssertUtil.notEmpty(flatDataList,"数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> categoryIdNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
@@ -194,8 +194,15 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //缺陷项类别与类别的创建时间
         Map<Integer, Integer> categoryMap = Maps.newHashMap();
         List<QtDefectiveItem> qtDefectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
+
+        //缺陷项 -> 第一个快照缺陷id ， 第一个快照的缺陷类别id
+        Set<String> defectCodeSet = qtDefectiveItemList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toSet());
+        Map<String,TupleDTO<Integer,Integer>> firstSnapshotData = qtDefectiveItemService.firstSnapshotData(defectCodeSet);
+        log.info("{}",firstSnapshotData);
+
         Assert.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
         qtDefectiveItemList.forEach(ele -> categoryMap.put(ele.getId(), ele.getCategoryId()));
+
 
         //遍历缺陷项集合
         List<QtCheckTaskDetailReportVO> flatDefectiveList = Lists.newArrayList();
