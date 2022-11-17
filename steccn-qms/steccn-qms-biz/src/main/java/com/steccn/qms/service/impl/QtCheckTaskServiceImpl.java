@@ -37,6 +37,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
@@ -1069,12 +1070,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         if (pmsProduceOrderVO.getData() != null) {
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            //如果根据生产订单号能查询到当前订单信息，则根据订单表中的id查询批次信息
+            R<PmsWorkOrderBatchVO> pmsWorkOrderBatchVO = remotePmsFeignApi.getByOrderId(pmsProduceOrderVO.getData().getId());
+            String batchCode = "";
+            if (pmsWorkOrderBatchVO.getData() != null){
+                batchCode = pmsWorkOrderBatchVO.getData().getCode();
+            }
+            qtProduceOrderLineVO.setBatchNo(batchCode);
             sysOfficeParentDTO.setId(pmsProduceOrderVO.getData().getProductionLineId());
             sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-            //根据产线查询父级车间
-            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(Integer.valueOf(PmManagerConstant.STATE_9))).get();
-            qtProduceOrderLineVO.setWorkshopId(Integer.valueOf(PmManagerConstant.STATE_8));
-            qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
+            Integer productionLineId = pmsProduceOrderVO.getData().getProductionLineId();
+
+            BeanUtils.copyProperties(pmsProduceOrderVO.getData(),qtProduceOrderLineVO);
+            if (productionLineId != null){
+                //根据产线查询父级车间
+                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(productionLineId)).get();
+                qtProduceOrderLineVO.setWorkshopId(sysOfficeVO.getParentId());
+                qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
+            }
         }
 
         return qtProduceOrderLineVO;

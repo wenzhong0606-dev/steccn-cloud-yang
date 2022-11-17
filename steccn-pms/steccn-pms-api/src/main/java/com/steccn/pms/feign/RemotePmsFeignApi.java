@@ -4,13 +4,11 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -66,4 +64,14 @@ public interface RemotePmsFeignApi {
     @PostMapping("/feign/pms/produce/order/material/ids")
     @ApiOperation("根据物料查询当前正在执行订单信息")
     R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds);
+
+    /**
+     * 根据订单表中的订单id查询批次表中当前批次的批次信息
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/feign/pms/produce/order/batch/{id}")
+    @ApiOperation("根据物料查询当前正在执行订单信息")
+    R<PmsWorkOrderBatchVO> getByOrderId(@PathVariable("id") Long id);
 }

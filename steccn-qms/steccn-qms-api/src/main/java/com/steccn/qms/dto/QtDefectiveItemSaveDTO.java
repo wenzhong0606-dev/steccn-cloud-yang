@@ -34,6 +34,10 @@ public class QtDefectiveItemSaveDTO implements Serializable {
     private String note;
 
     @ApiModelProperty("缺陷项类别id")
-    @NotNull(groups = InsertGroup.class, message = "缺陷项类别不能为空")
+    @NotNull(groups = InsertGroup.class, message = "缺陷项类别id不能为空")
     private Integer categoryId;
+
+    @ApiModelProperty("缺陷项类别")
+    @NotNull(groups = InsertGroup.class, message = "缺陷项类别不能为空")
+    private String defectCategory;
 }
