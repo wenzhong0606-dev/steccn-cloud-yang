@@ -96,7 +96,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap = mapMapTupleDTO.getField1();
         Map<Integer, String> idNameMap = mapMapTupleDTO.getField2();
         //存放数据的map
-        List<StackGraphDTO<String, Integer>> StackGraphList = Lists.newArrayList();
+        List<StackGraphDTO<String, Integer>> stackGraphList = Lists.newArrayList();
         //根据x轴分组
         for (Map.Entry<Integer, String> categoryEntry : xMap.entrySet()) {
             StackGraphDTO stackGraphDTO = new StackGraphDTO();
@@ -110,9 +110,15 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 int sum = xDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                 stackGraphDTO.getData().add(new TupleDTO<>(contrastEntry.getValue(), sum));
             }
-            StackGraphList.add(stackGraphDTO);
+            stackGraphList.add(stackGraphDTO);
         }
-        return StackGraphUtil.convertData(StackGraphList);
+        //倒序排序
+        stackGraphList.sort((o1, o2) -> {
+            int sum1 = o1.getData().stream().filter(v -> Objects.nonNull(v.getField2())).mapToInt(v -> v.getField2()).sum();
+            int sum2 = o2.getData().stream().filter(v -> Objects.nonNull(v.getField2())).mapToInt(v -> v.getField2()).sum();
+            return Integer.valueOf(sum2).compareTo(sum1);
+        });
+        return StackGraphUtil.convertData(stackGraphList);
     }
 
     /**
