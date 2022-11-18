@@ -43,6 +43,11 @@ public class QtReportExcelDTO extends BasePageDTO implements Serializable {
     private Integer checkItemId;
 
     /**
+     * 检验项名称
+     */
+    private String checkItemName;
+
+    /**
      * 检验项分组id
      */
     private Integer checkGroupId;
@@ -72,6 +77,21 @@ public class QtReportExcelDTO extends BasePageDTO implements Serializable {
      * 客户
      */
     private String customer;
+
+    /**
+     * 标准值
+     */
+    private BigDecimal standardValue;
+
+    /**
+     * 上限
+     */
+    private BigDecimal upLimit;
+
+    /**
+     * 下限
+     */
+    private BigDecimal downLimit;
 
     /**
      * 开始时间
