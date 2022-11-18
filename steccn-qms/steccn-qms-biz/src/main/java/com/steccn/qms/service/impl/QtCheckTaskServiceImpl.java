@@ -2158,6 +2158,33 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     /**
+     * 下载基片化验抽检详情
+     * @param dto
+     * @param response
+     */
+    @Override
+    public void downloadQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        //筛选车间
+        if(dto.getProductLineId()!=null){
+            flatDataList = flatDataList.stream().filter(s->s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
+        }
+        //筛选filters
+        if(dto.getFilters()!=null){
+            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+        }
+        //计算每条任务的合格率
+        flatDataList.forEach(tmp->{
+            BigDecimal result = BigDecimalUtil.divide(new BigDecimal(tmp.getGoodNum()),new BigDecimal(tmp.getCheckNum()));
+            tmp.setPassRate(new DecimalFormat("0.00%").format(result));
+        });
+//        DownloadUtil.downloadTemplate();
+    }
+
+    /**
      * 合格率分组
      *
      * @param compare      对比
