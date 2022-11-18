@@ -150,9 +150,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(defectCategorySet)).get();
         } else if(QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(compare)){
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            Set<Integer> classIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getClassId).collect(Collectors.toSet());
             idNameMap = Maps.newHashMap();
-            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
-            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+            for (Integer classId : classIdSet) {
+                QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
+                idNameMap.put(code.getCode(), code.getName());
+            }
         }else{
             //不对比
             targetMap = Maps.newHashMap();
@@ -170,7 +173,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN))
                 .endTime(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX))
-                .workOrderId(dto.getWorkOrderId())
+                .workOrderId(dto.getWorkingOrder())
                 .productWorkShopId(dto.getProductWorkShopId())
                 .defectType(dto.getDefectType())
                 .defectId(dto.getDefectId())
@@ -213,13 +216,14 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         //遍历缺陷项集合
         List<QtCheckTaskDetailReportVO> flatDefectiveList = Lists.newArrayList();
-        detailList.forEach(ele -> {
+        for (QtCheckTaskDetail ele : detailList) {
             //获取检验任务，一定存在，因为明细是根据任务查询出来的
             QtCheckTask qtCheckTask = taskMap.get(ele.getTaskId());
             if (CollUtil.isNotEmpty(ele.getDefectNum())) {
                 String numString = JSON.toJSONString(ele.getDefectNum());
                 List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString, QtOnlineCheckDefectDTO.class);
-                defectNumList.stream().filter(v -> Objects.nonNull(v.getDefectId())).forEach(de -> {
+                List<QtOnlineCheckDefectDTO> collect = defectNumList.stream().filter(v -> Objects.nonNull(v.getDefectId())).collect(Collectors.toList());
+                for (QtOnlineCheckDefectDTO de : collect) {
                     if (Objects.nonNull(de.getDefectId())) {
                         QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
                         vo.setDefectId(de.getDefectId());
@@ -237,14 +241,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         flatDefectiveList.add(vo);
                     }
-                });
+                }
             }
-        });
-
+        }
         if(Objects.nonNull(dto.getDefectCategory())){
 
         }
-
+        //白班夜班
+        if(Objects.nonNull(dto.getWorkingOrder())){
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
+        }
         return flatDefectiveList;
     }
 

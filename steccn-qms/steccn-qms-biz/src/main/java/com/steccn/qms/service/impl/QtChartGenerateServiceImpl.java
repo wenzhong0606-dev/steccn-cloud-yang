@@ -31,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.rmi.MarshalledObject;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -90,7 +89,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //班次时间范围
                 .between(QtCheckTask::getClassTime, startTime, endTime)
                 //班次
-                .eq(dto.getWorkOrderId() != null, QtCheckTask::getClassesId, dto.getWorkOrderId())
+                .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, dto.getWorkingOrder())
                 //只要巡检
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                 //只要基片车间
@@ -381,7 +380,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //完成时间范围
                                     .between(QtCheckTask::getFinishedTime, startTimeDate, endTimeDate)
                                     //班次
-                                    .eq(dto.getWorkOrderId() != null, QtCheckTask::getClassesId, entry2.getKey())
+                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
                                     //只要在线检
                                     .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                                     //该物料
@@ -851,9 +850,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             rList = rList.stream().filter(s -> s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
         }
         //班次
-        if(dto.getWorkOrderId()!=null){
+        if(dto.getWorkingOrder()!=null){
             //早班
-            if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+            if(dto.getWorkingOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                 rList = rList.stream().filter(s -> s.getClassesName().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).collect(Collectors.toList());
             }else {
                 //晚班

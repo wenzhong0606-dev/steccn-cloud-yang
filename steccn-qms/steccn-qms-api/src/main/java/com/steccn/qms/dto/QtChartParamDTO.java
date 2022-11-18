@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 图表统一入参
@@ -42,7 +43,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private Integer productWorkShopName;
 
     @ApiModelProperty("班次id 0为早班 1为晚班 3为全部")
-    private Integer workOrderId;
+    private Integer workingOrder;
 
     @ApiModelProperty("类型 0为柱状图 1为饼状图")
     private Integer type;
@@ -64,4 +65,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
     private String granularity;
+
+    @ApiModelProperty(value = "图表的过滤条件-用于筛选")
+    private List<String> filters;
 }
