@@ -760,7 +760,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())) {
             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
             //删除样本概况中暂存的值
-             qtCheckTaskCopyMapper.delete(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId,dto.getId()));
+             qtCheckTaskDestoryInfoService.remove(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId,dto.getId()));
 
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
                 QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
@@ -775,8 +775,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskDestoryInfoDTO.setCreateBy(SecurityUtils.getUser().getUserId());
                     qtCheckTaskDestoryInfoDTO.setDestoryStartTime(destoryInfoVO.getDestoryStartTime());
                     qtCheckTaskDestoryInfoDTO.setDestoryEndTime(destoryInfoVO.getDestoryEndTime());
-                    qtCheckTaskDestoryInfoDTO.setCreateName(SecurityUtils.getUser().getName());
                     if (qtCheckTaskCopyService.getById(dto.getId()) != null) {
+                        qtCheckTaskDestoryInfoDTO.setCreateName(SecurityUtils.getUser().getName());
                         qtCheckTaskDestoryInfoDTO.setSampleNum(qtCheckTaskCopyService.getById(dto.getId()).getSampleNum());
                     }
 
