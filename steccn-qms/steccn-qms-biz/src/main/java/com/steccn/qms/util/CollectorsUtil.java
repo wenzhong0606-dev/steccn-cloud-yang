@@ -1,7 +1,7 @@
 package com.steccn.qms.util;
 
 /**
- * BigDecimal工具类
+ * 加总BigDecimal工具类
  *
  * @author AndrewLuo
  * @date 2022/11/11

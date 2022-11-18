@@ -314,10 +314,10 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                     anchor.setDx2(-StyleUtil.getCoordinate(5));
                     anchor.setDx1(StyleUtil.getCoordinate(5));
                     // 图片位置设置代码
-                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 4));
-                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 7));
-                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 16) + 1);
-                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 14) + 1);
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 6));
+                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 11) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 7) + 1);
                     anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
                     drawing.createPicture(anchor, index);
                 }
