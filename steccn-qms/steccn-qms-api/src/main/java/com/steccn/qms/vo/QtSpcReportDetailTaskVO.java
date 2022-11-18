@@ -25,11 +25,6 @@ public class QtSpcReportDetailTaskVO implements Serializable {
     private String code;
 
     /**
-     * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
-     */
-    private Integer taskType;
-
-    /**
      * 检验完成时间
      */
     private String finishedTime;

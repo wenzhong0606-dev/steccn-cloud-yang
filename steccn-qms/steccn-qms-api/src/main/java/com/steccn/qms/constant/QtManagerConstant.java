@@ -76,6 +76,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_PLCJ = "PLCJ.xlsx";
 
+    String QT_CHART_SPC_NAME = "SPC.xlsx";
+
     String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
 
     String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -85,6 +87,8 @@ public interface QtManagerConstant {
     String QT_CHART_JPCP_NAME = "基片成品趋势";
 
     String QT_CHART_JPSH_NAME = "基片损耗分布";
+
+    String QT_CHART_SPC_REPORT_NAME="报表卡片名称";
 
     String QT_CHART_DEEP_PROCESS_NAME = "深加工巡检合格率趋势";
 

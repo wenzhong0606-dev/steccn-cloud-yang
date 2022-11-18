@@ -41,6 +41,11 @@ public class QtSpcReportDetailVO implements Serializable {
     private String  checkItemName;
 
     /**
+     * 检验类型:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     */
+    private Integer checkType;
+
+    /**
      * 计量单位
      */
     private String measureUnit;

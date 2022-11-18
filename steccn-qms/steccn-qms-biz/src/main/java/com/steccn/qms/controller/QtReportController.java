@@ -1,12 +1,16 @@
 package com.steccn.qms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtDefectiveItemPageDTO;
 import com.steccn.qms.dto.QtReportDTO;
+import com.steccn.qms.dto.QtReportExcelDTO;
 import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
 import com.steccn.qms.service.QtReportService;
 import com.steccn.qms.vo.*;
@@ -94,15 +98,36 @@ public class QtReportController {
     /**
      * 下载Spc报表明细加图表
      */
-    @GetMapping("/download")
-    @ApiModelProperty(value = "下载模板")
-    public void download(HttpServletResponse response) throws IOException {
-        qtReportService.download(response);
+    @PostMapping("/download/spc")
+    @ApiModelProperty(value = "下载spc报表")
+    @SysLog("下载spc报表数据")
+    public void downloadSPC(HttpServletResponse response, @RequestBody @Validated QtReportExcelDTO dto) throws IOException {
+        try{
+            qtReportService.downloadSPC(response,dto);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
     }
 
     @GetMapping("/select/spcchart/{id}")
     @ApiOperation(value = "根据卡片id查询spc图表")
     public R<QtReportChartVO> getQtReportChartVO(@PathVariable("id") Integer id){
         return R.success(qtReportService.getQtReportChartVO(id));
+    }
+
+    /**
+     * 对响应异常进行封装
+     * @param response
+     * @throws IOException
+     */
+    protected void exceptionResponse(HttpServletResponse response ,Exception e) throws IOException{
+        response.reset();
+        response.setContentType("application/json");
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        Map<String, String> map = MapUtils.newHashMap();
+        map.put("status", "failure");
+        map.put("message", "下载文件失败" + e.getMessage());
+        response.getWriter().println(JSON.toJSONString(map));
     }
 }
