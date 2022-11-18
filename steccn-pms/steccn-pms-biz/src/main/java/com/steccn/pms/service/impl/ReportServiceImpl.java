@@ -881,7 +881,7 @@ public class ReportServiceImpl implements ReportService {
             listVO.setDataType("拉引量");
             List<BigDecimal> quantityList = new ArrayList<>();
             for (SysOfficeVO sysOfficeVO : productLineList) {
-                quantityList.add(BigDecimal.valueOf(100));
+                quantityList.add(BigDecimal.ZERO);
             }
             listVO.setQuantityList(quantityList);
 
@@ -959,7 +959,7 @@ public class ReportServiceImpl implements ReportService {
             listVO.setDataName(sysOfficeVO.getOfficeName());
             List<BigDecimal> quantityList = new ArrayList<>();
             for (SysDictVO sysDictVO : sysDictVOList) {
-                quantityList.add(BigDecimal.valueOf(10000));
+                quantityList.add(BigDecimal.ZERO);
             }
             listVO.setQuantityList(quantityList);
             outputCountListVOList.add(listVO);
