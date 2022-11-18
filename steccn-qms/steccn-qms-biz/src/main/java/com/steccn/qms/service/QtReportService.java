@@ -62,7 +62,7 @@ public interface QtReportService extends IService<QtReport> {
      * @param qtReportDTO
      * @return
      */
-    Boolean edit(QtReportDTO qtReportDTO);
+    QtReportVO edit(QtReportDTO qtReportDTO);
 
     /**
      * 明细表分页
