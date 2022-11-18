@@ -17,73 +17,51 @@ import java.time.LocalDate;
 @Data
 public class QtChartParamDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 开始时间
-     */
+
+    @ApiModelProperty("开始时间")
     @NotNull(message = "时间范围不能为空")
     private LocalDate dateStart;
 
-    /**
-     * 结束时间
-     */
     @NotNull(message = "时间范围不能为空")
+    @ApiModelProperty("结束时间")
     private LocalDate dateEnd;
 
-    /**
-     * 对比 0为班次 1为产线 2为车间
-     */
+    @ApiModelProperty("对比 0为班次 1为产线 2为车间")
     private Integer compare;
 
-    /**
-     * 产线id
-     */
+    @ApiModelProperty("产线id")
     private Integer productLineId;
 
-    /**
-     * 产线名字
-     */
+    @ApiModelProperty("产线名字")
     private String productLineName;
 
-    /**
-     * 车间id
-     */
+    @ApiModelProperty("车间id")
     private Integer productWorkShopId;
 
-    /**
-     * 车间名字
-     */
+    @ApiModelProperty("车间名字")
     private Integer productWorkShopName;
 
-    /**
-     * 班次id 0为早班 1为晚班 3为全部
-     */
+    @ApiModelProperty("班次id 0为早班 1为晚班 3为全部")
     private Integer workOrderId;
 
-    /**
-     * 类型 0为柱状图 1为饼状图
-     */
+    @ApiModelProperty("类型 0为柱状图 1为饼状图")
     private Integer type;
 
+    @ApiModelProperty("生产车间名称")
     private String productWorkName;
 
     @ApiModelProperty("检验项id")
     private Integer taskId;
 
-    /**
-     * 缺陷项id
-     */
+    @ApiModelProperty("缺陷项id")
     private Integer defectId;
 
     @ApiModelProperty("缺陷项类别id")
     private Integer defectCategory;
 
-    /**
-     * 缺陷项类型
-     */
+    @ApiModelProperty("缺陷项类型")
     private String defectType;
 
     @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
     private String granularity;
-
-//    private Integer
 }

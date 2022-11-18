@@ -71,8 +71,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto) {
-        //扁平化数据
+        //获取所有扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
+        //如果车间和产线为空，表示查询深加工车间所有数据
         if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
             //默认给深加工产线
             Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
@@ -233,6 +234,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 });
             }
         });
+
+        if(Objects.nonNull(dto.getDefectCategory())){
+
+        }
+
         return flatDefectiveList;
     }
 

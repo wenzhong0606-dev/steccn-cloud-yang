@@ -328,7 +328,6 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
                 Set<String> categoryName = categoryAllMap.values().stream().map(QtItemCategory::getName).collect(Collectors.toSet());
                 List<QtItemCategory> categoryList = qtItemCategoryService.list(new QueryWrapper<QtItemCategory>().select("name , min(id) as id").lambda()
                         .in(QtItemCategory::getName, categoryName)
-                        .eq(QtItemCategory::getShowFlag, MpConstant.NO)
                         .groupBy(QtItemCategory::getName));
 
                 Map<String, Integer> categoryMap = Maps.newHashMap();
