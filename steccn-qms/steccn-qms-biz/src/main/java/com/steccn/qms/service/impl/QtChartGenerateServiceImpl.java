@@ -252,8 +252,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             });
                             //获取所有单片掰边重量
                             List<QtCheckTaskDetail> baiItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(QtCheckTaskDetail::getItemId, baiItemIds));
+                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                    .in(CollUtil.isNotEmpty(baiItemIds),QtCheckTaskDetail::getItemId, baiItemIds));
                             if (CollUtil.isNotEmpty(baiItemDetails)) {
                                 for (QtCheckTaskDetail tmp : baiItemDetails) {
                                     if (tmp.getCheckResult() != null) {
@@ -265,8 +265,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //获取所有单片重量
                             List<QtCheckTaskDetail> danItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(QtCheckTaskDetail::getItemId, danItemIds));
+                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                    .in(CollUtil.isNotEmpty(danItemIds),QtCheckTaskDetail::getItemId, danItemIds));
                             if (CollUtil.isNotEmpty(danItemDetails)) {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
                                     if (tmp.getCheckResult() != null) {
@@ -278,8 +278,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //获取所有拉引时速
                             List<QtCheckTaskDetail> laItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(QtCheckTaskDetail::getItemId, laItemIds));
+                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                    .in(CollUtil.isNotEmpty(laItemIds),QtCheckTaskDetail::getItemId, laItemIds));
                             if (CollUtil.isNotEmpty(laItemDetails)) {
                                 for (QtCheckTaskDetail tmp : laItemDetails) {
                                     if (tmp.getCheckResult() != null) {
