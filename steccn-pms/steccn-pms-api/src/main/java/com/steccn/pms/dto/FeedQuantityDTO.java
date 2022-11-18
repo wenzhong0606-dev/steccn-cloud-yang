@@ -16,8 +16,7 @@ import java.math.BigDecimal;
  * @date 2022/11/11
  */
 @ApiModel("投料信息DTO")
-@Getter
-@Setter
+@Data
 public class FeedQuantityDTO {
 
     @ApiModelProperty("订单id")
