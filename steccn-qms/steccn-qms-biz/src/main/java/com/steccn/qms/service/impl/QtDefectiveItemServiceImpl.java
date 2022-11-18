@@ -196,7 +196,11 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())){
             throw new BusinessException("该缺陷项已停用，不允许删除");
         }
-        return removeById(id);
+        //删除缺陷项,改成showFlag
+        QtDefectiveItem item = new QtDefectiveItem();
+        item.setShowFlag(MpConstant.NO);
+        item.setId(id);
+        return updateById(item);
     }
 
     @Override

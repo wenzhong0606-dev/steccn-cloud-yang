@@ -374,8 +374,10 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())){
             throw new BusinessException("该检验项已停用，不允许删除");
         }
-
-        return removeById(id);
+        QtCheckItem item = new QtCheckItem();
+        item.setShowFlag(MpConstant.NO);
+        item.setId(id);
+        return updateById(item);
     }
 
     @Override
