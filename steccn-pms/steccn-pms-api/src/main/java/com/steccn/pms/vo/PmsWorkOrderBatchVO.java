@@ -44,4 +44,5 @@ public class PmsWorkOrderBatchVO {
 
     @ApiModelProperty("最小包装数量")
     private Integer minPackQuantity;
+
 }

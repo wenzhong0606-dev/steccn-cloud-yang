@@ -46,4 +46,8 @@ public class QtDefectiveItemVO implements Serializable {
     @ApiModelProperty("更新人时间")
     private LocalDateTime updateTime;
 
+    @ApiModelProperty("缺陷编码")
+    private String defectCode;
+
+
 }
