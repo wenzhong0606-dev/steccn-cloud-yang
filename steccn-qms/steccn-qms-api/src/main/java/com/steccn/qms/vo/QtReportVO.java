@@ -4,6 +4,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,6 +13,10 @@ import java.util.List;
  */
 @Data
 public class QtReportVO implements Serializable {
+    /**
+     * 报表卡片id
+     */
+    private Integer id;
     /**
      * 报表卡片类型
      */
@@ -46,6 +51,30 @@ public class QtReportVO implements Serializable {
      */
     private Integer checkType;
 
+    /**
+     * 检验分组id
+     */
+    private Integer checkGroupId;
+
+    /**
+     * 检验项：为选中检验分组当前快照下所有数值、百分比、自动计算类型的检验项
+     */
+    private Integer checkItemId;
+
+    /**
+     * 标准值
+     */
+    private BigDecimal standardValue;
+
+    /**
+     * 上限
+     */
+    private BigDecimal upLimit;
+
+    /**
+     * 下限
+     */
+    private BigDecimal downLimit;
     /**
      * 生产车间
      */

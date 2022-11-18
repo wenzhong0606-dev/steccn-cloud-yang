@@ -75,7 +75,7 @@ public class QtReportController {
     @PutMapping("/edit")
     @ApiOperation(value = "编辑SPC报表卡片")
     @SysLog("编辑SPC报表任务")
-    public R<Boolean> edit(@Validated(UpdateGroup.class) @RequestBody QtReportDTO qtReportDTO) {
+    public R<QtReportVO> edit(@Validated(UpdateGroup.class) @RequestBody QtReportDTO qtReportDTO) {
         return R.success(qtReportService.edit(qtReportDTO));
     }
 

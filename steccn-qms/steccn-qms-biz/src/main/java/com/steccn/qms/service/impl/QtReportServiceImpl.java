@@ -426,7 +426,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 //        qtReportChartVO.setSpcFilter(spcfilter);
         //根据检验项id去获取计量单位
 
-
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
                         .eq(QtCheckTask::getMaterialId, q.getMaterialId())
@@ -536,14 +535,20 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean edit(QtReportDTO dto) {
-        LambdaQueryWrapper<QtReport> eq = new LambdaQueryWrapper<QtReport>().eq(QtReport::getId, dto.getId());
+    public QtReportVO edit(QtReportDTO dto) {
+        QtReport qureyReport = getById(dto.getId());
         QtReport report = new QtReport();
-        if (Objects.nonNull(eq)) {
+        if (Objects.nonNull(qureyReport)) {
             BeanUtils.copyProperties(dto, report);
+            updateById(report);
         }
-         updateById(report);
-         return Boolean.TRUE;
+       qureyReport = getById(dto.getId());
+        //编辑完后回显数据
+        QtReportVO qtReportVO = new QtReportVO();
+        BeanUtils.copyProperties(qureyReport,qtReportVO);
+        qtReportVO.setTimeScopeStart(qureyReport.getTimeScopeStart().toLocalDate());
+        qtReportVO.setTimeScopeEnd(qureyReport.getTimeScopeEnd().toLocalDate());
+        return qtReportVO;
     }
 
     /**
@@ -561,7 +566,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
         //设置查询条件
         LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
-
                 .lambda()
                 .eq(QtCheckTask::getMaterialId, report.getMaterialId())
                 .eq(QtCheckTask::getTaskType, report.getCheckType())

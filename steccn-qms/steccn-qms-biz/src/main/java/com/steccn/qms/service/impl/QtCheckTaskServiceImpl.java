@@ -138,6 +138,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
          * 判断是否需要创建检验方案快照【方案+分组+检验项+缺陷项】
          *      plan1 v1 -> T1 需要创建快照，plan1' v1
          *               -> T2 去查询最新版本是v1 不需要创建快照
+         *               -> 分组，缺陷项和检验项变化会造成方法版本更新
          *      plan2 v2 -> T3 去查询最新版本是v2 需要创建快照 plan2' v2
          *               -> T4 去查询最新版本是v2 不需要创建快照
          */
@@ -147,6 +148,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckPlan qtCheckPlan = qtCheckPlanService.getById(checkPlanId);
         if (Objects.isNull(qtCheckPlan)) {
             throw new BusinessException("检验方案不存在");
+        }
+        //fix bug 检验方案为快照，无法创建任务
+        if (MpConstant.NO.equals(qtCheckPlan.getShowFlag())) {
+            throw new BusinessException("检验方案是快照，不可以用于创建任务");
         }
         //获取最大版本号的快照数据
         QtCheckPlan maxSnapshot = qtCheckPlanService.getOne(new LambdaQueryWrapper<QtCheckPlan>()

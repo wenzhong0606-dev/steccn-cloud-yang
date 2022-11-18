@@ -93,6 +93,14 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                 }
             });
         }
+        //fix bug 如果是快照，不可以编辑
+        if(Objects.nonNull(dto.getId())){
+            QtCheckPlan editPlan = getById(dto.getId());
+            Assert.notNull(editPlan,"编辑操作时检验方案不存在");
+            if(MpConstant.NO.equals(editPlan.getShowFlag())){
+                throw new BusinessException("快照不可以被编辑");
+            }
+        }
         //2、插入计划表
         QtCheckPlan planModel = new QtCheckPlan();
         planModel.setStatus(1);
@@ -559,7 +567,6 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         //版本+1
         newPlan.setVersion(oldPlan.getVersion() + 1);
         save(newPlan);
-        //旧编码设置为用户不可见
         oldPlan.setShowFlag(MpConstant.YES);
         oldPlan.setVersion(oldPlan.getVersion() + 1);
         updateById(oldPlan);
