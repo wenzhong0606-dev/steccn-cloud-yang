@@ -22,9 +22,9 @@ public class PmsProduceOrderBatchController {
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
 
     @ApiOperation("查询当前批次信息")
-    @GetMapping("/{id}")
+    @GetMapping("/id")
     @SysLog("查询当前批次信息")
-    public R<PmsWorkOrderBatch> getByOrderId(@PathVariable("id") Long id){
+    public R<PmsWorkOrderBatch> getByOrderId(@RequestParam("id") Long id){
 
         return R.success(pmsWorkOrderBatchService.getByOrderId(id));
     }

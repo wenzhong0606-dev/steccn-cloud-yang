@@ -71,7 +71,7 @@ public interface RemotePmsFeignApi {
      * @param
      * @return
      */
-    @GetMapping("/feign/pms/produce/order/batch/{id}")
+    @GetMapping("/feign/pms/produce/order/batch/id")
     @ApiOperation("根据物料查询当前正在执行订单信息")
-    R<PmsWorkOrderBatchVO> getByOrderId(@PathVariable("id") Long id);
+    R<PmsWorkOrderBatchVO> getByOrderId(@RequestParam("id") Long id);
 }

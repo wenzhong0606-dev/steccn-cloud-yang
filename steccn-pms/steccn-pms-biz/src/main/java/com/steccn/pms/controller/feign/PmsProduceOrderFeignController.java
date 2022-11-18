@@ -1,8 +1,11 @@
 package com.steccn.pms.controller.feign;
 
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
+import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +34,8 @@ public class PmsProduceOrderFeignController {
 
     private final PmsProduceOrderService pmsProduceOrderService;
 
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+
     @PostMapping("/line/ids")
     @ApiOperation("根据产线查询当前正在执行订单信息")
     public R<Map<Integer, PmsProduceOrderDTO>> listByLineIds(@RequestBody Set<Integer> ids) {
@@ -53,6 +58,14 @@ public class PmsProduceOrderFeignController {
     @ApiOperation("根据物料查询当前正在执行订单信息")
     public R<Map<Long, PmsProduceOrderVO>> listByMaterialIds(@RequestBody Set<Long> materialIds) {
         return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
+    }
+
+    @ApiOperation("查询当前批次信息")
+    @GetMapping("/batch/id")
+    @SysLog("查询当前批次信息")
+    public R<PmsWorkOrderBatch> getByOrderId(@RequestParam("id") Long id){
+
+        return R.success(pmsWorkOrderBatchService.getByOrderId(id));
     }
 
 }
