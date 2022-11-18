@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
@@ -148,18 +149,12 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
             //需考虑安全库存动态配置 todo 获取安全库存 没有则不显示
             dto.setSize(dto.getSize() - PmManagerConstant.OrderStateEnum.ONE.getCode());
         }
-        //4.自定义查询条件获取分页数据
+        //4.自定义查询条件获取数据
         LambdaQueryWrapper<PmsMrpInfo> eq = new LambdaQueryWrapper<PmsMrpInfo>()
                 .eq(Objects.nonNull(dto.getId()), PmsMrpInfo::getMaterialId, dto.getId())
                 .orderByAsc(PmsMrpInfo::getMrpDate);
-        //5.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //6.查询分页数据
-        IPage resPage = page(page, eq);
-        //7.拷贝page信息
-        BeanUtil.copyProperties(resPage, page);
-        //8.拷贝返回的信息
-        List<PmsMrpInfoVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsMrpInfoVO.class);
+        List<PmsMrpInfo> list = list(eq);
+        List<PmsMrpInfoVO> res = BeanUtil.copyToList(list, PmsMrpInfoVO.class);
         //9.处理数据
         Set<Long> typeIds = Sets.newHashSet();
         typeIds.add(infoVO.getMrpTypeId());
@@ -195,9 +190,12 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         }
         infoVO.setMrpTypeName(dictMap.get(infoVO.getMrpTypeId()));
         infoVOList.add(PmManagerConstant.OrderStateEnum.ZERO.getCode(), infoVO);
-        page.setSize(infoVOList.size());
-        page.setTotal(page.getTotal() + PmManagerConstant.OrderStateEnum.ONE.getCode());
-        return page.setRecords(infoVOList);
+        //如果当前页是第一页，则当前分页加1（不考虑安全库存的情况）
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getCurrent())) {
+            //需考虑安全库存动态配置 todo 获取安全库存 没有则不显示
+            dto.setSize(dto.getSize() + PmManagerConstant.OrderStateEnum.ONE.getCode());
+        }
+        return LogicalPageUtil.page(infoVOList, dto.getCurrent(), dto.getSize());
     }
 
 
