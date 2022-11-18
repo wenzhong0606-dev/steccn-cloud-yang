@@ -2110,15 +2110,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         LocalDateTime start = LocalDateTime.of(dto.getDate(), LocalTime.of(8, 0, 0));
         LocalDateTime end = LocalDateTime.of(dto.getDate(), LocalTime.of(20, 0, 0));
 
+
         Map<String, Object> map = MapUtils.newHashMap();
-        if (StringUtils.isBlank(dto.getWorkshopName())) {
-            dto.setWorkshopName("");
+        if (Objects.isNull(dto.getWorkshopId())) {
+            map.put("materialWorkshopName","");
+        } else {
+            String workshopName = remoteOfficeFeign.getNameById(dto.getWorkshopId()).getData();
+            map.put("materialWorkshopName",workshopName);
         }
-        if (StringUtils.isBlank(dto.getMaterialWorkshop())) {
-            dto.setMaterialWorkshop("");
+        if (Objects.isNull(dto.getCompare())) {
+            map.put("materialWorkshop","");
+        } else {
+            map.put("materialWorkshop",QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getName());
         }
-        map.put("materialWorkshop",dto.getMaterialWorkshop());
-        map.put("materialWorkshopName",dto.getWorkshopName());
         if (Objects.isNull(dto.getDate())) {
             map.put("date","");
         } else {
