@@ -311,6 +311,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //拆分数据
                 //获取物料的投料信息
                 List<FeedQuantityDTO> feedList = Lists.newArrayList();
+                bomMap.forEach((bom,stations) ->{
+                    FeedQuantityDTO feedQuantityDTO = new FeedQuantityDTO();
+                    feedQuantityDTO.setProduceOrderId(bom.getWorkProduceId());
+                    feedQuantityDTO.setMaterialId(bom.getModuleId());
+                    feedQuantityDTO.setProcessId(bom.getProcessId());
+                    feedList.add(feedQuantityDTO);
+                });
                 Map<FeedQuantityDTO, BigDecimal> feedQuantityMap = pmsCompleteDeliveryInfoService.listQuantity(feedList);
                 BigDecimal quantity = BigDecimal.ZERO;
                 Set<Long> dictList = Sets.newHashSet();
