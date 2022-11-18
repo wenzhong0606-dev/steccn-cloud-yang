@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * @desc 凯盛节能断言工具类
  * @author yequan
  */
-public class SteccnAssertUtil {
+public class SteccnTableAssertUtil {
 
 
     /**
