@@ -5,7 +5,11 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 /**
  * 缺陷项表
@@ -41,9 +45,10 @@ public class QtDefectiveItem implements Serializable {
     private Integer categoryId;
 
     /**
-     * 缺陷项类别名称
+     * 缺陷项类别编码
      */
-    private String defectCategory;
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "缺陷项类别编码不能超过20个字符")
+    private String defectCode;
 
     /**
      * 状态：0停用  1启用
