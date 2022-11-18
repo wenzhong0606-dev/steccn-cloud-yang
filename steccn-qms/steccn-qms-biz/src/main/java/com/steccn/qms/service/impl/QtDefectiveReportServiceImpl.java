@@ -739,6 +739,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
         } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
             pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+        }else if(CollUtil.isNotEmpty(dto.getGuaFilters())){
+            pageList = pageList.stream().filter(v -> dto.getGuaFilters().contains(v.getName())).collect(Collectors.toList());
+        }else {
+            //无任何数据，直接返回空集合，前端显示空图
+            pageList = Lists.newArrayList();
         }
         return pageList;
     }

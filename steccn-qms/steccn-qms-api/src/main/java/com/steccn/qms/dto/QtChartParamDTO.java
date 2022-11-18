@@ -68,4 +68,7 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty(value = "图表的过滤条件-用于筛选")
     private List<String> filters;
+
+    @ApiModelProperty("折线图存在日期粒度，不对比模式下的图例")
+    private List<String> guaFilters;
 }
