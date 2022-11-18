@@ -5,6 +5,7 @@ import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -38,6 +39,7 @@ public class MaterialRequisitionDTO {
     private Long warehouseId;
 
     @ApiModelProperty("备注")
+    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")
     private String note;
 
     @ApiModelProperty("领料单详情")
