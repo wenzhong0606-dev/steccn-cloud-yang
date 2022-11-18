@@ -1586,6 +1586,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //5.拷贝page信息
         BeanUtils.copyProperties(resPage, page);
+        if (CollectionUtils.isEmpty(resPage.getRecords())) {
+            return page;
+        }
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
         qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());

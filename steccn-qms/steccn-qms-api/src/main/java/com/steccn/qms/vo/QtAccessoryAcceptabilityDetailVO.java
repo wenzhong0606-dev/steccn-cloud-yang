@@ -12,6 +12,8 @@ import java.util.List;
  */
 @Data
 public class QtAccessoryAcceptabilityDetailVO implements Serializable {
+
+    private Long id;
     /**
      * 检验任务单号
      */
