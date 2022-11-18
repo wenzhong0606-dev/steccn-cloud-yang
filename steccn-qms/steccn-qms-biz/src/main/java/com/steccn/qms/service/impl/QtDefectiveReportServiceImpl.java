@@ -36,13 +36,10 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -322,14 +319,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setName(qtItemCategory.getName());
             countVo.setCreateTime(qtItemCategory.getCreateTime());
         });
-        //对比模式下考虑到图例的过滤
-        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
-        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
-        } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
-        }
+        pageList = legendFilter(dto, pageList);
         //排序+逻辑分页
         pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
@@ -338,6 +328,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
         return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
     }
+
 
     /**
      * 缺陷类别或者缺陷项的项
@@ -532,19 +523,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setName(item.getName());
             countVo.setCreateTime(item.getCreateTime());
         });
+        //图例过滤
+        pageList = legendFilter(dto, pageList);
 
         //排序+逻辑分页
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
-        resPage.setTotal(pageList.size());
-        resPage.setRecords(records);
-        return resPage;
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
     }
 
     @Override
@@ -713,10 +701,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             stackGraphDTOList.add(stackGraphDTO);
         }
         //自定义转换工具
-        QtLineChartBarDTO qtLineChartBarDTO = StackGraphUtil.convertData(stackGraphDTOList);
-        return qtLineChartBarDTO;
+        return StackGraphUtil.convertData(stackGraphDTOList);
     }
-
 
     /**
      * 深加工缺陷分布明细
@@ -756,17 +742,33 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setCreateTime(item.getCreateTime());
         });
 
+        //图例过滤
+        pageList = legendFilter(dto, pageList);
+
         //排序+逻辑分页
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
-        resPage.setTotal(pageList.size());
-        resPage.setRecords(records);
-        return resPage;
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+    }
+
+    /**
+     * 图例过滤
+     * @param dto
+     * @param pageList
+     * @return
+     */
+    private List<DeepDefectiveCategoryDetailVO> legendFilter(QtChartParamDTO dto, List<DeepDefectiveCategoryDetailVO> pageList) {
+        //对比模式下考虑到图例的过滤
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+        }
+        return pageList;
     }
 }
