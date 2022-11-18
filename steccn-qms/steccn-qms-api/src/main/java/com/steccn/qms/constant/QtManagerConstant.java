@@ -74,6 +74,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_JPCP = "JPCP.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_PLCJ = "PLCJ.xlsx";
+
     String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
 
     String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

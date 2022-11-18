@@ -9,6 +9,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -171,6 +172,14 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return 柱状图
      */
     QtLineChartBiBarDTO getQtIQCAcceptabilityChart(QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 下载配料抽检合格率
+     *
+     * @param dto
+     * @param response
+     */
+    void downloadAccessoryAcceptability(AccessoryAcceptabilityDownDTO dto, HttpServletResponse response);
 }
 
 
