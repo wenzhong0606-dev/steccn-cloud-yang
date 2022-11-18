@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.qms.domain.QtReport;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtDefectiveItemPageDTO;
-import com.steccn.qms.dto.QtExcelDTO;
-import com.steccn.qms.dto.QtReportDTO;
-import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -86,15 +83,6 @@ public interface QtReportService extends IService<QtReport> {
      */
     QtCheckItemUnitVO getQtCheckItemUnitVO(Integer groupId,Integer itemId);
 
-
-
-    /**
-     * 下载模板
-     * @param response
-     * @throws IOException
-     */
-    void download(HttpServletResponse response) throws IOException;
-
    /**
     * 根据分组id查询报表卡片列表
     * @param reportGroupId
@@ -115,4 +103,11 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     QtReportChartVO getQtReportChartVO(Integer id);
+
+    /**
+     * 下载spc报表
+     * @param response
+     * @param dto
+     */
+    void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto);
 }

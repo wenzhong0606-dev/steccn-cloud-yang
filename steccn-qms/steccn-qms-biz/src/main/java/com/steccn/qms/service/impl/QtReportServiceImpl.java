@@ -4,7 +4,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.PageUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.context.WriteContext;
+import com.alibaba.excel.metadata.data.ClientAnchorData;
+import com.alibaba.excel.util.FileTypeUtils;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.excel.util.StyleUtil;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,6 +29,7 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -28,22 +38,29 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
 import com.steccn.qms.util.CollectorsUtil;
+import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.ShardingTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -177,10 +194,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据id查询检验项
         QtCheckItem qtCheckItem = qtCheckItemService.getById(itemId);
         Set<Long> measureUnitSet = new HashSet<>();
-        measureUnitSet.add(qtCheckItem.getMeasureUnit());
-        Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureUnitSet)).get();
-        String measureName = dictData.get(qtCheckItem.getMeasureUnit());
-        qtCheckItemUnitVO.setMeasureUnitName(measureName);
+        if (Objects.nonNull(qtCheckItem)){
+            measureUnitSet.add(qtCheckItem.getMeasureUnit());
+            Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureUnitSet)).get();
+            if (Objects.nonNull(dictData)){
+                String measureName = dictData.get(qtCheckItem.getMeasureUnit());
+                qtCheckItemUnitVO.setMeasureUnitName(measureName);
+            }
+        }
 //        qtCheckItemUnitVO.setLowerValue(qtCheckItem.get);
         if (Objects.isNull(qtCheckPlanGroupItem)) {
             return qtCheckItemUnitVO;
@@ -190,33 +211,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
     }
 
-
     /**
-     * 下载模板
-     *
+     * 下载excel Response封装
      * @param response
+     * @return
      */
-    @Override
-    public void download(HttpServletResponse response) throws IOException {
-        downloadExcel(response, new ArrayList<>());
-    }
-
-    /**
-     * 下载SPC报表excel
-     *
-     * @param response
-     * @param list
-     * @throws IOException
-     */
-    private void downloadExcel(HttpServletResponse response, List<QtReportExcelDTO> list) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setCharacterEncoding("utf-8");
-        //防止中文乱码
-        String fileName = URLEncoder.encode("报表卡片名称", "UTF-8").replaceAll("\\+", "%20");
+    public void setDownloadHeader(HttpServletResponse response,String name) throws UnsupportedEncodingException {
+        response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode(name, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcel.write(response.getOutputStream(), QtReportExcelDTO.class).sheet("模板").doWrite(list);
     }
-
     /**
      * 根据分组id查询报表图表列表
      *
@@ -490,6 +496,253 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReportChartVO;
     }
 
+    @Override
+    public void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) {
+        Map<String, Object> map = MapUtils.newHashMap();
+        //筛选dto数据
+        String reportName = dto.getReportName();
+        if(StrUtil.isBlank(dto.getReportName())){
+            reportName= "spc控制图表";
+        }
+
+        if(StrUtil.isBlank(dto.getMaterialName())){
+            dto.setMaterialName("");
+        }
+        if(StrUtil.isBlank(dto.getProductWorkshopName())){
+            dto.setProductWorkshopName("");
+        }
+
+        if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getName());
+        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()){
+            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getName());
+        }
+
+        if(StrUtil.isBlank(dto.getCustomer())){
+            dto.setCustomer("");
+        }
+        //根据自己的模版put数据
+        map.put("materialName", dto.getMaterialName());
+        map.put("productWorkshopName",dto.getProductWorkshopName());
+        map.put("checkType",dto.getCheckTypeName());
+        map.put("customer",dto.getCustomer());
+        map.put("dateStart",dto.getTimeScopeStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getTimeScopeEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+
+        //设置查询条件
+        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
+                .lambda()
+                .eq(QtCheckTask::getMaterialId, dto.getMaterialId())
+                .eq(QtCheckTask::getTaskType, dto.getCheckType())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .ge(QtCheckTask::getFinishedTime, dto.getTimeScopeStart())
+                .le(QtCheckTask::getFinishedTime, dto.getTimeScopeEnd());
+
+
+        //根据条件先low出所有的数据
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
+        //设置时间分片
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularityEnum,"粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+                , LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart())
+                , LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeEnd()));
+
+        //4.查询数据
+        List<QtCheckTask> dataList = qtCheckTaskService.list(condition);
+        //根据检验项id获取检验项名称
+        QtCheckItem qtCheckItem=new QtCheckItem();
+        qtCheckItem = qtCheckItemService.getById(dto.getCheckItemId());
+        //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
+        String measureUnitName = new String();
+        if (Objects.nonNull(qtCheckItem)){
+            Set<Long> ids = Sets.newHashSet();
+            ids.add(qtCheckItem.getMeasureUnit());
+            Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+            //获取单位名称
+            measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
+        }
+
+        //设置物料名称
+        QtMaterial qtMaterial=new QtMaterial();
+        if (Objects.nonNull(dto.getMaterialId())) {
+            qtMaterial= qtMaterialService.getById(dto.getMaterialId());
+        }
+        String name = qtMaterial.getName();
+        //设置下载返回数据集合
+        List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+            List<QtCheckTask> conditionDataList = qtCheckTasks.stream().filter(v->Objects.nonNull(v.getFinishedTime())).filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+            List<Long> taskids = conditionDataList.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+            //如果id集合为空该时间段下没有
+            BigDecimal average =new BigDecimal("0");
+            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS1 = Lists.newArrayList();
+            conditionDataList.forEach(ele ->{
+                QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
+                BeanUtils.copyProperties(ele,taskVO);
+                taskVO.setFinishedTime(LocalDateUtil.format(ele.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                taskVO.setMaterialName(name);
+                QtCheckTaskDetail qtCheckTaskDetail = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, ele.getId())
+                        .eq(QtCheckTaskDetail::getGroupId, dto.getCheckGroupId())
+                        .eq(QtCheckTaskDetail::getItemId, dto.getCheckItemId()));
+                if (Objects.nonNull(qtCheckTaskDetail)){
+                    taskVO.setCheckResult(qtCheckTaskDetail.getCheckResult());
+                }
+                taskVO.setId(ele.getId());
+                taskVO.setCustomer(ele.getCustomer());
+                qtSpcReportDetailTaskVOS1.add(taskVO);
+            });
+
+            if (CollUtil.isNotEmpty(taskids)){
+                List<String> stringList = qtCheckTaskDetailService
+                        .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
+                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                List<BigDecimal> bigDecimals = Lists.newArrayList();
+                stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                    BigDecimal bigDecimal = new BigDecimal(s);
+                    bigDecimals.add(bigDecimal);
+                    QtSpcReportDetailTaskVO qtSpcReportDetailTaskVO = new QtSpcReportDetailTaskVO();
+                    BeanUtils.copyProperties(s, qtSpcReportDetailTaskVO);
+                });
+                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+            }
+
+            //设置返回数据类型对象
+            QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+            qtSpcReportDetailVO.setCheckItemResultAverage(average);
+
+            //设置主键id
+            qtSpcReportDetailVO.setId(i);
+            //设置开始结束分片范围
+            qtSpcReportDetailVO.setStartTime(start);
+            qtSpcReportDetailVO.setEndTime(end);
+            qtSpcReportDetailVO.setCheckType(dto.getCheckType());
+            if (Objects.nonNull(qtCheckItem)) {
+                //检验项id
+                qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
+                //设置检验项名称
+                qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+            }
+            //设置计量单位名称
+            if (Objects.nonNull(measureUnitName)){
+                qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+            }
+            //设置标准值
+            qtSpcReportDetailVO.setStandardValue(dto.getStandardValue());
+            //设置上限
+            qtSpcReportDetailVO.setUpLimit(dto.getUpLimit());
+            //设置下限
+            qtSpcReportDetailVO.setDownLimit(dto.getDownLimit());
+
+            mainList.add(qtSpcReportDetailVO);
+        }
+
+        //对全量数据表进行筛选
+        List<QtSpcReportDownloadVO> data = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(mainList)){
+
+         mainList.forEach(s->{
+             QtSpcReportDownloadVO vo = new QtSpcReportDownloadVO();
+             BeanUtils.copyProperties(s,vo);
+             vo.setCheckItemResultAverage(s.getCheckItemResultAverage());
+             data.add(vo);
+         });
+
+        }
+        //封装的下载
+        try {
+            this.downloadTemplate(response,QtManagerConstant.QT_CHART_SPC_NAME,reportName,map,data,dto.getBase64());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * 对下载进行封装
+     * @param response 响应
+     * @param modelName 服务器上的模版名字
+     * @param downloadName 下载文件的名字
+     * @param fixMap 固定值的map
+     * @param dataList 数据list
+     * @param base64 图片base64编码
+     * @throws IOException
+     */
+    public void downloadTemplate(HttpServletResponse response,String modelName,String downloadName, Map<String, Object> fixMap, List<?> dataList,String base64) throws IOException {
+        //1、从服务器获取模板数据
+        InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
+        //2、设置下载头
+        this.setDownloadHeader(response,downloadName);
+        try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+            // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
+            // forceNewRow 如果设置了true,有个缺点 就是他会把所有的数据都放到内存了，所以慎用
+            // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
+            // 如果数据量大 list不是最后一行 参照下一个
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
+            excelWriter.fill(dataList, fillConfig, writeSheet);
+            if(StrUtil.isNotBlank(base64)){
+                BASE64Decoder decoder = new BASE64Decoder();
+                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        // 调整异常数据
+                        bytes[i] += 1024;
+                    }
+                }
+                if (bytes != null) {
+                    //拿到context数据
+                    WriteContext writeContext = excelWriter.writeContext();
+                    Workbook workbook = writeContext.writeWorkbookHolder().getWorkbook();
+                    Sheet sheet = writeContext.writeSheetHolder().getCachedSheet();
+                    Drawing<?> drawing = sheet.getDrawingPatriarch();
+                    if (drawing == null) {
+                        drawing = sheet.createDrawingPatriarch();
+                    }
+                    CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+                    int index = workbook.addPicture(bytes,
+                            FileTypeUtils.getImageTypeFormat(bytes));
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setDx2(-StyleUtil.getCoordinate(5));
+                    anchor.setDx1(StyleUtil.getCoordinate(5));
+                    // 图片位置设置代码
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 6));
+                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 11) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 7) + 1);
+                    anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
+                    drawing.createPicture(anchor, index);
+                }
+            }
+            excelWriter.fill(fixMap, writeSheet);
+            // bytes为要导出的图像文件字节数组
+
+            response.getOutputStream().flush();
+        }
+    }
 
     /**
      * 根据id删除spc卡片
@@ -564,15 +817,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.isNull(report)){
             throw new BusinessException("该报表卡片不存在");
         }
-        //设置查询条件
-        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
-                .lambda()
-                .eq(QtCheckTask::getMaterialId, report.getMaterialId())
-                .eq(QtCheckTask::getTaskType, report.getCheckType())
-                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
-                .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
-
         //2.解析排序规则
 //        if ((QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME.equals(dto.getSortField()))) {
 //            if (dto.getAscFlag()) {
@@ -592,6 +836,16 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 //        } else {
 //            condition.orderBy(true, !dto.getAscFlag(), QtCheckTask::getMaterialWorkshopName);
 //        }
+        //设置查询条件
+        LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
+                .lambda()
+                .eq(QtCheckTask::getMaterialId, report.getMaterialId())
+                .eq(QtCheckTask::getTaskType, report.getCheckType())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
+                .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
+
+
         //根据条件先low出所有的数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
         //设置时间分片
@@ -614,15 +868,16 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem=new QtCheckItem();
-        if (Objects.nonNull(report.getCheckItemId())){
-            qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
-        }
+        qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
+        String measureUnitName = new String();
+        if (Objects.nonNull(qtCheckItem)){
         Set<Long> ids = Sets.newHashSet();
         ids.add(qtCheckItem.getMeasureUnit());
         Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
         //获取单位名称
-        String measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
+         measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
+        }
 
         //设置物料名称
         QtMaterial qtMaterial=new QtMaterial();
@@ -659,7 +914,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 taskVO.setId(ele.getId());
                 taskVO.setCustomer(ele.getCustomer());
-                taskVO.setTaskType(ele.getTaskType());
                  qtSpcReportDetailTaskVOS1.add(taskVO);
             });
 
@@ -693,12 +947,17 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //设置开始结束分片范围
             qtSpcReportDetailVO.setStartTime(start);
             qtSpcReportDetailVO.setEndTime(end);
-            //检验项id
-            qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
-            //设置检验项名称
-            qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+            qtSpcReportDetailVO.setCheckType(report.getCheckType());
+            if (Objects.nonNull(qtCheckItem)) {
+                //检验项id
+                qtSpcReportDetailVO.setCheckItemId(qtCheckItem.getId());
+                //设置检验项名称
+                qtSpcReportDetailVO.setCheckItemName(qtCheckItem.getName());
+            }
             //设置计量单位名称
-            qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+            if (Objects.nonNull(measureUnitName)){
+                qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
+            }
             //设置标准值
             qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
             //设置上限
@@ -711,6 +970,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
             mainList.add(qtSpcReportDetailVO);
         }
+
         //排序+逻辑分页
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
@@ -718,9 +978,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         page.setCurrent(dto.getCurrent());
         page.setTotal(mainList.size());
         page.setSize(dto.getSize());
-         page.setRecords(collect);
+        page.setRecords(collect);
 
-         return page;
+        return page;
     }
 
     /**

@@ -1,72 +1,51 @@
 package com.steccn.qms.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * SPC报表excel导入
  */
 @Data
-public class QtReportExcelDTO implements Serializable {
-    @ExcelProperty(value = "图表路径")
-    private MultipartFile picture;
+public class QtReportExcelDTO extends BasePageDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
-     * 开始时间
+     * 粒度
      */
-    private LocalDate timeScopeStart;
+    @NotBlank(message = "粒度不能为空")
+    private String  granularity;
+    /**
+     * 报表卡片名称
+     */
+    private String reportName;
 
     /**
-     * 结束时间
+     * 物料id
      */
-    private LocalDate timeScopeEnd;
+    @NotNull(message = "物料id不能为空")
+    private Long materialId;
 
     /**
-     * 检验项
+     * 检验项id
      */
-    private String  checkItemName;
+    private Integer checkItemId;
 
     /**
-     * 计量单位
+     * 检验项分组id
      */
-    private String measureUnit;
-
-
-    /**
-     * 标准值
-     */
-    private BigDecimal standardValue;
-
-    /**
-     * 上限
-     */
-    private BigDecimal upLimit;
-
-    /**
-     * 下限
-     */
-    private BigDecimal downLimit;
-
-    /**
-     * 检验任务单号
-     */
-    private Integer checkTaskId;
-
-    /**
-     * 检验完成时间
-     */
-    private LocalDate finishedTime;
-
-    /**
-     * 检验结果
-     */
-    private Integer result;
+    private Integer checkGroupId;
 
     /**
      * 物料名称
@@ -74,13 +53,41 @@ public class QtReportExcelDTO implements Serializable {
     private String materialName;
 
     /**
-     * 生产产线
+     * 车间名称
      */
-    private List<QtBaseIdNameDTO> productLine;
+    private String productWorkshopName;
+
+    /**
+     * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     */
+    @NotNull(message = "检验类型不能为空")
+    private Integer checkType;
+
+    /**
+     * 检验类型名称
+     */
+    private String checkTypeName;
 
     /**
      * 客户
      */
-    private List<QtBaseIdNameDTO> customer;
+    private String customer;
 
+    /**
+     * 开始时间
+     */
+    @NotNull(message = "开始时间不能为空")
+    private LocalDate timeScopeStart;
+
+    /**
+     * 结束时间
+     */
+    @NotNull(message = "结束时间不能为空")
+    private LocalDate timeScopeEnd;
+
+    /**
+     * 图表base64
+     */
+    private String base64;
+    
 }
