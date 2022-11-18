@@ -383,6 +383,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.DEEP_OFFICE_NAME);
+        //缺陷项类别过滤
+        if(Objects.nonNull(dto.getDefectCategory())){
+            flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectId()));
+        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
@@ -415,7 +419,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
+        //缺陷项类别过滤
+        if(Objects.nonNull(dto.getDefectCategory())){
+            flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectId()));
+        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无明细");
+
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);

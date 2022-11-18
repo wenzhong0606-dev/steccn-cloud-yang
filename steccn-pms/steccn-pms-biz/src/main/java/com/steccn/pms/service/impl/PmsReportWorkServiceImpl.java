@@ -106,13 +106,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkPageVO> records = page.getRecords();
         Set<Long> orderSet = Sets.newHashSet();
         Set<Integer> organIdSet = Sets.newHashSet();
+        Set<Long> dictIdSet = Sets.newHashSet();
         records.forEach(ele -> {
             orderSet.add(ele.getProduceOrderId());
             organIdSet.add(ele.getStationId());
+            dictIdSet.add(ele.getClassesId());
+            dictIdSet.add(ele.getClassGroupId());
         });
         Map<Long, BaseSelectVO<Long>> orderUnitMap = produceOrderService.listUnit(orderSet);
 
         Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+
         records.forEach(ele -> {
             BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(ele.getProduceOrderId());
             ele.setUnitId(null);
@@ -121,6 +126,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 ele.setUnitId(baseSelectVO.getId());
                 ele.setUnitName(baseSelectVO.getName());
             }
+            ele.setClassesName(dictMap.get(ele.getClassesId()));
+            ele.setClassGroupName(dictMap.get(ele.getClassGroupId()));
             ele.setStationName(sysOfficeMap.get(ele.getStationId()));
         });
         return page;
