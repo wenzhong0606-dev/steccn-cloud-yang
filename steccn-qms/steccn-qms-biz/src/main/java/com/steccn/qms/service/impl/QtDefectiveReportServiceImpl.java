@@ -148,11 +148,17 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
             Set<Integer> defectCategorySet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
             idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(defectCategorySet)).get();
-        } else {
+        } else if(QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(compare)){
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
             idNameMap = Maps.newHashMap();
             idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
             idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+        }else{
+            //不对比
+            targetMap = Maps.newHashMap();
+            targetMap.put(0, flatDataList);
+            idNameMap = Maps.newHashMap();
+            idNameMap.put(0, "");
         }
         return new TupleDTO<>(targetMap, idNameMap);
     }
