@@ -515,15 +515,15 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
             //获取合格率、日环比、周同比
             getPassRateOverViewVO(passRateOverViewVO, datePassList, type);
         }
-        if (qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type)) != null) {
-            BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type)).getValue();
-            if (targetValue == null) {
-                targetValue = BigDecimal.ZERO;
-            }
-            //获取目标值
-            passRateOverViewVO.setTargetValue(targetValue);
-            passRateOverViewVO.setKey(type);
+
+        QtChartTargetValue chartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type));
+        BigDecimal targetValue = BigDecimal.ZERO ;
+        if (Objects.nonNull(chartTargetValue)) {
+            targetValue = BigDecimal.valueOf(chartTargetValue.getTarget());
         }
+        //获取目标值
+        passRateOverViewVO.setTargetValue(targetValue);
+        passRateOverViewVO.setKey(type);
         if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
             passRateOverViewVO.setTitle(QtManagerConstant.QtChatTargetValue.JPXJHG.getName());
         } else if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)){
