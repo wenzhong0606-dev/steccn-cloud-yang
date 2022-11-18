@@ -701,6 +701,12 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
+
+        //如果检验方案已经停用，不允许删除
+        QtCheckPlan qtCheckById = getById(id);
+        if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(qtCheckById.getStatus())){
+            throw new BusinessException("该检验方案已停用，不允许删除");
+        }
         //查询是否绑定了物料
         if (!weatherBindMaterial(id)) {
             //删除检验分组

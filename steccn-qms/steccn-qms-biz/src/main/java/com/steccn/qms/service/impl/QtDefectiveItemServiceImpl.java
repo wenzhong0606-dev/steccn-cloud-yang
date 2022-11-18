@@ -192,6 +192,10 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         if (inUseDefectiveItemSet.contains(id)) {
             throw new BusinessException("已有检验方案调用了该缺陷项，不允许删除");
         }
+        //4.如果缺陷项状态为已停用，不允许删除
+        if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())){
+            throw new BusinessException("该缺陷项已停用，不允许删除");
+        }
         return removeById(id);
     }
 
