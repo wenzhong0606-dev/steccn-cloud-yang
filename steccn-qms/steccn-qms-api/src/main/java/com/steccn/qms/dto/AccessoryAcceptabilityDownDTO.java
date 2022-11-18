@@ -12,9 +12,9 @@ import java.util.List;
 @Data
 public class AccessoryAcceptabilityDownDTO {
 
-    private String workshopName;
+    private Integer workshopId;
 
-    private String materialWorkshop;
+    private Integer compare;
 
     private LocalDate date;
 
