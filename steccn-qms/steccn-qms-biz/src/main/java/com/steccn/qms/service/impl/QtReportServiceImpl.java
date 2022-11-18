@@ -255,29 +255,38 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                  material= qtMaterialService.getById(q.getMaterialId());
             }
             //设置物料名称
-            qtReportChartVO.setMaterialName(material.getName());
+            if (Objects.nonNull(material)){
+                qtReportChartVO.setMaterialName(material.getName());
+            }
             QtCheckItem qtCheckItem = new QtCheckItem();
             if (Objects.nonNull(q.getCheckItemId())){
                  qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
             }
-            qtReportChartVO.setCheckItemName(qtCheckItem.getName());
-            //设置检验项的数据类型
-            Long dataType = qtCheckItem.getDataType();
-            List<Long> ids = Lists.newArrayList();
-            ids.add(dataType);
-            R<Map<Long, SysDictVO>> mapR1 = remoteDictFeignApi.listById(ids);
-            Map<Long, SysDictVO> data = mapR1.getData();
-            SysDictVO sysDictVO = data.get(dataType);
-            if(Objects.nonNull(sysDictVO)){
-                qtReportChartVO.setDataTypeId(dataType);
-                qtReportChartVO.setDataTypeName(sysDictVO.getName());
+            //设置检验项名称
+            if (Objects.nonNull(qtCheckItem)&& Objects.nonNull(qtCheckItem)&&Objects.nonNull(qtCheckItem.getName())&&
+                    Objects.nonNull(qtCheckItem.getDataType())&&
+                    Objects.nonNull(qtCheckItem.getMeasureUnit())){
+                qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+                //设置检验项的数据类型
+                Long dataType = qtCheckItem.getDataType();
+                List<Long> ids = Lists.newArrayList();
+                ids.add(dataType);
+                Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
+                SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
+                if(Objects.nonNull(sysDictVO)){
+                    qtReportChartVO.setDataTypeId(dataType);
+                    qtReportChartVO.setDataTypeName(sysDictVO.getName());
+                }
+
+                //根据检验项id去获取计量单位
+                measureIds.add(qtCheckItem.getMeasureUnit());
+                Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                String measureName =longStringMap.get(qtCheckItem.getMeasureUnit());
+                if (Objects.nonNull(measureName)) {
+                    qtReportChartVO.setMeasureUnit(measureName);
+                }
             }
 
-            //根据检验项id去获取计量单位
-            measureIds.add(qtCheckItem.getMeasureUnit());
-            R<Map<Long, String>> mapR = remoteDictFeignApi.listByIdCh(measureIds);
-            String measureName = mapR.getData().get(qtCheckItem.getMeasureUnit());
-            qtReportChartVO.setMeasureUnit(measureName);
 
             //根据条件查出所有的任务
             List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
@@ -371,41 +380,52 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             throw new BusinessException("卡片id不能为空");
         }
         QtReport q = getById(id);
+        if (Objects.isNull(q)){
+            throw new BusinessException("卡片信息不存在");
+        }
         BeanUtils.copyProperties(q, qtReportChartVO);
         qtReportChartVO.setReportCardType(q.getReportCardType());
         qtReportChartVO.setMaterialId(q.getMaterialId());
         //根据物料id查询物料
         QtMaterial material=new QtMaterial();
-        if (Objects.nonNull(q.getMaterialId())){
             material= qtMaterialService.getById(q.getMaterialId());
-        }
         //设置物料名称
-        qtReportChartVO.setMaterialName(material.getName());
+        if (Objects.nonNull(material)){
+            qtReportChartVO.setMaterialName(material.getName());
+        }
         QtCheckItem qtCheckItem = new QtCheckItem();
         if (Objects.nonNull(q.getCheckItemId())){
             qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
         }
-        qtReportChartVO.setCheckItemName(qtCheckItem.getName());
-        //设置检验项的数据类型
-        Long dataType = qtCheckItem.getDataType();
-        List<Long> ids = Lists.newArrayList();
-        ids.add(dataType);
-        R<Map<Long, SysDictVO>> mapR1 = remoteDictFeignApi.listById(ids);
-        Map<Long, SysDictVO> data = mapR1.getData();
-        SysDictVO sysDictVO = data.get(dataType);
-        if (Objects.nonNull(sysDictVO)) {
-            qtReportChartVO.setDataTypeId(dataType);
-            qtReportChartVO.setDataTypeName(sysDictVO.getName());
+        if (Objects.nonNull(qtCheckItem)&&Objects.nonNull(qtCheckItem.getName())&&
+                Objects.nonNull(qtCheckItem.getDataType())&&
+                Objects.nonNull(qtCheckItem.getMeasureUnit())){
+            qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+            //设置检验项的数据类型
+            Long dataType = qtCheckItem.getDataType();
+            List<Long> ids = Lists.newArrayList();
+            ids.add(dataType);
+            Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
+            SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
+            if (Objects.nonNull(sysDictVO.getName())) {
+                qtReportChartVO.setDataTypeId(dataType);
+                qtReportChartVO.setDataTypeName(sysDictVO.getName());
+            }
+
+            Set<Long> measureIds = Sets.newHashSet();
+            measureIds.add(qtCheckItem.getMeasureUnit());
+            Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+            String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
+            if (Objects.nonNull(measureName)) {
+                qtReportChartVO.setMeasureUnit(measureName);
+            }
         }
+
 //        List<String> spcfilter = Lists.newArrayList();
 //        Collections.addAll(spcfilter,material.getName(), qtCheckItem.getName());
 //        qtReportChartVO.setSpcFilter(spcfilter);
         //根据检验项id去获取计量单位
-        Set<Long> measureIds = Sets.newHashSet();
-        measureIds.add(qtCheckItem.getMeasureUnit());
-        Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
-        String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
-        qtReportChartVO.setMeasureUnit(measureName);
+
 
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
