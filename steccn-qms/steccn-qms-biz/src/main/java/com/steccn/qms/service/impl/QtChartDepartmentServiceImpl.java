@@ -519,7 +519,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         QtChartTargetValue chartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, type));
         BigDecimal targetValue = BigDecimal.ZERO ;
         if (Objects.nonNull(chartTargetValue)) {
-            targetValue = BigDecimal.valueOf(chartTargetValue.getTarget());
+            targetValue = chartTargetValue.getValue();
         }
         //获取目标值
         passRateOverViewVO.setTargetValue(targetValue);

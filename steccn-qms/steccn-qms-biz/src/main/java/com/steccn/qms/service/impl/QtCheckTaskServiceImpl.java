@@ -1745,7 +1745,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Page<QtCheckTaskReportVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
         dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
-        List<QtCheckTaskReportVO> flatDataList  = rateDataList(null, dto);
+        List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //筛选车间
         if(dto.getProductLineId()!=null){
