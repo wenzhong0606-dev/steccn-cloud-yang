@@ -36,6 +36,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -70,7 +71,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto) {
+    public QtLineChartBarDTO deepDefectiveCategoryBar(QtChartParamDTO dto) {
         //获取所有扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //如果车间和产线为空，表示查询深加工车间所有数据
@@ -94,37 +95,30 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @param xMap         类别id-name
      * @return
      */
-    private QtChartBarVO compareCategoryAndItem(Integer compare, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> xMap, BiFunction<List<QtCheckTaskDetailReportVO>, Integer, List<QtCheckTaskDetailReportVO>> function) {
-        //定义返回vo
-        QtChartBarVO resVo = new QtChartBarVO();
-        List<QtChartBarSeriesVO> series = Lists.newArrayList();
+    private QtLineChartBarDTO compareCategoryAndItem(Integer compare, List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> xMap, BiFunction<List<QtCheckTaskDetailReportVO>, Integer, List<QtCheckTaskDetailReportVO>> function) {
         List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
         //对比项目分组
         TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(compare, flatDataList);
         Map<Integer, List<QtCheckTaskDetailReportVO>> targetMap = mapMapTupleDTO.getField1();
         Map<Integer, String> idNameMap = mapMapTupleDTO.getField2();
-        AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.FALSE);
-        List<String> xAis = Lists.newArrayList();
-        Map<Integer, String> finalIdNameMap = idNameMap;
-        //遍历目标map
-        for (Map.Entry<Integer, String> entry1 : finalIdNameMap.entrySet()) {
-            List<QtCheckTaskDetailReportVO> tDataList = targetMap.getOrDefault(entry1.getKey(), defaultReportVoList);
-            List<Integer> data = Lists.newArrayList();
-            for (Map.Entry<Integer, String> entry2 : xMap.entrySet()) {
-                List<QtCheckTaskDetailReportVO> xDataList = function.apply(tDataList, entry2.getKey());
+        //存放数据的map
+        List<StackGraphDTO<String, Integer>> StackGraphList = Lists.newArrayList();
+        //根据x轴分组
+        for (Map.Entry<Integer, String> categoryEntry : xMap.entrySet()) {
+            StackGraphDTO stackGraphDTO = new StackGraphDTO();
+            stackGraphDTO.setData(Lists.newArrayList());
+            stackGraphDTO.setXAxis(categoryEntry.getValue());
+            //考虑对比分组，也可能不分组
+            for (Map.Entry<Integer, String> contrastEntry : idNameMap.entrySet()) {
+                List<QtCheckTaskDetailReportVO> tDataList = targetMap.getOrDefault(contrastEntry.getKey(), defaultReportVoList);
+                List<QtCheckTaskDetailReportVO> xDataList = function.apply(tDataList, categoryEntry.getKey());
                 //每个类别下，每个班次的缺陷数之和
                 int sum = xDataList.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-                data.add(sum);
-                if (!flag.get()) {
-                    xAis.add(entry2.getValue());
-                }
+                stackGraphDTO.getData().add(new TupleDTO<>(contrastEntry.getValue(), sum));
             }
-            flag.set(Boolean.TRUE);
-            series.add(new QtChartBarSeriesVO(entry1.getValue(), data, "total"));
+            StackGraphList.add(stackGraphDTO);
         }
-        resVo.setXAis(xAis);
-        resVo.setSeries(series);
-        return resVo;
+        return StackGraphUtil.convertData(StackGraphList);
     }
 
     /**
@@ -407,7 +401,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
 
     @Override
-    public QtChartBarVO deepDefectiveItemBar(QtChartParamDTO dto) {
+    public QtLineChartBarDTO deepDefectiveItemBar(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
@@ -443,7 +437,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @return
      */
     @Override
-    public QtChartBarVO substrateItemBar(QtChartParamDTO dto) {
+    public QtLineChartBarDTO substrateItemBar(QtChartParamDTO dto) {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
             //默认给深加工产线

@@ -20,7 +20,7 @@ public interface QtDefectiveReportService {
      * @param dto dto
      * @return
      */
-    QtChartBarVO deepDefectiveCategoryBar(QtChartParamDTO dto);
+    QtLineChartBarDTO deepDefectiveCategoryBar(QtChartParamDTO dto);
 
     /**
      * 根据条件获取缺陷扁平化数据
@@ -49,14 +49,14 @@ public interface QtDefectiveReportService {
      * @param dto
      * @return
      */
-    QtChartBarVO deepDefectiveItemBar(QtChartParamDTO dto);
+    QtLineChartBarDTO deepDefectiveItemBar(QtChartParamDTO dto);
 
     /**
      * 深加工基片缺陷分布
      * @param dto
      * @return
      */
-    QtChartBarVO substrateItemBar(QtChartParamDTO dto);
+    QtLineChartBarDTO substrateItemBar(QtChartParamDTO dto);
 
     /**
      * 深加工缺陷项分布-饼图

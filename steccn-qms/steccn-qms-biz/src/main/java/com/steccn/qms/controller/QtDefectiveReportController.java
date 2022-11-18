@@ -30,7 +30,7 @@ public class QtDefectiveReportController {
 
     @PostMapping("/deep/category/bar")
     @ApiOperation("深加工缺陷类别分布-柱状图")
-    public R<QtChartBarVO> deepDefectiveCategoryBar(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarDTO> deepDefectiveCategoryBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryBar(dto));
     }
 
@@ -48,7 +48,7 @@ public class QtDefectiveReportController {
 
     @PostMapping("/deep/item/bar")
     @ApiOperation("深加工缺陷分布-柱状图")
-    public R<QtChartBarVO> deepDefectiveItemBar(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarDTO> deepDefectiveItemBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveItemBar(dto));
     }
 
@@ -66,7 +66,7 @@ public class QtDefectiveReportController {
 
     @PostMapping("/substrate/item/bar")
     @ApiOperation("基片缺陷项分布-柱状图")
-    public R<QtChartBarVO> substrateItemBar(@Valid @RequestBody QtChartParamDTO dto) {
+    public R<QtLineChartBarDTO> substrateItemBar(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateItemBar(dto));
     }
 
