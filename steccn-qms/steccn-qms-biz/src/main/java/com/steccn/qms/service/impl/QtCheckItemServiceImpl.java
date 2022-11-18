@@ -370,6 +370,11 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         if (inUseCheckItemSet.contains(id)) {
             throw new BusinessException("已有检验方案调用了该检验项，不允许删除");
         }
+        //4.判断检验项是否已停用，如果停用，不允许删除
+        if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())){
+            throw new BusinessException("该检验项已停用，不允许删除");
+        }
+
         return removeById(id);
     }
 
