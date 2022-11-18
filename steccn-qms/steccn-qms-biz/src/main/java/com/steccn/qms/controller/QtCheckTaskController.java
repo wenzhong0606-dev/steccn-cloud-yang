@@ -1,5 +1,7 @@
 package com.steccn.qms.controller;
 
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
@@ -16,8 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 巡检任务controller
@@ -204,6 +209,32 @@ public class QtCheckTaskController {
     @ApiOperation(value = "来料检合格率明细分页")
     public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetailVO(dto));
+    }
+
+    @PostMapping("/accessory/acceptability/download")
+    @ApiOperation(value = "下载基片成品率数据")
+    public void downloadAccessoryAcceptability(@RequestBody AccessoryAcceptabilityDownDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            qtCheckTaskService.downloadAccessoryAcceptability(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
+    /**
+     * 对响应异常进行封装
+     * @param response
+     * @throws IOException
+     */
+    protected void exceptionResponse(HttpServletResponse response ,Exception e) throws IOException{
+        response.reset();
+        response.setContentType("application/json");
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        Map<String, String> map = MapUtils.newHashMap();
+        map.put("status", "failure");
+        map.put("message", "下载文件失败" + e.getMessage());
+        response.getWriter().println(JSON.toJSONString(map));
     }
 
 }

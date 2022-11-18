@@ -38,11 +38,11 @@ public class DownloadUtil {
      * @param base64 图片base64编码
      * @throws IOException
      */
-    public void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, List<?> dataList, String base64) throws IOException {
+    public static void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, List<?> dataList, String base64) throws IOException {
         //1、从服务器获取模板数据
         InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
         //2、设置下载头
-        this.setDownloadHeader(response,downloadName);
+        setDownloadHeader(response,downloadName);
         try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
             WriteSheet writeSheet = EasyExcel.writerSheet().build();
             // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
@@ -96,7 +96,7 @@ public class DownloadUtil {
      * @param response
      * @return
      */
-    public void setDownloadHeader(HttpServletResponse response,String name) throws UnsupportedEncodingException {
+    public static void setDownloadHeader(HttpServletResponse response,String name) throws UnsupportedEncodingException {
         response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
         response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
