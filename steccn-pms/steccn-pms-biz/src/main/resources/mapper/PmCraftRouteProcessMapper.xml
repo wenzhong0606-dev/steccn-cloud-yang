@@ -26,24 +26,23 @@
         update_time,del_flag
     </sql>
     <select id="processList" resultType="com.steccn.pms.vo.PmCraftRouteProcessVO">
-        SELECT
-            a.id,
-            a.process_name,
-            a.process_id,
-            b.CODE AS processCode,
-            b.type AS typeCode,
-            a.quantity,
-            a.unit_id,
-            a.standard_unit_id,
-            a.standard_quantity,
-            a.report_work_flag,
-            a.report_check_flag,
-            a.in_station_flag,
-            a.out_station_flag,
-            a.process_scrap
-        FROM
-            pm_craft_route_process a
-                JOIN pm_process b ON a.process_id = b.id
-        WHERE a.route_id = #{craftRouteId}
+        SELECT a.id,
+               a.process_name,
+               a.process_id,
+               b.CODE AS processCode,
+               b.type AS typeCode,
+               a.quantity,
+               a.unit_id,
+               a.standard_unit_id,
+               a.standard_quantity,
+               a.report_work_flag,
+               a.report_check_flag,
+               a.in_station_flag,
+               a.out_station_flag,
+               a.process_scrap
+        FROM pm_craft_route_process a
+                 JOIN pm_process b ON a.process_id = b.id
+        WHERE a.del_flag = 0
+          and a.route_id = #{craftRouteId}
     </select>
 </mapper>
