@@ -56,7 +56,7 @@
             parent_code = ( SELECT office_code FROM sys_office WHERE id = #{id} )
           AND office_type = #{officeType}
     </select>
-    <select id="listByParentCode" resultType="com.steccn.platform.vo.SysOfficeVO">
+    <select id="listByParentIds" resultType="com.steccn.platform.vo.SysOfficeVO">
         SELECT
             id,
             office_type,
@@ -69,10 +69,10 @@
         FROM
             sys_office
         WHERE
-            parent_code in
-            <foreach collection="codes" item="code" open="(" close=")" separator=",">
-                #{code}
-            </foreach>
+        parent_code in ( SELECT office_code FROM sys_office WHERE  id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach> )
           AND office_type = #{officeType}
     </select>
 

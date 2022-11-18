@@ -7,7 +7,11 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
+/**
+ * 配料抽检合格率DTO
+ */
 @Data
 public class QtAccessoryAcceptabilityDTO extends BasePageDTO implements Serializable {
     /**
@@ -25,6 +29,8 @@ public class QtAccessoryAcceptabilityDTO extends BasePageDTO implements Serializ
      * 物料使用车间
      */
     private Integer materialWorkshopId;
+
+    private List<Integer> workshopIdList;
 
     /**
      * 区分柱状图饼状图的字段

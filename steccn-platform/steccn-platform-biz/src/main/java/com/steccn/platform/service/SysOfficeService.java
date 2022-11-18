@@ -1,7 +1,7 @@
 package com.steccn.platform.service;
 
 import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentCodeDTO;
+import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.StationLineVO;
@@ -121,7 +121,7 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @param dto
      * @return
      */
-    List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentCodeDTO dto);
+    List<SysOfficeParentVO> getListSysOfficeList(SysOfficeParentIdsDTO dto);
 
     /**
      * 根据孩子id获取父亲节点数据

@@ -39,12 +39,12 @@ public class SysSpareUnitConversion implements Serializable {
     /**
      * 换算数量
      */
-    private BigDecimal conversionQunantity;
+    private BigDecimal conversionQuantity;
 
     /**
      * 换算单位
      */
-    private Long conversionUintId;
+    private Long conversionUnitId;
 
     /**
      * 创建人id

@@ -2,6 +2,7 @@ package com.steccn.pms.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -10,7 +11,9 @@ import java.time.LocalDate;
  * @date 2022/11/9 16:43
  */
 @Data
-public class ProducePassRateVO {
+public class ProducePassRateVO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private LocalDate date;
 
@@ -45,4 +48,14 @@ public class ProducePassRateVO {
     private String productLineName;
 
     private BigDecimal passRate;
+
+    /**
+     * 日期类字符串
+     */
+    private String dateString;
+
+    /**
+     * 成品率字符串
+     */
+    private String passRateString;
 }

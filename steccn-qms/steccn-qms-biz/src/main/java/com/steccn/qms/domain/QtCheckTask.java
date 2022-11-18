@@ -39,16 +39,17 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private QtBaseIdNameDTO materialWorkshop;
+
     @TableField(value = "material_workshop ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
-    private String materialWorkshopId;
+            select = true)
+    private Integer materialWorkshopId;
 
     @TableField(value = "material_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String materialWorkshopName;
 
     /**
@@ -60,14 +61,14 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "product_workshop ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String productWorkshopName;
 
     @TableField(value = "product_workshop ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
-    private String productWorkshopId;
+            select = true)
+    private Integer productWorkshopId;
 
     /**
      * 产线
@@ -78,9 +79,17 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "product_line ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String productLineName;
 
+    /**
+     * 产线id
+     */
+    @TableField(value = "product_line ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = true)
+    private Integer productLineId;
 
     /**
      * 生产工单
@@ -163,7 +172,7 @@ public class QtCheckTask implements Serializable {
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
             select = false)
-    private String supplierId;
+    private Integer supplierId;
 
     /**
      * 客户id
@@ -176,6 +185,12 @@ public class QtCheckTask implements Serializable {
             updateStrategy = FieldStrategy.NEVER,
             select = false)
     private String customerName;
+
+    @TableField(value = "customer ->> '$.id'",
+            insertStrategy = FieldStrategy.NEVER,
+            updateStrategy = FieldStrategy.NEVER,
+            select = false)
+    private Integer customerId;
 
     /**
      * 缺陷总数
@@ -316,12 +331,6 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(exist = false)
     private String date;
-
-    /**
-     * 产线id
-     */
-    @TableField(exist = false)
-    private Integer productLineId;
 
     /**
      * 工位

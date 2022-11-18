@@ -1,9 +1,6 @@
 package com.steccn.qms.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -67,13 +64,13 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 创建人id
      */
-    @TableField(value = "create_by")
+    @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
     /**
      * 创建人姓名
      */
-    @TableField(value = "create_name")
+    @TableField(fill = FieldFill.INSERT)
     private String createName;
 
     /**
@@ -97,7 +94,7 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time")
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**

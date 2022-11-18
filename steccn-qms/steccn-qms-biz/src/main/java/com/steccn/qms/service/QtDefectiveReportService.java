@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.vo.*;
 
@@ -83,42 +84,21 @@ public interface QtDefectiveReportService {
      * @param dto
      * @return
      */
-    QtLineChartBarVO substrateItemLine(QtChartParamDTO dto);
+    QtLineChartBarDTO substrateItemLine(QtChartParamDTO dto);
 
     /**
      * 深加工缺陷项趋势-折线图
      * @param dto
      * @return
      */
-    QtLineChartBarVO deepItemLine(QtChartParamDTO dto);
+    QtLineChartBarDTO deepItemLine(QtChartParamDTO dto);
 
     Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto);
-
-    /**
-     * 深加工类别趋势明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> deepCategoryTrendDetail(QtChartParamDTO dto);
-
-    /**
-     * 深加工缺陷项趋势-折线图-明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> deepItemTrendDetail(QtChartParamDTO dto);
-
-    /**
-     * 基片缺陷项趋势-折线图-明细
-     * @param dto
-     * @return
-     */
-    Page<DeepDefectiveCategoryDetailVO> substrateItemTrendDetail(QtChartParamDTO dto);
 
     /**
      * 深加工缺陷类别趋势-折线图
      * @param dto 筛选条件
      * @return vo
      */
-    QtLineChartBarVO deepDefectiveCategoryLine(QtChartParamDTO dto);
+    QtLineChartBarDTO deepDefectiveCategoryLine(QtChartParamDTO dto);
 }

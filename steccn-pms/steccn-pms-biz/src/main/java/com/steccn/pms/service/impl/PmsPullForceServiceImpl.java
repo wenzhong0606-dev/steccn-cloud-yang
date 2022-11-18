@@ -50,9 +50,16 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
     @Override
     public List<PmsPullForceVO> list(Integer workshopId, String monthDate) {
+        LocalDate date = LocalDate.parse(monthDate + "-01", ISO_DATE);
+        LocalDate startDate = date.minusWeeks(1);
+        LocalDate endDate = date.plusMonths(1).plusWeeks(1);
+
         List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
                 .eq(PmsPullForce::getWorkshopId, workshopId)
-                .like(PmsPullForce::getPullForceDate, monthDate));
+                .ge(PmsPullForce::getPullForceDate, startDate).le(PmsPullForce::getPullForceDate, endDate));
+
+        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate,endDate);
+
 
         //根据日期分组
         Map<LocalDate, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getPullForceDate));
@@ -87,7 +94,6 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             pullForceVO.setTotal(total);
             pmsPullForceVOList.add(pullForceVO);
         }
-        List<LocalDate> localDateList = LocalDateUtil.getCurrentMonthDateAll(LocalDate.parse(monthDate + "-01", ISO_DATE));
 
         List<PmsPullForceVO> pullForceVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {

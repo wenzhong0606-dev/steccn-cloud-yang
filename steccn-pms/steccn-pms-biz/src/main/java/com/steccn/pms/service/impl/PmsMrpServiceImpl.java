@@ -83,10 +83,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
             materialIds.add(eqpSpareVO.getId());
             pmsMrpVOList.add(pmsMrpVO);
         });
-        //6.根据物料id获取库存数量
-        Map<Long, MesMaterialInventoryDTO> materialInventory = remoteMessFeignApi.materialInventory(materialIds);
-        MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
-        //7.根据物料id 自定义sql 获取需求计划的数量
+        //6.根据物料id 自定义sql 获取需求计划的数量
         Set<String> typeCodes = Sets.newHashSet();
         typeCodes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
         typeCodes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
@@ -102,13 +99,16 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         }
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));
         PmsMrpInfo pmsMrpInfo = new PmsMrpInfo();
+        pmsMrpInfo.setQuantity(BigDecimal.ZERO);
         Map<Long, BigDecimal> inventoryCalculations = inventoryCalculations(materialIds);
+        BigDecimal quantity =  BigDecimal.ZERO;
         //获取库存信息
         pmsMrpVOList.forEach(pmsMrpVO -> {
+            inventoryCalculations.getOrDefault(pmsMrpVO.getMaterialId(),quantity);
             PmsMrpInfo orDefault = pmsMrpInfoMap.getOrDefault(pmsMrpVO.getMaterialId(), pmsMrpInfo);
             pmsMrpVO.setQuantity(orDefault.getQuantity());
-            //计算库存信息
-            pmsMrpVO.setStockQuantity(inventoryCalculations.get(pmsMrpVO.getMaterialId()));
+            //计算库存信息,如果不存在库存信息则为0
+            pmsMrpVO.setStockQuantity(quantity);
         });
         return page.setRecords(pmsMrpVOList);
     }

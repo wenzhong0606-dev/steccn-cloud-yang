@@ -2,13 +2,18 @@ package com.steccn.qms.controller;
 
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.dto.QtCheckItemSaveDTO;
+import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
 import com.steccn.qms.service.QtChartDownloadService;
+import com.steccn.qms.vo.QtCheckTaskReportVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,10 +38,10 @@ import java.util.Map;
 public class QtChartDownloadController {
     private final QtChartDownloadService qtChartDownloadService;
 
-    @GetMapping("/substrate")
+    @PostMapping("/substrate")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
-    public void downloadSubstrate(@Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
+    public void downloadSubstrate(@RequestBody @Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
         try{
             qtChartDownloadService.downloadSubstrate(response,dto);
         } catch (Exception e) {
@@ -43,6 +49,19 @@ public class QtChartDownloadController {
             this.exceptionResponse(response,e);
         }
     }
+
+    @PostMapping("/substrate/loss")
+    @ApiOperation(value = "下载基片损耗率数据")
+    @SysLog("下载基片损耗率数据")
+    public void downloadSubstrateLoss(@RequestBody @Validated QtChartYieldDownloadDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            qtChartDownloadService.downloadSubstrateLoss(response,dto);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     @GetMapping("/deep/process")
     @ApiOperation(value = "下载基片成品率数据")
     @SysLog("下载基片成品率数据")
@@ -53,6 +72,18 @@ public class QtChartDownloadController {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
         }
+    }
+
+    @PostMapping("/substrate/detail")
+    @ApiOperation(value = "基片成品率详情")
+    public R<Page<ProducePassRateVO>> substrateDetails(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
+        return R.success(qtChartDownloadService.details(dto));
+    }
+
+    @PostMapping("/substrate/loss/detail")
+    @ApiOperation(value = "基片损耗率详情")
+    public R<Page<QtChartSubDetailDTO>> substrateLossDetails(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
+        return R.success(qtChartDownloadService.LossDetails(dto));
     }
 
     /**

@@ -13,6 +13,16 @@ import java.util.Map;
 @Data
 public class QtReportChartVO implements Serializable {
     /**
+     * 控制图卡片id
+     */
+    private Integer id;
+
+    /**
+     * 报表卡片类型
+     */
+    private String reportCardType;
+
+    /**
      * 控制图卡片名称
      */
     private String name;
@@ -27,9 +37,14 @@ public class QtReportChartVO implements Serializable {
     private LocalDate timeScopeEnd;
 
     /**
-     * 筛选条件
+     * 粒度:小时、天、周、月、季度、年
      */
-   private List<String> spcFilter;
+    private String granularity;
+
+    /**
+     * 物料id
+     */
+    private Long materialId;
 
     /**
      * 物料名称
@@ -41,6 +56,30 @@ public class QtReportChartVO implements Serializable {
      */
     private Integer checkType;
 
+    /**
+     * 检验分组id
+     */
+    private Integer checkGroupId;
+
+    /**
+     * 检验项：为选中检验分组当前快照下所有数值、百分比、自动计算类型的检验项
+     */
+    private Integer checkItemId;
+
+    /**
+     * 检验项名称
+     */
+    private String checkItemName;
+
+    /**
+     * 数据类型编码
+     */
+    private Long dataTypeId;
+
+    /**
+     * 检验项数据的类型 计量还是百分数
+     */
+    private String dataTypeName;
 
     /**
      * 标准值
@@ -57,10 +96,6 @@ public class QtReportChartVO implements Serializable {
      */
     private BigDecimal downLimit;
 
-    /**
-     * 检验项名称
-     */
-    private String  checkItemName;
     /**
      * 生产车间
      */
@@ -85,6 +120,11 @@ public class QtReportChartVO implements Serializable {
      * 供应商
      */
     private List<QtBaseIdNameDTO> supplier;
+
+    /**
+     * 备注
+     */
+    private String note;
 
     /**
      * 计量单位

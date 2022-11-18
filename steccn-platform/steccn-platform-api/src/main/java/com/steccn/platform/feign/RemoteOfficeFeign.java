@@ -164,7 +164,7 @@ public interface RemoteOfficeFeign {
     @ApiOperation("根据机构类型和名字查找数据")
     R<List<SysOfficeVO>> getByTypeAndLine(@RequestBody SysOfficeDTO dto);
 
-    @PostMapping("/list/listByTypeAndKey")
+    @PostMapping("/feign/platform/sys/office/list/listByTypeAndKey")
     @ApiOperation("根据机构类型以及关键字名称返回SysOffice列表信息")
      R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto);
 }

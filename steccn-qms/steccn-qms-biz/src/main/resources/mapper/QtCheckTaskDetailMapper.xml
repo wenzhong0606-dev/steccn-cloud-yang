@@ -4,24 +4,45 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.qms.mapper.QtCheckTaskDetailMapper">
 
-<!--    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTaskDetail">-->
-<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
-<!--            <result property="taskId" column="task_id" jdbcType="BIGINT"/>-->
-<!--            <result property="checkResult" column="check_result" jdbcType="OTHER"/>-->
-<!--            <result property="checkResultStatus" column="check_result_status" jdbcType="TINYINT"/>-->
-<!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
-<!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
-<!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
-<!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
-<!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
-<!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
-<!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
-<!--    </resultMap>-->
+    <!--    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCheckTaskDetail">-->
+    <!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
+    <!--            <result property="taskId" column="task_id" jdbcType="BIGINT"/>-->
+    <!--            <result property="checkResult" column="check_result" jdbcType="OTHER"/>-->
+    <!--            <result property="checkResultStatus" column="check_result_status" jdbcType="TINYINT"/>-->
+    <!--            <result property="createBy" column="create_by" jdbcType="BIGINT"/>-->
+    <!--            <result property="createName" column="create_name" jdbcType="VARCHAR"/>-->
+    <!--            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>-->
+    <!--            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>-->
+    <!--            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>-->
+    <!--            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>-->
+    <!--            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>-->
+    <!--    </resultMap>-->
 
-<!--    <sql id="Base_Column_List">-->
-<!--        id,task_id,check_result,-->
-<!--        check_result_status,create_by,create_name,-->
-<!--        create_time,update_by,update_name,-->
-<!--        update_time,del_flag-->
-<!--    </sql>-->
+    <!--    <sql id="Base_Column_List">-->
+    <!--        id,task_id,check_result,-->
+    <!--        check_result_status,create_by,create_name,-->
+    <!--        create_time,update_by,update_name,-->
+    <!--        update_time,del_flag-->
+    <!--    </sql>-->
+    <select id="listByTaskId" resultType="com.steccn.qms.vo.QtSubtableVO">
+        SELECT
+        a.id AS label,
+        b.NAME,
+        a.check_result AS value,
+        a.copy,
+        a.task_id,
+        c.sample_num,
+        c.license_plate,
+        c.ingredient_num
+        FROM
+        qt_check_task_detail a
+        JOIN qt_check_item b ON a.item_id = b.id
+        JOIN qt_check_task_copy c ON c.task_id = a.task_id
+        AND c.copy = a.copy
+        WHERE a.del_flag = 0
+        AND a.task_id in (
+        <foreach collection="taskIds" item="id" separator=",">
+            #{id}
+        </foreach>)
+    </select>
 </mapper>

@@ -5,9 +5,11 @@ import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collector;
 
 /**
  * @author yequan
@@ -21,6 +23,8 @@ public class BigDecimalUtil {
     public static Integer DEFAULT_SCALE = 3;
     public static Integer SCALE_2 = 2;
     public static Integer SCALE_4 = 4;
+
+    public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     /**
      * 格式化val 指定scale
@@ -203,4 +207,5 @@ public class BigDecimalUtil {
         res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
         return res;
     }
+
 }

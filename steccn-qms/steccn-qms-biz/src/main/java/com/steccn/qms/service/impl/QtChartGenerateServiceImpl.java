@@ -3,9 +3,15 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -17,10 +23,7 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import com.steccn.qms.dto.QtChartDateRangeDTO;
-import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.dto.QtChartSubDetailDTO;
-import com.steccn.qms.dto.QtTimeDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
@@ -83,13 +86,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //1、先根据已知条件查询任务表
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
-                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED)
-                //完成时间范围
-                .between(QtCheckTask::getFinishedTime, startTime, endTime)
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                //班次时间范围
+                .between(QtCheckTask::getClassTime, startTime, endTime)
                 //班次
                 .eq(dto.getWorkOrderId() != null, QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //只要巡检
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                //只要基片车间
+                .like(QtCheckTask::getProductLineName,"基片")
                 //车间
                 .apply(dto.getProductWorkShopId() != null, "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
                 //产线
@@ -99,10 +104,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(taskList)) {
             for (QtCheckTask tmp : taskList) {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                tmp.setDate(df.format(tmp.getFinishedTime()));
+                tmp.setDate(df.format(tmp.getClassTime()));
                 tmp.setProductLineId(tmp.getProductLine().getId());
             }
-            //根据日期进行分组
+            //根据班次日期进行分组
             Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
             //遍历日期map
             for (Map.Entry<String, List<QtCheckTask>> entry : groupByDate.entrySet()) {
@@ -122,7 +127,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         materialList.add(tmp.getMaterialId());
                     });
                     Boolean flag = true;
-                    if (materialIdSet.size() > 0) {
+                    if (materialIdSet.size() > 1) {
                         flag = false;
                     }
 
@@ -254,8 +259,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 for (QtCheckTaskDetail tmp : baiItemDetails) {
                                     if (tmp.getCheckResult() != null) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalBaiItem.add(decimalTmp);
-                                        totalBaiItemCount.add(new BigDecimal(1));
+                                        totalBaiItem = BigDecimalUtil.add(totalBaiItem,decimalTmp);
+                                        totalBaiItemCount = BigDecimalUtil.add(totalBaiItemCount,new BigDecimal(1));
                                     }
                                 }
                             }
@@ -267,8 +272,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
                                     if (tmp.getCheckResult() != null) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalDanItem.add(decimalTmp);
-                                        totalDanItemCount.add(new BigDecimal(1));
+                                        totalDanItem = BigDecimalUtil.add(totalDanItem,decimalTmp);
+                                        totalDanItemCount = BigDecimalUtil.add(totalDanItemCount,new BigDecimal(1));
                                     }
                                 }
                             }
@@ -280,8 +285,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 for (QtCheckTaskDetail tmp : laItemDetails) {
                                     if (tmp.getCheckResult() != null) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalLaItem.add(decimalTmp);
-                                        totalLaItemCount.add(new BigDecimal(1));
+                                        totalLaItem = BigDecimalUtil.add(totalLaItem,decimalTmp);
+                                        totalLaItemCount = BigDecimalUtil.add(totalLaItemCount,new BigDecimal(1));
                                     }
                                 }
                             }
@@ -304,7 +309,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal glassLength = new BigDecimal(0);
                             QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
                             if (material.getLengthQuantity() != null) {
-                                glassLength.add(material.getLengthQuantity());
+                                glassLength = BigDecimalUtil.add(glassLength,material.getLengthQuantity());
                             }
 
 
@@ -372,7 +377,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             LambdaQueryWrapper<QtCheckTask> onlineTaskCondition = new LambdaQueryWrapper<QtCheckTask>()
                                     //任务完成
-                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED)
+                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                                     //完成时间范围
                                     .between(QtCheckTask::getFinishedTime, startTimeDate, endTimeDate)
                                     //班次
@@ -394,22 +399,34 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 });
                             }
                             //拿到所有在线检data的数据
-                            List<QtCheckTaskDetail> onlineDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, onlineTaskList));
+                            List<QtCheckTaskDetail> onlineDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(CollUtil.isNotEmpty(onlineTaskIds),QtCheckTaskDetail::getTaskId, onlineTaskIds));
                             Map<String, Integer> defectCounts = MapUtil.newHashMap();
                             //把在线检中的details数据放入
-                            onlineDetails.forEach(tmp -> {
-                                if (CollUtil.isNotEmpty(tmp.getDefectNum())) {
-                                    tmp.getDefectNum().forEach(numTmp -> {
-                                        if (defectCounts.get(numTmp.getDefectName()) != null) {
-                                            defectCounts.put(numTmp.getDefectName(), numTmp.getDefectNum());
+                            for(QtCheckTaskDetail tmp:onlineDetails){
+                                if(CollUtil.isNotEmpty(tmp.getDefectNum())){
+                                    //避免转换报错
+                                    String s1 = JSONObject.toJSONString(tmp.getDefectNum());
+                                    List<QtOnlineCheckDefectDTO> defectNum = JSON.parseArray(s1,QtOnlineCheckDefectDTO.class);
+                                    //遍历defectNum
+                                    for(QtOnlineCheckDefectDTO numTmp:defectNum){
+                                        if (defectCounts.get(numTmp.getDefectName()) == null) {
+                                            Integer res = 1;
+                                            if(numTmp.getDefectNum() != null){
+                                                res = numTmp.getDefectNum();
+                                            }
+                                            defectCounts.put(numTmp.getDefectName(), res);
                                         } else {
+                                            Integer res = 1;
+                                            if(numTmp.getDefectNum() != null){
+                                                res = numTmp.getDefectNum();
+                                            }
                                             Integer i = defectCounts.get(numTmp.getDefectName());
-                                            i = i + numTmp.getDefectNum();
+                                            i = i + res;
                                             defectCounts.put(numTmp.getDefectName(), i);
                                         }
-                                    });
+                                    }
                                 }
-                            });
+                            }
 
                             //拿到巡检data数据下该物料的数据
                             List<Long> xunTaskIds = new ArrayList<>();
@@ -440,7 +457,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal defectResultData = BigDecimalUtil.divide(multiplyRes, new BigDecimal(1000));
 
                                 //把缺陷项q的损耗重量放入全量数据中
-                                if (defectLossWeightMap.get(defectEntry.getKey()) != null) {
+                                if (defectLossWeightMap.get(defectEntry.getKey()) == null) {
                                     defectLossWeightMap.put(defectEntry.getKey(), defectResultData);
                                 } else {
                                     BigDecimal tmp = defectLossWeightMap.get(defectEntry.getKey());
@@ -484,8 +501,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                         }
                         QtChartSubDetailDTO baiResult = new QtChartSubDetailDTO();
-                        baiResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                        baiResult.setLossWeight(new DecimalFormat("0.00").format(baiLossWeight));
+                        baiResult.setPullAmount(laQuantity);
+                        baiResult.setLossWeight(baiLossWeight);
                         baiResult.setReason("掰边损耗");
                         baiResult.setWorkOrderTime(entry.getKey());
                         if (entry2.getKey().equals(0)) {
@@ -501,8 +518,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //放入缺陷项的值
                         for (Map.Entry<String, BigDecimal> defectEntry : defectLossWeightMap.entrySet()) {
                             QtChartSubDetailDTO defectResult = new QtChartSubDetailDTO();
-                            defectResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                            defectResult.setLossWeight(new DecimalFormat("0.00").format(defectEntry.getValue()));
+                            defectResult.setPullAmount(laQuantity);
+                            defectResult.setLossWeight(defectEntry.getValue());
                             defectResult.setReason(defectEntry.getKey());
                             defectResult.setWorkOrderTime(entry.getKey());
                             if (entry2.getKey().equals(0)) {
@@ -518,8 +535,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //落板
                         for (Map.Entry<String, BigDecimal> luoEntry : luoLossWeightMap.entrySet()) {
                             QtChartSubDetailDTO luoResult = new QtChartSubDetailDTO();
-                            luoResult.setPullAmount(new DecimalFormat("0.00").format(laQuantity));
-                            luoResult.setLossWeight(new DecimalFormat("0.00").format(luoEntry.getValue()));
+                            luoResult.setPullAmount(laQuantity);
+                            luoResult.setLossWeight(luoEntry.getValue());
                             luoResult.setReason(luoEntry.getKey());
                             luoResult.setWorkOrderTime(entry.getKey());
                             if (entry2.getKey().equals(0)) {
@@ -540,6 +557,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         return resultList;
     }
+
+
 
     /**
      * 成品率概览
@@ -614,7 +633,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //算周同比
             pmsDTO.setBeginDate(fullDate.minusDays(6));
-            pmsDTO.setEndDate(fullDate.minusDays(6));
+            pmsDTO.setEndDate(fullDate.minusDays(6).plusDays(1));
             R<List<ProducePassRateVO>> rResult2 = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
             BigDecimal weekRate = new BigDecimal(0);
             if (CollUtil.isNotEmpty(rResult2.getData())) {
@@ -659,7 +678,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         List<String> markLineDataList = new ArrayList<>();
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
-        pmsDTO.setEndDate(dto.getDateEnd());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = new R<>();
         //调用数据生成全量数据表
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
@@ -762,7 +781,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //调用数据生成全量数据表
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
-        pmsDTO.setEndDate(dto.getDateEnd());
+        pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
         R<List<ProducePassRateVO>> rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         Map<LocalDate, BigDecimal> groupByDate = MapUtil.newHashMap();
         if (CollUtil.isNotEmpty(rResult.getData())) {
@@ -804,6 +823,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
      * @param rList
      * @return
      */
+    @Override
     public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList,QtChartParamDTO dto){
         rList.forEach(tmp->{
             if(tmp.getWorkshopName() == null){
@@ -843,4 +863,169 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
         return rList;
     }
+
+    /**
+     * 生成基片损耗柱状图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
+        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        BigDecimal laAmount = BigDecimal.ZERO;
+        for(QtChartSubDetailDTO tmp:data){
+            laAmount = BigDecimalUtil.add(laAmount,tmp.getPullAmount());
+        }
+        if(CollUtil.isNotEmpty(data)){
+            //若对比维度为空
+            if(dto.getCompare()==null){
+                Map<String,BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, true);
+                List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
+                List<String> legend = Lists.newArrayList();
+                for(Map.Entry<String, BigDecimal> reasonEntry:orderByLossWeight.entrySet()){
+                    //一根柱子
+                    StackGraphDTO graphDTO = new StackGraphDTO();
+                    graphDTO.setXAxis(reasonEntry.getKey());
+                    //柱子里的堆叠图
+                    TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+                    tupleDTO.setField1(reasonEntry.getKey());
+                    tupleDTO.setField2(reasonEntry.getValue());
+                    List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                    //只堆叠一次
+                    tupleDTOList.add(tupleDTO);
+                    graphDTO.setData(tupleDTOList);
+                    stackGraphDTOS.add(graphDTO);
+                    //算折线图
+                    BigDecimal sunRate = BigDecimal.ZERO;
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(),laAmount);
+                    legend.add(new DecimalFormat("0.0%").format(sunRate));
+                }
+                QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
+                resultDTO.setLegend(legend);
+                return resultDTO;
+            }else {
+                //所有数据按照先按照损耗原因进行分组
+                Map<String,List<QtChartSubDetailDTO>> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason));
+
+                Map<String,BigDecimal> sumByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(sumByReason, true);
+                //所有的柱子
+                List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
+                //折线图
+                List<String> legend = Lists.newArrayList();
+                //根据损耗重量分组
+                for(Map.Entry<String, BigDecimal> reasonEntry:orderByLossWeight.entrySet()){
+                    //拿到损耗原因的所有值
+                    List<QtChartSubDetailDTO> reasonList = groupByReason.get(reasonEntry.getKey());
+                    Map<String,List<QtChartSubDetailDTO>> groupByCompare = MapUtil.newHashMap();
+                    Map<String,List<QtChartSubDetailDTO>> orderCompare = MapUtil.newHashMap();
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getWorkOrder));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getProductLineName));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                        groupByCompare = reasonList.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getProductWorkShopName));
+                        //根据key排序
+                        groupByCompare.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByKey())).forEachOrdered(x -> orderCompare.put(x.getKey(), x.getValue()));
+                    }
+                    //一根柱子
+                    StackGraphDTO graphDTO = new StackGraphDTO();
+                    for(Map.Entry<String, List<QtChartSubDetailDTO>> orderEntry:orderCompare.entrySet()){
+                        graphDTO.setXAxis(reasonEntry.getKey());
+                        //柱子里的堆叠图
+                        List<QtChartSubDetailDTO> duiValue = orderEntry.getValue();
+                        List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        BigDecimal sunAmount = BigDecimal.ZERO;
+                        for(QtChartSubDetailDTO tmp:duiValue){
+                            BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+                            TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                                tupleDTO.setField1(tmp.getWorkOrder());
+                            }
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                                tupleDTO.setField1(tmp.getProductWorkShopName());
+                            }
+                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                                tupleDTO.setField1(tmp.getProductLineName());
+                            }
+                            tupleDTO.setField2(tmp.getLossWeight());
+                            tupleDTOList.add(tupleDTO);
+                        }
+                        //堆叠多次
+                        graphDTO.setData(tupleDTOList);
+                        stackGraphDTOS.add(graphDTO);
+                        //算折线图
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
+                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                    }
+                }
+                QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
+                resultDTO.setLegend(legend);
+                return resultDTO;
+            }
+
+        }
+        return null;
+    }
+
+    /**
+     * 生成基片损耗饼图
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
+        List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        QtChartPieVO result = new QtChartPieVO();
+        List<QtChartPieValueVO<BigDecimal>> pieList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(data)){
+            //拉引量
+            BigDecimal laAmount = BigDecimal.ZERO;
+            //损耗总重量
+            BigDecimal sunAmount = BigDecimal.ZERO;
+            //算所有的拉引量
+            for(QtChartSubDetailDTO tmp:data){
+                laAmount = BigDecimalUtil.add(laAmount,tmp.getPullAmount());
+                sunAmount = BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+            }
+            //若拉引量为0，饼状图显示为暂无数据图片
+            if(laAmount.compareTo(BigDecimal.ZERO) == 0){
+                return result;
+            }
+            //对所有损耗数据原因进行加总分析
+            Map<String,BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
+
+            //损耗原因按损耗重量降序排序，成品排在所有损耗原因之后，显示格式：#损耗原因#: #损耗重量#吨(#损耗率#)、成品: #成品重量#吨(#成品率#)
+            Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, true);
+            //成品重量 = 拉引量 - 损耗总重量，单位为吨
+            BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount,sunAmount);
+            //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
+            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight,laAmount);
+            QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
+            onePie.setName("成品");
+            onePie.setValue(chengRate);
+            pieList.add(onePie);
+
+            //遍历损耗原因分组
+            for(Map.Entry<String,BigDecimal> reasonEntry:orderByReason.entrySet()){
+                QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
+                tmp.setName(reasonEntry.getKey());
+                tmp.setValue(BigDecimalUtil.divide(reasonEntry.getValue(),laAmount));
+                pieList.add(tmp);
+            }
+            result.setData(pieList);
+            return result;
+        }else {
+            return result;
+        }
+    }
+
+
 }

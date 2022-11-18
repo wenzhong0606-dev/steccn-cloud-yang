@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -66,6 +67,17 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         PmCraftRoute model = new PmCraftRoute();
         //拷贝数据，设置创建人时间
         BeanUtil.copyProperties(dto, model);
+        //校验该物料是否存在当前版本信息
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getIsCurrentVersion())){
+            List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>()
+                    .eq(PmCraftRoute::getMaterialId, dto.getMaterialId())
+                    .eq(PmCraftRoute::getIsCurrentVersion, PmManagerConstant.OrderStateEnum.ONE.getCode()));
+            if (CollUtil.isNotEmpty(list)){
+                update(new LambdaUpdateWrapper<PmCraftRoute>()
+                        .set(PmCraftRoute::getIsCurrentVersion,PmManagerConstant.OrderStateEnum.ZERO.getCode())
+                        .eq(PmCraftRoute::getMaterialId,dto.getMaterialId()));
+            }
+        }
         model.setCreateBy(SecurityUtils.getUser().getUserId());
         model.setCreateName(SecurityUtils.getUser().getName());
         model.setUpdateBy(SecurityUtils.getUser().getUserId());

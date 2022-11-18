@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.qms.domain.QtDefectiveItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
@@ -96,4 +97,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map
      */
     Map<Integer, QtDefectiveItem> listById(Set<Integer> defectIdSet);
+
+    /**
+     * 根据缺陷项id，查询该缺陷项id的 第一个快照id和类别id
+     * @param defectiveCodeSet 缺陷code集合
+     * @return map
+     */
+    Map<String, TupleDTO<Integer, Integer>> firstSnapshotData(Set<String> defectiveCodeSet);
 }

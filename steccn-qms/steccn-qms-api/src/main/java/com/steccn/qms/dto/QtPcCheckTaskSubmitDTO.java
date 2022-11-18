@@ -66,10 +66,6 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      */
     private List<QtOnlineCheckItemDTO> onlineItem;
 
-    /**
-     * 样本概况信息
-     */
-    private List<QtCheckTaskCopyDetailsDTO> sampleInfoList;
 
     /**
      * 落板明细信息
@@ -80,4 +76,14 @@ public class QtPcCheckTaskSubmitDTO implements Serializable {
      * 落板信息备注
      */
     private String destoryInfoRemark;
+
+    /**
+     *样本概况
+     */
+    private List<QtCheckTaskSimpleDTO> sampleInfoList1;
+
+    /**
+     *样本概况
+     */
+    private List<QtCheckTaskCopyDetailsDTO> sampleInfoList;
 }
