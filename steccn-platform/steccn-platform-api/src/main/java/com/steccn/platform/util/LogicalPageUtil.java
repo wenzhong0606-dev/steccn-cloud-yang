@@ -1,9 +1,11 @@
 package com.steccn.platform.util;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -20,7 +22,10 @@ public class LogicalPageUtil {
      * @param <T> 泛型
      * @return
      */
-    public static <T> Page<T> page(@NotNull List<T> dataList, int current, int size) {
+    public static <T> Page<T> page(List<T> dataList, int current, int size) {
+        if(Objects.isNull(dataList)){
+            dataList = Lists.newArrayList();
+        }
         int idx = (current - 1) * size;
         if (idx < 0 || size < 0) {
             throw new IllegalArgumentException("current ，size 参数不合法");

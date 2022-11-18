@@ -17,6 +17,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
@@ -241,10 +242,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if(Objects.nonNull(dto.getDefectCategory())){
 
         }
-        //白班夜班
-        if(Objects.nonNull(dto.getWorkingOrder())){
-            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
-        }
         return flatDefectiveList;
     }
 
@@ -300,13 +297,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
-
         if(Objects.isNull(dto.getProductWorkShopId()) && Objects.isNull(dto.getProductLineId())){
             //默认给深加工产线
             Set<Integer> produceLineSet = conditionProduceLine(QtManagerConstant.DEEP_OFFICE_NAME);
             flatDataList =  flatDataList.stream().filter(v -> produceLineSet.contains(v.getProductLineId())).collect(Collectors.toList());
         }
-
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Integer> categoryIdSet = Sets.newHashSet();
@@ -327,18 +322,21 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setName(qtItemCategory.getName());
             countVo.setCreateTime(qtItemCategory.getCreateTime());
         });
+        //对比模式下考虑到图例的过滤
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+        }
         //排序+逻辑分页
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        List<DeepDefectiveCategoryDetailVO> records = pageList.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-        Page<DeepDefectiveCategoryDetailVO> resPage = new Page(dto.getCurrent(), dto.getSize());
-        resPage.setTotal(pageList.size());
-        resPage.setRecords(records);
-        return resPage;
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
     }
 
     /**
