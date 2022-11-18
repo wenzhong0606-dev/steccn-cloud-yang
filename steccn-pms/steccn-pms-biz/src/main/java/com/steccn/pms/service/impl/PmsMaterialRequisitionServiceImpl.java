@@ -15,6 +15,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -268,14 +269,14 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 
     @Override
     public Page<MaterialRequisitionPlanVO> planPageList(MaterialRequisitionPlanDTO dto) {
-        Page<MaterialRequisitionPlanVO> resPage = new Page(dto.getCurrent(), dto.getSize());
+        List<MaterialRequisitionPlanVO> res = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dto.getStation())) {
             //1.根据工位id获取上级的产线数据
             Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.parentInfo(dto.getStation())).get();
             SysOfficeVO sysOfficeVO = new SysOfficeVO();
             //2.获取产线id
             List<Integer> lineIds = Lists.newArrayList();
-            officeMap.values().stream().collect(Collectors.toList()).forEach(officeVO -> {
+            officeMap.values().forEach(officeVO -> {
                 lineIds.add(officeVO.getId());
             });
             //3.根据产线获取产线下的订单的信息
@@ -389,15 +390,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             }
             List<Integer> stationList = dto.getStation();
             //过滤数据 只返回在当前工位上的物料信息
-            List<MaterialRequisitionPlanVO> res = resBomList.stream().filter(plan -> stationList.contains(plan.getStation())).collect(Collectors.toList());
-            //排序+逻辑分页
-            Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-            //排序
-            List<MaterialRequisitionPlanVO> collect = res.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-            resPage.setTotal(resBomList.size());
-            resPage.setRecords(collect);
+            res = resBomList.stream().filter(plan -> stationList.contains(plan.getStation())).collect(Collectors.toList());
         }
-        return resPage;
+        return LogicalPageUtil.page(res,dto.getCurrent(),dto.getSize());
     }
 
     @Override
