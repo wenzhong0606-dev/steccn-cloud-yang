@@ -177,13 +177,13 @@
                 JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
         WHERE
         prw.del_flag = 0 AND ppo.del_flag = 0
-        <if test="classesIdList != null and classesIdList != ''">
+        <if test="classesIdList != null and classesIdList.size  != ''">
             AND prw.classes_id in
             <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
                 #{classesId}
             </foreach>
         </if>
-        <if test="productLineIdList != null and productLineIdList != ''">
+        <if test="productLineIdList != null and productLineIdList.size  != ''">
             AND prw.product_line_id in
             <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
                 #{productLineId}
@@ -196,8 +196,6 @@
             prw.classes_id,
             prw.process_id,
             ppo.material_id
-
-
 
     </select>
 
@@ -224,13 +222,13 @@
                 JOIN pms_produce_order ppo ON ppo.id = prw.produce_order_id
         WHERE
             prw.del_flag = 0 AND ppo.del_flag = 0
-            <if test="classesIdList != null and classesIdList != ''">
+            <if test="classesIdList != null and classesIdList.size  != ''">
                 AND prw.classes_id in
                 <foreach collection="classesIdList" item="classesId" open="(" close=")" separator=",">
                     #{classesId}
                 </foreach>
             </if>
-            <if test="productLineIdList != null and productLineIdList != ''">
+            <if test="productLineIdList != null and productLineIdList.size  != ''">
                 AND prw.product_line_id in
                 <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
                     #{productLineId}

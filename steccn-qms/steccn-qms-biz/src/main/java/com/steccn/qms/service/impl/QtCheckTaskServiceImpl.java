@@ -109,12 +109,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
         //如果新建检验类型为在线检，缺陷记录时段不允许跨班次;即8:00、20:00两个时间点
-        if (dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())) {
+        if (QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType())) {
             if (dto.getDefectStartTime() != null && dto.getDefectEndTime() != null) {
-                if (dto.getDefectStartTime().getHour() > QtManagerConstant.beforeHour
-                        && dto.getDefectEndTime().getHour() > QtManagerConstant.afterHour) {
+                if (QtManagerConstant.beforeHour < dto.getDefectStartTime().getHour()
+                        && QtManagerConstant.afterHour < dto.getDefectEndTime().getHour()) {
                     throw new BusinessException("缺陷记录时段不允许跨班次");
-                } else if (dto.getDefectStartTime().getHour() < QtManagerConstant.afterHour && dto.getDefectEndTime().getHour() < QtManagerConstant.beforeHour) {
+                } else if (QtManagerConstant.afterHour > dto.getDefectStartTime().getHour()  && QtManagerConstant.beforeHour > dto.getDefectEndTime().getHour() ) {
                     qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.DAY.getCode());//早班
                 } else {
                     qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.NIGHT.getCode());//晚班
@@ -368,6 +368,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         qtCheckTaskListVo.setStation(qtCheckTask.getStation());
                     }
                     //设置样本概况模块数据
+                    //先删除样本概况表中可能存在的数据
+
                     String[] strings = {"sampleNum","licensePlate","analyst","analystTime","analystName","ingredientNum","samplingTime"};
                     List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, id));
                     List<QtCheckTaskSimpleDTO> qtCheckTaskSimpleDTOS = Lists.newArrayList();
@@ -419,11 +421,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = Lists.newArrayList();
         //放入落板记录模块数据setQtCheckTaskDestoryInfoVOList
         List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
-        for (QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo : qtCheckTaskDestoryInfoList) {
-            BeanUtils.copyProperties(qtCheckTaskDestoryInfo, qtCheckTaskDestoryInfoVO);
-            qtCheckTaskDestoryInfoVOList.add(qtCheckTaskDestoryInfoVO);
+        if (!qtCheckTaskDestoryInfoList.isEmpty()) {
+            List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList1 = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
+            qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
+            qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
-        qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList);
+
         return qtCheckTaskDetailVo;
     }
 
@@ -656,7 +659,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
                                 }
                             }
-                            objectMap.get(entry.getKey()).setLicensePlate(entry.getValue());
                         } else {
                             if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
                                 qtCheckTaskCopy.setSampleNum(entry.getValue());
@@ -696,6 +698,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     }
                     qtCheckTaskCopies2.add(qtCheckTaskCopy1);
                 });
+                //先删除可能暂存的值
+                qtCheckTaskCopyService.removeById(dto.getId());
                 qtCheckTaskCopyService.saveBatch(qtCheckTaskCopies2);
             }
         }
@@ -750,12 +754,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //组装落板记录详情数据
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())) {
             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
-            QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+            //删除样本概况中暂存的值
+             qtCheckTaskCopyMapper.delete(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId,dto.getId()));
+
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
                 QtCheckTaskDestoryInfoDTO qtCheckTaskDestoryInfoDTO = new QtCheckTaskDestoryInfoDTO();
                 QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
                 if (dto.getId() != null) {
-                    qtCheckTaskDestoryInfoDTO.setCopy(qtCheckTaskDetailService.getById(dto.getId()).getCopy());
+                    //qtCheckTaskDestoryInfoDTO.setCopy(qtCheckTaskDetailService.getById(dto.getId()).getCopy());
                     qtCheckTaskDestoryInfoDTO.setTaskId(dto.getId());
                     qtCheckTaskDestoryInfoDTO.setDestoryDetail(destoryInfoVO.getDestoryDetail());
                     qtCheckTaskDestoryInfoDTO.setDestoryReason(destoryInfoVO.getDestoryReason());
@@ -1086,11 +1092,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
             Integer productionLineId = pmsProduceOrderVO.getData().getProductionLineId();
 
+
             BeanUtils.copyProperties(pmsProduceOrderVO.getData(),qtProduceOrderLineVO);
             if (productionLineId != null){
                 //根据产线查询父级车间
                 SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(productionLineId)).get();
-                qtProduceOrderLineVO.setWorkshopId(sysOfficeVO.getParentId());
+                qtProduceOrderLineVO.setWorkshopId(sysOfficeVO.getId());
                 qtProduceOrderLineVO.setWorkshopName(sysOfficeVO.getOfficeName());
             }
         }

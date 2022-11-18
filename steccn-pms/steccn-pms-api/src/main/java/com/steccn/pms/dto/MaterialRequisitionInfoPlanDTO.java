@@ -35,6 +35,7 @@ public class MaterialRequisitionInfoPlanDTO {
     @ApiModelProperty("物料名称")
     private String materialName;
 
+
     @ApiModelProperty("机构id")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "机构不能为空")
     private List<Integer> organization;
@@ -52,4 +53,9 @@ public class MaterialRequisitionInfoPlanDTO {
 
     @ApiModelProperty("需求时间")
     private LocalDate requireDate;
+
+    @ApiModelProperty("单位id")
+    private Long unitId;
+
+
 }

@@ -697,8 +697,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据生产订单号来查询当前正在执行中的记录
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()));
         //2.校验数据
-        Assert.isNull(order, "该生产订单号不存在");
-
+        Assert.notNull(order,"该订单下没有正在执行的检验任务");
         //3.复制数据传入VO
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
         BeanUtils.copyProperties(order, pmsProduceOrderVO);
