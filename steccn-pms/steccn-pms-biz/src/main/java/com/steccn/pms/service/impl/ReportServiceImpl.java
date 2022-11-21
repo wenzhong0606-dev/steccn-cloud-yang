@@ -78,6 +78,9 @@ public class ReportServiceImpl implements ReportService {
         //查询所有数据
         List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
+        rowDataList = rowDataList.stream().filter(v -> Objects.nonNull(v.getMaterialId()) && Objects.nonNull(v.getClassesId())).collect(Collectors.toList());
+        SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
+
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
@@ -101,6 +104,8 @@ public class ReportServiceImpl implements ReportService {
         //全局统计
         Map<Integer, BigDecimal> allCountMap = Maps.newHashMap();
 
+        List<SubstrateDataListVO> finalRowDataList = rowDataList;
+
         workShopMap.forEach((k, v) -> {
             //车间统计
             Map<Integer, BigDecimal> workshopCountMap = Maps.newHashMap();
@@ -111,7 +116,7 @@ public class ReportServiceImpl implements ReportService {
                 Map<Integer, BigDecimal> countMap2 = Maps.newHashMap();
                 Map<Integer, BigDecimal> countMap3 = Maps.newHashMap();
                 //获取当前产线下的数据
-                List<SubstrateDataListVO> productLineDataList = rowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
+                List<SubstrateDataListVO> productLineDataList = finalRowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
                 //将当前产线下的数据根据物料分组
                 Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialId));
                 //遍历物料分组的数据，来组装数据
