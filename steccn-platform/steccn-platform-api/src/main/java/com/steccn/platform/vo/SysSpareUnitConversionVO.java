@@ -28,7 +28,7 @@ public class SysSpareUnitConversionVO implements Serializable {
     private Long unitId;
 
     @ApiModelProperty("换算数量")
-    private BigDecimal conversionQunantity;
+    private BigDecimal conversionQuantity;
 
     @ApiModelProperty("换算单位")
     private Long conversionUintId;
