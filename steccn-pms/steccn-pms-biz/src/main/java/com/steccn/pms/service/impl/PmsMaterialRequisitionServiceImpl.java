@@ -409,6 +409,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         List<MaterialRequisitionInfoDTO> infoList = Lists.newArrayList();
         list.forEach(info -> {
             MaterialRequisitionInfoDTO materialRequisitionInfoDTO = new MaterialRequisitionInfoDTO();
+            materialRequisitionInfoDTO.setReceiveQuantity(info.getQuantity());
             BeanUtil.copyProperties(info, materialRequisitionInfoDTO);
             infoList.add(materialRequisitionInfoDTO);
         });

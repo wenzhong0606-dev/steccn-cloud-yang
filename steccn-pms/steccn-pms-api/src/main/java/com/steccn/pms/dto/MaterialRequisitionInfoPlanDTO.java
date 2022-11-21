@@ -10,6 +10,7 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -49,7 +50,10 @@ public class MaterialRequisitionInfoPlanDTO {
     @DecimalMin(groups = {UpdateGroup.class, InsertGroup.class}, value = "0", message = "需求数量应大于0")
     @DecimalMax(groups = {UpdateGroup.class, InsertGroup.class}, value = "99999999.999", message = "需求数量大小应小于99999999.999")
     @Digits(groups = {UpdateGroup.class, InsertGroup.class}, integer = 8, fraction = 3, message = "整数位上限为8位，小数位上限位3位")
-    private String quantity;
+    private BigDecimal quantity;
+
+    @ApiModelProperty("领用数量")
+    private BigDecimal receiveQuantity;
 
     @ApiModelProperty("需求时间")
     private LocalDate requireDate;
