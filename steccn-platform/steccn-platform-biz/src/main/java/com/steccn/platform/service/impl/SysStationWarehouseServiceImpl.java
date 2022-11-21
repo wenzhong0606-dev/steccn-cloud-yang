@@ -79,6 +79,13 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
 
     @Override
     public Boolean add(SysStationWarehouseAddDTO dto) {
+        List<SysStationWarehouse> list = list(new LambdaQueryWrapper<SysStationWarehouse>().eq(SysStationWarehouse::getStationId, dto.getOrganId())
+                .eq(SysStationWarehouse::getWarehouseId, dto.getWarehouseId())
+                .eq(SysStationWarehouse::getShelfId, dto.getShelfId())
+                .eq(SysStationWarehouse::getOrganType, dto.getOrganType()));
+        if (CollectionUtils.isNotEmpty(list)) {
+            throw new BusinessException("当前节点下存在相同的仓库货架信息");
+        }
         SysOfficeVO sysOfficeVO = sysOfficeService.parentOffice(dto.getShelfId());
         if (!SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())) {
             throw new BusinessException("货架节点错误");
