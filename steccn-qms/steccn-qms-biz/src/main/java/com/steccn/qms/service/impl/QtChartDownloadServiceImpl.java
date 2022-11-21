@@ -16,6 +16,7 @@ import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.vo.ProducePassRateVO;
@@ -56,6 +57,8 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
 
     private final QtChartGenerateService qtChartGenerateService;
 
+    private final RemoteOfficeFeign remoteOfficeFeign;
+
     /**
      * 下载基片详情
      * @param response
@@ -76,9 +79,25 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             dto.setProductLineName("");
         }
         //根据自己的模版put数据
-        map.put("workOrderNameCondition", dto.getWorkOrderName());
-        map.put("workShopCondition", dto.getProductWorkShopName());
-        map.put("workLineCondition",dto.getProductLineName());
+        if(dto.getProductWorkShopId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
+            if(nameById!=null){
+                map.put("workShopCondition",nameById.getData());
+            }
+        }
+        if(dto.getProductLineId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
+            if(nameById!=null){
+                map.put("workLineCondition",nameById.getData());
+            }
+        }
+        if(dto.getWorkOrderId()!=null){
+            if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.DAY.getName());
+            }else {
+                map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.NIGHT.getName());
+            }
+        }
         map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
@@ -105,18 +124,18 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             //过滤图表数据
             if(CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())){
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
                 }
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
                 }
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
                 }
             }
             data.forEach(tmp->{
                 if(tmp.getDate()!=null){
-                    tmp.setDateString(tmp.getDate().toString());
+                    tmp.setDateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
                 }
                 if(tmp.getPassRate()!=null){
                     tmp.setPassRateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
@@ -196,15 +215,15 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             //过滤筛选数据
             data = qtChartGenerateService.rListFilter(data,param);
             //过滤图表数据
-            if(CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())){
+            if(CollUtil.isNotEmpty(data)&&dto.getFilters()!=null){
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getClassesName())).collect(Collectors.toList());
                 }
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
                 }
                 if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                    data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
+                    data = data.stream().filter(s->dto.getFilters().contains(s.getWorkshopName())).collect(Collectors.toList());
                 }
             }
             //先排序
@@ -291,7 +310,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             excelWriter.fill(dataList, fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
                 BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
+                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
                     if (bytes[i] < 0) {
                         // 调整异常数据

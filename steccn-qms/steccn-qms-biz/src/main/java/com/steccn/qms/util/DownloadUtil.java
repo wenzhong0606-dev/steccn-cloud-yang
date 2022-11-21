@@ -53,7 +53,7 @@ public class DownloadUtil {
             excelWriter.fill(dataList, fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
                 BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
+                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
                     if (bytes[i] < 0) {
                         // 调整异常数据
