@@ -21,7 +21,10 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
@@ -63,6 +66,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final PmCraftRouteService pmCraftRouteService;
     private final PmsProducePlanService pmsProducePlanService;
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
     /**
      * 新增生产订单信息
@@ -673,14 +677,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }
         Map<Integer, SysOfficeVO> productLineMap = remoteOfficeFeign.listById(new HashSet<>(dto.getProductLineList())).getData();
         Page<ProduceOrderTrackReportVO> produceOrderTrackReportVOPage = this.baseMapper.trackReportPage(new Page(dto.getCurrent(), dto.getSize()), dto.getProductLineList());
+        Set<Long> materialIdSet = produceOrderTrackReportVOPage.getRecords().stream().map(ProduceOrderTrackReportVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, List<SysSpareUnitConversionVO>> map = remoteSpareUnitConvertFeignApi.convert(materialIdSet).getData();
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode("m²", "measure_unit").getData();
+
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
+            Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId())
+                    .stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
+
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
             BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
+            BigDecimal shortfallQuantity = null;
             produceOrderTrackReportVO.setProductionLineName(productLineMap.get(produceOrderTrackReportVO.getProductionLineId()).getOfficeName());
             if (Objects.isNull(completeQuantity)) {
                 produceOrderTrackReportVO.setShortfallQuantity(planQuantity);
             } else {
-                produceOrderTrackReportVO.setShortfallQuantity(planQuantity.subtract(completeQuantity));
+                shortfallQuantity = planQuantity.subtract(completeQuantity);
+                produceOrderTrackReportVO.setShortfallQuantity(shortfallQuantity);
+            }
+            if (optional.isPresent()) {
+                BigDecimal conversionQuantity = optional.get().getConversionQuantity();
+                if (Objects.nonNull(planQuantity)) {
+                    produceOrderTrackReportVO.setPlanQuantitySq(planQuantity.multiply(conversionQuantity));
+                }
+                if (Objects.nonNull(completeQuantity)) {
+                    produceOrderTrackReportVO.setCompleteQuantitySq(completeQuantity.multiply(conversionQuantity));
+                }
+                if (Objects.nonNull(shortfallQuantity)) {
+                    produceOrderTrackReportVO.setShortfallQuantitySq(shortfallQuantity.multiply(conversionQuantity));
+                }
             }
         });
         return produceOrderTrackReportVOPage;

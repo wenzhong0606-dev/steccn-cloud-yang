@@ -31,7 +31,7 @@ public class SysSpareUnitConversionVO implements Serializable {
     private BigDecimal conversionQuantity;
 
     @ApiModelProperty("换算单位")
-    private Long conversionUintId;
+    private Long conversionUnitId;
 
     private static final long serialVersionUID = 1L;
 }

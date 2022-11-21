@@ -315,7 +315,7 @@ public class ReportServiceImpl implements ReportService {
         if(CollUtil.isNotEmpty(orDefault)){
             Map<Long,SysSpareUnitConversionVO> resMap = Maps.newHashMap();
             for (SysSpareUnitConversionVO spare : orDefault) {
-                resMap.put(spare.getConversionUintId(),spare);
+                resMap.put(spare.getConversionUnitId(),spare);
             }
             SysSpareUnitConversionVO vo = resMap.getOrDefault(unitList.get(idx), new SysSpareUnitConversionVO());
             if(Objects.nonNull(vo)){
