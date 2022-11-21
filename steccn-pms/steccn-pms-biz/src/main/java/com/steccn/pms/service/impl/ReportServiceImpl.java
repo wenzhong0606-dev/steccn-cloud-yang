@@ -318,7 +318,7 @@ public class ReportServiceImpl implements ReportService {
             SysSpareUnitConversionVO vo = resMap.getOrDefault(unitList.get(idx), new SysSpareUnitConversionVO());
             if(Objects.nonNull(vo)){
                 BigDecimal multiply = BigDecimalUtil.multiply(vo.getConversionQuantity(), num);
-                BigDecimal divide = multiply.divide(vo.getQuantity());
+                BigDecimal divide = BigDecimalUtil.divide(multiply, vo.getQuantity());
                 return divide;
             }
         }
@@ -422,7 +422,7 @@ public class ReportServiceImpl implements ReportService {
         PmsPullForce night = pmsPullForcesMap.get(classList.get(1).getId());
         BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
         BigDecimal nightBigDecimal = Objects.nonNull(night) ? night.getQuantity() : BigDecimal.ZERO;
-        BigDecimal sum = morningBigDecimal.add(nightBigDecimal);
+        BigDecimal sum = BigDecimalUtil.add(morningBigDecimal, nightBigDecimal);
         SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, sum), "拉引量(T)");
 
         productLineVOList.add(lyl);
@@ -547,8 +547,12 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
         List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
         Assert.notEmpty(pmsProduceOrderCraftList,"工序信息不可为空");
+        SteccnTableAssertUtil.notEmpty(dataList, "工序信息为空，暂无报表信息");
+        //工序信息转换
+        Map<Long,Long> craftProcessIdMap = Maps.newHashMap();
+        pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(),ele.getProcessId()));
+        dataList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
-        Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
         List<BaseReportHeaderVO> module = Lists.newArrayList();
         pmProcessList.forEach(ele -> {
             module.add(new BaseReportHeaderVO(ele.getName(), Arrays.asList("加工(片)", "合格(片)", "不良(片)", "合格率")));
