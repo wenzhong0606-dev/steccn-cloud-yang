@@ -196,9 +196,10 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             Map<Long, List<PmsWorkOrderBom>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsWorkOrderBom::getProcessId));
             dbMap.forEach((k, v) -> {
                 List<BaseSelectVO<Long>> resList = Lists.newArrayList();
-                for (PmsWorkOrderBom pmsWorkOrderBom : v) {
-                    resList.add(new BaseSelectVO<>(pmsWorkOrderBom.getModuleId(), spareVOMap.get(pmsWorkOrderBom.getModuleId())));
-                }
+                Map<Long, List<PmsWorkOrderBom>> collect = v.stream().collect(Collectors.groupingBy(PmsWorkOrderBom::getModuleId));
+                collect.forEach((a,b) ->{
+                    resList.add(new BaseSelectVO<>(a, spareVOMap.get(a)));
+                });
                 resMap.put(k, resList);
             });
         }

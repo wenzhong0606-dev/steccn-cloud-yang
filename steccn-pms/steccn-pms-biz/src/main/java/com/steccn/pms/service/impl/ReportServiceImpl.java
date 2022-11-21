@@ -691,11 +691,22 @@ public class ReportServiceImpl implements ReportService {
         //获取所有的工序id
         Set<Long> processIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProcessId).collect(Collectors.toSet());
         //查询工序的信息
-        List<PmProcess> pmProcessList = pmProcessService.listByIds(processIdSet);
+        List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
+        Assert.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
+        Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
+        List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
         Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
         Map<Long, PmProcess> pmProcessMap = Maps.newHashMap();
         pmProcessList.forEach(ele -> pmProcessMap.put(ele.getId(), ele));
         PmProcess defaultPmProcess = new PmProcess();
+
+        Map<Long,Long> craftProcessIdMap = Maps.newHashMap();
+        Map<Long,Long> processIdCraftMap = Maps.newHashMap();
+        pmsProduceOrderCraftList.forEach(ele -> {
+            craftProcessIdMap.put(ele.getId(),ele.getProcessId());
+            processIdCraftMap.put(ele.getProcessId(),ele.getId());
+        });
+        dataList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
         //获取生产订单id集合
         Set<Long> produceOrderIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProduceOrderId).collect(Collectors.toSet());
@@ -707,11 +718,16 @@ public class ReportServiceImpl implements ReportService {
         ProduceOrderProcessNumVO defaultProduceOrderProcessNumVO = new ProduceOrderProcessNumVO();
 
         //查询工序需要的物料,兼容所有的工序物料
-        Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, processIdSet);
-        Assert.notEmpty(materialProcessMap, "工序信息为配置物料信息，暂无报表数据");
+        Map<Long, List<BaseSelectVO<Long>>> materialProcessMapCopy = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, pidSet);
+        Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = Maps.newHashMap();
+        materialProcessMapCopy.forEach((k,v) ->{
+            materialProcessMap.put(processIdCraftMap.get(k),v);
+        });
+
+        Assert.notEmpty(materialProcessMap, "工序信息未配置物料信息，暂无报表数据");
         List<BaseReportHeaderVO> module = Lists.newArrayList();
         materialProcessMap.forEach((k, v) -> {
-            BaseReportHeaderVO moduleHeader = new BaseReportHeaderVO(pmProcessMap.getOrDefault(k, defaultPmProcess).getName(), v.stream().map(BaseSelectVO::getName).collect(Collectors.toList()));
+            BaseReportHeaderVO moduleHeader = new BaseReportHeaderVO(pmProcessMap.getOrDefault(craftProcessIdMap.get(k), defaultPmProcess).getName(), v.stream().map(BaseSelectVO::getName).collect(Collectors.toList()));
             module.add(moduleHeader);
         });
         header.setModule(module);
