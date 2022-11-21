@@ -1,10 +1,12 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.TupleDTO;
@@ -1013,6 +1015,9 @@ public class ReportServiceImpl implements ReportService {
         sysOfficeParentDTO.setId(dto.getWorkshopId());
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
         List<SysOfficeVO> productLineList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
+        if (CollectionUtils.isEmpty(productLineList)) {
+            throw new BusinessException("该车间没有绑定产线");
+        }
 
         //获取日期
         List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
@@ -1078,6 +1083,10 @@ public class ReportServiceImpl implements ReportService {
 
             List<CompleteStorageCountVO> storageCountVOList = completeStorageCount.stream().filter(storageCountVO -> sysDictVO.getId().equals(storageCountVO.getClassGroupId())).collect(Collectors.toList());
             for (SysOfficeVO sysOfficeVO : productLineList) {
+                if (CollectionUtils.isEmpty(storageCountVOList)) {
+                    quantityList.add(BigDecimal.ZERO);
+                    continue;
+                }
                 Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> storageCountVO.getProductionLineId().equals(sysOfficeVO.getId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getQuantity());
@@ -1131,6 +1140,10 @@ public class ReportServiceImpl implements ReportService {
 
             List<PmsReportWork> reportWorkList = pmsReportWorkList.stream().filter(reportWork -> reportWork.getProductLineId().equals(sysOfficeVO.getId())).collect(Collectors.toList());
             for (SysDictVO sysDictVO : sysDictVOList) {
+                if (CollectionUtils.isEmpty(reportWorkList)) {
+                    quantityList.add(BigDecimal.ZERO);
+                    continue;
+                }
                 Optional<PmsReportWork> present = reportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getProcessQuantity());
@@ -1156,6 +1169,10 @@ public class ReportServiceImpl implements ReportService {
 
             List<CompleteStorageCountVO> storageCountVOList = completeStorageCount.stream().filter(storageCountVO -> sysOfficeVO.getId().equals(storageCountVO.getProductionLineId())).collect(Collectors.toList());
             for (SysDictVO sysDictVO : sysDictVOList) {
+                if (CollectionUtils.isEmpty(storageCountVOList)) {
+                    quantityList.add(BigDecimal.ZERO);
+                    continue;
+                }
                 Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> storageCountVO.getClassGroupId().equals(sysDictVO.getId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getQuantity());
@@ -1192,6 +1209,10 @@ public class ReportServiceImpl implements ReportService {
 
         List<PmsReportWork> workFilterList = pmsReportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).collect(Collectors.toList());
         for (SysOfficeVO sysOfficeVO : productLineList) {
+            if (CollectionUtils.isEmpty(workFilterList)) {
+                quantityList.add(BigDecimal.ZERO);
+                continue;
+            }
             Optional<PmsReportWork> present = workFilterList.stream().filter(pmsReportWork -> pmsReportWork.getProductLineId().equals(sysOfficeVO.getId())).findAny();
             if (present.isPresent()) {
                 quantityList.add(present.get().getProcessQuantity());
