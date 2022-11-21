@@ -6,6 +6,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
@@ -310,11 +311,19 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     @Override
     public void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response, Integer type) {
         List<?> dataList = new ArrayList<>();
+        String modelName = null;
+        String fileName = null;
         if (type.equals(0)) {
+            fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB;
             dataList = getDeepDefectiveCategoryDetailList(dto);
         } else if (type.equals(1)) {
+            fileName = QtManagerConstant.QT_CHART_DEFECTIVE_ITEM_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXX;
             dataList = getDeepDefectiveItemDetailList(dto);
         } else if (type.equals(2)) {
+            fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPQXX;
             dataList = getSubstrateItemDetail(dto);
         }
         Map<String, Object> map = MapUtils.newHashMap();
@@ -322,11 +331,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         map.put("productWorkShopName","");
         map.put("productLineName","");
         map.put("defectCategory","");
+        map.put("defect","");
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
 
         if (Objects.nonNull(dto.getCompare())) {
             map.put("compare",QtManagerConstant.QtChartCompareEnum.getNameByCode(dto.getCompare()));
-
         }
         if (Objects.nonNull(dto.getProductWorkShopId())) {
             String workshopName = remoteOfficeFeign.getNameById(dto.getProductWorkShopId()).getData();
@@ -341,6 +350,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Optional<QtItemCategoryVO> optional = categoryList.stream().filter(qtItemCategoryVO -> qtItemCategoryVO.getId().equals(dto.getDefectCategory())).findAny();
             optional.ifPresent(qtItemCategoryVO -> map.put("defectCategory", qtItemCategoryVO.getName()));
         }
+        if (Objects.nonNull(dto.getDefectId())) {
+            Map<Integer, String> byIdCh = qtDefectiveItemService.listByIdCh(Collections.singleton(dto.getDefectId()));
+            if (!byIdCh.isEmpty()) {
+                map.put("defect",byIdCh.get(dto.getDefectId()));
+            }
+        }
         if (dto.getWorkingOrder().equals(0)) {
             map.put("workingOrder","早班");
         } else if (dto.getWorkingOrder().equals(1)) {
@@ -349,7 +364,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             map.put("workingOrder","全部");
         }
 
-        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB,QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME,map,dataList,dto.getBase64());
+        DownloadUtil.downloadTemplate(response,modelName,fileName,map,dataList,dto.getBase64());
 
     }
 

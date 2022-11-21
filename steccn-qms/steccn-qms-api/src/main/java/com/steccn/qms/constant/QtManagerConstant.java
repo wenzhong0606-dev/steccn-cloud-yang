@@ -78,6 +78,10 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB = "SJGQXLBFB.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_SJGQXX = "SJGQXX.xlsx";
+
+    String QT_CHART_EXCEL_MODEL_NAME_JPQXX = "JPQXX.xlsx";
+
     String QT_CHART_SPC_NAME = "SPC.xlsx";
 
     String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
@@ -101,6 +105,10 @@ public interface QtManagerConstant {
     String QT_CHART_ACCESSORY_PROCESS_NAME ="配料抽检合格率";
 
     String QT_CHART_DEFECTIVE_CATEGORY_NAME ="深加工缺陷类别分布";
+
+    String QT_CHART_DEFECTIVE_ITEM_NAME ="深加工缺陷项分布";
+
+    String QT_CHART_SUBSTRATE_ITEM_NAME ="基片缺陷项分布";
 
     String QT_CHART_SUB_JPCJ ="基片化验抽检合格率趋势";
 
