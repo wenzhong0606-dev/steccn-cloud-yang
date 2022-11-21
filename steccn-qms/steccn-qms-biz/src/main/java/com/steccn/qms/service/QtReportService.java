@@ -109,5 +109,5 @@ public interface QtReportService extends IService<QtReport> {
      * @param response
      * @param dto
      */
-    void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto);
+    void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) throws IOException;
 }
