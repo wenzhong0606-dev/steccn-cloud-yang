@@ -76,10 +76,10 @@ public class DownloadUtil {
                     anchor.setDx2(-StyleUtil.getCoordinate(5));
                     anchor.setDx1(StyleUtil.getCoordinate(5));
                     // 图片位置设置代码
-                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 6));
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 7));
                     anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
-                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 11) + 1);
-                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 7) + 1);
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 10) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 6) + 1);
                     anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
                     drawing.createPicture(anchor, index);
                 }

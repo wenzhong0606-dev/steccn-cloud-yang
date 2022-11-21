@@ -1762,11 +1762,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //筛选车间
         if(dto.getProductLineId()!=null){
-            flatDataList = flatDataList.stream().filter(s->s.getProductLineId().equals(dto.getProductLineId())).collect(Collectors.toList());
+            flatDataList = flatDataList.stream().filter(s->s.getProductWorkshopId().equals(dto.getProductLineId())).collect(Collectors.toList());
         }
         //筛选filters
         if(dto.getFilters()!=null){
-            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductWorkshop().getName())).collect(Collectors.toList());
         }
         //计算每条任务的合格率
         flatDataList.forEach(tmp->{
@@ -2176,33 +2176,35 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //筛选filters
         if(dto.getFilters()!=null){
-            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+            flatDataList = flatDataList.stream().filter(s->dto.getFilters().contains(s.getProductWorkshop().getName())).collect(Collectors.toList());
         }
         //计算每条任务的合格率
         flatDataList.forEach(tmp->{
             BigDecimal result = BigDecimalUtil.divide(new BigDecimal(tmp.getGoodNum()),new BigDecimal(tmp.getCheckNum()));
             tmp.setPassRate(new DecimalFormat("0.00%").format(result));
+            if(Objects.nonNull(tmp.getProductWorkshop().getName())){
+                tmp.setProductWorkshopName(tmp.getProductWorkshop().getName());
+            }
         });
 
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        if(dto.getProductLineId()!=null){
-            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
+        if(dto.getProductWorkShopId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
             if(nameById!=null){
                 map.put("productWorkshopName",nameById.getData());
             }
         }
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+            map.put("workOrderNameCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
         }
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+            map.put("workOrderNameCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
         }
         if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+            map.put("workOrderNameCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
         }
-        map.put("productWorkshopName",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPHY,QtManagerConstant.QT_CHART_SUB_JPCJ,map,flatDataList,dto.getBase64());
     }
 

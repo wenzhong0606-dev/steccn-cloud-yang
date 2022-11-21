@@ -36,7 +36,13 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
     public Map<Long, List<QtIQCAcceptabilityCopyVO>> listByTaskId(Set<Long> taskIds) {
         Map<Long, List<QtIQCAcceptabilityCopyVO>> resMap = Maps.newHashMap();
         //1.自定义sql获取动态表格内容
-        List<QtSubtableVO> list = this.baseMapper.listByTaskId(taskIds);
+
+        //修复taskIds为空的情况
+        List<QtSubtableVO> list = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(taskIds)){
+            list = this.baseMapper.listByTaskId(taskIds);
+        }
+
         //2.处理数据
         if (CollUtil.isNotEmpty(list)) {
             //根据任务分组

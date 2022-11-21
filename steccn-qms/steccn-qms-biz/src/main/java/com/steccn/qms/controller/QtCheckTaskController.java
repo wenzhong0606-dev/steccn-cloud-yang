@@ -177,6 +177,18 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtSubLaboratoryAcceptabilityDetailVO(dto));
     }
 
+    @PostMapping("/sub/chemical/acceptability/download")
+    @ApiOperation(value = "基片化验抽检合格率趋势明细分页")
+    public void downloadQtSubLaboratoryAcceptability(@RequestBody QtSubOrDeepAcceptabilityDTO dto,HttpServletResponse response) throws IOException{
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
+        try{
+            qtCheckTaskService.downloadQtSubLaboratoryAcceptabilityDetailVO(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     @PostMapping("/accessory/acceptability/chart")
     @ApiOperation(value = "配料抽检合格率")
     public R<QtLineChartBiBarDTO> accessoryChart(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
