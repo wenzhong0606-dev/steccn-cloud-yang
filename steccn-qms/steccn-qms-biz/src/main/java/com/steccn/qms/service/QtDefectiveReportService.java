@@ -5,6 +5,7 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -43,6 +44,14 @@ public interface QtDefectiveReportService {
      * @return 分页数据
      */
     Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto);
+
+    /**
+     * 深加工缺陷类别分布-下载
+     *
+     * @param dto
+     * @param response
+     */
+    void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response);
 
     /**
      * 深加工缺陷项分布

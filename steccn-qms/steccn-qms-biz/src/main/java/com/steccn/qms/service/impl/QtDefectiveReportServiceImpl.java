@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,6 +15,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -28,14 +30,18 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
+import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -289,6 +295,52 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public Page<DeepDefectiveCategoryDetailVO> deepDefectiveCategoryDetail(QtChartParamDTO dto) {
+
+        List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveCategoryDetailList(dto);
+        //排序+逻辑分页
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+    }
+
+    @SneakyThrows
+    @Override
+    public void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response) {
+        List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveCategoryDetailList(dto);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("compare","");
+        map.put("productWorkShopName","");
+        map.put("productLineName","");
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
+
+        if (Objects.nonNull(dto.getCompare())) {
+            map.put("compare",QtManagerConstant.QtChartCompareEnum.getNameByCode(dto.getCompare()));
+
+        }
+        if (Objects.nonNull(dto.getProductWorkShopId())) {
+            String workshopName = remoteOfficeFeign.getNameById(dto.getProductWorkShopId()).getData();
+            map.put("productWorkShopName",workshopName);
+        }
+        if (Objects.nonNull(dto.getProductLineId())) {
+            String productLineName = remoteOfficeFeign.getNameById(dto.getProductLineId()).getData();
+            map.put("productLineName",productLineName);
+        }
+        if (dto.getWorkingOrder().equals(0)) {
+            map.put("workingOrder","早班");
+        } else if (dto.getWorkingOrder().equals(1)) {
+            map.put("workingOrder","夜班");
+        } else {
+            map.put("workingOrder","全部");
+        }
+
+        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB,QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME,map,pageList,dto.getBase64());
+
+    }
+
+    private List<DeepDefectiveCategoryDetailVO> getDeepDefectiveCategoryDetailList(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //如果车间和产线为空，表示查询深加工车间所有数据
@@ -314,13 +366,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setCreateTime(qtItemCategory.getCreateTime());
         });
         pageList = legendFilter(dto, pageList);
-        //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+
+        return pageList;
     }
 
 
