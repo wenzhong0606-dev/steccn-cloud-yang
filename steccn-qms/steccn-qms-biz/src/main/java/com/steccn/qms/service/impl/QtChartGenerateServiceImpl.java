@@ -645,6 +645,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             } else {
                 vo.setWeekValue(new DecimalFormat("0.00%").format(weekRate));
             }
+            if (weekRate.compareTo(BigDecimal.ZERO) < 0) {
+                vo.setWeekFlag(0);
+            } else if (weekRate.compareTo(BigDecimal.ZERO) > 0) {
+                vo.setWeekFlag(1);
+            } else {
+                vo.setWeekFlag(2);
+            }
         }
         vo.setXData(xData);
         vo.setYData(yData);
@@ -653,9 +660,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         } else {
             vo.setValue(new DecimalFormat("0.00%").format(yData.get(yData.size() - 1)));
         }
-        BigDecimal targetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1)).getValue();
-        if (targetValue == null) {
-            targetValue = BigDecimal.ZERO;
+        BigDecimal targetValue = BigDecimal.ZERO;
+        QtChartTargetValue qtChartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1));
+        if (Objects.nonNull(qtChartTargetValue)) {
+            targetValue = qtChartTargetValue.getValue();
         }
         vo.setTargetValue(targetValue);
         return vo;
