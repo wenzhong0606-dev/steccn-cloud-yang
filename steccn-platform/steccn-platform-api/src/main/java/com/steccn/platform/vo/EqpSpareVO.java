@@ -58,4 +58,7 @@ public class EqpSpareVO implements Serializable {
 
     @ApiModelProperty("宽度")
     private BigDecimal wideQuantity;
+
+    @ApiModelProperty("规格")
+    private String specifications;
 }
