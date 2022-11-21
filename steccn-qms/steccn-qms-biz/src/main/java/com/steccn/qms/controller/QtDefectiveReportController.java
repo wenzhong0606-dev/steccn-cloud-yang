@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -44,6 +46,12 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷类别分布-明细")
     public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveCategoryDetail(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryDetail(dto));
+    }
+
+    @PostMapping("/deep/category/download")
+    @ApiOperation("深加工缺陷类别分布-下载")
+    public void deepDefectiveCategoryDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
+        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response);
     }
 
     @PostMapping("/deep/item/bar")

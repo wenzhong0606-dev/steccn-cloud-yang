@@ -76,6 +76,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_PLCJ = "PLCJ.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB = "SJGQXLBFB.xlsx";
+
     String QT_CHART_SPC_NAME = "SPC.xlsx";
 
     String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
@@ -97,6 +99,8 @@ public interface QtManagerConstant {
     String QT_CHART_SUB_PROCESS_NAME ="基片巡检合格率";
 
     String QT_CHART_ACCESSORY_PROCESS_NAME ="配料抽检合格率";
+
+    String QT_CHART_DEFECTIVE_CATEGORY_NAME ="深加工缺陷类别分布";
 
     String QT_CHART_SUB_JPCJ ="基片化验抽检合格率趋势";
 
@@ -393,6 +397,15 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
+
+        public static String getNameByCode(Integer code){
+            for (QtChartCompareEnum value : QtChartCompareEnum.values()) {
+                if(value.getCode().equals(code)){
+                    return value.getName();
+                }
+            }
+            return null;
+        }
     }
 
     /**

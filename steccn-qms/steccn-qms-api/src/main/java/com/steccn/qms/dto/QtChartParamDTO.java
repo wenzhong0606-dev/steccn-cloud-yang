@@ -71,4 +71,6 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("折线图存在日期粒度，不对比模式下的图例")
     private List<String> guaFilters;
+
+    private String base64;
 }
