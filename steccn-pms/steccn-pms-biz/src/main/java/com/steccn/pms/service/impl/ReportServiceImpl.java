@@ -1,12 +1,10 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.TupleDTO;
@@ -86,8 +84,6 @@ public class ReportServiceImpl implements ReportService {
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList("片","ton","㎡"),"measure_unit");
-        log.debug("{}",unitList);
-
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
 
         //获取班次数据
@@ -177,9 +173,23 @@ public class ReportServiceImpl implements ReportService {
                             BigDecimalUtil.accumulate(countMap2, 5, typeVO1.getQuantity());
                         }
                     }
+                    BigDecimal m1 = unitConvert(unitList, unitConvertMap, entry.getKey(), inCount, 1);
+                    BigDecimal m2 = unitConvert(unitList, unitConvertMap, entry.getKey(), inCount, 2);
+                    BigDecimal m3 = unitConvert(unitList, unitConvertMap, entry.getKey(), proCount, 1);
+                    BigDecimal m4 = unitConvert(unitList, unitConvertMap, entry.getKey(), proCount, 2);
+
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
-                    BigDecimalUtil.accumulate(countMap3, 1, proCount);
-                    row.setTotal(Arrays.asList(BigDecimalUtil.format(inCount), BigDecimalUtil.format(proCount)));
+                    BigDecimalUtil.accumulate(countMap3, 1, m1);
+                    BigDecimalUtil.accumulate(countMap3, 2, m2);
+                    BigDecimalUtil.accumulate(countMap3, 3, proCount);
+                    BigDecimalUtil.accumulate(countMap3, 4, m3);
+                    BigDecimalUtil.accumulate(countMap3, 5, m4);
+                    row.setTotal(Arrays.asList(BigDecimalUtil.format(inCount),
+                            BigDecimalUtil.format(m1),
+                            BigDecimalUtil.format(m2),
+                            BigDecimalUtil.format(proCount),
+                            BigDecimalUtil.format(m3),
+                            BigDecimalUtil.format(m4)));
                     EqpSpareVO eqpSpareVO = specMap.getOrDefault(entry.getKey(), defaultEqpSpareVO);
                     row.setSpecList(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity())));
                     productLineVOList.add(row);
@@ -189,17 +199,16 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
                 if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_0){
-                    rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
-                    rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                    rowTotal.setMorning(valueStr(countMap1));
+                    rowTotal.setNight(valueStr(countMap2));
                 }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_1){
-                    rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
+                    rowTotal.setMorning(valueStr(countMap1));
                 }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_2){
-                    rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                    rowTotal.setNight(valueStr(countMap2));
                 }
-                rowTotal.setTotal(Arrays.asList(BigDecimalUtil.format(countMap3.get(0)), BigDecimalUtil.format(countMap3.get(1))));
+                rowTotal.setTotal(valueStr(countMap3));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
                 productLineVOList.add(rowTotal);
-
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
                 addProductLineOther(dto, classList, productLine, productLineVOList, workshopCountMap);
             }
@@ -220,6 +229,20 @@ public class ReportServiceImpl implements ReportService {
         vo.setDataList(productLineVOList);
         return vo;
     }
+
+    /**
+     * 获取map中的数据
+     * @param countMap
+     * @return
+     */
+    private List<String> valueStr(Map<Integer, BigDecimal> countMap){
+        List<String> resList = Lists.newArrayList();
+        for(int i = 0 ; i <=5 ;i ++){
+            resList.add(BigDecimalUtil.format(countMap.get(i)));
+        }
+        return resList;
+    }
+
 
     /**
      * 获取所有的单位的id  依次是片，
@@ -468,9 +491,9 @@ public class ReportServiceImpl implements ReportService {
         String dataStr1 = BigDecimalUtil.format(dataList.get(0));
         String dataStr2 = BigDecimalUtil.format(dataList.get(1));
         String dataStr3 = BigDecimalUtil.format(dataList.get(2));
-        row.setMorning(Arrays.asList(dataStr1, dataStr1));
-        row.setNight(Arrays.asList(dataStr2, dataStr2));
-        row.setTotal(Arrays.asList(dataStr3, dataStr3));
+        row.setMorning(Arrays.asList(dataStr1, dataStr1,dataStr1,dataStr1,dataStr1,dataStr1));
+        row.setNight(Arrays.asList(dataStr2, dataStr2, dataStr2, dataStr2, dataStr2, dataStr2));
+        row.setTotal(Arrays.asList(dataStr3, dataStr3, dataStr3, dataStr3, dataStr3, dataStr3));
         return row;
     }
 
