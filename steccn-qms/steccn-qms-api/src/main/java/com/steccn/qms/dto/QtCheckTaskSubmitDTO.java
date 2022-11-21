@@ -42,4 +42,15 @@ public class QtCheckTaskSubmitDTO implements Serializable {
      */
     private String destoryInfoRemark;
 
+    /**
+     * 工位id
+     */
+    private String stationId;
+
+    /**
+     * 工位
+     */
+    private QtBaseIdNameDTO station;
+
+
 }

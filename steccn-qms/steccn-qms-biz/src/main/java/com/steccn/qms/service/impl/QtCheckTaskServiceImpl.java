@@ -432,6 +432,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
             qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
+        //设置工位字段
+        qtCheckTaskDetailVo.setStation(qtCheckTask.getStation());
+        qtCheckTaskDetailVo.setStationId(qtCheckTask.getStationId());
+        qtCheckTaskDetailVo.setStationName(qtCheckTask.getStationName());
 
         return qtCheckTaskDetailVo;
     }
@@ -1122,7 +1126,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         QtProduceOrderLineVO qtProduceOrderLineVO = new QtProduceOrderLineVO();
         PmsProduceOrderVO pmsProduceOrderVO = remotePmsFeignApi.listByProduceLineId(id).getData();
-        Assert.notNull(pmsProduceOrderVO,"该条产线下面没有正在执行中的订单");
+        Assert.notNull(pmsProduceOrderVO,"该产线的生产订单尚未开始,请通知生产人员");
         BeanUtils.copyProperties(pmsProduceOrderVO, qtProduceOrderLineVO);
 
         return qtProduceOrderLineVO;

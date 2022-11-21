@@ -142,6 +142,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         oldModel.setName(dto.getName());
         oldModel.setNameEn(PinyinUtil.getPinyin(dto.getName(), Strings.EMPTY));
         oldModel.setNote(dto.getNote());
+        oldModel.setDefectCode(dto.getDefectCode());
         boolean save = updateById(oldModel);
         //判断是否关联检验方案，如果关联则需要升检验方案的版本
         Set<Integer> planIdList = qtCheckPlanService.linkedPlan(oldModel.getId(), 1);
