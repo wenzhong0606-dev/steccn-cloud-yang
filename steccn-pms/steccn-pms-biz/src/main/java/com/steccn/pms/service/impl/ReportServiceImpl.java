@@ -267,9 +267,12 @@ public class ReportServiceImpl implements ReportService {
         PmsReportWork defaultPmsReportWork = new PmsReportWork();
         PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
         PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
-        BigDecimal morningRate = BigDecimalUtil.divide(morningPms.getProcessQuantity(), morningBigDecimal);
-        BigDecimal nightRate = BigDecimalUtil.divide(nightPms.getProcessQuantity(), nightBigDecimal);
-        SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, morningRate.add(nightRate)), "合格率(%)");
+        BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, morningPms.getProcessQuantity());
+        BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, nightPms.getProcessQuantity());
+        BigDecimal morningRate = BigDecimalUtil.divide(dayPq, morningBigDecimal);
+        BigDecimal nightRate = BigDecimalUtil.divide(nightPq, nightBigDecimal);
+        BigDecimal rateSum = BigDecimalUtil.add(morningRate, nightRate);
+        SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
 
         productLineVOList.add(rateVo);
