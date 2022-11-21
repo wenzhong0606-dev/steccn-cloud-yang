@@ -57,8 +57,18 @@ public class QtChartSubDetailDTO implements Serializable {
     private BigDecimal lossWeight;
 
     /**
+     * 损耗重量字符串
+     */
+    private String lossWeightStr;
+
+    /**
      * 拉引量
      */
     private BigDecimal pullAmount;
+
+    /**
+     * 拉引量字符串
+     */
+    private String pullAmountStr;
 
 }

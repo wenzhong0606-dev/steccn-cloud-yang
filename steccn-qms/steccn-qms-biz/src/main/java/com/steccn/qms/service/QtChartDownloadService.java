@@ -52,12 +52,12 @@ public interface QtChartDownloadService {
      * @param dto
      * @return
      */
-    Page<QtChartSubDetailDTO>  LossDetails(QtChartYieldDownloadDTO dto);
+    Page<QtChartSubDetailDTO>  lossDetails(QtChartYieldDownloadDTO dto);
 
     /**
      * 下载成品率详情
      * @param dto
      * @return
      */
-    void  DownloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException ;
+    void  downloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException ;
 }

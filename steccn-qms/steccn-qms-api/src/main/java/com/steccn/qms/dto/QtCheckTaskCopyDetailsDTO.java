@@ -3,6 +3,7 @@ package com.steccn.qms.dto;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class QtCheckTaskCopyDetailsDTO implements Serializable {
     /**
      * 分析时间
      */
-    private LocalDateTime analystTime;
+    private LocalDate analystTime;
 
     /**
      * 配料付数

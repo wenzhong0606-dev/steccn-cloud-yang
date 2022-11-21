@@ -83,7 +83,18 @@ public class QtChartDownloadController {
     @PostMapping("/substrate/loss/detail")
     @ApiOperation(value = "基片损耗率详情")
     public R<Page<QtChartSubDetailDTO>> substrateLossDetails(@RequestBody @Validated QtChartYieldDownloadDTO dto) {
-        return R.success(qtChartDownloadService.LossDetails(dto));
+        return R.success(qtChartDownloadService.lossDetails(dto));
+    }
+
+    @PostMapping("/substrate/loss/download")
+    @ApiOperation(value = "基片损耗率下载")
+    public void substrateLossDownload (@RequestBody @Validated QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException {
+        try{
+            qtChartDownloadService.downloadLossDetails(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
     }
 
     /**

@@ -39,6 +39,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
@@ -248,7 +249,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
      * @return
      */
     @Override
-    public Page<QtChartSubDetailDTO> LossDetails(QtChartYieldDownloadDTO dto) {
+    public Page<QtChartSubDetailDTO> lossDetails(QtChartYieldDownloadDTO dto) {
         QtChartParamDTO paramDTO = new QtChartParamDTO();
         BeanUtils.copyProperties(dto,paramDTO);
         List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(paramDTO);
@@ -263,13 +264,13 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                 if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.DAY.getName())){
                     workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getCode());
                 }
-                qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
+                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
             }
             if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
+                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
             }
             if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductWorkShopName())).collect(Collectors.toList());
+                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductWorkShopName())).collect(Collectors.toList());
             }
         }
         //先排序
@@ -291,14 +292,55 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
      * @param dto
      */
     @Override
-    public void DownloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException {
+    public void downloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException {
         //拿到details数据，默认所有9999条
         dto.setCurrent(1);
         dto.setSize(99999);
-        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.LossDetails(dto);
+        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.lossDetails(dto);
         if(CollUtil.isNotEmpty(qtChartSubDetailDTOPage.getRecords())){
             List<QtChartSubDetailDTO> records = qtChartSubDetailDTOPage.getRecords();
-            this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPSH,QtManagerConstant.QT_CHART_JPSH_NAME,null,records,dto.getBase64());
+            //根据map塞入数据
+            Map<String, Object> map = MapUtils.newHashMap();
+            //根据自己的模版put数据
+            if(dto.getProductWorkShopId()!=null){
+                R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
+                if(nameById!=null){
+                    map.put("workShopCondition",nameById.getData());
+                }
+            }
+            if(dto.getProductLineId()!=null){
+                R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
+                if(nameById!=null){
+                    map.put("workLineCondition",nameById.getData());
+                }
+            }
+            if(dto.getWorkOrderId()!=null){
+                if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                    map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.DAY.getName());
+                }else {
+                    map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.NIGHT.getName());
+                }
+            }
+            map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+            }
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+            }
+            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+            }
+            records.forEach(tmp->{
+                if(tmp.getPullAmount()!=null){
+                    tmp.setPullAmountStr(new DecimalFormat("0.0000").format(tmp.getPullAmount()));
+                }
+                if(tmp.getLossWeight()!=null){
+                    tmp.setLossWeightStr(new DecimalFormat("0.0000").format(tmp.getLossWeight()));
+                }
+            });
+            this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPSH,QtManagerConstant.QT_CHART_JPSH_NAME,map,records,dto.getBase64());
         }
     }
 
@@ -400,7 +442,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
         }
         //对全量数据表进行筛选
-        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.LossDetails(dto);
+        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.lossDetails(dto);
         List<QtChartSubDetailDTO> records = qtChartSubDetailDTOPage.getRecords();
         if(CollUtil.isNotEmpty(records)){
             //封装的下载

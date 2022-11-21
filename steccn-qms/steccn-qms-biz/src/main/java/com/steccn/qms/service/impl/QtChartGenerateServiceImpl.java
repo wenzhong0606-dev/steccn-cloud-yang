@@ -553,7 +553,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
             }
         } else {
-            Assert.notEmpty(resultList, "数据为空，暂无报表");
+//            Assert.notEmpty(resultList, "数据为空，暂无报表");
             return resultList;
         }
         return resultList;
