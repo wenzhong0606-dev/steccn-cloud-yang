@@ -302,6 +302,21 @@ public class ReportServiceImpl implements ReportService {
      * @return 转换后的数值
      */
     private BigDecimal unitConvert(List<Long> unitList,Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap , Long materialId ,BigDecimal num, Integer idx){
+        //1.获取物料对应的单位转换
+        List<SysSpareUnitConversionVO> orDefault = unitConvertMap.getOrDefault(materialId, Lists.newArrayList());
+        //2.遍历此物料所有单位转换集合
+        if(CollUtil.isNotEmpty(orDefault)){
+            Map<Long,SysSpareUnitConversionVO> resMap = Maps.newHashMap();
+            for (SysSpareUnitConversionVO spare : orDefault) {
+                resMap.put(spare.getConversionUintId(),spare);
+            }
+            SysSpareUnitConversionVO vo = resMap.getOrDefault(unitList.get(idx), new SysSpareUnitConversionVO());
+            if(Objects.nonNull(vo)){
+                BigDecimal multiply = BigDecimalUtil.multiply(vo.getConversionQuantity(), num);
+                BigDecimal divide = multiply.divide(vo.getQuantity());
+                return divide;
+            }
+        }
         return BigDecimal.ZERO;
     }
 
