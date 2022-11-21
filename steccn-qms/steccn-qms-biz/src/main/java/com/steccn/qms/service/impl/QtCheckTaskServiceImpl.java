@@ -432,6 +432,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
             qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
+        //设置工位字段
+        qtCheckTaskDetailVo.setStation(qtCheckTask.getStation());
+        qtCheckTaskDetailVo.setStationId(qtCheckTask.getStationId());
+        qtCheckTaskDetailVo.setStationName(qtCheckTask.getStationName());
 
         return qtCheckTaskDetailVo;
     }
