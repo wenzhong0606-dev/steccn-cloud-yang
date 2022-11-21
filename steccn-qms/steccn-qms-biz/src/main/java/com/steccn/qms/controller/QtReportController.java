@@ -40,7 +40,7 @@ public class QtReportController {
     @PostMapping
     @ApiOperation(value = "新建报表任务")
     @SysLog("新建报表任务")
-    public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
+    public R<Integer> add(@Validated(InsertGroup.class) @RequestBody QtReportDTO dto) {
         return R.success(qtReportService.add(dto));
     }
 

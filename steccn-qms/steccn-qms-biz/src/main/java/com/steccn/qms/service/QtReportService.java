@@ -23,7 +23,7 @@ public interface QtReportService extends IService<QtReport> {
      * @param dto
      * @return
      */
-    Boolean add(QtReportDTO dto);
+    Integer add(QtReportDTO dto);
 
     /**
      * 根据物料id以及检验类型选择检验分组

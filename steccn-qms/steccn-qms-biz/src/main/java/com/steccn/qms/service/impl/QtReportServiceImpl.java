@@ -95,16 +95,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(QtReportDTO dto) {
+    public Integer add(QtReportDTO dto) {
+        QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
+       if (Objects.nonNull(report)){
+           throw new BusinessException("该报表卡片已存在,请勿重复创建!");
+       }
         QtReport qtReport = new QtReport();
         BeanUtils.copyProperties(dto, qtReport);
-        QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
-        Assert.notNull(report, "该报表卡片已存在,请勿重复创建!");
         qtReport.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
         qtReport.setTimeScopeEnd(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeEnd()));
         //根据分组id去查询分组
         this.save(qtReport);
-        return Boolean.TRUE;
+        return qtReport.getId();
     }
 
     /**
@@ -357,12 +359,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }else if(QtManagerConstant.QtGranularityEnum.DAY.getName().equals(q.getGranularity())){
                     timeFormat = LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_DATE_PATTERN);
                 }else if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(q.getGranularity())){
-                    WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY,1);
-                    int weekNum = LocalDateTime.of(start.getYear(), start.getMonth()
-                            , start.getDayOfYear(), start.getHour(), start.getMinute()
-                            , start.getSecond()).get(weekFields.weekOfYear());
-                  String weekFormat =  LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_DATE_PATTERN);
-                    timeFormat="第"+weekNum+"周"+" "+weekFormat;
+                    LocalDate date = start.toLocalDate();
+                    WeekFields weekFields = WeekFields.ISO;
+                    int weekNumber = date.get(weekFields.weekOfWeekBasedYear());
+                  String weekFormat =  LocalDateUtil.localDateFormat(date,DatePattern.NORM_DATE_PATTERN);
+                    timeFormat="第"+weekNumber+"周"+" "+weekFormat;
                 }else if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(q.getGranularity())){
                     timeFormat= LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_MONTH_PATTERN);
                 }else if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(q.getGranularity())){
@@ -513,39 +514,39 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
                 itemValue.add(average.toString());
             }
-//            String timeFormat = new String();
-//            if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(q.getGranularity())){
-//                String startHourFormat = LocalDateUtil.format(start, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
-//                String endHourFormat = LocalDateUtil.format(end, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
-//                timeFormat = startHourFormat +"~"+endHourFormat;
-//            }else if(QtManagerConstant.QtGranularityEnum.DAY.getName().equals(q.getGranularity())){
-//                timeFormat = LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_DATE_PATTERN);
-//            }else if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(q.getGranularity())){
-//                WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY,1);
-//                int weekNum = LocalDateTime.of(start.getYear(), start.getMonth()
-//                        , start.getDayOfYear(), start.getHour(), start.getMinute()
-//                        , start.getSecond()).get(weekFields.weekOfYear());
-//                String weekFormat =  LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_DATE_PATTERN);
-//                timeFormat="第"+weekNum+"周"+" "+weekFormat;
-//            }else if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(q.getGranularity())){
-//                timeFormat= LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_MONTH_PATTERN);
-//            }else if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(q.getGranularity())){
-//                int currentMonth = start.getMonthValue();
-//                String  quarter ="";
-//                if (currentMonth >= 1 && currentMonth <= 3) {
-//                    quarter="一季度";
-//                } else if (currentMonth >= 4 && currentMonth <= 6) {
-//                    quarter="二季度";
-//                } else if (currentMonth >= 7 && currentMonth <= 9) {
-//                    quarter="三季度";
-//                } else if (currentMonth >= 10 && currentMonth <= 12) {
-//                    quarter="四季度";
-//                }
-//                timeFormat = start.getYear()+" "+quarter;
-//            }else if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(q.getGranularity())){
-//                timeFormat= start.getYear()+"";
-//            }
-            dates.add(start.toString());
+
+            String timeFormat = new String();
+            if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(q.getGranularity())){
+                String startHourFormat = LocalDateUtil.format(start, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
+                String endHourFormat = LocalDateUtil.format(end, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
+                timeFormat = startHourFormat +"~"+endHourFormat;
+            }else if(QtManagerConstant.QtGranularityEnum.DAY.getName().equals(q.getGranularity())){
+                timeFormat = LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_DATE_PATTERN);
+            }else if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(q.getGranularity())){
+                LocalDate date = start.toLocalDate();
+                WeekFields weekFields = WeekFields.ISO;
+                int weekNumber = date.get(weekFields.weekOfWeekBasedYear());
+                String weekFormat =  LocalDateUtil.localDateFormat(date,DatePattern.NORM_DATE_PATTERN);
+                timeFormat="第"+weekNumber+"周"+" "+weekFormat;
+            }else if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(q.getGranularity())){
+                timeFormat= LocalDateUtil.localDateFormat(start.toLocalDate(),DatePattern.NORM_MONTH_PATTERN);
+            }else if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(q.getGranularity())){
+                int currentMonth = start.getMonthValue();
+                String  quarter ="";
+                if (currentMonth >= 1 && currentMonth <= 3) {
+                    quarter="一季度";
+                } else if (currentMonth >= 4 && currentMonth <= 6) {
+                    quarter="二季度";
+                } else if (currentMonth >= 7 && currentMonth <= 9) {
+                    quarter="三季度";
+                } else if (currentMonth >= 10 && currentMonth <= 12) {
+                    quarter="四季度";
+                }
+                timeFormat = start.getYear()+" "+quarter;
+            }else if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(q.getGranularity())){
+                timeFormat= start.getYear()+"";
+            }
+            dates.add(timeFormat);
             if (i==localDateTimes.size()-1){
                 dates.add(end.toString());
             }
