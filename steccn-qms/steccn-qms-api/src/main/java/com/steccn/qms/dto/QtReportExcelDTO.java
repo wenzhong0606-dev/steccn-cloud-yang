@@ -58,9 +58,14 @@ public class QtReportExcelDTO extends BasePageDTO implements Serializable {
     private String materialName;
 
     /**
+     * 车间id
+     */
+    private Integer workshopId;
+
+    /**
      * 车间名称
      */
-    private String productWorkshopName;
+    private String workshopName;
 
     /**
      * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
@@ -74,9 +79,14 @@ public class QtReportExcelDTO extends BasePageDTO implements Serializable {
     private String checkTypeName;
 
     /**
+     * 客户id
+     */
+    private Integer customerId;
+
+    /**
      * 客户
      */
-    private String customer;
+    private String customerName;
 
     /**
      * 标准值

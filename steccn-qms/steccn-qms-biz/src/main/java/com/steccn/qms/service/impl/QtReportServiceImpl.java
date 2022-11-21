@@ -28,6 +28,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
@@ -86,6 +87,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final QtMaterialService qtMaterialService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     /**
      * 新建报表卡片
@@ -241,18 +243,16 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             return qtReportChartVOlist;
         }
 
-        if (Objects.isNull(reportGroupId)) {
-            return qtReportChartVOlist;
-        }
         List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId)
                 .orderByDesc(QtReport::getId));
         //List<Long> materialIds= qtReportList.stream().map(QtReport::getMaterialId).collect(Collectors.toList());
         if (CollUtil.isEmpty(qtReportList)) {
             return qtReportChartVOlist;
         }
-        Set<Long> measureIds = Sets.newHashSet();
+
         //遍历查出来的集合封装数据`
         qtReportList.forEach(q -> {
+            //返回报表数据
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
             qtReportChartVO.setReportCardType(q.getReportCardType());
@@ -288,6 +288,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtReportChartVO.setDataTypeName(sysDictVO.getName());
                 }
                 //根据检验项id去获取计量单位
+                Set<Long> measureIds = Sets.newHashSet();
                 measureIds.add(qtCheckItem.getMeasureUnit());
                 Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
                 String measureName =longStringMap.get(qtCheckItem.getMeasureUnit());
@@ -341,9 +342,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
 
-                    stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                    stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
                         BigDecimal bigDecimal = new BigDecimal(s);
-                        bigDecimals.add(bigDecimal);
+                        if (Objects.nonNull(bigDecimal)){
+                            bigDecimals.add(bigDecimal);
+                        }
                     });
 
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -370,13 +373,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     int currentMonth = start.getMonthValue();
                     String  quarter ="";
                     if (currentMonth >= 1 && currentMonth <= 3) {
-                        quarter="一季度";
+                        quarter="第一季度";
                     } else if (currentMonth >= 4 && currentMonth <= 6) {
-                        quarter="二季度";
+                        quarter="第二季度";
                     } else if (currentMonth >= 7 && currentMonth <= 9) {
-                        quarter="三季度";
+                        quarter="第三季度";
                     } else if (currentMonth >= 10 && currentMonth <= 12) {
-                        quarter="四季度";
+                        quarter="第四季度";
                     }
                     timeFormat = start.getYear()+" "+quarter;
                 }else if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(q.getGranularity())){
@@ -505,7 +508,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
 
-                stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
                     BigDecimal bigDecimal = new BigDecimal(s);
                     bigDecimals.add(bigDecimal);
                 });
@@ -534,13 +537,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 int currentMonth = start.getMonthValue();
                 String  quarter ="";
                 if (currentMonth >= 1 && currentMonth <= 3) {
-                    quarter="一季度";
+                    quarter="第一季度";
                 } else if (currentMonth >= 4 && currentMonth <= 6) {
-                    quarter="二季度";
+                    quarter="第二季度";
                 } else if (currentMonth >= 7 && currentMonth <= 9) {
-                    quarter="三季度";
+                    quarter="第三季度";
                 } else if (currentMonth >= 10 && currentMonth <= 12) {
-                    quarter="四季度";
+                    quarter="第四季度";
                 }
                 timeFormat = start.getYear()+" "+quarter;
             }else if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(q.getGranularity())){
@@ -563,47 +566,61 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param dto
      */
     @Override
-    public void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) {
+    public void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) throws IOException{
         Map<String, Object> map = MapUtils.newHashMap();
         //筛选dto数据
-        String reportName = dto.getReportName();
         if(StrUtil.isBlank(dto.getReportName())){
-            reportName= "spc控制图表";
+            dto.setReportName("spc控制图表");
         }
 
         if(StrUtil.isBlank(dto.getMaterialName())){
             dto.setMaterialName("");
         }
-        if(StrUtil.isBlank(dto.getProductWorkshopName())){
-            dto.setProductWorkshopName("");
+        if(StrUtil.isBlank(dto.getWorkshopName())){
+            dto.setWorkshopName("");
         }
 
         if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getName());
         }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()){
-            dto.setCheckItemName(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getName());
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getName());
         }
 
-        if(StrUtil.isBlank(dto.getCustomer())){
-            dto.setCustomer("");
+        if(StrUtil.isBlank(dto.getCustomerName())){
+            dto.setCustomerName("");
         }
         //根据自己的模版put数据
-        map.put("materialName", dto.getMaterialName());
-        map.put("productWorkshopName",dto.getProductWorkshopName());
-        map.put("checkType",dto.getCheckTypeName());
-        map.put("customer",dto.getCustomer());
-        map.put("dateStart",dto.getTimeScopeStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("dateEnd",dto.getTimeScopeEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("reportName",dto.getReportName());
+        if (Objects.nonNull(dto.getMaterialId())){
+            QtMaterial material = qtMaterialService.getById(dto.getMaterialId());
+            if (Objects.nonNull(material)){
+                map.put("materialName",material.getName());
+            }
+        }
+        if (Objects.nonNull(dto.getWorkshopId())){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getWorkshopId());
+            if (Objects.nonNull(nameById)){
+                map.put("productWorkshopName",nameById.getData());
+            }
+        }
+
+
+        if (Objects.nonNull(dto.getCustomerId())){
+
+        }
+        map.put("customer",dto.getCustomerName());
+        map.put("dateStart",dto.getTimeScopeStart().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+        map.put("dateEnd",dto.getTimeScopeEnd().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
 
 
         //设置查询条件
@@ -739,11 +756,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         }
         //封装的下载
-        try {
-            this.downloadTemplate(response,QtManagerConstant.QT_CHART_SPC_NAME,reportName,map,data,dto.getBase64());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.downloadTemplate(response,QtManagerConstant.QT_CHART_SPC_NAME,dto.getReportName(),map,data,dto.getBase64());
+
 
     }
 
@@ -987,15 +1001,17 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                                 .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
                         .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
-                stringList.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
                     BigDecimal bigDecimal = new BigDecimal(s);
-                    bigDecimals.add(bigDecimal);
+                    if (Objects.nonNull(bigDecimal)){
+                        bigDecimals.add(bigDecimal);
+                    }
                     QtSpcReportDetailTaskVO qtSpcReportDetailTaskVO = new QtSpcReportDetailTaskVO();
                     BeanUtils.copyProperties(s, qtSpcReportDetailTaskVO);
                     qtSpcReportDetailTaskVOS.add(qtSpcReportDetailTaskVO);
                 });
-                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                 average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
             }
 
             //设置返回数据类型对象
