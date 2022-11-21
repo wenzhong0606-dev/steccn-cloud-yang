@@ -20,7 +20,7 @@ public class PmsDayReportDTO implements Serializable {
     private List<Integer> productLineIdList;
 
     @ApiModelProperty("班次")
-    private List<Long> classesIdList;
+    private List<Long> classGroupIdList;
 
     @ApiModelProperty("日期")
     private LocalDate date;

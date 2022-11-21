@@ -1,10 +1,7 @@
 package com.steccn.pms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -15,9 +12,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.pms.domain.PmsCompleteDelivery;
-import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.*;
@@ -168,7 +163,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
     public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
         List<SubstrateIngredientVO> resList = Lists.newArrayList();
 
-        List<SubstrateIngredientConsumeVO> dataList = this.baseMapper.subIngredientReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        List<SubstrateIngredientConsumeVO> dataList = this.baseMapper.subIngredientReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         if (CollUtil.isNotEmpty(dataList)) {
             dataList.forEach(ele -> {
                 SubstrateIngredientVO vo = new SubstrateIngredientVO();

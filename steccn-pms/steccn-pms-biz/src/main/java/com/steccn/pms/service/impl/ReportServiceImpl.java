@@ -76,7 +76,7 @@ public class ReportServiceImpl implements ReportService {
 
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
         //查询所有数据
-        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
@@ -90,7 +90,7 @@ public class ReportServiceImpl implements ReportService {
         List<SysDictVO> classList = getClassList();
         //构建表头
         List<SysDictVO> filterClassList = Lists.newArrayList();
-        SubstrateReportHeaderVO header = getSubstrateHeader(dto.getClassesIdList(),classList,filterClassList);
+        SubstrateReportHeaderVO header = getSubstrateHeader(dto.getClassGroupIdList(),classList,filterClassList);
 
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
@@ -198,12 +198,12 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setType(PmReportConstant.TYPE_1);
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
-                if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_0){
+                if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_0){
                     rowTotal.setMorning(valueStr(countMap1));
                     rowTotal.setNight(valueStr(countMap2));
-                }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_1){
+                }else if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_1){
                     rowTotal.setMorning(valueStr(countMap1));
-                }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_2){
+                }else if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_2){
                     rowTotal.setNight(valueStr(countMap2));
                 }
                 rowTotal.setTotal(valueStr(countMap3));
@@ -222,9 +222,9 @@ public class ReportServiceImpl implements ReportService {
         //最后一个总计
         addAllOther(productLineVOList, allCountMap);
         //如果只选择一个班次，则只展示一个班次
-        filterClass(dayOrNight(dto.getClassesIdList(),classList),productLineVOList);
+        filterClass(dayOrNight(dto.getClassGroupIdList(),classList),productLineVOList);
         vo.setSpecsNum(3);
-        vo.setDataNum(2);
+        vo.setDataNum(6);
         vo.setHeader(header);
         vo.setDataList(productLineVOList);
         return vo;
@@ -504,7 +504,7 @@ public class ReportServiceImpl implements ReportService {
         vo.setSpecsNum(PmReportConstant.TYPE_3);
 
         //根据产线去查询所有订单的工序分组，用于表头
-        List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
@@ -651,7 +651,7 @@ public class ReportServiceImpl implements ReportService {
         FurtherIngredientReportVO vo = new FurtherIngredientReportVO();
         vo.setSpecsNum(PmReportConstant.TYPE_3);
         //根据产线去查询所有订单的工序分组，用于表头
-        List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
+        List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
         Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
