@@ -1,10 +1,12 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.TupleDTO;
@@ -24,6 +26,7 @@ import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.PmProcess;
+import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.EnergyCountDTO;
@@ -65,6 +68,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
     private final PmsCompleteDeliveryService completeDeliveryService;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -79,6 +83,10 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
+        //获取平方米和吨的id
+        List<Long> unitList = allUnit(Lists.newArrayList("片","ton","㎡"),"measure_unit");
+        log.debug("{}",unitList);
 
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
 
@@ -131,16 +139,42 @@ public class ReportServiceImpl implements ReportService {
                         SubstrateDataListVO typeVO1 = typeMap.getOrDefault(PmReportConstant.TYPE_1, defaultSubstrateDataListVO);
                         inCount = BigDecimalUtil.add(inCount, typeVO0.getQuantity());
                         proCount = BigDecimalUtil.add(proCount, typeVO1.getQuantity());
+
+                        BigDecimal bigDecimal1 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO0.getQuantity(), 1);
+                        BigDecimal bigDecimal2 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO0.getQuantity(), 2);
+                        BigDecimal bigDecimal3 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO1.getQuantity(), 1);
+                        BigDecimal bigDecimal4 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO1.getQuantity(), 2);
+
                         if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
                             //早班
-                            row.setMorning(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(typeVO1.getQuantity())));
+                            row.setMorning(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()),
+                                    BigDecimalUtil.format(bigDecimal1),
+                                    BigDecimalUtil.format(bigDecimal2),
+                                    BigDecimalUtil.format(typeVO1.getQuantity()),
+                                    BigDecimalUtil.format(bigDecimal3),
+                                    BigDecimalUtil.format(bigDecimal4)
+                            ));
                             BigDecimalUtil.accumulate(countMap1, 0, typeVO0.getQuantity());
-                            BigDecimalUtil.accumulate(countMap1, 1, typeVO1.getQuantity());
+                            BigDecimalUtil.accumulate(countMap1, 1, bigDecimal1);
+                            BigDecimalUtil.accumulate(countMap1, 2, bigDecimal2);
+                            BigDecimalUtil.accumulate(countMap1, 3, typeVO1.getQuantity());
+                            BigDecimalUtil.accumulate(countMap1, 4, bigDecimal3);
+                            BigDecimalUtil.accumulate(countMap1, 5, bigDecimal4);
                         } else {
                             //晚班
-                            row.setNight(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(typeVO1.getQuantity())));
+                            row.setNight(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()),
+                                    BigDecimalUtil.format(bigDecimal1),
+                                    BigDecimalUtil.format(bigDecimal2),
+                                    BigDecimalUtil.format(typeVO1.getQuantity()),
+                                    BigDecimalUtil.format(bigDecimal3),
+                                    BigDecimalUtil.format(bigDecimal4)
+                            ));
                             BigDecimalUtil.accumulate(countMap2, 0, typeVO0.getQuantity());
-                            BigDecimalUtil.accumulate(countMap2, 1, typeVO1.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 1, typeVO0.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 2, typeVO0.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 3, typeVO1.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 4, typeVO1.getQuantity());
+                            BigDecimalUtil.accumulate(countMap2, 5, typeVO1.getQuantity());
                         }
                     }
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
@@ -168,7 +202,6 @@ public class ReportServiceImpl implements ReportService {
 
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
                 addProductLineOther(dto, classList, productLine, productLineVOList, workshopCountMap);
-
             }
             //添加车间库存
             addWorkShopOther(v.get(0), productLineVOList, workshopCountMap);
@@ -187,6 +220,27 @@ public class ReportServiceImpl implements ReportService {
         vo.setDataList(productLineVOList);
         return vo;
     }
+
+    /**
+     * 获取所有的单位的id  依次是片，
+     * @param codeSet
+     * @param measureUnit
+     * @return
+     */
+    private List<Long> allUnit(List<String> codeSet, String measureUnit) {
+        List<Long> resList = Lists.newArrayList();
+        SysDictDTO sysDictDTO = new SysDictDTO();
+        sysDictDTO.setType(measureUnit);
+        sysDictDTO.setCodeList(codeSet);
+        SysDictVO defaultSysDictVO = new SysDictVO();
+        Map<String, SysDictVO> resMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        for (String code : codeSet) {
+            SysDictVO sysDictVO = resMap.getOrDefault(code,defaultSysDictVO);
+            resList.add(sysDictVO.getId());
+        }
+        return resList;
+    }
+
 
     /**
      * 返回0-早班夜班 ， 1-早班 ，2-夜班
@@ -217,12 +271,14 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 物料单位转换
+     * @param unitList 单位list
      * @param unitConvertMap 单位转换map
      * @param materialId 物料id
-     * @param unit 单位id
+     * @param num 数量
+     * @param idx 单位id
      * @return 转换后的数值
      */
-    private BigDecimal unitConvert( Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap , Long materialId , Long unit){
+    private BigDecimal unitConvert(List<Long> unitList,Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap , Long materialId ,BigDecimal num, Integer idx){
         return BigDecimal.ZERO;
     }
 
@@ -442,7 +498,13 @@ public class ReportServiceImpl implements ReportService {
         //工序id集合
         Set<Long> processIdSet = dataList.stream().map(FurtherProduceReportDataVO::getProcessId).collect(Collectors.toSet());
         //查询工序的信息
-        List<PmProcess> pmProcessList = pmProcessService.listByIds(processIdSet);
+
+        List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
+        Assert.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
+        Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
+        List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
+        Assert.notEmpty(pmsProduceOrderCraftList,"工序信息不可为空");
+
         Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
         List<BaseReportHeaderVO> module = Lists.newArrayList();
         pmProcessList.forEach(ele -> {
