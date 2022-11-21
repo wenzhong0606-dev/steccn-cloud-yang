@@ -1,8 +1,10 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtCheckTaskCopyDetailsDTO;
 import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
 import com.steccn.qms.dto.QtCheckTaskSimpleDTO;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -53,6 +55,21 @@ public class QtCheckTaskDetailVO implements Serializable {
      * 落板备注
      */
     private String destoryInfoRemark;
+
+    /**
+     * 工位id
+     */
+    private Long stationId;
+
+    /**
+     * 工位Name
+     */
+    private String stationName;
+
+    /**
+     * 工位JSON
+     */
+    private QtBaseIdNameDTO station;
 
 
 
