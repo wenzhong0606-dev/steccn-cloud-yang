@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -72,20 +73,20 @@ public class ReportServiceImpl implements ReportService {
         SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
 
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
-        //构建表头
-        SubstrateReportHeaderVO header = getSubstrateHeader();
         //查询所有数据
         List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassesIdList(), dto.getDate());
-        Assert.notEmpty(rowDataList, "数据为空，暂无基片日报表");
+        SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
-        log.info("{}", unitConvertMap);
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
+        //构建表头
+        List<SysDictVO> filterClassList = Lists.newArrayList();
+        SubstrateReportHeaderVO header = getSubstrateHeader(dto.getClassesIdList(),classList,filterClassList);
 
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
@@ -119,8 +120,8 @@ public class ReportServiceImpl implements ReportService {
                     //入库inCount 产量proCount
                     BigDecimal inCount = BigDecimal.ZERO;
                     BigDecimal proCount = BigDecimal.ZERO;
-                    //遍历班次
-                    for (SysDictVO c : classList) {
+                    //遍历已筛选的班次
+                    for (SysDictVO c : filterClassList) {
                         //获取班次信息
                         List<SubstrateDataListVO> classData = classDataMap.getOrDefault(c.getId(), defaultSubstrateDataListVOList);
                         //将classData分成不同类型
@@ -153,14 +154,21 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setType(PmReportConstant.TYPE_1);
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
-                rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
-                rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_0){
+                    rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
+                    rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_1){
+                    rowTotal.setMorning(Arrays.asList(BigDecimalUtil.format(countMap1.get(0)), BigDecimalUtil.format(countMap1.get(1))));
+                }else if(dayOrNight(dto.getClassesIdList(),classList) == PmReportConstant.TYPE_2){
+                    rowTotal.setNight(Arrays.asList(BigDecimalUtil.format(countMap2.get(0)), BigDecimalUtil.format(countMap2.get(1))));
+                }
                 rowTotal.setTotal(Arrays.asList(BigDecimalUtil.format(countMap3.get(0)), BigDecimalUtil.format(countMap3.get(1))));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
                 productLineVOList.add(rowTotal);
 
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
                 addProductLineOther(dto, classList, productLine, productLineVOList, workshopCountMap);
+
             }
             //添加车间库存
             addWorkShopOther(v.get(0), productLineVOList, workshopCountMap);
@@ -171,6 +179,8 @@ public class ReportServiceImpl implements ReportService {
         });
         //最后一个总计
         addAllOther(productLineVOList, allCountMap);
+        //如果只选择一个班次，则只展示一个班次
+        filterClass(dayOrNight(dto.getClassesIdList(),classList),productLineVOList);
         vo.setSpecsNum(3);
         vo.setDataNum(2);
         vo.setHeader(header);
@@ -179,16 +189,71 @@ public class ReportServiceImpl implements ReportService {
     }
 
     /**
-     * 获取基片日报表 表头
-     *
+     * 返回0-早班夜班 ， 1-早班 ，2-夜班
+     * @param classesIdList
+     * @param classList
      * @return
      */
-    private SubstrateReportHeaderVO getSubstrateHeader() {
+    private int dayOrNight(List<Long> classesIdList, List<SysDictVO> classList){
+        if(CollUtil.isEmpty(classesIdList)){
+            return PmReportConstant.TYPE_0;
+        }
+        List<Long> collect = classList.stream().map(SysDictVO::getId).collect(Collectors.toList());
+        if(classesIdList.containsAll(collect)){
+            return PmReportConstant.TYPE_0;
+        }
+        for (Long cid : classesIdList) {
+            if(collect.indexOf(cid) == PmReportConstant.TYPE_0){
+                return PmReportConstant.TYPE_1;
+            }else if(collect.indexOf(cid) == PmReportConstant.TYPE_1){
+                return PmReportConstant.TYPE_2;
+            }else{
+                throw new IllegalArgumentException("班次产线异常");
+            }
+        }
+        return PmReportConstant.TYPE_0;
+    }
+
+
+    /**
+     * 物料单位转换
+     * @param unitConvertMap 单位转换map
+     * @param materialId 物料id
+     * @param unit 单位id
+     * @return 转换后的数值
+     */
+    private BigDecimal unitConvert( Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap , Long materialId , Long unit){
+        return BigDecimal.ZERO;
+    }
+
+
+    /**
+     * 获取基片日报表 表头
+     *
+     * @param classesIdList dto的参数
+     * @param classList 所有的班次对象集合
+     */
+    private SubstrateReportHeaderVO getSubstrateHeader(List<Long> classesIdList, List<SysDictVO> classList, List<SysDictVO> filterClassList ) {
         SubstrateReportHeaderVO header = new SubstrateReportHeaderVO();
         header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
-        header.setMorning(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "产量(片)")));
-        header.setNight(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "产量(片)")));
-        header.setTotal(new BaseReportHeaderVO("合计", Arrays.asList("入库(片)", "产量(片)")));
+
+        List<Long> allClassIdList = classList.stream().map(SysDictVO::getId).collect(Collectors.toList());
+        if(CollUtil.isEmpty(classesIdList)){
+            classesIdList = allClassIdList;
+        }
+        //只查询白班，或者夜班
+        for (Long cid : classesIdList) {
+            int i = allClassIdList.indexOf(cid);
+            if (i == 0) {
+                header.setMorning(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "入库(㎡)", "入库(t)", "产量(片)", "产量(㎡)", "产量(t)")));
+            } else if(i == 1){
+                header.setNight(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "入库(㎡)", "入库(t)", "产量(片)", "产量(㎡)", "产量(t)")));
+            }else{
+                throw new IllegalArgumentException("班次数据异常");
+            }
+            filterClassList.add(classList.get(i));
+        }
+        header.setTotal(new BaseReportHeaderVO("合计", Arrays.asList("入库(片)", "入库(㎡)", "入库(t)", "产量(片)", "产量(㎡)", "产量(t)")));
         return header;
     }
 
@@ -258,7 +323,9 @@ public class ReportServiceImpl implements ReportService {
         PmsPullForce night = pmsPullForcesMap.get(classList.get(1).getId());
         BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
         BigDecimal nightBigDecimal = Objects.nonNull(night) ? night.getQuantity() : BigDecimal.ZERO;
-        SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, morningBigDecimal.add(nightBigDecimal)), "拉引量(T)");
+        BigDecimal sum = morningBigDecimal.add(nightBigDecimal);
+        SubstrateDayReportListVO lyl = rowData(productLine, Lists.newArrayList(morningBigDecimal, nightBigDecimal, sum), "拉引量(T)");
+
         productLineVOList.add(lyl);
         BigDecimalUtil.accumulate(workshopCountMap, 0, morningBigDecimal.add(nightBigDecimal));
 
@@ -284,6 +351,26 @@ public class ReportServiceImpl implements ReportService {
         productLineVOList.addAll(energyList);
         productLineVOList.add(bly);
     }
+
+    /**
+     * 过滤班级
+     * @param flag
+     * @param dataList
+     */
+    private void filterClass(int flag, List<SubstrateDayReportListVO> dataList) {
+        if (CollUtil.isNotEmpty(dataList)) {
+            if (flag == PmReportConstant.TYPE_1) {
+                for (SubstrateDayReportListVO vo : dataList) {
+                    vo.setNight(null);
+                }
+            } else if (flag == PmReportConstant.TYPE_2) {
+                for (SubstrateDayReportListVO vo : dataList) {
+                    vo.setMorning(null);
+                }
+            }
+        }
+    }
+
 
     /**
      * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
