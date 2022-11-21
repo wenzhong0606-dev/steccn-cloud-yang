@@ -308,12 +308,20 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @SneakyThrows
     @Override
-    public void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response) {
-        List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveCategoryDetailList(dto);
+    public void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response, Integer type) {
+        List<?> dataList = new ArrayList<>();
+        if (type.equals(0)) {
+            dataList = getDeepDefectiveCategoryDetailList(dto);
+        } else if (type.equals(1)) {
+            dataList = getDeepDefectiveItemDetailList(dto);
+        } else if (type.equals(2)) {
+            dataList = getSubstrateItemDetail(dto);
+        }
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("compare","");
         map.put("productWorkShopName","");
         map.put("productLineName","");
+        map.put("defectCategory","");
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
 
         if (Objects.nonNull(dto.getCompare())) {
@@ -328,6 +336,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             String productLineName = remoteOfficeFeign.getNameById(dto.getProductLineId()).getData();
             map.put("productLineName",productLineName);
         }
+        if (Objects.nonNull(dto.getDefectCategory())) {
+            List<QtItemCategoryVO> categoryList = qtItemCategoryService.getCategoryList(1);
+            Optional<QtItemCategoryVO> optional = categoryList.stream().filter(qtItemCategoryVO -> qtItemCategoryVO.getId().equals(dto.getDefectCategory())).findAny();
+            optional.ifPresent(qtItemCategoryVO -> map.put("defectCategory", qtItemCategoryVO.getName()));
+        }
         if (dto.getWorkingOrder().equals(0)) {
             map.put("workingOrder","早班");
         } else if (dto.getWorkingOrder().equals(1)) {
@@ -336,7 +349,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             map.put("workingOrder","全部");
         }
 
-        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB,QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME,map,pageList,dto.getBase64());
+        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB,QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME,map,dataList,dto.getBase64());
 
     }
 
@@ -534,6 +547,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public Page<DeepDefectiveCategoryDetailVO> substrateItemDetail(QtChartParamDTO dto) {
+
+        List<DeepDefectiveCategoryDetailVO> pageList = getSubstrateItemDetail(dto);
+        //排序+逻辑分页
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+    }
+
+    private List<DeepDefectiveCategoryDetailVO> getSubstrateItemDetail(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -561,13 +586,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //图例过滤
         pageList = legendFilter(dto, pageList);
 
-        //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+        return pageList;
     }
 
     @Override
@@ -750,6 +769,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     @Override
     public Page<DeepDefectiveCategoryDetailVO> deepDefectiveItemDetail(QtChartParamDTO dto) {
+
+        List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveItemDetailList(dto);
+        //排序+逻辑分页
+        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
+                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
+        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+    }
+
+    private List<DeepDefectiveCategoryDetailVO> getDeepDefectiveItemDetailList(QtChartParamDTO dto) {
         //扁平化数据
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
@@ -774,17 +805,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             countVo.setName(item.getName());
             countVo.setCreateTime(item.getCreateTime());
         });
-
         //图例过滤
         pageList = legendFilter(dto, pageList);
 
-        //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
-                .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getCreateTime))));
-        return LogicalPageUtil.page(pageList,dto.getCurrent(),dto.getSize());
+        return pageList;
     }
 
     /**

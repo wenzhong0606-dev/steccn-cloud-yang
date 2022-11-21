@@ -51,7 +51,7 @@ public interface QtDefectiveReportService {
      * @param dto
      * @param response
      */
-    void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response);
+    void deepDefectiveCategoryDownload(QtChartParamDTO dto, HttpServletResponse response, Integer type);
 
     /**
      * 深加工缺陷项分布

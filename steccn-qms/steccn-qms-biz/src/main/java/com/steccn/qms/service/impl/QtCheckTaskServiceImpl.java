@@ -1592,7 +1592,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
 
-        if (CollectionUtils.isEmpty(dto.getWorkshopIdList())) {
+        if (CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
             return page;
         }
         //4.查询分页数据
@@ -1608,7 +1608,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-        qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());
+        qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
         Set<Long> taskIds = qtCheckTasks.stream().map(QtCheckTask::getId).collect(Collectors.toSet());
         Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
         List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
@@ -2140,7 +2140,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()));
 
         //过滤数据
-        qtCheckTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> dto.getWorkshopIdList().contains(qtCheckTask.getMaterialWorkshop().getId())).collect(Collectors.toList());
+        qtCheckTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
 
         //创建返回数据的类
         List<AccessoryAcceptabilityDownVO> acceptabilityDownVOList = Lists.newArrayList();

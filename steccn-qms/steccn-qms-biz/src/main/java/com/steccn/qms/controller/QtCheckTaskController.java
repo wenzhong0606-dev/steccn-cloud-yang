@@ -224,7 +224,7 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/accessory/acceptability/download")
-    @ApiOperation(value = "下载基片成品率数据")
+    @ApiOperation(value = "下载配料抽检合格率")
     public void downloadAccessoryAcceptability(@RequestBody AccessoryAcceptabilityDownDTO dto, HttpServletResponse response) throws IOException {
         try{
             qtCheckTaskService.downloadAccessoryAcceptability(dto,response);
