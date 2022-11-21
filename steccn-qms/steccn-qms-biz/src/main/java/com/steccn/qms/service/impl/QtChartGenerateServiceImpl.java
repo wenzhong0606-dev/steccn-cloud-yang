@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -116,7 +117,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //遍历班次分组
                 for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
                     //根据时间排序
-                    List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+                    List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime).reversed()).collect(Collectors.toList());
                     //查看是否是一种物料
                     HashSet<Long> materialIdSet = new HashSet<>();
                     //物料id集合
@@ -256,7 +257,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     .in(CollUtil.isNotEmpty(baiItemIds),QtCheckTaskDetail::getItemId, baiItemIds));
                             if (CollUtil.isNotEmpty(baiItemDetails)) {
                                 for (QtCheckTaskDetail tmp : baiItemDetails) {
-                                    if (tmp.getCheckResult() != null) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                         totalBaiItem = BigDecimalUtil.add(totalBaiItem,decimalTmp);
                                         totalBaiItemCount = BigDecimalUtil.add(totalBaiItemCount,new BigDecimal(1));
@@ -269,7 +270,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     .in(CollUtil.isNotEmpty(danItemIds),QtCheckTaskDetail::getItemId, danItemIds));
                             if (CollUtil.isNotEmpty(danItemDetails)) {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
-                                    if (tmp.getCheckResult() != null) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                         totalDanItem = BigDecimalUtil.add(totalDanItem,decimalTmp);
                                         totalDanItemCount = BigDecimalUtil.add(totalDanItemCount,new BigDecimal(1));
@@ -282,7 +283,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     .in(CollUtil.isNotEmpty(laItemIds),QtCheckTaskDetail::getItemId, laItemIds));
                             if (CollUtil.isNotEmpty(laItemDetails)) {
                                 for (QtCheckTaskDetail tmp : laItemDetails) {
-                                    if (tmp.getCheckResult() != null) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                         BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                         totalLaItem = BigDecimalUtil.add(totalLaItem,decimalTmp);
                                         totalLaItemCount = BigDecimalUtil.add(totalLaItemCount,new BigDecimal(1));
@@ -552,6 +553,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
             }
         } else {
+            Assert.notEmpty(resultList, "数据为空，暂无报表");
             return resultList;
         }
         return resultList;
@@ -709,6 +711,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 bar2.setName(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                 barMap.put(QtManagerConstant.QtClassesEnum.DAY.getName(), bar1);
                 barMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getName(), bar2);
+            } else if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())){
+                //不对比则是全部
+                QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
+                List<String> bar1Data = Lists.newArrayList();
+                bar1.setData(bar1Data);
+                bar1.setName("默认");
+                barMap.put("默认", bar1);
             } else {
                 SysOfficeDTO officeDTO = new SysOfficeDTO();
                 officeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);
@@ -737,6 +746,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 xAis.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 List<ProducePassRateVO> groupByDateVO = groupByDate.get(tmpDate);
                 Map<String, BigDecimal> dataMap = MapUtil.newHashMap();
+
+                //不对比的dateMap
+                Map<LocalDate,BigDecimal> noCompareData = MapUtil.newHashMap();
                 //若VO不为空
                 if (CollUtil.isNotEmpty(groupByDateVO)) {
                     //对markLine进行求和
@@ -754,14 +766,34 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
                     }
+
+                    //不对比则直接对日期求和
+                    if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
+                        noCompareData = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                    }
+
+                }else {
+                    markLineDataList.add(new DecimalFormat("0.00%").format(BigDecimal.ZERO));
                 }
-                for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
-                    if (dataMap.get(entry.getKey()) == null) {
-                        entry.getValue().getData().add(new BigDecimal(0));
-                    } else {
-                        entry.getValue().getData().add(dataMap.get(entry.getKey()));
+                //不对比的情况
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())){
+                    for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
+                        if (noCompareData.get(tmpDate) == null) {
+                            entry.getValue().getData().add(new BigDecimal(0));
+                        } else {
+                            entry.getValue().getData().add(noCompareData.get(tmpDate));
+                        }
+                    }
+                }else {
+                    for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
+                        if (dataMap.get(entry.getKey()) == null) {
+                            entry.getValue().getData().add(new BigDecimal(0));
+                        } else {
+                            entry.getValue().getData().add(dataMap.get(entry.getKey()));
+                        }
                     }
                 }
+
             }
             for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
                 series.add(entry.getValue());

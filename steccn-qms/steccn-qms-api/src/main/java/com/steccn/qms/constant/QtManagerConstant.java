@@ -394,6 +394,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChartCompareEnum{
         //班次 产线 车间 缺陷类别
+        ALL(-1,"不对比"),
         WORK(0,"班次"),
         PRODUCTLINE(1,"产线"),
         WORKSHOP(2,"车间"),

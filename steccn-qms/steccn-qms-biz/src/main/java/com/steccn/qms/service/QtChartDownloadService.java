@@ -53,4 +53,11 @@ public interface QtChartDownloadService {
      * @return
      */
     Page<QtChartSubDetailDTO>  LossDetails(QtChartYieldDownloadDTO dto);
+
+    /**
+     * 下载成品率详情
+     * @param dto
+     * @return
+     */
+    void  DownloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException ;
 }

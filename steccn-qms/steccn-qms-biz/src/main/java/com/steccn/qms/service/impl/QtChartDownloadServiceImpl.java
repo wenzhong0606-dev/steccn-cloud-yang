@@ -27,6 +27,7 @@ import com.steccn.qms.dto.QtChartYieldDownloadDTO;
 import com.steccn.qms.service.QtChartDownloadService;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.util.DownloadModelUtil;
+import com.steccn.qms.util.DownloadUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
@@ -283,6 +284,22 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         page.setRecords(qtChartSubDetailDTOS);
         page.setTotal(qtChartSubDetailDTOS.size());
         return page;
+    }
+
+    /**
+     * 下载基片损耗数据
+     * @param dto
+     */
+    @Override
+    public void DownloadLossDetails(QtChartYieldDownloadDTO dto,HttpServletResponse response) throws IOException {
+        //拿到details数据，默认所有9999条
+        dto.setCurrent(1);
+        dto.setSize(99999);
+        Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.LossDetails(dto);
+        if(CollUtil.isNotEmpty(qtChartSubDetailDTOPage.getRecords())){
+            List<QtChartSubDetailDTO> records = qtChartSubDetailDTOPage.getRecords();
+            this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPSH,QtManagerConstant.QT_CHART_JPSH_NAME,null,records,dto.getBase64());
+        }
     }
 
     /**
