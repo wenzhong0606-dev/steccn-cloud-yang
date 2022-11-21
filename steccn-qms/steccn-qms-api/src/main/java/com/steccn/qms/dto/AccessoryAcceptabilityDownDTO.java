@@ -18,7 +18,7 @@ public class AccessoryAcceptabilityDownDTO {
 
     private LocalDate date;
 
-    private List<Integer> workshopIdList;
+    private List<String> workshopNameList;
 
     /**
      * 图表base64
