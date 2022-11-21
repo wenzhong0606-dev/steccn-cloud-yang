@@ -35,7 +35,6 @@ import com.steccn.qms.vo.PassRateOverViewVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.service.QtDefectiveItemService;
-import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;

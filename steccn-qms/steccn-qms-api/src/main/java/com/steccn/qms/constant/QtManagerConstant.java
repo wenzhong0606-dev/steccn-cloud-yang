@@ -80,6 +80,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_JPSH = "JPSH.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_JPHY = "JPHY.xlsx";
+
     String QT_CHART_EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     String QT_CHART_EXCEL_ENCODE = "UTF-8";
@@ -95,6 +97,8 @@ public interface QtManagerConstant {
     String QT_CHART_SUB_PROCESS_NAME ="基片巡检合格率";
 
     String QT_CHART_ACCESSORY_PROCESS_NAME ="配料抽检合格率";
+
+    String QT_CHART_SUB_JPCJ ="基片化验抽检合格率趋势";
 
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 

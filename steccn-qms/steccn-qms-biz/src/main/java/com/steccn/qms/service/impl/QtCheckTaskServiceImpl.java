@@ -63,6 +63,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -2162,6 +2163,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @param dto
      * @param response
      */
+    @SneakyThrows
     @Override
     public void downloadQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
@@ -2181,7 +2183,27 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             BigDecimal result = BigDecimalUtil.divide(new BigDecimal(tmp.getGoodNum()),new BigDecimal(tmp.getCheckNum()));
             tmp.setPassRate(new DecimalFormat("0.00%").format(result));
         });
-//        DownloadUtil.downloadTemplate();
+
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        if(dto.getProductLineId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
+            if(nameById!=null){
+                map.put("productWorkshopName",nameById.getData());
+            }
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+        }
+        map.put("productWorkshopName",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPHY,QtManagerConstant.QT_CHART_SUB_JPCJ,map,flatDataList,dto.getBase64());
     }
 
     /**

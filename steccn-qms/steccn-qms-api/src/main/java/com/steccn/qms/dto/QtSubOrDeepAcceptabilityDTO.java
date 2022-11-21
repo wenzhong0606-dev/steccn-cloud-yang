@@ -77,4 +77,7 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
 
     @ApiModelProperty(value = "图表的过滤条件")
     private List<String> filters;
+
+    @ApiModelProperty(value = "图片base64")
+    private String base64;
 }
