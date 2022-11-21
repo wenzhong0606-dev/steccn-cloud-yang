@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -22,4 +23,8 @@ public class MessMaterialStorageDTO implements Serializable {
 
     @ApiModelProperty("货架code")
     private List<String> shelfCodes;
+
+    @ApiModelProperty("工位id")
+    private Set<Integer> stationId;
+
 }

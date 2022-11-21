@@ -100,15 +100,17 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));
         PmsMrpInfo pmsMrpInfo = new PmsMrpInfo();
         pmsMrpInfo.setQuantity(BigDecimal.ZERO);
-        Map<Long, BigDecimal> inventoryCalculations = inventoryCalculations(materialIds);
+        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
         BigDecimal quantity =  BigDecimal.ZERO;
+        mesMaterialInventoryDTO.setAvailableQuantity(quantity);
         //获取库存信息
+        Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
         pmsMrpVOList.forEach(pmsMrpVO -> {
-            inventoryCalculations.getOrDefault(pmsMrpVO.getMaterialId(),quantity);
+            MesMaterialInventoryDTO inventoryDTO = inventoryDTOMap.getOrDefault(pmsMrpVO.getMaterialId(), mesMaterialInventoryDTO);
             PmsMrpInfo orDefault = pmsMrpInfoMap.getOrDefault(pmsMrpVO.getMaterialId(), pmsMrpInfo);
             pmsMrpVO.setQuantity(orDefault.getQuantity());
             //计算库存信息,如果不存在库存信息则为0
-            pmsMrpVO.setStockQuantity(quantity);
+            pmsMrpVO.setStockQuantity(inventoryDTO.getAvailableQuantity());
         });
         return page.setRecords(pmsMrpVOList);
     }

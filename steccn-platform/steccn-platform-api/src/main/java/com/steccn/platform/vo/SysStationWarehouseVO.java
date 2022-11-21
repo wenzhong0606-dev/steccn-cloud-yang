@@ -15,6 +15,8 @@ public class SysStationWarehouseVO {
 
     private String shelfName;
 
+    private String shelfCode;
+
     /**
      * 仓库id
      */
@@ -26,4 +28,9 @@ public class SysStationWarehouseVO {
     private Integer shelfId;
 
     private String note;
+
+    /**
+     * 工位id
+     */
+    private Integer stationId;
 }

@@ -1,14 +1,20 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysStationWarehouse;
 import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.service.SysStationWarehouseService;
 import com.steccn.platform.mapper.SysStationWarehouseMapper;
@@ -41,7 +47,7 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
         queryWrapper.eq(SysStationWarehouse::getStationId, dto.getOrganId()).eq(SysStationWarehouse::getOrganType, dto.getOrganType());
         Page<SysStationWarehouse> page = page(new Page<>(dto.getCurrent(), dto.getSize()), queryWrapper);
         Page<SysStationWarehouseVO> voPage = new Page<>();
-        BeanUtils.copyProperties(page,voPage);
+        BeanUtils.copyProperties(page, voPage);
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return voPage;
         }
@@ -91,6 +97,32 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
         SysStationWarehouse sysStationWarehouse = new SysStationWarehouse();
         BeanUtils.copyProperties(dto, sysStationWarehouse);
         return updateById(sysStationWarehouse);
+    }
+
+    @Override
+    public Map<Integer, List<SysStationWarehouseVO>> listByStationIds(Set<Integer> stationIds) {
+        Map<Integer, List<SysStationWarehouseVO>> resMap = Maps.newHashMap();
+        List<SysStationWarehouse> list = list(new LambdaQueryWrapper<SysStationWarehouse>().in(SysStationWarehouse::getStationId, stationIds));
+        if (CollUtil.isNotEmpty(list)) {
+            List<SysStationWarehouseVO> dtoList = BeanUtil.copyToList(list, SysStationWarehouseVO.class);
+            Set<Integer> officeId = Sets.newHashSet();
+            dtoList.forEach(sysStationWarehouseVO -> {
+                officeId.add(sysStationWarehouseVO.getShelfId());
+            });
+            resMap = dtoList.stream().collect(Collectors.groupingBy(SysStationWarehouseVO::getStationId));
+            //处理数据，获取编码
+            Map<Integer, SysOfficeVO> officeVOMap = sysOfficeService.listById(officeId);
+            SysOfficeVO sysOfficeVO = new SysOfficeVO();
+            resMap.forEach((key, value) -> {
+                value.forEach(
+                        sysStationWarehouseVO -> {
+                            SysOfficeVO orDefault = officeVOMap.getOrDefault(sysStationWarehouseVO.getShelfId(), sysOfficeVO);
+                            sysStationWarehouseVO.setShelfCode(orDefault.getOfficeCode());
+                        }
+                );
+            });
+        }
+        return resMap;
     }
 }
 

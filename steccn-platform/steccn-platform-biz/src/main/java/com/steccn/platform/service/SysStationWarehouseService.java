@@ -7,6 +7,10 @@ import com.steccn.platform.dto.SysStationWarehouseAddDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
 import com.steccn.platform.vo.SysStationWarehouseVO;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
 * @author yequan
 * @description 针对表【sys_station_warehouse(工位配置)】的数据库操作Service
@@ -35,6 +39,14 @@ public interface SysStationWarehouseService extends IService<SysStationWarehouse
      * @return
      */
     Boolean edit(SysStationWarehouseDTO dto);
+
+
+    /**
+     * 批量获取工位绑定的线边仓信息
+     * @param stationIds
+     * @return
+     */
+    Map<Integer, List<SysStationWarehouseVO>> listByStationIds(Set<Integer> stationIds);
 
 
 }
