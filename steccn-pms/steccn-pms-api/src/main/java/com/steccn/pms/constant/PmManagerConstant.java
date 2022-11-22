@@ -2,9 +2,12 @@ package com.steccn.pms.constant;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.List;
 
 /**
  * @author W10
@@ -16,6 +19,14 @@ public interface PmManagerConstant {
      * 测量单位
      */
     String MEASURE_UNIT = "measure_unit";
+
+    /**
+     * 单位转换
+     */
+    String MEASURE_UNIT_PIECE = "片";
+    String MEASURE_UNIT_TON ="ton";
+    String MEASURE_UNIT_SM ="m²";
+
 
     /**
      * mrp 类型
