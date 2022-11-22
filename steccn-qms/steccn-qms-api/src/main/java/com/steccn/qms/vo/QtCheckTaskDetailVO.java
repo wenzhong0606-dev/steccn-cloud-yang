@@ -55,22 +55,4 @@ public class QtCheckTaskDetailVO implements Serializable {
      * 落板备注
      */
     private String destoryInfoRemark;
-
-    /**
-     * 工位id
-     */
-    private Long stationId;
-
-    /**
-     * 工位Name
-     */
-    private String stationName;
-
-    /**
-     * 工位JSON
-     */
-    private QtBaseIdNameDTO station;
-
-
-
 }

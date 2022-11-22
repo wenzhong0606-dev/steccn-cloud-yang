@@ -101,7 +101,7 @@ public class QtCheckTaskController {
     @PostMapping("/retask")
     @ApiOperation(value = "创建复检任务")
     @SysLog("创建复检任务")
-    public R<Long> retask(@RequestBody QtReTaskDTO dto) {
+    public R<Boolean> retask(@RequestBody QtReTaskDTO dto) {
         return R.success(qtCheckTaskService.retask(dto));
     }
 

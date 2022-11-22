@@ -57,6 +57,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -127,6 +128,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             }
             Assert.notNull("缺陷记录时段不能为空");
+        }
+        //产线为空校验
+        if (dto.getProductLine() == null || "null".equals(dto.getProductLine().getName() )){
+            throw  new BusinessException("产线不能为空");
         }
 
         //状态待检验
@@ -271,6 +276,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 qtCheckTaskListVo.setOriginalTaskCode(recheckTask.getOriginalCode());
             }
         }
+        //设置工位字段
+        qtCheckTaskListVo.setStation(qtCheckTask.getStation());
+        if (qtCheckTask.getStationId() != null) {
+            qtCheckTaskListVo.setStationId(Math.toIntExact(qtCheckTask.getStationId()));
+        }
+        qtCheckTaskListVo.setStationName(qtCheckTask.getStationName());
+
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
 
@@ -432,10 +444,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskDetailVo.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList1);
             qtCheckTaskDetailVo.setDestoryInfoRemark(qtCheckTaskDestoryInfoVOList1.get(0).getDestoryInfoRemark());
         }
-        //设置工位字段
-        qtCheckTaskDetailVo.setStation(qtCheckTask.getStation());
-        qtCheckTaskDetailVo.setStationId(qtCheckTask.getStationId());
-        qtCheckTaskDetailVo.setStationName(qtCheckTask.getStationName());
 
         return qtCheckTaskDetailVo;
     }
@@ -877,21 +885,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long retask(QtReTaskDTO dto) {
-        if (dto.getId() == null) {
-            throw new BusinessException("任务信息不存在");
+    public Boolean retask(QtReTaskDTO dto) {
+        QtRecheckTask recheckModel = new QtRecheckTask();
+        if (dto.getOriginalId() != null) {
+            //复检任务
+            QtCheckTask originalTask = getById(dto.getOriginalId());
+            recheckModel.setOriginalId(dto.getOriginalId());
+            recheckModel.setRecheckId(dto.getId());
+            recheckModel.setOriginalCode(originalTask.getCode());
         }
-        QtReTaskDTO qtReTaskDTO = new QtReTaskDTO();
-        qtReTaskDTO.setOriginalId(dto.getId());
-        //qtReTaskDTO.setCheckPlanId(dto.getCheckPlanId());
-        Long taskId = 0L;
-        QtAddCheckTaskDTO neworiginalId = new QtAddCheckTaskDTO();
-
-        if (qtReTaskDTO != null) {
-            BeanUtils.copyProperties(qtReTaskDTO, neworiginalId);
-        }
-        add(neworiginalId);
-        return taskId;
+        return  qtRecheckTaskService.save(recheckModel);
     }
 
     @Override
@@ -936,6 +939,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
                 .selectAs(QtCheckTask::getSupplierName, QtCheckTaskListVO::getSupplierName)
                 .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
+                .selectAs(QtCheckTask::getStation, QtCheckTaskListVO::getStation)
+                .selectAs(QtCheckTask::getStationName, QtCheckTaskListVO::getStationName)
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)

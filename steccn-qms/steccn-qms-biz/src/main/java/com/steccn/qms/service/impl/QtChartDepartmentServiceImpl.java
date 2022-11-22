@@ -458,16 +458,16 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                     .le(QtCheckTask::getCreateTime, passRateDateVo.getEndDateTime()));
             if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)) {
                 //获取来料检数据
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())).collect(Collectors.toList());
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(qtCheckTask.getTaskType())).collect(Collectors.toList());
             } else if (QtManagerConstant.QtChatTargetValue.JPXJHG.getCode().equals(type)) {
                 //获取基片寻检查数据
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
                         && Objects.nonNull(qtCheckTask.getProductWorkshop())
                         && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                         && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
             } else if (QtManagerConstant.QtChatTargetValue.SJGXJHG.getCode().equals(type)){
                 //获取深加工寻检查数据
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
                         && Objects.nonNull(qtCheckTask.getProductWorkshop())
                         && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                         && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
@@ -476,7 +476,10 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                 List<String> defectJPList = Lists.newArrayList();
                 defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ1.getWorkShopName());
                 defectJPList.add(QtManagerConstant.WORKSHOP.JPCJ2.getWorkShopName());
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> defectJPList.contains(qtCheckTask.getProductWorkshop().getName())).collect(Collectors.toList());
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
+                        && Objects.nonNull(qtCheckTask.getProductWorkshop())
+                        && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
+                        && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
                 badNum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getBadNum()) ? 0 : qtCheckTask.getBadNum()).sum();
                 Integer checkNumSum2 = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
                 BigDecimal passRate = BigDecimal.ZERO;
@@ -488,10 +491,14 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
                 defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ1.getWorkShopName());
                 defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ2.getWorkShopName());
                 defectSJGList.add(QtManagerConstant.WORKSHOP.SJGCJ3.getWorkShopName());
-                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> defectSJGList.contains(qtCheckTask.getProductWorkshop().getName())).collect(Collectors.toList());
+                checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
+                        && Objects.nonNull(qtCheckTask.getProductWorkshop())
+                        && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
+                        && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
                 BigDecimal passRate = BigDecimal.ZERO;
-                badNum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getBadNum()) ? 0 : qtCheckTask.getBadNum()).sum();
-                Integer checkNumSum2 = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getCheckNum()) ? 0 : qtCheckTask.getCheckNum()).sum();
+                if (!checkTaskList.isEmpty()) {
+                    badNum = checkTaskList.stream().mapToInt(qtCheckTask -> Objects.isNull(qtCheckTask.getBadNum()) ? 0 : qtCheckTask.getBadNum()).sum();
+                }
                 datePassList.add(passRate);
                 badNumS.add(BigDecimal.valueOf(badNum));
             }
