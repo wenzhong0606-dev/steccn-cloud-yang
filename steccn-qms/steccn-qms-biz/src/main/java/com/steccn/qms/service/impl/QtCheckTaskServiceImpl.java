@@ -2223,6 +2223,30 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPHY,QtManagerConstant.QT_CHART_SUB_JPCJ,map,flatDataList,dto.getBase64());
     }
 
+    @Override
+    public void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
+
+//        if (Objects.isNull(dto.getWorkshopId())) {
+//            map.put("materialWorkshopName","");
+//        } else {
+//            String workshopName = remoteOfficeFeign.getNameById(dto.getWorkshopId()).getData();
+//            map.put("materialWorkshopName",workshopName);
+//        }
+//        if (Objects.isNull(dto.getCompare())) {
+//            map.put("materialWorkshop","");
+//        } else {
+//            map.put("materialWorkshop",QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getName());
+//        }
+//        if (Objects.isNull(dto.getDate())) {
+//            map.put("date","");
+//        } else {
+//            map.put("date",LocalDateUtil.localDateFormat(dto.getDate(),DatePattern.NORM_DATE_PATTERN));
+//        }
+    }
+
     /**
      * 合格率分组
      *

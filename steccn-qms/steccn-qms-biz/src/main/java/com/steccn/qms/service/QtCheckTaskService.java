@@ -189,6 +189,14 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     void downloadQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
 
+    /**
+     * 来料检下载
+     *
+     * @param dto
+     * @param response
+     */
+    void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
+
 
 }
 

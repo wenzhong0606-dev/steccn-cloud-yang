@@ -16,7 +16,7 @@ public class ProduceOrderTrackReportVO {
     @ApiModelProperty("产线id")
     private Integer productionLineId;
 
-    @ApiModelProperty("产线id")
+    @ApiModelProperty("产线名称")
     private String productionLineName;
 
     @ApiModelProperty("订单号")

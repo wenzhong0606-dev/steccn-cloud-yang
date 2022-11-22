@@ -682,21 +682,28 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("m²", "measure_unit").getData();
 
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
-            Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId())
-                    .stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
+            BigDecimal conversionQuantity = null;
+            if (CollectionUtils.isNotEmpty(map.get(produceOrderTrackReportVO.getMaterialId()))) {
+                Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId())
+                        .stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
 
+                if (optional.isPresent()) {
+                    conversionQuantity = optional.get().getConversionQuantity();
+                }
+            }
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
             BigDecimal completeQuantity = produceOrderTrackReportVO.getCompleteQuantity();
             BigDecimal shortfallQuantity = null;
-            produceOrderTrackReportVO.setProductionLineName(productLineMap.get(produceOrderTrackReportVO.getProductionLineId()).getOfficeName());
+            String productionLineName = Objects.nonNull(productLineMap.get(produceOrderTrackReportVO.getProductionLineId())) ? productLineMap.get(produceOrderTrackReportVO.getProductionLineId()).getOfficeName() : null;
+            produceOrderTrackReportVO.setProductionLineName(productionLineName);
             if (Objects.isNull(completeQuantity)) {
                 produceOrderTrackReportVO.setShortfallQuantity(planQuantity);
             } else {
                 shortfallQuantity = planQuantity.subtract(completeQuantity);
                 produceOrderTrackReportVO.setShortfallQuantity(shortfallQuantity);
             }
-            if (optional.isPresent()) {
-                BigDecimal conversionQuantity = optional.get().getConversionQuantity();
+
+            if (Objects.nonNull(conversionQuantity)) {
                 if (Objects.nonNull(planQuantity)) {
                     produceOrderTrackReportVO.setPlanQuantitySq(planQuantity.multiply(conversionQuantity));
                 }
@@ -722,7 +729,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据生产订单号来查询当前正在执行中的记录
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, code).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()));
         //2.校验数据
-        Assert.notNull(order,"该订单下没有正在执行的检验任务");
+        Assert.notNull(order, "该订单下没有正在执行的检验任务");
         //3.复制数据传入VO
         PmsProduceOrderVO pmsProduceOrderVO = new PmsProduceOrderVO();
         BeanUtils.copyProperties(order, pmsProduceOrderVO);
@@ -767,7 +774,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (CollUtil.isNotEmpty(list)) {
             Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
             collect.forEach((key, value) -> {
-                Collections.sort(value,Comparator.nullsFirst(Comparator.comparing(PmsProduceOrder::getActualEndTime).reversed()));
+                Collections.sort(value, Comparator.nullsFirst(Comparator.comparing(PmsProduceOrder::getActualEndTime).reversed()));
                 PmsProduceOrderVO vo = new PmsProduceOrderVO();
                 BeanUtils.copyProperties(value.get(0), vo);
                 map.put(key, vo);

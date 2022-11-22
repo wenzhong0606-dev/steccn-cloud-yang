@@ -234,6 +234,17 @@ public class QtCheckTaskController {
         }
     }
 
+    @PostMapping("/iqc/acceptability/download")
+    @ApiOperation(value = "来料检合格率下载")
+    public void downloadAcceptability(@RequestBody QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            qtCheckTaskService.downloadAcceptability(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     /**
      * 对响应异常进行封装
      * @param response
