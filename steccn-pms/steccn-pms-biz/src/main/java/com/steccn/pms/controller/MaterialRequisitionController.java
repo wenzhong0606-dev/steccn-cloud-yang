@@ -2,6 +2,7 @@ package com.steccn.pms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -9,6 +10,7 @@ import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 import com.steccn.pms.dto.MaterialRequisitionPageDTO;
 import com.steccn.pms.dto.MaterialRequisitionPlanDTO;
+import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
@@ -17,6 +19,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 生产领料单控制器
@@ -31,6 +38,8 @@ import org.springframework.web.bind.annotation.*;
 public class MaterialRequisitionController {
 
     private final PmsMaterialRequisitionService pmsMaterialRequisitionService;
+
+    private final PmsMaterialRequisitionInfoService pmsMaterialRequisitionInfoService;
 
     @ApiOperation("生产领料列表")
     @PostMapping("/list")
@@ -70,5 +79,12 @@ public class MaterialRequisitionController {
     @SysLog("领料单审批")
     public R<Boolean> approval(@Validated(UpdateGroup.class) @RequestBody MaterialRequisitionApprovalDTO dto) {
         return R.success(pmsMaterialRequisitionService.approval(dto));
+    }
+
+
+    @ApiOperation("获取领料数量")
+    @PostMapping("/quantity")
+    public Map<Long, BigDecimal> quantityMap(@RequestBody TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO){
+        return pmsMaterialRequisitionInfoService.quantityMap(tupleDTO);
     }
 }

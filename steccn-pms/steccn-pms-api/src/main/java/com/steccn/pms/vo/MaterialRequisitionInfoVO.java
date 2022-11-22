@@ -4,6 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -38,10 +40,10 @@ public class MaterialRequisitionInfoVO {
     private List<String> organizationName;
 
     @ApiModelProperty("需求数量")
-    private String quantity;
+    private BigDecimal quantity;
 
     @ApiModelProperty("领用数量")
-    private String receiveQuantity;
+    private BigDecimal receiveQuantity;
 
     @ApiModelProperty("需求时间")
     private String requireDate;
@@ -57,4 +59,7 @@ public class MaterialRequisitionInfoVO {
 
     @ApiModelProperty("单位数量")
     private String unitName;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createTime;
 }

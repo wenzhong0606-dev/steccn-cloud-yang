@@ -1,10 +1,12 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.pms.domain.PmsMaterialRequisitionInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.MaterialRequisitionDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,4 +30,11 @@ public interface PmsMaterialRequisitionInfoService extends IService<PmsMaterialR
      * @return
      */
     Map<Long, BigDecimal> getTotalQuantity(Set<Long> ids);
+
+    /**
+     * 根据创建时间筛选获取物料的领料数量
+     * @param tupleDTO
+     * @return
+     */
+    Map<Long, BigDecimal> quantityMap(TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO);
 }
