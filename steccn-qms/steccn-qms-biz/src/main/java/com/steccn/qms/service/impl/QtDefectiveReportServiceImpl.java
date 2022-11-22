@@ -34,6 +34,7 @@ import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
+import com.steccn.qms.util.XAxisUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -773,7 +774,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
             StackGraphDTO<String, Integer> stackGraphDTO = new StackGraphDTO<>();
-            stackGraphDTO.setXAxis(LocalDateTimeUtil.format(start, DatePattern.NORM_DATE_PATTERN));
+            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+            stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, start));
             List<TupleDTO<String, Integer>> data = Lists.newArrayList();
             //类别
             List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
