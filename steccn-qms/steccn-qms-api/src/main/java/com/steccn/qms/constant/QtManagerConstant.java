@@ -467,7 +467,7 @@ public interface QtManagerConstant {
             }
             return null;
         }
-
+    }
         /**
          * 样本概览枚举
          */
@@ -485,5 +485,19 @@ public interface QtManagerConstant {
             private String code;
             private String name;
         }
+
+    /**
+     * 计量单位
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChartUnit{
+        PERCENT(1566986152769929216L,"百分比","%");
+
+        private Long code;
+        private String name;
+        private String unitType;
     }
+
+
 }

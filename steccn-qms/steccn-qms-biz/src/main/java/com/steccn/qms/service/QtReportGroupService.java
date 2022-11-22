@@ -16,6 +16,11 @@ import java.util.List;
 */
 public interface QtReportGroupService extends IService<QtReportGroup> {
 
+    /**
+     * 新建分组
+     * @param dto
+     * @return
+     */
     Boolean add(QtReportGroupDTO dto);
 
     /**

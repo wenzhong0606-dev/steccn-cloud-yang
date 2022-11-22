@@ -22,10 +22,17 @@ public class QtReportExcelDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 报表id
+     */
+    @NotNull(message = "报表id不能为空")
+    private Integer reportId;
+
+    /**
      * 粒度
      */
     @NotBlank(message = "粒度不能为空")
     private String  granularity;
+
     /**
      * 报表卡片名称
      */
