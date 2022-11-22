@@ -29,6 +29,9 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.logging.Log;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -38,6 +41,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -48,8 +52,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class QtChartGenerateServiceImpl implements QtChartGenerateService {
-
     private final QtCheckTaskService qtCheckTaskService;
 
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
@@ -476,9 +480,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfos = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().in(QtCheckTaskDestoryInfo::getTaskId, allIds));
                             if (CollUtil.isNotEmpty(qtCheckTaskDestoryInfos)) {
                                 BigDecimal luoDateRange = BigDecimal.ZERO;
+                                Duration dr = Duration.between(LocalDateTime.now().plusHours(3),LocalDateTime.now());
                                 for (QtCheckTaskDestoryInfo info : qtCheckTaskDestoryInfos) {
-                                    Duration dr = Duration.between(info.getDestoryEndTime(), info.getDestoryStartTime());
+                                    if(info.getDestoryEndTime()==null&&info.getDestoryStartTime()==null){
+                                        log.info("落版时长为空,默认三个小时");
+                                    }else {
+                                        dr = Duration.between(info.getDestoryStartTime(),info.getDestoryEndTime());
+                                    }
                                     luoDateRange = BigDecimalUtil.divide(new BigDecimal(dr.toMinutes()), new BigDecimal(60));
+
                                     //任意落板原因r导致损耗重量 = r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
                                     //r导致的落板时长 * 拉引时速
                                     BigDecimal firstStep = BigDecimalUtil.multiply(luoDateRange, avgLaItem);
@@ -919,7 +929,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //若对比维度为空
             if(dto.getCompare()==null){
                 Map<String,BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
-                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, true);
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, false);
                 List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
                 List<String> legend = Lists.newArrayList();
                 for(Map.Entry<String, BigDecimal> reasonEntry:orderByLossWeight.entrySet()){
@@ -948,7 +958,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 Map<String,List<QtChartSubDetailDTO>> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason));
 
                 Map<String,BigDecimal> sumByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
-                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(sumByReason, true);
+
+                //根据损耗原因进行排序
+                Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(sumByReason, false);
                 //所有的柱子
                 List<StackGraphDTO<String,BigDecimal>> stackGraphDTOS = new ArrayList<>();
                 //折线图
@@ -983,7 +995,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
                         BigDecimal sunAmount = BigDecimal.ZERO;
                         for(QtChartSubDetailDTO tmp:duiValue){
-                            BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+                            sunAmount = BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
                             TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
                             if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
                                 tupleDTO.setField1(tmp.getWorkOrder());
@@ -1001,11 +1013,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         graphDTO.setData(tupleDTOList);
                         stackGraphDTOS.add(graphDTO);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
+                        BigDecimal sunRate = BigDecimalUtil.divide(laAmount,sunAmount);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
+                legend = Lists.reverse(legend);
                 resultDTO.setLegend(legend);
                 return resultDTO;
             }
@@ -1042,7 +1055,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             Map<String,BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
 
             //损耗原因按损耗重量降序排序，成品排在所有损耗原因之后，显示格式：#损耗原因#: #损耗重量#吨(#损耗率#)、成品: #成品重量#吨(#成品率#)
-            Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, true);
+            Map<String, BigDecimal> orderByReason = MapUtil.sortByValue(reasonData, false);
             //成品重量 = 拉引量 - 损耗总重量，单位为吨
             BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount,sunAmount);
             //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
