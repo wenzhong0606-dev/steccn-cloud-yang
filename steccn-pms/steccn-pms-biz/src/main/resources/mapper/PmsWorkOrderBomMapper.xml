@@ -33,8 +33,8 @@
     </sql>
     <select id="materialOrderStation" resultType="com.steccn.common.dto.TupleDTO">
         SELECT
-        bom.module_id as f1,
-        GROUP_CONCAT( DISTINCT pwocs.execute_station_id ) as f2
+        bom.module_id as field1,
+        GROUP_CONCAT( DISTINCT pwocs.execute_station_id ) as field2
         FROM
         pms_work_order_craft_station pwocs
         JOIN pms_produce_order_craft ppoc ON pwocs.id = pwocs.produce_order_craft_id

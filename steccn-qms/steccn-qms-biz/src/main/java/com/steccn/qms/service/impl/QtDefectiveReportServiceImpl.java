@@ -325,6 +325,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_NAME;
             modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPQXX;
             dataList = getSubstrateItemDetail(dto);
+        } else if (type.equals(3)) {
+            fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_LINE_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBQS;
+            dataList = getSubstrateItemDetail(dto);
+        } else if (type.equals(4)) {
+            fileName = QtManagerConstant.QT_CHART_DEEP_ITEM_LINE_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXXQS;
+            dataList = getSubstrateItemDetail(dto);
+        } else if (type.equals(5)) {
+            fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_LINE_NAME;
+            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JQQXXQS;
+            dataList = getSubstrateItemDetail(dto);
         }
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("compare","");

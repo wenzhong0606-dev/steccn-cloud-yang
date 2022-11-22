@@ -167,6 +167,7 @@
         SELECT
 	        o.production_line_id as productionLineId,
 	        o.`code` as code,
+	        o.material_id as materialId,
 	        o.material_code as materialCode,
 	        o.material_name as materialName,
 	        o.quantity as planQuantity,

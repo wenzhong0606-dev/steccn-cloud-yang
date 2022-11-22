@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -315,7 +316,7 @@ public class ReportServiceImpl implements ReportService {
         if(CollUtil.isNotEmpty(orDefault)){
             Map<Long,SysSpareUnitConversionVO> resMap = Maps.newHashMap();
             for (SysSpareUnitConversionVO spare : orDefault) {
-                resMap.put(spare.getConversionUintId(),spare);
+                resMap.put(spare.getConversionUnitId(),spare);
             }
             SysSpareUnitConversionVO vo = resMap.getOrDefault(unitList.get(idx), new SysSpareUnitConversionVO());
             if(Objects.nonNull(vo)){
@@ -829,6 +830,8 @@ public class ReportServiceImpl implements ReportService {
         });
         Map<Long, Set<Long>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
         log.info("{}", materialStationMap);
+        TupleDTO<LocalDate, Map<Long, Set<Long>>> tupleDTO = new TupleDTO<>(dto.getDate(), materialStationMap);
+
         return dataList;
     }
 

@@ -68,6 +68,7 @@ public class LoginService {
             steccnTokenVO.setUsername(username);
             R<OaUserInfo> oaUserInfoRes = oaInfoService.getOaUserInfo(username);
             if (Objects.isNull(oaUserInfoRes) || ResultCode.SUCCESS.getCode() != oaUserInfoRes.getCode()) {
+                log.error("获取用户信息失败 -> {}", oaUserInfoRes);
                 throw new BusinessException("获取用户信息失败");
             }
             OaUserInfo oaUserInfo = oaUserInfoRes.getData();

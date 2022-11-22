@@ -1093,6 +1093,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
             //如果根据生产订单号能查询到当前订单信息，则根据订单表中的id查询批次信息
             R<PmsWorkOrderBatchVO> pmsWorkOrderBatchVO = remotePmsFeignApi.getByOrderId(pmsProduceOrderVO.getData().getId());
+            if (pmsProduceOrderVO.getData().getProductionLineId() != null) {
+                //根据产线id查询产线名称
+                R<String> productionLineName = remoteOfficeFeign.getNameById(pmsProduceOrderVO.getData().getProductionLineId());
+                //设置产线名称
+                qtProduceOrderLineVO.setProductionLineName(productionLineName.getData());
+            }
             String batchCode = "";
             if (pmsWorkOrderBatchVO.getData() != null){
                 batchCode = pmsWorkOrderBatchVO.getData().getCode();

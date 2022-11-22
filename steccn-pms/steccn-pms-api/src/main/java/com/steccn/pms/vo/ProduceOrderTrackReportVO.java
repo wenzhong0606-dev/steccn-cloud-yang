@@ -28,6 +28,9 @@ public class ProduceOrderTrackReportVO {
     @ApiModelProperty("产品名称")
     private String materialName;
 
+    @ApiModelProperty("物料id")
+    private Long materialId;
+
     @ApiModelProperty("计划数")
     private BigDecimal planQuantity;
 

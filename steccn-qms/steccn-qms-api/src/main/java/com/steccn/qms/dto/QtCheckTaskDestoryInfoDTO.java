@@ -2,6 +2,8 @@ package com.steccn.qms.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -41,11 +43,13 @@ public class QtCheckTaskDestoryInfoDTO implements Serializable {
     /**
      * 落板开始时间
      */
+    @NotNull(message = "落板开始时间不能为空")
     private LocalDateTime destoryStartTime;
 
     /**
      * 落板结束时间
      */
+    @NotNull(message = "落板结束时间不能为空")
     private LocalDateTime destoryEndTime;
 
     /**
