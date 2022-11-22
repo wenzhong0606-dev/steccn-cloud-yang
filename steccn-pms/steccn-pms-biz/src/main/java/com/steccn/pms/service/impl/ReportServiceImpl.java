@@ -529,7 +529,7 @@ public class ReportServiceImpl implements ReportService {
 
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
-        Assert.notEmpty(dataList, "数据为空，暂无报表信息");
+        SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
