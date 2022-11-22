@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -829,6 +830,8 @@ public class ReportServiceImpl implements ReportService {
         });
         Map<Long, Set<Long>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
         log.info("{}", materialStationMap);
+        TupleDTO<LocalDate, Map<Long, Set<Long>>> tupleDTO = new TupleDTO<>(dto.getDate(), materialStationMap);
+
         return dataList;
     }
 
