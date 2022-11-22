@@ -26,6 +26,9 @@ public class FurtherProduceReportDataVO implements Serializable {
     @ApiModelProperty("物料id")
     private Long materialId;
 
+    @ApiModelProperty("生产订单id")
+    private Long produceOrderId;
+
     @ApiModelProperty("加工数")
     private BigDecimal processQuantity;
 

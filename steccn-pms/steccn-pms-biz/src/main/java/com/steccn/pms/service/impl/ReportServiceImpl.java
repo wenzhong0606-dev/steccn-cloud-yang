@@ -598,9 +598,10 @@ public class ReportServiceImpl implements ReportService {
                     Map<Long, Map<Integer, BigDecimal>> classCountMap = Maps.newHashMap();
                     //获取班次的数据
                     SysDictVO sysDictVO = classMap.get(classEntry.getKey());
-                    Map<Long, List<FurtherProduceReportDataVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherProduceReportDataVO::getMaterialId));
+                    Map<Long, List<FurtherProduceReportDataVO>> materialMap = classEntry.getValue().stream().collect(Collectors.groupingBy(FurtherProduceReportDataVO::getProduceOrderId));
                     //遍历物料分组
                     for (Map.Entry<Long, List<FurtherProduceReportDataVO>> materialEntry : materialMap.entrySet()) {
+                        Long materialId = materialEntry.getValue().get(0).getMaterialId();
                         //记录行合计
                         Map<Integer, BigDecimal> rowCountMap = Maps.newHashMap();
                         //将同一条物料数据，根据工序分组
@@ -616,14 +617,14 @@ public class ReportServiceImpl implements ReportService {
                             FurtherProduceReportDataVO orDefault = processMap.getOrDefault(pmProcess.getId(), defaultFurtherProduceReportDataVO);
                             List<String> valueStrList = Lists.newArrayList();
                             valueStrList.add(BigDecimalUtil.format(orDefault.getProcessQuantity()));
-                            BigDecimal value2 = unitConvert(unitList, unitConvertMap, materialEntry.getKey(), orDefault.getProcessQuantity(), 2);
+                            BigDecimal value2 = unitConvert(unitList, unitConvertMap, materialId, orDefault.getProcessQuantity(), 2);
                             valueStrList.add(BigDecimalUtil.format(value2));
                             BigDecimal subtract = BigDecimalUtil.subtract(orDefault.getProcessQuantity(), orDefault.getBadnessQuantity());
                             valueStrList.add(BigDecimalUtil.format(subtract));
-                            BigDecimal value4 = unitConvert(unitList, unitConvertMap, materialEntry.getKey(), subtract, 2);
+                            BigDecimal value4 = unitConvert(unitList, unitConvertMap,materialId, subtract, 2);
                             valueStrList.add(BigDecimalUtil.format(value4));
                             valueStrList.add(BigDecimalUtil.format(orDefault.getBadnessQuantity()));
-                            BigDecimal value6 = unitConvert(unitList, unitConvertMap, materialEntry.getKey(), orDefault.getBadnessQuantity(), 2);
+                            BigDecimal value6 = unitConvert(unitList, unitConvertMap, materialId, orDefault.getBadnessQuantity(), 2);
                             valueStrList.add(BigDecimalUtil.format(value6));
                             BigDecimal value7 = BigDecimalUtil.divide(BigDecimalUtil.multiply(subtract, BigDecimalUtil.HUNDRED), orDefault.getProcessQuantity());
                             valueStrList.add(BigDecimalUtil.format(value7));
@@ -647,9 +648,9 @@ public class ReportServiceImpl implements ReportService {
                         //合计
                         List<String> rowCountList = Lists.newArrayList();
                         rowCountList.add(BigDecimalUtil.format(firstProcessQuantity));
-                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialEntry.getKey(), firstProcessQuantity, 2)));
+                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialId, firstProcessQuantity, 2)));
                         rowCountList.add(BigDecimalUtil.format(lastPassQuantity));
-                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialEntry.getKey(), lastPassQuantity, 2)));
+                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialId, lastPassQuantity, 2)));
                         rowCountList.add(BigDecimalUtil.format(BigDecimalUtil.divide(BigDecimalUtil.multiply(lastPassQuantity, BigDecimalUtil.HUNDRED), firstProcessQuantity)));
                         //班次合计
                         pmColumnCount(classCountMap, 0L, rowCountMap);
@@ -659,18 +660,18 @@ public class ReportServiceImpl implements ReportService {
                         pmColumnCount(workshopCountMap, 0L, rowCountMap);
                         moduleList.add(new FurtherValueStrVO(rowCountList));
                         //入库
-                        Map<Long, BigDecimal> orDefaultMap = materialCompleteMap.getOrDefault(materialEntry.getKey(), Maps.newHashMap());
+                        Map<Long, BigDecimal> orDefaultMap = materialCompleteMap.getOrDefault(materialId, Maps.newHashMap());
                         BigDecimal completeNum = orDefaultMap.get(classEntry.getKey());
-                        BigDecimal completeConvert = unitConvert(unitList, unitConvertMap, materialEntry.getKey(), completeNum, 2);
+                        BigDecimal completeConvert = unitConvert(unitList, unitConvertMap, materialId, completeNum, 2);
                         //成品率 = 入库平方米数 / 上片加工平方米数
-                        BigDecimal firstProcessNum = unitConvert(unitList, unitConvertMap, materialEntry.getKey(), firstProcessQuantity, 2);
+                        BigDecimal firstProcessNum = unitConvert(unitList, unitConvertMap, materialId, firstProcessQuantity, 2);
                         BigDecimal productRate = BigDecimalUtil.divide(BigDecimalUtil.multiply(completeConvert, BigDecimalUtil.HUNDRED), firstProcessNum);
                         moduleList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(completeNum), BigDecimalUtil.format(completeConvert), BigDecimalUtil.format(productRate))));
                         //班次，产线，车间
                         countIn(classEntry.getKey(), classCountMap, completeNum , completeConvert);
                         countIn(classEntry.getKey(), lineCountMap, completeNum , completeConvert);
                         countIn(classEntry.getKey(), workshopCountMap, completeNum , completeConvert);
-                        EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialEntry.getKey(), defaultEqpSpareVO);
+                        EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialId, defaultEqpSpareVO);
                         List<String> specDataList = Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity()));
                         FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList);
                         tableData.add(rowData);

@@ -170,6 +170,7 @@
             prw.classes_id,
             prw.process_id,
             ppo.material_id,
+            prw.produce_order_id,
             sum( prw.process_quantity ) as process_quantity,
             sum( prw.badness_quantity ) as badness_quantity
         FROM
