@@ -221,7 +221,7 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
                 productLineVOList.add(rowTotal);
                 //插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
-                addProductLineOther(dto, classList, productLine, productLineVOList, workshopCountMap);
+                addProductLineOther(countMap1, countMap2, dto, classList, productLine, productLineVOList, workshopCountMap);
             }
             //添加车间库存
             addWorkShopOther(v.get(0), productLineVOList, workshopCountMap);
@@ -248,7 +248,7 @@ public class ReportServiceImpl implements ReportService {
      */
     private List<String> valueStr(Map<Integer, BigDecimal> countMap){
         List<String> resList = Lists.newArrayList();
-        for(int i = 0 ; i <=5 ;i ++){
+        for (int i = 0; i <= 5; i++) {
             resList.add(BigDecimalUtil.format(countMap.get(i)));
         }
         return resList;
@@ -416,14 +416,16 @@ public class ReportServiceImpl implements ReportService {
     /**
      * 插入拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
      *
+     * @param countMap1         早班数据集合
+     * @param countMap2         夜班数据集合
      * @param dto               查询条件
      * @param classList         班次数据
      * @param productLine       产线信息
      * @param productLineVOList 数据存放集合
      */
-    private void addProductLineOther(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
+    private void addProductLineOther(Map<Integer, BigDecimal> countMap1, Map<Integer, BigDecimal> countMap2, PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
         //拉引量(T)
-        Map<Long, PmsPullForce> pmsPullForcesMap = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate());
+        Map<Long, PmsPullForce> pmsPullForcesMap = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate() , dto.getClassGroupIdList());
         PmsPullForce morning = pmsPullForcesMap.get(classList.get(0).getId());
         PmsPullForce night = pmsPullForcesMap.get(classList.get(1).getId());
         BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
@@ -435,16 +437,18 @@ public class ReportServiceImpl implements ReportService {
         BigDecimalUtil.accumulate(workshopCountMap, 0, morningBigDecimal.add(nightBigDecimal));
 
         //合格率：根据当日当班产量(t)/拉引量计算，按百分比显示
-        Map<Long, PmsReportWork> pmsReportWorkMap = pmsReportWorkService.dateProductNum(productLine.getId(), dto.getDate());
-        PmsReportWork defaultPmsReportWork = new PmsReportWork();
-        PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
-        PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
+//        Map<Long, PmsReportWork> pmsReportWorkMap = pmsReportWorkService.dateProductNum(productLine.getId(), dto.getDate());
+//        PmsReportWork defaultPmsReportWork = new PmsReportWork();
+//        PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
+//        PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
 
-        BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, morningPms.getProcessQuantity());
-        BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, nightPms.getProcessQuantity());
+        BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(4));
+        BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(4));
         BigDecimal morningRate = BigDecimalUtil.divide(dayPq, morningBigDecimal);
         BigDecimal nightRate = BigDecimalUtil.divide(nightPq, nightBigDecimal);
-        BigDecimal rateSum = BigDecimalUtil.add(morningRate, nightRate);
+        //产线的合格率
+        BigDecimal sumNum = BigDecimalUtil.add(countMap1.get(4), countMap2.get(4));
+        BigDecimal rateSum = BigDecimalUtil.divide(sumNum, sum);
         SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
 
@@ -502,8 +506,8 @@ public class ReportServiceImpl implements ReportService {
             BigDecimal nightMultiply = nightGas.multiply(BigDecimal.valueOf(7800)).add(nightOil.multiply(BigDecimal.valueOf(9300)));
             nightKcal = nightMultiply.divide(nightBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
         }
-        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, morningKcal.add(nightKcal)), "单耗(kcal/Kg玻璃液)");
-        BigDecimalUtil.accumulate(workshopCountMap, 6, morningKcal.add(nightKcal));
+        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, BigDecimalUtil.add(morningKcal,nightKcal)), "单耗(kcal/Kg玻璃液)");
+        BigDecimalUtil.accumulate(workshopCountMap, 6, BigDecimalUtil.add(morningKcal,nightKcal));
         return bly;
     }
 

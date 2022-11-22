@@ -391,7 +391,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     });
                     inventoryDTO.setShelfCodes(warehouseCodes);
                 });
-                Map<Long, BigDecimal> inventoryMap = remoteMessFeignApi.listMaterialInventory(inventoryDTOList);
+                List<MessMaterialStorageDTO> collect = inventoryDTOList.stream().filter(inventoryDTO -> inventoryDTO.getShelfCodes().size() > 0).collect(Collectors.toList());
+                Map<Long, BigDecimal> inventoryMap = remoteMessFeignApi.listMaterialInventory(collect);
                 // 获取物料的数据
                 EqpSpareVO eqpSpareVO = new EqpSpareVO();
                 Map<Long, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();

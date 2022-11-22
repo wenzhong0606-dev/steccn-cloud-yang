@@ -12,12 +12,12 @@ public class QtSpcReportDownloadVO implements Serializable {
     /**
      * 时间分片开始时间
      */
-    private LocalDateTime startTime;
+    private String startTime;
 
     /**
      * 时间分片结束时间
      */
-    private LocalDateTime endTime;
+    private String endTime;
 
     /**
      * 检验项名称
@@ -32,7 +32,7 @@ public class QtSpcReportDownloadVO implements Serializable {
     /**
      * 检验结果平均值
      */
-    private BigDecimal checkItemResultAverage;
+    private BigDecimal resultAverage;
 
     /**
      * 标准值

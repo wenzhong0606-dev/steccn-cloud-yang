@@ -90,7 +90,7 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_SJGXJHGLQS = "SJGXJHGLQS.xlsx";
 
-    String QT_CHART_EXCEL_MODEL_NAME_JPXJHGL = "JPXJHGL.xlsx";
+    //String QT_CHART_EXCEL_MODEL_NAME_JPXJHGL = "JPXJHGL.xlsx";
 
     String QT_CHART_SPC_NAME = "SPC.xlsx";
 
@@ -131,6 +131,8 @@ public interface QtManagerConstant {
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
+
+    String QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS= "JPXJHGLQS.xlsx"; //基片巡检合格率
 
     //质量管控模块样本概况字段常量
     String SAMPLENUM = "sampleNum"; //样本编号

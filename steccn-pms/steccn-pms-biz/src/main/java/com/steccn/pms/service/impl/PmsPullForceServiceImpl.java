@@ -214,10 +214,13 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     }
 
     @Override
-    public Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date) {
+    public Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date, List<Long> classGroupIdList) {
         Map<Long, PmsPullForce> resMap = Maps.newHashMap();
         if (Objects.nonNull(productLineId) && Objects.nonNull(date)) {
-            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getProductLineId, productLineId).eq(PmsPullForce::getPullForceDate, date));
+            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>()
+                    .eq(PmsPullForce::getProductLineId, productLineId)
+                    .in(CollUtil.isNotEmpty(classGroupIdList), PmsPullForce::getClassesId, classGroupIdList)
+                    .eq(PmsPullForce::getPullForceDate, date));
             if (CollUtil.isNotEmpty(list)) {
                 for (PmsPullForce pmsPullForce : list) {
                     resMap.put(pmsPullForce.getClassesId(), pmsPullForce);

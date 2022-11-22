@@ -47,8 +47,9 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      *
      * @param productLineId 产线id
      * @param date          日期
+     * @param classGroupIdList 班次id集合
      * @return list
      */
-    Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date);
+    Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date, List<Long> classGroupIdList);
 
 }
