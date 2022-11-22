@@ -89,6 +89,7 @@ public class ReportServiceImpl implements ReportService {
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
+
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
         Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
@@ -122,9 +123,10 @@ public class ReportServiceImpl implements ReportService {
                 //获取当前产线下的数据
                 List<SubstrateDataListVO> productLineDataList = finalRowDataList.stream().filter(row -> productLine.getId().equals(row.getProductLineId())).collect(Collectors.toList());
                 //将当前产线下的数据根据物料分组
-                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getMaterialId));
+                Map<Long, List<SubstrateDataListVO>> materialMap = productLineDataList.stream().collect(Collectors.groupingBy(SubstrateDataListVO::getProduceOrderId));
                 //遍历物料分组的数据，来组装数据
                 for (Map.Entry<Long, List<SubstrateDataListVO>> entry : materialMap.entrySet()) {
+                    Long materialId = entry.getValue().get(0).getMaterialId();
                     SubstrateDayReportListVO row = new SubstrateDayReportListVO();
                     row.setType(PmReportConstant.TYPE_0);
                     row.setWorkshopName(productLine.getParentName());
@@ -145,10 +147,10 @@ public class ReportServiceImpl implements ReportService {
                         inCount = BigDecimalUtil.add(inCount, typeVO0.getQuantity());
                         proCount = BigDecimalUtil.add(proCount, typeVO1.getQuantity());
 
-                        BigDecimal bigDecimal1 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO0.getQuantity(), 1);
-                        BigDecimal bigDecimal2 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO0.getQuantity(), 2);
-                        BigDecimal bigDecimal3 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO1.getQuantity(), 1);
-                        BigDecimal bigDecimal4 = unitConvert(unitList, unitConvertMap, entry.getKey(), typeVO1.getQuantity(), 2);
+                        BigDecimal bigDecimal1 = unitConvert(unitList, unitConvertMap, materialId, typeVO0.getQuantity(), 1);
+                        BigDecimal bigDecimal2 = unitConvert(unitList, unitConvertMap, materialId, typeVO0.getQuantity(), 2);
+                        BigDecimal bigDecimal3 = unitConvert(unitList, unitConvertMap, materialId, typeVO1.getQuantity(), 1);
+                        BigDecimal bigDecimal4 = unitConvert(unitList, unitConvertMap, materialId, typeVO1.getQuantity(), 2);
 
                         if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
                             //早班
@@ -182,10 +184,10 @@ public class ReportServiceImpl implements ReportService {
                             BigDecimalUtil.accumulate(countMap2, 5, typeVO1.getQuantity());
                         }
                     }
-                    BigDecimal m1 = unitConvert(unitList, unitConvertMap, entry.getKey(), inCount, 1);
-                    BigDecimal m2 = unitConvert(unitList, unitConvertMap, entry.getKey(), inCount, 2);
-                    BigDecimal m3 = unitConvert(unitList, unitConvertMap, entry.getKey(), proCount, 1);
-                    BigDecimal m4 = unitConvert(unitList, unitConvertMap, entry.getKey(), proCount, 2);
+                    BigDecimal m1 = unitConvert(unitList, unitConvertMap, materialId, inCount, 1);
+                    BigDecimal m2 = unitConvert(unitList, unitConvertMap, materialId, inCount, 2);
+                    BigDecimal m3 = unitConvert(unitList, unitConvertMap, materialId, proCount, 1);
+                    BigDecimal m4 = unitConvert(unitList, unitConvertMap, materialId, proCount, 2);
 
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
                     BigDecimalUtil.accumulate(countMap3, 1, m1);
@@ -199,7 +201,7 @@ public class ReportServiceImpl implements ReportService {
                             BigDecimalUtil.format(proCount),
                             BigDecimalUtil.format(m3),
                             BigDecimalUtil.format(m4)));
-                    EqpSpareVO eqpSpareVO = specMap.getOrDefault(entry.getKey(), defaultEqpSpareVO);
+                    EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialId, defaultEqpSpareVO);
                     row.setSpecList(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity())));
                     productLineVOList.add(row);
                 }

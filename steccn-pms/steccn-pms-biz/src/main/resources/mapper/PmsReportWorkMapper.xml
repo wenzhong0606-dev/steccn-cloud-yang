@@ -90,6 +90,7 @@
     <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">
         SELECT
             1 AS type,
+            prw.produce_order_id,
             ppo.production_line_id as productLineId,
             ppo.material_id,
             any_value(ppo.material_code),
@@ -123,6 +124,7 @@
         UNION ALL
         SELECT
             0 AS type,
+            ppo.id as produceOrderId,
             ppo.production_line_id as productLineId,
             ppo.material_id,
             any_value(ppo.material_code),

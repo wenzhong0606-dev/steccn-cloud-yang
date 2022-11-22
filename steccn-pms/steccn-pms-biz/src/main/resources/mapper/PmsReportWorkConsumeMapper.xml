@@ -58,6 +58,14 @@
         WHERE
             product_line_id = #{productLineId}
           AND DATE_FORMAT( wc.create_time, '%Y-%m-%d' ) = #{date}
+        <if test="classList !=null and classList.size > 0">
+            AND  rw.classes_id IN
+            <foreach collection="classList" item="item" open="(" close=")" separator=",">
+                #{item.id}
+            </foreach>
+        </if>
+
+
         GROUP BY
             rw.product_line_id,
             rw.classes_id,

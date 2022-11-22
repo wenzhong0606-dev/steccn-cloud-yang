@@ -1,11 +1,13 @@
 package com.steccn.pms.mapper;
 
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.domain.PmsReportWorkConsume;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.vo.EnergyGroupListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,11 +33,12 @@ public interface PmsReportWorkConsumeMapper extends BaseMapper<PmsReportWorkCons
 
     /**
      * 基片日报表
+     * @param classList 班次id集合
      * @param productLineId 产线id
      * @param date 日期
      * @return 数据
      */
-    List<EnergyGroupListVO> substrateEnergy(@Param("productLineId") Integer productLineId,@Param("date") LocalDate date);
+    List<EnergyGroupListVO> substrateEnergy(@Param("classList") List<SysDictVO> classList, @Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
 }
 
 

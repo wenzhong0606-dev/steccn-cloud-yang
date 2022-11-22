@@ -68,7 +68,7 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
     public List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap) {
         List<SubstrateDayReportListVO> resList = Lists.newArrayList();
 
-        List<EnergyGroupListVO> groupList = this.baseMapper.substrateEnergy(productLine.getId(), dto.getDate());
+        List<EnergyGroupListVO> groupList = this.baseMapper.substrateEnergy(classList,productLine.getId(), dto.getDate());
         Map<Integer, List<EnergyGroupListVO>> typeMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(groupList)) {
             typeMap = groupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getType));
