@@ -16,6 +16,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.Constant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -683,12 +684,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
         produceOrderTrackReportVOPage.getRecords().forEach(produceOrderTrackReportVO -> {
             BigDecimal conversionQuantity = null;
+            BigDecimal quantity = null;
             if (CollectionUtils.isNotEmpty(map.get(produceOrderTrackReportVO.getMaterialId()))) {
                 Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId())
                         .stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
 
                 if (optional.isPresent()) {
                     conversionQuantity = optional.get().getConversionQuantity();
+                    quantity = optional.get().getQuantity();
                 }
             }
             BigDecimal planQuantity = produceOrderTrackReportVO.getPlanQuantity();
@@ -703,15 +706,15 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 produceOrderTrackReportVO.setShortfallQuantity(shortfallQuantity);
             }
 
-            if (Objects.nonNull(conversionQuantity)) {
+            if (Objects.nonNull(conversionQuantity) && Objects.nonNull(quantity)) {
                 if (Objects.nonNull(planQuantity)) {
-                    produceOrderTrackReportVO.setPlanQuantitySq(planQuantity.multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(planQuantity,quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(completeQuantity)) {
-                    produceOrderTrackReportVO.setCompleteQuantitySq(completeQuantity.multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(completeQuantity,quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(shortfallQuantity)) {
-                    produceOrderTrackReportVO.setShortfallQuantitySq(shortfallQuantity.multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(shortfallQuantity,quantity).multiply(conversionQuantity));
                 }
             }
         });
