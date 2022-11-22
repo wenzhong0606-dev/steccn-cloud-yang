@@ -53,7 +53,7 @@ public class QtSpcReportDetailVO implements Serializable {
     /**
      * 检验结果
      */
-    private BigDecimal checkItemResultAverage;
+    private BigDecimal resultAverage;
 
     /**
      * 标准值
