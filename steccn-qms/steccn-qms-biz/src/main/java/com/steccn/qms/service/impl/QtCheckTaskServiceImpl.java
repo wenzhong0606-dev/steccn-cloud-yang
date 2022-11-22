@@ -6,7 +6,15 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.context.WriteContext;
+import com.alibaba.excel.metadata.data.ClientAnchorData;
+import com.alibaba.excel.util.FileTypeUtils;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.excel.util.StyleUtil;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -45,6 +53,7 @@ import com.steccn.qms.dto.*;
 import com.steccn.qms.mapper.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
+import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
@@ -52,14 +61,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -2223,12 +2237,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPHY,QtManagerConstant.QT_CHART_SUB_JPCJ,map,flatDataList,dto.getBase64());
     }
 
+    @SneakyThrows
     @Override
     public void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
         map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
-
+        map.put("samplingTime","全部");
+        map.put("materialName","");
+        map.put("materialWorkshopName","全部");
+        map.put("compare","");
 //        if (Objects.isNull(dto.getWorkshopId())) {
 //            map.put("materialWorkshopName","");
 //        } else {
@@ -2245,6 +2263,101 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 //        } else {
 //            map.put("date",LocalDateUtil.localDateFormat(dto.getDate(),DatePattern.NORM_DATE_PATTERN));
 //        }
+        downloadTemplate(response,null,null,map,null,dto.getBase64(),dto.getDetailBase64());
+    }
+
+     private void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, List<?> dataList, String base64, String detailBase64) throws IOException {
+        //1、从服务器获取模板数据
+        InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
+        //2、设置下载头
+        setDownloadHeader(response,downloadName);
+        try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+            // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
+            // forceNewRow 如果设置了true,有个缺点 就是他会把所有的数据都放到内存了，所以慎用
+            // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
+            // 如果数据量大 list不是最后一行 参照下一个
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
+            excelWriter.fill(dataList, fillConfig, writeSheet);
+            if(StrUtil.isNotBlank(base64)){
+                BASE64Decoder decoder = new BASE64Decoder();
+                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        // 调整异常数据
+                        bytes[i] += 1024;
+                    }
+                }
+                if (bytes != null) {
+                    //拿到context数据
+                    WriteContext writeContext = excelWriter.writeContext();
+                    Workbook workbook = writeContext.writeWorkbookHolder().getWorkbook();
+                    Sheet sheet = writeContext.writeSheetHolder().getCachedSheet();
+                    Drawing<?> drawing = sheet.getDrawingPatriarch();
+                    if (drawing == null) {
+                        drawing = sheet.createDrawingPatriarch();
+                    }
+                    CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+                    int index = workbook.addPicture(bytes,
+                            FileTypeUtils.getImageTypeFormat(bytes));
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setDx2(-StyleUtil.getCoordinate(5));
+                    anchor.setDx1(StyleUtil.getCoordinate(5));
+                    // 图片位置设置代码
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 7));
+                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 10) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 6) + 1);
+                    anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
+                    drawing.createPicture(anchor, index);
+                }
+            }
+            if (StringUtils.isNotBlank(detailBase64)) {
+                BASE64Decoder decoder = new BASE64Decoder();
+                byte[] bytes = decoder.decodeBuffer(detailBase64.replace("data:image/png;base64,",""));
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        // 调整异常数据
+                        bytes[i] += 1024;
+                    }
+                }
+                if (bytes != null) {
+                    //拿到context数据
+                    WriteContext writeContext = excelWriter.writeContext();
+                    Workbook workbook = writeContext.writeWorkbookHolder().getWorkbook();
+                    Sheet sheet = writeContext.writeSheetHolder().getCachedSheet();
+                    Drawing<?> drawing = sheet.getDrawingPatriarch();
+                    if (drawing == null) {
+                        drawing = sheet.createDrawingPatriarch();
+                    }
+                    CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+                    int index = workbook.addPicture(bytes,
+                            FileTypeUtils.getImageTypeFormat(bytes));
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setDx2(-StyleUtil.getCoordinate(5));
+                    anchor.setDx1(StyleUtil.getCoordinate(5));
+                    // 图片位置设置代码
+                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 14));
+                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 17) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 6) + 1);
+                    anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
+                    drawing.createPicture(anchor, index);
+                }
+            }
+            excelWriter.fill(fixMap, writeSheet);
+            // bytes为要导出的图像文件字节数组
+
+            response.getOutputStream().flush();
+        }
+    }
+
+    private void setDownloadHeader(HttpServletResponse response,String name) throws UnsupportedEncodingException {
+        response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode(name, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
     }
 
     @SneakyThrows
