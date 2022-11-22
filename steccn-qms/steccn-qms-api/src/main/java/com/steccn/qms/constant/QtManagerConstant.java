@@ -90,6 +90,8 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_SJGXJHGLQS = "SJGXJHGLQS.xlsx";
 
+    String QT_CHART_EXCEL_MODEL_NAME_LLJ = "LLJ.xlsx";
+
     //String QT_CHART_EXCEL_MODEL_NAME_JPXJHGL = "JPXJHGL.xlsx";
 
     String QT_CHART_SPC_NAME = "SPC.xlsx";
@@ -127,6 +129,8 @@ public interface QtManagerConstant {
     String QT_CHART_SUBSTRATE_ITEM_LINE_NAME = "基片缺陷项趋势";
 
     String QT_CHART_SUB_JPCJ ="基片化验抽检合格率趋势";
+
+    String QT_CHART_ACCEPTABILITY_LLJ ="来料检合格率";
 
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 

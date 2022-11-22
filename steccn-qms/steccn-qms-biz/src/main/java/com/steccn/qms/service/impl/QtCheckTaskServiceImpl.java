@@ -2241,36 +2241,41 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
         Map<String, Object> map = MapUtils.newHashMap();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(Collections.singleton(dto.getMaterialId()))).get();
+
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
         map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
         map.put("samplingTime","全部");
         map.put("materialName","");
         map.put("materialWorkshopName","全部");
         map.put("compare","");
-//        if (Objects.isNull(dto.getWorkshopId())) {
-//            map.put("materialWorkshopName","");
-//        } else {
-//            String workshopName = remoteOfficeFeign.getNameById(dto.getWorkshopId()).getData();
-//            map.put("materialWorkshopName",workshopName);
-//        }
-//        if (Objects.isNull(dto.getCompare())) {
-//            map.put("materialWorkshop","");
-//        } else {
-//            map.put("materialWorkshop",QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getName());
-//        }
-//        if (Objects.isNull(dto.getDate())) {
-//            map.put("date","");
-//        } else {
-//            map.put("date",LocalDateUtil.localDateFormat(dto.getDate(),DatePattern.NORM_DATE_PATTERN));
-//        }
-        downloadTemplate(response,null,null,map,null,dto.getBase64(),dto.getDetailBase64());
+        if (Objects.nonNull(dto.getCompare())) {
+            map.put("compare",QtManagerConstant.QtChartCompareEnum.getNameByCode(dto.getCompare()));
+        }
+        if (Objects.nonNull(dto.getSamplingTime())) {
+            map.put("samplingTime",LocalDateUtil.localDateFormat(dto.getSamplingTime(),DatePattern.NORM_DATE_PATTERN));
+        }
+        if (Objects.nonNull(dto.getMaterialWorkshopId())) {
+            String workshopName = remoteOfficeFeign.getNameById(dto.getProductWorkShopId()).getData();
+            map.put("materialWorkshopName",workshopName);
+        }
+        if (Objects.nonNull(dto.getMaterialId())) {
+            map.put("materialName",materialIdNameMap.get(dto.getMaterialId()));
+        }
+
+        downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_LLJ,QtManagerConstant.QT_CHART_ACCEPTABILITY_LLJ,map,dto.getBase64(),dto.getDetailBase64());
     }
 
-     private void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, List<?> dataList, String base64, String detailBase64) throws IOException {
+     private void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, String base64, String detailBase64) throws IOException {
         //1、从服务器获取模板数据
         InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
         //2、设置下载头
-        setDownloadHeader(response,downloadName);
+         response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
+         response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+         String fileName = URLEncoder.encode(downloadName, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
+         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+
         try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
             WriteSheet writeSheet = EasyExcel.writerSheet().build();
             // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
@@ -2278,7 +2283,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
             // 如果数据量大 list不是最后一行 参照下一个
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
-            excelWriter.fill(dataList, fillConfig, writeSheet);
+            excelWriter.fill(fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
                 BASE64Decoder decoder = new BASE64Decoder();
                 byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
@@ -2350,14 +2355,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
             response.getOutputStream().flush();
         }
-    }
-
-    private void setDownloadHeader(HttpServletResponse response,String name) throws UnsupportedEncodingException {
-        response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
-        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
-        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-        String fileName = URLEncoder.encode(name, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
     }
 
     @SneakyThrows
