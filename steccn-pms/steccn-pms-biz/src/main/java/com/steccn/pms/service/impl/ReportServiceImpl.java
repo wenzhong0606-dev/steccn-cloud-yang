@@ -391,7 +391,7 @@ public class ReportServiceImpl implements ReportService {
             SubstrateDayReportListVO subVo = rowData(new SysOfficeVO(), Arrays.asList(allCountMap.get(idx), allCountMap.get(idx), allCountMap.get(idx)), consumeEnum.getName());
             if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
                 //合格率需要重新算
-                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1),BigDecimalUtil.HUNDRED), allCountMap.get(2));
+                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1),BigDecimalUtil.HUNDRED), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
             }
             subVo.setWorkshopName("总计");
@@ -415,7 +415,7 @@ public class ReportServiceImpl implements ReportService {
             SubstrateDayReportListVO subVo = rowData(productLine, Arrays.asList(workshopCountMap.get(idx), workshopCountMap.get(idx), workshopCountMap.get(idx)), consumeEnum.getName());
             if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
                 //合格率需要重新计算
-                BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-1), BigDecimalUtil.HUNDRED), workshopCountMap.get(1));
+                BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-1), BigDecimalUtil.HUNDRED), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate, rate, rate), consumeEnum.getName());
             }
             subVo.setWorkshopName(productLine.getParentName());
@@ -461,7 +461,7 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal nightRate = BigDecimalUtil.divide(nightPq, nightBigDecimal);
         //产线的合格率
         BigDecimal sumNum = BigDecimalUtil.add(countMap1.get(5), countMap2.get(5));
-        BigDecimal rateSum = BigDecimalUtil.divide(sumNum, sum);
+        BigDecimal rateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), sum);
         SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
 
