@@ -1,42 +1,78 @@
 package com.steccn.oa.constant;
 
+import com.steccn.oa.config.OaConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
 /**
  * oa常量
  *
  * @author AndrewLuo
  * @date 2022/09/02
  */
-public interface OaConstant {
+public class OaConstant {
     /**
      * checklogin json
      */
-    String OA_JSON_LOGIN_STATUS = "loginstatus";
-    String OA_JSON_USER_ID = "userid";
-    String OA_JSON_MSG_CODE = "msgcode";
-    String OA_JSON_MSG = "msg";
-    String OA_JSON_DATA = "data";
-    String OA_JSON_DATAS = "datas";
-    String OA_JSON_STATUS = "status";
-    String OA_JSON_TOKEN = "token";
-    String OA_JSON_CHILD = "child";
-    String OA_JSON_PID = "pid";
-    String OA_JSON_ID = "id";
-    String OA_JSON_NAME = "name";
-    String OA_JSON_URL = "url";
-    String OA_JSON_DEPARTMENTNAME = "departmentname";
-    String OA_JSON_ICON = "icon";
+    public static final String OA_JSON_LOGIN_STATUS = "loginstatus";
+    public static final String OA_JSON_USER_ID = "userid";
+    public static final String OA_JSON_MSG_CODE = "msgcode";
+    public static final String OA_JSON_MSG = "msg";
+    public static final String OA_JSON_DATA = "data";
+    public static final String OA_JSON_DATAS = "datas";
+    public static final String OA_JSON_STATUS = "status";
+    public static final String OA_JSON_TOKEN = "token";
+    public static final String OA_JSON_CHILD = "child";
+    public static final String OA_JSON_PID = "pid";
+    public static final String OA_JSON_ID = "id";
+    public static final String OA_JSON_NAME = "name";
+    public static final String OA_JSON_URL = "url";
+    public static final String OA_JSON_DEPARTMENTNAME = "departmentname";
+    public static final String OA_JSON_ICON = "icon";
+
+
+
     /**
      * 泛微oa常量
      */
-    String OA_SSO_APPID = "ssso";
-    String OA_API_APPID = "fad36a4ac8412767c11007fc1736cff5";
-    String OA_API_SECRET = "wbSRHWiPyCMBY3NNkcsDHJVXjCe6y1NJglmzNeNlAgOTpqxbhh7Xe3ib2X2zm3Fq8kySb7guECI1ykYoew3DmHYvf6tAiWxrUPdAx7Cuzoo9NDW+cwTPuYHTH5njvSNY6NRnopr4QXHoAk2UY//I8X0l9v3Uz3CB6IkPz2mByXYLQoSHC6p1CovDDVJXhJf90hh844G5pj+63fQZUzuSOyBLlGcQ/DqYceHgtE5RCuWiDz1wsX7CehoRKqrmfkyguiiKCOhF5KYOpxpvys/1MI34IXh4t9UO06MfOrT9gCjlVKITql3Z6SHdqSv981DXgERCUmP30HHxLB8oPpvsrQ==";
-    String OA_SPK = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4vp8JgKbgJ5r6fp1nS48hl/UFUv1OVcP9pAlxsMrvdELjglzsQqArKchASjJR3JblIjZBQiFwdt9v4wufj3jyoGRMdKEsxIzdSIvVuEjcvTDoyZeIeOUZPqlGyln6Me4ddekqtB9SK9HOmiwVuJYiajF3Do5zWcY1MBp+wUyH63KyjOKnwLv2+SkTexYsjEcEc585TCpUnxJIRfEN1ckY8s9y8oUVTlXhFFU9z/SAOADDmv2D0bYSOiKBRy/OjUZNbU9OMY0ErKt9epzXvccgGyTUpAG9mQohN55OSzjVmSW9sT8fgxGO96TphJRwmBDpW3q1A4ELHJza99+0RmZ8QIDAQAB";
-    String OA_SYSTEM_USERID = "WgG/JdOb8YMGopow65ELcljv8PZoef5XktK+3IU6RBn5OSq4dHoX+qbFdGquwRp+OPabHlMZUh35q0KLrQMB42w7ucxzQ5+XG6gI7g9HKhxSux8DlTlRHqhfmg2oUJG9FhCN8eA/DoOeNi68JOX1wqbO7QZOKzPN5wT9XCfsCRs3bU92HDzzVmqK28sVMBH18IAQq+t0tu+tpRLDPFVy+R4OmzbkU06mXxyF49OEtLW9cYUh6xFdnydagqjafby4eGToxIE3nnQ9FvFYmzcJz4iHIZ+dmn1MS5BbTFDTMki1s3jHyp8mZWWuEnosOD/ZdP01zVbsDCDGTVUWUzCY6A==";
-    String OA_WEAVER_SITE = "http://61.177.139.244:8887";
-    String OA_RIGHT_STRING = "HrmResourceAdd:Add";
-    Integer YES = 1;
-    Integer NO = 0;
-    Integer NONE = -1;
-    String OA_SESSION_KEY = "sessionkey";
+    public static final String OA_SSO_APPID = OaConfigHelper.OA_SSO_APPID;
+    public static final String OA_API_APPID = OaConfigHelper.OA_API_APPID;
+    public static final String OA_API_SECRET = OaConfigHelper.OA_API_SECRET;
+    public static final String OA_SPK = OaConfigHelper.OA_SPK;
+    public static final String OA_SYSTEM_USERID = OaConfigHelper.OA_SYSTEM_USERID;
+    public static final String OA_WEAVER_SITE = OaConfigHelper.OA_WEAVER_SITE;
+    public static final String OA_RIGHT_STRING = OaConfigHelper.OA_RIGHT_STRING;
+    public static final Integer YES = 1;
+    public static final Integer NO = 0;
+    public static final Integer NONE = -1;
+    public static final String OA_SESSION_KEY = "sessionkey";
+
+
+}
+
+/**
+ * 把配置转成静态属性
+ */
+@Component
+class OaConfigHelper{
+    static String OA_SSO_APPID;
+    static String OA_API_APPID;
+    static String OA_API_SECRET;
+    static String OA_SPK;
+    static String OA_SYSTEM_USERID;
+    static String OA_WEAVER_SITE;
+    static String OA_RIGHT_STRING;
+
+    @Autowired
+    public void setOaConfig(OaConfig oaConfig){
+        OA_SSO_APPID = oaConfig.getOA_SSO_APPID();
+        OA_API_APPID = oaConfig.getOA_API_APPID();
+        OA_API_SECRET = oaConfig.getOA_API_SECRET();
+        OA_SPK = oaConfig.getOA_SPK();
+        OA_SYSTEM_USERID = oaConfig.getOA_SYSTEM_USERID();
+        OA_WEAVER_SITE = oaConfig.getOA_WEAVER_SITE();
+        OA_RIGHT_STRING = oaConfig.getOA_RIGHT_STRING();
+    }
 }

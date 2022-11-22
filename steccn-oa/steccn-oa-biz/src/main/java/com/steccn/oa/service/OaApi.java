@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * @author AndrewLuo
  * @date 2022/08/26
  */
-@FeignClient(name = "oaApi",url = "61.177.139.244:8887",decode404 = true)
+@FeignClient(name = "oaApi",url = "${oa.weaver-site}",decode404 = true)
 public interface OaApi {
 
     /**
