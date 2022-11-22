@@ -86,7 +86,11 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_SJGQXXQS = "SJGQXXQS.xlsx";
 
-    String QT_CHART_EXCEL_MODEL_NAME_JQQXXQS = "JQQXXQS.xlsx";
+    String QT_CHART_EXCEL_MODEL_NAME_JQQXXQS = "JPQXXQS.xlsx";
+
+    String QT_CHART_EXCEL_MODEL_NAME_SJGXJHGLQS = "SJGXJHGLQS.xlsx";
+
+    String QT_CHART_EXCEL_MODEL_NAME_JPXJHGL = "JPXJHGL.xlsx";
 
     String QT_CHART_SPC_NAME = "SPC.xlsx";
 

@@ -328,22 +328,32 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         } else if (type.equals(3)) {
             fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_LINE_NAME;
             modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBQS;
-            dataList = getSubstrateItemDetail(dto);
+            dataList = getDeepDefectiveCategoryDetailList(dto);
         } else if (type.equals(4)) {
             fileName = QtManagerConstant.QT_CHART_DEEP_ITEM_LINE_NAME;
             modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXXQS;
-            dataList = getSubstrateItemDetail(dto);
+            dataList = getDeepDefectiveItemDetailList(dto);
         } else if (type.equals(5)) {
             fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_LINE_NAME;
             modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JQQXXQS;
             dataList = getSubstrateItemDetail(dto);
         }
-        Map<String, Object> map = MapUtils.newHashMap();
+//        else if (type.equals(6)) {
+//            fileName = QtManagerConstant.QT_CHART_DEEP_PROCESS_NAME;
+//            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGXJHGLQS;
+//            dataList = getSubstrateItemDetail(dto);
+//        } else {
+//            fileName = QtManagerConstant.QT_CHART_SUB_PROCESS_NAME;
+//            modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPXJHGL;
+//            dataList = getSubstrateItemDetail(dto);
+//        }
+            Map<String, Object> map = MapUtils.newHashMap();
         map.put("compare","");
         map.put("productWorkShopName","");
         map.put("productLineName","");
         map.put("defectCategory","");
         map.put("defect","");
+        map.put("workingOrder","");
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
 
         if (Objects.nonNull(dto.getCompare())) {
@@ -368,13 +378,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 map.put("defect",byIdCh.get(dto.getDefectId()));
             }
         }
-        if (dto.getWorkingOrder().equals(0)) {
-            map.put("workingOrder","早班");
-        } else if (dto.getWorkingOrder().equals(1)) {
-            map.put("workingOrder","夜班");
-        } else {
-            map.put("workingOrder","全部");
+        if (Objects.nonNull(dto.getWorkingOrder())) {
+            if (dto.getWorkingOrder().equals(0)) {
+                map.put("workingOrder","早班");
+            } else if (dto.getWorkingOrder().equals(1)) {
+                map.put("workingOrder","夜班");
+            } else {
+                map.put("workingOrder","全部");
+            }
         }
+
 
         DownloadUtil.downloadTemplate(response,modelName,fileName,map,dataList,dto.getBase64());
 
@@ -858,6 +871,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             //无任何数据，直接返回空集合，前端显示空图
             pageList = Lists.newArrayList();
         }
+        pageList.forEach(detailVO -> detailVO.setClassesDateString(LocalDateUtil.localDateFormat(detailVO.getClassesDate(),DatePattern.NORM_DATE_PATTERN)));
         return pageList;
     }
 }

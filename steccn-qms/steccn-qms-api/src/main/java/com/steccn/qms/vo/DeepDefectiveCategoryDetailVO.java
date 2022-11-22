@@ -44,6 +44,8 @@ public class DeepDefectiveCategoryDetailVO implements Serializable {
     @ApiModelProperty("班次日期")
     private LocalDate classesDate;
 
+    private String classesDateString;
+
     @ApiModelProperty("班次")
     private Integer classId;
 

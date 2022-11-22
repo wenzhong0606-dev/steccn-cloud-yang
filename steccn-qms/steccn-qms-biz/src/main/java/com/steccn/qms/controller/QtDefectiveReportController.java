@@ -48,12 +48,6 @@ public class QtDefectiveReportController {
         return R.success(qtDefectiveReportService.deepDefectiveCategoryDetail(dto));
     }
 
-    @PostMapping("/deep/category/download")
-    @ApiOperation("深加工缺陷类别分布-下载")
-    public void deepDefectiveCategoryDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
-        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,0);
-    }
-
     @PostMapping("/deep/item/bar")
     @ApiOperation("深加工缺陷分布-柱状图")
     public R<QtLineChartBarDTO> deepDefectiveItemBar(@Valid @RequestBody QtChartParamDTO dto) {
@@ -70,12 +64,6 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷分布-明细")
     public R<Page<DeepDefectiveCategoryDetailVO>> deepDefectiveItemDetail(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.deepDefectiveItemDetail(dto));
-    }
-
-    @PostMapping("/deep/item/download")
-    @ApiOperation("深加工缺陷分布-下载")
-    public void deepDefectiveItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
-        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,1);
     }
 
     @PostMapping("/substrate/item/bar")
@@ -96,12 +84,6 @@ public class QtDefectiveReportController {
         return R.success(qtDefectiveReportService.substrateItemDetail(dto));
     }
 
-    @PostMapping("/substrate/item/download")
-    @ApiOperation("基片缺陷项分布-下载")
-    public void substrateItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
-        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,2);
-    }
-
     @PostMapping("/deep/category/line")
     @ApiOperation("深加工缺陷类别趋势-折线图")
     public R<QtLineChartBarDTO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
@@ -118,5 +100,23 @@ public class QtDefectiveReportController {
     @ApiOperation("基片缺陷项趋势-折线图")
     public R<QtLineChartBarDTO> substrateItemLine(@Valid @RequestBody QtChartParamDTO dto) {
         return R.success(qtDefectiveReportService.substrateItemLine(dto));
+    }
+
+    @PostMapping("/deep/category/download")
+    @ApiOperation("深加工缺陷类别分布-下载")
+    public void deepDefectiveCategoryDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
+        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,0);
+    }
+
+    @PostMapping("/deep/item/download")
+    @ApiOperation("深加工缺陷分布-下载")
+    public void deepDefectiveItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
+        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,1);
+    }
+
+    @PostMapping("/substrate/item/download")
+    @ApiOperation("基片缺陷项分布-下载")
+    public void substrateItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) {
+        qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,2);
     }
 }
