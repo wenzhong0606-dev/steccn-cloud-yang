@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * spc图表明细返回数据对象
+ * spc明细表的子集对象 (任务详情)
  */
 @Data
 public class QtSpcReportDetailTaskVO implements Serializable {

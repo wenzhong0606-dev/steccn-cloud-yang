@@ -341,8 +341,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                                     .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
                             .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                    //用来计算平均值
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
-
                     stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
                         BigDecimal bigDecimal = new BigDecimal(s);
                         if (Objects.nonNull(bigDecimal)){
@@ -946,7 +946,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
                 .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
 
-        //根据条件先low出所有的数据
+        //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
         //设置时间分片
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(report.getGranularity());
@@ -973,16 +973,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
          measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
         }
 
-        //设置物料名称
+        //查询物料名称
         QtMaterial qtMaterial=new QtMaterial();
         if (Objects.nonNull(report.getMaterialId())) {
             qtMaterial= qtMaterialService.getById(report.getMaterialId());
         }
         String name = qtMaterial.getName();
+        //spc任务明细表的数据集合
         List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
         for (int i = 1; i < localDateTimes.size(); i++) {
             LocalDateTime start = localDateTimes.get(i - 1);
             LocalDateTime end = localDateTimes.get(i);
+            //过滤出该时间分片下的所有检验任务
             List<QtCheckTask> conditionDataList = qtCheckTasks.stream().filter(v->Objects.nonNull(v.getFinishedTime())).filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
                 if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
@@ -990,57 +992,15 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
-            List<Long> taskids = conditionDataList.stream().map(QtCheckTask::getId).collect(Collectors.toList());
-            //如果id集合为空该时间段下没有
-            BigDecimal average =new BigDecimal("0");
-            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS1 = Lists.newArrayList();
-            conditionDataList.forEach(ele ->{
-                QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
-                BeanUtils.copyProperties(ele,taskVO);
-                taskVO.setFinishedTime(LocalDateUtil.format(ele.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                taskVO.setMaterialName(name);
-                QtCheckTaskDetail qtCheckTaskDetail = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                        .eq(QtCheckTaskDetail::getTaskId, ele.getId())
-                        .eq(QtCheckTaskDetail::getGroupId, report.getCheckGroupId())
-                        .eq(QtCheckTaskDetail::getItemId, report.getCheckItemId()));
-                if (Objects.nonNull(qtCheckTaskDetail)){
-                    taskVO.setCheckResult(qtCheckTaskDetail.getCheckResult());
-                }
-                taskVO.setId(ele.getId());
-                taskVO.setCustomer(ele.getCustomer());
-                 qtSpcReportDetailTaskVOS1.add(taskVO);
-            });
-
-            //设置详情列表返回集合
-            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
-            if (CollUtil.isNotEmpty(taskids)){
-                List<String> stringList = qtCheckTaskDetailService
-                        .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
-                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-                List<BigDecimal> bigDecimals = Lists.newArrayList();
-                stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
-                    BigDecimal bigDecimal = new BigDecimal(s);
-                    if (Objects.nonNull(bigDecimal)){
-                        bigDecimals.add(bigDecimal);
-                    }
-                    QtSpcReportDetailTaskVO qtSpcReportDetailTaskVO = new QtSpcReportDetailTaskVO();
-                    BeanUtils.copyProperties(s, qtSpcReportDetailTaskVO);
-                    qtSpcReportDetailTaskVOS.add(qtSpcReportDetailTaskVO);
-                });
-                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-            }
 
             //设置返回数据类型对象
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
-            qtSpcReportDetailVO.setCheckItemResultAverage(average);
-
             //设置主键id
             qtSpcReportDetailVO.setId(i);
             //设置开始结束分片范围
             qtSpcReportDetailVO.setStartTime(start);
             qtSpcReportDetailVO.setEndTime(end);
+            //设置检验项类型
             qtSpcReportDetailVO.setCheckType(report.getCheckType());
             if (Objects.nonNull(qtCheckItem)) {
                 //检验项id
@@ -1060,10 +1020,48 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
             //设置下限
             qtSpcReportDetailVO.setDownLimit(report.getDownLimit());
-
-            // 设置每个检验项下面的检验任务根据分片时间分好片的任务详情
-            qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS1);
-
+            //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
+            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
+            BigDecimal resultAverage =new BigDecimal("0");
+            if (CollUtil.isEmpty(conditionDataList)){
+                qtSpcReportDetailVO.setCheckItemResultAverage(resultAverage);
+                qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
+            }else if (CollUtil.isNotEmpty(conditionDataList)){
+                List<BigDecimal> mainDecimals = Lists.newArrayList();
+                //遍历该时间段下的检验任务设置详情
+                conditionDataList.forEach(s->{
+                    QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
+                    //详情检验结果平均值
+                    BigDecimal detailAverage = new BigDecimal("0");
+                    BeanUtils.copyProperties(s,taskVO);
+                    //设置物料名称
+                    if (Objects.nonNull(name)){
+                        taskVO.setMaterialName(name);
+                    }
+                    //设置完成时间
+                    taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                    //检验任务结果集合
+                    List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                            .eq(QtCheckTaskDetail::getTaskId, s.getId())).stream()
+                            .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                    List<BigDecimal> bigDecimals = Lists.newArrayList();
+                    stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
+                        BigDecimal bigDecimal = new BigDecimal(st);
+                        if (Objects.nonNull(bigDecimal)){
+                            bigDecimals.add(bigDecimal);
+                        }
+                    });
+                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                    taskVO.setCheckResult(detailAverage.toString());
+                    mainDecimals.add(detailAverage);
+                    qtSpcReportDetailTaskVOS.add(taskVO);
+                });
+                BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
+                qtSpcReportDetailVO.setCheckItemResultAverage(resultAverage);
+                qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
+            }
             mainList.add(qtSpcReportDetailVO);
         }
 
