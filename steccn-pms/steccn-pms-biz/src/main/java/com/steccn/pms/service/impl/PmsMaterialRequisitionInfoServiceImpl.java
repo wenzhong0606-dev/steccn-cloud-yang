@@ -84,6 +84,9 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
 
     @Override
     public Map<Long, BigDecimal> quantityMap(TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO) {
+        if(Objects.isNull(tupleDTO) || CollUtil.isEmpty(tupleDTO.getField2())){
+            return Maps.newHashMap();
+        }
         //处理时间
         LocalDateTime startTime = null;
         LocalDateTime endTime = null;
@@ -94,7 +97,13 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
         Map<Long, BigDecimal> map = Maps.newHashMap();
         //获取工位绑定的仓库
         Set<Integer> stationIds = Sets.newHashSet();
-        tupleDTO.getField2().forEach((key, value) -> value.forEach(id -> stationIds.add(id)));
+        Map<Long, Set<Integer>> field2 = tupleDTO.getField2();
+
+        field2.forEach((key, value) -> {
+            value.forEach(id -> {
+                stationIds.add(id);
+            });
+        });
         Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
         //处理物料的工位数据
         Map<Long, List<Integer>> materialShelfMap = Maps.newHashMap();
@@ -106,7 +115,9 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
                 List<SysStationWarehouseVO> orDefault = warehouseMap.getOrDefault(id, sysStationWarehouseVOList);
                 orDefault.forEach( shelf -> shelfIds.add(shelf.getShelfId()));
             });
-            materialShelfMap.put(k, shelfIds);
+            if(CollUtil.isNotEmpty(shelfIds)){
+                materialShelfMap.put(k, shelfIds);
+            }
         });
         if (CollUtil.isNotEmpty(materialShelfMap)) {
             //自定义sql获取领料数量

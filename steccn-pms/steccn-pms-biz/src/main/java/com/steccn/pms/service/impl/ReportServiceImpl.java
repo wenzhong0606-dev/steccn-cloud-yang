@@ -439,6 +439,7 @@ public class ReportServiceImpl implements ReportService {
         PmsReportWork defaultPmsReportWork = new PmsReportWork();
         PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
         PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
+
         BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, morningPms.getProcessQuantity());
         BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, nightPms.getProcessQuantity());
         BigDecimal morningRate = BigDecimalUtil.divide(dayPq, morningBigDecimal);
