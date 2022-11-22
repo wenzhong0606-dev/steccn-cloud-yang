@@ -2247,6 +2247,64 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 //        }
     }
 
+    @SneakyThrows
+    @Override
+    public void downloadAccessoryDeepOrSubstrateProcessing(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
+
+        //获取表格明细数据
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        dto.setCurrent(1);
+        dto.setSize(10000);
+        dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        List<QtDeepOrSubAcceptabilityDetailVO> flatDataList  = getQtDeepOrSubAcceptabilityDetailVO(dto.getInspectionType()==1?
+                QtManagerConstant.DEEP_OFFICE_NAME:QtManagerConstant.SUB_OFFICE_NAME,  dto).getRecords();
+        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+
+        //声明excel表格数据
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+        //车间，产线，物料名称，客户
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Long> materialIdSet = Sets.newHashSet();
+        materialIdSet.add(dto.getMaterialId());//物料
+        officeIdSet.add(dto.getProductWorkShopId());//生产车间
+        officeIdSet.add(dto.getProductLineId());//产线
+        officeIdSet.add(dto.getCustomer());//客户
+
+        Map<Integer, String> officeIdNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+
+
+        if(dto.getProductWorkShopId()!=null){
+//            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
+//            if(nameById!=null){
+//                map.put("productWorkShopName",nameById.getData());
+//            }
+            map.put("productWorkShopName",officeIdNameMap.getOrDefault(dto.getProductWorkShopId(), Strings.EMPTY));
+        }
+        if(dto.getProductLineId()!=null){
+            map.put("productLineName", officeIdNameMap.getOrDefault(dto.getProductLineId(), Strings.EMPTY));
+        }
+        if(dto.getWorkingOrder()!=null){
+            QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(dto.getWorkingOrder());
+            map.put("className",Objects.nonNull(classEnum) ? classEnum.getName() : Strings.EMPTY);
+        }
+        if(dto.getMaterialId()!=null){
+            map.put("materialName",materialIdNameMap.getOrDefault(dto.getMaterialId(), Strings.EMPTY));
+        }
+        if(dto.getCustomer()!=null){
+            map.put("customerName",officeIdNameMap.getOrDefault(dto.getCustomer(), Strings.EMPTY));
+        }
+        if(dto.getCompare()!=null){
+            map.put("compareName",QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(dto.getCompare()));
+        }
+        DownloadUtil.downloadTemplate(response,dto.getInspectionType()==1?QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGXJHGLQS:QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS,
+                dto.getInspectionType()==1?QtManagerConstant.QT_CHART_DEEP_PROCESS_NAME:QtManagerConstant.QT_CHART_SUB_PROCESS_NAME,map,flatDataList,dto.getBase64());
+    }
+
     /**
      * 合格率分组
      *

@@ -80,4 +80,12 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
 
     @ApiModelProperty(value = "图片base64")
     private String base64;
+
+    @ApiModelProperty("巡检合格率l类型")
+    private Integer inspectionType;// 1-深加工 0-基片
+
+    @ApiModelProperty("对比名称")
+    private String compareName;
+
+
 }

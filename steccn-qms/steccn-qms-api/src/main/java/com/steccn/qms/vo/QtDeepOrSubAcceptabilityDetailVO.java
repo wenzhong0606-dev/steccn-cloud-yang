@@ -73,7 +73,7 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     private Integer materialWorkshopId;
 
     /**
-     * 物料名称
+     * 物料车间名称
      */
     private String materialWorkshopName;
 

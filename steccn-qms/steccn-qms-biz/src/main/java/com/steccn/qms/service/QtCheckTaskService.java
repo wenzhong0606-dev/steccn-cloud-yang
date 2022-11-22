@@ -197,6 +197,14 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
 
+    /**
+     * 下载深加工巡检合格率趋势
+     *
+     * @param dto
+     * @param response
+     */
+    void downloadAccessoryDeepOrSubstrateProcessing(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
+
 
 }
 

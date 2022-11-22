@@ -245,6 +245,20 @@ public class QtCheckTaskController {
         }
     }
 
+    @PostMapping("/accessory/deepOrSubstrateProcessing/download")
+    @ApiOperation(value = "下载深加工巡检合格率趋势|基片巡检合格率")
+    public void deepOrSubstrateProcessing(@RequestBody QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            qtCheckTaskService.downloadAccessoryDeepOrSubstrateProcessing(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
+
+
+
     /**
      * 对响应异常进行封装
      * @param response
