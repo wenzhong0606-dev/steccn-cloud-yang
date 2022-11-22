@@ -182,7 +182,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
             throw new BusinessException("编辑的工艺路线不存在");
         }
         PmCraftRoute model = new PmCraftRoute();
-        BeanUtils.copyProperties(dto, model);
+        BeanUtil.copyProperties(dto, model);
         model.setUpdateBy(SecurityUtils.getUser().getUserId());
         model.setUpdateName(SecurityUtils.getUser().getName());
         //生成编码
