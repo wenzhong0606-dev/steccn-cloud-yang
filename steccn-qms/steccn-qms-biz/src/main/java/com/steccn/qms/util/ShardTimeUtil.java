@@ -1,5 +1,6 @@
 package com.steccn.qms.util;
 
+import com.steccn.common.util.LocalDateUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.DayOfWeek;
@@ -26,55 +27,92 @@ public class ShardTimeUtil {
     public static List<LocalDateTime> cutDateRange(String dateType, LocalDateTime start, LocalDateTime end) {
         List<LocalDateTime> listDate = new ArrayList<>();
         while (end.isAfter(start)) {
-            listDate.add(start);
+
             switch (dateType) {
                 case "Y":
+                    listDate.add(LocalDateUtil.getFirstDayOfYearStr(start.toLocalDate()));
                     start = start.plusYears(1);
                     start = LocalDateTime.of(LocalDate.of(start.getYear(), 1, 1), LocalTime.MIN);
+                    //永远加最后一个元素
+                    if (!end.isAfter(start)) {
+                        listDate.add(LocalDateUtil.getLastDayOfYearStr(end.toLocalDate()));
+                    }
                     break;
                 case "Q":
                     int currentMonth = start.getMonthValue();
                     if (currentMonth >= 1 && currentMonth <= 3) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 1, 1), start.toLocalTime());
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),3,31),end.toLocalTime()));
+                        }
+                        start = start.plusMonths(3);
                     } else if (currentMonth >= 4 && currentMonth <= 6) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 4, 1), start.toLocalTime());
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),6,30),end.toLocalTime()));
+                        }
+                        start = start.plusMonths(3);
                     } else if (currentMonth >= 7 && currentMonth <= 9) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 7, 1), start.toLocalTime());
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),9,30),end.toLocalTime()));
+                        }
+                        start = start.plusMonths(3);
                     } else if (currentMonth >= 10 && currentMonth <= 12) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 10, 1), start.toLocalTime());
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),12,31),end.toLocalTime()));
+                        }
+                        start = start.plusMonths(3);
                     }
-                    start = start.plusMonths(3);
                     break;
                 case "M":
                     start = LocalDateTime.of(LocalDate.of(start.getYear(), start.getMonth(), 1), start.toLocalTime());
+                    listDate.add(start);
                     start = start.plusMonths(1);
+                    if (!end.isAfter(start)){
+                        listDate.add(LocalDateUtil.getLastDayOfMonthStr(end.toLocalDate()));
+                    }
                     break;
                 case "W":
+                    listDate.add(LocalDateUtil.getFirstDayOfWeekStr(start.toLocalDate()));
                     start = start.plusWeeks(1);
                     start = start.with(DayOfWeek.MONDAY);
+                    if (!end.isAfter(start)){
+                        listDate.add(LocalDateUtil.getLastDayOfWeekStr(end.toLocalDate()));
+                    }
                     break;
                 case "D":
+                    listDate.add(start);
                     start = start.plusDays(1);
+                    if (!end.isAfter(start)){
+                        listDate.add(end);
+                    }
                     break;
                 case "H":
+                    listDate.add(start);
                     start = start.plusHours(1);
+                    if (!end.isAfter(start)){
+                        listDate.add(end);
+                    }
                     break;
             }
-            //永远加最后一个元素
-            if (!end.isAfter(start)) {
-                listDate.add(end);
-            }
+
         }
         return listDate;
     }
 
 
-//    public static void main(String[] args) {
-//        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 10, 8), LocalTime.MIN);
-//        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MIN);
-//        List<LocalDateTime> resList = cutDateRange("D", start, end);
-//        resList.forEach(ele -> {
-//            log.info("{}", ele);
-//        });
-//    }
+    public static void main(String[] args) {
+        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 10, 8), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MIN);
+        List<LocalDateTime> resList = cutDateRange("W", start, end);
+        resList.forEach(ele -> {
+            log.info("{}", ele);
+        });
+    }
 }

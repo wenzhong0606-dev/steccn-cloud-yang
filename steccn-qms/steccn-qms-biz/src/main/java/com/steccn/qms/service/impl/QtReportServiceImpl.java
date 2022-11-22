@@ -227,6 +227,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         String fileName = URLEncoder.encode(name, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
     }
+
     /**
      * 根据分组id查询报表图表列表
      *
@@ -270,30 +271,33 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                  qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
             }
             //设置检验项名称
-            if (Objects.nonNull(qtCheckItem)&&Objects.nonNull(qtCheckItem.getName())&&
-                    Objects.nonNull(qtCheckItem.getDataType())&&
-                    Objects.nonNull(qtCheckItem.getMeasureUnit())){
-                qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+            if (Objects.nonNull(qtCheckItem)){
+                if (Objects.nonNull(qtCheckItem.getName())){
+                    qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+                }
                 //设置检验项的数据类型
-                Long dataType = qtCheckItem.getDataType();
+                Long dataType= qtCheckItem.getDataType();
+                qtReportChartVO.setDataTypeId(dataType);
                 List<Long> ids = Lists.newArrayList();
                 ids.add(dataType);
                 Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
                 SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
-                if(Objects.nonNull(sysDictVO)){
-                    qtReportChartVO.setDataTypeId(dataType);
+                if (Objects.nonNull(sysDictVO.getName())) {
                     qtReportChartVO.setDataTypeName(sysDictVO.getName());
                 }
-                //根据检验项id去获取计量单位
-                Set<Long> measureIds = Sets.newHashSet();
-                measureIds.add(qtCheckItem.getMeasureUnit());
-                Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
-                String measureName =longStringMap.get(qtCheckItem.getMeasureUnit());
-                if (Objects.nonNull(measureName)) {
-                    qtReportChartVO.setMeasureUnit(measureName);
-                }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
-                    qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+
+                if (Objects.nonNull(qtCheckItem.getMeasureUnit())){
+                    Set<Long> measureIds = Sets.newHashSet();
+                    measureIds.add(qtCheckItem.getMeasureUnit());
+                    Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                    String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
+                    if (Objects.nonNull(measureName)) {
+                        qtReportChartVO.setMeasureUnit(measureName);
+                    }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
+                        qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                    }
                 }
+
             }
             //根据条件查出所有的任务
             List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
@@ -302,7 +306,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                             .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
                             .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
-                            .orderByAsc(QtCheckTask::getFinishedTime)
                     //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
             );
 
@@ -437,30 +440,33 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(q.getCheckItemId())){
             qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
         }
-        if (Objects.nonNull(qtCheckItem)&&Objects.nonNull(qtCheckItem.getName())&&
-                Objects.nonNull(qtCheckItem.getDataType())&&
-                Objects.nonNull(qtCheckItem.getMeasureUnit())){
-            qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+        if (Objects.nonNull(qtCheckItem)){
+            if (Objects.nonNull(qtCheckItem.getName())){
+                qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+            }
             //设置检验项的数据类型
-            Long dataType = qtCheckItem.getDataType();
+           Long dataType= qtCheckItem.getDataType();
+            qtReportChartVO.setDataTypeId(dataType);
             List<Long> ids = Lists.newArrayList();
-            ids.add(dataType);
+                ids.add(dataType);
             Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
             SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
             if (Objects.nonNull(sysDictVO.getName())) {
-                qtReportChartVO.setDataTypeId(dataType);
                 qtReportChartVO.setDataTypeName(sysDictVO.getName());
             }
 
-            Set<Long> measureIds = Sets.newHashSet();
-            measureIds.add(qtCheckItem.getMeasureUnit());
-            Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
-            String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
-            if (Objects.nonNull(measureName)) {
-                qtReportChartVO.setMeasureUnit(measureName);
-            }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
-                qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+            if (Objects.nonNull(qtCheckItem.getMeasureUnit())){
+                Set<Long> measureIds = Sets.newHashSet();
+                measureIds.add(qtCheckItem.getMeasureUnit());
+                Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
+                if (Objects.nonNull(measureName)) {
+                    qtReportChartVO.setMeasureUnit(measureName);
+                }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
+                    qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                }
             }
+
         }
 
         //根据条件查出所有的任务
@@ -470,7 +476,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                         .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
                         .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
-                        .orderByAsc(QtCheckTask::getFinishedTime)
                 //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
         );
 
