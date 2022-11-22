@@ -230,7 +230,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //产线名字
                         String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
                         //车间名字
-                        String productWorkShopName = remoteOfficeFeign.parent(entry3.getKey()).getData().getOfficeName();
+                        String productWorkShopName = "";
+                        R<SysOfficeVO> parent = remoteOfficeFeign.parent(entry3.getKey());
+                        if(parent.getData() != null){
+                            productWorkShopName = remoteOfficeFeign.parent(entry3.getKey()).getData().getOfficeName();
+                        }
                         //拉引量
                         BigDecimal laQuantity = BigDecimal.ZERO;
                         //掰边损耗重量

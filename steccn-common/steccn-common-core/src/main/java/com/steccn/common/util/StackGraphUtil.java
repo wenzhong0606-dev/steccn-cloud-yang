@@ -44,7 +44,9 @@ public class StackGraphUtil {
         QtLineChartBarDTO resDto = new QtLineChartBarDTO();
         resDto.setLegend(qtLineChartBiBarDTO.getName());
         resDto.setXData(qtLineChartBiBarDTO.getXData());
-        resDto.setSeriesDataVO((List<QtSeriesDataDTO>) qtLineChartBiBarDTO.getSeriesDataVO().get(0));
+        if(qtLineChartBiBarDTO.getSeriesDataVO().size() > 0){
+            resDto.setSeriesDataVO((List<QtSeriesDataDTO>) qtLineChartBiBarDTO.getSeriesDataVO().get(0));
+        }
         return resDto;
     }
 
