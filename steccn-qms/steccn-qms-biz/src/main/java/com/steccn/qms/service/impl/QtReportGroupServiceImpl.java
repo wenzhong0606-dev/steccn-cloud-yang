@@ -35,13 +35,19 @@ import java.util.Objects;
 public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, QtReportGroup>
     implements QtReportGroupService {
         private final QtReportService qtReportService;
+
+    /**
+     * 新建分组
+      * @param dto
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtReportGroupDTO dto) {
         QtReportGroup reportGroup = new QtReportGroup();
         BeanUtils.copyProperties(dto, reportGroup);
         QtReportGroup qtReportGroup = getOne(new LambdaQueryWrapper<QtReportGroup>().eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
-        Assert.isNull(qtReportGroup, "该报表卡片分组已存在,请勿重复创建!");
+        Assert.notNull(qtReportGroup, "该报表卡片分组已存在,请勿重复创建!");
         this.save(reportGroup);
         return Boolean.TRUE;
     }
@@ -58,6 +64,10 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         return qtReportChartVOS;
     }
 
+    /**
+     * 查询分组以及该分组下的卡片
+     * @return
+     */
     @Override
     public List<QtReportGroupVO> getReportGroupVOlist() {
         List<QtReportGroup> groups = list();
@@ -73,6 +83,11 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         return qtReportGroupVOS;
     }
 
+    /**
+     * 删除分组及分组下的卡片
+     * @param id
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deletQtReportGroup(Integer id) {
@@ -93,6 +108,11 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         return Boolean.TRUE;
     }
 
+    /**
+     * 编辑报表分组
+     * @param dto
+     * @return
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(QtReportGroupDTO dto) {

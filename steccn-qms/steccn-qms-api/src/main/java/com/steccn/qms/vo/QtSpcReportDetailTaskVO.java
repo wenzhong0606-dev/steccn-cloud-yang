@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 public class QtSpcReportDetailTaskVO implements Serializable {
     /**
-     * 单号的id
+     * 检验任务单号的id
      */
     private Long id;
 

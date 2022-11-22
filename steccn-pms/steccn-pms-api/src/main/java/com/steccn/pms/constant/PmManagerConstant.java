@@ -153,6 +153,7 @@ public interface PmManagerConstant {
     String PROCESS_TYPE = "process_type";
 
 
+
     /**
      * 入库出库凭证状态
      */

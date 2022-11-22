@@ -39,6 +39,15 @@ public class SysDictController {
         return R.success(sysDictService.sysListFilter(type, name));
     }
 
+    @PostMapping("/ch")
+    @ApiOperation("根据主键id查询数据字典的中文")
+    public R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysDictService.listByIdCh(idList));
+    }
+
     @GetMapping("/getByCode")
     @ApiOperation("根据编码查询数据字典的值")
     public R<SysDictVO> getByCode(@ApiParam("编码") @RequestParam("code") String code,@ApiParam("类型") @RequestParam("type") String type) {

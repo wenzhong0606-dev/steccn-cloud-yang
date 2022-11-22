@@ -5,30 +5,52 @@
 <mapper namespace="com.steccn.pms.mapper.PmsMaterialRequisitionInfoMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsMaterialRequisitionInfo">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="organization" column="organization" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
-            <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
-            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
-            <result property="requireDate" column="require_date" jdbcType="DATE"/>
-            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
-            <result property="receiveQuantity" column="receive_quantity" jdbcType="DECIMAL"/>
-            <result property="associatedNo" column="associated_no" jdbcType="VARCHAR"/>
-            <result property="materialRequisitionId" column="material_requisition_id" jdbcType="BIGINT"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="organization" column="organization"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
+        <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+        <result property="requireDate" column="require_date" jdbcType="DATE"/>
+        <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+        <result property="receiveQuantity" column="receive_quantity" jdbcType="DECIMAL"/>
+        <result property="associatedNo" column="associated_no" jdbcType="VARCHAR"/>
+        <result property="materialRequisitionId" column="material_requisition_id" jdbcType="BIGINT"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,organization,shelf_id,
+        id
+        ,organization,shelf_id,
         material_id,require_date,quantity,
         receive_quantity,associated_no,material_requisition_id,
         create_by,create_name,create_time,
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="quantityList" resultType="com.steccn.pms.vo.MaterialRequisitionInfoVO">
+        SELECT
+        a.receive_quantity,
+        a.material_id
+        FROM
+        pms_material_requisition_info a
+        JOIN pms_material_requisition b on a.material_requisition_id = b.id
+        WHERE
+        a.del_flag = 0 and b.status = 1588005536876478464
+        <if test="startTime != null and endTime != null">
+            and a.create_time between #{startTime} and #{endTime}
+        </if>
+        and
+        <foreach collection="map" index="key" item="value" open="(" separator="OR" close=")">
+            a.material_id = #{key} and a.shelf_id in
+            <foreach collection="value" item="v" separator="," open="(" close=")">
+                #{v}
+            </foreach>
+        </foreach>
+    </select>
 </mapper>
