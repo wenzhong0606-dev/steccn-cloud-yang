@@ -139,35 +139,35 @@ public class QtCheckTaskController {
     @ApiOperation(value = "深加工合格率趋势明细表分页")
     public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtDeepAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
-        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(null,dto));
+        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(QtManagerConstant.DEEP_OFFICE_NAME,dto));
     }
 
     @PostMapping("/sub/acceptability/detail")
     @ApiOperation(value = "基片合格率趋势明细表分页")
     public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtSubAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
-        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(null,dto));
+        return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(QtManagerConstant.SUB_OFFICE_NAME,dto));
     }
 
     @PostMapping("/deep/acceptability/chart")
     @ApiOperation(value = "深加工合格率趋势柱状图")
     public R<QtLineChartBiBarDTO> getQtChartDeepBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
-        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null, dto));
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(QtManagerConstant.DEEP_OFFICE_NAME, dto));
     }
 
     @PostMapping("/sub/acceptability/chart")
     @ApiOperation(value = "基片合格率趋势柱状图")
     public R<QtLineChartBiBarDTO> getQtChartSubBarVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
-        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null, dto));
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(QtManagerConstant.SUB_OFFICE_NAME, dto));
     }
 
     @PostMapping("/sub/spot/acceptability/chart")
     @ApiOperation(value = "基片化验抽检合格率趋势图表")
     public R<QtLineChartBiBarDTO> getQtSubLaboratoryChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
-        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(null,dto));
+        return R.success(qtCheckTaskService.getQtChartDeepOrSubBarVO(QtManagerConstant.SUB_OFFICE_NAME, dto));
     }
 
     @PostMapping("/sub/chemical/acceptability/detail")
