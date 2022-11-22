@@ -1,8 +1,10 @@
 package com.steccn.qms.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.steccn.common.valid.InsertGroup;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -52,12 +54,14 @@ public class QtCheckTaskDestoryInfo implements Serializable {
     /**
      * 落板开始时间
      */
+    @NotNull(groups = {InsertGroup.class}, message = "落板开始时间不能为空")
     @TableField(value = "destory_start_time")
     private LocalDateTime destoryStartTime;
 
     /**
      * 落板结束时间
      */
+    @NotNull(groups = {InsertGroup.class}, message = "落板结束时间不能为空")
     @TableField(value = "destory_end_time")
     private LocalDateTime destoryEndTime;
 
