@@ -38,7 +38,7 @@ public interface PmsReportWorkConsumeMapper extends BaseMapper<PmsReportWorkCons
      * @param date 日期
      * @return 数据
      */
-    List<EnergyGroupListVO> substrateEnergy(@Param("classList") List<SysDictVO> classList, @Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
+    List<EnergyGroupListVO> substrateEnergy(@Param("classList") List<Long> classList, @Param("productLineId") Integer productLineId, @Param("date") LocalDate date);
 }
 
 

@@ -61,7 +61,7 @@
         <if test="classList !=null and classList.size > 0">
             AND  rw.classes_id IN
             <foreach collection="classList" item="item" open="(" close=")" separator=",">
-                #{item.id}
+                #{item}
             </foreach>
         </if>
 
