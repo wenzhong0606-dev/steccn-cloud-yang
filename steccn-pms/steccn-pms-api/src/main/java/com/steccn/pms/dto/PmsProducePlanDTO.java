@@ -23,4 +23,8 @@ public class PmsProducePlanDTO implements Serializable {
     private Long materialId;
     private String materialName;
     private BigDecimal total;
+    /**
+     * 序号前端编辑用
+     */
+    private Integer id;
 }

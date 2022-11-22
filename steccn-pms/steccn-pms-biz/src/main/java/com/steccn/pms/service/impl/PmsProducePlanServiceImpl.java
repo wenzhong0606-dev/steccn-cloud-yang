@@ -125,6 +125,10 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
             pmsProducePlanDTOList.add(pmsProducePlanDTO);
         }
+        //添加序号
+        for (int i = 0; i<pmsProducePlanDTOList.size(); i++) {
+            pmsProducePlanDTOList.get(i).setId(i);
+        }
 
         return pmsProducePlanDTOList;
     }
