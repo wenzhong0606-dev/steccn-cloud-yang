@@ -69,7 +69,7 @@ public interface PmsWorkOrderBomService extends IService<PmsWorkOrderBom> {
      * @param conditionList 条件
      * @return map
      */
-    Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList);
+    Map<Long, Set<Integer>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList);
 
     /**
      * 根据bomId 找到绑定的执行工位信息

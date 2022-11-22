@@ -207,8 +207,8 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
     }
 
     @Override
-    public Map<Long, Set<Long>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList) {
-        Map<Long, Set<Long>> resMap = Maps.newHashMap();
+    public Map<Long, Set<Integer>> materialOrderStation(List<TupleDTO<Long, Long>> conditionList) {
+        Map<Long, Set<Integer>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(conditionList)) {
             List<TupleDTO<Long, String>> dataList = this.baseMapper.materialOrderStation(conditionList);
             if (CollUtil.isNotEmpty(dataList)) {
@@ -216,10 +216,10 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
                     String field2 = ele.getField2();
                     if (StrUtil.isNotBlank(field2)) {
                         String[] split = field2.split(",");
-                        Set<Long> resSet = Sets.newHashSet();
+                        Set<Integer> resSet = Sets.newHashSet();
                         try {
                             for (String s : split) {
-                                resSet.add(Long.parseLong(s));
+                                resSet.add(Integer.parseInt(s));
                             }
                         } catch (Exception e) {
                             log.error(e.getLocalizedMessage());

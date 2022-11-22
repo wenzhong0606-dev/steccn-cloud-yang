@@ -70,6 +70,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmsCompleteDeliveryService completeDeliveryService;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
+    private final PmsMaterialRequisitionInfoService pmsMaterialRequisitionInfoService;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -843,19 +844,28 @@ public class ReportServiceImpl implements ReportService {
     public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
         //根据条件确定生产订单
         List<SubstrateIngredientVO> dataList = completeDeliveryService.subIngredientReport(dto);
-        List<TupleDTO<Long, Long>> conditionList = Lists.newArrayList();
-        dataList.forEach(ele -> {
-            //根据订单和子物料查询工位信息【订单的子物料关联工序，工序关联可执行工位】
-            if (Objects.nonNull(ele.getMaterialId()) && CollUtil.isNotEmpty(ele.getProduceOrderIdSet())) {
-                for (Long poId : ele.getProduceOrderIdSet()) {
-                    conditionList.add(new TupleDTO<>(poId, ele.getMaterialId()));
+        if(CollUtil.isNotEmpty(dataList)){
+            List<TupleDTO<Long, Long>> conditionList = Lists.newArrayList();
+            dataList.forEach(ele -> {
+                //根据订单和子物料查询工位信息【订单的子物料关联工序，工序关联可执行工位】
+                if (Objects.nonNull(ele.getMaterialId()) && CollUtil.isNotEmpty(ele.getProduceOrderIdSet())) {
+                    for (Long poId : ele.getProduceOrderIdSet()) {
+                        conditionList.add(new TupleDTO<>(poId, ele.getMaterialId()));
+                    }
                 }
+            });
+            //构建map，查询领料数据
+            Map<Long, Set<Integer>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
+            TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO = new TupleDTO<>(dto.getDate(), materialStationMap);
+            Map<Long, BigDecimal> map = Maps.newHashMap();
+            if(CollUtil.isNotEmpty(materialStationMap)){
+                map = pmsMaterialRequisitionInfoService.quantityMap(tupleDTO);
             }
-        });
-        //构建map，查询领料数据
-        Map<Long, Set<Long>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
-        log.info("{}", materialStationMap);
-        TupleDTO<LocalDate, Map<Long, Set<Long>>> tupleDTO = new TupleDTO<>(dto.getDate(), materialStationMap);
+            for (SubstrateIngredientVO data : dataList) {
+                data.setInKg(map.getOrDefault(data.getMaterialId(), BigDecimal.ZERO));
+                data.setInTon(BigDecimalUtil.divide(data.getInKg(),BigDecimalUtil.THOUSAND));
+            }
+        }
         return dataList;
     }
 
