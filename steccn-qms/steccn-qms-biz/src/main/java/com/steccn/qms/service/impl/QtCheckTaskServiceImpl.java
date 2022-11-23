@@ -142,10 +142,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
             Assert.notNull("缺陷记录时段不能为空");
         }
-        //产线为空校验
-        if (dto.getProductLine() == null || "null".equals(dto.getProductLine().getName() )){
-            throw  new BusinessException("产线不能为空");
-        }
+//        //产线为空校验
+//        if (dto.getProductLine() == null || "null".equals(dto.getProductLine().getName() )){
+//            throw  new BusinessException("产线不能为空");
+//        }
 
         //状态待检验
         qtCheckTask.setStatus(0);
@@ -899,14 +899,30 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean retask(QtReTaskDTO dto) {
+        //复检操作后添加 新的复核任务
+        QtCheckTask qtCheckTask = new QtCheckTask();
+        //获取原始任务信息
+        LambdaQueryWrapper<QtCheckTask> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QtCheckTask::getCode,dto.getOriginalTaskCode());
+        QtCheckTask originalQtCheckTask = qtCheckTaskMapper.selectOne(queryWrapper);
+        BeanUtils.copyProperties(originalQtCheckTask, qtCheckTask);
+        qtCheckTask.setId(null);
+        qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
+        qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
+        qtCheckTask.setCreateTime(LocalDateTime.now());
+        qtCheckTask.setUpdateTime(LocalDateTime.now());
+        save(qtCheckTask);
+        //保存巡检任务与复检任务关联数据
         QtRecheckTask recheckModel = new QtRecheckTask();
-        if (dto.getOriginalId() != null) {
-            //复检任务
-            QtCheckTask originalTask = getById(dto.getOriginalId());
-            recheckModel.setOriginalId(dto.getOriginalId());
-            recheckModel.setRecheckId(dto.getId());
-            recheckModel.setOriginalCode(originalTask.getCode());
-        }
+        recheckModel.setRecheckId(qtCheckTask.getId());
+        recheckModel.setOriginalCode(originalQtCheckTask.getCode());
+        recheckModel.setOriginalId(originalQtCheckTask.getId());
+        recheckModel.setCreateBy(originalQtCheckTask.getCreateBy());
+        recheckModel.setCreateName(originalQtCheckTask.getCreateName());
+        recheckModel.setUpdateBy(originalQtCheckTask.getUpdateBy());
+        recheckModel.setUpdateName(originalQtCheckTask.getUpdateName());
+        recheckModel.setUpdateTime(originalQtCheckTask.getUpdateTime());
+        recheckModel.setDelFlag(originalQtCheckTask.getDelFlag());
         return  qtRecheckTaskService.save(recheckModel);
     }
 

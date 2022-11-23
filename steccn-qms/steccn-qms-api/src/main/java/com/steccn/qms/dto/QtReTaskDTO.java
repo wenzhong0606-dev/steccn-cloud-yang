@@ -131,4 +131,6 @@ public class QtReTaskDTO implements Serializable {
          * 原始任务id
          */
         private Long originalId;
+
+        private String originalTaskCode;//原始任务code
 }

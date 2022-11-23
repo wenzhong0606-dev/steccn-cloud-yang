@@ -15,6 +15,7 @@ import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -102,6 +103,7 @@ public class QtCheckTaskController {
     @ApiOperation(value = "创建复检任务")
     @SysLog("创建复检任务")
     public R<Boolean> retask(@RequestBody QtReTaskDTO dto) {
+        if (StringUtils.isBlank(dto.getOriginalTaskCode()))  return R.failure("原始任务code不可为空!");
         return R.success(qtCheckTaskService.retask(dto));
     }
 
