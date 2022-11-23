@@ -100,7 +100,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
                 .eq(Objects.nonNull(dto.getCaseState()), PmsBarcodePrint::getCaseState, dto.getCaseState())
-                .orderByDesc(PmsBarcodePrint::getCreateTime));
+                .orderByDesc(PmsBarcodePrint::getCreateTime,PmsBarcodePrint::getCaseNo));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
