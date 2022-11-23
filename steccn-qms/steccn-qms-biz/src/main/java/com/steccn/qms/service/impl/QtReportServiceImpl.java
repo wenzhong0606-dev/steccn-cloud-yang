@@ -105,7 +105,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         QtReport qtReport = new QtReport();
         BeanUtils.copyProperties(dto, qtReport);
         qtReport.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
-        qtReport.setTimeScopeEnd(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeEnd()));
+        LocalDate timeScopeEnd = dto.getTimeScopeEnd();
+        qtReport.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(),timeScopeEnd.getMonth()
+                ,timeScopeEnd.getDayOfMonth(),23,59,59));
         //根据分组id去查询分组
         this.save(qtReport);
         return qtReport.getId();
@@ -900,7 +902,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(qureyReport)) {
             BeanUtils.copyProperties(dto, report);
             report.setTimeScopeStart(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeStart()));
-            report.setTimeScopeEnd(LocalDateUtil.getStartTimeOfDayStr(dto.getTimeScopeEnd()));
+            LocalDate timeScopeEnd = dto.getTimeScopeEnd();
+            report.setTimeScopeEnd(LocalDateTime.of(timeScopeEnd.getYear(),timeScopeEnd.getMonth()
+                    ,timeScopeEnd.getDayOfMonth(),23,59,59));
             updateById(report);
         }
        qureyReport = getById(dto.getId());
