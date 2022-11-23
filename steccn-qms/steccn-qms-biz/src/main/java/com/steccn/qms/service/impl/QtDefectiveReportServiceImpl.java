@@ -32,6 +32,7 @@ import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
+import com.steccn.qms.dto.QtTaskClassCalculate;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
@@ -238,17 +239,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                         vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                         vo.setClassId(qtCheckTask.getClassesId());
-                        vo.setClassesDate(ele.getCreateTime().toLocalDate());
+                        vo.setClassesDate(qtCheckTask.getClassTime().toLocalDate());
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
-                        vo.setFinishedTime(qtCheckTask.getFinishedTime());
+                        //根据缺陷记录时段计算完成时间
+                        QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(qtCheckTask.getDefectEndTime());
+                        vo.setFinishedTime(qtTaskClassCalculate.getClassDate());
                         flatDefectiveList.add(vo);
                     }
                 }
             }
-        }
-        if(Objects.nonNull(dto.getDefectCategory())){
-
         }
         return flatDefectiveList;
     }

@@ -214,6 +214,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     void downloadAccessoryDeepOrSubstrateProcessing(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
 
 
+    /**
+     * 计算时间的日期
+     * @param time
+     * @return
+     */
+    QtTaskClassCalculate calculateDateTime(LocalDateTime time) ;
+
 }
 
 
