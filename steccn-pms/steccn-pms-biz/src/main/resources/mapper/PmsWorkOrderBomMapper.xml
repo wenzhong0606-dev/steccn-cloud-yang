@@ -37,8 +37,8 @@
         GROUP_CONCAT( DISTINCT pwocs.execute_station_id ) as field2
         FROM
         pms_work_order_craft_station pwocs
-        JOIN pms_produce_order_craft ppoc ON pwocs.id = pwocs.produce_order_craft_id
-        JOIN pms_work_order_bom bom ON bom.work_produce_id = ppoc.produce_order_id
+        JOIN pms_produce_order_craft ppoc ON ppoc.id = pwocs.produce_order_craft_id
+        JOIN pms_work_order_bom bom ON bom.work_produce_id = ppoc.produce_order_id and bom.process_id = ppoc.process_id
         WHERE
         (pwocs.del_flag = 0 AND ppoc.del_flag = 0 AND bom.del_flag = 0)
         <if test="conditionList !=null and conditionList.size > 0">

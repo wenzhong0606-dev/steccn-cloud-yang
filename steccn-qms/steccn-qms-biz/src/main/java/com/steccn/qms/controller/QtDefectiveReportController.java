@@ -111,7 +111,7 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷类别分布-下载")
     public void deepDefectiveCategoryDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,0);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.SJGQXLB.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
@@ -122,7 +122,7 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷分布-下载")
     public void deepDefectiveItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,1);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.SJGQX.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
@@ -132,7 +132,7 @@ public class QtDefectiveReportController {
     @ApiOperation("基片缺陷项分布-下载")
     public void substrateItemDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,2);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.JBQXX.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
@@ -142,7 +142,7 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷类别趋势-下载")
     public void deepDefectiveCategoryLineDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,3);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.SJGQXLBQS.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
@@ -152,7 +152,7 @@ public class QtDefectiveReportController {
     @ApiOperation("深加工缺陷项趋势-下载")
     public void deepItemLineDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,4);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.SJGQXQS.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
@@ -162,7 +162,7 @@ public class QtDefectiveReportController {
     @ApiOperation("基片缺陷项趋势-下载")
     public void substrateItemLineDownload(@Valid @RequestBody QtChartParamDTO dto, HttpServletResponse response) throws IOException {
         try{
-            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,5);
+            qtDefectiveReportService.deepDefectiveCategoryDownload(dto,response,QtManagerConstant.QtChatDownloadEnum.JBQXXQS.getCode());
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);

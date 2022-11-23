@@ -514,5 +514,32 @@ public interface QtManagerConstant {
         private String unitType;
     }
 
+    /**
+     * 统计图下载枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChatDownloadEnum{
+        //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
+        SJGQXLB(0,"深加工缺陷类别分布下载"),
+        SJGQX(1,"深加工缺陷分布下载"),
+        JBQXX(2,"基片缺陷项分布下载"),
+        SJGQXLBQS(3,"深加工缺陷类别趋势下载"),
+        SJGQXQS(4,"深加工缺陷项趋势下载"),
+        JBQXXQS(5,"基片缺陷项趋势下载");
+
+        private final Integer code;
+        private final String name;
+
+        public static QtChatDownloadEnum getByCode(Integer code){
+            for (QtChatDownloadEnum value : QtChatDownloadEnum.values()) {
+                if(value.getCode().equals(code)){
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
+
 
 }

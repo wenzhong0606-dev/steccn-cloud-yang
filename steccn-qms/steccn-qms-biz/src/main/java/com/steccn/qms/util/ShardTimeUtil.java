@@ -107,12 +107,12 @@ public class ShardTimeUtil {
     }
 
 
-//    public static void main(String[] args) {
-//        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 6, 11), LocalTime.MIN);
-//        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MAX);
-//        List<LocalDateTime> resList = cutDateRange("M", start, end);
-//        resList.forEach(ele -> {
-//            log.info("{}", ele);
-//        });
-//    }
+    public static void main(String[] args) {
+        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 6, 11), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 1), LocalTime.MAX);
+        List<LocalDateTime> resList = cutDateRange("M", start, end);
+        resList.forEach(ele -> {
+            log.info("{}", ele);
+        });
+    }
 }
