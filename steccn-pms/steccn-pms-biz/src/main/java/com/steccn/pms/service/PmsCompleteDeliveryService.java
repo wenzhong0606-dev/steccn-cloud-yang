@@ -48,7 +48,7 @@ public interface PmsCompleteDeliveryService extends IService<PmsCompleteDelivery
     /**
      * 工序物料消耗
      * @param produceOrderIdSet 生产订单id集合
-     * @return map
+     * @return map key-订单id value【key-工序id value【key-物料id，value-数据对象】】
      */
     Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> processNumConsumeMap(Set<Long> produceOrderIdSet);
 

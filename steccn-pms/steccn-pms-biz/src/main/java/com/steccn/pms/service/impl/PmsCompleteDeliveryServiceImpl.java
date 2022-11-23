@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -13,6 +14,8 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.domain.PmsCompleteDelivery;
+import com.steccn.pms.domain.PmsProduceOrderCraft;
+import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.*;
@@ -46,6 +49,8 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private PmsWorkOrderBomService pmsWorkOrderBomService;
 
 
     @Override
@@ -131,7 +136,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
 
     @Override
     public Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> processNumConsumeMap(Set<Long> produceOrderIdSet) {
-        //定义返回结构
+        //定义返回结构 key-订单id value【key-工序id value【key-物料id，value-数据对象】】
         Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> resMap = Maps.newHashMap();
         //如果生产订单不为空
         if (CollUtil.isNotEmpty(produceOrderIdSet)) {
@@ -149,6 +154,16 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                         Map<Long, ProduceOrderProcessNumVO> materialResMap = Maps.newHashMap();
                         for (ProduceOrderProcessNumVO materialVO : processEntry.getValue()) {
                             materialResMap.put(materialVO.getMaterialId(), materialVO);
+                            //基于生产订单的bom去查询计划数量
+                            PmsWorkOrderBom one = pmsWorkOrderBomService.getOne(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                                            .eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey())
+                                            .eq(PmsWorkOrderBom::getProcessId,processEntry.getKey())
+                                            .eq(PmsWorkOrderBom::getModuleId,materialVO.getMaterialId()), false);
+                            if (Objects.nonNull(one) && Objects.nonNull(one.getQuantity())) {
+                                materialVO.setAvaQuantity(one.getQuantity());
+                            } else {
+                                materialVO.setAvaQuantity(BigDecimal.ZERO);
+                            }
                         }
                         processResMap.put(processEntry.getKey(), materialResMap);
                     }

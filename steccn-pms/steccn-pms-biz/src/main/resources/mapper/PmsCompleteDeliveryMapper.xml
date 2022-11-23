@@ -84,9 +84,6 @@
             pcd.produce_order_id,
             info.process_id,
             info.material_id
-
-
-
     </select>
     <select id="subIngredientReport" resultType="com.steccn.pms.vo.SubstrateIngredientConsumeVO">
         SELECT

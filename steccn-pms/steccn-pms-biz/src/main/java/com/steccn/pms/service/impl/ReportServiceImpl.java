@@ -795,7 +795,7 @@ public class ReportServiceImpl implements ReportService {
         //获取生产订单id集合
         Set<Long> produceOrderIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProduceOrderId).collect(Collectors.toSet());
 
-        //查询生产订单的耗料
+        //查询生产订单的耗料 key-订单id value【key-工序id value【key-物料id，value-数据对象】】
         Map<Long, Map<Long, Map<Long, ProduceOrderProcessNumVO>>> numConsumeMap = completeDeliveryService.processNumConsumeMap(produceOrderIdSet);
         Map<Long, Map<Long, ProduceOrderProcessNumVO>> defaultProcessNumMap = Maps.newHashMap();
         Map<Long, ProduceOrderProcessNumVO> defaultMaterialNumMap = Maps.newHashMap();
@@ -848,7 +848,7 @@ public class ReportServiceImpl implements ReportService {
                     for (Map.Entry<Long, List<FurtherIngredientMapperVO>> po : produceOrderMap.entrySet()) {
                         List<FurtherValueVO> processModule = Lists.newArrayList();
                         Map<Long, Map<Long, ProduceOrderProcessNumVO>> processNumMap = numConsumeMap.getOrDefault(po.getKey(), defaultProcessNumMap);
-                        //遍历工序物料集合
+                        //遍历工序物料集合,key为工序id
                         materialProcessMap.forEach((k, v) -> {
                             List<FurtherValueStrVO> strList = Lists.newArrayList();
                             Map<Long, ProduceOrderProcessNumVO> materialNumMap = processNumMap.getOrDefault(k, defaultMaterialNumMap);
