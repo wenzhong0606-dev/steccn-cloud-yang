@@ -290,8 +290,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             QtChartPieValueVO vo = new QtChartPieValueVO();
             vo.setName(idNameMap.getOrDefault(k, Strings.EMPTY));
             int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-            vo.setValue(categorySum);
-            dataList.add(vo);
+            if(categorySum >0){
+                vo.setValue(categorySum);
+                dataList.add(vo);
+            }
         });
         qtChartPieVO.setData(dataList);
         return qtChartPieVO;
