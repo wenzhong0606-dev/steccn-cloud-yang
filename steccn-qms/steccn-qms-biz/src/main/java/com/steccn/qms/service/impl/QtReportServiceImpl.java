@@ -96,8 +96,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Integer add(QtReportDTO dto) {
-        QtReport report = getOne(new LambdaQueryWrapper<QtReport>().eq(QtReport::getName, dto.getName()));
-       if (Objects.nonNull(report)){
+        List<QtReport> qtReports = list(new LambdaQueryWrapper<QtReport>()
+                .eq(QtReport::getName, dto.getName())
+                .eq(QtReport::getReportGroupId, dto.getReportGroupId()));
+        if (qtReports.size()>0){
            throw new BusinessException("该报表卡片已存在,请勿重复创建!");
        }
         QtReport qtReport = new QtReport();
@@ -336,7 +338,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
               //如果id集合为空该时间段下没有数据添加0
                 if (CollUtil.isEmpty(taskids)){
-                    itemValue.add("0");
+                    itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
                 }else {
                     List<String> stringList = qtCheckTaskDetailService
                             .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
@@ -350,10 +352,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             bigDecimals.add(bigDecimal);
                         }
                     });
+                    if (CollUtil.isNotEmpty(bigDecimals)){
+                        BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                        itemValue.add(average.toString());
+                    }else {
+                        itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    }
 
-                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                    itemValue.add(average.toString());
                 }
 
                 String timeFormat = new String();
@@ -506,7 +512,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
             //如果id集合为空该时间段下没有
             if (CollUtil.isEmpty(taskids)){
-                itemValue.add("0");
+                itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
             }else {
                 List<String> stringList = qtCheckTaskDetailService
                         .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
@@ -518,10 +524,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     BigDecimal bigDecimal = new BigDecimal(s);
                     bigDecimals.add(bigDecimal);
                 });
-
-                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                itemValue.add(average.toString());
+                if (CollUtil.isNotEmpty(bigDecimals)){
+                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                    itemValue.add(average.toString());
+                }else {
+                    itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
+                }
             }
 
             String timeFormat = new String();
@@ -727,7 +736,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailVO.setDownLimit(report.getDownLimit());
             //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
             List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
-            BigDecimal resultAverage =new BigDecimal("0");
+            BigDecimal resultAverage =new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
             if (CollUtil.isEmpty(conditionDataList)){
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
                 qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
@@ -737,7 +746,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 conditionDataList.forEach(s->{
                     QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
                     //详情检验结果平均值
-                    BigDecimal detailAverage = new BigDecimal("0");
+                    BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                     BeanUtils.copyProperties(s,taskVO);
                     //设置物料名称
                     if (Objects.nonNull(name)){
@@ -756,9 +765,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             bigDecimals.add(bigDecimal);
                         }
                     });
-                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                    taskVO.setCheckResult(detailAverage.toString());
+                    if (CollUtil.isNotEmpty(bigDecimals)){
+                        BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                        detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                        taskVO.setCheckResult(detailAverage.toString());
+                    }else {
+                        taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    }
                     mainDecimals.add(detailAverage);
                     qtSpcReportDetailTaskVOS.add(taskVO);
                 });
@@ -1019,7 +1032,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailVO.setDownLimit(report.getDownLimit());
             //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
             List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
-            BigDecimal resultAverage =new BigDecimal("0");
+            BigDecimal resultAverage =new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
             if (CollUtil.isEmpty(conditionDataList)){
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
                 qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
@@ -1029,7 +1042,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 conditionDataList.forEach(s->{
                     QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
                     //详情检验结果平均值
-                    BigDecimal detailAverage = new BigDecimal("0");
+                    BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                     BeanUtils.copyProperties(s,taskVO);
                     //设置物料名称
                     if (Objects.nonNull(name)){
@@ -1048,9 +1061,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             bigDecimals.add(bigDecimal);
                         }
                     });
-                    BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                    taskVO.setCheckResult(detailAverage.toString());
+                    if (CollUtil.isNotEmpty(bigDecimals)){
+                        BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                        detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                        taskVO.setCheckResult(detailAverage.toString());
+                    }else {
+                        taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    }
                     mainDecimals.add(detailAverage);
                     qtSpcReportDetailTaskVOS.add(taskVO);
                 });

@@ -90,7 +90,7 @@ public class ShardTimeUtil {
                     listDate.add(start);
                     start = start.plusDays(1);
                     if (!end.isAfter(start)){
-                        listDate.add(end);
+                        listDate.add(LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate()));
                     }
                     break;
                 case "H":
@@ -107,12 +107,12 @@ public class ShardTimeUtil {
     }
 
 
-    public static void main(String[] args) {
-        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 10, 8), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MIN);
-        List<LocalDateTime> resList = cutDateRange("W", start, end);
-        resList.forEach(ele -> {
-            log.info("{}", ele);
-        });
-    }
+//    public static void main(String[] args) {
+//        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 6, 11), LocalTime.MIN);
+//        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 11), LocalTime.MAX);
+//        List<LocalDateTime> resList = cutDateRange("M", start, end);
+//        resList.forEach(ele -> {
+//            log.info("{}", ele);
+//        });
+//    }
 }

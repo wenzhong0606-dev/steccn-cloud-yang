@@ -195,6 +195,11 @@ public interface QtManagerConstant {
 
 
     /**
+     * 计算结果为"0"
+     */
+    String THE_CALCULATION_RESULTS = "0";
+
+    /**
      * 班次
      */
     Integer DAY_SHIFT = 0;
