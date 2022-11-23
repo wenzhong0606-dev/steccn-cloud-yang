@@ -200,13 +200,6 @@ public interface QtManagerConstant {
     String THE_CALCULATION_RESULTS = "0";
 
     /**
-     * 班次
-     */
-    Integer DAY_SHIFT = 0;
-    Integer NIGHT_SHIFT =1;
-
-
-    /**
      * beforeHour 代表早上8点
      * afterHour  代表晚上20点
      */
@@ -549,6 +542,20 @@ public interface QtManagerConstant {
             return null;
         }
     }
+    /**
+     * 计量单位
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtSpcFilterConditions{
+        UPLIMIT(0,"上限"),
+        DOWNLIMIT(1,"下限"),
+        STANDARDVALUE(2,"标准值"),
+        TESTVALUE(3,"检验值");
 
+        private Integer code;
+        private String name;
+
+    }
 
 }

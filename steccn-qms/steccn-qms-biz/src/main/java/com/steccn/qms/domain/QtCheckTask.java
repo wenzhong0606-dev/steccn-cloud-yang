@@ -183,13 +183,13 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "customer ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String customerName;
 
     @TableField(value = "customer ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private Integer customerId;
 
     /**

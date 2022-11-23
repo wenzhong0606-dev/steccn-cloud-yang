@@ -320,7 +320,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //设置时间分片
             List<String> dates = Lists.newArrayList();
             QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-            Assert.notNull(granularityEnum,"粒度不存在");
+            if (Objects.isNull(granularityEnum)){
+                throw new BusinessException("粒度不存在");
+            }
             //将时间范围根据粒度分片
             List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
                     , q.getTimeScopeStart()
@@ -433,7 +435,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
         QtReport q = getById(id);
         if (Objects.isNull(q)){
-            throw new BusinessException("卡片信息不存在");
+            return qtReportChartVO;
         }
         BeanUtils.copyProperties(q, qtReportChartVO);
         qtReportChartVO.setReportCardType(q.getReportCardType());
@@ -495,7 +497,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //设置时间分片
         List<String> dates = Lists.newArrayList();
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-        Assert.notNull(granularityEnum,"粒度不存在");
+        if (Objects.isNull(granularityEnum)){
+            throw new BusinessException("粒度不存在");
+        }
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
                 , q.getTimeScopeStart()
@@ -585,77 +589,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     @Override
     public void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) {
         Map<String, Object> map = MapUtils.newHashMap();
-        //筛选dto数据
-        if(StrUtil.isBlank(dto.getReportName())){
-            dto.setReportName("spc控制图表");
-        }
-
-        if(StrUtil.isBlank(dto.getMaterialName())){
-            dto.setMaterialName("");
-        }
-        if(StrUtil.isBlank(dto.getWorkshopName())){
-            dto.setWorkshopName("");
-        }
-
-        if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getName());
-        }else if (dto.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()){
-            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getName());
-        }
-
-        if(StrUtil.isBlank(dto.getCustomerName())){
-            dto.setCustomerName("");
-        }
-        //根据自己的模版put数据
-        map.put("reportName",dto.getReportName());
-        if (Objects.nonNull(dto.getMaterialId())){
-            QtMaterial material = qtMaterialService.getById(dto.getMaterialId());
-            if (Objects.nonNull(material)){
-                map.put("materialName",material.getName());
-            }
-        }
-        if (Objects.nonNull(dto.getWorkshopId())){
-            R<String> nameById = remoteOfficeFeign.getNameById(dto.getWorkshopId());
-            if (Objects.nonNull(nameById)){
-                map.put("productWorkshopName",nameById.getData());
-            }
-        }
-
-        map.put("customer",dto.getCustomerName());
-        map.put("timeScopeStart",dto.getTimeScopeStart().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
-        map.put("timeScopeEnd",dto.getTimeScopeEnd().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
 
         QtReport report = getById(dto.getReportId());
-
-        List<QtSpcReportDetailVO> mainList = getQtSpcReportDetailVOS(report);
-
-        //对全量数据表进行筛选
-        List<QtSpcReportDownloadVO> data = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(mainList)){
-         mainList.forEach(s->{
-             QtSpcReportDownloadVO vo = new QtSpcReportDownloadVO();
-             BeanUtils.copyProperties(s,vo);
-             vo.setStartTime(s.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE));
-             vo.setEndTime(s.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE));
-             data.add(vo);
-         });
-
+        if (Objects.isNull(report)){
+            throw new BusinessException("该报表不存在,无法下载");
         }
-        //封装的下载
-        downloadTemplate(response,QtManagerConstant.QT_CHART_SPC_NAME,dto.getReportName(),map,data,dto.getBase64());
-    }
-
-    private List<QtSpcReportDetailVO> getQtSpcReportDetailVOS(QtReport report) {
         //设置查询条件
         LambdaQueryWrapper<QtCheckTask> condition = new QueryWrapper<QtCheckTask>()
                 .lambda()
@@ -669,7 +607,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
         //设置时间分片
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(report.getGranularity());
-        Assert.notNull(granularityEnum,"粒度不存在");
+        if (Objects.isNull(granularityEnum)){
+            throw new BusinessException("粒度不存在");
+        }
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
                 , report.getTimeScopeStart()
@@ -687,13 +627,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //获取单位名称
             measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
         }
-
         //查询物料名称
         QtMaterial qtMaterial=new QtMaterial();
         if (Objects.nonNull(report.getMaterialId())) {
             qtMaterial= qtMaterialService.getById(report.getMaterialId());
         }
-        String name = qtMaterial.getName();
         //spc任务明细表的数据集合
         List<QtSpcReportDetailVO> mainList = Lists.newArrayList();
         for (int i = 1; i < localDateTimes.size(); i++) {
@@ -713,7 +651,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
             //设置返回数据类型对象
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
-            //设置主键id
+            //设置明细表的主键id
             qtSpcReportDetailVO.setId(i);
             //设置开始结束分片范围
             qtSpcReportDetailVO.setStartTime(start);
@@ -729,15 +667,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //设置计量单位名称
             if (Objects.nonNull(measureUnitName)){
                 qtSpcReportDetailVO.setMeasureUnit(measureUnitName);
-            } else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureUnitName)){
-                qtSpcReportDetailVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureUnitName)){
+                    qtSpcReportDetailVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                }
             }
-            //设置标准值
-            qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
+
             //设置上限
             qtSpcReportDetailVO.setUpLimit(report.getUpLimit());
             //设置下限
             qtSpcReportDetailVO.setDownLimit(report.getDownLimit());
+            //设置标准值
+            qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
+
             //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
             List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
             BigDecimal resultAverage =new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
@@ -752,10 +693,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     //详情检验结果平均值
                     BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                     BeanUtils.copyProperties(s,taskVO);
-                    //设置物料名称
-                    if (Objects.nonNull(name)){
-                        taskVO.setMaterialName(name);
-                    }
+
                     //设置完成时间
                     taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                     //检验任务结果集合
@@ -781,78 +719,95 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 });
                 BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
                 resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
+
+                //设置检验项平均值
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
                 qtSpcReportDetailVO.setReportDetailTaskVOList(qtSpcReportDetailTaskVOS);
             }
             mainList.add(qtSpcReportDetailVO);
         }
-        return mainList;
-    }
-
-    /**
-     * 对下载进行封装
-     * @param response 响应
-     * @param modelName 服务器上的模版名字
-     * @param downloadName 下载文件的名字
-     * @param fixMap 固定值的map
-     * @param dataList 数据list
-     * @param base64 图片base64编码
-     * @throws IOException
-     */
-    public void downloadTemplate(HttpServletResponse response,String modelName,String downloadName,
-                                 Map<String, Object> fixMap, List<?> dataList,String base64) throws IOException {
-        //1、从服务器获取模板数据
-        InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
-        //2、设置下载头
-        this.setDownloadHeader(response,downloadName);
-        try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream())
-                .autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {
-            WriteSheet writeSheet = EasyExcel.writerSheet().build();
-            // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
-            // forceNewRow 如果设置了true,有个缺点 就是他会把所有的数据都放到内存了，所以慎用
-            // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
-            // 如果数据量大 list不是最后一行 参照下一个
-            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
-            excelWriter.fill(dataList, fillConfig, writeSheet);
-            if(StrUtil.isNotBlank(base64)){
-                BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/jpeg;base64,",""));
-                for (int i = 0; i < bytes.length; ++i) {
-                    if (bytes[i] < 0) {
-                        // 调整异常数据
-                        bytes[i] += 1024;
-                    }
-                }
-                if (bytes != null) {
-                    //拿到context数据
-                    WriteContext writeContext = excelWriter.writeContext();
-                    Workbook workbook = writeContext.writeWorkbookHolder().getWorkbook();
-                    Sheet sheet = writeContext.writeSheetHolder().getCachedSheet();
-                    Drawing<?> drawing = sheet.getDrawingPatriarch();
-                    if (drawing == null) {
-                        drawing = sheet.createDrawingPatriarch();
-                    }
-                    CreationHelper helper = sheet.getWorkbook().getCreationHelper();
-                    int index = workbook.addPicture(bytes,
-                            FileTypeUtils.getImageTypeFormat(bytes));
-                    ClientAnchor anchor = helper.createClientAnchor();
-                    anchor.setDx2(-StyleUtil.getCoordinate(5));
-                    anchor.setDx1(StyleUtil.getCoordinate(5));
-                    // 图片位置设置代码
-                    anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 6));
-                    anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
-                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 11) + 1);
-                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 7) + 1);
-                    anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
-                    drawing.createPicture(anchor, index);
-                }
-            }
-            excelWriter.fill(fixMap, writeSheet);
-            // bytes为要导出的图像文件字节数组
-
-            response.getOutputStream().flush();
+        //筛选dto数据
+        if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.DELIVER.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getName());
+        }else if (report.getCheckType()==QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()){
+            map.put("checkType",QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getName());
         }
+
+        //根据自己的模版put数据
+        map.put("reportName",report.getName());
+        //设置物料名称
+        if (Objects.nonNull( qtMaterial.getName())){
+            map.put("materialName", qtMaterial.getName());
+        }
+        //设置生产车间
+        if (CollUtil.isNotEmpty(qtCheckTasks)){
+            QtCheckTask qtCheckTask = qtCheckTasks.get(0);
+            QtBaseIdNameDTO materialWorkshop = qtCheckTask.getMaterialWorkshop();
+            if (Objects.nonNull(materialWorkshop.getName())){
+                map.put("productWorkshopName",materialWorkshop.getName());
+            }
+            //设置客户
+            QtBaseIdNameDTO customer = qtCheckTask.getCustomer();
+            if (Objects.nonNull(customer.getName())){
+                map.put("customer",customer.getName());
+            }
+        }
+        map.put("timeScopeStart",report.getTimeScopeStart().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+        map.put("timeScopeEnd",report.getTimeScopeEnd().format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+
+        //对全量数据表进行筛选
+        List<QtSpcReportDownloadVO> data = Lists.newArrayList();
+
+        if(CollUtil.isNotEmpty(mainList)){
+
+         mainList.forEach(s->{
+             QtSpcReportDownloadVO vo = new QtSpcReportDownloadVO();
+             vo.setStartTime(s.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE));
+             vo.setEndTime(s.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE));
+             if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(report.getGranularity())){
+                 vo.setStartTime(LocalDateUtil.format(s.getStartTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                 vo.setEndTime(LocalDateUtil.format(s.getEndTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+             }
+             vo.setCheckItemName(s.getCheckItemName());
+             vo.setMeasureUnit(s.getMeasureUnit());
+
+             if (CollUtil.isNotEmpty(dto.getFilterConditions())){
+                 List<String> conditions = dto.getFilterConditions();
+                 if (conditions.contains(QtManagerConstant.QtSpcFilterConditions.UPLIMIT.getName())){
+                     //设置上限
+                     vo.setUpLimit(s.getUpLimit());
+                 }
+                 if (conditions.contains(QtManagerConstant.QtSpcFilterConditions.DOWNLIMIT.getName())){
+                     //设置下限
+                     vo.setDownLimit(s.getDownLimit());
+                 }
+                 if (conditions.contains(QtManagerConstant.QtSpcFilterConditions.STANDARDVALUE.getName())){
+                     //设置标准值
+                     vo.setStandardValue(s.getStandardValue());
+                 }
+                 if (conditions.contains(QtManagerConstant.QtSpcFilterConditions.TESTVALUE.getName())){
+                     //设置标准值
+                     vo.setResultAverage(s.getResultAverage());
+                 }
+             }
+             data.add(vo);
+         });
+
+        }
+        //封装的下载
+        DownloadUtil.downloadTemplate(response,QtManagerConstant.QT_CHART_SPC_NAME,report.getName(),map,data,dto.getBase64());
     }
+
 
     /**
      * 根据id删除spc卡片
@@ -963,7 +918,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
         //设置时间分片
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(report.getGranularity());
-        Assert.notNull(granularityEnum,"粒度不存在");
+        if (Objects.isNull(granularityEnum)){
+            throw new BusinessException("粒度不存在");
+        }
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
                 , report.getTimeScopeStart()
