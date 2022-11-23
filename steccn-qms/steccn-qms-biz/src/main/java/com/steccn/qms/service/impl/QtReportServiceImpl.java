@@ -235,7 +235,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     /**
      * 根据分组id查询报表图表列表
      *
-     * @param id
+     * @param reportGroupId
      * @return
      */
     @Override
@@ -517,7 +517,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
-            List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+            List<Long> taskids= Lists.newArrayList();
+            if (CollUtil.isNotEmpty(conditionTasks)){
+                taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
+            }
             //如果id集合为空该时间段下没有
             if (CollUtil.isEmpty(taskids)){
                 itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
@@ -530,7 +533,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
                 stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
                     BigDecimal bigDecimal = new BigDecimal(s);
-                    bigDecimals.add(bigDecimal);
+                    if (Objects.nonNull(bigDecimal)){
+                        bigDecimals.add(bigDecimal);
+                    }
                 });
                 if (CollUtil.isNotEmpty(bigDecimals)){
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);

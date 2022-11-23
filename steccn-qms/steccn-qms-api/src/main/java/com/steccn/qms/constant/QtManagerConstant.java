@@ -147,12 +147,18 @@ public interface QtManagerConstant {
     String ANALYSTIME = "analystTime"; //分析时间
     String INGREDIENTNUM = "ingredientNum"; //配料付数
 
-
     /**
      * 机构类型为车间的编码
      */
     String OFFICE_WORKSHOP_TYPE ="8";
     String OFFICE_PRODUCE_LINE_TYPE ="9";
+
+
+    /**
+     * SPC 任务详情的表头
+     */
+    String SPC_HEADER_FIELD_ONE ="检验任务单号";
+    String SPC_HEADER_FIELD_TWO ="检验完成时间";
 
 
     /**
@@ -166,32 +172,6 @@ public interface QtManagerConstant {
     String SUB_OFFICE_NAME="基片";
     String SUB_OFFICE_NAME_ONE = "基片一车间";
     String SUB_OFFICE_NAME_TWO = "基片二车间";
-
-    /**
-     * 产线名称
-     */
-    String DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_ONE = "深加工一车间一产线";
-    String DEEP_OFFICE_NAME_ONE_PRODUCT_LINE_TWO = "深加工一车间二产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_ONE = "深加工二车间一产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_TWO = "深加工二车间二产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_THREE = "深加工二车间三产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR = "深加工二车间四产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE = "深加工二车间五产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SIX = "深加工二车间六产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN = "深加工二车间七产线";
-    String DEEP_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT = "深加工二车间八产线";
-    String DEEP_OFFICE_NAME_THREE_PRODUCT_LINE_ONE = "深加工三车间一产线";
-
-    String SUB_OFFICE_NAME_ONE_PRODUCT_LINE_ONE = "基片一车间一产线";
-    String SUB_OFFICE_NAME_ONE_PRODUCT_LINE_TWO = "基片一车间二产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_ONE = "基片二车间一产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_TWO = "基片二车间二产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_THREE = "基片二车间三产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FOUR = "基片二车间四产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_FIVE = "基片二车间五产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SIX = "基片二车间六产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_SEVEN = "基片二车间七产线";
-    String SUB_OFFICE_NAME_TWO_PRODUCT_LINE_EIGHT = "基片二车间八产线";
 
 
     /**
@@ -265,6 +245,8 @@ public interface QtManagerConstant {
     final int nameLengthDownLimit = 1;
     final int noteLengthUpLimit = 100;
     final int noteLengthDownLimit = 1;
+
+
     /**
      * @desc 检验项 | 缺陷项类别枚举
      */
