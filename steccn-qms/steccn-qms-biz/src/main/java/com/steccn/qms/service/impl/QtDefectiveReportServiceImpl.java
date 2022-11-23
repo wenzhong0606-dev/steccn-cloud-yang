@@ -175,10 +175,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //查询符合条件的检验任务
         QtCheckTaskConditionDTO condition = QtCheckTaskConditionDTO.builder()
                 .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
-                .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN))
-                .endTime(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX))
+                .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)))
+                .endTime(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)))
                 .workOrderId(dto.getWorkingOrder())
                 .productWorkShopId(dto.getProductWorkShopId())
+                .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
                 .defectId(dto.getDefectId())
                 .build();

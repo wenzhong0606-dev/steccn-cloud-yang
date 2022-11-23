@@ -30,6 +30,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.*;
 import com.steccn.common.util.BigDecimalUtil;
@@ -1409,10 +1410,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList(keyword, dto);
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //定义数据集合
         List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
 
@@ -1585,7 +1586,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getFinishedTime, dto.getStartTime(), dto.getEndTime())
+                .between(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType()) && Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getFinishedTime, dto.getStartTime(), dto.getEndTime())
+                .between(!QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType()) && Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectStartTime, dto.getStartTime(), dto.getEndTime() )
+                .between(!QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType()) && Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getStartTime(), dto.getEndTime() )
                 //班次
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //只要巡检
@@ -1786,7 +1789,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
         dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //筛选车间
         if(dto.getProductLineId()!=null){
             flatDataList = flatDataList.stream().filter(s->s.getProductWorkshopId().equals(dto.getProductLineId())).collect(Collectors.toList());
@@ -2018,7 +2021,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
         dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList(null, dto);
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
 
         //定义数据集合
         List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
@@ -2081,7 +2084,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
         dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList = rateDataList(null, dto);
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
+        SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
 
         //定义数据集合
         List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
