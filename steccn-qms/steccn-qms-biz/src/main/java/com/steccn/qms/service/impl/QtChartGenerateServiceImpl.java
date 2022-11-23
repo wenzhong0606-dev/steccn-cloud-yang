@@ -1066,15 +1066,19 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             BigDecimal chengRate = BigDecimalUtil.divide(chengWeight,laAmount);
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
-            onePie.setValue(chengRate);
+            onePie.setValue(chengRate.abs());
             pieList.add(onePie);
 
             //遍历损耗原因分组
             for(Map.Entry<String,BigDecimal> reasonEntry:orderByReason.entrySet()){
                 QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
-                tmp.setName(reasonEntry.getKey());
-                tmp.setValue(BigDecimalUtil.divide(reasonEntry.getValue(),laAmount));
-                pieList.add(tmp);
+                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(),laAmount);
+                //为0则不放入
+                if(value.compareTo(BigDecimal.ZERO)!=0){
+                    tmp.setName(reasonEntry.getKey());
+                    tmp.setValue(value);
+                    pieList.add(tmp);
+                }
             }
             result.setData(pieList);
             return result;
