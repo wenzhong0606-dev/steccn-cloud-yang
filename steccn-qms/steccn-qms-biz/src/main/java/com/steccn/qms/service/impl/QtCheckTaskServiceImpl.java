@@ -1260,8 +1260,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public Page<QtDeepOrSubAcceptabilityDetailVO> getQtDeepOrSubAcceptabilityDetailVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
         Page<QtDeepOrSubAcceptabilityDetailVO> page = new Page<>(dto.getCurrent(), dto.getSize());
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         //根据条件获取数据
         List<QtCheckTaskReportVO> rateDataList = rateDataList(keyword, dto);
         rateDataList = rateDataList.stream().filter(v -> Objects.nonNull(v.getClassesId()) &&
@@ -1426,8 +1424,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public QtLineChartBiBarDTO getQtChartDeepOrSubBarVO(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList(keyword, dto);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //定义数据集合
@@ -1562,6 +1558,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return list
      */
     private List<QtCheckTaskReportVO> rateDataList(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
+        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
+        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
         List<QtCheckTaskReportVO> resList = Lists.newArrayList();
         Set<Integer> produceLineSet = null;
         if(StrUtil.isNotBlank(keyword)){
@@ -1802,8 +1800,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public Page<QtCheckTaskReportVO> getQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //筛选车间
@@ -2093,8 +2089,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     public QtLineChartBiBarDTO accessoryChart(QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList(null, dto);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
 
@@ -2156,8 +2150,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public QtLineChartBiBarDTO getQtIQCAcceptabilityChart(QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList = rateDataList(null, dto);
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
 
@@ -2271,8 +2263,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @SneakyThrows
     @Override
     public void downloadQtSubLaboratoryAcceptabilityDetailVO(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.MIN));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         List<QtCheckTaskReportVO> flatDataList  = rateDataList("基片", dto);
         Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //筛选车间
