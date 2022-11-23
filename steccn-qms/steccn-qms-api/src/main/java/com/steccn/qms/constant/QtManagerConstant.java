@@ -412,6 +412,15 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
+
+        public static String getNameByCode(Integer code) {
+            for (QtChatTargetValue value : QtChatTargetValue.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
     }
 
     /**
