@@ -68,10 +68,8 @@ import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
@@ -2263,17 +2261,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             map.put("materialName",materialIdNameMap.get(dto.getMaterialId()));
         }
 
-        downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_LLJ,QtManagerConstant.QT_CHART_ACCEPTABILITY_LLJ,map,dto.getBase64(),dto.getDetailBase64());
+        downloadTemplate(response, map,dto.getBase64(),dto.getDetailBase64());
     }
 
-     private void downloadTemplate(HttpServletResponse response, String modelName, String downloadName, Map<String, Object> fixMap, String base64, String detailBase64) throws IOException {
+     private void downloadTemplate(HttpServletResponse response, Map<String, Object> fixMap, String base64, String detailBase64) throws IOException {
         //1、从服务器获取模板数据
-        InputStream modelIn = DownloadModelUtil.getModelInputStream(modelName);
+        InputStream modelIn = DownloadModelUtil.getModelInputStream(QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_LLJ);
         //2、设置下载头
          response.setContentType(QtManagerConstant.QT_CHART_EXCEL_CONTENT_TYPE);
          response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
          // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-         String fileName = URLEncoder.encode(downloadName, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
+         String fileName = URLEncoder.encode(QtManagerConstant.QT_CHART_ACCEPTABILITY_LLJ, QtManagerConstant.QT_CHART_EXCEL_ENCODE).replaceAll("\\+", "%20");
          response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
 
         try (ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).autoCloseStream(Boolean.FALSE).withTemplate(modelIn).build()) {

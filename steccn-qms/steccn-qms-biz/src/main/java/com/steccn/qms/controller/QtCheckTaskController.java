@@ -236,7 +236,7 @@ public class QtCheckTaskController {
 
     @PostMapping("/iqc/acceptability/download")
     @ApiOperation(value = "来料检合格率下载")
-    public void downloadAcceptability(@RequestBody QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) throws IOException {
+    public void downloadAcceptability(@Valid @RequestBody QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) throws IOException {
         try{
             qtCheckTaskService.downloadAcceptability(dto,response);
         } catch (Exception e) {

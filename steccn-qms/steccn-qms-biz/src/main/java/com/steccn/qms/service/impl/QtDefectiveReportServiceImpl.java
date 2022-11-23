@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
@@ -315,36 +316,56 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<?> dataList = new ArrayList<>();
         String modelName = null;
         String fileName = null;
+        QtManagerConstant.QtChatDownloadEnum downloadType = QtManagerConstant.QtChatDownloadEnum.getByCode(type);
+        if (Objects.isNull(downloadType)) {
+            throw new BusinessException("下载类型不能为空");
+        }
         try {
-            if (type.equals(0)) {
-                fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB;
-                dataList = getDeepDefectiveCategoryDetailList(dto);
-            } else if (type.equals(1)) {
-                fileName = QtManagerConstant.QT_CHART_DEFECTIVE_ITEM_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXX;
-                dataList = getDeepDefectiveItemDetailList(dto);
-            } else if (type.equals(2)) {
-                fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPQXX;
-                dataList = getSubstrateItemDetail(dto);
-            } else if (type.equals(3)) {
-                fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_LINE_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBQS;
-                dataList = getDeepDefectiveCategoryDetailList(dto);
-            } else if (type.equals(4)) {
-                fileName = QtManagerConstant.QT_CHART_DEEP_ITEM_LINE_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXXQS;
-                dataList = getDeepDefectiveItemDetailList(dto);
-            } else if (type.equals(5)) {
-                fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_LINE_NAME;
-                modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JQQXXQS;
-                dataList = getSubstrateItemDetail(dto);
+            switch (downloadType) {
+                case SJGQXLB:
+                    fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBFB;
+                    dataList = getDeepDefectiveCategoryDetailList(dto);
+                    break;
+                case SJGQX:
+                    fileName = QtManagerConstant.QT_CHART_DEFECTIVE_ITEM_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXX;
+                    dataList = getDeepDefectiveItemDetailList(dto);
+                    break;
+                case JBQXX:
+                    fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPQXX;
+                    dataList = getSubstrateItemDetail(dto);
+                    break;
+                case SJGQXLBQS:
+                    fileName = QtManagerConstant.QT_CHART_DEFECTIVE_CATEGORY_LINE_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXLBQS;
+                    dataList = getDeepDefectiveCategoryDetailList(dto);
+                    break;
+                case SJGQXQS:
+                    fileName = QtManagerConstant.QT_CHART_DEEP_ITEM_LINE_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_SJGQXXQS;
+                    dataList = getDeepDefectiveItemDetailList(dto);
+                    break;
+                case JBQXXQS:
+                    fileName = QtManagerConstant.QT_CHART_SUBSTRATE_ITEM_LINE_NAME;
+                    modelName = QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JQQXXQS;
+                    dataList = getSubstrateItemDetail(dto);
+                    break;
+                default:
+                    throw new BusinessException("下载类型不存在");
             }
         } catch (SteccnChartException e) {
             dataList = Lists.newArrayList();
         }
+        //获取参数map
+        Map<String, Object> map = getMap(dto);
 
+        DownloadUtil.downloadTemplate(response,modelName,fileName,map,dataList,dto.getBase64());
+
+    }
+
+    private Map<String, Object> getMap(QtChartParamDTO dto) {
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("compare","");
         map.put("productWorkShopName","");
@@ -386,8 +407,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         }
 
-        DownloadUtil.downloadTemplate(response,modelName,fileName,map,dataList,dto.getBase64());
-
+        return map;
     }
 
     private List<DeepDefectiveCategoryDetailVO> getDeepDefectiveCategoryDetailList(QtChartParamDTO dto) {
