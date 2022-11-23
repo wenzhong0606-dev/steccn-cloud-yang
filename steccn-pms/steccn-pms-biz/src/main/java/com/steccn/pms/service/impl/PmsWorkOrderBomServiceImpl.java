@@ -100,6 +100,7 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
         Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
         //3.3 获取工序数据
         Map<Long, PmProcessVO> processVOMap = processService.listById(processIds);
+        PmProcessVO pmProcessVO = new PmProcessVO();
         List<PmsWorkOrderBomVO> pmsWorkOrderBomVOList = Lists.newArrayList();
         list.forEach(pmsWorkOrderBom -> {
             PmsWorkOrderBomVO pmsWorkOrderBomVO = new PmsWorkOrderBomVO();
@@ -111,7 +112,8 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             }
             //处理工序数据
             if (CollUtil.isNotEmpty(processVOMap)) {
-                pmsWorkOrderBomVO.setProcessName(processVOMap.get(pmsWorkOrderBomVO.getProcessId()).getName());
+                PmProcessVO orDefault = processVOMap.getOrDefault(pmsWorkOrderBomVO.getProcessId(), pmProcessVO);
+                pmsWorkOrderBomVO.setProcessName(orDefault.getName());
             }
             pmsWorkOrderBomVO.setUnit(dictMap.get(pmsWorkOrderBomVO.getUnitId()));
             pmsWorkOrderBomVOList.add(pmsWorkOrderBomVO);
