@@ -711,10 +711,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(planQuantity,quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(completeQuantity)) {
-                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(completeQuantity,quantity).multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setCompleteQuantitySq(BigDecimalUtil.divide(completeQuantity,quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(shortfallQuantity)) {
-                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(shortfallQuantity,quantity).multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setShortfallQuantitySq(BigDecimalUtil.divide(shortfallQuantity,quantity).multiply(conversionQuantity));
                 }
             }
         });
