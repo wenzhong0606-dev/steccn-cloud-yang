@@ -74,7 +74,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
 
     @Override
-    public PassRateOverViewVO passRateOverview(Integer type,LocalDateTime selectDateTime) {
+    public PassRateOverViewVO passRateOverview(Integer type,LocalDate selectDate) {
 
         //最近7天完整工作日
         List<PassRateDateVo> passRateDateVoList = new ArrayList<>();
@@ -82,7 +82,7 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
 
 
         //获取横坐标和最近7天完整工作日
-        getPassRateDateVoList(selectDateTime,dxData,passRateDateVoList);
+        getPassRateDateVoList(selectDate,dxData,passRateDateVoList);
 
         PassRateOverViewVO passRateOverViewVO = new PassRateOverViewVO();
         List<BigDecimal> datePassList = new ArrayList<>();
@@ -233,22 +233,24 @@ public class QtChartDepartmentServiceImpl  implements QtChartDepartmentService {
         }
     }
 
-    private void getPassRateDateVoList(LocalDateTime selectDateTime, List<LocalDate> dxData, List<PassRateDateVo> passRateDateVoList) {
+    private void getPassRateDateVoList(LocalDate selectDate, List<LocalDate> dxData, List<PassRateDateVo> passRateDateVoList) {
         LocalDate startLocalDate;
         LocalDate endLocalDate;
         LocalTime localTime = LocalTime.of(8,0,0);
 
-        LocalDate selectDate = selectDateTime.toLocalDate();
+        endLocalDate = selectDate.plusDays(1);
+        startLocalDate = selectDate.minusDays(6);
+        dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, endLocalDate));
         //获取最近七天开始日期和结束日期
-        if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
-            startLocalDate = selectDate.minusDays(8);
-            endLocalDate = selectDate.minusDays(1);
-            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2)));
-        } else {
-            startLocalDate = selectDate.minusDays(7);
-            endLocalDate = selectDate;
-            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1)));
-        }
+//        if (selectDateTime.getHour() < QtManagerConstant.beforeHour) {
+//            startLocalDate = selectDate.minusDays(8);
+//            endLocalDate = selectDate.minusDays(1);
+//            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(8), selectDate.minusDays(2)));
+//        } else {
+//            startLocalDate = selectDate.minusDays(7);
+//            endLocalDate = selectDate;
+//            dxData.addAll(LocalDateUtil.getLocalDateByStartEndDate(selectDate.minusDays(7), selectDate.minusDays(1)));
+//        }
 
         //获取最近7天的完整工作时间
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, endLocalDate);
