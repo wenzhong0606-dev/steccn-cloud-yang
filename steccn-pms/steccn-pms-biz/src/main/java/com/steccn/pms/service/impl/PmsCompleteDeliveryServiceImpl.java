@@ -144,6 +144,9 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             List<ProduceOrderProcessNumVO> dataList = this.baseMapper.processNumConsumeMap(produceOrderIdSet);
             //分组数据不为空
             if (CollUtil.isNotEmpty(dataList)) {
+                List<Long> craftProcessIdList = dataList.stream().map(ProduceOrderProcessNumVO::getProcessId).collect(Collectors.toList());
+                Map<Long, PmsProduceOrderCraftVO> craftMap = pmsProduceOrderCraftService.listById(craftProcessIdList);
+
                 //根据生产订单id分组  key-生产订单id value-分组数据
                 Map<Long, List<ProduceOrderProcessNumVO>> produceOrderMap = dataList.stream().collect(Collectors.groupingBy(ProduceOrderProcessNumVO::getProduceOrderId));
                 for (Map.Entry<Long, List<ProduceOrderProcessNumVO>> produceOrderEntry : produceOrderMap.entrySet()) {
@@ -157,7 +160,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                             //基于生产订单的bom去查询计划数量
                             PmsWorkOrderBom one = pmsWorkOrderBomService.getOne(new LambdaQueryWrapper<PmsWorkOrderBom>()
                                             .eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey())
-                                            .eq(PmsWorkOrderBom::getProcessId,processEntry.getKey())
+                                            .eq(Objects.nonNull(craftMap.get(processEntry.getKey())),PmsWorkOrderBom::getProcessId,craftMap.get(processEntry.getKey()).getProcessId())
                                             .eq(PmsWorkOrderBom::getModuleId,materialVO.getMaterialId()), false);
                             if (Objects.nonNull(one) && Objects.nonNull(one.getQuantity())) {
                                 materialVO.setAvaQuantity(one.getQuantity());

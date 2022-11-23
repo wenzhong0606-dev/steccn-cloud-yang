@@ -691,7 +691,7 @@ public class ReportServiceImpl implements ReportService {
                             if (i == pmProcessList.size() - 1) {
                                 lastPassQuantity = subtract;
                             }
-                            //列统计数据
+                            //列统计数据  一行数据汇总
                             pmColumnCount(rowCountMap, Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
                             //班组求和
                             pmRowCount(classCountMap, pmProcess.getId(),Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
@@ -703,16 +703,19 @@ public class ReportServiceImpl implements ReportService {
                         //合计
                         List<String> rowCountList = Lists.newArrayList();
                         rowCountList.add(BigDecimalUtil.format(firstProcessQuantity));
-                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialId, firstProcessQuantity, 2)));
+                        BigDecimal f1Convert = unitConvert(unitList, unitConvertMap, materialId, firstProcessQuantity, 2);
+                        rowCountList.add(BigDecimalUtil.format(f1Convert));
                         rowCountList.add(BigDecimalUtil.format(lastPassQuantity));
-                        rowCountList.add(BigDecimalUtil.format(unitConvert(unitList, unitConvertMap, materialId, lastPassQuantity, 2)));
-                        rowCountList.add(BigDecimalUtil.format(BigDecimalUtil.divide(BigDecimalUtil.multiply(lastPassQuantity, BigDecimalUtil.HUNDRED), firstProcessQuantity)));
+                        BigDecimal f2Convert = unitConvert(unitList, unitConvertMap, materialId, lastPassQuantity, 2);
+                        rowCountList.add(BigDecimalUtil.format(f2Convert));
+                        BigDecimal passRate = BigDecimalUtil.divide(BigDecimalUtil.multiply(lastPassQuantity, BigDecimalUtil.HUNDRED), firstProcessQuantity);
+                        rowCountList.add(BigDecimalUtil.format(passRate));
                         //班次合计
-                        pmColumnCount(classCountMap, 0L, rowCountMap);
+                        pmColumnCount(classCountMap, -2L, Lists.newArrayList(firstProcessQuantity, f1Convert, lastPassQuantity, f2Convert, passRate));
                         //产线合计
-                        pmColumnCount(lineCountMap, 0L, rowCountMap);
+                        pmColumnCount(lineCountMap, -2L, Lists.newArrayList(firstProcessQuantity, f1Convert, lastPassQuantity, f2Convert, passRate));
                         //车间合计
-                        pmColumnCount(workshopCountMap, 0L, rowCountMap);
+                        pmColumnCount(workshopCountMap, -2L, Lists.newArrayList(firstProcessQuantity, f1Convert, lastPassQuantity, f2Convert, passRate));
                         moduleList.add(new FurtherValueStrVO(rowCountList));
                         //入库
                         Map<Long, BigDecimal> orDefaultMap = materialCompleteMap.getOrDefault(materialId, Maps.newHashMap());
@@ -954,8 +957,8 @@ public class ReportServiceImpl implements ReportService {
      * @param value2 数据2
      */
     private void countIn(Long classesId, Map<Long, Map<Integer, BigDecimal>> classCountMap, BigDecimal value1, BigDecimal value2) {
-        BigDecimalUtil.biAccumulate(classCountMap, 1L, 0, value1);
-        BigDecimalUtil.biAccumulate(classCountMap, 1L, 1, value2);
+        BigDecimalUtil.biAccumulate(classCountMap, -1L, 0, value1);
+        BigDecimalUtil.biAccumulate(classCountMap, -1L, 1, value2);
     }
 
     /**
@@ -987,23 +990,26 @@ public class ReportServiceImpl implements ReportService {
                 firstTotal = rate;
             }
         }
-        Map<Integer, BigDecimal> classCountChildMap = classCountMap.get(0L);
-        Map<Integer, BigDecimal> classInChildMap = classCountMap.get(1L);
+        Map<Integer, BigDecimal> classCountChildMap = classCountMap.get(-2L);
+        Map<Integer, BigDecimal> classInChildMap = classCountMap.get(-1L);
         List<String> classCountChildList = Lists.newArrayList();
         classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(0)));
         classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(1)));
         classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(2)));
         classCountChildList.add(BigDecimalUtil.format(classCountChildMap.get(3)));
+        //合格率
         BigDecimal divide = BigDecimalUtil.divide(classCountChildMap.get(2), classCountChildMap.get(0));
         classCountChildList.add(BigDecimalUtil.format(BigDecimalUtil.multiply(divide, BigDecimalUtil.HUNDRED)));
         List<String> classInChildList = Lists.newArrayList();
         classInChildList.add(BigDecimalUtil.format(classInChildMap.get(0)));
         classInChildList.add(BigDecimalUtil.format(classInChildMap.get(1)));
-        //完工率
+        //成品率
         BigDecimal rate = BigDecimalUtil.divide(classInChildMap.get(1), firstTotal);
         BigDecimal multiply = BigDecimalUtil.multiply(rate, BigDecimalUtil.HUNDRED);
         classInChildList.add(BigDecimalUtil.format(multiply));
+        //合计
         classCountModuleList.add(new FurtherValueStrVO(classCountChildList));
+        //完工
         classCountModuleList.add(new FurtherValueStrVO(classInChildList));
         return createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_1, classCountModuleList, defaultSpecList);
     }
@@ -1015,8 +1021,8 @@ public class ReportServiceImpl implements ReportService {
      * @param countMap    统计map
      * @param rowCountMap 行
      */
-    private void pmColumnCount(Map<Long, Map<Integer, BigDecimal>> countMap, Long pmProcessId, Map<Integer, BigDecimal> rowCountMap) {
-        for (int i = 0; i <= 5; i++) {
+    private void pmColumnCount(Map<Long, Map<Integer, BigDecimal>> countMap, Long pmProcessId, List<BigDecimal> rowCountMap) {
+        for (int i = 0; i <= 4; i++) {
             BigDecimalUtil.biAccumulate(countMap, pmProcessId, i, rowCountMap.get(i));
         }
     }
