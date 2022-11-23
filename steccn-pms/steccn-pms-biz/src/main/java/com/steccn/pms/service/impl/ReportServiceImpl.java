@@ -393,6 +393,13 @@ public class ReportServiceImpl implements ReportService {
                 //合格率需要重新算
                 BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1),BigDecimalUtil.HUNDRED), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
+            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
+                //单耗(kcal/Kg玻璃液) 需要重新计算
+                BigDecimal oil = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
+                BigDecimal gas = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
+                BigDecimal lyl = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.PULL_FORCE.getCode());
+                BigDecimal kcal = kcal(oil, gas, lyl);
+                subVo = rowData(new SysOfficeVO(), Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
             }
             subVo.setWorkshopName("总计");
             subVo.setProductLineName("总计");
@@ -417,6 +424,13 @@ public class ReportServiceImpl implements ReportService {
                 //合格率需要重新计算
                 BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-1), BigDecimalUtil.HUNDRED), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate, rate, rate), consumeEnum.getName());
+            }else if(PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())){
+                //单耗(kcal/Kg玻璃液)需要重新计算
+                BigDecimal oil = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
+                BigDecimal gas = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
+                BigDecimal lyl = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.PULL_FORCE.getCode());
+                BigDecimal kcal = kcal(oil, gas, lyl);
+                subVo = rowData(productLine, Arrays.asList(kcal, kcal, kcal), consumeEnum.getName());
             }
             subVo.setWorkshopName(productLine.getParentName());
             subVo.setProductLineName("总计");
@@ -424,6 +438,21 @@ public class ReportServiceImpl implements ReportService {
             subVo.setSpecList(Arrays.asList(consumeEnum.getName(), consumeEnum.getName(), consumeEnum.getName()));
             productLineVOList.add(subVo);
         }
+    }
+
+    /**
+     * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
+     * @param oil 油
+     * @param gas 气
+     * @param lyl 拉引量
+     * @return
+     */
+    private BigDecimal kcal(BigDecimal oil, BigDecimal gas, BigDecimal lyl) {
+        BigDecimal gasMultiply = BigDecimalUtil.multiply(gas, BigDecimal.valueOf(7800));
+        BigDecimal oilMultiply = BigDecimalUtil.multiply(oil, BigDecimal.valueOf(9300));
+        BigDecimal lylMultiply = BigDecimalUtil.multiply(lyl, BigDecimal.valueOf(1000));
+        BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.add(gasMultiply, oilMultiply), lylMultiply);
+        return divide;
     }
 
     /**
@@ -466,7 +495,7 @@ public class ReportServiceImpl implements ReportService {
         BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
 
         productLineVOList.add(rateVo);
-        //0耗电量 1耗水量 2耗油量 3耗气量
+        //0耗电量 1耗水量 2耗气量 3耗油量
         List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine, workshopCountMap);
 
         //单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
@@ -497,7 +526,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
-     *
+     * 0耗电量 1耗水量 2耗气量 3耗油量
      * @param productLine       产线id
      * @param morningBigDecimal 早上数量
      * @param nightBigDecimal   晚上数量
@@ -505,11 +534,11 @@ public class ReportServiceImpl implements ReportService {
      * @return 统计数据
      */
     private SubstrateDayReportListVO getSubstrateDayReportListVO(SysOfficeVO productLine, BigDecimal morningBigDecimal, BigDecimal nightBigDecimal, List<SubstrateDayReportListVO> energyList, Map<Integer, BigDecimal> workshopCountMap) {
-        BigDecimal morningGas = new BigDecimal(energyList.get(3).getMorning().get(0));
-        BigDecimal morningOil = new BigDecimal(energyList.get(2).getMorning().get(0));
+        BigDecimal morningGas = new BigDecimal(energyList.get(2).getMorning().get(0));
+        BigDecimal morningOil = new BigDecimal(energyList.get(3).getMorning().get(0));
         BigDecimal morningKcal = BigDecimal.ZERO;
-        BigDecimal nightGas = new BigDecimal(energyList.get(3).getNight().get(0));
-        BigDecimal nightOil = new BigDecimal(energyList.get(2).getNight().get(0));
+        BigDecimal nightGas = new BigDecimal(energyList.get(2).getNight().get(0));
+        BigDecimal nightOil = new BigDecimal(energyList.get(3).getNight().get(0));
         BigDecimal nightKcal = BigDecimal.ZERO;
         if (BigDecimal.ZERO.compareTo(morningBigDecimal.multiply(BigDecimal.valueOf(1000))) != 0) {
             BigDecimal morningMultiply = morningGas.multiply(BigDecimal.valueOf(7800)).add(morningOil.multiply(BigDecimal.valueOf(9300)));
@@ -519,8 +548,14 @@ public class ReportServiceImpl implements ReportService {
             BigDecimal nightMultiply = nightGas.multiply(BigDecimal.valueOf(7800)).add(nightOil.multiply(BigDecimal.valueOf(9300)));
             nightKcal = nightMultiply.divide(nightBigDecimal.multiply(BigDecimal.valueOf(1000)), BigDecimalUtil.DEFAULT_SCALE, RoundingMode.HALF_UP);
         }
-        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, BigDecimalUtil.add(morningKcal,nightKcal)), "单耗(kcal/Kg玻璃液)");
-        BigDecimalUtil.accumulate(workshopCountMap, 6, BigDecimalUtil.add(morningKcal,nightKcal));
+        //单耗的合计得重新计算
+        BigDecimal gas = BigDecimalUtil.add(morningGas, nightGas);
+        BigDecimal oil = BigDecimalUtil.add(morningOil, nightOil);
+        BigDecimal lyl = BigDecimalUtil.add(morningBigDecimal, nightBigDecimal);
+        BigDecimal divide = kcal(oil,gas,lyl);
+
+        SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, divide), "单耗(kcal/Kg玻璃液)");
+        BigDecimalUtil.accumulate(workshopCountMap, 6, divide);
         return bly;
     }
 

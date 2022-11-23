@@ -97,8 +97,8 @@ public interface PmReportConstant {
     enum ReportWorkConsumeEnum {
         ELECTRIC(0, "耗电量(Kwh)"),
         WATER(1, "耗水量(T)"),
-        OIL(2, "耗气量(m³)"),
-        GAS(3, "耗油量(Kg)");
+        OIL(2, "耗油量(Kg)"),
+        GAS(3, "耗气量(m³)");
 
         private final Integer code;
         private final String name;
@@ -111,8 +111,8 @@ public interface PmReportConstant {
         PASS_RATE(1, "合格率(%)"),
         ELECTRIC(2, "耗电量(Kwh)"),
         WATER(3, "耗水量(T)"),
-        OIL(4, "耗气量(m³)"),
-        GAS(5, "耗油量(Kg)"),
+        OIL(4, "耗油量(Kg)"),
+        GAS(5, "耗气量(m³)"),
         Kcal(6, "单耗(kcal/Kg玻璃液)");
 
         private final Integer code;

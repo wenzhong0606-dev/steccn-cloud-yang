@@ -16,21 +16,30 @@ public class HikVisionConfig {
     /**
      * 平台host地址
      */
-//    @Value("${hik.host}")
+    @Value("${hik.host}")
     private String HIK_HOST;
 
     /**
      * 秘钥appKey
      */
-//    @Value("${hik.appKey}")
+    @Value("${hik.appKey}")
     private String HIK_APP_KEY;
 
     /**
      * 秘钥appSecret
      */
-//    @Value("${hik.appSecret}")
+    @Value("${hik.appSecret}")
     private String HIK_APP_SECRET;
 
-//    @Value("${hik.path}")
+    /**
+     * path上下文
+     */
+    @Value("${hik.path}")
     private String PATH;
+
+    /**
+     * service请求
+     */
+    @Value("${hik.service}")
+    private String service;
 }

@@ -14,6 +14,7 @@ import com.alibaba.excel.util.StyleUtil;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -297,51 +298,53 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         dto.setCurrent(1);
         dto.setSize(99999);
         Page<QtChartSubDetailDTO> qtChartSubDetailDTOPage = this.lossDetails(dto);
+        List<QtChartSubDetailDTO> records = Lists.newArrayList();
         if(CollUtil.isNotEmpty(qtChartSubDetailDTOPage.getRecords())){
-            List<QtChartSubDetailDTO> records = qtChartSubDetailDTOPage.getRecords();
-            //根据map塞入数据
-            Map<String, Object> map = MapUtils.newHashMap();
-            //根据自己的模版put数据
-            if(dto.getProductWorkShopId()!=null){
-                R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
-                if(nameById!=null){
-                    map.put("workShopCondition",nameById.getData());
-                }
-            }
-            if(dto.getProductLineId()!=null){
-                R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
-                if(nameById!=null){
-                    map.put("workLineCondition",nameById.getData());
-                }
-            }
-            if(dto.getWorkOrderId()!=null){
-                if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
-                    map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.DAY.getName());
-                }else {
-                    map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.NIGHT.getName());
-                }
-            }
-            map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
-            }
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
-            }
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
-            }
-            records.forEach(tmp->{
-                if(tmp.getPullAmount()!=null){
-                    tmp.setPullAmountStr(new DecimalFormat("0.0000").format(tmp.getPullAmount()));
-                }
-                if(tmp.getLossWeight()!=null){
-                    tmp.setLossWeightStr(new DecimalFormat("0.0000").format(tmp.getLossWeight()));
-                }
-            });
-            this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPSH,QtManagerConstant.QT_CHART_JPSH_NAME,map,records,dto.getBase64());
+            records = qtChartSubDetailDTOPage.getRecords();
         }
+        //根据map塞入数据
+        Map<String, Object> map = MapUtils.newHashMap();
+        //根据自己的模版put数据
+        if(dto.getProductWorkShopId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
+            if(nameById!=null){
+                map.put("workShopCondition",nameById.getData());
+            }
+        }
+        if(dto.getProductLineId()!=null){
+            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductLineId());
+            if(nameById!=null){
+                map.put("workLineCondition",nameById.getData());
+            }
+        }
+        if(dto.getWorkOrderId()!=null){
+            if(dto.getWorkOrderId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.DAY.getName());
+            }else {
+                map.put("workOrderNameCondition", QtManagerConstant.QtClassesEnum.NIGHT.getName());
+            }
+        }
+        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORK.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
+        }
+        if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            map.put("workOrderCondition",QtManagerConstant.QtChartCompareEnum.WORKSHOP.getName());
+        }
+        records.forEach(tmp->{
+            if(tmp.getPullAmount()!=null){
+                tmp.setPullAmountStr(new DecimalFormat("0.0000").format(tmp.getPullAmount()));
+            }
+            if(tmp.getLossWeight()!=null){
+                tmp.setLossWeightStr(new DecimalFormat("0.0000").format(tmp.getLossWeight()));
+            }
+        });
+        this.downloadTemplate(response,QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_JPSH,QtManagerConstant.QT_CHART_JPSH_NAME,map,records,dto.getBase64());
+
     }
 
     /**
