@@ -15,6 +15,7 @@ public class HikVisionConstant {
     public static final String HIK_APP_KEY = HikVisionConfigHelper.HIK_APP_KEY;
     public static final String HIK_APP_SECRET = HikVisionConfigHelper.HIK_APP_SECRET;
     public static final String PATH = HikVisionConfigHelper.PATH;
+    public static final String SERVICE = HikVisionConfigHelper.SERVICE;
 }
 
 /**
@@ -26,6 +27,7 @@ class HikVisionConfigHelper{
     static String HIK_APP_KEY;
     static String HIK_APP_SECRET;
     static String PATH;
+    static String SERVICE;
 
     @Autowired
     public void setHikVisionConfig(HikVisionConfig hikVisionConfig){
@@ -33,5 +35,6 @@ class HikVisionConfigHelper{
         HIK_APP_KEY = hikVisionConfig.getHIK_APP_KEY();
         HIK_APP_SECRET = hikVisionConfig.getHIK_APP_SECRET();
         PATH = hikVisionConfig.getPATH();
+        SERVICE = hikVisionConfig.getService();
     }
 }

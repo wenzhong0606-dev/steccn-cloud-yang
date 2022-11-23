@@ -3,8 +3,9 @@ package com.steccn.portal.service;
 import cn.hutool.core.map.MapUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
-import com.steccn.common.vo.R;
+import com.hikvision.artemis.sdk.config.ArtemisConfig;
 import com.steccn.portal.constant.HikVisionConstant;
+import com.steccn.portal.util.HikVisionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,16 +30,15 @@ public class HikVisionService {
      * @return
      */
     public String getToken(String userCode){
-        //组装接口url地址
-        Map<String, String> path = MapUtil.newHashMap();
-        path.put("https://", HikVisionConstant.PATH + "/api/cas/v1/tgt/login");
+        //组装请求数据
+        Map<String,String> queries = MapUtil.newHashMap();
+        queries.put("language","zh_CN");
+        queries.put("service",HikVisionConstant.SERVICE);
+        queries.put("userCode",userCode);
 
-        Map<String,String> querys = MapUtil.newHashMap();
-        querys.put("language","zh_CN");
-        querys.put("service",HikVisionConstant.HIK_HOST);
-        querys.put("userCode",userCode);
-
-        String result = ArtemisHttpUtil.doGetArtemis(path,querys,null,"application/json");
+        String api = "/api/cas/v1/tgt/login";
+        //装入get请求
+        String result = HikVisionUtil.callGetApi(api,queries);
         JSONObject resultObj = JSONObject.parseObject(result);
         String data = resultObj.getString("data");
         String token = JSONObject.parseObject(data).getString("token");
