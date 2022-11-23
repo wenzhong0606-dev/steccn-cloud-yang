@@ -297,8 +297,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
                     if (Objects.nonNull(measureName)) {
                         qtReportChartVO.setMeasureUnit(measureName);
-                    }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
-                        qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                        if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
+                            qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                        }
                     }
                 }
 
@@ -470,8 +471,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
                 if (Objects.nonNull(measureName)) {
                     qtReportChartVO.setMeasureUnit(measureName);
-                }else if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
-                    qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                    if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
+                        qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                    }
                 }
             }
 
