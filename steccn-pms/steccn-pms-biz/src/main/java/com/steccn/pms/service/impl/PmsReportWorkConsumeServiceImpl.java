@@ -74,6 +74,11 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             typeMap = groupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getType));
         }
 
+//        ELECTRIC(0, "耗电量(Kwh)"),
+//                WATER(1, "耗水量(T)"),
+//                OIL(2, "耗气量(m³)"),
+//                GAS(3, "耗油量(Kg)");
+
         //0耗电量 1耗水量 2耗油量 3耗气量
         for (PmReportConstant.ReportWorkConsumeEnum consumeEnum : PmReportConstant.ReportWorkConsumeEnum.values()) {
             List<EnergyGroupListVO> classesDataList = typeMap.getOrDefault(consumeEnum.getCode(), Lists.newArrayList());
