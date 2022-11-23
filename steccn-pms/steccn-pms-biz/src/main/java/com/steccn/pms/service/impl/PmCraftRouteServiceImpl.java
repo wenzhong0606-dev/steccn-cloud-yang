@@ -135,9 +135,9 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
             //处理物料组件数据
             LambdaQueryWrapper<PmCraftRouteModule> wrapper = new LambdaQueryWrapper<PmCraftRouteModule>().in(PmCraftRouteModule::getCraftRouteId, materialIdS);
             List<PmCraftRouteModule> moduleList = pmCraftRouteModuleService.list(wrapper);
-            Map<Long, List<PmCraftRouteModule>> collect = moduleList.stream().collect(Collectors.groupingBy(PmCraftRouteModule::getMaterialId));
+            Map<Long, List<PmCraftRouteModule>> collect = moduleList.stream().collect(Collectors.groupingBy(PmCraftRouteModule::getCraftRouteId));
             res.forEach(craftRouteVO -> {
-                List<PmCraftRouteModule> craftRouteModuleList = collect.get(craftRouteVO.getMaterialId());
+                List<PmCraftRouteModule> craftRouteModuleList = collect.get(craftRouteVO.getId());
                 List<PmCraftRouteModuleVO> pmCraftRouteModuleVOS = BeanUtil.copyToList(craftRouteModuleList, PmCraftRouteModuleVO.class);
                 if (CollUtil.isNotEmpty(pmCraftRouteModuleVOS)) {
                     pmCraftRouteModuleVOS.forEach(craftRouteModuleVO -> {

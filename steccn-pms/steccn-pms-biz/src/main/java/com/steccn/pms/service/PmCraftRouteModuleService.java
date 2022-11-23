@@ -11,8 +11,18 @@ import com.steccn.pms.dto.PmCraftRouteDTO;
 */
 public interface PmCraftRouteModuleService extends IService<PmCraftRouteModule> {
 
+    /**
+     * 保存子组件
+     * @param dto
+     * @return
+     */
     Boolean saveMaterial(PmCraftRouteDTO dto);
 
 
+    /**
+     * 根据工艺路线id删除数据
+     * @param id
+     * @return
+     */
     Boolean deleteByRoteId(Long id);
 }
