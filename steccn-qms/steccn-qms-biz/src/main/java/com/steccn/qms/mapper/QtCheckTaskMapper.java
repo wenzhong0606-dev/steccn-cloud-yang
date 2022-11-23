@@ -48,6 +48,14 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return
      */
     Page<QtIQCAcceptabilityDetailVO> pageList(@Param("page") Page page,@Param("dto") QtSubOrDeepAcceptabilityDTO dto);
+
+    /**
+     * 获取合格来料检合格率数据
+     *
+     * @param dto
+     * @return
+     */
+    List<QtIQCAcceptabilityDetailVO> list(@Param("dto") QtSubOrDeepAcceptabilityDTO dto);
 }
 
 

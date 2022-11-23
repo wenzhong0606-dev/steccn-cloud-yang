@@ -225,6 +225,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetailVO(dto));
     }
 
+    @PostMapping("/acceptability/detail")
+    @ApiOperation(value = "来料检合格率明细")
+    public R<List<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
+        return R.success(qtCheckTaskService.getQtIQCAcceptabilityDetail(dto));
+    }
+
     @PostMapping("/accessory/acceptability/download")
     @ApiOperation(value = "下载配料抽检合格率")
     public void downloadAccessoryAcceptability(@RequestBody AccessoryAcceptabilityDownDTO dto, HttpServletResponse response) throws IOException {

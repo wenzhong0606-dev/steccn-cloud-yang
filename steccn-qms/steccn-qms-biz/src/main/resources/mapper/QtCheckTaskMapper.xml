@@ -156,4 +156,40 @@
             </if>
         </where>
     </select>
+    <select id="list" resultMap="TaskResultMap">
+        SELECT
+        a.id id,
+        a.code code,
+        a.material_workshop material_workshop,
+        a.product_workshop product_workshop,
+        a.result result,
+        a.finished_time finished_time,
+        b.sampling_time sampling_time,
+        a.material_id material_id,
+        a.supplier supplier,
+        IFNULL(a.good_num,0) as good_num,
+        IFNULL(a.check_num,0) as check_num
+        FROM
+        qt_check_task a
+        LEFT JOIN qt_check_task_copy b ON b.task_id = a.id
+        LEFT JOIN qt_material c ON c.id = a.material_id
+        <where>
+            a. task_type = 1 and a.del_flag = 0
+            <if test="dto.materialWorkshopId != null">
+                AND (product_workshop ->> '$.id' = #{dto.productWorkShopId})
+            </if>
+            <if test="dto.supplierId != null and dto.supplierId != ''">
+                AND (supplier ->> '$.id') = #{dto.supplierId}
+            </if>
+            <if test="dto.materialId != null and dto.materialId != ''">
+                and a.material_id = #{dto.materialId}
+            </if>
+            <if test="dto.dateTimeStart !=null and dto.dateTimeEnd !=null">
+                and a.finished_time between #{dto.dateTimeStart} and #{dateTimeEnd}
+            </if>
+            <if test="dto.samplingStartTime != null and dto.samplingEndTime != null">
+                and b.sampling_time between #{dto.samplingStartTime} and #{dto.samplingEndTime}
+            </if>
+        </where>
+    </select>
 </mapper>

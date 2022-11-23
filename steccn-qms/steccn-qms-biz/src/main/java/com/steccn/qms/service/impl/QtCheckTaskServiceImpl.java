@@ -1902,6 +1902,65 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return resPage.setRecords(voList);
     }
 
+    @Override
+    public List<QtIQCAcceptabilityDetailVO> getQtIQCAcceptabilityDetail(QtSubOrDeepAcceptabilityDTO dto) {
+        //1.处理时间数据
+        if (Objects.nonNull(dto.getDateStart())) {
+            dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
+        }
+        if (Objects.nonNull(dto.getDateEnd())) {
+            dto.setDateTimeStart(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
+        }
+        if (Objects.nonNull(dto.getSamplingTime())) {
+            dto.setSamplingStartTime(LocalDateTime.of(dto.getSamplingTime(), LocalTime.MIN));
+            dto.setSamplingEndTime(LocalDateTime.of(dto.getSamplingTime(), LocalTime.MAX));
+        }
+        //2.自定义sql查询数据
+        List<QtIQCAcceptabilityDetailVO> resList = this.baseMapper.list(dto);
+        //3.处理数据
+        Set<Long> taskIds = Sets.newHashSet();
+        Set<Long> materialIds = Sets.newHashSet();
+        resList.forEach(task -> {
+                    //处理时间
+//            task.setFinishedTime(LocalDate.from(task.getFinishedTime()));
+//            task.setSamplingTime(LocalDateTime.from(task.get));
+                    taskIds.add(task.getId());
+                    materialIds.add(task.getMaterialId());
+                    //计算合格
+                    BigDecimal checkNum = new BigDecimal(task.getCheckNum());
+                    BigDecimal goodNum = new BigDecimal(task.getGoodNum());
+                    task.setAcceptability(BigDecimalUtil.divide(goodNum, checkNum, BigDecimalUtil.SCALE_2));
+                }
+        );
+        List<QtIQCAcceptabilityDetailVO> voList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(resList)) {
+            List<QtIQCAcceptabilityDetailVO> filterList = resList;
+            //根据对比类型过滤数据
+            if (Objects.nonNull(dto.getCompare())) {
+                filterList = resList.stream().filter(predicate(dto.getCompare(), dto.getCompareContent(), resList)).collect(Collectors.toList());
+            }
+            //获取物料数据
+            Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+            //获取详情数据
+            Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
+            List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
+            //处理详情数据
+            filterList.forEach(task -> {
+                List<QtIQCAcceptabilityCopyVO> orDefault = taskInfoMap.getOrDefault(task.getId(), orCopyList);
+                task.setDetail(orDefault);
+                task.setMaterialName(materialMap.get(task.getMaterialId()));
+            });
+            //根据规则排序
+            voList = filterList.stream().sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName,Comparator.nullsLast(String::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getFinishedTime,Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getSamplingTime,Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
+                    .collect(Collectors.toList());
+        }
+        return voList;
+    }
+
 //    /**
 //     * 来料检合格率明细分页
 //     *
