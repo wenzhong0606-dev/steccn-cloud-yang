@@ -2336,10 +2336,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             map.put("materialName",materialIdNameMap.get(dto.getMaterialId()));
         }
 
-        downloadTemplate(response, map,dto.getBase64(),dto.getDetailBase64());
+        downloadTemplate(response, map,dto.getBase64(),dto.getDetailBase64(),dto.getLength());
     }
 
-     private void downloadTemplate(HttpServletResponse response, Map<String, Object> fixMap, String base64, String detailBase64) throws IOException {
+     private void downloadTemplate(HttpServletResponse response, Map<String, Object> fixMap, String base64, String detailBase64, Integer length) throws IOException {
         //1、从服务器获取模板数据
         InputStream modelIn = DownloadModelUtil.getModelInputStream(QtManagerConstant.QT_CHART_EXCEL_MODEL_NAME_LLJ);
         //2、设置下载头
@@ -2413,6 +2413,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         drawing = sheet.createDrawingPatriarch();
                     }
                     CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+                    int high = 20;
+                    if (length > 10) {
+                        high =length/2+16;
+                    }
                     int index = workbook.addPicture(bytes,
                             FileTypeUtils.getImageTypeFormat(bytes));
                     ClientAnchor anchor = helper.createClientAnchor();
@@ -2421,8 +2425,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     // 图片位置设置代码
                     anchor.setRow1(StyleUtil.getCellCoordinate(0, 0, 14));
                     anchor.setCol1(StyleUtil.getCellCoordinate(0, 0, 0));
-                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, 17) + 1);
-                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 6) + 1);
+                    anchor.setRow2(StyleUtil.getCellCoordinate(0, 0, high) + 1);
+                    anchor.setCol2(StyleUtil.getCellCoordinate(0, 0, 6) + 2);
                     anchor.setAnchorType(ClientAnchorData.AnchorType.MOVE_AND_RESIZE.getValue());
                     drawing.createPicture(anchor, index);
                 }

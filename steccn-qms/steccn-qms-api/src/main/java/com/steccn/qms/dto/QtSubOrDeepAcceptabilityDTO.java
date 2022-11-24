@@ -91,4 +91,6 @@ public class QtSubOrDeepAcceptabilityDTO extends BasePageDTO implements Serializ
 
     @ApiModelProperty(value = "明细图片base64")
     private String detailBase64;
+
+    private Integer length;
 }
