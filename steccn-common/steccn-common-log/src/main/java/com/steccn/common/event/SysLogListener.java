@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +34,7 @@ public class SysLogListener {
         if (logProperties.getEnable()) {
             if (logProperties.getLogType().equals(LogServiceEnum.DB)) {
                 //todo 异步 -> 远程过程调用接口
+                RequestContextHolder.setRequestAttributes(RequestContextHolder.getRequestAttributes(), true);
                 R<Boolean> result = CompletableFuture.supplyAsync(() -> remoteLogFeignApi.add(sysLog)).exceptionally(e -> {
                     log.error("{}",e);
                     return null;
