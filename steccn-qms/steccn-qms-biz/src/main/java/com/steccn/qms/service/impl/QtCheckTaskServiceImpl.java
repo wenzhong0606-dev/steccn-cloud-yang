@@ -2138,7 +2138,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
                 }
             }else{
-                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(entry.getValue(), "第" + idx + "抽检");
+                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(entry.getValue(), StackGraphUtil.STR_DEFAULT);
                 biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
             }
             stackGraphDTOList.add(biStackGraphDTO);
