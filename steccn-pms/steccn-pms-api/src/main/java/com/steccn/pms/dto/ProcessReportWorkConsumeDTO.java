@@ -23,7 +23,7 @@ public class ProcessReportWorkConsumeDTO implements Serializable {
     @NotNull(message = "类型不能为空")
     private Integer type;
 
-    @ApiModelProperty("数量")
+    @ApiModelProperty("能耗数量")
     @NotNull(message = "数量不能为空")
     @DecimalMin(value="0",message="数量应大于0")
     @DecimalMax(value="99999999.999",message="数量大小应小于99999999.999")

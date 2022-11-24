@@ -22,6 +22,7 @@ public class StackGraphUtil {
 
     private static final String STR_STACK = "Total";
     private static final String STR_GRAPH = "line";
+    public static final String STR_DEFAULT = "DEFAULT";
 
     /**
      * 单只柱子转换数据
@@ -29,7 +30,7 @@ public class StackGraphUtil {
      * @param dataList 数据集合
      * @return
      */
-    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList) {
+    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList , boolean flag) {
         List<BiStackGraphDTO<T1, T2>> biDataList = Lists.newArrayList();
         //适配biConvertData
         for (StackGraphDTO<T1, T2> data : dataList) {
@@ -40,7 +41,7 @@ public class StackGraphUtil {
             biStackGraphDTO.setData(list);
             biDataList.add(biStackGraphDTO);
         }
-        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(biDataList);
+        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(biDataList,flag);
         QtLineChartBarDTO resDto = new QtLineChartBarDTO();
         resDto.setLegend(qtLineChartBiBarDTO.getName());
         resDto.setXData(qtLineChartBiBarDTO.getXData());
@@ -48,6 +49,16 @@ public class StackGraphUtil {
             resDto.setSeriesDataVO((List<QtSeriesDataDTO>) qtLineChartBiBarDTO.getSeriesDataVO().get(0));
         }
         return resDto;
+    }
+
+    /**
+     * 单只柱子转换数据
+     *
+     * @param dataList 数据集合
+     * @return
+     */
+    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList) {
+        return convertData(dataList, Boolean.TRUE);
     }
 
     /**
