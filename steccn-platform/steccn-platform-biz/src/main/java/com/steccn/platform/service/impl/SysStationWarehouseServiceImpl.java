@@ -126,6 +126,7 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
                             sysStationWarehouseVO -> {
                                 SysOfficeVO orDefault = officeVOMap.getOrDefault(sysStationWarehouseVO.getShelfId(), sysOfficeVO);
                                 sysStationWarehouseVO.setShelfCode(orDefault.getOfficeCode());
+                                sysStationWarehouseVO.setShelfName(orDefault.getOfficeName());
                             }
                     );
                 });
