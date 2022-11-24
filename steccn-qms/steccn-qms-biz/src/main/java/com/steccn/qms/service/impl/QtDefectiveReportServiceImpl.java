@@ -211,7 +211,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Map<Integer, Integer> categoryMap = Maps.newHashMap();
         List<QtDefectiveItem> qtDefectiveItemList = qtDefectiveItemService.listByIds(defectiveIdSet);
 
-        //缺陷项 -> 第一个快照缺陷id ， 第一个快照的缺陷类别id
+        //缺陷项 -> 第一个快照缺陷id ， 第一个缺陷类别id【缺陷类别id】
         Set<String> defectCodeSet = qtDefectiveItemList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toSet());
         Map<String,TupleDTO<Integer,Integer>> firstSnapshotData = qtDefectiveItemService.firstSnapshotData(defectCodeSet);
         log.info("{}",firstSnapshotData);
@@ -249,6 +249,14 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     }
                 }
             }
+        }
+        //过滤缺陷项类别
+        if(Objects.nonNull(dto.getDefectCategory())){
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
+        }
+        //如果缺陷项不为空，则过滤缺陷项
+        if (Objects.nonNull(dto.getDefectId())) {
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getDefectId().equals(v.getDefectId())).collect(Collectors.toList());
         }
         return flatDefectiveList;
     }
@@ -509,10 +517,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.DEEP_OFFICE_NAME);
-        //缺陷项类别过滤
-        if(Objects.nonNull(dto.getDefectCategory())){
-            flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectId()));
-        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //对扁平化数据获取类别
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
@@ -545,10 +549,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
-        //缺陷项类别过滤
-        if(Objects.nonNull(dto.getDefectCategory())){
-            flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectId()));
-        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无明细");
 
         //对扁平化数据获取类别
@@ -655,11 +655,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.DEEP_OFFICE_NAME);
-
-        //如果类别不为空，则过滤类别
-        if (Objects.nonNull(dto.getDefectCategory())) {
-            flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
-        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //获取粒度枚举
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
@@ -714,14 +709,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.SUB_OFFICE_NAME);
-        //如果类别不为空，则过滤类别
-        if (Objects.nonNull(dto.getDefectCategory())) {
-            flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
-        }
-        //如果缺陷项不为空，则过滤缺陷项
-        if (Objects.nonNull(dto.getDefectId())) {
-            flatDataList = flatDataList.stream().filter(v -> dto.getDefectId().equals(v.getDefectId())).collect(Collectors.toList());
-        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //获取粒度枚举
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
@@ -749,15 +736,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetailReportVO> flatDataList = defectiveDataFlat(dto);
         //过滤车间
         flatDataList = workshopFilter(dto, flatDataList, QtManagerConstant.DEEP_OFFICE_NAME);
-
-        //如果类别不为空，则过滤类别
-        if (Objects.nonNull(dto.getDefectCategory())) {
-            flatDataList = flatDataList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
-        }
-        //如果缺陷项不为空，则过滤缺陷项
-        if (Objects.nonNull(dto.getDefectId())) {
-            flatDataList = flatDataList.stream().filter(v -> dto.getDefectId().equals(v.getDefectId())).collect(Collectors.toList());
-        }
         SteccnTableAssertUtil.notEmpty(flatDataList, "数据为空，暂无报表");
         //获取粒度枚举
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());

@@ -44,10 +44,13 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(QtReportGroupDTO dto) {
+        List<QtReportGroup> qtReportGroup = list(new LambdaQueryWrapper<QtReportGroup>()
+                .eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
+        if (qtReportGroup.size()>0){
+            throw new BusinessException("该卡片分组已存在,请勿重新创建!");
+        }
         QtReportGroup reportGroup = new QtReportGroup();
         BeanUtils.copyProperties(dto, reportGroup);
-        QtReportGroup qtReportGroup = getOne(new LambdaQueryWrapper<QtReportGroup>().eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
-        Assert.notNull(qtReportGroup, "该报表卡片分组已存在,请勿重复创建!");
         this.save(reportGroup);
         return Boolean.TRUE;
     }

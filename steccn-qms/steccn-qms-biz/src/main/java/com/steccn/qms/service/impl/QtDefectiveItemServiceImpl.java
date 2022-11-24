@@ -269,27 +269,25 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         //如果类别不传，返回所有的缺陷项
         List<QtBaseIdNameDTO> qtBaseIdNameDTOS = Lists.newArrayList();
         List<QtDefectiveItem> qtDefectiveItems = Lists.newArrayList();
-        QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
+        LambdaQueryWrapper<QtDefectiveItem> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(QtDefectiveItem::getDelFlag,0).eq(QtDefectiveItem::getShowFlag,1);
         if (id == null){
-            qtDefectiveItems = list();
-            if (!qtDefectiveItems.isEmpty()) {
-                for (QtDefectiveItem tem : qtDefectiveItems) {
-                    qtBaseIdNameDTO.setId(tem.getId());
-                    qtBaseIdNameDTO.setName(tem.getName());
-                    qtBaseIdNameDTOS.add(qtBaseIdNameDTO);
-                }
-            }
+            qtDefectiveItems = baseMapper.selectList(lambdaQueryWrapper);
         }else {
-            qtDefectiveItems = list(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getCategoryId,id));
-            if (!qtDefectiveItems.isEmpty()){
-                for (int i = 0; i < qtDefectiveItems.size() ; i++) {
-                    QtBaseIdNameDTO tmp = new QtBaseIdNameDTO();
-                    tmp.setId(qtDefectiveItems.get(i).getId());
-                    tmp.setName(qtDefectiveItems.get(i).getName());
-                    qtBaseIdNameDTOS.add(tmp);
-                }
-                }
+            lambdaQueryWrapper.eq(QtDefectiveItem::getCategoryId,id);
+            qtDefectiveItems = baseMapper.selectList(lambdaQueryWrapper);
+        }
+        if (!qtDefectiveItems.isEmpty()){
+            //对集合的结果进行去重
+            List<QtDefectiveItem> qtDefectiveItemsTems = qtDefectiveItems.stream()
+                    .collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(QtDefectiveItem::getCode))), ArrayList::new));
+            for (QtDefectiveItem tem : qtDefectiveItemsTems) {
+                QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
+                qtBaseIdNameDTO.setId(tem.getId());
+                qtBaseIdNameDTO.setName(tem.getName());
+                qtBaseIdNameDTOS.add(qtBaseIdNameDTO);
             }
+        }
         return qtBaseIdNameDTOS;
     }
 
