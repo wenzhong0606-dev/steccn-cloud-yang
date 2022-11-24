@@ -1956,8 +1956,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             voList = filterList.stream().sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName,Comparator.nullsLast(String::compareTo))
                     .thenComparing(QtIQCAcceptabilityDetailVO::getFinishedTime,Comparator.nullsLast(LocalDate::compareTo))
                     .thenComparing(QtIQCAcceptabilityDetailVO::getSamplingTime,Comparator.nullsLast(LocalDate::compareTo))
-                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
-                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
+//                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
+//                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
+            )
                     .collect(Collectors.toList());
         }
         return voList;

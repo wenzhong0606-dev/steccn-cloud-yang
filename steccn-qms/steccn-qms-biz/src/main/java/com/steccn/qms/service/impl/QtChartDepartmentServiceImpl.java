@@ -94,8 +94,8 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
         for (PassRateDateVo passRateDateVo : passRateDateVoList) {
             List<QtCheckTask> checkTaskList = new ArrayList<>();
             List<QtCheckTask> qtCheckTaskList = qtCheckTaskMapper.selectList(new LambdaQueryWrapper<QtCheckTask>()
-                    .ge(QtCheckTask::getCreateTime, passRateDateVo.getStartDateTime())
-                    .le(QtCheckTask::getCreateTime, passRateDateVo.getEndDateTime()));
+                    .ge(QtCheckTask::getFinishedTime, passRateDateVo.getStartDateTime())
+                    .le(QtCheckTask::getFinishedTime, passRateDateVo.getEndDateTime()).eq(QtCheckTask::getStatus,2));
             if (QtManagerConstant.QtChatTargetValue.LLJHG.getCode().equals(type)) {
                 //获取来料检数据
                 checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(qtCheckTask.getTaskType())).collect(Collectors.toList());
