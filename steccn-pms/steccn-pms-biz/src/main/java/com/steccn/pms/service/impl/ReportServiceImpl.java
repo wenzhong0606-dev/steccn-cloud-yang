@@ -763,7 +763,7 @@ public class ReportServiceImpl implements ReportService {
         vo.setSpecsNum(PmReportConstant.TYPE_3);
         //根据产线去查询所有订单的工序分组，用于表头
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
-        Assert.notEmpty(dataList, "数据为空，暂无深加工日报表");
+        SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无深加工日报表");
         Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
@@ -779,10 +779,10 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> processIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProcessId).collect(Collectors.toSet());
         //查询工序的信息
         List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
-        Assert.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
         Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
         List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
-        Assert.notEmpty(dataList, "工序信息为空，暂无报表信息");
+        SteccnTableAssertUtil.notEmpty(dataList, "工序信息为空，暂无报表信息");
         Map<Long, PmProcess> pmProcessMap = Maps.newHashMap();
         pmProcessList.forEach(ele -> pmProcessMap.put(ele.getId(), ele));
         PmProcess defaultPmProcess = new PmProcess();
