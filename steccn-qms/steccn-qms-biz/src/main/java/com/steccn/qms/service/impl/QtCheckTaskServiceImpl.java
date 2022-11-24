@@ -899,6 +899,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean retask(QtReTaskDTO dto) {
+        log.info("-->>retask begin!");
         //复检操作后添加 新的复核任务
         QtCheckTask qtCheckTask = new QtCheckTask();
         //获取原始任务信息
@@ -923,7 +924,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setUpdateName(originalQtCheckTask.getUpdateName());
         recheckModel.setUpdateTime(originalQtCheckTask.getUpdateTime());
         recheckModel.setDelFlag(originalQtCheckTask.getDelFlag());
-        return  qtRecheckTaskService.save(recheckModel);
+        Boolean result = qtRecheckTaskService.save(recheckModel)
+        log.info("-->>retask end!");
+        return  result;
     }
 
     @Override
@@ -2438,8 +2441,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         List<QtDeepOrSubAcceptabilityDetailVO> flatDataList  = getQtDeepOrSubAcceptabilityDetailVO(dto.getInspectionType()==1?
                 QtManagerConstant.DEEP_OFFICE_NAME:QtManagerConstant.SUB_OFFICE_NAME,  dto).getRecords();
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-
+       // Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //声明excel表格数据
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
