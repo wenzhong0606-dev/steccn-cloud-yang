@@ -55,6 +55,7 @@ public class QtItemCategoryServiceImpl extends ServiceImpl<QtItemCategoryMapper,
                 .eq(QtItemCategory::getType, type)
                 //有软删除的情况
                 .eq(QtItemCategory::getShowFlag, MpConstant.YES)
+                .eq(QtItemCategory::getDelFlag, MpConstant.NO)
                 .orderByDesc(QtItemCategory::getCreateTime));
         //3.不为空，返回数据集合
         if (CollUtil.isNotEmpty(dbList)) {
