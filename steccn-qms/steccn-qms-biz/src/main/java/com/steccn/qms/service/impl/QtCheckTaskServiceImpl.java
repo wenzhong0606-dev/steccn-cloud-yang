@@ -2654,7 +2654,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtBaseIdNameDTO materialWorkshop = detail.getMaterialWorkshop();
                 QtBaseIdNameDTO supplier = detail.getSupplier();
                 if (Objects.isNull(detail.getSamplingTime()) || Objects.isNull(detail.getFinishedTime())
-                        || Objects.isNull(materialWorkshop.getName()) || Objects.isNull(supplier.getName())) {
+                        || Objects.isNull(materialWorkshop) || StringUtils.isBlank(materialWorkshop.getName()) || StringUtils.isBlank(supplier.getName()) || Objects.isNull(supplier) || StringUtils.isBlank(detail.getMaterialName())) {
                     valueIsNullList.add(detail);
                 } else {
                     sortList.add(detail);
