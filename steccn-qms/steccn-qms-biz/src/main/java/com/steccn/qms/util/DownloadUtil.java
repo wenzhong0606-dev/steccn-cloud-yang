@@ -11,13 +11,13 @@ import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.steccn.qms.constant.QtManagerConstant;
 import org.apache.poi.ss.usermodel.*;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +52,10 @@ public class DownloadUtil {
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             excelWriter.fill(dataList, fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
-                BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
+                //BASE64Decoder decoder = new BASE64Decoder();
+                //byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
+                Base64.Decoder decoder = Base64.getDecoder();
+                byte[] bytes = decoder.decode(base64.replace("data:image/png;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
                     if (bytes[i] < 0) {
                         // 调整异常数据

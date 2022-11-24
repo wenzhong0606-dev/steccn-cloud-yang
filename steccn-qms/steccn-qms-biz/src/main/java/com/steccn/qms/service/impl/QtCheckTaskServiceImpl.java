@@ -32,10 +32,11 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.*;
+import com.steccn.common.dto.BiStackGraphDTO;
+import com.steccn.common.dto.QtLineChartBiBarDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -43,6 +44,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemotePmsFeignApi;
@@ -51,7 +53,9 @@ import com.steccn.pms.vo.PmsWorkOrderBatchVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
-import com.steccn.qms.mapper.*;
+import com.steccn.qms.mapper.QtCheckTaskCopyMapper;
+import com.steccn.qms.mapper.QtCheckTaskDestoryInfoMapper;
+import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.util.DownloadModelUtil;
@@ -66,7 +70,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -75,7 +78,10 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
@@ -2352,8 +2358,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             excelWriter.fill(fillConfig, writeSheet);
             if(StrUtil.isNotBlank(base64)){
-                BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
+                //BASE64Decoder decoder = new BASE64Decoder();
+                Base64.Decoder decoder =  Base64.getDecoder();
+                byte[] bytes = decoder.decode(base64.replace("data:image/png;base64,",""));
+                //byte[] bytes = decoder.decodeBuffer(base64.replace("data:image/png;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
                     if (bytes[i] < 0) {
                         // 调整异常数据
@@ -2385,8 +2393,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             }
             if (StringUtils.isNotBlank(detailBase64)) {
-                BASE64Decoder decoder = new BASE64Decoder();
-                byte[] bytes = decoder.decodeBuffer(detailBase64.replace("data:image/png;base64,",""));
+                //BASE64Decoder decoder = new BASE64Decoder();
+                //byte[] bytes = decoder.decodeBuffer(detailBase64.replace("data:image/png;base64,",""));
+                Base64.Decoder decoder = Base64.getDecoder();
+                byte[] bytes = decoder.decode(detailBase64.replace("data:image/png;base64,",""));
                 for (int i = 0; i < bytes.length; ++i) {
                     if (bytes[i] < 0) {
                         // 调整异常数据
