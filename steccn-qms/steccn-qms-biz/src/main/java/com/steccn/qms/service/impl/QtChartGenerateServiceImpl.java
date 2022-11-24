@@ -591,7 +591,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //最晚数据完整日期
         LocalDate fullDate = calculateOrder(LocalDateTime.now()).toLocalDate();
         if (dto != null) {
-            fullDate = calculateOrder(dto.getStartTime()).toLocalDate();
+            fullDate = dto.getStartTime();
         }
         LocalDate pmsStartDate;
 

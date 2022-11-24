@@ -16,5 +16,5 @@ import java.time.LocalDateTime;
 public class QtTimeDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private LocalDateTime startTime;
+    private LocalDate startTime;
 }
