@@ -166,7 +166,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             targetMap = Maps.newHashMap();
             targetMap.put(0, flatDataList);
             idNameMap = Maps.newHashMap();
-            idNameMap.put(0, "默认");
+            idNameMap.put(0, StackGraphUtil.STR_DEFAULT);
         }
         return new TupleDTO<>(targetMap, idNameMap);
     }
@@ -666,7 +666,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-        return commonLine(dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
@@ -721,7 +721,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return commonLine(dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
@@ -748,12 +748,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return commonLine(dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
      * 公共折线图
      *
+     * @param type         0表示类别  1表示缺陷项
      * @param dto          dto条件
      * @param flatDataList 平铺数据
      * @param cutDate      当前日期分片
@@ -761,7 +762,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * @param predicate    断言
      * @return 折线图对象
      */
-    private QtLineChartBarDTO commonLine(QtChartParamDTO dto, List<QtCheckTaskDetailReportVO> flatDataList, List<LocalDateTime> cutDate, Map<Integer, String> idNameMap, Predicate<QtChartParamDTO> predicate) {
+    private QtLineChartBarDTO commonLine(Integer type,QtChartParamDTO dto, List<QtCheckTaskDetailReportVO> flatDataList, List<LocalDateTime> cutDate, Map<Integer, String> idNameMap, Predicate<QtChartParamDTO> predicate) {
         //定义数据集合
         List<StackGraphDTO<String, Integer>> stackGraphDTOList = Lists.newArrayList();
         for (int i = 1; i < cutDate.size(); i++) {
@@ -781,8 +782,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             //类别
             List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
             for (Map.Entry<Integer, String> entry : idNameMap.entrySet()) {
-                List<QtCheckTaskDetailReportVO> categoryDataList = conditionDataList.stream().filter(ele -> entry.getKey().equals(ele.getDefectCategory())).collect(Collectors.toList());
-                if (predicate.test(dto)) {
+                List<QtCheckTaskDetailReportVO> categoryDataList;
+                if (type == 0) {
+                    categoryDataList = conditionDataList.stream().filter(ele -> entry.getKey().equals(ele.getDefectCategory())).collect(Collectors.toList());
+                } else {
+                    categoryDataList = conditionDataList.stream().filter(ele -> entry.getKey().equals(ele.getDefectId())).collect(Collectors.toList());
+                }
+                if (predicate.test(dto) && Objects.nonNull(dto.getCompare())) {
                     //对比班次，车间，产线
                     TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), categoryDataList);
                     mapMapTupleDTO.getField2().forEach((k, v) -> {
