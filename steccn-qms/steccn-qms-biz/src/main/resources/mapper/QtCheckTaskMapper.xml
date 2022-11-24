@@ -96,6 +96,9 @@
         <if test="dto.productWorkShopId != null and dto.productWorkShopId != ''">
             AND (product_workshop ->> '$.id' = #{dto.productWorkShopId})
         </if>
+        <if test="dto.materialWorkshopId != null and dto.materialWorkshopId != ''">
+            AND (material_workshop ->> '$.id' = #{dto.materialWorkshopId})
+        </if>
         <if test="dto.productLineId != null and dto.productLineId != ''">
             AND (product_line ->> '$.id' = #{dto.productLineId})
         </if>
