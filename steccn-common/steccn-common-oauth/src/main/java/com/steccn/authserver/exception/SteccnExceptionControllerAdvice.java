@@ -62,7 +62,9 @@ public class SteccnExceptionControllerAdvice {
     @ExceptionHandler(value = SteccnChartException.class)
     public R handleRuntimeException(SteccnChartException chartException) {
         log.error("错误：", chartException);
-        return R.success();
+        R success = R.success();
+        success.setMsg(chartException.getLocalizedMessage());
+        return success;
     }
 
     /**
