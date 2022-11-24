@@ -201,7 +201,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 
         List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
-        //获取需要修改的物料信息
+        //获取已存在的物料信息
         HashMap<String, Long> updateMap = getUpdateMap(dtoList, codeList);
 
         List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, updateMap);
@@ -691,9 +691,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     .stream()
                     .filter(dto -> dto.getMaterialCode().equals(excelDTO.getMaterialCode()) && dto.getPlanDate().equals(excelDTO.getPlanDate()))
                     .filter(dto -> !dto.getRowIndex().equals(excelDTO.getRowIndex())).collect(Collectors.toList());
-            String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList()), ",");
+            String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getRowIndex).collect(Collectors.toList()), ",");
             if (updateFlag.equals(0) && pmsProducePlanExcelDTOList.size() > 0) {
-                errorMsgList.add("和" + rows + "物料编码重复");
+                errorMsgList.add("和第" + rows + "行物料编码重复");
             }
 
             //获取当前行的错误信息
