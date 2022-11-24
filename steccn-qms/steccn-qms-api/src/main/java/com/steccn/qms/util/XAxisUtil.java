@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 
 /**
@@ -34,10 +35,9 @@ public class XAxisUtil {
         if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, DatePattern.NORM_DATE_PATTERN);
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.getCode().equals(granularityEnum.getCode())) {
-            WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 1);
-            LocalDateTime with = ldt.with(DayOfWeek.MONDAY);
-            int weeks = ldt.get(weekFields.weekOfYear());
-            xAxis = "第" + weeks + "周 " + LocalDateTimeUtil.format(with, "MM-dd");
+            LocalDateTime monday = ldt.with(DayOfWeek.MONDAY);
+            LocalDateTime sunday = ldt.with(DayOfWeek.SUNDAY);
+            xAxis = LocalDateTimeUtil.format(monday, "MM.dd") + "-" + LocalDateTimeUtil.format(sunday, "MM.dd");
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
         } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getCode().equals(granularityEnum.getCode())) {
