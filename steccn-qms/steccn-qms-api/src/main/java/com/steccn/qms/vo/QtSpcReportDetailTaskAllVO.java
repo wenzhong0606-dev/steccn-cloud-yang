@@ -1,12 +1,13 @@
 package com.steccn.qms.vo;
 
 import lombok.Data;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class QtSpcReportDetailTaskAllVO implements Serializable {
+public class QtSpcReportDetailTaskAllVO<T> implements Serializable {
     /**
      * 表头
      */
@@ -15,5 +16,5 @@ public class QtSpcReportDetailTaskAllVO implements Serializable {
     /**
      * 任务详情
      */
-    private List<QtSpcReportDetailTaskVO> reportDetailTaskVOList;
+    private List<T> reportDetailTaskVOList;
 }

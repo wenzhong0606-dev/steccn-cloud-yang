@@ -123,6 +123,11 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         if (Objects.isNull(qtReportGroup)){
             throw new BusinessException("改分组不存在,无法编辑");
         }
+        List<QtReportGroup> qtReportGroup2 = list(new LambdaQueryWrapper<QtReportGroup>()
+                .eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
+        if (qtReportGroup2.size()>0){
+            throw new BusinessException("该卡片分组已存在,请换个分组名!");
+        }
         QtReportGroup reportGroup = new QtReportGroup();
         BeanUtils.copyProperties(dto, reportGroup);
         updateById(reportGroup);

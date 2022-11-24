@@ -157,8 +157,12 @@ public interface QtManagerConstant {
     /**
      * SPC 任务详情的表头
      */
-    String SPC_HEADER_FIELD_ONE ="检验任务单号";
-    String SPC_HEADER_FIELD_TWO ="检验完成时间";
+    String SPC_HEADER_FIELD_ORDER ="检验任务单号";
+    String SPC_HEADER_FIELD_FINISHED_TIME ="检验完成时间";
+    String SPC_HEADER_FIELD_MATERIAL_NAME ="物料名称";
+    String SPC_HEADER_FIELD_PRODUCT_LINE="生产产线";
+    String SPC_HEADER_FIELD_WORKSHOP ="物料使用车间";
+    String SPC_HEADER_FILELD_SUPPLIER="供应商";
 
 
     /**

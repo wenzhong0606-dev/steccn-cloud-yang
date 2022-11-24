@@ -71,9 +71,9 @@ public class QtSpcReportDetailVO implements Serializable {
     private BigDecimal downLimit;
 
     /**
-     * 每个检验项下面的检验任务根据分片时间分好片的任务详情
+     * 检验项详情
      */
-   private List<QtSpcReportDetailTaskVO> reportDetailTaskVOList;
+   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
 
 
 }
