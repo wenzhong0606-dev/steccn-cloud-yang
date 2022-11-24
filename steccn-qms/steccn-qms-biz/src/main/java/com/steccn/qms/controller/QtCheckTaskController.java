@@ -215,14 +215,6 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.getQtAccessoryAcceptabilityDetailVO(dto));
     }
 
-
-//    @PostMapping("/accessory/acceptability/chart")
-//    @ApiOperation(value = "配料抽检合格率柱状图")
-//    public R<QtChartBarVO> getAccessoryChartDefectVO(@RequestBody QtAccessoryAcceptabilityDTO dto) {
-//        return R.success(qtCheckTaskService.getAccessoryChartDefectVO(dto));
-
-//    }
-
     @PostMapping("/iqc/acceptability/detail")
     @ApiOperation(value = "来料检合格率明细分页")
     public R<Page<QtIQCAcceptabilityDetailVO>> getQtIQCAcceptabilityDetailVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
