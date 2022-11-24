@@ -271,7 +271,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         List<QtDefectiveItem> qtDefectiveItems = Lists.newArrayList();
         LambdaQueryWrapper<QtDefectiveItem> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(QtDefectiveItem::getDelFlag,0).eq(QtDefectiveItem::getShowFlag,1);
-        if (id == null){
+        if (id == -1){
             qtDefectiveItems = baseMapper.selectList(lambdaQueryWrapper);
         }else {
             lambdaQueryWrapper.eq(QtDefectiveItem::getCategoryId,id);

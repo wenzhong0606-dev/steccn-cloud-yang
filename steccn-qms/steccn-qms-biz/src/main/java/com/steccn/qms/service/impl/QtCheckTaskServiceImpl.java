@@ -74,9 +74,8 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.text.SimpleDateFormat;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
@@ -259,8 +258,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
         if (qtCheckTask != null) {
-            //json名字
-            qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             //计划id
             qtCheckTaskListVo.setCheckPlanName(qtCheckPlanService.getById(qtCheckTask.getCheckPlanId()).getName());
             if (qtCheckTask.getMaterialWorkshop() != null) {
@@ -283,6 +280,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 qtCheckTask.setStatus(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode());
             }
             BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
+            //json名字
+            qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
                 QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id));
@@ -683,7 +682,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 }
                             }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
-                                    objectMap.get(entry.getKey()).setAnalystTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
+                                    Date date= null;
+                                    try {
+                                        objectMap.get(entry.getKey()).setAnalystTime(entry.getKey().length()>10?
+                                                LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER):
+                                                new SimpleDateFormat("yyyyMMdd").
+                                                        parse("2022-10-11").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                                    } catch (Exception e) {
+                                        log.info("-->>转换异常！Exception:"+e.getLocalizedMessage());
+                                    }
                                 }
                             }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
@@ -898,8 +905,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean retask(QtReTaskDTO dto) {
-        log.info("-->>retask begin!");
+    public Integer retask(QtReTaskDTO dto) {
         //复检操作后添加 新的复核任务
         QtCheckTask qtCheckTask = new QtCheckTask();
         //获取原始任务信息
@@ -924,9 +930,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setUpdateName(originalQtCheckTask.getUpdateName());
         recheckModel.setUpdateTime(originalQtCheckTask.getUpdateTime());
         recheckModel.setDelFlag(originalQtCheckTask.getDelFlag());
-        Boolean result = qtRecheckTaskService.save(recheckModel);
-        log.info("-->>retask end!");
-        return  result;
+        qtRecheckTaskService.save(recheckModel);
+        return  recheckModel.getId();
     }
 
     @Override

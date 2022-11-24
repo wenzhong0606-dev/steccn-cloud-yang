@@ -1,13 +1,11 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
-import io.swagger.models.auth.In;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -81,7 +79,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Boolean retask(QtReTaskDTO dto);
+    Integer retask(QtReTaskDTO dto);
 
     /**
      * 通过类型查询任务
