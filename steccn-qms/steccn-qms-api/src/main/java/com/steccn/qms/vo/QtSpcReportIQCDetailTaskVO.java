@@ -5,47 +5,36 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-/**
- * spc明细表的子集对象 (任务详情)
- */
+import java.util.Map;
 @Data
-public class QtSpcReportIQCDetailTaskVO<T> implements Serializable {
-    /**
-     * 检验任务单号的id
-     */
-    private Long id;
-
+public class QtSpcReportIQCDetailTaskVO implements Serializable {
     /**
      * 检验任务单号
      */
-    private String code;
+    private Map<String,String> code;
 
     /**
      * 检验完成时间
      */
-    private String finishedTime;
+    private Map<String,String> finishedTime;
 
     /**
      * 检验结果
      */
-    private String checkResult;
+    private Map<String, BigDecimal> checkResult;
 
     /**
      * 物料名称
      */
-    private String materialName;
+    private Map<String,String> materialName;
 
     /**
      * 物料使用车间
      */
-    private QtBaseIdNameDTO workshop;
+    private Map<String, QtBaseIdNameDTO> workshop;
 
     /**
      * 供应商
      */
-    private QtBaseIdNameDTO supplier;
+    private Map<String,QtBaseIdNameDTO> supplier;
 }

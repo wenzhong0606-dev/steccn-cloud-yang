@@ -4,6 +4,9 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Map;
+
 @Data
 public class QtSpcReportSamplingDetailTaskVO implements Serializable {
     /**
