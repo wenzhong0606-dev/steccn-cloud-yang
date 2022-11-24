@@ -233,7 +233,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     }
 
     /**
-     * 根据分组id查询报表图表列表
+     * 查询改分组下的所有报表卡片
      *
      * @param reportGroupId
      * @return
@@ -262,48 +262,57 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtReportChartVO.setMaterialId(q.getMaterialId());
 
             //根据物料id查询物料
-            QtMaterial material=new QtMaterial();
-            if (Objects.nonNull(q.getMaterialId())){
-                 material= qtMaterialService.getById(q.getMaterialId());
-            }
-            //设置物料名称
-            if (Objects.nonNull(material)){
-                qtReportChartVO.setMaterialName(material.getName());
-            }
-            QtCheckItem qtCheckItem = new QtCheckItem();
-            if (Objects.nonNull(q.getCheckItemId())){
-                 qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
-            }
-            //设置检验项名称
-            if (Objects.nonNull(qtCheckItem)){
-                if (Objects.nonNull(qtCheckItem.getName())){
-                    qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+            if (Objects.nonNull(q.getMaterialId())) {
+                QtMaterial material = qtMaterialService.getById(q.getMaterialId());
+                //设置物料名称
+                if (Objects.nonNull(material)) {
+                    qtReportChartVO.setMaterialName(material.getName());
                 }
-                //设置检验项的数据类型
-                Long dataType= qtCheckItem.getDataType();
-                qtReportChartVO.setDataTypeId(dataType);
-                List<Long> ids = Lists.newArrayList();
-                ids.add(dataType);
-                Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
-                SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
-                if (Objects.nonNull(sysDictVO.getName())) {
-                    qtReportChartVO.setDataTypeName(sysDictVO.getName());
-                }
+            }
+            //该检验任务的包括快照的id集合
+            List<Integer> itemIds = Lists.newArrayList();
+            if (Objects.nonNull(q.getCheckItemId())) {
+                QtCheckItem qtCheckItem  = qtCheckItemService.getById(q.getCheckItemId());
+                if (Objects.nonNull(qtCheckItem)) {
+                    if (Objects.nonNull(qtCheckItem.getName())) {
+                        qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+                    }
+                    List<Integer> checkIds = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                                    .eq(QtCheckItem::getCode, qtCheckItem.getCode()))
+                            .stream().map(QtCheckItem::getId).collect(Collectors.toList());
+                    //添加快照ids
+                    if (CollUtil.isNotEmpty(checkIds)){
+                        checkIds.forEach(s->{
+                            itemIds.add(s);
+                        });
+                    }
+                    //设置检验项的数据类型
+                    Long dataType = qtCheckItem.getDataType();
+                    qtReportChartVO.setDataTypeId(dataType);
+                    List<Long> ids = Lists.newArrayList();
+                    ids.add(dataType);
+                    Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
+                    SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
+                    if (Objects.nonNull(sysDictVO.getName())) {
+                        qtReportChartVO.setDataTypeName(sysDictVO.getName());
+                    }
 
-                if (Objects.nonNull(qtCheckItem.getMeasureUnit())){
-                    Set<Long> measureIds = Sets.newHashSet();
-                    measureIds.add(qtCheckItem.getMeasureUnit());
-                    Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
-                    String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
-                    if (Objects.nonNull(measureName)) {
-                        qtReportChartVO.setMeasureUnit(measureName);
-                        if (QtManagerConstant.QtChartUnit.PERCENT.getName().equals(measureName)){
-                            qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                    if (Objects.nonNull(qtCheckItem.getMeasureUnit())) {
+                        Set<Long> measureIds = Sets.newHashSet();
+                        measureIds.add(qtCheckItem.getMeasureUnit());
+                        Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                        String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
+                        if (Objects.nonNull(measureName)) {
+                            qtReportChartVO.setMeasureUnit(measureName);
+
                         }
                     }
+                    if (QtManagerConstant.QtChartUnit.PERCENT.getCode().equals(dataType)) {
+                        qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
+                    }
                 }
-
             }
+
             //根据条件查出所有的任务
             List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
                             .eq(QtCheckTask::getMaterialId, q.getMaterialId())
@@ -332,30 +341,31 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             for (int i = 1; i < localDateTimes.size(); i++) {
                 LocalDateTime start = localDateTimes.get(i - 1);
                 LocalDateTime end = localDateTimes.get(i);
-                //过滤出时间分片内的数据
+                //过滤出时间分片内所有检验任务的数据
                 List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
                     //数据范围应该是大于等于开始时间  小于结束时间
-                    if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime()))&& end.isAfter(v.getFinishedTime())) {
+                    if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
                         return Boolean.TRUE;
                     }
                     return Boolean.FALSE;
                 }).collect(Collectors.toList());
-                List<Long> taskids = conditionTasks.stream().map(QtCheckTask::getId).collect(Collectors.toList());
-              //如果id集合为空该时间段下没有数据添加0
-                if (CollUtil.isEmpty(taskids)){
+
+                //如果检验任务为空则该时间段下检验结果为0
+                if (CollUtil.isEmpty(conditionTasks)){
                     itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
                 }else {
-                    List<String> stringList = qtCheckTaskDetailService
-                            .list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(QtCheckTaskDetail::getTaskId, taskids)).stream()
-                            .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-                    //用来计算平均值
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
-                    stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
-                        BigDecimal bigDecimal = new BigDecimal(s);
-                        if (Objects.nonNull(bigDecimal)){
-                            bigDecimals.add(bigDecimal);
-                        }
+                    conditionTasks.forEach(r->{
+                        List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                        .eq(QtCheckTaskDetail::getTaskId, r.getId()).in(CollUtil.isNotEmpty(itemIds),QtCheckTaskDetail::getItemId, itemIds))
+                                .stream()
+                                .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
+                        stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
+                            BigDecimal bigDecimal = new BigDecimal(s);
+                            if (Objects.nonNull(bigDecimal)){
+                                bigDecimals.add(bigDecimal);
+                            }
+                        });
                     });
                     if (CollUtil.isNotEmpty(bigDecimals)){
                         BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -364,7 +374,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     }else {
                         itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
                     }
-
                 }
 
                 String timeFormat = new String();
