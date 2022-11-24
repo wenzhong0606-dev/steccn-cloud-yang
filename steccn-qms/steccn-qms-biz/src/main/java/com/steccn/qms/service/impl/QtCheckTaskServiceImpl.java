@@ -2591,14 +2591,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             result.setClassDate(zaoStartTime.minusDays(1).withHour(0).withMinute(1));
             return result;
         }
-        //在早班的范围内
-        if (time.isAfter(zaoStartTime) && time.isBefore(zaoEndTime)) {
+        //在早班的范围内[8:00,20:00)
+        if ((time.isAfter(zaoStartTime) || time.isEqual(zaoStartTime)) && time.isBefore(zaoEndTime)) {
             result.setClassType(0);
             result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
             return result;
         }
-        //在早班之后
-        if (time.isAfter(zaoEndTime)) {
+        //在早班之后[20:00,8:00)
+        if (time.isAfter(zaoEndTime) || time.isEqual(zaoEndTime)) {
             result.setClassType(1);
             result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
             return result;
