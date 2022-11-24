@@ -17,4 +17,6 @@ public class ProducePassRateDTO {
 
     private LocalDate endDate;
 
+    private List<Integer> productLineIdList;
+
 }
