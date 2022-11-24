@@ -351,4 +351,10 @@ public class QtCheckTask implements Serializable {
      * 班次时间
      */
     private LocalDateTime classTime;
+
+    /**
+     * 物料名称
+     */
+    @TableField(exist = false)
+    private String materialName;
 }

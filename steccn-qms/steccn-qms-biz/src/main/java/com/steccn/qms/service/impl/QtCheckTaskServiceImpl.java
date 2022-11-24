@@ -1187,7 +1187,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAll(QtCheckTask.class)
                 //关联复检表
                 .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
+                //关联物料表
+                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
+                .selectAs(QtMaterial::getName,QtCheckTask::getMaterialName)
                 .eq(QtCheckTask::getProductOrder, dto.getProductOrder())
                 .in(QtCheckTask::getTaskType, checkTypeCodeList);
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
@@ -1601,8 +1604,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
-                .between(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType()) && Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectStartTime, dto.getStartTime(), dto.getEndTime() )
-                .between(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType()) && Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getStartTime(), dto.getEndTime() )
+                .between( Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectStartTime, dto.getStartTime(), dto.getEndTime() )
+                .between( Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getStartTime(), dto.getEndTime() )
                 //班次
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //只要巡检
@@ -2588,14 +2591,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             result.setClassDate(zaoStartTime.minusDays(1).withHour(0).withMinute(1));
             return result;
         }
-        //在早班的范围内
-        if (time.isAfter(zaoStartTime) && time.isBefore(zaoEndTime)) {
+        //在早班的范围内[8:00,20:00)
+        if ((time.isAfter(zaoStartTime) || time.isEqual(zaoStartTime)) && time.isBefore(zaoEndTime)) {
             result.setClassType(0);
             result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
             return result;
         }
-        //在早班之后
-        if (time.isAfter(zaoEndTime)) {
+        //在早班之后[20:00,8:00)
+        if (time.isAfter(zaoEndTime) || time.isEqual(zaoEndTime)) {
             result.setClassType(1);
             result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
             return result;
