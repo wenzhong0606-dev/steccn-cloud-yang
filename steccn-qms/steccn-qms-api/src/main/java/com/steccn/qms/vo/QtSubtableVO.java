@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 类说明
@@ -31,6 +32,11 @@ public class QtSubtableVO implements Serializable {
      */
 
     private String label;
+
+    /**
+     * 样本时间
+     */
+    private LocalDateTime samplingTime;
 
     /**
      * 任务id

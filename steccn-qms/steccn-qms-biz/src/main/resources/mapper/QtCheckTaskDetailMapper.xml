@@ -33,7 +33,8 @@
         a.task_id,
         c.sample_num,
         c.license_plate,
-        c.ingredient_num
+        c.ingredient_num,
+        c.sampling_time
         FROM
         qt_check_task_detail a
         JOIN qt_check_item b ON a.item_id = b.id

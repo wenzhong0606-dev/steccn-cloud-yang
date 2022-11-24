@@ -3,6 +3,7 @@ package com.steccn.qms.vo;
 import io.swagger.models.auth.In;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -36,4 +37,9 @@ public class QtIQCAcceptabilityCopyVO {
      * 配料附数
      */
     private Integer ingredientNum;
+
+    /**
+     * 取样时间
+     */
+    private LocalDateTime samplingTime;
 }
