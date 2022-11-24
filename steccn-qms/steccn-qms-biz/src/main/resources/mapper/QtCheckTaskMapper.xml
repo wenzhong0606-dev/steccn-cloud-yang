@@ -88,7 +88,8 @@
             classes_id classes_id,
             class_time,
             CODE CODE,
-            finished_time
+            finished_time,
+            classTime
         FROM
         qt_check_task
         WHERE
@@ -118,8 +119,8 @@
             </foreach>
         </if>
         AND task_type = #{dto.taskType}
-        AND finished_time &gt;= #{dto.dateTimeStart}
-        AND finished_time &lt;= #{dto.dateTimeEnd}
+        AND classTime &gt;= #{dto.dateTimeStart}
+        AND classTime &lt;= #{dto.dateTimeEnd}
         AND status = 2
         ORDER BY CODE ASC
     </select>
