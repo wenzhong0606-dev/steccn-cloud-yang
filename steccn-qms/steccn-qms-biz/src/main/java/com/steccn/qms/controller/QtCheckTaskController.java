@@ -195,6 +195,8 @@ public class QtCheckTaskController {
     @ApiOperation(value = "配料抽检合格率")
     public R<QtLineChartBiBarDTO> accessoryChart(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode());
+        dto.setMaterialWorkshopId(dto.getProductWorkShopId());
+        dto.setProductWorkShopId(null);
         return R.success(qtCheckTaskService.accessoryChart(dto));
     }
 
