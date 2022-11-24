@@ -64,6 +64,7 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
+    String QT_CHECK_TASK_FIELD_CHECK_DEFECTTEM = "defect";
     String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME ="finishedTime";
 
     String QT_CHECK_TASK_COPY__SORT_FIELD="samplingTime";
