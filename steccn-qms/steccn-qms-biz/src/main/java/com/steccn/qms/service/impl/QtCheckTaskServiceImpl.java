@@ -114,7 +114,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskCopyService qtCheckTaskCopyService;
 
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
-    
+
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
@@ -134,7 +134,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 if (QtManagerConstant.beforeHour < dto.getDefectStartTime().getHour()
                         && QtManagerConstant.afterHour < dto.getDefectEndTime().getHour()) {
                     throw new BusinessException("缺陷记录时段不允许跨班次");
-                } else if (QtManagerConstant.afterHour > dto.getDefectStartTime().getHour()  && QtManagerConstant.beforeHour > dto.getDefectEndTime().getHour() ) {
+                } else if (QtManagerConstant.afterHour > dto.getDefectStartTime().getHour() && QtManagerConstant.beforeHour > dto.getDefectEndTime().getHour()) {
                     qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.DAY.getCode());//早班
                 } else {
                     qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.NIGHT.getCode());//晚班
@@ -899,6 +899,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean retask(QtReTaskDTO dto) {
+        log.info("-->>retask begin!");
         //复检操作后添加 新的复核任务
         QtCheckTask qtCheckTask = new QtCheckTask();
         //获取原始任务信息
@@ -923,7 +924,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setUpdateName(originalQtCheckTask.getUpdateName());
         recheckModel.setUpdateTime(originalQtCheckTask.getUpdateTime());
         recheckModel.setDelFlag(originalQtCheckTask.getDelFlag());
-        return  qtRecheckTaskService.save(recheckModel);
+        Boolean result = qtRecheckTaskService.save(recheckModel);
+        log.info("-->>retask end!");
+        return  result;
     }
 
     @Override
@@ -1891,12 +1894,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 task.setMaterialName(materialMap.get(task.getMaterialId()));
             });
             //根据规则排序
-            voList = filterList.stream().sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName,Comparator.nullsLast(String::compareTo))
-                    .thenComparing(QtIQCAcceptabilityDetailVO::getFinishedTime,Comparator.nullsLast(LocalDate::compareTo))
-                    .thenComparing(QtIQCAcceptabilityDetailVO::getSamplingTime,Comparator.nullsLast(LocalDate::compareTo))
-                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
-                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
-                    .collect(Collectors.toList());
+            voList = sortList(filterList);
         }
         return resPage.setRecords(voList);
     }
@@ -2438,8 +2436,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         List<QtDeepOrSubAcceptabilityDetailVO> flatDataList  = getQtDeepOrSubAcceptabilityDetailVO(dto.getInspectionType()==1?
                 QtManagerConstant.DEEP_OFFICE_NAME:QtManagerConstant.SUB_OFFICE_NAME,  dto).getRecords();
-        Assert.notEmpty(flatDataList, "数据为空，暂无报表");
-
+       // Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //声明excel表格数据
         Map<String, Object> map = MapUtils.newHashMap();
         map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -2631,6 +2628,34 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
         };
         return predicate;
+    }
+
+    private static List<QtIQCAcceptabilityDetailVO> sortList(List<QtIQCAcceptabilityDetailVO> voList) {
+        List<QtIQCAcceptabilityDetailVO> list = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(voList)) {
+            List<QtIQCAcceptabilityDetailVO> valueIsNullList = Lists.newArrayList();
+            List<QtIQCAcceptabilityDetailVO> sortList = Lists.newArrayList();
+            voList.forEach(detail -> {
+                if (Objects.isNull(detail.getSamplingTime()) || Objects.isNull(detail.getFinishedTime())
+                        || Objects.isNull(detail.getMaterialWorkshop().getName()) || Objects.isNull(detail.getSupplier().getName())) {
+                    valueIsNullList.add(detail);
+                } else {
+                    sortList.add(detail);
+                }
+            });
+            //根据规则排序
+            list = sortList.stream().sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName, Comparator.nullsLast(String::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getFinishedTime, Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(QtIQCAcceptabilityDetailVO::getSamplingTime, Comparator.nullsLast(LocalDate::compareTo))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getMaterialWorkshop().getName())))
+                    .thenComparing(Comparator.nullsLast(Comparator.comparing(x -> x.getSupplier().getName()))))
+                    .collect(Collectors.toList());
+            list.addAll(valueIsNullList);
+            list = list.stream()
+                    .sorted(Comparator.comparing(QtIQCAcceptabilityDetailVO::getMaterialName, Comparator.nullsLast(String::compareTo)))
+                    .collect(Collectors.toList());
+        }
+        return list;
     }
 
 }
