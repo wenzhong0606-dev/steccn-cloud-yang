@@ -1187,7 +1187,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAll(QtCheckTask.class)
                 //关联复检表
                 .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
+                //关联物料表
+                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
+                .selectAs(QtMaterial::getName,QtCheckTask::getMaterialName)
                 .eq(QtCheckTask::getProductOrder, dto.getProductOrder())
                 .in(QtCheckTask::getTaskType, checkTypeCodeList);
         if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
