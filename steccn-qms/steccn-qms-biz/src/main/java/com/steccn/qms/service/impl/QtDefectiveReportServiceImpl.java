@@ -214,7 +214,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //缺陷项 -> 第一个快照缺陷id ， 第一个缺陷类别id【缺陷类别id】
         Set<String> defectCodeSet = qtDefectiveItemList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toSet());
         Map<String,TupleDTO<Integer,Integer>> firstSnapshotData = qtDefectiveItemService.firstSnapshotData(defectCodeSet);
-        log.info("{}",firstSnapshotData);
+        Map<Integer, String> defectIdCodeMap = Maps.newHashMap();
+        qtDefectiveItemList.forEach(v -> defectIdCodeMap.put(v.getId(), v.getCode()));
 
         SteccnTableAssertUtil.notEmpty(qtDefectiveItemList, "深加工缺陷集合为空，暂无报表");
         qtDefectiveItemList.forEach(ele -> categoryMap.put(ele.getId(), ele.getCategoryId()));
@@ -256,8 +257,23 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         }
         //如果缺陷项不为空，则过滤缺陷项
         if (Objects.nonNull(dto.getDefectId())) {
-            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getDefectId().equals(v.getDefectId())).collect(Collectors.toList());
+            Map<Integer, Set<Integer>> defectSnapshot = qtDefectiveItemService.defectSnapshot(Sets.newHashSet(dto.getDefectId()));
+            Set<Integer> dataFilter = Sets.newHashSet();
+            for (Set<Integer> set : defectSnapshot.values()) {
+                dataFilter.addAll(set);
+            }
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dataFilter.contains(v.getDefectId())).collect(Collectors.toList());
         }
+        //替换快照数据
+        flatDefectiveList.forEach(v -> {
+            String code = defectIdCodeMap.get(v.getDefectId());
+            TupleDTO<Integer, Integer> tupleDTO = firstSnapshotData.get(code);
+            Assert.notNull(tupleDTO, "缺陷快照转换异常");
+            Assert.notNull(tupleDTO.getField1(), "缺陷快照field1转换异常");
+            Assert.notNull(tupleDTO.getField2(), "缺陷快照field2转换异常");
+            v.setDefectId(tupleDTO.getField1());
+            v.setDefectCategory(tupleDTO.getField2());
+        });
         return flatDefectiveList;
     }
 

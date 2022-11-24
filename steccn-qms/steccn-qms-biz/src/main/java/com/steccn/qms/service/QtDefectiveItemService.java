@@ -104,4 +104,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map
      */
     Map<String, TupleDTO<Integer, Integer>> firstSnapshotData(Set<String> defectiveCodeSet);
+
+    /**
+     * 缺陷快照的所有集合
+     * @param defectIdSet 缺陷快照
+     * @return map
+     */
+    Map<Integer,Set<Integer>> defectSnapshot(Set<Integer> defectIdSet);
 }

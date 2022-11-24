@@ -353,6 +353,31 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
+    @Override
+    public Map<Integer, Set<Integer>> defectSnapshot(Set<Integer> defectIdSet) {
+        //1.定义返回的map
+        Map<Integer, Set<Integer>> resMap = Maps.newHashMap();
+        //2.如果缺陷id不为空
+        if (CollUtil.isNotEmpty(defectIdSet)) {
+            //获取所有的缺陷项id集合
+            List<QtDefectiveItem> qtDefectiveItems = listByIds(defectIdSet);
+            if (CollUtil.isNotEmpty(qtDefectiveItems)) {
+                //获取缺陷项所有code
+                Set<String> codeSet = qtDefectiveItems.stream().map(QtDefectiveItem::getCode).collect(Collectors.toSet());
+                //编码的map
+                Map<String, Integer> codeIdMap = Maps.newHashMap();
+                qtDefectiveItems.forEach(v -> codeIdMap.put(v.getCode(),v.getId()));
+                //获取所有code的缺陷项
+                List<QtDefectiveItem> codeList = list(new LambdaQueryWrapper<QtDefectiveItem>().in(QtDefectiveItem::getCode, codeSet));
+                Map<String, List<QtDefectiveItem>> codeMap = codeList.stream().collect(Collectors.groupingBy(QtDefectiveItem::getCode));
+                for (Map.Entry<String, List<QtDefectiveItem>> entry : codeMap.entrySet()) {
+                    resMap.put(codeIdMap.get(entry.getKey()), entry.getValue().stream().map(QtDefectiveItem::getId).collect(Collectors.toSet()));
+                }
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 同类别下名称是否重复
      *
