@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -668,6 +669,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             } else {
                 vo.setWeekFlag(2);
             }
+        }else {
+            SteccnTableAssertUtil.notEmpty(new ArrayList<>(), "数据为空，暂无报表");
         }
         vo.setXData(xData);
         vo.setYData(yData);
