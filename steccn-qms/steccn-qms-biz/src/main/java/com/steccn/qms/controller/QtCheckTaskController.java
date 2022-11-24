@@ -204,6 +204,8 @@ public class QtCheckTaskController {
     @ApiOperation(value = "来料检合格率")
     public R<QtLineChartBiBarDTO> getQtIQCAcceptabilityChartVO(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode());
+        dto.setMaterialWorkshopId(dto.getProductWorkShopId());
+        dto.setProductWorkShopId(null);
         return R.success(qtCheckTaskService.getQtIQCAcceptabilityChart(dto));
     }
 
