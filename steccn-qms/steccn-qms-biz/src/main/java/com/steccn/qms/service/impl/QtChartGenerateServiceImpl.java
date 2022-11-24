@@ -676,12 +676,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         } else {
             vo.setValue(new DecimalFormat("0.00%").format(yData.get(yData.size() - 1)));
         }
-        BigDecimal targetValue = BigDecimal.ZERO;
         QtChartTargetValue qtChartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1));
         if (Objects.nonNull(qtChartTargetValue)) {
-            targetValue = qtChartTargetValue.getValue();
+            if(qtChartTargetValue.getValue()!=null){
+                vo.setTargetValue(qtChartTargetValue.getValue());
+            }else {
+                vo.setTargetValue(null);
+            }
+        }else {
+            vo.setTargetValue(null);
         }
-        vo.setTargetValue(targetValue);
         return vo;
     }
 

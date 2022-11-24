@@ -19,7 +19,6 @@ public class QtChatTargetValueDTO implements Serializable {
 
     @NotNull
     private Integer target;
-
-    @NotNull
+    
     private BigDecimal value;
 }

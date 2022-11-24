@@ -29,6 +29,7 @@ public class QtChartTargetValue implements Serializable {
     /**
      * 值
      */
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal value;
 
     /**
