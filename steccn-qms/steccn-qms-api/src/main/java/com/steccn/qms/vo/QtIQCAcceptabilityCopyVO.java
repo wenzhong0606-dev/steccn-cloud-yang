@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.util.List;
@@ -7,9 +8,14 @@ import java.util.List;
 @Data
 public class QtIQCAcceptabilityCopyVO {
     /**
-     * 样本序号
+     * 样本编号
      */
     private String sampleNum;
+
+    /**
+     * 样本序号
+     */
+    private Integer copy;
 
     /**
      * 车牌号

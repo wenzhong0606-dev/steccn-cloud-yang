@@ -1,5 +1,6 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,6 +13,7 @@ import com.steccn.qms.service.QtCheckTaskDetailService;
 import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
 import com.steccn.qms.vo.QtIQCAcceptabilityCopyVO;
 import com.steccn.qms.vo.QtSubtableVO;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -49,15 +51,13 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
             Map<Long, List<QtSubtableVO>> map = list.stream().collect(Collectors.groupingBy(QtSubtableVO::getTaskId));
             for (Map.Entry<Long, List<QtSubtableVO>> entry : map.entrySet()) {
                 List<QtIQCAcceptabilityCopyVO> copyVOList = Lists.newArrayList();
-                Map<String, List<QtSubtableVO>> tableMap = entry.getValue().stream().collect(Collectors.groupingBy(QtSubtableVO::getSampleNum));
+                Map<Integer, List<QtSubtableVO>> tableMap = entry.getValue().stream().collect(Collectors.groupingBy(QtSubtableVO::getCopy));
                 List<QtSubtableVO> voList = Lists.newArrayList();
                 entry.getValue().forEach(
                         qtSubtableVO -> {
-                            List<QtSubtableVO> orDefault = tableMap.getOrDefault(qtSubtableVO.getSampleNum(), voList);
+                            List<QtSubtableVO> orDefault = tableMap.getOrDefault(qtSubtableVO.getCopy(), voList);
                             QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
-                            qtIQCAcceptabilityCopyVO.setSampleNum(qtSubtableVO.getSampleNum());
-                            qtIQCAcceptabilityCopyVO.setLicensePlate(qtSubtableVO.getLicensePlate());
-                            qtIQCAcceptabilityCopyVO.setIngredientNum(qtSubtableVO.getIngredientNum());
+                            BeanUtil.copyProperties(qtSubtableVO,qtIQCAcceptabilityCopyVO);
                             qtIQCAcceptabilityCopyVO.setList(orDefault);
                             copyVOList.add(qtIQCAcceptabilityCopyVO);
                         }
