@@ -64,19 +64,34 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             List<PmsReportWorkGroupVO> reportWorkList = pmsReportWorkGroupVOList.stream()
                     .filter(workGroupVO -> workGroupVO.getGroupDate().equals(localDate)).collect(Collectors.toList());
 
+
+
             if (CollectionUtils.isEmpty(reportWorkList)) {
                 ProducePassRateVO producePassRateVO = new ProducePassRateVO();
                 producePassRateVO.setDate(localDate);
                 producePassRateVOList.add(producePassRateVO);
                 continue;
             }
+            //获取每天的合格率
+            BigDecimal dayPassRate = null;
+            if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
+                BigDecimal dayWork = reportWorkList.stream().map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                //过滤出指定日期的拉引量
+                List<PmsPullForce> pullForceList = pmsPullForceList.stream()
+                        .filter(pullForce -> pullForce.getPullForceDate().equals(localDate)).collect(Collectors.toList());
+                BigDecimal dayPullForce = pullForceList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+                dayPassRate = BigDecimalUtil.divide(dayWork,dayPullForce,4);
+            }
+
+            //获取每个班次的合格率
             for (PmsReportWorkGroupVO reportWorkGroupVO : reportWorkList) {
                 ProducePassRateVO producePassRateVO = new ProducePassRateVO();
                 producePassRateVO.setDate(localDate);
                 producePassRateVO.setClassesId(reportWorkGroupVO.getClassesId());
                 producePassRateVO.setProductLineId(reportWorkGroupVO.getProductLineId());
                 producePassRateVO.setWorkshopId(reportWorkGroupVO.getWorkshopId());
+                producePassRateVO.setDayPassRate(dayPassRate);
 
                 if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
                     Optional<PmsPullForce> optional = pmsPullForceList.stream()
@@ -90,6 +105,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                     } else {
                         producePassRateVO.setPassRate(BigDecimal.ZERO);
                     }
+
                 } else {
                     producePassRateVO.setPassRate(BigDecimal.ZERO);
                 }
@@ -128,7 +144,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         queryWrapper.lambda()
                 .ge(PmsPullForce::getPullForceDate,dto.getBeginDate())
                 .le(PmsPullForce::getPullForceDate,dto.getEndDate()).groupBy(sFunctionList);
-
+        if (CollectionUtils.isNotEmpty(dto.getProductLineIdList())) {
+            queryWrapper.lambda().in(PmsPullForce::getProductLineId,dto.getProductLineIdList());
+        }
         return queryWrapper;
     }
 
@@ -153,7 +171,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             dateMap.put(startDate,rateDateVo);
         }
 
-        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime);
+        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime,dto.getProductLineIdList());
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
         //获取分组日期

@@ -212,6 +212,12 @@
             pms_report_work c
         WHERE
             c.create_time &gt;= #{startTime} and c.create_time &lt;= #{endTime}
+        <if test="productLineIdList != null and productLineIdList.size  != ''">
+            AND product_line_id in
+            <foreach collection="productLineIdList" item="productLineId" open="(" close=")" separator=",">
+                #{productLineId}
+            </foreach>
+        </if>
     </select>
     <select id="furtherIngredient" resultType="com.steccn.pms.vo.FurtherIngredientMapperVO">
         SELECT

@@ -56,7 +56,7 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @param endDate
      * @return
      */
-    List<PmsReportWorkGroupVO> selectAllGroupByDate(@Param("startTime") LocalDateTime startDate, @Param("endTime") LocalDateTime endDate);
+    List<PmsReportWorkGroupVO> selectAllGroupByDate(@Param("startTime") LocalDateTime startDate, @Param("endTime") LocalDateTime endDate, @Param("productLineIdList") List<Integer> productLineIdList);
 
     /**
      * 基于产线，班次，物料，工序分组报工数据【加工，合格，不良】

@@ -36,6 +36,7 @@ public class QtCheckTaskDetail implements Serializable {
     /**
      *缺陷项id
      */
+    @TableField(fill = FieldFill.INSERT)
     private Integer defectId;
 
     /**

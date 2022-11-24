@@ -376,7 +376,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                                     result.put("checkResult" + num, itemGroupTmp.getCheckResult());
                                                 }
                                                 if (itemGroupTmp.getDefectId() != null) {
-                                                    result.put("defectId" + num, itemGroupTmp.getCheckResult());
+                                                    result.put("defectId" + num, itemGroupTmp.getDefectId().toString());
                                                     result.put("defectName" + num, itemGroupTmp.getDefectName());
                                                 }
                                                 if (itemGroupTmp.getIsQualified() != null && itemGroupTmp.getIsQualified().equals(0)) {
@@ -688,12 +688,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 }
                             }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
-                                    Date date= null;
                                     try {
                                         objectMap.get(entry.getKey()).setAnalystTime(entry.getKey().length()>10?
                                                 LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER):
-                                                new SimpleDateFormat("yyyyMMdd").
-                                                        parse("2022-10-11").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                                                new SimpleDateFormat("yyyy-MM-dd").
+                                                        parse(entry.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
                                     } catch (Exception e) {
                                         log.info("-->>转换异常！Exception:"+e.getLocalizedMessage());
                                     }
@@ -757,9 +756,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         //遍历Map
                         for (Map.Entry<String, String> entry : item.getResult().entrySet()) {
                             String key = entry.getKey();
+
+                            System.out.println("1=="+key);
                             //如果map值等于checkResult
                             if (key.substring(0, key.length() - 1).equals(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)) {
                                 QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+                                System.out.println("2=="+item.getResult().get(key));
+
                                 //detail设置Result
                                 qtCheckTaskDetail.setCheckResult(item.getResult().get(key));
                                 //如果是在线检则设置copy为0
@@ -771,11 +774,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     qtCheckTaskDetail.setCopy(copy);
                                 }
                                 //处理defect
-                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECT + key.substring(key.length() - 1);
+                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECTTEM + key.substring(key.length() - 1);
+                                System.out.println("3=="+item.getResult().get(defectId));
+
                                 if (item.getResult().get(defectId) != null) {
                                     qtCheckTaskDetail.setDefectId(Integer.valueOf(item.getResult().get(defectId)));
                                 }
                                 qtCheckTaskDetail.setTaskId(dto.getId());
+
+                                System.out.println();
                                 qtCheckTaskDetail.setItemId(item.getItemId());
                                 qtCheckTaskDetail.setGroupId(group.getId());
                                 //在该list中的数据是不合格数据的值
@@ -1106,12 +1113,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (CollUtil.isNotEmpty(iPage.getRecords())) {
             for (QtCheckTaskListVO vo : iPage.getRecords()) {
                 //若为暂存状态，则是检验中
-                if (vo.getStatus() == 4) {
-                    vo.setStatus(1);
-                }
-                if (vo.getMaterialWorkshopName() == null || ("null").equals(vo.getMaterialWorkshopName())) {
-                    vo.setMaterialWorkshopName("");
-                }
+                if (vo.getStatus() == 4)  vo.setStatus(1);
+                if (vo.getMaterialWorkshopName() == null || ("null").equals(vo.getMaterialWorkshopName()))  vo.setMaterialWorkshopName("");
+                if (vo.getProductWorkshopName() == null || ("null").equals(vo.getProductWorkshopName()))   vo.setProductWorkshopName(null);
+                if (vo.getProductLineName() == null || ("null").equals(vo.getProductLineName()))   vo.setProductLineName(null);
+                if (vo.getCustomerName() == null || ("null").equals(vo.getCustomerName()))   vo.setCustomerName(null);
+                if (vo.getStationName() == null || ("null").equals(vo.getStationName()))   vo.setStationName(null);
                 QtCheckPlan planNameTmp = qtCheckPlanService.getById(vo.getCheckPlanId());
                 if (planNameTmp != null) {
                     vo.setCheckPlanName(planNameTmp.getName());
