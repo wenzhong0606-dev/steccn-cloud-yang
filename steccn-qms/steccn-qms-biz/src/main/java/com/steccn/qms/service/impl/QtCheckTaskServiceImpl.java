@@ -2645,9 +2645,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (CollUtil.isNotEmpty(voList)) {
             List<QtIQCAcceptabilityDetailVO> valueIsNullList = Lists.newArrayList();
             List<QtIQCAcceptabilityDetailVO> sortList = Lists.newArrayList();
+            QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
             voList.forEach(detail -> {
+                QtBaseIdNameDTO materialWorkshop = detail.getMaterialWorkshop();
+                QtBaseIdNameDTO supplier = detail.getSupplier();
                 if (Objects.isNull(detail.getSamplingTime()) || Objects.isNull(detail.getFinishedTime())
-                        || Objects.isNull(detail.getMaterialWorkshop().getName()) || Objects.isNull(detail.getSupplier().getName())) {
+                        || Objects.isNull(materialWorkshop.getName()) || Objects.isNull(supplier.getName())) {
                     valueIsNullList.add(detail);
                 } else {
                     sortList.add(detail);
