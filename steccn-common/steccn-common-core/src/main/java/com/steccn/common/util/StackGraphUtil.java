@@ -86,14 +86,17 @@ public class StackGraphUtil {
         LinkedHashMap<Integer, Map<T1, List<T2>>> dataMap = new LinkedHashMap<>();
 
         for (int i = 0; i < dataList.size(); i++) {
+            //获取x轴上i点的柱子集合
             List<List<TupleDTO<T1, T2>>> data = dataList.get(i).getData();
-            //一个x轴对应多个柱子，现在处理第一个柱子
             for (int k = 0; k < data.size(); k++) {
+                //如果k号柱子还没有map，则生成k号柱子
+                if (!dataMap.containsKey(k)) {
+                    dataMap.put(k, new LinkedHashMap<>());
+                }
+                //获取x轴上k号柱子
                 List<TupleDTO<T1, T2>> tupleDTOS = data.get(k);
                 for (int j = 0; j < tupleDTOS.size(); j++) {
-                    if (!dataMap.containsKey(k)) {
-                        dataMap.put(k, new LinkedHashMap<>());
-                    }
+                    //获取k号柱子的第j号堆叠图数据
                     TupleDTO<T1, T2> sbDto = tupleDTOS.get(j);
                     Map<T1, List<T2>> map1 = dataMap.get(k);
                     if (!map1.containsKey(sbDto.getField1())) {
