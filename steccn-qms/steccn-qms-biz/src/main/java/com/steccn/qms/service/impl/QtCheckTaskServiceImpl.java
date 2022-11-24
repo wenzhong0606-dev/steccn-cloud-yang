@@ -1552,11 +1552,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialWorkshopId));
             Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).map(QtCheckTaskReportVO::getMaterialWorkshopId).collect(Collectors.toSet());
             idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
-        }else {
+        }else if(QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(compare)){
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getClassesId));
+            Set<Integer> classIdSet = flatDataList.stream().map(QtCheckTaskReportVO::getClassesId).collect(Collectors.toSet());
             idNameMap = Maps.newHashMap();
-            idNameMap.put(QtManagerConstant.QtClassesEnum.DAY.getCode(), QtManagerConstant.QtClassesEnum.DAY.getName());
-            idNameMap.put(QtManagerConstant.QtClassesEnum.NIGHT.getCode(), QtManagerConstant.QtClassesEnum.NIGHT.getName());
+            for (Integer classId : classIdSet) {
+                QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
+                idNameMap.put(code.getCode(), code.getName());
+            }
+        }else{
+            //不对比
+            targetMap = Maps.newHashMap();
+            targetMap.put(0, flatDataList);
+            idNameMap = Maps.newHashMap();
+            idNameMap.put(0, StackGraphUtil.STR_DEFAULT);
         }
         return new TupleDTO<>(targetMap, idNameMap);
     }
