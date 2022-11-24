@@ -2192,7 +2192,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
                 }
             }else{
-                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(entry.getValue(), materialIdNameMap.getOrDefault(entry.getKey(), Strings.EMPTY));
+                TupleDTO<String, BigDecimal> tupleDTO = getTupleDTO(entry.getValue(), StackGraphUtil.STR_DEFAULT);
                 biStackGraphDTO.getData().add(Lists.newArrayList(tupleDTO));
             }
             stackGraphDTOList.add(biStackGraphDTO);
@@ -2492,13 +2492,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<String, String> idNameMap = Maps.newHashMap();
         if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.getCode().equals(compare)) {
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getSamplingTime())).collect(Collectors.groupingBy(x -> String.valueOf(x.getSamplingTime().toLocalDate())));
+            for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
+                idNameMap.put(e.getKey(), e.getKey() + "取样");
+            }
         } else if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(compare)) {
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.groupingBy(v -> String.valueOf(v.getMaterialWorkshopId())));
+            Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).map(QtCheckTaskReportVO::getMaterialWorkshopId).collect(Collectors.toSet());
+            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+            for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
+                idNameMap.put(e.getKey(),officeMap.get(Integer.parseInt(e.getKey())));
+            }
         } else {
+            //供应商
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getSupplierId())).collect(Collectors.groupingBy(v -> String.valueOf(v.getSupplierId())));
-        }
-        for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
-            idNameMap.put(e.getKey(),e.getKey());
+            Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getSupplierId())).map(QtCheckTaskReportVO::getSupplierId).collect(Collectors.toSet());
+            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+            for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
+                idNameMap.put(e.getKey(),officeMap.get(Integer.parseInt(e.getKey())));
+            }
         }
         return new TupleDTO<>(targetMap, idNameMap);
     }
