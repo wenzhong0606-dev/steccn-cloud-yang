@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * spc任务明细表
@@ -70,10 +71,13 @@ public class QtSpcReportDetailVO implements Serializable {
      */
     private BigDecimal downLimit;
 
+//    /**
+//     * 检验项详情
+//     */
+//   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
+
     /**
-     * 检验项详情
+     * 表头的字段及该字段下的数据
      */
-   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
-
-
+    private Map<String, Object> details;
 }
