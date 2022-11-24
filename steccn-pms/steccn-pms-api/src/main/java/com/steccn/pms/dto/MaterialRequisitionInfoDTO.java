@@ -67,7 +67,7 @@ public class MaterialRequisitionInfoDTO {
 
     @ApiModelProperty("货架id")
     @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "货架不能为空")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架名称")
     private String shelfName;

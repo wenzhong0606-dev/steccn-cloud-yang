@@ -109,25 +109,27 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
     @Override
     public Map<Integer, List<SysStationWarehouseVO>> listByStationIds(Set<Integer> stationIds) {
         Map<Integer, List<SysStationWarehouseVO>> resMap = Maps.newHashMap();
-        List<SysStationWarehouse> list = list(new LambdaQueryWrapper<SysStationWarehouse>().in(SysStationWarehouse::getStationId, stationIds));
-        if (CollUtil.isNotEmpty(list)) {
-            List<SysStationWarehouseVO> dtoList = BeanUtil.copyToList(list, SysStationWarehouseVO.class);
-            Set<Integer> officeId = Sets.newHashSet();
-            dtoList.forEach(sysStationWarehouseVO -> {
-                officeId.add(sysStationWarehouseVO.getShelfId());
-            });
-            resMap = dtoList.stream().collect(Collectors.groupingBy(SysStationWarehouseVO::getStationId));
-            //处理数据，获取编码
-            Map<Integer, SysOfficeVO> officeVOMap = sysOfficeService.listById(officeId);
-            SysOfficeVO sysOfficeVO = new SysOfficeVO();
-            resMap.forEach((key, value) -> {
-                value.forEach(
-                        sysStationWarehouseVO -> {
-                            SysOfficeVO orDefault = officeVOMap.getOrDefault(sysStationWarehouseVO.getShelfId(), sysOfficeVO);
-                            sysStationWarehouseVO.setShelfCode(orDefault.getOfficeCode());
-                        }
-                );
-            });
+        if (CollUtil.isNotEmpty(stationIds)) {
+            List<SysStationWarehouse> list = list(new LambdaQueryWrapper<SysStationWarehouse>().in(SysStationWarehouse::getStationId, stationIds));
+            if (CollUtil.isNotEmpty(list)) {
+                List<SysStationWarehouseVO> dtoList = BeanUtil.copyToList(list, SysStationWarehouseVO.class);
+                Set<Integer> officeId = Sets.newHashSet();
+                dtoList.forEach(sysStationWarehouseVO -> {
+                    officeId.add(sysStationWarehouseVO.getShelfId());
+                });
+                resMap = dtoList.stream().collect(Collectors.groupingBy(SysStationWarehouseVO::getStationId));
+                //处理数据，获取编码
+                Map<Integer, SysOfficeVO> officeVOMap = sysOfficeService.listById(officeId);
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                resMap.forEach((key, value) -> {
+                    value.forEach(
+                            sysStationWarehouseVO -> {
+                                SysOfficeVO orDefault = officeVOMap.getOrDefault(sysStationWarehouseVO.getShelfId(), sysOfficeVO);
+                                sysStationWarehouseVO.setShelfCode(orDefault.getOfficeCode());
+                            }
+                    );
+                });
+            }
         }
         return resMap;
     }

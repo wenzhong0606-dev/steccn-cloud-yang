@@ -424,10 +424,20 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         R<String> r = new R<>();
         MaterialRequisitionDTO materialRequisitionDTO = new MaterialRequisitionDTO();
         List<MaterialRequisitionInfoDTO> infoList = Lists.newArrayList();
+        Set<Integer> stationIds = Sets.newHashSet();
+        list.forEach(info -> stationIds.add(info.getWorkshopId()));
+        //获取工位的线边仓
+        Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
+        List<SysStationWarehouseVO> warehouseVOList = Lists.newArrayList();
         list.forEach(info -> {
             MaterialRequisitionInfoDTO materialRequisitionInfoDTO = new MaterialRequisitionInfoDTO();
+            List<SysStationWarehouseVO> orDefault = warehouseMap.getOrDefault(info.getWorkshopId(), warehouseVOList);
             BeanUtil.copyProperties(info, materialRequisitionInfoDTO);
             materialRequisitionInfoDTO.setReceiveQuantity(info.getQuantity());
+            if (CollUtil.isNotEmpty(orDefault)){
+                materialRequisitionInfoDTO.setShelfId(orDefault.get(0).getShelfId());
+                materialRequisitionInfoDTO.setShelfName(orDefault.get(0).getShelfName());
+            }
             infoList.add(materialRequisitionInfoDTO);
         });
         materialRequisitionDTO.setList(infoList);
