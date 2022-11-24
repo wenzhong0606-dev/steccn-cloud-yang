@@ -102,7 +102,7 @@ public class QtCheckTaskController {
     @PostMapping("/retask")
     @ApiOperation(value = "创建复检任务")
     @SysLog("创建复检任务")
-    public R<Integer> retask(@RequestBody QtReTaskDTO dto) {
+    public R<Long> retask(@RequestBody QtReTaskDTO dto) {
         if (StringUtils.isBlank(dto.getOriginalTaskCode()))  return R.failure("原始任务code不可为空!");
         return R.success(qtCheckTaskService.retask(dto));
     }

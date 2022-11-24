@@ -79,7 +79,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param dto
      * @return
      */
-    Integer retask(QtReTaskDTO dto);
+    Long retask(QtReTaskDTO dto);
 
     /**
      * 通过类型查询任务

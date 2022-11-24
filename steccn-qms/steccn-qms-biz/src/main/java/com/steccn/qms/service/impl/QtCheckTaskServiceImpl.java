@@ -905,7 +905,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Integer retask(QtReTaskDTO dto) {
+    public Long retask(QtReTaskDTO dto) {
         //复检操作后添加 新的复核任务
         QtCheckTask qtCheckTask = new QtCheckTask();
         //获取原始任务信息
@@ -931,7 +931,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         recheckModel.setUpdateTime(originalQtCheckTask.getUpdateTime());
         recheckModel.setDelFlag(originalQtCheckTask.getDelFlag());
         qtRecheckTaskService.save(recheckModel);
-        return  recheckModel.getId();
+        return  qtCheckTask.getId();
     }
 
     @Override
