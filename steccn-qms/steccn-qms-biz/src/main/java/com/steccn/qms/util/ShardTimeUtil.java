@@ -75,7 +75,9 @@ public class ShardTimeUtil {
                     listDate.add(start);
                     start = start.plusMonths(1);
                     if (!end.isAfter(start)){
-                        listDate.add(LocalDateUtil.getLastDayOfMonthStr(end.toLocalDate()));
+                        LocalDateTime lastDayOfMonthStr = LocalDateUtil.getLastDayOfMonthStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(lastDayOfMonthStr.getYear(),lastDayOfMonthStr.getMonth(),
+                                lastDayOfMonthStr.getDayOfMonth(),23,59,59));
                     }
                     break;
                 case "W":
@@ -83,21 +85,27 @@ public class ShardTimeUtil {
                     start = start.plusWeeks(1);
                     start = start.with(DayOfWeek.MONDAY);
                     if (!end.isAfter(start)){
-                        listDate.add(LocalDateUtil.getLastDayOfWeekStr(end.toLocalDate()));
+                        LocalDateTime lastDayOfWeekStr = LocalDateUtil.getLastDayOfWeekStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(lastDayOfWeekStr.getYear(),lastDayOfWeekStr.getMonth(),
+                                lastDayOfWeekStr.getDayOfMonth(),23,59,59));
                     }
                     break;
                 case "D":
                     listDate.add(start);
                     start = start.plusDays(1);
                     if (!end.isAfter(start)){
-                        listDate.add(LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate()));
+                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(endTimeOfDayStr.getYear(),endTimeOfDayStr.getMonth()
+                                ,endTimeOfDayStr.getDayOfMonth(), 23,59,59));
                     }
                     break;
                 case "H":
                     listDate.add(start);
                     start = start.plusHours(1);
                     if (!end.isAfter(start)){
-                        listDate.add(end);
+                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(endTimeOfDayStr.getYear(),endTimeOfDayStr.getMonth()
+                                ,endTimeOfDayStr.getDayOfMonth(), 23,59,59));
                     }
                     break;
             }
@@ -107,12 +115,12 @@ public class ShardTimeUtil {
     }
 
 
-    public static void main(String[] args) {
-        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 6, 11), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 1), LocalTime.MAX);
-        List<LocalDateTime> resList = cutDateRange("M", start, end);
-        resList.forEach(ele -> {
-            log.info("{}", ele);
-        });
-    }
+//    public static void main(String[] args) {
+//        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 10, 1), LocalTime.MIN);
+//        LocalDateTime end = LocalDateTime.of(LocalDate.of(2022, 10, 1), LocalTime.MAX);
+//        List<LocalDateTime> resList = cutDateRange("M", start, end);
+//        resList.forEach(ele -> {
+//            log.info("{}", ele);
+//        });
+//    }
 }
