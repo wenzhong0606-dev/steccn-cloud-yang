@@ -771,7 +771,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //先放入x轴的数据和y轴数据
             Long dateRange = dto.getDateEnd().toEpochDay() - dto.getDateStart().toEpochDay();
-            for (int i = 0; i < dateRange; i++) {
+            for (int i = 0; i < dateRange+1; i++) {
                 LocalDate tmpDate = dto.getDateStart().plusDays(i);
                 xAis.add(tmpDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 List<ProducePassRateVO> groupByDateVO = groupByDate.get(tmpDate);
@@ -781,8 +781,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 Map<LocalDate,BigDecimal> noCompareData = MapUtil.newHashMap();
                 //若VO不为空
                 if (CollUtil.isNotEmpty(groupByDateVO)) {
-                    //对markLine进行求和
-                    BigDecimal markLineData = groupByDateVO.stream().collect(CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate));
+                    BigDecimal markLineData = BigDecimal.ZERO;
+                    if(groupByDateVO.get(0).getDayPassRate()!=null){
+                        markLineData = groupByDateVO.get(0).getDayPassRate();
+                    }
                     markLineDataList.add(new DecimalFormat("0.00%").format(markLineData));
                     //对比维度为班次
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
