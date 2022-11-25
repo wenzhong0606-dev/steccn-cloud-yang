@@ -303,6 +303,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(qtCheckTask.getProductLine() !=null) {
             //生产产线code
             if(qtCheckTask.getProductLine().getId() !=null) {
+                qtCheckTaskListVo.setProductLineId(qtCheckTask.getProductLine().getId().toString());
                 R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
                 if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
                     qtCheckTaskListVo.setProductLineCode(productLineCode.getMsg());
@@ -311,6 +312,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(qtCheckTask.getProductWorkshop() !=null) {
             //生产车间code
             if(qtCheckTask.getProductWorkshop().getId() !=null) {
+                qtCheckTaskListVo.setProductWorkshopId(qtCheckTask.getProductWorkshop().getId().toString());
                 R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
                 if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
                     qtCheckTaskListVo.setProductWorkshopCode(productWorkshopCode.getMsg());
@@ -2520,11 +2522,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         List<QtDeepOrSubAcceptabilityDetailVO> flatDataList  = getQtDeepOrSubAcceptabilityDetailVO(dto.getInspectionType()==1?
                 QtManagerConstant.DEEP_OFFICE_NAME:QtManagerConstant.SUB_OFFICE_NAME,  dto).getRecords();
+        for (QtDeepOrSubAcceptabilityDetailVO vo:flatDataList) {
+            vo.setClassesDateString(LocalDateUtil.localDateFormat(vo.getClassesDate(),DatePattern.NORM_DATE_PATTERN));
+        }
        // Assert.notEmpty(flatDataList, "数据为空，暂无报表");
         //声明excel表格数据
         Map<String, Object> map = MapUtils.newHashMap();
-        map.put("dateStart",dto.getDateStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        map.put("dateEnd",dto.getDateEnd().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
         //车间，产线，物料名称，客户
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Long> materialIdSet = Sets.newHashSet();
