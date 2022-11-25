@@ -260,9 +260,6 @@ public class QtCheckTaskController {
         }
     }
 
-
-
-
     /**
      * 对响应异常进行封装
      * @param response

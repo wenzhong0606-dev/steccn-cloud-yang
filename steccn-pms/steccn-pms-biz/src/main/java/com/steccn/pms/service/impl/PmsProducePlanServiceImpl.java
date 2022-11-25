@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelAnalysisException;
+import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -197,14 +199,17 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }
 
         List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
-        EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList)).sheet().doRead();
+        List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
+
+        EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList,planMsgVOList)).sheet().doRead();
+
 
         List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
         //获取已存在的物料信息
         HashMap<String, Long> updateMap = getUpdateMap(dtoList, codeList);
 
-        List<ProducePlanMsgVO> planMsgVOList = checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, updateMap);
+        planMsgVOList.addAll(checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, updateMap));
 
         //如果错误信息不为空组装数据返回
         ProducePlanImportVO planImportVO = new ProducePlanImportVO();
@@ -277,7 +282,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
             planExcelDTO.setMaterialCode(materialMap.get(pmsProducePlan.getMaterialId()).getCode());
             planExcelDTO.setMaterialName(materialMap.get(pmsProducePlan.getMaterialId()).getName());
-            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlan.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
+//            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlan.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
             planExcelDTO.setQuantity(pmsProducePlan.getQuantity());
             excelDTOList.add(planExcelDTO);
         }
@@ -672,7 +677,12 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         for (PmsProducePlanExcelDTO excelDTO : dtoList) {
             ProducePlanMsgVO planMsgVO = new ProducePlanMsgVO();
             List<String> errorMsgList = new ArrayList<>();
+            try {
+                LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
+            } catch (Exception e) {
+                errorMsgList.add("计划日期格式错误格式应为“1970-01-01”");
 
+            }
             if (Objects.isNull(excelDTO.getPlanDate())) {
                 errorMsgList.add("计划日期不能为空");
             }
@@ -689,7 +699,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             //过滤出本行以外的重复数据
             List<PmsProducePlanExcelDTO> pmsProducePlanExcelDTOList = dtoList
                     .stream()
-                    .filter(dto -> dto.getMaterialCode().equals(excelDTO.getMaterialCode()) && dto.getPlanDate().equals(excelDTO.getPlanDate()))
+                    .filter(dto -> Objects.equals(dto.getMaterialCode(),excelDTO.getMaterialCode()) && dto.getPlanDate().equals(excelDTO.getPlanDate()))
                     .filter(dto -> !dto.getRowIndex().equals(excelDTO.getRowIndex())).collect(Collectors.toList());
             String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getRowIndex).collect(Collectors.toList()), ",");
             if (updateFlag.equals(0) && pmsProducePlanExcelDTOList.size() > 0) {
@@ -697,7 +707,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
 
             //获取当前行的错误信息
-            planMsgVO.setErrorMsgList(errorMsgList);
+            planMsgVO.setErrorMsgList(StringUtils.join(errorMsgList,","));
             //如果错误信息不为空获取行号
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 planMsgVO.setRowIndex(excelDTO.getRowIndex());
@@ -709,27 +719,33 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
     }
 
     private HashMap<String, Long> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList, List<String> codeList) {
-        List<String> planDateList = dtoList.stream().map(PmsProducePlanExcelDTO::getPlanDate).collect(Collectors.toList());
+        HashMap<String, Long> updateMap = Maps.newHashMap();
+
         List<LocalDate> localDateList = new ArrayList<>();
-        for (String planDate : planDateList) {
-            LocalDate localDate = LocalDate.parse(planDate, ISO_DATE);
+        for (PmsProducePlanExcelDTO planExcelDTO : dtoList) {
+            LocalDate localDate = null;
+            try {
+                localDate = LocalDate.parse(planExcelDTO.getPlanDate(), ISO_DATE);
+            } catch (Exception e) {
+                continue;
+            }
             localDateList.add(localDate);
         }
 
-        //根据导入的日期查询数据
-        List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
-        //根据物料code查询物料信息
-        Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.mapByCode(codeList).getData();
+        if (CollectionUtils.isNotEmpty(localDateList)) {
+            //根据导入的日期查询数据
+            List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
+            //根据物料code查询物料信息
+            Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.mapByCode(codeList).getData();
 
-        HashMap<String, Long> updateMap = Maps.newHashMap();
-        //获取所有日期查询数据的物料id和物料code
-        for (PmsProducePlan pmsProducePlan : producePlanList) {
-            EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
-            if (!Objects.isNull(spareVO)) {
-                updateMap.put(spareVO.getCode(), spareVO.getId());
+            //获取所有日期查询数据的物料id和物料code
+            for (PmsProducePlan pmsProducePlan : producePlanList) {
+                EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
+                if (!Objects.isNull(spareVO)) {
+                    updateMap.put(spareVO.getCode(), spareVO.getId());
+                }
             }
         }
-
         return updateMap;
     }
 

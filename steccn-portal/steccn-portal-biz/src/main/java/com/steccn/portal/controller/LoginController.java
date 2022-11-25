@@ -1,5 +1,7 @@
 package com.steccn.portal.controller;
 
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.util.AESUtils;
 import com.steccn.common.vo.R;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.portal.service.LoginService;
@@ -34,7 +36,13 @@ public class LoginController {
      */
     @GetMapping("/login")
     public R<SteccnTokenVO> login(@RequestParam("username") String username, @RequestParam("password") String password) {
-        return loginService.login(username,password);
+        String decryptPassword;
+        try {
+            decryptPassword = AESUtils.decrypt(password);
+        } catch (Exception e) {
+            throw new BusinessException("密码解密失败");
+        }
+        return loginService.login(username, decryptPassword);
     }
 
     /**

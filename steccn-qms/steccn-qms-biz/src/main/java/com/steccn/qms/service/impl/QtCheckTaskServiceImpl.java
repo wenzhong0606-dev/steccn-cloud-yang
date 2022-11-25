@@ -290,7 +290,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
-                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id));
+                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id),false);
                 qtCheckTaskListVo.setOriginalTaskCode(recheckTask.getOriginalCode());
             }
         }
@@ -300,16 +300,25 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setStationId(Math.toIntExact(qtCheckTask.getStationId()));
         }
         qtCheckTaskListVo.setStationName(qtCheckTask.getStationName());
+        if(qtCheckTask.getProductLine() !=null) {
+            //生产产线code
+            if(qtCheckTask.getProductLine().getId() !=null) {
+                R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
+                if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
+                    qtCheckTaskListVo.setProductLineCode(productLineCode.getMsg());
+            }
+        }
+        if(qtCheckTask.getProductWorkshop() !=null) {
+            //生产车间code
+            if(qtCheckTask.getProductWorkshop().getId() !=null) {
+                R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
+                if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
+                    qtCheckTaskListVo.setProductWorkshopCode(productWorkshopCode.getMsg());
+            }
+        }
 
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
-        //生产产线code
-        R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
-        if(org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg())) qtCheckTaskDetailVo.setProductLineCode(productLineCode.getMsg());
-        //生产车间code
-        R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
-        if(org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))  qtCheckTaskDetailVo.setProductWorkshopCode(productWorkshopCode.getMsg());
-
         //处理样本数
         //选择任务详情
         QueryWrapper<QtCheckTaskDetail> queryWrapper = new QueryWrapper<>();
@@ -742,7 +751,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
                     if(key.length() != 0) {
-                        Integer copy = Integer.valueOf(key.substring(key.length()==12?(key.length() - 1):(key.length() - 2)));
+                        Integer copy = Integer.valueOf(key.contains("checkResult")
+                                ?key.substring(key.length()==12?(key.length() - 1):(key.length() - 2))
+                                :key.substring(key.length() - 1));
                         qtCheckTaskCopy1.setCopy(copy);
                     }
                     qtCheckTaskCopies2.add(qtCheckTaskCopy1);
@@ -937,7 +948,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setBadNum(null);
         qtCheckTask.setCheckNum(null);
         qtCheckTask.setGoodNum(null);
-        qtCheckTask.setStatus(null);
+        qtCheckTask.setStatus(0);
         save(qtCheckTask);
         //保存巡检任务与复检任务关联数据
         QtRecheckTask recheckModel = new QtRecheckTask();
@@ -998,6 +1009,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .selectAs(QtCheckTask::getCustomerName, QtCheckTaskListVO::getCustomerName)
                 .selectAs(QtCheckTask::getStation, QtCheckTaskListVO::getStation)
                 .selectAs(QtCheckTask::getStationName, QtCheckTaskListVO::getStationName)
+                .selectAs(QtCheckTask::getProductLineId, QtCheckTaskListVO::getProductLineId)
+                .selectAs(QtCheckTask::getProductWorkshopId, QtCheckTaskListVO::getProductWorkshopId)
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
@@ -1129,6 +1142,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtCheckPlan planNameTmp = qtCheckPlanService.getById(vo.getCheckPlanId());
                 if (planNameTmp != null) {
                     vo.setCheckPlanName(planNameTmp.getName());
+                }
+                if(org.apache.commons.lang3.StringUtils.isNotBlank(vo.getProductLineId()) && !vo.getProductLineId().equals("null")) {
+                    //生产产线code
+                    R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(vo.getProductLineId()));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
+                        vo.setProductLineCode(productLineCode.getMsg());
+                }else{
+                    vo.setProductLineId(null);
+                }
+                if(org.apache.commons.lang3.StringUtils.isNotBlank(vo.getProductWorkshopId()) && !vo.getProductWorkshopId().equals("null")) {
+                    //生产车间code
+                    R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(vo.getProductWorkshopId()));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
+                        vo.setProductWorkshopCode(productWorkshopCode.getMsg());
+                }else{
+                    vo.setProductWorkshopId(null);
                 }
                 log.debug("vo:" + vo);
             }

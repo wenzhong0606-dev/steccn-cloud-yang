@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -16,6 +17,7 @@ import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.dto.ProducePassRateDTO;
@@ -137,7 +139,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
             }
             data.forEach(tmp->{
                 if(tmp.getDate()!=null){
-                    tmp.setDateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));
+                    tmp.setDateString(LocalDateUtil.localDateFormat(tmp.getDate(), DatePattern.NORM_DATE_PATTERN));
                 }
                 if(tmp.getPassRate()!=null){
                     tmp.setPassRateString(new DecimalFormat("0.00%").format(tmp.getPassRate()));

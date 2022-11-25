@@ -537,7 +537,7 @@ public interface QtManagerConstant {
         }
     }
     /**
-     * 计量单位
+     * 检验值
      */
     @Getter
     @AllArgsConstructor

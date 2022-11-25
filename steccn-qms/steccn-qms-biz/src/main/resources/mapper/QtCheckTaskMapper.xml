@@ -93,22 +93,22 @@
         qt_check_task
         WHERE
         del_flag = 0
-        <if test="dto.productWorkShopId != null and dto.productWorkShopId != ''">
+        <if test="dto.productWorkShopId != null">
             AND (product_workshop ->> '$.id' = #{dto.productWorkShopId})
         </if>
-        <if test="dto.materialWorkshopId != null and dto.materialWorkshopId != ''">
+        <if test="dto.materialWorkshopId != null ">
             AND (material_workshop ->> '$.id' = #{dto.materialWorkshopId})
         </if>
-        <if test="dto.productLineId != null and dto.productLineId != ''">
+        <if test="dto.productLineId != null ">
             AND (product_line ->> '$.id' = #{dto.productLineId})
         </if>
-        <if test="dto.customer != null and dto.customer != ''">
+        <if test="dto.customer != null">
             AND (customer ->> '$.id' = #{dto.customer})
         </if>
-        <if test="dto.materialId != null and dto.materialId != ''">
+        <if test="dto.materialId != null">
             AND material_id = #{dto.materialId}
         </if>
-        <if test="dto.workingOrder != null and dto.workingOrder != ''">
+        <if test="dto.workingOrder != null">
             AND classes_id = #{dto.workingOrder}
         </if>
         <if test="line != null and line.size > 0">
