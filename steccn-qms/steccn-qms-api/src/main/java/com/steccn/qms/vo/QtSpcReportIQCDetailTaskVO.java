@@ -9,6 +9,11 @@ import java.util.Map;
 @Data
 public class QtSpcReportIQCDetailTaskVO implements Serializable {
     /**
+     * 检验任务单号的id
+     */
+    private Long id;
+
+    /**
      * 检验任务单号
      */
     private String code;
