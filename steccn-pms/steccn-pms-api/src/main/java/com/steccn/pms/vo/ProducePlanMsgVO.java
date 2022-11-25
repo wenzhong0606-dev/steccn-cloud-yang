@@ -11,5 +11,5 @@ import java.util.List;
 @Data
 public class ProducePlanMsgVO {
     private Integer rowIndex;
-    private List<String> errorMsgList;
+    private String errorMsgList;
 }
