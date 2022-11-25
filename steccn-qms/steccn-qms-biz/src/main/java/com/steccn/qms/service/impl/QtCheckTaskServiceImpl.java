@@ -742,7 +742,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
                     if(key.length() != 0) {
-                        Integer copy = Integer.valueOf(key.substring(key.length()==12?(key.length() - 1):(key.length() - 2)));
+                        Integer copy = Integer.valueOf(key.contains("checkResult")
+                                ?key.substring(key.length()==12?(key.length() - 1):(key.length() - 2))
+                                :key.substring(key.length() - 1));
                         qtCheckTaskCopy1.setCopy(copy);
                     }
                     qtCheckTaskCopies2.add(qtCheckTaskCopy1);
