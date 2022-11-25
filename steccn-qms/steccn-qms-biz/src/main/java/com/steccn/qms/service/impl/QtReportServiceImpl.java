@@ -1139,13 +1139,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()==report.getCheckType()){
                    getIQCList(itemIds, qtMateria.getName(),
                             conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
-                }
-                if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()==report.getCheckType()){
+                }else if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()==report.getCheckType()){
                     getMIXEDList(itemIds, qtMateria.getName(),
                             conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
+                }else {
+                    getHSCList(itemIds, qtMateria.getName(),
+                            conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
                 }
-                getHSCList(itemIds, qtMateria.getName(),
-                        conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
+
             }
             qtSpcReportDetailVO.setDetailTaskAllVO(qtSpcReportDetailTaskAllVO);
             mainList.add(qtSpcReportDetailVO);
@@ -1230,6 +1231,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 } else {
                     taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
                 }
+                taskVO.setProductLine(s.getProductLine());
                 mainDecimals.add(detailAverage);
                 qtSamplingDetailVOS.add(taskVO);
             });
@@ -1281,6 +1283,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 } else {
                     taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
                 }
+                taskVO.setWorkshop(s.getMaterialWorkshop());
                 mainDecimals.add(detailAverage);
                 qtSamplingDetailVOS.add(taskVO);
             });
@@ -1312,6 +1315,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 if (Objects.nonNull(name)) {
                     taskVO.setMaterialName(name);
                 }
+
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                 //检验任务结果集合
@@ -1334,6 +1338,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 } else {
                     taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
                 }
+                taskVO.setWorkshop(s.getMaterialWorkshop());
+                taskVO.setSupplier(s.getSupplier());
                 mainDecimals.add(detailAverage);
                 reportDetailTaskVOS.add(taskVO);
             });
