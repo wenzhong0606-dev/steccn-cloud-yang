@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -210,7 +211,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     }
 
     /**
-     * 查询改分组下的所有报表卡片
+     * 根据报表卡片分组ID去查询报表卡片列表
      *
      * @param reportGroupId
      * @return
@@ -333,16 +334,17 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }else {
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
                     conditionTasks.forEach(r->{
-                        List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                        .eq(QtCheckTaskDetail::getTaskId, r.getId()).in(CollUtil.isNotEmpty(itemIds),QtCheckTaskDetail::getItemId, itemIds))
-                                .stream()
-                                .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-                        stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
-                            BigDecimal bigDecimal = new BigDecimal(s);
+                        QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                                .orderByDesc(QtCheckTaskDetail::getId)
+                                .last(MpConstant.STR_LIMIT_1));
+                        if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                            BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
                             if (Objects.nonNull(bigDecimal)){
                                 bigDecimals.add(bigDecimal);
                             }
-                        });
+                        }
                     });
                     if (CollUtil.isNotEmpty(bigDecimals)){
                         BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -526,17 +528,17 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             }else {
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
                 conditionTasks.forEach(r->{
-                    List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .eq(QtCheckTaskDetail::getTaskId, r.getId())
-                                    .in(CollUtil.isNotEmpty(itemIds),QtCheckTaskDetail::getItemId, itemIds))
-                            .stream()
-                            .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-                    stringList.stream().filter(s -> Objects.nonNull(s)).filter(s -> StrUtil.isNotBlank(s)).forEach(s -> {
-                        BigDecimal bigDecimal = new BigDecimal(s);
-                        if (Objects.nonNull(bigDecimal)){
-                            bigDecimals.add(bigDecimal);
+                    QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                            .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                            .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                            .orderByDesc(QtCheckTaskDetail::getId)
+                            .last(MpConstant.STR_LIMIT_1));
+                        if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                            BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
+                            if (Objects.nonNull(bigDecimal)){
+                                bigDecimals.add(bigDecimal);
+                            }
                         }
-                    });
                 });
                 if (CollUtil.isNotEmpty(bigDecimals)){
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -946,7 +948,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
-        List<QtCheckItem> itemIds = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, qtCheckItem.getCode()));
+        List<Integer> itemIds = qtCheckItemService
+                .list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, qtCheckItem.getCode()))
+                .stream().map(QtCheckItem::getId).collect(Collectors.toList());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
         String measureUnitName = new String();
         if (Objects.nonNull(qtCheckItem)){
@@ -1194,7 +1198,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 //    }
 
 
-    private void getHSCList(List<QtCheckItem> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
+    private void getHSCList(List<Integer> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
         //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
         List<QtSpcReportHSCDetailTaskVO> qtSamplingDetailVOS =Lists.newArrayList();
         BigDecimal resultAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
@@ -1215,19 +1219,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
-                List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                        .stream()
-                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
-                stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
-                    BigDecimal bigDecimal = new BigDecimal(st);
-                    if (Objects.nonNull(bigDecimal)) {
+                //检验任务结果集合
+                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                        .orderByDesc(QtCheckTaskDetail::getId)
+                        .last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                    BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
+                    if (Objects.nonNull(bigDecimal)){
                         bigDecimals.add(bigDecimal);
                     }
-                });
+                }
                 if (CollUtil.isNotEmpty(bigDecimals)) {
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
                     detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
@@ -1246,7 +1250,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
     }
 
-    private void getMIXEDList(List<QtCheckItem> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
+    private void getMIXEDList(List<Integer> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
         //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
         List<QtSpcReportSamplingDetailTaskVO> qtSamplingDetailVOS =Lists.newArrayList();
         BigDecimal resultAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
@@ -1267,19 +1271,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
-                List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                        .stream()
-                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
-                stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
-                    BigDecimal bigDecimal = new BigDecimal(st);
-                    if (Objects.nonNull(bigDecimal)) {
+                //检验任务结果集合
+                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                        .orderByDesc(QtCheckTaskDetail::getId)
+                        .last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                    BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
+                    if (Objects.nonNull(bigDecimal)){
                         bigDecimals.add(bigDecimal);
                     }
-                });
+                }
                 if (CollUtil.isNotEmpty(bigDecimals)) {
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
                     detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
@@ -1298,7 +1302,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         }
     }
 
-    private void getIQCList(List<QtCheckItem> itemIds, String name, List<QtCheckTask> conditionDataList
+    private void getIQCList(List<Integer> itemIds, String name, List<QtCheckTask> conditionDataList
             , QtSpcReportDetailVO qtSpcReportDetailVO
             , QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO ) {
         //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
@@ -1312,7 +1316,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //遍历该时间段下的检验任务设置详情
             conditionDataList.forEach(s -> {
                 QtSpcReportIQCDetailTaskVO taskVO = new QtSpcReportIQCDetailTaskVO();
-                //详情检验结果平均值
+                //详情检验结果值
                 BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                 BeanUtils.copyProperties(s, taskVO);
                 //设置物料名称
@@ -1322,19 +1326,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
-                List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                        .stream()
-                        .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
-                stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
-                    BigDecimal bigDecimal = new BigDecimal(st);
-                    if (Objects.nonNull(bigDecimal)) {
+                //检验任务结果集合
+                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                        .orderByDesc(QtCheckTaskDetail::getId)
+                        .last(MpConstant.STR_LIMIT_1));
+                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                    BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
+                    if (Objects.nonNull(bigDecimal)){
                         bigDecimals.add(bigDecimal);
                     }
-                });
+                }
                 if (CollUtil.isNotEmpty(bigDecimals)) {
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
                     detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
