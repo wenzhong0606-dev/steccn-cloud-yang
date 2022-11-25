@@ -245,7 +245,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
                         //根据缺陷记录时段计算完成时间
                         QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(qtCheckTask.getDefectEndTime());
-                        vo.setFinishedTime(qtTaskClassCalculate.getClassDate());
+                        vo.setFinishedTime(qtCheckTask.getFinishedTime());
+                        vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         flatDefectiveList.add(vo);
                     }
                 }
@@ -786,7 +787,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             LocalDateTime end = cutDate.get(i);
             List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
                     return Boolean.TRUE;
                 }
                 return Boolean.FALSE;
