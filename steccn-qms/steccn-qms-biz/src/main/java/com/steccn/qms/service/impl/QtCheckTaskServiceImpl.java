@@ -290,7 +290,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
-                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id));
+                QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id),false);
                 qtCheckTaskListVo.setOriginalTaskCode(recheckTask.getOriginalCode());
             }
         }
@@ -937,7 +937,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setBadNum(null);
         qtCheckTask.setCheckNum(null);
         qtCheckTask.setGoodNum(null);
-        qtCheckTask.setStatus(null);
+        qtCheckTask.setStatus(0);
         save(qtCheckTask);
         //保存巡检任务与复检任务关联数据
         QtRecheckTask recheckModel = new QtRecheckTask();
