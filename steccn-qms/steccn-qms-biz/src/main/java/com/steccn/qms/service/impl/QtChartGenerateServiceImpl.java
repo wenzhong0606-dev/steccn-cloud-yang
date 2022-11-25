@@ -129,7 +129,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     List<Long> materialList = Lists.newArrayList();
                     checkTaskWorkOrderList.forEach(tmp -> {
                         materialIdSet.add(tmp.getMaterialId());
-                        materialList.add(tmp.getMaterialId());
+                        if(!materialList.contains(tmp.getMaterialId())){
+                            materialList.add(tmp.getMaterialId());
+                        }
                     });
                     Boolean flag = true;
                     if (materialIdSet.size() > 1) {
@@ -390,7 +392,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //任务完成
                                     .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                                     //完成时间范围
-                                    .between(QtCheckTask::getFinishedTime, startTimeDate, endTimeDate)
+                                    .between(QtCheckTask::getClassTime, startTime,endTime)
                                     //班次
                                     .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
                                     //只要在线检
@@ -453,7 +455,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(tmp.getDefectId());
                                     if (defectCounts.get(defectiveItem.getName()) != null) {
                                         Integer i = defectCounts.get(defectiveItem.getName());
-                                        defectCounts.put(defectiveItem.getName(), i++);
+                                        i = i + 1;
+                                        defectCounts.put(defectiveItem.getName(), i);
                                     }
                                 }
                             });
@@ -795,17 +798,42 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         Map<String,List<ProducePassRateVO>> groupByProductLine = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName));
                         if(groupByProductLine.size() > 0){
                             for(Map.Entry<String,List<ProducePassRateVO>> lineEntry: groupByProductLine.entrySet()){
-                                BigDecimal linePassRate = BigDecimal.ZERO;
-                                lineEntry.getValue().forEach(tmp->{
-
-                                });
-                                dataMap.put(lineEntry.getKey(),linePassRate);
+                                //拉引量
+                                BigDecimal laAmount = BigDecimal.ZERO;
+                                //产量
+                                BigDecimal yield = BigDecimal.ZERO;
+                                for(ProducePassRateVO tmp:lineEntry.getValue()){
+                                    if(tmp.getLaAmount()!=null){
+                                        laAmount = BigDecimalUtil.add(laAmount,tmp.getLaAmount());
+                                    }
+                                    if(tmp.getYield()!=null){
+                                        yield = BigDecimalUtil.add(yield,tmp.getYield());
+                                    }
+                                }
+                                dataMap.put(lineEntry.getKey(),BigDecimalUtil.divide(yield,laAmount));
                             }
                         }
                     }
                     //对比维度为车间
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
-                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                        Map<String,List<ProducePassRateVO>> groupByWorkshopName = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getWorkshopName));
+                        if(groupByWorkshopName.size() > 0){
+                            for(Map.Entry<String,List<ProducePassRateVO>> lineEntry: groupByWorkshopName.entrySet()){
+                                //拉引量
+                                BigDecimal laAmount = BigDecimal.ZERO;
+                                //产量
+                                BigDecimal yield = BigDecimal.ZERO;
+                                for(ProducePassRateVO tmp:lineEntry.getValue()){
+                                    if(tmp.getLaAmount()!=null){
+                                        laAmount = BigDecimalUtil.add(laAmount,tmp.getLaAmount());
+                                    }
+                                    if(tmp.getYield()!=null){
+                                        yield = BigDecimalUtil.add(yield,tmp.getYield());
+                                    }
+                                }
+                                dataMap.put(lineEntry.getKey(),BigDecimalUtil.divide(yield,laAmount));
+                            }
+                        }
                     }
 
                     //不对比则直接对日期求和
