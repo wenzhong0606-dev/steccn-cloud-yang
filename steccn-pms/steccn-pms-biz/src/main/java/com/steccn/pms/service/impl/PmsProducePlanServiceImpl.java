@@ -282,7 +282,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             PmsProducePlanExcelDTO planExcelDTO = new PmsProducePlanExcelDTO();
             planExcelDTO.setMaterialCode(materialMap.get(pmsProducePlan.getMaterialId()).getCode());
             planExcelDTO.setMaterialName(materialMap.get(pmsProducePlan.getMaterialId()).getName());
-//            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlan.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
+            planExcelDTO.setPlanDate(LocalDateUtil.localDateFormat(pmsProducePlan.getPlanDate(), DatePattern.NORM_DATE_PATTERN));
             planExcelDTO.setQuantity(pmsProducePlan.getQuantity());
             excelDTOList.add(planExcelDTO);
         }
@@ -699,7 +699,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             //过滤出本行以外的重复数据
             List<PmsProducePlanExcelDTO> pmsProducePlanExcelDTOList = dtoList
                     .stream()
-                    .filter(dto -> Objects.equals(dto.getMaterialCode(),excelDTO.getMaterialCode()) && dto.getPlanDate().equals(excelDTO.getPlanDate()))
+                    .filter(dto -> Objects.equals(dto.getMaterialCode(),excelDTO.getMaterialCode()) && Objects.equals(dto.getPlanDate(),excelDTO.getPlanDate()))
                     .filter(dto -> !dto.getRowIndex().equals(excelDTO.getRowIndex())).collect(Collectors.toList());
             String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getRowIndex).collect(Collectors.toList()), ",");
             if (updateFlag.equals(0) && pmsProducePlanExcelDTOList.size() > 0) {
