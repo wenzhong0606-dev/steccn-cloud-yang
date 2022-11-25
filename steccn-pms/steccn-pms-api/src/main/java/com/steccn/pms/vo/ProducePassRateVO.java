@@ -60,4 +60,14 @@ public class ProducePassRateVO implements Serializable {
     private String passRateString;
 
     private BigDecimal dayPassRate;
+
+    /**
+     * 拉引量
+     */
+    private BigDecimal laAmount;
+
+    /**
+     * 产量
+     */
+    private BigDecimal yield;
 }

@@ -792,7 +792,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
                     //对比维度为产线
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())) {
-                        dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
+                        Map<String,List<ProducePassRateVO>> groupByProductLine = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getProductLineName));
+                        if(groupByProductLine.size() > 0){
+                            for(Map.Entry<String,List<ProducePassRateVO>> lineEntry: groupByProductLine.entrySet()){
+                                BigDecimal linePassRate = BigDecimal.ZERO;
+                                lineEntry.getValue().forEach(tmp->{
+
+                                });
+                                dataMap.put(lineEntry.getKey(),linePassRate);
+                            }
+                        }
                     }
                     //对比维度为车间
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())) {
