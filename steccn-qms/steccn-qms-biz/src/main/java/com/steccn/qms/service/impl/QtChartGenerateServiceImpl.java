@@ -1047,35 +1047,104 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
                     graphDTO.setXAxis(reasonEntry.getKey());
-                    for(Map.Entry<String, List<QtChartSubDetailDTO>> orderEntry:orderCompare.entrySet()){
-                        //柱子里的堆叠图
-                        List<QtChartSubDetailDTO> duiValue = orderEntry.getValue();
+
+                    //若按照班次堆叠
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
                         List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        TupleDTO<String,BigDecimal> tupleDTOZAO = new TupleDTO();
+                        tupleDTOZAO.setField1("早班");
+                        //早班损耗
+                        BigDecimal zaoAmount = BigDecimal.ZERO;
+                        //晚班损耗
+                        BigDecimal wanAmount = BigDecimal.ZERO;
+                        //总共损耗
                         BigDecimal sunAmount = BigDecimal.ZERO;
-                        TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
-                        tupleDTO.setField1(orderEntry.getKey());
-                        for(QtChartSubDetailDTO tmp:duiValue){
-//                            TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
-//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-//                                tupleDTO.setField1(tmp.getWorkOrder());
-//                            }
-//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-//                                tupleDTO.setField1(tmp.getProductWorkShopName());
-//                            }
-//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-//                                tupleDTO.setField1(tmp.getProductLineName());
-//                            }
-                            sunAmount = BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
+                        if(orderCompare.get("早班")!=null){
+                            for(QtChartSubDetailDTO tmp:orderCompare.get("早班")){
+                                zaoAmount = BigDecimalUtil.add(zaoAmount,tmp.getLossWeight());
+                                sunAmount = BigDecimalUtil.add(zaoAmount,sunAmount);
+                            }
                         }
-                        tupleDTO.setField2(sunAmount);
-                        tupleDTOList.add(tupleDTO);
-                        //堆叠多次
+                        tupleDTOZAO.setField2(zaoAmount);
+                        tupleDTOList.add(tupleDTOZAO);
+
+                        //晚班损耗
+
+                        TupleDTO<String,BigDecimal> tupleDTOWAN = new TupleDTO();
+                        tupleDTOWAN.setField1("晚班");
+                        if(orderCompare.get("晚班")!=null){
+                            for(QtChartSubDetailDTO tmp:orderCompare.get("晚班")){
+                                wanAmount = BigDecimalUtil.add(wanAmount,tmp.getLossWeight());
+                                sunAmount = BigDecimalUtil.add(wanAmount,sunAmount);
+                            }
+                        }
+                        tupleDTOWAN.setField2(wanAmount);
+                        tupleDTOList.add(tupleDTOWAN);
                         graphDTO.setData(tupleDTOList);
-                        stackGraphDTOS.add(graphDTO);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
+
+                    //按照车间堆叠
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                        //车间损耗
+                        BigDecimal cheAmount = BigDecimal.ZERO;
+                        //总共损耗
+                        BigDecimal sunAmount = BigDecimal.ZERO;
+                        List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        SysOfficeDTO officeDTO = new SysOfficeDTO();
+                        officeDTO.setOfficeName("基片");
+                        officeDTO.setOfficeType("8");
+                        R<List<SysOfficeVO>> byTypeAndLine = remoteOfficeFeign.getByTypeAndLine(officeDTO);
+                        for(SysOfficeVO sysVo:byTypeAndLine.getData()){
+                            TupleDTO<String,BigDecimal> tupleDTOShop = new TupleDTO();
+                            tupleDTOShop.setField1(sysVo.getOfficeName());
+                            if(orderCompare.get(sysVo.getOfficeName())!=null){
+                                for(QtChartSubDetailDTO tmp:orderCompare.get(sysVo.getOfficeName())){
+                                    cheAmount = BigDecimalUtil.add(cheAmount,tmp.getLossWeight());
+                                    sunAmount = BigDecimalUtil.add(cheAmount,sunAmount);
+                                }
+                            }
+                            tupleDTOShop.setField2(cheAmount);
+                            tupleDTOList.add(tupleDTOShop);
+                            graphDTO.setData(tupleDTOList);
+                            //算折线图
+                            BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
+                            legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        }
+                    }
+
+                    //按照产线堆叠
+                    if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                        //车间损耗
+                        BigDecimal cheAmount = BigDecimal.ZERO;
+                        //总共损耗
+                        BigDecimal sunAmount = BigDecimal.ZERO;
+                        List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
+                        SysOfficeDTO officeDTO = new SysOfficeDTO();
+                        officeDTO.setOfficeName("基片");
+                        officeDTO.setOfficeType("9");
+                        R<List<SysOfficeVO>> byTypeAndLine = remoteOfficeFeign.getByTypeAndLine(officeDTO);
+                        for(SysOfficeVO sysVo:byTypeAndLine.getData()){
+                            TupleDTO<String,BigDecimal> tupleDTOShop = new TupleDTO();
+                            tupleDTOShop.setField1(sysVo.getOfficeName());
+                            if(orderCompare.get(sysVo.getOfficeName())!=null){
+                                for(QtChartSubDetailDTO tmp:orderCompare.get(sysVo.getOfficeName())){
+                                    cheAmount = BigDecimalUtil.add(cheAmount,tmp.getLossWeight());
+                                    sunAmount = BigDecimalUtil.add(cheAmount,sunAmount);
+                                }
+                            }
+                            tupleDTOShop.setField2(cheAmount);
+                            tupleDTOList.add(tupleDTOShop);
+                            graphDTO.setData(tupleDTOList);
+                            //算折线图
+                            BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
+                            legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        }
+                    }
+
+                    stackGraphDTOS.add(graphDTO);
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
 //                legend = Lists.reverse(legend);
