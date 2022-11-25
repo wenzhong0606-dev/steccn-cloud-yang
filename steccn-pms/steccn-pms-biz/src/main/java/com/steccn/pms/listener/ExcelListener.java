@@ -49,7 +49,7 @@ public class ExcelListener extends AnalysisEventListener<PmsProducePlanExcelDTO>
                     excelDataConvertException.getColumnIndex(), excelDataConvertException.getCellData());
 
             planMsgVO.setRowIndex(excelDataConvertException.getRowIndex());
-            planMsgVO.setErrorMsgList(String.format("第%s列解析异常，数据为:%s",excelDataConvertException.getColumnIndex(),excelDataConvertException.getCellData()));
+            planMsgVO.setErrorMsgList(String.format("第%s列解析异常，数据为:%s",excelDataConvertException.getColumnIndex(),excelDataConvertException.getCellData().getStringValue()));
             producePlanMsgVOList.add(planMsgVO);
         }
     }
