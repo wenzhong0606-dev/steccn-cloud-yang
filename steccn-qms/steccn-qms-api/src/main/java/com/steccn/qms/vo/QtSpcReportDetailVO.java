@@ -2,6 +2,7 @@ package com.steccn.qms.vo;
 
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -14,7 +15,7 @@ import java.util.Map;
  * spc任务明细表
  */
 @Data
-public class QtSpcReportDetailVO implements Serializable {
+public class QtSpcReportDetailVO<T> implements Serializable {
 
     /**
      * 用来标记表的主键id
@@ -76,8 +77,13 @@ public class QtSpcReportDetailVO implements Serializable {
 //     */
 //   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
 
+//    /**
+//     * 表头的字段及该字段下的数据
+//     */
+//    private Map<String, Object> details;
+
     /**
-     * 表头的字段及该字段下的数据
+     * 模板3
      */
-    private Map<String, Object> details;
+    private List<Object> taskDetails;
 }

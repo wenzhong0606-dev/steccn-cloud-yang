@@ -20,7 +20,7 @@ public class DeepDefectiveCategoryDetailVO implements Serializable {
     @ApiModelProperty("缺陷项&缺陷类别 id")
     private Integer id;
 
-    @ApiModelProperty("缺陷项&缺陷类别 id")
+    @ApiModelProperty("缺陷项&缺陷类别名称")
     private String name;
 
     @ApiModelProperty("缺陷项&缺陷类别 创建时间")
@@ -44,6 +44,7 @@ public class DeepDefectiveCategoryDetailVO implements Serializable {
     @ApiModelProperty("班次日期")
     private LocalDate classesDate;
 
+    @ApiModelProperty("班次日期字符串")
     private String classesDateString;
 
     @ApiModelProperty("班次")
