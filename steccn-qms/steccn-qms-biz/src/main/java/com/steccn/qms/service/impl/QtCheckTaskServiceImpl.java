@@ -300,16 +300,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTaskListVo.setStationId(Math.toIntExact(qtCheckTask.getStationId()));
         }
         qtCheckTaskListVo.setStationName(qtCheckTask.getStationName());
+        if(qtCheckTask.getProductLine() !=null) {
+            //生产产线code
+            R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
+                qtCheckTaskListVo.setProductLineCode(productLineCode.getMsg());
+        }
+        if(qtCheckTask.getProductWorkshop() !=null) {
+            //生产车间code
+            R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
+                qtCheckTaskListVo.setProductWorkshopCode(productWorkshopCode.getMsg());
+        }
 
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
-        //生产产线code
-        R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
-        if(org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg())) qtCheckTaskDetailVo.setProductLineCode(productLineCode.getMsg());
-        //生产车间code
-        R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
-        if(org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))  qtCheckTaskDetailVo.setProductWorkshopCode(productWorkshopCode.getMsg());
-
         //处理样本数
         //选择任务详情
         QueryWrapper<QtCheckTaskDetail> queryWrapper = new QueryWrapper<>();
@@ -1122,6 +1127,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (CollUtil.isNotEmpty(iPage.getRecords())) {
             for (QtCheckTaskListVO vo : iPage.getRecords()) {
                 //若为暂存状态，则是检验中
+                System.out.println("======="+vo.getStatus());
                 if (vo.getStatus() == 4)  vo.setStatus(1);
                 if (vo.getMaterialWorkshopName() == null || ("null").equals(vo.getMaterialWorkshopName()))  vo.setMaterialWorkshopName("");
                 if (vo.getProductWorkshopName() == null || ("null").equals(vo.getProductWorkshopName()))   vo.setProductWorkshopName(null);
@@ -1131,6 +1137,22 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtCheckPlan planNameTmp = qtCheckPlanService.getById(vo.getCheckPlanId());
                 if (planNameTmp != null) {
                     vo.setCheckPlanName(planNameTmp.getName());
+                }
+
+                System.out.println(vo.getProductLine()+"=="+vo.getProductWorkshop());
+                if(vo.getProductLine() !=null) {
+                    vo.setProductLineId(Long.parseLong(vo.getProductLine().getId().toString()));
+                    //生产产线code
+                    R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(vo.getProductLine().getId().toString()));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
+                        vo.setProductLineCode(productLineCode.getMsg());
+                }
+                if(vo.getProductWorkshop() !=null) {
+                    vo.setProductWorkshopId(Long.parseLong(vo.getProductWorkshop().getId().toString()));
+                    //生产车间code
+                    R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(vo.getProductWorkshop().getId().toString()));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
+                        vo.setProductWorkshopCode(productWorkshopCode.getMsg());
                 }
                 log.debug("vo:" + vo);
             }

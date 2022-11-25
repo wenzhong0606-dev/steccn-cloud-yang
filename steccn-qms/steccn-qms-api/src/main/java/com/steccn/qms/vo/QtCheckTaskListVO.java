@@ -225,4 +225,14 @@ public class QtCheckTaskListVO implements Serializable {
      * 班次
      */
     private String classes;
+
+
+    private Long productLineId;//生产产线id
+    private Long productWorkshopId;//生产车间id
+
+    private String productLineCode;//生产产线code
+    private String productWorkshopCode;//生产车间code
+
+
+
 }
