@@ -683,7 +683,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, String> idNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
-        return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
     }
 
     /**
@@ -782,6 +782,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private QtLineChartBarDTO commonLine(Integer type,QtChartParamDTO dto, List<QtCheckTaskDetailReportVO> flatDataList, List<LocalDateTime> cutDate, Map<Integer, String> idNameMap, Predicate<QtChartParamDTO> predicate) {
         //定义数据集合
         List<StackGraphDTO<String, Integer>> stackGraphDTOList = Lists.newArrayList();
+
+        //对比情况下，获取对比的维度
+        Map<Integer, String> xMap = Maps.newHashMap();
+        if (predicate.test(dto) && Objects.nonNull(dto.getCompare())) {
+            //对比班次，车间，产线
+            TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
+            xMap = mapMapTupleDTO.getField2();
+        }
+
+
         for (int i = 1; i < cutDate.size(); i++) {
             LocalDateTime start = cutDate.get(i - 1);
             LocalDateTime end = cutDate.get(i);
@@ -798,22 +808,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             List<TupleDTO<String, Integer>> data = Lists.newArrayList();
             //类别
             List<QtCheckTaskDetailReportVO> defaultReportVoList = Lists.newArrayList();
-            for (Map.Entry<Integer, String> entry : idNameMap.entrySet()) {
-                List<QtCheckTaskDetailReportVO> categoryDataList;
-                if (type == 0) {
-                    categoryDataList = conditionDataList.stream().filter(ele -> entry.getKey().equals(ele.getDefectCategory())).collect(Collectors.toList());
-                } else {
-                    categoryDataList = conditionDataList.stream().filter(ele -> entry.getKey().equals(ele.getDefectId())).collect(Collectors.toList());
+            if (predicate.test(dto) && Objects.nonNull(dto.getCompare())) {
+                TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), conditionDataList);
+                Map<Integer, List<QtCheckTaskDetailReportVO>> dataMap = mapMapTupleDTO.getField1();
+                for (Map.Entry<Integer, String> xEntry : xMap.entrySet()) {
+                    List<QtCheckTaskDetailReportVO> tDataList = dataMap.getOrDefault(xEntry.getKey(), defaultReportVoList);
+                    data.add(getTupleDTO(tDataList, xEntry.getValue()));
                 }
-                if (predicate.test(dto) && Objects.nonNull(dto.getCompare())) {
-                    //对比班次，车间，产线
-                    TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), categoryDataList);
-                    mapMapTupleDTO.getField2().forEach((k, v) -> {
-                        List<QtCheckTaskDetailReportVO> tDataList = mapMapTupleDTO.getField1().getOrDefault(k, defaultReportVoList);
-                        data.add(getTupleDTO(tDataList, v));
-                    });
-                } else {
-                    data.add(getTupleDTO(categoryDataList, entry.getValue()));
+            } else {
+                for (Map.Entry<Integer, String> entry : idNameMap.entrySet()) {
+                    data.add(getTupleDTO(conditionDataList, entry.getValue()));
                 }
             }
             stackGraphDTO.setData(data);
