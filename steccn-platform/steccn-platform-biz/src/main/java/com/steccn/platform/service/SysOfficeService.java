@@ -154,4 +154,6 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Map<Integer, SysOfficeVO> parentInfo(Set<Integer> childIdList);
+
+    String getByIdSysOfficeInfo( Long id);
 }

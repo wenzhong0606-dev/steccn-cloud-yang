@@ -360,6 +360,12 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     }
 
+    @Override
+    public String getByIdSysOfficeInfo(Long id) {
+        SysOffice sysOffice = getById(id);
+        return sysOffice==null?"":sysOffice.getOfficeCode();
+    }
+
     /**
      * 父节点
      *

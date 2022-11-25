@@ -303,6 +303,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         QtCheckTaskDetailVO qtCheckTaskDetailVo = new QtCheckTaskDetailVO();
         qtCheckTaskDetailVo.setQtCheckTaskListVo(qtCheckTaskListVo);
+        //生产产线code
+        R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg())) qtCheckTaskDetailVo.setProductLineCode(productLineCode.getMsg());
+        //生产车间code
+        R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))  qtCheckTaskDetailVo.setProductWorkshopCode(productWorkshopCode.getMsg());
 
         //处理样本数
         //选择任务详情
@@ -756,46 +762,40 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         //遍历Map
                         for (Map.Entry<String, String> entry : item.getResult().entrySet()) {
                             String key = entry.getKey();
-
-                            System.out.println("1=="+key);
-                            //如果map值等于checkResult
-                            if (key.substring(0, key.length() - 1).equals(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)) {
-                                QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
-                                System.out.println("2=="+item.getResult().get(key));
-
-                                //detail设置Result
-                                qtCheckTaskDetail.setCheckResult(item.getResult().get(key));
-                                //如果是在线检则设置copy为0
-                                if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())) {
-                                    qtCheckTaskDetail.setCopy(0);
-                                } else {
-                                    //否则设置copy的值为末尾
-                                    Integer copy = Integer.valueOf(key.substring(key.length() - 1));
-                                    qtCheckTaskDetail.setCopy(copy);
+                            if(item.getItemId() != null) {
+                                //如果map值等于checkResult
+                                if (key.contains(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)) {
+                                    //得到checkResult 后面追加参数 (只保证到100内 )
+                                    String checkResultNum = key.substring(key.length()==12?(key.length() - 1):(key.length() - 2));
+                                    QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
+                                    //detail设置Result
+                                    qtCheckTaskDetail.setCheckResult(item.getResult().get(key));
+                                    //如果是在线检则设置copy为0
+                                    if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())) {
+                                        qtCheckTaskDetail.setCopy(0);
+                                    } else {
+                                        //否则设置copy的值为末尾
+                                        Integer copy = Integer.valueOf(checkResultNum);
+                                        qtCheckTaskDetail.setCopy(copy);
+                                    }
+                                    String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECTTEM + checkResultNum;
+                                    if (item.getResult().get(defectId) != null) {
+                                        qtCheckTaskDetail.setDefectId(Integer.valueOf(item.getResult().get(defectId)));
+                                    }
+                                    qtCheckTaskDetail.setTaskId(dto.getId());
+                                    qtCheckTaskDetail.setItemId(item.getItemId());
+                                    qtCheckTaskDetail.setGroupId(group.getId());
+                                    //在该list中的数据是不合格数据的值
+                                    if (CollUtil.isNotEmpty(item.getIsQualifiedList()) && item.getIsQualifiedList().contains(key)) {
+                                        qtCheckTaskDetail.setIsQualified(0);
+                                    } else {
+                                        qtCheckTaskDetail.setIsQualified(1);
+                                    }
+                                    valueModels.add(qtCheckTaskDetail);
                                 }
-                                //处理defect
-                                String defectId = QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_DEFECTTEM + key.substring(key.length() - 1);
-                                System.out.println("3=="+item.getResult().get(defectId));
-
-                                if (item.getResult().get(defectId) != null) {
-                                    qtCheckTaskDetail.setDefectId(Integer.valueOf(item.getResult().get(defectId)));
-                                }
-                                qtCheckTaskDetail.setTaskId(dto.getId());
-
-                                System.out.println();
-                                qtCheckTaskDetail.setItemId(item.getItemId());
-                                qtCheckTaskDetail.setGroupId(group.getId());
-                                //在该list中的数据是不合格数据的值
-                                if (CollUtil.isNotEmpty(item.getIsQualifiedList()) && item.getIsQualifiedList().contains(key)) {
-                                    qtCheckTaskDetail.setIsQualified(0);
-                                } else {
-                                    qtCheckTaskDetail.setIsQualified(1);
-                                }
-                                valueModels.add(qtCheckTaskDetail);
                             }
                         }
                     });
-
                 } else {
                     throw new BusinessException("检验项数据为空");
                 }
@@ -837,21 +837,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem() != null) {
             List<QtCheckTaskDetail> model = Lists.newArrayList();
             dto.getOnlineItem().forEach(tmp -> {
-                QtCheckTaskDetail detail = new QtCheckTaskDetail();
-                detail.setTaskId(dto.getId());
-                detail.setItemId(tmp.getItemId());
-                detail.setGroupId(tmp.getGroupId());
-                detail.setCopy(0);
-                List<QtOnlineCheckDefectDTO> defectList = new ArrayList<>();
-                if (CollUtil.isNotEmpty(tmp.getCategory())) {
-                    tmp.getCategory().forEach(category -> {
-                        category.getDefect().forEach(categoryTmp -> {
-                            defectList.add(categoryTmp);
-                        });
-                    });
-                }
-                detail.setDefectNum(defectList);
-                model.add(detail);
+               if(tmp.getItemId() !=null) {
+                   QtCheckTaskDetail detail = new QtCheckTaskDetail();
+                   detail.setTaskId(dto.getId());
+                   detail.setItemId(tmp.getItemId());
+                   detail.setGroupId(tmp.getGroupId());
+                   detail.setCopy(0);
+                   List<QtOnlineCheckDefectDTO> defectList = new ArrayList<>();
+                   if (CollUtil.isNotEmpty(tmp.getCategory())) {
+                       tmp.getCategory().forEach(category -> {
+                           category.getDefect().forEach(categoryTmp -> {
+                               defectList.add(categoryTmp);
+                           });
+                       });
+                   }
+                   detail.setDefectNum(defectList);
+                   model.add(detail);
+               }
             });
             qtCheckTaskDetailService.saveBatch(model);
         }
@@ -931,6 +933,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
         qtCheckTask.setCreateTime(LocalDateTime.now());
         qtCheckTask.setUpdateTime(LocalDateTime.now());
+        qtCheckTask.setNote(null);
+        qtCheckTask.setBadNum(null);
+        qtCheckTask.setCheckNum(null);
+        qtCheckTask.setGoodNum(null);
+        qtCheckTask.setStatus(null);
         save(qtCheckTask);
         //保存巡检任务与复检任务关联数据
         QtRecheckTask recheckModel = new QtRecheckTask();

@@ -55,4 +55,7 @@ public class QtCheckTaskDetailVO implements Serializable {
      * 落板备注
      */
     private String destoryInfoRemark;
+
+    private String productLineCode;//生产产线code
+    private String productWorkshopCode;//生产车间code
 }
