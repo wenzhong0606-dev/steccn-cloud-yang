@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class QtLineChartBiBarDTO<T> implements Serializable {
+public class QtLineChartBiBarDTO<T,Q> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -32,4 +32,9 @@ public class QtLineChartBiBarDTO<T> implements Serializable {
      *第二层数据
      */
     private List<List<QtSeriesDataDTO>> seriesDataVO;
+
+    /**
+     * 其余数据
+     */
+    private Q other;
 }
