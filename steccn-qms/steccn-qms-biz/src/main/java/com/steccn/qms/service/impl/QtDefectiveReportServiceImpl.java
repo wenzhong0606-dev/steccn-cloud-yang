@@ -738,7 +738,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
@@ -765,7 +765,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()) && Objects.nonNull(dto1.getDefectId()));
+        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
@@ -790,7 +790,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
             xMap = mapMapTupleDTO.getField2();
         }
-
 
         for (int i = 1; i < cutDate.size(); i++) {
             LocalDateTime start = cutDate.get(i - 1);
