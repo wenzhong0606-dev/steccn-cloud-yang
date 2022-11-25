@@ -303,6 +303,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(qtCheckTask.getProductLine() !=null) {
             //生产产线code
             if(qtCheckTask.getProductLine().getId() !=null) {
+                qtCheckTaskListVo.setProductLineId(qtCheckTask.getProductLine().getId().toString());
                 R<String> productLineCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductLine().getId().toString()));
                 if (org.apache.commons.lang3.StringUtils.isNotBlank(productLineCode.getMsg()))
                     qtCheckTaskListVo.setProductLineCode(productLineCode.getMsg());
@@ -311,6 +312,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(qtCheckTask.getProductWorkshop() !=null) {
             //生产车间code
             if(qtCheckTask.getProductWorkshop().getId() !=null) {
+                qtCheckTaskListVo.setProductWorkshopId(qtCheckTask.getProductWorkshop().getId().toString());
                 R<String> productWorkshopCode = remoteOfficeFeign.getByIdSysOfficeInfo(Long.parseLong(qtCheckTask.getProductWorkshop().getId().toString()));
                 if (org.apache.commons.lang3.StringUtils.isNotBlank(productWorkshopCode.getMsg()))
                     qtCheckTaskListVo.setProductWorkshopCode(productWorkshopCode.getMsg());
