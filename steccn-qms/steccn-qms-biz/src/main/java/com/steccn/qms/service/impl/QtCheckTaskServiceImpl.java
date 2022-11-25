@@ -341,7 +341,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //查看是否有details
                 QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
                         .eq(QtCheckTaskCopy::getTaskId, id)
-                        .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()));
+                        .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()).last("limit 1"));
                 QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
                 qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
                 qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVOTmp.getCheckGroup());
