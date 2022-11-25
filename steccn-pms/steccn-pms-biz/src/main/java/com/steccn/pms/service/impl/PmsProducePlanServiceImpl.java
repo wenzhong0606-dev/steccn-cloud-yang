@@ -10,6 +10,7 @@ import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -186,6 +187,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return true;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public ProducePlanImportVO excelImportData(PmExcelDTO dto) throws IOException {
         Integer updateFlag = dto.getUpdateFlag();
@@ -261,8 +263,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)) {
-            if (!updateBatchById(updateList)) {
-                throw new BusinessException("生产月计划修改失败");
+            for (PmsProducePlan pmsProducePlan : updateList) {
+                update(pmsProducePlan,new LambdaUpdateWrapper<PmsProducePlan>()
+                        .eq(PmsProducePlan::getMaterialId,pmsProducePlan.getMaterialId()).eq(PmsProducePlan::getPlanDate,pmsProducePlan.getPlanDate()));
             }
         }
 
