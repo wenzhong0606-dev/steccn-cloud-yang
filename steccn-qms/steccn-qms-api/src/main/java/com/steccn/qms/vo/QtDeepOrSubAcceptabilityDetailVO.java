@@ -40,6 +40,9 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
      */
     private LocalDate classesDate;
 
+    @ApiModelProperty("班次日期")
+    private String classesDateString;
+
     /**
      * 班次
      */

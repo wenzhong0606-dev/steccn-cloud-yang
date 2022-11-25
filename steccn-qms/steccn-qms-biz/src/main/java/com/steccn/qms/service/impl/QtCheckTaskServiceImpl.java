@@ -1326,8 +1326,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 Objects.nonNull(v.getClassTime()) &&
                 Objects.nonNull(v.getProductWorkshopId()) &&
                 Objects.nonNull(v.getProductLineId()) &&
-                Objects.nonNull(v.getMaterialId()) &&
-                Objects.nonNull(v.getCustomerId())).collect(Collectors.toList());
+                Objects.nonNull(v.getMaterialId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(rateDataList)) {
             page.setTotal(0L);
             page.setRecords(Lists.newArrayList());
@@ -1358,8 +1357,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     for (Map.Entry<Integer, List<QtCheckTaskReportVO>> lineEntry : lineMap.entrySet()) {
                         Map<Long, List<QtCheckTaskReportVO>> materialMap = lineEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialId));
                         for (Map.Entry<Long, List<QtCheckTaskReportVO>> materialEntry : materialMap.entrySet()) {
-                            Map<Integer, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
-                            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
+//                            Map<Integer, List<QtCheckTaskReportVO>> customerMap = materialEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getCustomerId));
+//                            for (Map.Entry<Integer, List<QtCheckTaskReportVO>> customerEntry : customerMap.entrySet()) {
                                 QtDeepOrSubAcceptabilityDetailVO resVO = new QtDeepOrSubAcceptabilityDetailVO();
                                 resVO.setClassesDate(classDateEntry.getKey());
                                 QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(classEntry.getKey());
@@ -1367,10 +1366,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setProductWorkshopName(officeIdNameMap.getOrDefault(pwsEntry.getKey(), Strings.EMPTY));
                                 resVO.setProductLineName(officeIdNameMap.getOrDefault(lineEntry.getKey(), Strings.EMPTY));
                                 resVO.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), Strings.EMPTY));
-                                resVO.setCustomerName(officeIdNameMap.getOrDefault(customerEntry.getKey(), Strings.EMPTY));
+//                                resVO.setCustomerName(officeIdNameMap.getOrDefault(customerEntry.getKey(), Strings.EMPTY));
                                 List<QtSubOrDeepFPYTaskDetailsVO> taskDetails = Lists.newArrayList();
                                 List<BigDecimal> rateList = Lists.newArrayList();
-                                customerEntry.getValue().forEach(ele -> {
+                                materialEntry.getValue().forEach(ele -> {
                                     QtSubOrDeepFPYTaskDetailsVO detail = new QtSubOrDeepFPYTaskDetailsVO();
                                     detail.setCode(ele.getCode());
                                     detail.setDetailAcceptability(BigDecimalUtil.divide(BigDecimal.valueOf(ele.getGoodNum()).multiply(BigDecimalUtil.HUNDRED), BigDecimal.valueOf(ele.getCheckNum())));
@@ -1386,15 +1385,36 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 resVO.setAcceptability(divide);
                                 resVO.setTaskDetails(taskDetails);
                                 resList.add(resVO);
-                            }
+//                            }
                         }
                     }
                 }
             }
         }
+        //过滤图例
+        legendFilter(dto,resList);
         //分页
         Page<QtDeepOrSubAcceptabilityDetailVO> page1 = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
         return page1;
+    }
+
+    /**
+     * 图例过滤
+     * @param dto
+     * @param pageList
+     * @return
+     */
+    private List<QtDeepOrSubAcceptabilityDetailVO> legendFilter(QtSubOrDeepAcceptabilityDTO dto, List<QtDeepOrSubAcceptabilityDetailVO> pageList) {
+        //对比模式下考虑到图例的过滤
+        if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
+            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassName())).collect(Collectors.toList());
+        }
+        pageList.forEach(detailVO -> detailVO.setClassesDateString(LocalDateUtil.localDateFormat(detailVO.getClassesDate(), DatePattern.NORM_DATE_PATTERN)));
+        return pageList;
     }
 
     private LambdaQueryWrapper<QtCheckTask> getQtDeepOrSubAcceptabilityWrapper(QtSubOrDeepAcceptabilityDTO dto) {

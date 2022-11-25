@@ -65,6 +65,11 @@ public class QtIQCAcceptabilityDetailVO implements Serializable {
     private QtBaseIdNameDTO supplier;
 
     /**
+     * 客户
+     */
+    private QtBaseIdNameDTO customer;
+
+    /**
      * 生产车间的id
      */
     private QtBaseIdNameDTO productWorkshop;

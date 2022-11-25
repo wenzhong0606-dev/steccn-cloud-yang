@@ -165,13 +165,13 @@ public class QtCheckTask implements Serializable {
     @TableField(value = "supplier ->> '$.name'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private String supplierName;
 
     @TableField(value = "supplier ->> '$.id'",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER,
-            select = false)
+            select = true)
     private Integer supplierId;
 
     /**

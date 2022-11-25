@@ -138,14 +138,14 @@ public class QtCheckTaskController {
     }
 
     @PostMapping("/deep/acceptability/detail")
-    @ApiOperation(value = "深加工合格率趋势明细表分页")
+    @ApiOperation(value = "深加工巡检合格率趋势-明细表分页")
     public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtDeepAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(QtManagerConstant.DEEP_OFFICE_NAME,dto));
     }
 
     @PostMapping("/sub/acceptability/detail")
-    @ApiOperation(value = "基片合格率趋势明细表分页")
+    @ApiOperation(value = "基片巡检合格率-明细表分页")
     public R<Page<QtDeepOrSubAcceptabilityDetailVO>> getQtSubAcceptabilityDetail(@RequestBody QtSubOrDeepAcceptabilityDTO dto) {
         dto.setTaskType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
         return R.success(qtCheckTaskService.getQtDeepOrSubAcceptabilityDetailVO(QtManagerConstant.SUB_OFFICE_NAME,dto));
