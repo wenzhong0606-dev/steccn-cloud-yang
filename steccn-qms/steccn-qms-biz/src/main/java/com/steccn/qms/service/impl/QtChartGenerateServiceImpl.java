@@ -849,7 +849,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (noCompareData.get(tmpDate) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
                         } else {
-                            entry.getValue().getData().add(noCompareData.get(tmpDate));
+                            entry.getValue().getData().add(noCompareData.get(tmpDate).setScale(2,BigDecimal.ROUND_HALF_DOWN));
                         }
                     }
                 }else {
@@ -857,7 +857,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (dataMap.get(entry.getKey()) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
                         } else {
-                            entry.getValue().getData().add(dataMap.get(entry.getKey()));
+                            entry.getValue().getData().add(dataMap.get(entry.getKey()).setScale(2,BigDecimal.ROUND_HALF_DOWN));
                         }
                     }
                 }
@@ -900,7 +900,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             for (Map.Entry<LocalDate, BigDecimal> entry : groupByDate.entrySet()) {
                 QtChartPieValueVO<BigDecimal> pieValue = new QtChartPieValueVO<>();
                 pieValue.setName(entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                pieValue.setValue(entry.getValue());
+                pieValue.setValue(entry.getValue().setScale(2,BigDecimal.ROUND_HALF_DOWN));
                 data.add(pieValue);
             }
         }
@@ -1046,37 +1046,39 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
+                    graphDTO.setXAxis(reasonEntry.getKey());
                     for(Map.Entry<String, List<QtChartSubDetailDTO>> orderEntry:orderCompare.entrySet()){
-                        graphDTO.setXAxis(reasonEntry.getKey());
                         //柱子里的堆叠图
                         List<QtChartSubDetailDTO> duiValue = orderEntry.getValue();
                         List<TupleDTO<String, BigDecimal>> tupleDTOList = new ArrayList<>();
                         BigDecimal sunAmount = BigDecimal.ZERO;
+                        TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+                        tupleDTO.setField1(orderEntry.getKey());
                         for(QtChartSubDetailDTO tmp:duiValue){
+//                            TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
+//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+//                                tupleDTO.setField1(tmp.getWorkOrder());
+//                            }
+//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+//                                tupleDTO.setField1(tmp.getProductWorkShopName());
+//                            }
+//                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+//                                tupleDTO.setField1(tmp.getProductLineName());
+//                            }
                             sunAmount = BigDecimalUtil.add(sunAmount,tmp.getLossWeight());
-                            TupleDTO<String,BigDecimal> tupleDTO = new TupleDTO();
-                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                                tupleDTO.setField1(tmp.getWorkOrder());
-                            }
-                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                                tupleDTO.setField1(tmp.getProductWorkShopName());
-                            }
-                            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                                tupleDTO.setField1(tmp.getProductLineName());
-                            }
-                            tupleDTO.setField2(tmp.getLossWeight());
-                            tupleDTOList.add(tupleDTO);
                         }
+                        tupleDTO.setField2(sunAmount);
+                        tupleDTOList.add(tupleDTO);
                         //堆叠多次
                         graphDTO.setData(tupleDTOList);
                         stackGraphDTOS.add(graphDTO);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(laAmount,sunAmount);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmount);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
-                legend = Lists.reverse(legend);
+//                legend = Lists.reverse(legend);
                 resultDTO.setLegend(legend);
                 return resultDTO;
             }
