@@ -5,11 +5,17 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Maps;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsPullForce;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
@@ -44,6 +50,8 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
     private final PmsReportWorkMapper pmsReportWorkMapper;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
 
 
     @Override
@@ -176,6 +184,9 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime,dto.getProductLineIdList());
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
+        Set<Long> materialIdSet = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, List<SysSpareUnitConversionVO>> unitMap = remoteSpareUnitConvertFeignApi.convert(materialIdSet).getData();
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT).getData();
         //获取分组日期
         for (PmsReportWorkGroupVO pmsReportWorkGroupVO : reportWorkGroupVOList) {
             LocalDateTime dateTime = pmsReportWorkGroupVO.getDate();
@@ -191,6 +202,15 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             if (Objects.nonNull(sysOfficeMap)) {
                 pmsReportWorkGroupVO.setWorkshopId(sysOfficeMap.get(pmsReportWorkGroupVO.getProductLineId()).getParentId());
             }
+            List<SysSpareUnitConversionVO> unitConversionVOList = unitMap.get(pmsReportWorkGroupVO.getMaterialId());
+            Optional<SysSpareUnitConversionVO> optional = unitConversionVOList.stream().filter(sysSpareUnitConversionVO -> sysSpareUnitConversionVO.equals(sysDictVO.getId())).findAny();
+            if (optional.isPresent()) {
+                BigDecimal quantity = optional.get().getQuantity();
+                BigDecimal conversionQuantity = optional.get().getConversionQuantity();
+                BigDecimal work = pmsReportWorkGroupVO.getQuantity();
+                pmsReportWorkGroupVO.setQuantity(BigDecimalUtil.divide(work,quantity).multiply(conversionQuantity));
+            }
+
         }
 
         Map<String, List<PmsReportWorkGroupVO>> groupBy = reportWorkGroupVOList

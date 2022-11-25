@@ -32,4 +32,6 @@ public class PmsReportWorkGroupVO {
      */
     private Integer productLineId;
 
+    private Long materialId;
+
 }
