@@ -36,4 +36,13 @@ public class LoginController {
     public R<SteccnTokenVO> login(@RequestParam("username") String username, @RequestParam("password") String password) {
         return loginService.login(username,password);
     }
+
+    /**
+     * 退出登录
+     * @return r
+     */
+    @GetMapping("/logout")
+    public R<Boolean> loginOut() {
+        return R.success(Boolean.TRUE);
+    }
 }
