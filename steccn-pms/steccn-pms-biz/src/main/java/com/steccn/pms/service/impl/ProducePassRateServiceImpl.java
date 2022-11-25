@@ -92,6 +92,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 producePassRateVO.setProductLineId(reportWorkGroupVO.getProductLineId());
                 producePassRateVO.setWorkshopId(reportWorkGroupVO.getWorkshopId());
                 producePassRateVO.setDayPassRate(dayPassRate);
+                producePassRateVO.setYield(reportWorkGroupVO.getQuantity());
 
                 if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
                     Optional<PmsPullForce> optional = pmsPullForceList.stream()
@@ -101,6 +102,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                                     && pmsPullForce.getWorkshopId().equals(reportWorkGroupVO.getWorkshopId())
                                     && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
                     if (optional.isPresent()) {
+                        producePassRateVO.setLaAmount(optional.get().getQuantity());
                         producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(),optional.get().getQuantity(),4));
                     } else {
                         producePassRateVO.setPassRate(BigDecimal.ZERO);
