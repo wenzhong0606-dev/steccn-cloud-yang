@@ -391,7 +391,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                                     result.put("checkResult" + num, itemGroupTmp.getCheckResult());
                                                 }
                                                 if (itemGroupTmp.getDefectId() != null) {
-                                                    result.put("defectId" + num, itemGroupTmp.getDefectId().toString());
+                                                    result.put("defect" + num, itemGroupTmp.getDefectId().toString());
                                                     result.put("defectName" + num, itemGroupTmp.getDefectName());
                                                 }
                                                 if (itemGroupTmp.getIsQualified() != null && itemGroupTmp.getIsQualified().equals(0)) {
