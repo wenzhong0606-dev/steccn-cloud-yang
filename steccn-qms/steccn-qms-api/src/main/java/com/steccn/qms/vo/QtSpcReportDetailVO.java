@@ -72,18 +72,18 @@ public class QtSpcReportDetailVO<T> implements Serializable {
      */
     private BigDecimal downLimit;
 
-//    /**
-//     * 检验项详情
-//     */
-//   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
+    /**
+     * 检验项详情
+     */
+   private QtSpcReportDetailTaskAllVO detailTaskAllVO;
 
 //    /**
 //     * 表头的字段及该字段下的数据
 //     */
 //    private Map<String, Object> details;
 
-    /**
-     * 模板3
-     */
-    private List<Object> taskDetails;
+//    /**
+//     * 模板3
+//     */
+//    private List<Object> taskDetails;
 }

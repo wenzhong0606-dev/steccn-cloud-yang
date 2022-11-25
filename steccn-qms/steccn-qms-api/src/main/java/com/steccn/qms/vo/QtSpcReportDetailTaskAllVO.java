@@ -5,13 +5,14 @@ import org.apache.poi.ss.formula.functions.T;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class QtSpcReportDetailTaskAllVO<T> implements Serializable {
     /**
      * 表头
      */
-    private List<String> header;
+    private List<QtSpcHeadTitleVO> header;
 
     /**
      * 任务详情

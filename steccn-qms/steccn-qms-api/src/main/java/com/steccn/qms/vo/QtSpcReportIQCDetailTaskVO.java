@@ -11,30 +11,30 @@ public class QtSpcReportIQCDetailTaskVO implements Serializable {
     /**
      * 检验任务单号
      */
-    private Map<String,String> code;
+    private String code;
 
     /**
      * 检验完成时间
      */
-    private Map<String,String> finishedTime;
+    private String finishedTime;
 
     /**
      * 检验结果
      */
-    private Map<String, BigDecimal> checkResult;
+    private String checkResult;
 
     /**
      * 物料名称
      */
-    private Map<String,String> materialName;
+    private String materialName;
 
     /**
      * 物料使用车间
      */
-    private Map<String, QtBaseIdNameDTO> workshop;
+    private  QtBaseIdNameDTO workshop;
 
     /**
      * 供应商
      */
-    private Map<String,QtBaseIdNameDTO> supplier;
+    private QtBaseIdNameDTO supplier;
 }

@@ -164,6 +164,13 @@ public interface QtManagerConstant {
     String SPC_HEADER_FIELD_PRODUCT_LINE="生产产线";
     String SPC_HEADER_FIELD_WORKSHOP ="物料使用车间";
     String SPC_HEADER_FILELD_SUPPLIER="供应商";
+    String SPC_HEADER_FIELD_ORDER_VALUE ="code";
+    String SPC_HEADER_FIELD_FINISHED_TIME_VALUE ="finishedTime";
+    String SPC_HEADER_FIELD_FINISHED_CHECK_RESULT_VALUE ="checkResult";
+    String SPC_HEADER_FIELD_MATERIAL_NAME_VALUE ="materialName";
+    String SPC_HEADER_FIELD_PRODUCT_LINE_VALUE ="productLine";
+    String SPC_HEADER_FIELD_WORKSHOP_VALUE ="workshop";
+    String SPC_HEADER_FILELD_SUPPLIER_VALUE ="supplier";
 
 
     /**
