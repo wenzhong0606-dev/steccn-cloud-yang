@@ -203,12 +203,14 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 pmsReportWorkGroupVO.setWorkshopId(sysOfficeMap.get(pmsReportWorkGroupVO.getProductLineId()).getParentId());
             }
             List<SysSpareUnitConversionVO> unitConversionVOList = unitMap.get(pmsReportWorkGroupVO.getMaterialId());
-            Optional<SysSpareUnitConversionVO> optional = unitConversionVOList.stream().filter(sysSpareUnitConversionVO -> sysSpareUnitConversionVO.equals(sysDictVO.getId())).findAny();
+            Optional<SysSpareUnitConversionVO> optional = unitConversionVOList.stream().filter(sysSpareUnitConversionVO -> sysSpareUnitConversionVO.getConversionUnitId().equals(sysDictVO.getId())).findAny();
             if (optional.isPresent()) {
                 BigDecimal quantity = optional.get().getQuantity();
                 BigDecimal conversionQuantity = optional.get().getConversionQuantity();
                 BigDecimal work = pmsReportWorkGroupVO.getQuantity();
                 pmsReportWorkGroupVO.setQuantity(BigDecimalUtil.divide(work,quantity).multiply(conversionQuantity));
+            } else {
+                pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
             }
 
         }
