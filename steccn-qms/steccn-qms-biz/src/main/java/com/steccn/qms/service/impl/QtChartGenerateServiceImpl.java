@@ -153,7 +153,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //若物料后有n+1
                                     int indexOf = materialList.indexOf(tmp.getMaterialId());
                                     if (indexOf + 1 != materialList.size()) {
-                                        materialList.remove(indexOf);
                                         //若物料n关联的生产订单开始、结束时间均非空，且物料n关联的最晚生产订单结束时间 <= 物料n+1的最早巡检时间：根据生产订单的开始、结束时间计算班次b的时段内各物料的生产时长，单位为h。例如某白班生产2种物料，物料1关联一个14:34:23结束的生产订单，物料2的巡检从15:00:00开始，则14:34:23 - 8:00:00（减法）为物料1的生产时长，20:00:00 - 14:34:23（减法）为物料2的生产时长
                                         if (pmsProduceOrderVO.getActualStartTime() != null && pmsProduceOrderVO.getActualEndTime() != null && pmsProduceOrderVO.getActualEndTime().isBefore(checkTaskWorkOrderList.get(i + 1).getFinishedTime())) {
                                             if (materialProduceTime.get(tmp.getMaterialId()) == null) {
