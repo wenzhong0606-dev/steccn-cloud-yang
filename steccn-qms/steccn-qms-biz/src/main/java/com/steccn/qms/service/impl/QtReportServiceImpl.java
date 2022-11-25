@@ -624,6 +624,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem=new QtCheckItem();
         qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
+        List<QtCheckItem> itemIds = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                .eq(QtCheckItem::getCode, qtCheckItem.getCode()));
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
         String measureUnitName = new String();
         if (Objects.nonNull(qtCheckItem)){
@@ -704,7 +706,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                     //检验任务结果集合
                     List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .eq(QtCheckTaskDetail::getTaskId, s.getId())).stream()
+                                    .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                                    .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                            .stream()
                             .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
                     stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
