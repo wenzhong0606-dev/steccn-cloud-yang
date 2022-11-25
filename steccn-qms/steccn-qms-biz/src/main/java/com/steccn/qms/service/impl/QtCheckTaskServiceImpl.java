@@ -38,6 +38,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -340,7 +341,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //查看是否有details
                 QtCheckTaskCopy qtCheckTaskCopy = qtCheckTaskCopyMapper.selectOne(new LambdaQueryWrapper<QtCheckTaskCopy>()
                         .eq(QtCheckTaskCopy::getTaskId, id)
-                        .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()));
+                        .eq(QtCheckTaskCopy::getCopy, tmp.getCopy()).last("limit 1"));
                 QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
                 qtCheckTaskDetailCopyVO.setNum(tmp.getCopy());
                 qtCheckTaskDetailCopyVO.setCheckGroup(qtCheckPlanDetailsVOTmp.getCheckGroup());
@@ -1523,6 +1524,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<Integer, List<QtCheckTaskReportVO>> contrastDataMap = mapMapTupleDTO.getField1();
         Map<Integer, String> idNameMap = mapMapTupleDTO.getField2();
 
+        List<QtCheckTaskReportVO> allSelectList = Lists.newArrayList();
         for (int i = 1; i < cutDate.size(); i++) {
             LocalDateTime start = cutDate.get(i - 1);
             LocalDateTime end = cutDate.get(i);
@@ -1534,6 +1536,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
+            //加入所有下拉选项数据
+            allSelectList.addAll(conditionDataList);
             BiStackGraphDTO<String, BigDecimal> biStackGraphDTO = new BiStackGraphDTO<>();
             biStackGraphDTO.setXAxis(LocalDateTimeUtil.format(start, DatePattern.NORM_DATE_PATTERN));
             biStackGraphDTO.setData(Lists.newArrayList());
@@ -1553,6 +1557,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //自定义转换工具
         QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
+        //获取所有的下拉选项
+        qtLineChartBiBarDTO.setOther(materialSelect(allSelectList));
         return qtLineChartBiBarDTO;
     }
 
@@ -2278,7 +2284,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //自定义转换工具
         QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
+        qtLineChartBiBarDTO.setOther(materialSelect(flatDataList));
         return qtLineChartBiBarDTO;
+    }
+
+
+    /**
+     * 获取物料所有下拉选项
+     * @param allSelectList 所有数据
+     * @return
+     */
+    private List<BaseSelectVO<Long>> materialSelect( List<QtCheckTaskReportVO> allSelectList){
+        //获取所有的下拉选项
+        Set<Long> materialIdSet = allSelectList.stream().map(QtCheckTaskReportVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+        List<BaseSelectVO<Long>> materialSelectList = Lists.newArrayList();
+        materialMap.entrySet().forEach(entry -> materialSelectList.add(new BaseSelectVO<>(entry.getKey(), entry.getValue())));
+        return materialSelectList;
     }
 
     @SneakyThrows
