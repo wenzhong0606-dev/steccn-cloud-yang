@@ -681,13 +681,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //先删除可能暂存的值
                 qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                 List<QtCheckTaskCopy> qtCheckTaskCopies2 = Lists.newArrayList();
-
                 Map<String, QtCheckTaskCopy> objectMap = new HashMap<>();
-
                 dto.getSampleInfoList().forEach(sampleInfo -> {
                     //遍历Map
                     for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
-
                         QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
                         if (Objects.nonNull(objectMap.get(entry.getKey()))) {
                             if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
@@ -699,7 +696,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(entry.getValue()));
                                 }
                             }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
-                                objectMap.get(entry.getKey()).setAnalystName(entry.getValue());
+                              //  objectMap.get(entry.getKey()).setAnalystName(entry.getValue());
+                                objectMap.get(entry.getKey()).setAnalystName(sampleInfo.getResult().get("checkResult1"));
+                                objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(sampleInfo.getResult().get("analyst1")));
                             }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
@@ -721,30 +720,32 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 }
                             }
                         } else {
-                            if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
-                                qtCheckTaskCopy.setSampleNum(entry.getValue());
-                            }else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
-                                qtCheckTaskCopy.setLicensePlate(entry.getValue());
-                            }else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
-                                if (entry.getKey() != null) {
-                                    qtCheckTaskCopy.setAnalyst(Integer.valueOf(entry.getValue()));
+                                if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
+                                    qtCheckTaskCopy.setSampleNum(entry.getValue());
+                                } else if (QtManagerConstant.LICENSEPLATE.equals(sampleInfo.getId())) {
+                                    qtCheckTaskCopy.setLicensePlate(entry.getValue());
+                                } else if (QtManagerConstant.ANALYST.equals(sampleInfo.getId())) {
+                                    if (entry.getKey() != null) {
+                                        qtCheckTaskCopy.setAnalyst(Integer.valueOf(entry.getValue()));
+                                    }
+                                } else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
+                                    qtCheckTaskCopy.setAnalystName(entry.getValue());
+                                } else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
+                                    if (StringUtils.isNotBlank(entry.getKey())) {
+                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                    }
+                                } else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
+                                    if (StringUtils.isNotBlank(entry.getKey())) {
+                                        qtCheckTaskCopy.setAnalystTime(LocalDateTime.parse(entry.getValue()));
+                                    }
+                                } else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
+                                    if (StringUtils.isNotBlank(entry.getKey())) {
+                                        qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
+                                    }
                                 }
-                            }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
-                                qtCheckTaskCopy.setAnalystName(entry.getValue());
-                            }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
-                                if (StringUtils.isNotBlank(entry.getKey())) {
-                                    qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
-                                }
-                            }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
-                                if (StringUtils.isNotBlank(entry.getKey())) {
-                                    qtCheckTaskCopy.setAnalystTime(LocalDateTime.parse(entry.getValue()));
-                                }
-                            }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())){
-                                if (StringUtils.isNotBlank(entry.getKey())) {
-                                    qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
-                                }
+                            if(!entry.getKey().contains("analyst")){
+                                objectMap.put(entry.getKey(),qtCheckTaskCopy);
                             }
-                            objectMap.put(entry.getKey(),qtCheckTaskCopy);
                         }
                     }
                 });
