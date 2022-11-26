@@ -1728,9 +1728,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
 
-        if (CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
-            return page;
-        }
+//        if (CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
+//            return page;
+//        }
         //4.查询分页数据
         IPage<QtCheckTask> resPage = page(page, new LambdaQueryWrapper<QtCheckTask>()
                 .ge(QtCheckTask::getFinishedTime, start)
@@ -1744,7 +1744,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-        qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(dto.getWorkshopNameList())) {
+            qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
+        }
         Set<Long> taskIds = qtCheckTasks.stream().map(QtCheckTask::getId).collect(Collectors.toSet());
         Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
         List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
