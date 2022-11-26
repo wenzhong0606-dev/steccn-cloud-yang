@@ -943,8 +943,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         queryWrapper.eq(QtCheckTask::getCode,dto.getOriginalTaskCode());
         QtCheckTask originalQtCheckTask = qtCheckTaskMapper.selectOne(queryWrapper);
         BeanUtils.copyProperties(originalQtCheckTask, qtCheckTask);
-        qtCheckTask.setMaterialId(dto.getMaterialId());
-        qtCheckTask.setMaterialWorkshop(dto.getMaterialWorkshop());
         qtCheckTask.setId(null);
         qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
@@ -1703,7 +1701,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 resList.forEach(ele -> ele.setSamplingTime(copyMap.get(ele.getId())));
                 //来料检需要过滤取样日期
                 if(Objects.nonNull(dto.getSamplingTime())){
-                    resList = resList.stream().filter(v -> dto.getSamplingTime().equals(v.getSamplingTime().toLocalDate())).collect(Collectors.toList());
+                    resList = resList.stream().filter(v -> Objects.nonNull(v.getSamplingTime()) && dto.getSamplingTime().equals(v.getSamplingTime().toLocalDate())).collect(Collectors.toList());
                 }
 
             }
