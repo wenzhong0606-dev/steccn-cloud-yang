@@ -152,7 +152,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
 
     private BigDecimal getDefectJp(List<QtCheckTask> qtCheckTaskList) {
         int badNum = 0;
-        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
+        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(qtCheckTask.getTaskType())
                 && Objects.nonNull(qtCheckTask.getProductWorkshop())
                 && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                 && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
