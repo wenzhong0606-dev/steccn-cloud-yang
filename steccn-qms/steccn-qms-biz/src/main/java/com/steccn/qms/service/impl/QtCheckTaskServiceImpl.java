@@ -1734,9 +1734,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //3.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
 
-//        if (CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
-//            return page;
-//        }
+        if (Objects.nonNull(dto.getCompare()) && CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
+            return page;
+        }
         //4.查询分页数据
         IPage<QtCheckTask> resPage = page(page, new LambdaQueryWrapper<QtCheckTask>()
                 .ge(QtCheckTask::getFinishedTime, start)
@@ -1750,7 +1750,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //6.拷贝返回的数据
         List<QtCheckTask> qtCheckTasks = BeanUtil.copyToList(resPage.getRecords(), QtCheckTask.class);
-        if (CollectionUtils.isNotEmpty(dto.getWorkshopNameList())) {
+        if (Objects.nonNull(dto.getCompare()) && CollectionUtils.isNotEmpty(dto.getWorkshopNameList())) {
             qtCheckTasks = qtCheckTasks.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
         }
         Set<Long> taskIds = qtCheckTasks.stream().map(QtCheckTask::getId).collect(Collectors.toSet());
@@ -2362,11 +2362,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         .le(QtCheckTask::getFinishedTime, end)
                         .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()));
 
-        //过滤数据
-        qtCheckTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
+        if (Objects.nonNull(dto.getCompare()) && CollectionUtils.isNotEmpty(dto.getWorkshopNameList())) {
+            //过滤数据
+            qtCheckTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> dto.getWorkshopNameList().contains(qtCheckTask.getMaterialWorkshop().getName())).collect(Collectors.toList());
+        } else if (Objects.nonNull(dto.getCompare()) && CollectionUtils.isEmpty(dto.getWorkshopNameList())) {
+            qtCheckTaskList = Lists.newArrayList();
+        }
 
         //创建返回数据的类
         List<AccessoryAcceptabilityDownVO> acceptabilityDownVOList = Lists.newArrayList();
+
+
         qtCheckTaskList.forEach(q -> {
             AccessoryAcceptabilityDownVO acceptabilityDownVO = new AccessoryAcceptabilityDownVO();
 

@@ -16,6 +16,10 @@ public class QtAccessoryAcceptabilityDetailDTO extends BasePageDTO {
 
     @NotNull(message = "时间不能为空")
     private LocalDate dateTime;
+    /**
+     * 对比
+     */
+    private Integer compare;
 
     private List<String> workshopNameList;
 }
