@@ -1686,6 +1686,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     }
                 }
                 resList.forEach(ele -> ele.setSamplingTime(copyMap.get(ele.getId())));
+                //来料检需要过滤取样日期
+                if(Objects.nonNull(dto.getSamplingTime())){
+                    resList = resList.stream().filter(v -> dto.getSamplingTime().equals(v.getSamplingTime().toLocalDate())).collect(Collectors.toList());
+                }
+
             }
         }
         return resList;
@@ -2287,7 +2292,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //自定义转换工具
         QtLineChartBiBarDTO qtLineChartBiBarDTO = StackGraphUtil.biConvertData(stackGraphDTOList, Boolean.FALSE);
-        qtLineChartBiBarDTO.setOther(materialSelect(flatDataList));
+        BaseScreenVO baseScreenVO = new BaseScreenVO();
+        baseScreenVO.setMaterialScreen(materialSelect(flatDataList));
+        baseScreenVO.setSampleTimeScreen(sampleTimeSelect(flatDataList));
+        qtLineChartBiBarDTO.setOther(baseScreenVO);
         return qtLineChartBiBarDTO;
     }
 
@@ -2305,6 +2313,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         materialMap.entrySet().forEach(entry -> materialSelectList.add(new BaseSelectVO<>(entry.getKey(), entry.getValue())));
         return materialSelectList;
     }
+
+    /**
+     * 获取取样时间下拉选项
+     * @param allSelectList 所有数据
+     * @return
+     */
+    private List<BaseSelectVO<LocalDate>> sampleTimeSelect( List<QtCheckTaskReportVO> allSelectList){
+        //获取所有的下拉选项
+        Set<LocalDate> sampleTimeIdSet = allSelectList.stream().filter(v -> Objects.nonNull(v.getSamplingTime())).map(v -> v.getSamplingTime().toLocalDate()).collect(Collectors.toSet());
+
+        List<LocalDate> list = new ArrayList<>(sampleTimeIdSet);
+        Collections.sort(list);
+        List<BaseSelectVO<LocalDate>> sampleTimeSelectList = Lists.newArrayList();
+        list.forEach(e -> sampleTimeSelectList.add(new BaseSelectVO<>(e, LocalDateTimeUtil.format(e, DatePattern.NORM_DATE_PATTERN))));
+        return sampleTimeSelectList;
+    }
+
 
     @SneakyThrows
     @Override
