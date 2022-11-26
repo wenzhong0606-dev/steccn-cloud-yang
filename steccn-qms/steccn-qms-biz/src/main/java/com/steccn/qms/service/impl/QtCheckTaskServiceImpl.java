@@ -2623,13 +2623,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private TupleDTO<Map<String, List<QtCheckTaskReportVO>>, Map<String, String>> rateGroup(Integer compare, List<QtCheckTaskReportVO> flatDataList) {
         Map<String, List<QtCheckTaskReportVO>> targetMap;
         Map<String, String> idNameMap = Maps.newHashMap();
+        List<QtCheckTaskReportVO> flatDataCopyData = null;
         if (QtManagerConstant.QtChartCompareEnum.SAMPLINGTIME.getCode().equals(compare)) {
-            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getSamplingTime())).collect(Collectors.groupingBy(x -> String.valueOf(x.getSamplingTime().toLocalDate())));
+            flatDataCopyData = flatDataList.stream().filter(v -> Objects.nonNull(v.getSamplingTime())).collect(Collectors.toList());
+            flatDataList.clear();
+            flatDataList.addAll(flatDataCopyData);
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(x -> String.valueOf(x.getSamplingTime().toLocalDate())));
             for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
                 idNameMap.put(e.getKey(), e.getKey() + "取样");
             }
         } else if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(compare)) {
-            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.groupingBy(v -> String.valueOf(v.getMaterialWorkshopId())));
+            flatDataCopyData = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.toList());
+            flatDataList.clear();
+            flatDataList.addAll(flatDataCopyData);
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(v -> String.valueOf(v.getMaterialWorkshopId())));
             Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).map(QtCheckTaskReportVO::getMaterialWorkshopId).collect(Collectors.toSet());
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
             for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
@@ -2637,7 +2644,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
         } else {
             //供应商
-            targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getSupplierId())).collect(Collectors.groupingBy(v -> String.valueOf(v.getSupplierId())));
+            flatDataCopyData = flatDataList.stream().filter(v -> Objects.nonNull(v.getSupplierId())).collect(Collectors.toList());
+            flatDataList.clear();
+            flatDataList.addAll(flatDataCopyData);
+            targetMap = flatDataList.stream().collect(Collectors.groupingBy(v -> String.valueOf(v.getSupplierId())));
             Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getSupplierId())).map(QtCheckTaskReportVO::getSupplierId).collect(Collectors.toSet());
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
             for (Map.Entry<String, List<QtCheckTaskReportVO>> e : targetMap.entrySet()) {
