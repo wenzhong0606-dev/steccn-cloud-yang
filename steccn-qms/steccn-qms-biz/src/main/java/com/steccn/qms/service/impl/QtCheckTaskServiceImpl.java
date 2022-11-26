@@ -942,7 +942,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         LambdaQueryWrapper<QtCheckTask> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(QtCheckTask::getCode,dto.getOriginalTaskCode());
         QtCheckTask originalQtCheckTask = qtCheckTaskMapper.selectOne(queryWrapper);
-        BeanUtils.copyProperties(dto, qtCheckTask);
+        BeanUtils.copyProperties(originalQtCheckTask, qtCheckTask);
+        qtCheckTask.setMaterialId(dto.getMaterialId());
+        qtCheckTask.setMaterialWorkshop(dto.getMaterialWorkshop());
         qtCheckTask.setId(null);
         qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
