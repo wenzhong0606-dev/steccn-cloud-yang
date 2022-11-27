@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.Constant;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
@@ -35,6 +36,8 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,6 +71,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmCraftRouteService pmCraftRouteService;
     private final PmsProducePlanService pmsProducePlanService;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+    private final RedissonClient redissonClient;
 
     /**
      * 新增生产订单信息
@@ -78,36 +82,42 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     @Transactional(readOnly = false)
     public Boolean add(PmsProduceOrderDTO dto) {
-        //1.校验数据是否存在
-        Assert.isTrue(Objects.nonNull(dto), "订单信息为空");
-        //2.定义数据模型
-        PmsProduceOrder model = new PmsProduceOrder();
-        BeanUtil.copyProperties(dto, model);
-        //3.给当前订单生成编码
-        model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
-        //4.保存订单信息
-        //4.1.保存基础信息
-        //获取货架信息
-        if (Objects.nonNull(model.getDefaultShelfId())) {
-            SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
-            model.setDefaultWarehouseId(sysOfficeVO.getId());
-        }
-        save(model);
-        //4.2保存工序信息
-        if (CollUtil.isNotEmpty(dto.getProcessList())) {
-            pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId(), model.getProductionLineId());
-        }
-        //4.3保存物料信息
-        if (CollUtil.isNotEmpty(dto.getMaterialList())) {
-            pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
-        }
-        //判断是否是计划转生产订单
-        if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())) {
-            try {
-                BeanUtil.copyProperties(model, dto);
-                pmsProducePlanService.turnProduceOrder(dto);
-            } catch (Exception e) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_PRODUCE_ORDER);
+        lock.lock();
+        try {
+            //1.校验数据是否存在
+            Assert.isTrue(Objects.nonNull(dto), "订单信息为空");
+            //2.定义数据模型
+            PmsProduceOrder model = new PmsProduceOrder();
+            BeanUtil.copyProperties(dto, model);
+            //3.给当前订单生成编码
+            model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_PRODUCE_ORDER, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+            //4.保存订单信息
+            //4.1.保存基础信息
+            //获取货架信息
+            if (Objects.nonNull(model.getDefaultShelfId())) {
+                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
+                model.setDefaultWarehouseId(sysOfficeVO.getId());
             }
+            save(model);
+            //4.2保存工序信息
+            if (CollUtil.isNotEmpty(dto.getProcessList())) {
+                pmsProduceOrderCraftService.saveCrafts(dto.getProcessList(), model.getId(), model.getProductionLineId());
+            }
+            //4.3保存物料信息
+            if (CollUtil.isNotEmpty(dto.getMaterialList())) {
+                pmsWorkOrderBomService.saveMaterial(dto.getMaterialList(), model.getId());
+            }
+            //判断是否是计划转生产订单
+            if (PmManagerConstant.OrderStateEnum.ZERO.getCode().equals(dto.getPlanFlag())) {
+                try {
+                    BeanUtil.copyProperties(model, dto);
+                    pmsProducePlanService.turnProduceOrder(dto);
+                } catch (Exception e) {
+                }
+            }
+        } finally {
+            lock.unlock();
         }
         return true;
     }
@@ -708,13 +718,13 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
 
             if (Objects.nonNull(conversionQuantity) && Objects.nonNull(quantity)) {
                 if (Objects.nonNull(planQuantity)) {
-                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(planQuantity,quantity).multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setPlanQuantitySq(BigDecimalUtil.divide(planQuantity, quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(completeQuantity)) {
-                    produceOrderTrackReportVO.setCompleteQuantitySq(BigDecimalUtil.divide(completeQuantity,quantity).multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setCompleteQuantitySq(BigDecimalUtil.divide(completeQuantity, quantity).multiply(conversionQuantity));
                 }
                 if (Objects.nonNull(shortfallQuantity)) {
-                    produceOrderTrackReportVO.setShortfallQuantitySq(BigDecimalUtil.divide(shortfallQuantity,quantity).multiply(conversionQuantity));
+                    produceOrderTrackReportVO.setShortfallQuantitySq(BigDecimalUtil.divide(shortfallQuantity, quantity).multiply(conversionQuantity));
                 }
             }
         });
