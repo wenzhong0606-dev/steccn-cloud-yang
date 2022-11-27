@@ -447,6 +447,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystTime());
                                 } else if (QtManagerConstant.ANALYSTNAME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalystName());
+                                    simpleMap.put("analyst" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getAnalyst());
                                 } else if (QtManagerConstant.INGREDIENTNUM.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
@@ -730,6 +731,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     }
                                 } else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                                     qtCheckTaskCopy.setAnalystName(entry.getValue());
+                                    qtCheckTaskCopy.setAnalyst(Integer.valueOf(sampleInfo.getResult().get("analyst1")));
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                     if (StringUtils.isNotBlank(entry.getKey())) {
                                         qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
@@ -743,9 +745,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                         qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
                                     }
                                 }
-                            if(!entry.getKey().contains("analyst")){
-                                objectMap.put(entry.getKey(),qtCheckTaskCopy);
-                            }
+                            if(!entry.getKey().contains("analyst")) objectMap.put(entry.getKey(),qtCheckTaskCopy);
                         }
                     }
                 });
