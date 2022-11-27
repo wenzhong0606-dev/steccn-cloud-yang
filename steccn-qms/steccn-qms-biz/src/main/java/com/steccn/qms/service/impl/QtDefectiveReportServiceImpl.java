@@ -816,6 +816,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }
             } else {
                 for (Map.Entry<Integer, String> entry : idNameMap.entrySet()) {
+                    if(type == 0){
+                        conditionDataList = conditionDataList.stream().filter(v -> entry.getKey().equals(v.getDefectCategory())).collect(Collectors.toList());
+                    }else{
+                        conditionDataList = conditionDataList.stream().filter(v -> entry.getKey().equals(v.getDefectId())).collect(Collectors.toList());
+                    }
                     data.add(getTupleDTO(conditionDataList, entry.getValue()));
                 }
             }
