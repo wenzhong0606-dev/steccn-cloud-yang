@@ -621,6 +621,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         vo.setTitle("基片成品率");
         vo.setTooltip(String.valueOf(pmsEndDate.getMonthValue()) + "-" + String.valueOf(pmsEndDate.getDayOfMonth()) + "所有基片车间的总成品率");
 
+        //获取所有基片车间数量
+        SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
+        sysOfficeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);
+        sysOfficeDTO.setOfficeType(QtManagerConstant.OFFICE_WORKSHOP_TYPE);
+        R<List<SysOfficeVO>> subWorkShops = remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO);
+        int workShopCount = subWorkShops.getData().size();
         List<String> xData = new ArrayList<>();
         List<BigDecimal> yData = new ArrayList<>();
         if (CollUtil.isNotEmpty(rResult.getData())) {
@@ -636,7 +642,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     yData.add(BigDecimal.ZERO);
                 } else {
                     if(resultMap.get(tmpDate).get(0).getDayPassRate()!=null){
-                        yData.add(resultMap.get(tmpDate).get(0).getDayPassRate());
+                        yData.add(BigDecimalUtil.divide(resultMap.get(tmpDate).get(0).getDayPassRate(),new BigDecimal(workShopCount)));
                     }else {
                         yData.add(BigDecimal.ZERO);
                     }
