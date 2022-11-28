@@ -603,7 +603,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //塞入产线list
         SysOfficeDTO officeDTO = new SysOfficeDTO();
         officeDTO.setOfficeName(QtManagerConstant.SUB_OFFICE_NAME);
-        officeDTO.setOfficeType("9");
+        officeDTO.setOfficeType(QtManagerConstant.OFFICE_PRODUCE_LINE_TYPE);
         R<List<SysOfficeVO>> byTypeAndLine = remoteOfficeFeign.getByTypeAndLine(officeDTO);
         List<Integer> lineIds = Lists.newArrayList();
         byTypeAndLine.getData().forEach(tmp->{
