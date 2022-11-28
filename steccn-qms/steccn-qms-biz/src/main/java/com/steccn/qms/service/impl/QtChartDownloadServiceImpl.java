@@ -259,12 +259,12 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         if(CollUtil.isNotEmpty(qtChartSubDetailDTOS)&&CollUtil.isNotEmpty(dto.getFilters())){
             if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
                 //对班次进行处理
-                List<Integer> workOrderCode = new ArrayList<>();
+                List<String> workOrderCode = new ArrayList<>();
                 if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.NIGHT.getName())){
-                    workOrderCode.add(QtManagerConstant.QtClassesEnum.NIGHT.getCode());
+                    workOrderCode.add(QtManagerConstant.QtClassesEnum.NIGHT.getName());
                 }
                 if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.DAY.getName())){
-                    workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getCode());
+                    workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getName());
                 }
                 qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
             }

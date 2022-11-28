@@ -152,7 +152,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
 
     private BigDecimal getDefectJp(List<QtCheckTask> qtCheckTaskList) {
         int badNum = 0;
-        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
+        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(qtCheckTask.getTaskType())
                 && Objects.nonNull(qtCheckTask.getProductWorkshop())
                 && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                 && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.SUB_OFFICE_NAME)).collect(Collectors.toList());
@@ -163,7 +163,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
     private BigDecimal getDefectSjg(List<QtCheckTask> qtCheckTaskList) {
         //初始化缺陷数量
         int badNum = 0;
-        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(qtCheckTask.getTaskType())
+        List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(qtCheckTask.getTaskType())
                 && Objects.nonNull(qtCheckTask.getProductWorkshop())
                 && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
                 && qtCheckTask.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)).collect(Collectors.toList());
@@ -216,9 +216,11 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
             if (startDatePassRate.equals(BigDecimal.ZERO)) {
                 passRateOverViewVO.setWeekFlag(2);
             } else {
-                weekValue = endDatePassRate.subtract(startDatePassRate).divide(startDatePassRate, 4, BigDecimal.ROUND_DOWN);
+                BigDecimal subtract = BigDecimalUtil.subtract(endDatePassRate, startDatePassRate);
+                weekValue= BigDecimalUtil.divide(subtract, startDatePassRate, 4);
                 if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
-                    weekValue = startDatePassRate.subtract(endDatePassRate).divide(startDatePassRate, 4, BigDecimal.ROUND_DOWN);
+                    BigDecimal subtract1 = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
+                    weekValue = BigDecimalUtil.divide(subtract1, startDatePassRate, 4);
                     passRateOverViewVO.setWeekFlag(0);
                 } else if (weekValue.compareTo(BigDecimal.ZERO) == 0) {
                     passRateOverViewVO.setWeekFlag(2);

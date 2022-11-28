@@ -609,7 +609,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .eq(QtCheckTask::getTaskType, report.getCheckType())
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
-                .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
+                .lt(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
 
         //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
@@ -626,8 +626,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据检验项id获取检验项名称
         QtCheckItem qtCheckItem=new QtCheckItem();
         qtCheckItem = qtCheckItemService.getById(report.getCheckItemId());
-        List<QtCheckItem> itemIds = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                .eq(QtCheckItem::getCode, qtCheckItem.getCode()));
+        List<Integer> itemIds = qtCheckItemService
+                .list(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getCode, qtCheckItem.getCode()))
+                .stream().map(QtCheckItem::getId).collect(Collectors.toList());
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
         String measureUnitName = new String();
         if (Objects.nonNull(qtCheckItem)){
@@ -691,7 +692,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtSpcReportDetailVO.setStandardValue(report.getStandardValue());
 
             //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
-            List<QtSpcReportDetailTaskVO> qtSpcReportDetailTaskVOS= Lists.newArrayList();
             BigDecimal resultAverage =new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
             if (CollUtil.isEmpty(conditionDataList)){
                 qtSpcReportDetailVO.setResultAverage(resultAverage);
@@ -700,39 +700,31 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 //遍历该时间段下的检验任务设置详情
                 conditionDataList.forEach(s->{
                     QtSpcReportDetailTaskVO taskVO = new QtSpcReportDetailTaskVO();
-                    //详情检验结果平均值
-                    BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                     BeanUtils.copyProperties(s,taskVO);
 
                     //设置完成时间
                     taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
                     //检验任务结果集合
-                    List<String> stringList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                                    .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                            .stream()
-                            .map(QtCheckTaskDetail::getCheckResult).collect(Collectors.toList());
-                    List<BigDecimal> bigDecimals = Lists.newArrayList();
-                    stringList.stream().filter(st -> Objects.nonNull(st)).filter(st -> StrUtil.isNotBlank(st)).forEach(st -> {
-                        BigDecimal bigDecimal = new BigDecimal(st);
+                    QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                            .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                            .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
+                            .orderByDesc(QtCheckTaskDetail::getId)
+                            .last(MpConstant.STR_LIMIT_1));
+                    BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
+                    if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                        bigDecimal = new BigDecimal(one.getCheckResult());
                         if (Objects.nonNull(bigDecimal)){
-                            bigDecimals.add(bigDecimal);
+                            mainDecimals.add(bigDecimal);
                         }
-                    });
-                    if (CollUtil.isNotEmpty(bigDecimals)){
-                        BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                        detailAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                        taskVO.setCheckResult(detailAverage.toString());
-                    }else {
-                        taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
                     }
-                    mainDecimals.add(detailAverage);
-                    qtSpcReportDetailTaskVOS.add(taskVO);
                 });
-                BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
-                //设置检验项平均值
-                qtSpcReportDetailVO.setResultAverage(resultAverage);
+                if (CollUtil.isNotEmpty(mainDecimals)){
+                    BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
+                    qtSpcReportDetailVO.setResultAverage(resultAverage);
+                }else {
+                    qtSpcReportDetailVO.setResultAverage(new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS));
+                }
             }
             mainList.add(qtSpcReportDetailVO);
         }
@@ -931,7 +923,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .eq(QtCheckTask::getTaskType, report.getCheckType())
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .ge(QtCheckTask::getFinishedTime, report.getTimeScopeStart())
-                .le(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
+                .lt(QtCheckTask::getFinishedTime, report.getTimeScopeEnd());
 
         //根据条件先low出所有的检验任务数据
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(condition);
@@ -1210,8 +1202,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //遍历该时间段下的检验任务设置详情
             conditionDataList.forEach(s -> {
                 QtSpcReportHSCDetailTaskVO taskVO = new QtSpcReportHSCDetailTaskVO();
-                //详情检验结果平均值
-                BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
+                //详情检验结果
                 BeanUtils.copyProperties(s, taskVO);
                 //设置物料名称
                 if (Objects.nonNull(name)) {
@@ -1219,7 +1210,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                List<BigDecimal> bigDecimals = Lists.newArrayList();
                 //检验任务结果集合
                 QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
                         .eq(QtCheckTaskDetail::getTaskId, s.getId())
@@ -1262,7 +1252,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             conditionDataList.forEach(s -> {
                 QtSpcReportSamplingDetailTaskVO taskVO = new QtSpcReportSamplingDetailTaskVO();
                 //详情检验结果平均值
-                BigDecimal detailAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
                 BeanUtils.copyProperties(s, taskVO);
                 //设置物料名称
                 if (Objects.nonNull(name)) {
@@ -1270,7 +1259,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
+                //检验任务结果
                 QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
                         .eq(QtCheckTaskDetail::getTaskId, s.getId())
                         .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)

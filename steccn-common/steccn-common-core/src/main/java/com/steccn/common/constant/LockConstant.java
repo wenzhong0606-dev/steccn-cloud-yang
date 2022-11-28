@@ -16,4 +16,10 @@ public interface LockConstant {
      * 计划下达
      */
     String PLAN_ORDER ="PLAN_ORDER";
+
+
+    /**
+     * 生产订单新增
+     */
+    String TABLE_PMS_PRODUCE_ORDER = "TABLE_PMS_PRODUCE_ORDER";
 }

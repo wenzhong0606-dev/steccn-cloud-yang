@@ -1,6 +1,7 @@
 package com.steccn.common.util;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.common.dto.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +31,7 @@ public class StackGraphUtil {
      * @param dataList 数据集合
      * @return
      */
-    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList , boolean flag) {
+    public static <T1, T2> QtLineChartBarDTO convertData(@NotNull List<StackGraphDTO<T1, T2>> dataList, boolean flag) {
         List<BiStackGraphDTO<T1, T2>> biDataList = Lists.newArrayList();
         //适配biConvertData
         for (StackGraphDTO<T1, T2> data : dataList) {
@@ -41,11 +42,11 @@ public class StackGraphUtil {
             biStackGraphDTO.setData(list);
             biDataList.add(biStackGraphDTO);
         }
-        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(biDataList,flag);
+        QtLineChartBiBarDTO qtLineChartBiBarDTO = biConvertData(biDataList, flag);
         QtLineChartBarDTO resDto = new QtLineChartBarDTO();
         resDto.setLegend(qtLineChartBiBarDTO.getName());
         resDto.setXData(qtLineChartBiBarDTO.getXData());
-        if(qtLineChartBiBarDTO.getSeriesDataVO().size() > 0){
+        if (qtLineChartBiBarDTO.getSeriesDataVO().size() > 0) {
             resDto.setSeriesDataVO((List<QtSeriesDataDTO>) qtLineChartBiBarDTO.getSeriesDataVO().get(0));
         }
         return resDto;
@@ -63,27 +64,31 @@ public class StackGraphUtil {
 
     /**
      * 转换 默认为纵向图例
+     *
      * @param dataList 数据集
      * @param <T1>
      * @param <T2>
      * @return
      */
-    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList){
-       return biConvertData(dataList,Boolean.TRUE);
+    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList) {
+        return biConvertData(dataList, Boolean.TRUE);
     }
 
     /**
      * 多只柱子转换
      *
      * @param dataList
-     * @param legend 横向图例还是纵向图例 是标识纵向图例，否标识横向图例
+     * @param legend   横向图例还是纵向图例 是标识纵向图例，否标识横向图例
      * @return
      */
-    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList ,boolean legend) {
+    public static <T1, T2> QtLineChartBiBarDTO biConvertData(@NotNull List<BiStackGraphDTO<T1, T2>> dataList, boolean legend) {
         QtLineChartBiBarDTO qtLineChartBarDTO = new QtLineChartBiBarDTO();
         qtLineChartBarDTO.setXData(dataList.stream().map(v -> v.getXAxis()).collect(Collectors.toList()));
         //存放x轴的map
-        LinkedHashMap<Integer, Map<T1, List<T2>>> dataMap = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Map<Integer, List<T2>>> dataMap = new LinkedHashMap<>();
+
+        //存放名称
+        Map<Integer, T1> nameMap = Maps.newHashMap();
 
         for (int i = 0; i < dataList.size(); i++) {
             //获取x轴上i点的柱子集合
@@ -98,11 +103,12 @@ public class StackGraphUtil {
                 for (int j = 0; j < tupleDTOS.size(); j++) {
                     //获取k号柱子的第j号堆叠图数据
                     TupleDTO<T1, T2> sbDto = tupleDTOS.get(j);
-                    Map<T1, List<T2>> map1 = dataMap.get(k);
-                    if (!map1.containsKey(sbDto.getField1())) {
-                        map1.put(sbDto.getField1(), Lists.newArrayList());
+                    Map<Integer, List<T2>> map1 = dataMap.get(k);
+                    if (!map1.containsKey(j)) {
+                        map1.put(j, Lists.newArrayList());
+                        nameMap.put(j, sbDto.getField1());
                     }
-                    map1.get(sbDto.getField1()).add(sbDto.getField2());
+                    map1.get(j).add(sbDto.getField2());
                 }
             }
         }
@@ -113,25 +119,25 @@ public class StackGraphUtil {
         AtomicReference<Boolean> flag = new AtomicReference<>(Boolean.TRUE);
         List<T1> nameList = Lists.newArrayList();
         //存放返回的数据
-        for (Map.Entry<Integer, Map<T1, List<T2>>> entry : dataMap.entrySet()) {
+        for (Map.Entry<Integer, Map<Integer, List<T2>>> entry : dataMap.entrySet()) {
             List<QtSeriesDataDTO> seriesDataVOList = Lists.newArrayList();
 
-            for (Map.Entry<T1, List<T2>> entryIn : entry.getValue().entrySet()) {
+            for (Map.Entry<Integer, List<T2>> entryIn : entry.getValue().entrySet()) {
                 QtSeriesDataDTO<T1, T2> qtSeriesDataDTO = new QtSeriesDataDTO();
-                qtSeriesDataDTO.setName(entryIn.getKey());
+                qtSeriesDataDTO.setName(nameMap.get(entryIn.getKey()));
                 qtSeriesDataDTO.setData(entryIn.getValue());
                 qtSeriesDataDTO.setStack(STR_STACK);
                 qtSeriesDataDTO.setType(STR_GRAPH);
                 seriesDataVOList.add(qtSeriesDataDTO);
                 if (flag.get() && legend) {
                     //纵向图例
-                    nameList.add(entryIn.getKey());
+                    nameList.add(nameMap.get(entryIn.getKey()));
                 }
             }
-            if(!legend){
+            if (!legend) {
                 //横向图例
-                Optional<Map.Entry<T1, List<T2>>> first = entry.getValue().entrySet().stream().findFirst();
-                nameList.add(first.get().getKey());
+                Optional<Map.Entry<Integer, List<T2>>> first = entry.getValue().entrySet().stream().findFirst();
+                nameList.add(nameMap.get(first.get().getKey()));
             }
 
             flag.set(Boolean.FALSE);
@@ -141,14 +147,14 @@ public class StackGraphUtil {
         qtLineChartBarDTO.setName(nameList);
         return qtLineChartBarDTO;
     }
-
+//
 //    private static BiStackGraphDTO<String, BigDecimal> getStackGraphDTO(String x) {
 //        BiStackGraphDTO<String, BigDecimal> stackGraphDTO = new BiStackGraphDTO();
 //        stackGraphDTO.setXAxis(x);
 //        List<List<TupleDTO<String, BigDecimal>>> data1 = Lists.newArrayList();
 //        List<TupleDTO<String, BigDecimal>> dataList1 = Lists.newArrayList();
 //        dataList1.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
-//        dataList1.add(new TupleDTO<>("乙班", BigDecimal.valueOf(random.nextInt(100))));
+//        dataList1.add(new TupleDTO<>("甲班", BigDecimal.valueOf(random.nextInt(100))));
 //        dataList1.add(new TupleDTO<>("丙班", BigDecimal.valueOf(random.nextInt(100))));
 //        data1.add(dataList1);
 //
@@ -161,7 +167,7 @@ public class StackGraphUtil {
 //        stackGraphDTO.setData(data1);
 //        return stackGraphDTO;
 //    }
-
+//
 //    public static void main(String[] args) {
 //        List<BiStackGraphDTO<String, BigDecimal>> dataList = Lists.newArrayList();
 //        dataList.add(getStackGraphDTO("2022-09-15"));
