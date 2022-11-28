@@ -339,10 +339,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                                 .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
                                 .orderByDesc(QtCheckTaskDetail::getId)
                                 .last(MpConstant.STR_LIMIT_1));
-                        if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
-                            BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
-                            if (Objects.nonNull(bigDecimal)){
-                                bigDecimals.add(bigDecimal);
+                        if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                            if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
+                                BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
+                                if (Objects.nonNull(bigDecimal)) {
+                                    bigDecimals.add(bigDecimal);
+                                }
                             }
                         }
                     });
@@ -533,12 +535,14 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
                             .orderByDesc(QtCheckTaskDetail::getId)
                             .last(MpConstant.STR_LIMIT_1));
-                        if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
+                    if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                        if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
                             BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
-                            if (Objects.nonNull(bigDecimal)){
+                            if (Objects.nonNull(bigDecimal)) {
                                 bigDecimals.add(bigDecimal);
                             }
                         }
+                    }
                 });
                 if (CollUtil.isNotEmpty(bigDecimals)){
                     BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -711,10 +715,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                             .orderByDesc(QtCheckTaskDetail::getId)
                             .last(MpConstant.STR_LIMIT_1));
                     BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                    if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
-                        bigDecimal = new BigDecimal(one.getCheckResult());
-                        if (Objects.nonNull(bigDecimal)){
-                            mainDecimals.add(bigDecimal);
+                    if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                        if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
+                            bigDecimal = new BigDecimal(one.getCheckResult());
+                            if (Objects.nonNull(bigDecimal)) {
+                                mainDecimals.add(bigDecimal);
+                            }
                         }
                     }
                 });
@@ -1217,11 +1223,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .orderByDesc(QtCheckTaskDetail::getId)
                         .last(MpConstant.STR_LIMIT_1));
                 BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
-                    bigDecimal = new BigDecimal(one.getCheckResult());
-                    if (Objects.nonNull(bigDecimal)){
-                        mainDecimals.add(bigDecimal);
-
+                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
+                        bigDecimal = new BigDecimal(one.getCheckResult());
+                        if (Objects.nonNull(bigDecimal)) {
+                            mainDecimals.add(bigDecimal);
+                        }
                     }
                 }
                 taskVO.setCheckResult(bigDecimal.toString());
@@ -1266,10 +1273,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .orderByDesc(QtCheckTaskDetail::getId)
                         .last(MpConstant.STR_LIMIT_1));
                 BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
-                    bigDecimal = new BigDecimal(one.getCheckResult());
-                    if (Objects.nonNull(bigDecimal)){
-                        mainDecimals.add(bigDecimal);
+                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
+                        bigDecimal = new BigDecimal(one.getCheckResult());
+                        if (Objects.nonNull(bigDecimal)) {
+                            mainDecimals.add(bigDecimal);
+                        }
                     }
                 }
                 taskVO.setCheckResult(bigDecimal.toString());
@@ -1318,10 +1327,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         .orderByDesc(QtCheckTaskDetail::getId)
                         .last(MpConstant.STR_LIMIT_1));
                 BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one)&&Objects.nonNull(one.getCheckResult())&&StrUtil.isNotBlank(one.getCheckResult())){
-                   bigDecimal = new BigDecimal(one.getCheckResult());
-                    if (Objects.nonNull(bigDecimal)){
-                        mainDecimals.add(bigDecimal);
+                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
+                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
+                        bigDecimal = new BigDecimal(one.getCheckResult());
+                        if (Objects.nonNull(bigDecimal)) {
+                            mainDecimals.add(bigDecimal);
+                        }
                     }
                 }
                 taskVO.setCheckResult(bigDecimal.toString());
@@ -1404,7 +1415,3 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return qtReportVOS;
     }
 }
-
-
-
-

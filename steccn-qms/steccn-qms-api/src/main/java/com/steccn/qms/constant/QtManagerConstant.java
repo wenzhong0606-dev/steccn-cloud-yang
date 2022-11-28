@@ -185,6 +185,10 @@ public interface QtManagerConstant {
     String SUB_OFFICE_NAME_ONE = "基片一车间";
     String SUB_OFFICE_NAME_TWO = "基片二车间";
 
+    /**
+     * 正则表达式表示为非负浮点数
+     */
+    String REGULAR_NON_FLOATING_POINT_NUMBER = "/^\\d+(\\.\\d+)?$/";
 
     /**
      * 计算结果为"0"
