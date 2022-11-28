@@ -178,7 +178,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)))
                 .endTime(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)))
-                .workOrderId(dto.getWorkingOrder())
                 .productWorkShopId(dto.getProductWorkShopId())
                 .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
@@ -252,6 +251,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     }
                 }
             }
+        }
+        //过滤班次信息
+        if(Objects.nonNull(dto.getWorkingOrder())){
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
         }
         //过滤缺陷项类别
         if(Objects.nonNull(dto.getDefectCategory())){
