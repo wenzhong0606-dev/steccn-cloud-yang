@@ -247,6 +247,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(qtCheckTask.getDefectEndTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                        vo.setClassId(qtTaskClassCalculate.getClassType());
                         flatDefectiveList.add(vo);
                     }
                 }
