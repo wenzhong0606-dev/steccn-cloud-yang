@@ -137,13 +137,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //如果新建检验类型为在线检，缺陷记录时段不允许跨班次;即8:00、20:00两个时间点
         if (QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType())) {
             if (dto.getDefectStartTime() != null && dto.getDefectEndTime() != null) {
-                if (QtManagerConstant.beforeHour < dto.getDefectStartTime().getHour()
-                        && QtManagerConstant.afterHour < dto.getDefectEndTime().getHour()) {
+                QtTaskClassCalculate defectStart = calculateDateTime(dto.getDefectStartTime());
+                QtTaskClassCalculate defectEnd = calculateDateTime(dto.getDefectEndTime());
+                //判断是否跨班次和跨时间维度
+                if(defectStart.getClassType().equals(defectEnd.getClassType()) && defectStart.getClassDate().toLocalDate().equals(defectEnd.getClassDate().toLocalDate())){
+                    qtCheckTask.setClassesId(defectStart.getClassType());
+                }else {
                     throw new BusinessException("缺陷记录时段不允许跨班次");
-                } else if (QtManagerConstant.afterHour > dto.getDefectStartTime().getHour() && QtManagerConstant.beforeHour > dto.getDefectEndTime().getHour()) {
-                    qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.DAY.getCode());//早班
-                } else {
-                    qtCheckTask.setClassesId(QtManagerConstant.QtClassesEnum.NIGHT.getCode());//晚班
                 }
             }
             Assert.notNull("缺陷记录时段不能为空");
