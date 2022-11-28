@@ -1210,6 +1210,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     pieList.add(tmp);
                 }
             }
+            //倒序排序value
+            pieList.sort(Comparator.comparing(QtChartPieValueVO<BigDecimal>::getValue).reversed());
             result.setData(pieList);
             return result;
         }else {
