@@ -21,6 +21,8 @@
         <module>steccn-platform</module>
         <module>steccn-minio</module>
         <module>steccn-monitor</module>
+        <module>steccn-wms</module>
+        <module>steccn-ems</module>
     </modules>
 
     <properties>
