@@ -325,6 +325,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 dataList.add(vo);
             }
         });
+        SteccnTableAssertUtil.notEmpty(dataList,"暂无数据");
         dataList.sort(Comparator.comparingInt(QtChartPieValueVO<Integer>::getValue).reversed());
         qtChartPieVO.setData(dataList);
         return qtChartPieVO;
