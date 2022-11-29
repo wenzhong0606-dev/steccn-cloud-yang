@@ -1328,6 +1328,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         //设置数据
         produceTaskpage.setRecords(resRecords);
+        produceTaskpage.setTotal(resPage.getTotal());
         return produceTaskpage;
     }
 
