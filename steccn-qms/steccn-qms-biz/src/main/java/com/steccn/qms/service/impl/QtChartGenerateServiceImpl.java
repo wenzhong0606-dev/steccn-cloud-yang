@@ -985,6 +985,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         BigDecimal laAmount = BigDecimal.ZERO;
         for(QtChartSubDetailDTO tmp:data){
             laAmount = BigDecimalUtil.add(laAmount,tmp.getPullAmount());
@@ -1170,6 +1171,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         QtChartPieVO result = new QtChartPieVO();
         List<QtChartPieValueVO<BigDecimal>> pieList = new ArrayList<>();
         if(CollUtil.isNotEmpty(data)){
