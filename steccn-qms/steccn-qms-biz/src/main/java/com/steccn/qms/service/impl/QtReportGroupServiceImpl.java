@@ -73,11 +73,11 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
      */
     @Override
     public List<QtReportGroupVO> getReportGroupVOlist() {
+        List<QtReportGroupVO> qtReportGroupVOS=Lists.newArrayList();
         List<QtReportGroup> groups = list();
         if (CollUtil.isEmpty(groups)){
-            throw new BusinessException("暂无分组请先创建");
+            return qtReportGroupVOS;
         }
-        List<QtReportGroupVO> qtReportGroupVOS=Lists.newArrayList();
         groups.stream().forEach(g->{
             QtReportGroupVO qtReportGroupVO = new QtReportGroupVO();
             BeanUtils.copyProperties(g,qtReportGroupVO);

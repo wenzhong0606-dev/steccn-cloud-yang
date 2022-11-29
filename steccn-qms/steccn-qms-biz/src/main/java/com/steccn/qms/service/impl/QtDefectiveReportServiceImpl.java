@@ -178,7 +178,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)))
                 .endTime(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)))
-                .workOrderId(dto.getWorkingOrder())
                 .productWorkShopId(dto.getProductWorkShopId())
                 .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
@@ -253,6 +252,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }
             }
         }
+        //过滤班次信息
+        if(Objects.nonNull(dto.getWorkingOrder())){
+            flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
+        }
         //过滤缺陷项类别
         if(Objects.nonNull(dto.getDefectCategory())){
             flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getDefectCategory().equals(v.getDefectCategory())).collect(Collectors.toList());
@@ -311,17 +314,18 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private QtChartPieVO pieGraph(Map<Integer, String> idNameMap, Map<Integer, List<QtCheckTaskDetailReportVO>> defectDataMap, int sum) {
         //定义返回vo
         QtChartPieVO qtChartPieVO = new QtChartPieVO();
-        List<QtChartPieValueVO> dataList = Lists.newArrayList();
+        List<QtChartPieValueVO<Integer>> dataList = Lists.newArrayList();
         //遍历缺陷类别
         defectDataMap.forEach((k, v) -> {
-            QtChartPieValueVO vo = new QtChartPieValueVO();
+            QtChartPieValueVO<Integer> vo = new QtChartPieValueVO();
             vo.setName(idNameMap.getOrDefault(k, Strings.EMPTY));
             int categorySum = v.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
-            if(categorySum >0){
+            if(categorySum >0) {
                 vo.setValue(categorySum);
                 dataList.add(vo);
             }
         });
+        dataList.sort(Comparator.comparingInt(QtChartPieValueVO<Integer>::getValue).reversed());
         qtChartPieVO.setData(dataList);
         return qtChartPieVO;
     }

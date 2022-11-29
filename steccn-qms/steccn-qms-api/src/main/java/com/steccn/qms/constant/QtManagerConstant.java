@@ -149,7 +149,7 @@ public interface QtManagerConstant {
     String INGREDIENTNUM = "ingredientNum"; //配料付数
 
     /**
-     * 机构类型为车间的编码
+     * 机构类型编码
      */
     String OFFICE_WORKSHOP_TYPE ="8";
     String OFFICE_PRODUCE_LINE_TYPE ="9";

@@ -5,10 +5,8 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Maps;
-import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
@@ -22,7 +20,6 @@ import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.ProducePassRateService;
 import com.steccn.pms.vo.PassRateDateVo;
-import com.steccn.pms.vo.PmsProducePlanVO;
 import com.steccn.pms.vo.PmsReportWorkGroupVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import lombok.RequiredArgsConstructor;
@@ -58,20 +55,19 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
     public List<ProducePassRateVO> getProducePassRateGroup(ProducePassRateDTO dto) {
 
         //获取日期
-        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate(),dto.getEndDate());
+        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate(), dto.getEndDate());
 
         //分组获取产量数据
-        List<PmsReportWorkGroupVO> pmsReportWorkGroupVOList = getPmsReportWorkGroupVOList(localDateList,dto);
+        List<PmsReportWorkGroupVO> pmsReportWorkGroupVOList = getPmsReportWorkGroupVOList(localDateList, dto);
 
         QueryWrapper<PmsPullForce> queryWrapper = getQueryWrapper(dto);
         List<PmsPullForce> pmsPullForceList = pmsPullForceService.list(queryWrapper);
-        localDateList.remove(localDateList.size() -1);
+        localDateList.remove(localDateList.size() - 1);
         List<ProducePassRateVO> producePassRateVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {
             //过滤出指定日期的产量
             List<PmsReportWorkGroupVO> reportWorkList = pmsReportWorkGroupVOList.stream()
                     .filter(workGroupVO -> workGroupVO.getGroupDate().equals(localDate)).collect(Collectors.toList());
-
 
 
             if (CollectionUtils.isEmpty(reportWorkList)) {
@@ -83,13 +79,25 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             //获取每天的合格率
             BigDecimal dayPassRate = null;
             if (CollectionUtils.isNotEmpty(pmsPullForceList)) {
-                BigDecimal dayWork = reportWorkList.stream().map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+                Map<Integer, List<PmsReportWorkGroupVO>> groupBy = pmsReportWorkGroupVOList
+                        .stream()
+                        .collect(Collectors.groupingBy(PmsReportWorkGroupVO::getProductLineId));
+                BigDecimal dayWorkSum = BigDecimal.ZERO;
+                BigDecimal pullForceSum = BigDecimal.ZERO;
+                //根据产线分组
+                for (Map.Entry<Integer, List<PmsReportWorkGroupVO>> entry : groupBy.entrySet()) {
+                    //获取每条产线的产量和拉引量
+                    BigDecimal dayWork = reportWorkList.stream().filter(reportWork -> Objects.equals(reportWork.getProductLineId(), entry.getKey())).map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal pullForce = pmsPullForceList.stream().filter(pmsPullForce -> pmsPullForce.getPullForceDate().equals(localDate) && Objects.equals(entry.getKey(), pmsPullForce.getProductLineId()))
+                            .map(PmsPullForce::getQuantity)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    if (Objects.nonNull(dayWork) && Objects.nonNull(pullForce)) {
+                        dayWorkSum = dayWorkSum.add(dayWork);
+                        pullForceSum = pullForceSum.add(pullForce);
+                    }
 
-                //过滤出指定日期的拉引量
-                List<PmsPullForce> pullForceList = pmsPullForceList.stream()
-                        .filter(pullForce -> pullForce.getPullForceDate().equals(localDate)).collect(Collectors.toList());
-                BigDecimal dayPullForce = pullForceList.stream().map(PmsPullForce::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-                dayPassRate = BigDecimalUtil.divide(dayWork,dayPullForce,4);
+                }
+                dayPassRate = BigDecimalUtil.divide(dayWorkSum, pullForceSum, 4);
             }
 
             //获取每个班次的合格率
@@ -111,7 +119,7 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                                     && pmsPullForce.getProductLineId().equals(reportWorkGroupVO.getProductLineId())).findAny();
                     if (optional.isPresent()) {
                         producePassRateVO.setLaAmount(optional.get().getQuantity());
-                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(),optional.get().getQuantity(),4));
+                        producePassRateVO.setPassRate(BigDecimalUtil.divide(reportWorkGroupVO.getQuantity(), optional.get().getQuantity(), 4));
                     } else {
                         producePassRateVO.setPassRate(BigDecimal.ZERO);
                     }
@@ -133,37 +141,37 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
         Map<Long, String> classesMap = remoteDictFeignApi.listByIdCh(classesIdList).getData();
         producePassRateVOList.forEach(producePassRateVO -> {
             producePassRateVO.setClassesName(classesMap.get(producePassRateVO.getClassesId()));
-            producePassRateVO.setWorkshopName(sysOfficeVoMap.getOrDefault(producePassRateVO.getWorkshopId(),defaultSysOfficeVO).getOfficeName());
-            producePassRateVO.setProductLineName(sysOfficeVoMap.getOrDefault(producePassRateVO.getProductLineId(),defaultSysOfficeVO).getOfficeName());
+            producePassRateVO.setWorkshopName(sysOfficeVoMap.getOrDefault(producePassRateVO.getWorkshopId(), defaultSysOfficeVO).getOfficeName());
+            producePassRateVO.setProductLineName(sysOfficeVoMap.getOrDefault(producePassRateVO.getProductLineId(), defaultSysOfficeVO).getOfficeName());
         });
 
         return producePassRateVOList;
     }
 
-    private QueryWrapper<PmsPullForce> getQueryWrapper(ProducePassRateDTO dto){
+    private QueryWrapper<PmsPullForce> getQueryWrapper(ProducePassRateDTO dto) {
 
         QueryWrapper<PmsPullForce> queryWrapper = new QueryWrapper<PmsPullForce>();
         queryWrapper.select("pull_force_date as pullForceDate,workshop_id as workshopId,product_line_id ,classes_id as classesId, sum(quantity) as quantity");
 
-        List<SFunction<PmsPullForce,?>> sFunctionList = new ArrayList<>();
+        List<SFunction<PmsPullForce, ?>> sFunctionList = new ArrayList<>();
         sFunctionList.add(PmsPullForce::getPullForceDate);
         sFunctionList.add(PmsPullForce::getWorkshopId);
         sFunctionList.add(PmsPullForce::getProductLineId);
         sFunctionList.add(PmsPullForce::getClassesId);
 
         queryWrapper.lambda()
-                .ge(PmsPullForce::getPullForceDate,dto.getBeginDate())
-                .le(PmsPullForce::getPullForceDate,dto.getEndDate()).groupBy(sFunctionList);
+                .ge(PmsPullForce::getPullForceDate, dto.getBeginDate())
+                .le(PmsPullForce::getPullForceDate, dto.getEndDate()).groupBy(sFunctionList);
         if (CollectionUtils.isNotEmpty(dto.getProductLineIdList())) {
-            queryWrapper.lambda().in(PmsPullForce::getProductLineId,dto.getProductLineIdList());
+            queryWrapper.lambda().in(PmsPullForce::getProductLineId, dto.getProductLineIdList());
         }
         return queryWrapper;
     }
 
-    private List<PmsReportWorkGroupVO> getPmsReportWorkGroupVOList(List<LocalDate> localDateList,ProducePassRateDTO dto) {
-        LocalTime localTime = LocalTime.of(8,0,0);
-        LocalDateTime beginDateTime = LocalDateTime.of(dto.getBeginDate(),localTime);
-        LocalDateTime endDateTime = LocalDateTime.of(dto.getEndDate(),localTime);
+    private List<PmsReportWorkGroupVO> getPmsReportWorkGroupVOList(List<LocalDate> localDateList, ProducePassRateDTO dto) {
+        LocalTime localTime = LocalTime.of(8, 0, 0);
+        LocalDateTime beginDateTime = LocalDateTime.of(dto.getBeginDate(), localTime);
+        LocalDateTime endDateTime = LocalDateTime.of(dto.getEndDate(), localTime);
 
         List<LocalDate> dateList = new ArrayList<>(localDateList);
         Map<LocalDate, PassRateDateVo> dateMap = Maps.newHashMap();
@@ -178,10 +186,10 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
             if (dateList.size() == 1) {
                 dateList.remove(startDate);
             }
-            dateMap.put(startDate,rateDateVo);
+            dateMap.put(startDate, rateDateVo);
         }
 
-        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime,dto.getProductLineIdList());
+        List<PmsReportWorkGroupVO> reportWorkGroupVOList = pmsReportWorkMapper.selectAllGroupByDate(beginDateTime, endDateTime, dto.getProductLineIdList());
         Set<Integer> childIdList = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> sysOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(childIdList)).getData();
         Set<Long> materialIdSet = reportWorkGroupVOList.stream().map(PmsReportWorkGroupVO::getMaterialId).collect(Collectors.toSet());
@@ -209,11 +217,11 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                     BigDecimal quantity = optional.get().getQuantity();
                     BigDecimal conversionQuantity = optional.get().getConversionQuantity();
                     BigDecimal work = pmsReportWorkGroupVO.getQuantity();
-                    pmsReportWorkGroupVO.setQuantity(BigDecimalUtil.divide(work,quantity).multiply(conversionQuantity));
+                    pmsReportWorkGroupVO.setQuantity(BigDecimalUtil.divide(work, quantity).multiply(conversionQuantity));
                 } else {
                     pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
                 }
-            }else {
+            } else {
                 pmsReportWorkGroupVO.setQuantity(BigDecimal.ZERO);
             }
 

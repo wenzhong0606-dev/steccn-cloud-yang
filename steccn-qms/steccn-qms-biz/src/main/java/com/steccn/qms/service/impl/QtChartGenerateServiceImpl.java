@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -25,14 +24,15 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import com.steccn.qms.dto.*;
+import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
+import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
+import com.steccn.qms.dto.QtTimeDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.logging.Log;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,7 +42,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -642,7 +641,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     yData.add(BigDecimal.ZERO);
                 } else {
                     if(resultMap.get(tmpDate).get(0).getDayPassRate()!=null){
-                        yData.add(BigDecimalUtil.divide(resultMap.get(tmpDate).get(0).getDayPassRate(),new BigDecimal(workShopCount)));
+                        yData.add(resultMap.get(tmpDate).get(0).getDayPassRate());
                     }else {
                         yData.add(BigDecimal.ZERO);
                     }
@@ -1213,6 +1212,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     pieList.add(tmp);
                 }
             }
+            //倒序排序value
+            pieList.sort(Comparator.comparing(QtChartPieValueVO<BigDecimal>::getValue).reversed());
             result.setData(pieList);
             return result;
         }else {
