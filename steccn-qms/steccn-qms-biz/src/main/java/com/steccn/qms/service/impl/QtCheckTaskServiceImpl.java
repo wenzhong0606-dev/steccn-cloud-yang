@@ -953,6 +953,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         queryWrapper.eq(QtCheckTask::getCode,dto.getOriginalTaskCode());
         QtCheckTask originalQtCheckTask = qtCheckTaskMapper.selectOne(queryWrapper);
         BeanUtils.copyProperties(dto, qtCheckTask);
+        qtCheckTask.setStation(originalQtCheckTask.getStation());
+        qtCheckTask.setClassTime(originalQtCheckTask.getClassTime());
+        qtCheckTask.setFinishedBy(originalQtCheckTask.getFinishedBy());
+        qtCheckTask.setFinishedName(originalQtCheckTask.getFinishedName());
+        qtCheckTask.setStartBy(originalQtCheckTask.getStartBy());
+        qtCheckTask.setStartName(originalQtCheckTask.getStartName());
         qtCheckTask.setId(null);
         qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
