@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.wms.mapper.PmsTransferSlipInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.wms.domain.PmsTransferSlipInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="transerSlipId" column="transer_slip_id" jdbcType="BIGINT"/>
+            <result property="sourceShelf" column="source_shelf" jdbcType="INTEGER"/>
+            <result property="targetShlf" column="target_shlf" jdbcType="INTEGER"/>
+            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+            <result property="quantity" column="quantity" jdbcType="DECIMAL"/>
+            <result property="unit" column="unit" jdbcType="BIGINT"/>
+            <result property="associatedNo" column="associated_no" jdbcType="VARCHAR"/>
+            <result property="batch" column="batch" jdbcType="VARCHAR"/>
+            <result property="caseNo" column="case_no" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,transer_slip_id,source_shelf,
+        target_shlf,material_id,quantity,
+        unit,associated_no,batch,
+        case_no,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>
