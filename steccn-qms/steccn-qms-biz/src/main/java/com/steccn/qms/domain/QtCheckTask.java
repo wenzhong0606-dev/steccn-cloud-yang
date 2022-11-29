@@ -357,4 +357,10 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(exist = false)
     private String materialName;
+
+    /**
+     * 原始任务单号
+     */
+    @TableField(exist = false)
+    private String  originalTaskCode;
 }
