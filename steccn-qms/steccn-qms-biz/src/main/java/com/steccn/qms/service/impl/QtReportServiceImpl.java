@@ -43,6 +43,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -334,18 +336,28 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }else {
                     List<BigDecimal> bigDecimals = Lists.newArrayList();
                     conditionTasks.forEach(r->{
-                        QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, r.getId())
-                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                                .orderByDesc(QtCheckTaskDetail::getId)
-                                .last(MpConstant.STR_LIMIT_1));
-                        if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                            if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                                BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
-                                if (Objects.nonNull(bigDecimal)) {
-                                    bigDecimals.add(bigDecimal);
+                        //检验任务样本结果集合
+                        List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                        .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                                .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                                .map(QtCheckTaskDetail::getCheckResult)
+                                .collect(Collectors.toList());
+                        List<BigDecimal> resultList = Lists.newArrayList();
+                        if (CollUtil.isNotEmpty(results)){
+                            results.forEach(re->{
+                                if (isNumber(re)||isFloatNumber(re)){
+                                    BigDecimal bigDecimal = new BigDecimal(re);
+                                    if (Objects.nonNull(bigDecimal)){
+                                        resultList.add(bigDecimal);
+                                    }
                                 }
-                            }
+                            });
+                        }
+                        if (CollUtil.isNotEmpty(resultList)){
+                            BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                            BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                            bigDecimals.add(result);
                         }
                     });
                     if (CollUtil.isNotEmpty(bigDecimals)){
@@ -530,18 +542,28 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             }else {
                 List<BigDecimal> bigDecimals = Lists.newArrayList();
                 conditionTasks.forEach(r->{
-                    QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                            .eq(QtCheckTaskDetail::getTaskId, r.getId())
-                            .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                            .orderByDesc(QtCheckTaskDetail::getId)
-                            .last(MpConstant.STR_LIMIT_1));
-                    if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                        if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                            BigDecimal bigDecimal = new BigDecimal(one.getCheckResult());
-                            if (Objects.nonNull(bigDecimal)) {
-                                bigDecimals.add(bigDecimal);
+                    //检验任务样本结果集合
+                    List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                    .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                                    .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                            .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                            .map(QtCheckTaskDetail::getCheckResult)
+                            .collect(Collectors.toList());
+                    List<BigDecimal> resultList = Lists.newArrayList();
+                    if (CollUtil.isNotEmpty(results)){
+                        results.forEach(re->{
+                            if (isNumber(re)||isFloatNumber(re)){
+                                BigDecimal bigDecimal = new BigDecimal(re);
+                                if (Objects.nonNull(bigDecimal)){
+                                    resultList.add(bigDecimal);
+                                }
                             }
-                        }
+                        });
+                    }
+                    if (CollUtil.isNotEmpty(resultList)){
+                        BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                        bigDecimals.add(result);
                     }
                 });
                 if (CollUtil.isNotEmpty(bigDecimals)){
@@ -708,20 +730,31 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
                     //设置完成时间
                     taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(),DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                    //检验任务结果集合
-                    QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                            .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                            .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                            .orderByDesc(QtCheckTaskDetail::getId)
-                            .last(MpConstant.STR_LIMIT_1));
-                    BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                    if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                        if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                            bigDecimal = new BigDecimal(one.getCheckResult());
-                            if (Objects.nonNull(bigDecimal)) {
-                                mainDecimals.add(bigDecimal);
+                    //检验任务样本结果集合
+                    List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                    .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                                    .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                            .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                            .map(QtCheckTaskDetail::getCheckResult)
+                            .collect(Collectors.toList());
+                    List<BigDecimal> resultList = Lists.newArrayList();
+                    if (CollUtil.isNotEmpty(results)){
+                        results.forEach(re->{
+                            if (isNumber(re)||isFloatNumber(re)){
+                                BigDecimal bigDecimal = new BigDecimal(re);
+                                if (Objects.nonNull(bigDecimal)){
+                                    resultList.add(bigDecimal);
+                                }
                             }
-                        }
+                        });
+                    }
+                    if (CollUtil.isNotEmpty(resultList)){
+                        BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                        taskVO.setCheckResult(result.toString());
+                        mainDecimals.add(result);
+                    }else {
+                        taskVO.setCheckResult( QtManagerConstant.THE_CALCULATION_RESULTS);
                     }
                 });
                 if (CollUtil.isNotEmpty(mainDecimals)){
@@ -1216,22 +1249,32 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
-                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                        .orderByDesc(QtCheckTaskDetail::getId)
-                        .last(MpConstant.STR_LIMIT_1));
-                BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                        bigDecimal = new BigDecimal(one.getCheckResult());
-                        if (Objects.nonNull(bigDecimal)) {
-                            mainDecimals.add(bigDecimal);
+                //检验任务样本结果集合
+                List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                        .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                        .map(QtCheckTaskDetail::getCheckResult)
+                        .collect(Collectors.toList());
+                List<BigDecimal> resultList = Lists.newArrayList();
+                if (CollUtil.isNotEmpty(results)){
+                    results.forEach(re->{
+                        if (isNumber(re)||isFloatNumber(re)){
+                            BigDecimal bigDecimal = new BigDecimal(re);
+                            if (Objects.nonNull(bigDecimal)){
+                                resultList.add(bigDecimal);
+                            }
                         }
-                    }
+                    });
                 }
-                taskVO.setCheckResult(bigDecimal.toString());
+                if (CollUtil.isNotEmpty(resultList)){
+                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                    taskVO.setCheckResult(result.toString());
+                    mainDecimals.add(result);
+                }else {
+                    taskVO.setCheckResult( QtManagerConstant.THE_CALCULATION_RESULTS);
+                }
                 taskVO.setProductLine(s.getProductLine());
                 qtSpcReportHSCDetailTaskVOS.add(taskVO);
             });
@@ -1266,22 +1309,32 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果
-                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                        .orderByDesc(QtCheckTaskDetail::getId)
-                        .last(MpConstant.STR_LIMIT_1));
-                BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                        bigDecimal = new BigDecimal(one.getCheckResult());
-                        if (Objects.nonNull(bigDecimal)) {
-                            mainDecimals.add(bigDecimal);
+                //检验任务样本结果集合
+                List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                        .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                        .map(QtCheckTaskDetail::getCheckResult)
+                        .collect(Collectors.toList());
+                List<BigDecimal> resultList = Lists.newArrayList();
+                if (CollUtil.isNotEmpty(results)){
+                    results.forEach(re->{
+                        if (isNumber(re)||isFloatNumber(re)){
+                            BigDecimal bigDecimal = new BigDecimal(re);
+                            if (Objects.nonNull(bigDecimal)){
+                                resultList.add(bigDecimal);
+                            }
                         }
-                    }
+                    });
                 }
-                taskVO.setCheckResult(bigDecimal.toString());
+                if (CollUtil.isNotEmpty(resultList)){
+                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                    taskVO.setCheckResult(result.toString());
+                    mainDecimals.add(result);
+                }else {
+                    taskVO.setCheckResult( QtManagerConstant.THE_CALCULATION_RESULTS);
+                }
                 taskVO.setWorkshop(s.getMaterialWorkshop());
                 qtSamplingDetailVOS.add(taskVO);
             });
@@ -1320,22 +1373,32 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
                 //设置完成时间
                 taskVO.setFinishedTime(LocalDateUtil.format(s.getFinishedTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务结果集合
-                QtCheckTaskDetail one = qtCheckTaskDetailService.getOne(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                        .eq(QtCheckTaskDetail::getTaskId, s.getId())
-                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds)
-                        .orderByDesc(QtCheckTaskDetail::getId)
-                        .last(MpConstant.STR_LIMIT_1));
-                BigDecimal bigDecimal = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
-                if (Objects.nonNull(one) && Objects.nonNull(one.getCheckResult()) && StrUtil.isNotBlank(one.getCheckResult())) {
-                    if (QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER.equals(one.getCheckResult())) {
-                        bigDecimal = new BigDecimal(one.getCheckResult());
-                        if (Objects.nonNull(bigDecimal)) {
-                            mainDecimals.add(bigDecimal);
+                //检验任务样本结果集合
+                List<String>  results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, s.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                        .stream().filter(qt->Objects.nonNull(qt)&&Objects.nonNull(qt.getCheckResult())&&StrUtil.isNotBlank(qt.getCheckResult()))
+                        .map(QtCheckTaskDetail::getCheckResult)
+                        .collect(Collectors.toList());
+                List<BigDecimal> resultList = Lists.newArrayList();
+                if (CollUtil.isNotEmpty(results)){
+                    results.forEach(re->{
+                        if (isNumber(re)||isFloatNumber(re)){
+                            BigDecimal bigDecimal = new BigDecimal(re);
+                            if (Objects.nonNull(bigDecimal)){
+                                resultList.add(bigDecimal);
+                            }
                         }
-                    }
+                    });
                 }
-                taskVO.setCheckResult(bigDecimal.toString());
+               if (CollUtil.isNotEmpty(resultList)){
+                   BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                   BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
+                   taskVO.setCheckResult(result.toString());
+                   mainDecimals.add(result);
+               }else {
+                   taskVO.setCheckResult( QtManagerConstant.THE_CALCULATION_RESULTS);
+               }
                 taskVO.setWorkshop(s.getMaterialWorkshop());
                 taskVO.setSupplier(s.getSupplier());
                 reportDetailTaskVOS.add(taskVO);
@@ -1413,5 +1476,33 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             });
         }
         return qtReportVOS;
+    }
+
+
+    /**
+     * 判断是否为非负浮点数
+     * @param str
+     * @return
+     */
+    public static boolean isFloatNumber(String str){
+        Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER);
+        Matcher num = pattern.matcher(str);
+        if (!num.matches()) {
+            return false;
+        }
+        return true;
+    }
+    /**
+     * 判断是否为整数
+     * @param str
+     * @return
+     */
+    public static boolean isNumber(String str){
+        Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_NUMBER);
+        Matcher num = pattern.matcher(str);
+        if (!num.matches()) {
+            return false;
+        }
+        return true;
     }
 }

@@ -189,6 +189,7 @@ public interface QtManagerConstant {
      * 正则表达式表示为非负浮点数
      */
     String REGULAR_NON_FLOATING_POINT_NUMBER = "/^\\d+(\\.\\d+)?$/";
+    String REGULAR_NON_NUMBER ="\\d+";
 
     /**
      * 计算结果为"0"
