@@ -1212,6 +1212,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     pieList.add(tmp);
                 }
             }
+            SteccnTableAssertUtil.notEmpty(pieList,"饼图暂无数据");
             //倒序排序value
             pieList.sort(Comparator.comparing(QtChartPieValueVO<BigDecimal>::getValue).reversed());
             result.setData(pieList);
