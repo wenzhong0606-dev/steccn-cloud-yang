@@ -686,6 +686,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 dto.getSampleInfoList().forEach(sampleInfo -> {
                     //遍历Map
                     for (Map.Entry<String, String> entry : sampleInfo.getResult().entrySet()) {
+                        String checkResultNum = "";
+                        if(entry.getKey().contains(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT))
+                              checkResultNum = entry.getKey().substring(entry.getKey().length()==12?(entry.getKey().length() - 1)
+                                    :(entry.getKey().length() - 2));
                         QtCheckTaskCopy qtCheckTaskCopy = new QtCheckTaskCopy();
                         if (Objects.nonNull(objectMap.get(entry.getKey()))) {
                             if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
@@ -698,8 +702,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 }
                             }else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
                               //  objectMap.get(entry.getKey()).setAnalystName(entry.getValue());
-                                objectMap.get(entry.getKey()).setAnalystName(sampleInfo.getResult().get("checkResult1"));
-                                objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(sampleInfo.getResult().get("analyst1")));
+                                if(entry.getKey().contains(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)){
+                                    objectMap.get(entry.getKey()).setAnalystName(sampleInfo.getResult()
+                                            .get(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT+checkResultNum));
+                                    objectMap.get(entry.getKey()).setAnalyst(Integer.valueOf(sampleInfo.getResult()
+                                            .get(QtManagerConstant.ANALYST+checkResultNum)));
+                                }
                             }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
@@ -730,8 +738,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                         qtCheckTaskCopy.setAnalyst(Integer.valueOf(entry.getValue()));
                                     }
                                 } else if (QtManagerConstant.ANALYSTNAME.equals(sampleInfo.getId())) {
-                                    qtCheckTaskCopy.setAnalystName(entry.getValue());
-                                    qtCheckTaskCopy.setAnalyst(Integer.valueOf(sampleInfo.getResult().get("analyst1")));
+                                    if(entry.getKey().contains(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)){
+                                        qtCheckTaskCopy.setAnalystName(entry.getValue());
+                                        qtCheckTaskCopy.setAnalyst(Integer.valueOf(sampleInfo.getResult().get(QtManagerConstant.ANALYST+checkResultNum)));
+                                    }
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
                                     if (StringUtils.isNotBlank(entry.getKey())) {
                                         qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
@@ -745,7 +755,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                         qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
                                     }
                                 }
-                            if(!entry.getKey().contains("analyst")) objectMap.put(entry.getKey(),qtCheckTaskCopy);
+                            if(!entry.getKey().contains(QtManagerConstant.ANALYST)) objectMap.put(entry.getKey(),qtCheckTaskCopy);
                         }
                     }
                 });
@@ -755,7 +765,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
                     if(key.length() != 0) {
-                        Integer copy = Integer.valueOf(key.contains("checkResult")
+                        Integer copy = Integer.valueOf(key.contains(QtManagerConstant.QT_CHECK_TASK_FIELD_CHECK_RESULT)
                                 ?key.substring(key.length()==12?(key.length() - 1):(key.length() - 2))
                                 :key.substring(key.length() - 1));
                         qtCheckTaskCopy1.setCopy(copy);
@@ -942,7 +952,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         LambdaQueryWrapper<QtCheckTask> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(QtCheckTask::getCode,dto.getOriginalTaskCode());
         QtCheckTask originalQtCheckTask = qtCheckTaskMapper.selectOne(queryWrapper);
-        BeanUtils.copyProperties(originalQtCheckTask, qtCheckTask);
+        BeanUtils.copyProperties(dto, qtCheckTask);
         qtCheckTask.setId(null);
         qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
