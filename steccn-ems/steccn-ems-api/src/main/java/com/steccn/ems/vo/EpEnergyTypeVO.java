@@ -8,11 +8,12 @@ import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class EpEnergyTypeVO {
+public class EpEnergyTypeVO implements Serializable {
     /**
      * 主键
      */

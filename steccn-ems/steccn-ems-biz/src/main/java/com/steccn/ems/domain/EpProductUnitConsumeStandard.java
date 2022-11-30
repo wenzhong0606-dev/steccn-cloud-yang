@@ -6,13 +6,16 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.common.vo.BaseSelectVO;
 import lombok.Data;
 
 /**
  * 产品单耗标准
  * @TableName ep_product_unit_consume_standard
  */
-@TableName(value ="ep_product_unit_consume_standard")
+@TableName(value ="ep_product_unit_consume_standard", autoResultMap = true)
 @Data
 public class EpProductUnitConsumeStandard implements Serializable {
     /**
@@ -44,7 +47,8 @@ public class EpProductUnitConsumeStandard implements Serializable {
     /**
      * 应用部门
      */
-    private Object applyOffice;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private BaseSelectVO<Long> applyOffice;
 
     /**
      * 产品类型【基片、深加工】

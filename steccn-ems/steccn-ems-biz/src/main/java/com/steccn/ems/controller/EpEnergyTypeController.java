@@ -3,7 +3,7 @@ package com.steccn.ems.controller;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
-import com.steccn.ems.dto.EpAddEnergyTypeDTO;
+import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import io.swagger.annotations.Api;
@@ -24,7 +24,7 @@ public class EpEnergyTypeController {
     @PostMapping
     @ApiOperation(value = "新增能源类型")
     @SysLog("新增能源类型")
-    public R<EpEnergyTypeVO> addOrEdit(@Validated(InsertGroup.class) @RequestBody EpAddEnergyTypeDTO dto) {
+    public R<EpEnergyTypeVO> addOrEdit(@Validated(InsertGroup.class) @RequestBody EpEnergyTypeDTO dto) {
         return R.success(epEnergyTypeService.addOrEdit(dto));
     }
 

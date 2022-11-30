@@ -9,7 +9,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
-import com.steccn.ems.dto.EpAddEnergyTypeDTO;
+import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.mapper.EpEnergyTypeMapper;
 import com.steccn.ems.vo.EpEnergyTypeVO;
@@ -45,7 +45,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public EpEnergyTypeVO addOrEdit(EpAddEnergyTypeDTO dto) {
+    public EpEnergyTypeVO addOrEdit(EpEnergyTypeDTO dto) {
         List<EpEnergyType> epEnergyTypes = list(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getName, dto.getName()));
         if (epEnergyTypes.size()>1){
             throw new BusinessException("能源类型的名称不能重复!");

@@ -14,13 +14,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class EpAddEnergyTypeDTO implements Serializable {
+public class EpEnergyTypeDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * 主键
      */
-    @NotNull(groups = {UpdateGroup.class},message = "编辑能源类型时id不能为空")
     private Integer id;
 
     /**

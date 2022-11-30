@@ -2,6 +2,9 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +13,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpProductUnitConsumeStandardService extends IService<EpProductUnitConsumeStandard> {
 
+    /**
+     *
+     * @return
+     */
+    List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList();
 }
