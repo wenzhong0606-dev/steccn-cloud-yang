@@ -1,7 +1,10 @@
 package com.steccn.wms.service;
 
-import com.steccn.wms.domain.WmsWarehouseMaterialAllocation;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.vo.R;
+import com.steccn.wms.domain.WmsWarehouseMaterialAllocation;
+import com.steccn.wms.dto.WmsWarehouseMaterialAllocationDTO;
 
 /**
 * @author W10
@@ -9,5 +12,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2022-11-30 09:45:17
 */
 public interface WmsWarehouseMaterialAllocationService extends IService<WmsWarehouseMaterialAllocation> {
+
+
+    Page<WmsWarehouseMaterialAllocation> getMaterialConfigureList(WmsWarehouseMaterialAllocationDTO dto);
+
+    R<String> addOrUpdateMaterialConfigure( WmsWarehouseMaterialAllocation dto);
+
+    R<String> delMaterialConfigure( WmsWarehouseMaterialAllocation dto);
 
 }
