@@ -3,7 +3,7 @@ package com.steccn.ems.service;
 import com.steccn.ems.domain.EpEnergyType;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpAddEnergyTypeDTO;
-import com.steccn.ems.vo.EpAddEnergyTypeVO;
+import com.steccn.ems.vo.EpEnergyTypeVO;
 
 import java.util.List;
 
@@ -19,18 +19,18 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
      * @param dto
      * @return
      */
-    Integer add(EpAddEnergyTypeDTO dto);
+    EpEnergyTypeVO addOrEdit(EpAddEnergyTypeDTO dto);
 
     /**
      *
      * @param id
      * @return
      */
-    EpAddEnergyTypeVO getEpAddEnergyTypeVO(Integer id);
+    EpEnergyTypeVO getEpAddEnergyTypeVO(Integer id);
 
     /**
      * 查询能源列表
      * @return
      */
-    List<EpAddEnergyTypeVO> getEpAddEnergyTypeVOList();
+    List<EpEnergyTypeVO> getEpAddEnergyTypeVOList();
 }

@@ -5,7 +5,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpAddEnergyTypeDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
-import com.steccn.ems.vo.EpAddEnergyTypeVO;
+import com.steccn.ems.vo.EpEnergyTypeVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +24,19 @@ public class EpEnergyTypeController {
     @PostMapping
     @ApiOperation(value = "新增能源类型")
     @SysLog("新增能源类型")
-    public R<Integer> add(@Validated(InsertGroup.class) @RequestBody EpAddEnergyTypeDTO dto) {
-        return R.success(epEnergyTypeService.add(dto));
+    public R<EpEnergyTypeVO> addOrEdit(@Validated(InsertGroup.class) @RequestBody EpAddEnergyTypeDTO dto) {
+        return R.success(epEnergyTypeService.addOrEdit(dto));
     }
 
     @GetMapping
     @ApiOperation(value = "根据id查询能源类型")
-    public R<EpAddEnergyTypeVO> getEpAddEnergyTypeVO(@PathVariable("id") Integer id){
+    public R<EpEnergyTypeVO> getEpAddEnergyTypeVO(@PathVariable("id") Integer id){
         return R.success(epEnergyTypeService.getEpAddEnergyTypeVO(id));
     }
 
     @GetMapping("/selectAll")
     @ApiOperation(value = "查询能源列表")
-    public R<List<EpAddEnergyTypeVO>> getEpAddEnergyTypeVOList(){
+    public R<List<EpEnergyTypeVO>> getEpAddEnergyTypeVOList(){
         return R.success(epEnergyTypeService.getEpAddEnergyTypeVOList());
     }
 }
