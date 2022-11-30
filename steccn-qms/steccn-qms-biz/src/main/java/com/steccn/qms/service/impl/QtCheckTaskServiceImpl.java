@@ -1323,6 +1323,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             for (QtCheckTask qtCheckTask : resPage.getRecords()) {
                 QtCheckProduceTaskVO vo = new QtCheckProduceTaskVO();
                 BeanUtils.copyProperties(qtCheckTask, vo);
+                //不是在线检 缺陷记录开始与结束时间置空
+                if(qtCheckTask.getTaskType() != QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) {
+                    vo.setDefectStartTime(null);
+                    vo.setDefectEndTime(null);
+                }
                 resRecords.add(vo);
             }
         }
