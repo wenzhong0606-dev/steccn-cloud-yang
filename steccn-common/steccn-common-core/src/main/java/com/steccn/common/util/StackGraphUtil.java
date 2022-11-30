@@ -88,7 +88,7 @@ public class StackGraphUtil {
         LinkedHashMap<Integer, Map<Integer, List<T2>>> dataMap = new LinkedHashMap<>();
 
         //存放名称
-        Map<Integer, T1> nameMap = Maps.newHashMap();
+        Map<String, T1> nameMap = Maps.newHashMap();
 
         for (int i = 0; i < dataList.size(); i++) {
             //获取x轴上i点的柱子集合
@@ -106,8 +106,8 @@ public class StackGraphUtil {
                     Map<Integer, List<T2>> map1 = dataMap.get(k);
                     if (!map1.containsKey(j)) {
                         map1.put(j, Lists.newArrayList());
-                        nameMap.put(j, sbDto.getField1());
                     }
+                    nameMap.put(k + "_" + j, sbDto.getField1());
                     map1.get(j).add(sbDto.getField2());
                 }
             }
@@ -124,22 +124,21 @@ public class StackGraphUtil {
 
             for (Map.Entry<Integer, List<T2>> entryIn : entry.getValue().entrySet()) {
                 QtSeriesDataDTO<T1, T2> qtSeriesDataDTO = new QtSeriesDataDTO();
-                qtSeriesDataDTO.setName(nameMap.get(entryIn.getKey()));
+                qtSeriesDataDTO.setName(nameMap.get(entry.getKey() + "_" + entryIn.getKey()));
                 qtSeriesDataDTO.setData(entryIn.getValue());
                 qtSeriesDataDTO.setStack(STR_STACK);
                 qtSeriesDataDTO.setType(STR_GRAPH);
                 seriesDataVOList.add(qtSeriesDataDTO);
                 if (flag.get() && legend) {
                     //纵向图例
-                    nameList.add(nameMap.get(entryIn.getKey()));
+                    nameList.add(nameMap.get(entry.getKey() + "_" + entryIn.getKey()));
                 }
             }
             if (!legend) {
                 //横向图例
                 Optional<Map.Entry<Integer, List<T2>>> first = entry.getValue().entrySet().stream().findFirst();
-                nameList.add(nameMap.get(first.get().getKey()));
+                nameList.add(nameMap.get(entry.getKey() + "_" + first.get().getKey()));
             }
-
             flag.set(Boolean.FALSE);
             resDataVoList.add(seriesDataVOList);
         }
@@ -147,7 +146,7 @@ public class StackGraphUtil {
         qtLineChartBarDTO.setName(nameList);
         return qtLineChartBarDTO;
     }
-//
+
 //    private static BiStackGraphDTO<String, BigDecimal> getStackGraphDTO(String x) {
 //        BiStackGraphDTO<String, BigDecimal> stackGraphDTO = new BiStackGraphDTO();
 //        stackGraphDTO.setXAxis(x);
