@@ -673,6 +673,9 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                     errorMsgList.add("计划日期格式错误格式应为“1970-01-01”");
                 } else {
                     LocalDate planDate = LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
+                    if (planDate.isBefore(LocalDate.now())) {
+                        errorMsgList.add("日期小于当前日期");
+                    }
                     Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> planDate.equals(producePlanVO.getPlanDate())
                             && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
                     if (optional.isPresent() && updateFlag.equals(0)) {
