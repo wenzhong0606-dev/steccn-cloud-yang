@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -37,7 +39,7 @@ public class EpEnergyType implements Serializable {
     /**
      * 关联图表
      */
-    private Integer linkTable;
+    private List<Integer> linkTable;
 
     /**
      * 备注
