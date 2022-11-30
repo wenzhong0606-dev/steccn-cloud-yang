@@ -90,6 +90,7 @@ public class EpEnergyType implements Serializable {
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

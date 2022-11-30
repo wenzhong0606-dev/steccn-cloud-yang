@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.ems.mapper.EpMeterReadMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.ems.domain.EpMeterRead">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="meterId" column="meter_id" jdbcType="INTEGER"/>
+            <result property="readDate" column="read_date" jdbcType="DATE"/>
+            <result property="classId" column="class_id" jdbcType="INTEGER"/>
+            <result property="thick" column="thick" jdbcType="BIGINT"/>
+            <result property="adminValue" column="admin_value" jdbcType="DECIMAL"/>
+            <result property="adminTime" column="admin_time" jdbcType="TIMESTAMP"/>
+            <result property="adminFlag" column="admin_flag" jdbcType="TINYINT"/>
+            <result property="correctValue" column="correct_value" jdbcType="DECIMAL"/>
+            <result property="readValue" column="read_value" jdbcType="DECIMAL"/>
+            <result property="readTime" column="read_time" jdbcType="TIMESTAMP"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,meter_id,read_date,
+        class_id,thick,admin_value,
+        admin_time,admin_flag,correct_value,
+        read_value,read_time,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time
+    </sql>
+</mapper>
