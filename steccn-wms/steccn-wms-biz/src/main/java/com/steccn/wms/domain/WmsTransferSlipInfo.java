@@ -23,7 +23,7 @@ public class WmsTransferSlipInfo implements Serializable {
     /**
      * 调拨单id
      */
-    private Long transerSlipId;
+    private Long transferSlipId;
 
     /**
      * 来源货架
@@ -33,7 +33,7 @@ public class WmsTransferSlipInfo implements Serializable {
     /**
      * 目标货架
      */
-    private Integer targetShlf;
+    private Integer targetShelf;
 
     /**
      * 物料id
