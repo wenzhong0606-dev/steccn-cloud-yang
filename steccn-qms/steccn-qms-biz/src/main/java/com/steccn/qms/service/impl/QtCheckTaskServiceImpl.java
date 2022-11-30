@@ -1633,21 +1633,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             flatDataList.addAll(flatDataCopyList);
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductWorkshopId));
             Set<Integer> workshopIdSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductWorkshopId())).map(QtCheckTaskReportVO::getProductWorkshopId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(workshopIdSet)).get();
+            idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
             flatDataCopyList = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).collect(Collectors.toList());
             flatDataList.clear();
             flatDataList.addAll(flatDataCopyList);
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getProductLineId));
             Set<Integer> lineIdSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getProductLineId())).map(QtCheckTaskReportVO::getProductLineId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(lineIdSet)).get();
+            idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.MATERIALWORKSHOP.getCode().equals(compare)) {
             flatDataCopyList = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.toList());
             flatDataList.clear();
             flatDataList.addAll(flatDataCopyList);
             targetMap = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialWorkshopId));
             Set<Integer> idSet = flatDataList.stream().filter(v -> Objects.nonNull(v.getMaterialWorkshopId())).map(QtCheckTaskReportVO::getMaterialWorkshopId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(idSet)).get();
+            idNameMap =  officeContrastSort(dataMap);
         }else if(QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(compare)){
             flatDataCopyList = flatDataList.stream().filter(v -> Objects.nonNull(v.getClassesId())).collect(Collectors.toList());
             flatDataList.clear();
@@ -1668,6 +1671,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         return new TupleDTO<>(targetMap, idNameMap);
     }
+
+    /**
+     * 组织架构对比排序
+     * @param dataMap 数据map
+     * @return 排序后的map
+     */
+    private Map<Integer, String> officeContrastSort(Map<Integer, SysOfficeVO> dataMap) {
+        Map<Integer,String> idNameMap = Maps.newLinkedHashMap();
+        if(CollUtil.isNotEmpty(dataMap)){
+            List<SysOfficeVO> collect = dataMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+            collect.forEach(ele -> {
+                idNameMap.put(ele.getId(),ele.getOfficeName());
+            });
+        }
+        return idNameMap;
+    }
+
     /**
      * 求和，返回二元组数据
      *

@@ -144,19 +144,23 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
             Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(workshopIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(workshopIdSet)).get();
+            idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
             Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(lineIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(lineIdSet)).get();
+            idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.DEFECTCATEGORY.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
             Set<Integer> defectCategorySet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-            idNameMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(defectCategorySet)).get();
+            Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(defectCategorySet);
+            idNameMap = defectCategorySort(defectCategoryMap);
         } else if(QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(compare)){
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-            Set<Integer> classIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getClassId).collect(Collectors.toSet());
+            List<Integer> classIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getClassId).collect(Collectors.toList());
             idNameMap = Maps.newHashMap();
+            Collections.sort(classIdSet);
             for (Integer classId : classIdSet) {
                 QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(classId);
                 idNameMap.put(code.getCode(), code.getName());
@@ -169,6 +173,22 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             idNameMap.put(0, StackGraphUtil.STR_DEFAULT);
         }
         return new TupleDTO<>(targetMap, idNameMap);
+    }
+
+    /**
+     * 组织架构对比排序
+     * @param dataMap 数据map
+     * @return 排序后的map
+     */
+    private Map<Integer, String> officeContrastSort(Map<Integer, SysOfficeVO> dataMap) {
+        Map<Integer,String> idNameMap = Maps.newLinkedHashMap();
+        if(CollUtil.isNotEmpty(dataMap)){
+            List<SysOfficeVO> collect = dataMap.values().stream().sorted(Comparator.comparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+            collect.forEach(ele -> {
+                idNameMap.put(ele.getId(),ele.getOfficeName());
+            });
+        }
+        return idNameMap;
     }
 
     @Override
@@ -688,8 +708,26 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
-        Map<Integer, String> idNameMap = qtItemCategoryService.listByIdCh(categoryIdSet);
+        Map<Integer, QtItemCategory> defectMap = qtItemCategoryService.listById(categoryIdSet);
+        Map<Integer, String> idNameMap = defectCategorySort(defectMap);
         return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
+    }
+
+    /**
+     * 缺陷类别排序
+     * @param defectMap 缺陷类别map
+     * @return
+     */
+    private Map<Integer, String> defectCategorySort(Map<Integer, QtItemCategory> defectMap) {
+        Map<Integer, String> idNameMap = new LinkedHashMap<>();
+        if (CollUtil.isNotEmpty(defectMap)) {
+            //排序：按缺陷项所属缺陷项类别的创建时间升序排序
+            List<QtItemCategory> collect = defectMap.values().stream().sorted(Comparator.comparing(QtItemCategory::getId)).collect(Collectors.toList());
+            for (QtItemCategory ele : collect) {
+                idNameMap.put(ele.getId(), ele.getName());
+            }
+        }
+        return idNameMap;
     }
 
     /**
@@ -743,8 +781,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
-        Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
-        return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
+        Map<Integer, QtDefectiveItem> defectMap = qtDefectiveItemService.listById(defectIdSet);
+        Map<Integer, String> defectIdNameMap = new LinkedHashMap<>();
+        //保证排序关系
+        //①一级排序：按缺陷项所属缺陷项类别的创建时间升序排序
+        //②二级排序：按缺陷项的创建时间升序排序
+        List<QtDefectiveItem> collect = defectMap.values().stream().sorted(Comparator.comparing(QtDefectiveItem::getCategoryId).thenComparing(QtDefectiveItem::getId)).collect(Collectors.toList());
+        for (QtDefectiveItem ele : collect) {
+          defectIdNameMap.put(ele.getId(),ele.getName());
+        }
+        return commonLine(1, dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
     }
 
     /**
@@ -770,7 +816,15 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
-        Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
+        Map<Integer, QtDefectiveItem> defectMap = qtDefectiveItemService.listById(defectIdSet);
+        Map<Integer, String> defectIdNameMap = new LinkedHashMap<>();
+        //保证排序关系
+        //①一级排序：按缺陷项所属缺陷项类别的创建时间升序排序
+        //②二级排序：按缺陷项的创建时间升序排序
+        List<QtDefectiveItem> collect = defectMap.values().stream().sorted(Comparator.comparing(QtDefectiveItem::getCategoryId).thenComparing(QtDefectiveItem::getId)).collect(Collectors.toList());
+        for (QtDefectiveItem ele : collect) {
+            defectIdNameMap.put(ele.getId(),ele.getName());
+        }
         return commonLine(1,dto, flatDataList, cutDate, defectIdNameMap, dto1 -> Objects.nonNull(dto1.getDefectId()));
     }
 
