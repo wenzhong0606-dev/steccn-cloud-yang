@@ -25,6 +25,15 @@ public class WmsTransferSlipVO {
     @ApiModelProperty("源仓库名称")
     private String sourceWarehouseName;
 
+    @ApiModelProperty("目标仓库")
+    private Integer targetWarehouse;
+
+    @ApiModelProperty("目标仓库名称")
+    private String targetWarehouseName;
+
+    @ApiModelProperty("状态")
+    private Integer status;
+
     @ApiModelProperty("调拨单号")
     private String code;
 
