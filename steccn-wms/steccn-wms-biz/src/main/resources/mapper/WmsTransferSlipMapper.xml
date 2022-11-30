@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.wms.mapper.WmsTransferSlipMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.wms.domain.WmsTransferSlip">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="sourceWarehouse" column="source_warehouse" jdbcType="INTEGER"/>
+            <result property="targetWarehouse" column="target_warehouse" jdbcType="INTEGER"/>
+            <result property="type" column="type" jdbcType="BIGINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="affirmBy" column="affirm_by" jdbcType="BIGINT"/>
+            <result property="affirmTime" column="affirm_time" jdbcType="TIMESTAMP"/>
+            <result property="affirmName" column="affirm_name" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,code,source_warehouse,
+        target_warehouse,type,status,
+        note,affirm_by,affirm_time,
+        affirm_name,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>
