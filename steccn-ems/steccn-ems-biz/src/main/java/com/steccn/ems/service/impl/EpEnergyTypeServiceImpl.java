@@ -5,7 +5,6 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
-import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
@@ -23,10 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yequan
@@ -40,6 +36,11 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         implements EpEnergyTypeService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    /**
+     * 默认能源,不可修改列表
+     */
+    private final Set<String> DEFAULT_ENERGY_SET = Sets.newHashSet("电", "水", "天然气", "燃料油", "燃料(气+油)");
 
     /**
      * 新增能源类型
@@ -59,9 +60,9 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         if (Objects.isNull(dto.getId())) {
             save(epEnergyType);
         } else {
-            if (dto.getId() < 6) {
-                throw new BusinessException("前五项已写死,无法修改");
-            }
+            EpEnergyType oldEnergy = getById(dto.getId());
+            Assert.notNull(oldEnergy,"编辑的能源类型不存在");
+            Assert.isTrue(!DEFAULT_ENERGY_SET.contains(oldEnergy.getName()), "前五项已写死,无法修改");
             updateById(epEnergyType);
         }
         return Boolean.TRUE;
@@ -83,14 +84,11 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         BeanUtils.copyProperties(epEnergyType, epEnergyTypeVO);
         //设置单位名称
         if (Objects.nonNull(epEnergyType.getMeasureUnit())) {
-            Set<Long> measure = Sets.newHashSet();
-            measure.add(epEnergyType.getMeasureUnit());
-            Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measure)).get();
-            String measureName = longStringMap.get(epEnergyType.getMeasureUnit());
-            epEnergyTypeVO.setMeasureUnitName(measureName);
+            Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(epEnergyType.getMeasureUnit()))).get();
+            epEnergyTypeVO.setMeasureUnitName(idNameMap.get(epEnergyType.getMeasureUnit()));
         }
         //关联图表
-        List<BaseSelectVO<Integer>> linkTableList  = energyType(epEnergyType.getLinkTable());
+        List<BaseSelectVO<Integer>> linkTableList  = energyTypeLinkTable(epEnergyType.getLinkTable());
         epEnergyTypeVO.setLinkTable(linkTableList);
         return epEnergyTypeVO;
     }
@@ -100,19 +98,20 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
      * @param linkTable
      * @return
      */
-    private List<BaseSelectVO<Integer>> energyType(List<Integer> linkTable) {
+    private List<BaseSelectVO<Integer>> energyTypeLinkTable(List<Integer> linkTable) {
         //获取关联表
-        List<BaseSelectVO<Integer>> linkTableString = Lists.newArrayList();
+        List<BaseSelectVO<Integer>> linkTableList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(linkTable)) {
             linkTable.forEach(q -> {
                 BaseSelectVO<Integer> baseSelectVo = new BaseSelectVO<>();
                 EpManagerConstant.EpEnergyTypes energyTypes = EpManagerConstant.EpEnergyTypes.getById(q);
+                Assert.notNull(energyTypes, "关联图表不存在");
                 baseSelectVo.setId(q);
                 baseSelectVo.setName(energyTypes.getName());
-                linkTableString.add(baseSelectVo);
+                linkTableList.add(baseSelectVo);
             });
         }
-        return linkTableString;
+        return linkTableList;
     }
 
     @Override
@@ -128,14 +127,11 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
             BeanUtils.copyProperties(s, epAddEnergyTypeVO);
             //设置单位名称
             if (Objects.nonNull(s.getMeasureUnit())) {
-                Set<Long> measure = Sets.newHashSet();
-                measure.add(s.getMeasureUnit());
-                Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measure)).get();
-                String measureName = longStringMap.get(s.getMeasureUnit());
-                epAddEnergyTypeVO.setMeasureUnitName(measureName);
+                Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(s.getMeasureUnit()))).get();
+                epAddEnergyTypeVO.setMeasureUnitName(idNameMap.get(s.getMeasureUnit()));
             }
             //获取关联表
-            List<BaseSelectVO<Integer>> linkTableList  = energyType(s.getLinkTable());
+            List<BaseSelectVO<Integer>> linkTableList  = energyTypeLinkTable(s.getLinkTable());
             epAddEnergyTypeVO.setLinkTable(linkTableList);
             epAddEnergyTypeVOS.add(epAddEnergyTypeVO);
         });
@@ -143,8 +139,13 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
-        return null;
+        EpEnergyType epEnergyType = getById(id);
+        Assert.notNull(epEnergyType,"该id图表不存在,无法删除");
+        epEnergyType.setShowFlag(MpConstant.NO);
+        updateById(epEnergyType);
+        return Boolean.TRUE;
     }
 
 }
