@@ -6,13 +6,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
  * 能源类型表
  * @TableName ep_energy_type
  */
-@TableName(value ="ep_energy_type")
+@TableName(value = "ep_energy_type", autoResultMap = true)
 @Data
 public class EpEnergyType implements Serializable {
     /**
@@ -39,6 +40,7 @@ public class EpEnergyType implements Serializable {
     /**
      * 关联图表
      */
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private List<Integer> linkTable;
 
     /**

@@ -5,19 +5,20 @@
 <mapper namespace="com.steccn.ems.mapper.EpEnergyTypeMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.ems.domain.EpEnergyType">
-        <id property="id" column="id" jdbcType="INTEGER"/>
-        <result property="name" column="name" jdbcType="VARCHAR"/>
-        <result property="measureUnit" column="measure_unit" jdbcType="BIGINT"/>
-        <result property="measureMeterName" column="measure_meter_name" jdbcType="VARCHAR"/>
-        <result property="linkTable" column="link_table" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
-        <result property="note" column="note" jdbcType="VARCHAR"/>
-        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="measureUnit" column="measure_unit" jdbcType="BIGINT"/>
+            <result property="measureMeterName" column="measure_meter_name" jdbcType="VARCHAR"/>
+            <result property="linkTable" column="link_table"
+                    typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
