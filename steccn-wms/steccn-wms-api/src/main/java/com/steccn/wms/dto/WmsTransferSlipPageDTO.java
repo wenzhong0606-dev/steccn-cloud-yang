@@ -55,7 +55,7 @@ public class WmsTransferSlipPageDTO extends BasePageDTO {
     private String createName;
 
     @ApiModelProperty("确认人")
-    private Long affirmBy;
+    private String affirmName;
 
     @ApiModelProperty("创建开始日期")
     private LocalDate createStartDate;
