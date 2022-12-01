@@ -14,6 +14,9 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 能源类型新增编辑dto
+ */
 @Data
 public class EpEnergyTypeDTO implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -27,7 +30,7 @@ public class EpEnergyTypeDTO implements Serializable {
      * 能源类型名称
      */
     @NotBlank(message = "能源类型名称不能为空")
-    @Length(max = 20, message = "名称长度不能超过20个中文")
+    @Length(max = 20, message = "名称长度不能超过20个文字")
     private String name;
 
     /**
@@ -39,7 +42,7 @@ public class EpEnergyTypeDTO implements Serializable {
     /**
      * 计量仪表名称
      */
-    @Length(max = 20, message = "计量仪表名称长度不能超过20个中文")
+    @Length(max = 20, message = "计量仪表名称长度不能超过20个文字")
     @NotBlank(message = "计量仪表名称不能为空")
     private String measureMeterName;
 
@@ -52,6 +55,6 @@ public class EpEnergyTypeDTO implements Serializable {
     /**
      * 备注
      */
-    @Length(max = 100, message = "备注不能超过100个中文")
+    @Length(max = 100, message = "备注不能超过100个文字")
     private String note;
 }

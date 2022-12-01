@@ -13,6 +13,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 产品单耗标准新增编辑dto
+ */
 @Data
 public class EpProductUnitStandardDTO implements Serializable {
     /**

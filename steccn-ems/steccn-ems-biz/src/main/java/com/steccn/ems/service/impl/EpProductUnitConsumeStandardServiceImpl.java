@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
+import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
@@ -27,7 +29,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     implements EpProductUnitConsumeStandardService{
 
     @Override
-    public List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList() {
+    public List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList(EpProductUnitStandardPageDTO dto) {
         EpProductUnitConsumeStandardVO epProductUnitStandardVO = new EpProductUnitConsumeStandardVO();
         List<EpProductUnitConsumeStandardVO> epProductUnitStandardVOS = Lists.newArrayList();
         epProductUnitStandardVOS.add(epProductUnitStandardVO);
@@ -40,7 +42,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //去数据库中根据名称查询产品单耗个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName()));
-        Assert.isTrue(size !=0, "产品单耗的名称不能重复");
+        Assert.isTrue(size ==0, "产品单耗的名称不能重复");
         //创建domain实体类对象
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
         //复制传进来的dto
@@ -54,17 +56,23 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 &&Objects.nonNull(dto.getEnergyType())
                 &&Objects.nonNull(dto.getProductType())
                 &&Objects.nonNull(dto.getProductThick())){
-           EpProductUnitConsumeStandard epProductUnitConsumeStandard= getOne(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+           List<EpProductUnitConsumeStandard> dataList= list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                     .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
                     .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                     .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
                     .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
-                    //大于等于dto的有效期开始时间,表明有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidStart,dto.getValidStart())
-                    .or()
-                    //小于等于dto的有效结束时间,表明有重叠
-                    .lt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidEnd()));
-           Assert.isNull(epProductUnitConsumeStandard,"与现有标准"+epProductUnitConsumeStandard.getName()+"有效期有重叠");
+                    //老的开始时间小于等于dto的有效期结束时间,表明时间有重叠
+                    .lt(EpProductUnitConsumeStandard::getValidStart,dto.getValidEnd())
+                    //老的结束时间小于等于dto的有效开始时间,表明时间有重叠
+                    .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart()));
+            String names = new String();
+            if (CollUtil.isNotEmpty(dataList)){
+                for (EpProductUnitConsumeStandard data : dataList) {
+                    names = data.getName()+" ";
+                }
+                throw new BusinessException("与现有标准"+names+"有效期有重叠");
+            }
+
 
         }
 

@@ -4,6 +4,7 @@ import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
+import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      *分页查询产品单耗标准
      * @return
      */
-    List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList();
+    List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList(EpProductUnitStandardPageDTO dto);
 
     /**
      * 新建或编辑产品单耗标准

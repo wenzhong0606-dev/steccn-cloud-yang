@@ -4,6 +4,10 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+
+/**
+ * 产品单耗标准分页dto
+ */
 @Data
 public class EpProductUnitStandardPageDTO extends BasePageDTO implements Serializable {
     /**

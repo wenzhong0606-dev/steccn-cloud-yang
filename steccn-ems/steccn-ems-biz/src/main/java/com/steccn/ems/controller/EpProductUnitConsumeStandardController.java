@@ -4,6 +4,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
+import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
@@ -31,8 +32,10 @@ public class EpProductUnitConsumeStandardController {
     }
 
     @PostMapping("/select")
-    @ApiOperation(value = "查询能源列表")
-    public R<List<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(){
-        return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList());
+    @ApiOperation(value = "查询产品单耗标准分页列表")
+    //TODO:查询产品单耗标准分页列表
+    public R<List<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody
+                                                                                       EpProductUnitStandardPageDTO dto){
+        return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
     }
 }

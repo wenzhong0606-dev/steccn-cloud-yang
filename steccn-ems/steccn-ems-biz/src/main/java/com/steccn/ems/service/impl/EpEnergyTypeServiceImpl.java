@@ -57,7 +57,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         long size = count(new LambdaQueryWrapper<EpEnergyType>()
                 .eq(EpEnergyType::getName, dto.getName())
                 .eq(EpEnergyType::getShowFlag, MpConstant.YES));
-        Assert.isTrue(size !=0 , "能源类型的名称不能重复");
+        Assert.isTrue(size ==0 , "能源类型的名称不能重复");
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
         //link table是否合法
