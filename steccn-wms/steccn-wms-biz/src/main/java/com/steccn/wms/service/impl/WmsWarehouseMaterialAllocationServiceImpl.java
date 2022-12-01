@@ -26,17 +26,17 @@ public class WmsWarehouseMaterialAllocationServiceImpl extends ServiceImpl<WmsWa
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         LambdaQueryWrapper<WmsWarehouseMaterialAllocation> wmsWarehouseMaterialAllocationLambdaQueryWrapper = new LambdaQueryWrapper<WmsWarehouseMaterialAllocation>();
         wmsWarehouseMaterialAllocationLambdaQueryWrapper.eq(WmsWarehouseMaterialAllocation::getDelFlag,0);
-        //搜索条件可以是专题中文名或英文名
         if (StringUtils.isNotEmpty(dto.getKeyWord())) {
             wmsWarehouseMaterialAllocationLambdaQueryWrapper.and(wrapper -> wrapper.like(WmsWarehouseMaterialAllocation::getMaterialCode, dto.getKeyWord())
                     .or().like(WmsWarehouseMaterialAllocation::getMaterialName, dto.getKeyWord()));
         }
+        wmsWarehouseMaterialAllocationLambdaQueryWrapper.orderByDesc(WmsWarehouseMaterialAllocation::getCreateTime);
         Page resPage = page(page, wmsWarehouseMaterialAllocationLambdaQueryWrapper);
         return resPage;
     }
 
     @Override
-    public R<String> addOrUpdateMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
+    public R<Boolean> addOrUpdateMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
         Integer result;
         if(dto.getId() == null ){
             dto.setCreateBy( SecurityUtils.getUser().getUserId());
@@ -49,17 +49,17 @@ public class WmsWarehouseMaterialAllocationServiceImpl extends ServiceImpl<WmsWa
             dto.setUpdateName( SecurityUtils.getUser().getName());
             result = baseMapper.updateById(dto);
         }
-        return result >0 ?R.success("操作成功"):R.failure("操作失败");
+        return result >0 ?R.success(true):R.failure(false);
     }
 
     @Override
-    public R<String> delMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
+    public R<Boolean> delMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
         WmsWarehouseMaterialAllocation wmsWarehouseMaterialAllocation = baseMapper.selectById(dto.getId());
         wmsWarehouseMaterialAllocation.setDelFlag(1);
         wmsWarehouseMaterialAllocation.setUpdateBy( SecurityUtils.getUser().getUserId());
         wmsWarehouseMaterialAllocation.setUpdateName( SecurityUtils.getUser().getName());
         int reulst = baseMapper.updateById(wmsWarehouseMaterialAllocation);
-        return reulst>0?R.success("删除成功"):R.failure("删除失败");
+        return reulst>0?R.success(true):R.failure(false);
     }
 }
 
