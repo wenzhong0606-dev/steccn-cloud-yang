@@ -4,7 +4,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
+import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -15,6 +19,13 @@ import org.springframework.stereotype.Service;
 public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProductUnitConsumeStandardMapper, EpProductUnitConsumeStandard>
     implements EpProductUnitConsumeStandardService{
 
+    @Override
+    public List<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList() {
+        EpProductUnitConsumeStandardVO epProductUnitStandardVO = new EpProductUnitConsumeStandardVO();
+        List<EpProductUnitConsumeStandardVO> epProductUnitStandardVOS = Lists.newArrayList();
+        epProductUnitStandardVOS.add(epProductUnitStandardVO);
+        return epProductUnitStandardVOS;
+    }
 }
 
 

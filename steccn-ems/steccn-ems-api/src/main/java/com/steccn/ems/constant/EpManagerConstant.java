@@ -14,10 +14,10 @@ public interface EpManagerConstant {
         ENERGYHISTORY(1,"能耗历史对比"),
         CONSUMPTIONPARTITION(2,"单耗分区对比"),
         CONSUMPTIONSHIFT(3,"单耗班组对比"),
-        CONSUMPTIONHISTORY(4,"单耗历史对比"),
-        PEAKGUPINGPARTITION(5,"峰谷平分区对比"),
-        PEAKGUPINGHISTORY(6,"峰谷平历史对比"),
-        ENERGYFLOW(7,"能源流向");
+        ENERGYFLOW(4,"能源流向"),
+        CONSUMPTIONHISTORY(5,"单耗历史对比"),
+        PEAKGUPINGPARTITION(6,"峰谷平分区对比"),
+        PEAKGUPINGHISTORY(7,"峰谷平历史对比");
 
         private Integer code;
         private String name;
@@ -30,6 +30,6 @@ public interface EpManagerConstant {
             }
             return null;
         }
-
     }
+
 }

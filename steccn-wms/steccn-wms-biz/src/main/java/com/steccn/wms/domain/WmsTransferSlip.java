@@ -40,7 +40,7 @@ public class WmsTransferSlip implements Serializable {
     private Long type;
 
     /**
-     * 状态
+     * 状态： 0：已创建 1：已确认 2：已完成 3：已删除
      */
     private Integer status;
 

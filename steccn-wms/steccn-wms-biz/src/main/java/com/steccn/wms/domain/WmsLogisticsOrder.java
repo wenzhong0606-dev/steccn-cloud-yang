@@ -52,7 +52,7 @@ public class WmsLogisticsOrder implements Serializable {
     /**
      * 实际送达时间
      */
-    private LocalDateTime practical;
+    private LocalDateTime practicalTime;
 
     /**
      * 备注

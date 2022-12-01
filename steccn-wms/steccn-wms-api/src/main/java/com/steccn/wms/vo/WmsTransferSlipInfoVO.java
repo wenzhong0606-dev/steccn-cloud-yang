@@ -22,8 +22,14 @@ public class WmsTransferSlipInfoVO {
     @ApiModelProperty("来源货架")
     private Integer sourceShelf;
 
+    @ApiModelProperty("来源货架名称")
+    private String  sourceShelfName;
+
     @ApiModelProperty("目标货架")
     private Integer targetShelf;
+
+    @ApiModelProperty("目标货架名称")
+    private Integer targetShelfName;
 
     @ApiModelProperty("物料id")
     private Long materialId;

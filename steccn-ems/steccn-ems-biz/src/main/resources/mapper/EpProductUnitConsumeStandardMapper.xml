@@ -10,7 +10,8 @@
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="energyType" column="energy_type" jdbcType="INTEGER"/>
             <result property="standardType" column="standard_type" jdbcType="BIGINT"/>
-            <result property="applyOffice" column="apply_office" jdbcType="OTHER"/>
+            <result property="applyOffice" column="apply_office"
+                    typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
             <result property="productType" column="product_type" jdbcType="BIGINT"/>
             <result property="productThick" column="product_thick" jdbcType="BIGINT"/>
             <result property="unitValue" column="unit_value" jdbcType="DECIMAL"/>

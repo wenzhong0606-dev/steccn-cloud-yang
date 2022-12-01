@@ -14,20 +14,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class EpAddEnergyTypeDTO implements Serializable {
+public class EpEnergyTypeDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * 主键
      */
-    @NotNull(groups = {UpdateGroup.class},message = "编辑能源类型时id不能为空")
     private Integer id;
 
     /**
      * 能源类型名称
      */
-    @NotBlank(message="能源类型名称不能为空",groups = {InsertGroup.class, UpdateGroup.class})
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "名称长度不能超过20个中文")
+    @NotBlank(message = "能源类型名称不能为空")
+    @Length(max = 20, message = "名称长度不能超过20个中文")
     private String name;
 
     /**

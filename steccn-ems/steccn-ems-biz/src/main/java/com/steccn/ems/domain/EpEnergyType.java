@@ -56,6 +56,11 @@ public class EpEnergyType implements Serializable {
     private Integer delFlag;
 
     /**
+     * 是否可见 0 否 1 是
+     */
+    private Integer showFlag;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
