@@ -23,20 +23,20 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 标准名称
      */
-    @NotBlank(message="标准名称不能为空",groups = {InsertGroup.class, UpdateGroup.class})
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "标准名称长度不能超过50个中文")
+    @NotBlank(message="标准名称不能为空")
+    @Length( max = 20, message = "标准名称长度不能超过50个中文")
     private String name;
 
     /**
      * 能源类型id
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "能源类型不能为空")
+    @NotNull(message = "能源类型不能为空")
     private Integer energyType;
 
     /**
      * 标准类型【企业标准、行业标准、部门标准】
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "标准类型不能为空")
+    @NotNull(message = "标准类型不能为空")
     private Long standardType;
 
 
@@ -48,7 +48,7 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 产品类型【基片、深加工】
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "应用部门不能为空")
+    @NotNull(message = "产品类型不能为空")
     private Long productType;
 
     /**
@@ -59,25 +59,25 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 单耗标准值
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "单耗标准值不能为空")
+    @NotNull(message = "单耗标准值不能为空")
     private BigDecimal unitValue;
 
     /**
      * 计量单位
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "计量的单位不能为空")
+    @NotNull(message = "计量的单位不能为空")
     private Long measureUnit;
 
     /**
      * 有效期-开始
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "有效期开始时间不能为空")
+    @NotNull(message = "有效期开始时间不能为空")
     private LocalDate validStart;
 
     /**
      * 有效期-结束
      */
-    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "有效期结束时间不能为空")
+    @NotNull(message = "有效期结束时间不能为空")
     private LocalDate validEnd;
 
     /**

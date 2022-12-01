@@ -1,5 +1,6 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
 * @author yequan
@@ -34,17 +37,43 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
 
     @Override
     public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
-        //去数据库中
+        //去数据库中根据名称查询产品单耗个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName()));
         Assert.isTrue(size !=0, "产品单耗的名称不能重复");
+        //创建domain实体类对象
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
+        //复制传进来的dto
         BeanUtils.copyProperties(dto,unitConsumeStandard);
         long sum = count();
         String code = "BZ"+String.format("%06d", sum);
+        //设置标准编码
         unitConsumeStandard.setCode(code);
+        //检测有效期是否有重叠部分,如果有提示“与现有标准【#现有标准的名称#】有效期有重叠”，无法保存
+        if (Objects.nonNull(dto.getStandardType())
+                &&Objects.nonNull(dto.getEnergyType())
+                &&Objects.nonNull(dto.getProductType())
+                &&Objects.nonNull(dto.getProductThick())){
+           EpProductUnitConsumeStandard epProductUnitConsumeStandard= getOne(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                    .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
+                    .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
+                    .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
+                    .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
+                    //大于等于dto的有效期开始时间,表明有重叠
+                    .gt(EpProductUnitConsumeStandard::getValidStart,dto.getValidStart())
+                    .or()
+                    //小于等于dto的有效结束时间,表明有重叠
+                    .lt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidEnd()));
+           Assert.isNull(epProductUnitConsumeStandard,"与现有标准"+epProductUnitConsumeStandard.getName()+"有效期有重叠");
 
-        return null;
+        }
+
+        if (Objects.isNull(dto.getId())){
+            save(unitConsumeStandard);
+        }else {
+            updateById(unitConsumeStandard);
+        }
+        return Boolean.TRUE;
     }
 }
 
