@@ -19,7 +19,7 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
      * @param dto
      * @return
      */
-    EpEnergyTypeVO addOrEdit(EpEnergyTypeDTO dto);
+    Boolean addOrEdit(EpEnergyTypeDTO dto);
 
     /**
      *
@@ -32,5 +32,12 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
      * 查询能源列表
      * @return
      */
-    List<EpEnergyTypeVO> getEpAddEnergyTypeVOList();
+    List<EpEnergyTypeVO> getEpEnergyTypeVOList();
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    Boolean delete(Integer id);
 }

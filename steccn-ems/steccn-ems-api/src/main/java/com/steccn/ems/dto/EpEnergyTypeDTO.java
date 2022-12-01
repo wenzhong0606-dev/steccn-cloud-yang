@@ -25,8 +25,8 @@ public class EpEnergyTypeDTO implements Serializable {
     /**
      * 能源类型名称
      */
-    @NotBlank(message="能源类型名称不能为空",groups = {InsertGroup.class, UpdateGroup.class})
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "名称长度不能超过20个中文")
+    @NotBlank(message = "能源类型名称不能为空")
+    @Length(max = 20, message = "名称长度不能超过20个中文")
     private String name;
 
     /**

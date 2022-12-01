@@ -3,6 +3,7 @@ package com.steccn.ems.vo;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.BaseSelectVO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -14,9 +15,8 @@ import java.util.List;
 
 @Data
 public class EpEnergyTypeVO implements Serializable {
-    /**
-     * 主键
-     */
+
+    @ApiModelProperty("主键")
     private Integer id;
 
     /**
