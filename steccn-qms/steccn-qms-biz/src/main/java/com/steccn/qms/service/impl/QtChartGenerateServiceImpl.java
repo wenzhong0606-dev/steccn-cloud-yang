@@ -394,7 +394,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             String morningStartStr = entry.getKey() + " 08:00:00";
                             String morningEndStr = entry.getKey() + " 19:59:59";
                             String eveningStartStr = entry.getKey() + " 20:00:00";
-                            String eveningEndStr = entry.getKey() + " 7:59:59";
+                            String eveningEndStr = entry.getKey() + " 07:59:59";
                             LocalDateTime startTimeDate = LocalDateTime.now();
                             LocalDateTime endTimeDate = LocalDateTime.now();
                             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
