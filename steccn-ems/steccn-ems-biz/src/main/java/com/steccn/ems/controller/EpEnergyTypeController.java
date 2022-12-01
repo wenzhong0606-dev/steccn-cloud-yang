@@ -21,8 +21,8 @@ public class EpEnergyTypeController {
     private final EpEnergyTypeService epEnergyTypeService;
 
     @PostMapping
-    @ApiOperation(value = "新增能源类型")
-    @SysLog("新增能源类型")
+    @ApiOperation(value = "新增或编辑能源类型")
+    @SysLog("新增或编辑能源类型")
     public R<Boolean> addOrEdit(@Valid @RequestBody EpEnergyTypeDTO dto) {
         return R.success(epEnergyTypeService.addOrEdit(dto));
     }

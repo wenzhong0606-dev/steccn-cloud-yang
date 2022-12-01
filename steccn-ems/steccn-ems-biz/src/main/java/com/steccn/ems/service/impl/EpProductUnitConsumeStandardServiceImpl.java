@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
+import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
@@ -25,6 +26,12 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         List<EpProductUnitConsumeStandardVO> epProductUnitStandardVOS = Lists.newArrayList();
         epProductUnitStandardVOS.add(epProductUnitStandardVO);
         return epProductUnitStandardVOS;
+    }
+
+
+    @Override
+    public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
+        return null;
     }
 }
 

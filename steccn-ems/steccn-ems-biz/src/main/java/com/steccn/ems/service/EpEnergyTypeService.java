@@ -15,14 +15,14 @@ import java.util.List;
 public interface EpEnergyTypeService extends IService<EpEnergyType> {
 
     /**
-     * 新增能源类型
+     * 新增或编辑能源类型
      * @param dto
      * @return
      */
     Boolean addOrEdit(EpEnergyTypeDTO dto);
 
     /**
-     *
+     *根据id查询
      * @param id
      * @return
      */
@@ -35,7 +35,7 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
     List<EpEnergyTypeVO> getEpEnergyTypeVOList();
 
     /**
-     *
+     *根据id逻辑删除
      * @param id
      * @return
      */

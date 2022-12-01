@@ -43,7 +43,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     private final Set<String> DEFAULT_ENERGY_SET = Sets.newHashSet("电", "水", "天然气", "燃料油", "燃料(气+油)");
 
     /**
-     * 新增能源类型
+     * 新增或编辑能源类型
      *
      * @param dto
      * @return
@@ -57,6 +57,8 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         Assert.isTrue(size != 0, "能源类型的名称不能重复");
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
+        //link table是否合法
+        Assert.isTrue(EpManagerConstant.EpEnergyTypes.codeSet().containsAll(dto.getLinkTable()),"关联图表参数异常");
         if (Objects.isNull(dto.getId())) {
             save(epEnergyType);
         } else {
@@ -104,7 +106,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         if (CollUtil.isNotEmpty(linkTable)) {
             linkTable.forEach(q -> {
                 BaseSelectVO<Integer> baseSelectVo = new BaseSelectVO<>();
-                EpManagerConstant.EpEnergyTypes energyTypes = EpManagerConstant.EpEnergyTypes.getById(q);
+                EpManagerConstant.EpEnergyTypes energyTypes = EpManagerConstant.EpEnergyTypes.getByCode(q);
                 Assert.notNull(energyTypes, "关联图表不存在");
                 baseSelectVo.setId(q);
                 baseSelectVo.setName(energyTypes.getName());
@@ -116,18 +118,24 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
 
     @Override
     public List<EpEnergyTypeVO> getEpEnergyTypeVOList() {
-        //查询所有
-        List<EpEnergyType> epEnergyTypes = list(new LambdaQueryWrapper<EpEnergyType>());
+        //查询所有可见标识为1的
+        List<EpEnergyType> epEnergyTypes = list(new LambdaQueryWrapper<EpEnergyType>()
+                .eq(EpEnergyType::getShowFlag,MpConstant.YES));
         List<EpEnergyTypeVO> epAddEnergyTypeVOS = Lists.newArrayList();
         if (CollUtil.isEmpty(epEnergyTypes)) {
             return epAddEnergyTypeVOS;
         }
+        Set<Long> measures = Sets.newHashSet();
+        for (EpEnergyType epEnergyType : epEnergyTypes) {
+            measures.add(epEnergyType.getMeasureUnit());
+        }
+        //获取所有的单位名称和编码的map集合
+        Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(measures))).get();
         epEnergyTypes.forEach(s -> {
             EpEnergyTypeVO epAddEnergyTypeVO = new EpEnergyTypeVO();
             BeanUtils.copyProperties(s, epAddEnergyTypeVO);
             //设置单位名称
             if (Objects.nonNull(s.getMeasureUnit())) {
-                Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(s.getMeasureUnit()))).get();
                 epAddEnergyTypeVO.setMeasureUnitName(idNameMap.get(s.getMeasureUnit()));
             }
             //获取关联表
@@ -143,6 +151,10 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     public Boolean delete(Integer id) {
         EpEnergyType epEnergyType = getById(id);
         Assert.notNull(epEnergyType,"该id图表不存在,无法删除");
+        Assert.isTrue(!DEFAULT_ENERGY_SET.contains(epEnergyType.getName()), "前五项已写死,无法删除");
+        //TODO:校验是否存在该能源类型的仪表(仪表台账,产品单耗),如果存在无法逻辑删除
+
+
         epEnergyType.setShowFlag(MpConstant.NO);
         updateById(epEnergyType);
         return Boolean.TRUE;

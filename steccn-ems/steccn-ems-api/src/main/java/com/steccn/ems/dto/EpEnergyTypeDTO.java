@@ -4,6 +4,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -32,27 +33,25 @@ public class EpEnergyTypeDTO implements Serializable {
     /**
      * 计量单位
      */
+    @NotNull(message = "计量单位不能为空")
     private Long measureUnit;
 
     /**
      * 计量仪表名称
      */
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 20, message = "计量仪表名称长度不能超过20个中文")
+    @Length(max = 20, message = "计量仪表名称长度不能超过20个中文")
+    @NotBlank(message = "计量仪表名称不能为空")
     private String measureMeterName;
 
     /**
      * 关联图表
      */
+    @NotEmpty(message = "关联图表不能为空")
     private List<Integer> linkTable;
 
     /**
      * 备注
      */
-    @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注不能超过100个中文")
+    @Length(max = 100, message = "备注不能超过100个中文")
     private String note;
-
-    /**
-     * 是否删除 0 否 1是
-     */
-    private Integer delFlag;
 }
