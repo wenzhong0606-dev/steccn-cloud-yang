@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.LocalDateUtil;
@@ -12,10 +13,7 @@ import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.vo.EqMeterReadVO;
-import com.steccn.ems.vo.MeterReadListVO;
-import com.steccn.ems.vo.MeterReadMapperVO;
-import com.steccn.ems.vo.ReadValueListVO;
+import com.steccn.ems.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -45,7 +43,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
 
     @Override
-    public EqMeterReadVO list(String readMonth, Integer meterType) {
+    public EpMeterReadVO list(String readMonth, Integer meterType) {
         //当前时间
         LocalDateTime now = LocalDateTime.now();
         //当前日期
@@ -119,7 +117,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
         ).collect(Collectors.toList());
 
-        EqMeterReadVO eqMeterReadVO = new EqMeterReadVO();
+        EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
@@ -150,6 +148,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterOperationRecordMapper.insert(epMeterOperationRecord);
 
         return true;
+    }
+
+    @Override
+    public EpMeterReadDetailsVO details(String readDate, Integer meterId) {
+        EpMeterReadDetailsVO epMeterReadDetailsVO = this.baseMapper.selectByReadDateAndMeterId(readDate, meterId);
+        if (Objects.nonNull(epMeterReadDetailsVO) && epMeterReadDetailsVO.getStatus().equals(0)) {
+            throw new BusinessException("仪表不存在或停用");
+        }
+        return null;
     }
 
     private List<MeterReadListVO> recursion(List<MeterReadListVO> meterReadListVOList, Long partitionNode) {

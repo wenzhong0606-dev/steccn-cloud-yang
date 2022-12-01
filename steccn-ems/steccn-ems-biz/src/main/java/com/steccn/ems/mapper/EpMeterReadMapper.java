@@ -2,8 +2,10 @@ package com.steccn.ems.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.MeterReadMapperVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -23,7 +25,16 @@ public interface EpMeterReadMapper extends BaseMapper<EpMeterRead> {
      * @param meterType
      * @return
      */
-    List<MeterReadMapperVO> selectAllByReadMonth(String readMonth, Integer meterType);
+    List<MeterReadMapperVO> selectAllByReadMonth(@Param("readMonth") String readMonth,@Param("meterType") Integer meterType);
+
+    /**
+     * 根据仪表id和抄表日期查询
+     *
+     * @param readDate
+     * @param meterId
+     * @return
+     */
+    EpMeterReadDetailsVO selectByReadDateAndMeterId(@Param("readDate")String readDate,@Param("meterId") Integer meterId);
 }
 
 

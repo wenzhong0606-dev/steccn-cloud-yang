@@ -55,4 +55,25 @@
 	        AND r.meter_type = #{meterType}
 	        AND read_date LIKE CONCAT( #{readMonth}, '%')
     </select>
+
+    <select id="selectByReadDateAndMeterId" resultType="com.steccn.ems.vo.EpMeterReadDetailsVO">
+        SELECT
+	        a.meter_name meterName,
+	        a.partition_node partitionId,
+	        a.meter_type meterType,
+	        r.read_value readValue,
+	        a.entity_table entityTable,
+	        r.id id,
+	        r.meter_id meterId,
+	        t.`name` meterTypeName,
+	        a.status status
+        FROM
+	        ep_instrument_account a
+	        INNER JOIN ep_meter_read r ON a.id = r.meter_id
+	        INNER JOIN ep_energy_type t ON r.meter_type = t.id
+        WHERE
+            a.status = 1
+	        AND r.read_date = #{readDate}
+	        AND r.meter_id = #{meterId}
+    </select>
 </mapper>

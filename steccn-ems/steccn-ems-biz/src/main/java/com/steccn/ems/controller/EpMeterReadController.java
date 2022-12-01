@@ -3,7 +3,8 @@ package com.steccn.ems.controller;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.vo.EqMeterReadVO;
+import com.steccn.ems.vo.EpMeterReadDetailsVO;
+import com.steccn.ems.vo.EpMeterReadVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,19 @@ public class EpMeterReadController {
 
     @GetMapping("/list")
     @ApiOperation(value = "抄表管理列表")
-    public R<EqMeterReadVO> list(@RequestParam("readMonth") String readMonth, @RequestParam("energyType") Integer energyType) {
+    public R<EpMeterReadVO> list(@RequestParam("readMonth") String readMonth, @RequestParam("energyType") Integer energyType) {
         return R.success(epMeterReadService.list(readMonth, energyType));
     }
 
-    @GetMapping("/add")
+    @PostMapping("/add")
     @ApiOperation(value = "抄表管理新增")
     public R<Boolean> add(@RequestBody EpMeterReadAddDTO dto) {
         return R.success(epMeterReadService.add(dto));
+    }
+
+    @GetMapping("/details")
+    @ApiOperation(value = "抄表管理详情")
+    public R<EpMeterReadDetailsVO> details(@RequestParam("readDate") String readDate, @RequestParam("meterId") Integer meterId) {
+        return R.success(epMeterReadService.details(readDate,meterId));
     }
 }

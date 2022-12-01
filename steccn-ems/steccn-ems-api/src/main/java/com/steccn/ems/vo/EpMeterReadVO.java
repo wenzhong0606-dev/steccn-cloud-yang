@@ -10,7 +10,7 @@ import java.util.List;
  * @date 2022/12/1 9:04
  */
 @Data
-public class EqMeterReadVO {
+public class EpMeterReadVO {
     private List<MeterReadListVO> meterReadListVOList;
     private List<LocalDate> labelList;
 }
