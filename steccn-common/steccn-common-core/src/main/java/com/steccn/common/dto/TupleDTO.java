@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author yequan
  */
@@ -13,7 +15,7 @@ import lombok.NoArgsConstructor;
 @ApiModel("二元组")
 @NoArgsConstructor
 @AllArgsConstructor
-public class TupleDTO<E1, E2> {
+public class TupleDTO<E1, E2> implements Serializable {
 
     @ApiModelProperty("属性1")
     private E1 field1;
