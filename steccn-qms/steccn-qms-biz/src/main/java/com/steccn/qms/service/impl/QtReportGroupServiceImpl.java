@@ -125,7 +125,7 @@ public class QtReportGroupServiceImpl extends ServiceImpl<QtReportGroupMapper, Q
         }
         List<QtReportGroup> qtReportGroup2 = list(new LambdaQueryWrapper<QtReportGroup>()
                 .eq(QtReportGroup::getReportGroupName, dto.getReportGroupName()));
-        if (qtReportGroup2.size()>0){
+        if (qtReportGroup2.size()>1){
             throw new BusinessException("该卡片分组已存在,请换个分组名!");
         }
         QtReportGroup reportGroup = new QtReportGroup();

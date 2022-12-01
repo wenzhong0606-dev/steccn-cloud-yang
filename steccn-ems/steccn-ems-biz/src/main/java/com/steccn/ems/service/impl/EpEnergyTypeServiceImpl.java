@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -54,7 +57,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         long size = count(new LambdaQueryWrapper<EpEnergyType>()
                 .eq(EpEnergyType::getName, dto.getName())
                 .eq(EpEnergyType::getShowFlag, MpConstant.YES));
-        Assert.isTrue(size != 0, "能源类型的名称不能重复");
+        Assert.isTrue(size !=0 , "能源类型的名称不能重复");
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
         //link table是否合法
@@ -158,6 +161,25 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         epEnergyType.setShowFlag(MpConstant.NO);
         updateById(epEnergyType);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<Integer, EpEnergyTypeVO> getBylinkTable(Integer code) {
+        //获取能源类型列表
+        List<EpEnergyTypeVO> epEnergyTypeVOList = getEpEnergyTypeVOList();
+        if (CollUtil.isEmpty(epEnergyTypeVOList)){
+            throw new BusinessException("数据库无任何能源类型");
+        }
+        Map<Integer, EpEnergyTypeVO> idAndMeasures =Maps.newHashMap();
+        epEnergyTypeVOList.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+            if (CollUtil.isNotEmpty(s.getLinkTable())){
+                List<Integer> codes = s.getLinkTable().stream().map(BaseSelectVO::getId).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(codes)&&codes.contains(code)){
+                    idAndMeasures.put(s.getId(),s);
+                }
+            }
+        });
+        return idAndMeasures;
     }
 
 }

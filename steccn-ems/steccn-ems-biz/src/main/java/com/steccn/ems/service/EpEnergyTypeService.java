@@ -6,6 +6,7 @@ import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -40,4 +41,11 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 根据关联图表的code查询能源类型id以及能源单位
+     * @param code
+     * @return
+     */
+    Map<Integer,EpEnergyTypeVO> getBylinkTable(Integer code);
 }
