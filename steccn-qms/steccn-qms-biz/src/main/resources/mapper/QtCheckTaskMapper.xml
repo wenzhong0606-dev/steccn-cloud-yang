@@ -106,6 +106,9 @@
         <if test="dto.customer != null">
             AND (customer ->> '$.id' = #{dto.customer})
         </if>
+        <if test="dto.supplierId != null">
+            AND (supplier ->> '$.id' = #{dto.supplierId})
+        </if>
         <if test="dto.materialId != null">
             AND material_id = #{dto.materialId}
         </if>
