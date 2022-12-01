@@ -3,15 +3,23 @@ package com.steccn.ems.service.impl;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.dto.EpMeterReadAddDTO;
+import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.vo.EqMeterReadVO;
 import com.steccn.ems.vo.MeterReadListVO;
 import com.steccn.ems.vo.MeterReadMapperVO;
 import com.steccn.ems.vo.ReadValueListVO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,8 +38,11 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-30 15:05:32
  */
 @Service
+@RequiredArgsConstructor
 public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMeterRead>
         implements EpMeterReadService {
+
+    private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
 
     @Override
     public EqMeterReadVO list(String readMonth, Integer meterType) {
@@ -79,20 +90,22 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> meterReadMapperVO.getReadDate().isEqual(localDate)).collect(Collectors.toList());
+                ReadValueListVO readValueListVO = new ReadValueListVO();
                 if (CollectionUtils.isNotEmpty(filterList)) {
                     BigDecimal total = filterList.stream().map(MeterReadMapperVO::getAdminValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    ReadValueListVO readValueListVO = new ReadValueListVO();
                     readValueListVO.setMeterId(filterList.get(0).getMeterId());
                     readValueListVO.setReadDate(filterList.get(0).getReadDate());
                     readValueListVO.setEntityTable(filterList.get(0).getEntityTable());
                     readValueListVO.setReadValue(total);
                     readValueListVOList.add(readValueListVO);
+                } else {
+                    readValueListVO.setReadDate(localDate);
                 }
             }
             meterReadListVO.setReadValueList(readValueListVOList);
             meterReadListVOList.add(meterReadListVO);
         }
-        List<MeterReadListVO> meterReadListVOList1 = meterReadListVOList.stream().filter(meterReadMapperVO -> Objects.equals(null, meterReadMapperVO.getParentId())).peek(
+        List<MeterReadListVO> meterReadListVOList1 = meterReadListVOList.stream().filter(meterReadMapperVO -> Objects.isNull(meterReadMapperVO.getParentId())).peek(
                 meterReadListVO -> {
                     meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
                     //如果是虚拟仪表
@@ -110,6 +123,33 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean add(EpMeterReadAddDTO dto) {
+        EpMeterRead epMeterRead = new EpMeterRead();
+        BeanUtils.copyProperties(dto,epMeterRead);
+        epMeterRead.setAdminValue(dto.getReadValue());
+        if (dto.getAdminFlag().equals(1)) {
+            epMeterRead.setReadValue(null);
+            epMeterRead.setAdminTime(LocalDateTime.now());
+            epMeterRead.setAdminValue(dto.getReadValue());
+        }else {
+            epMeterRead.setReadTime(LocalDateTime.now());
+        }
+        SteccnUser user = SecurityUtils.getUser();
+        EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
+        epMeterOperationRecord.setReadId(epMeterRead.getId().longValue());
+        epMeterOperationRecord.setOpNode(dto.getPartitionId().intValue());
+        epMeterOperationRecord.setOpBy(user.getUserId());
+        epMeterOperationRecord.setOpName(user.getName());
+        epMeterOperationRecord.setOpValueOld(dto.getReadValue());
+
+        save(epMeterRead);
+        epMeterOperationRecordMapper.insert(epMeterOperationRecord);
+
+        return true;
     }
 
     private List<MeterReadListVO> recursion(List<MeterReadListVO> meterReadListVOList, Long partitionNode) {
