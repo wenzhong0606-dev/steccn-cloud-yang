@@ -23,7 +23,7 @@ public class StackGraphUtil {
 
     private static final String STR_STACK = "Total";
     private static final String STR_GRAPH = "line";
-    public static final String STR_DEFAULT = "DEFAULT";
+    public static final String STR_DEFAULT = "默认";
 
     /**
      * 单只柱子转换数据
