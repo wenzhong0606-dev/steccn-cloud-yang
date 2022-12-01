@@ -151,4 +151,8 @@ public class QtAddCheckTaskDTO implements Serializable {
      */
     private QtBaseIdNameDTO station;
 
+    private String materialName;//物料名称
+
+    private Integer materialWorkshopId;//物料车间id
+    private String materialWorkshopName;//物料车间名称
 }

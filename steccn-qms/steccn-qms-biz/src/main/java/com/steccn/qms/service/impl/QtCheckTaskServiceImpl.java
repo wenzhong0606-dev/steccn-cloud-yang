@@ -134,6 +134,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Long add(QtAddCheckTaskDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
+        QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
+        qtBaseIdNameDTO.setId(dto.getMaterialWorkshopId());
+        qtBaseIdNameDTO.setName(dto.getMaterialWorkshopName());
+        qtCheckTask.setMaterialWorkshop(qtBaseIdNameDTO);
         //如果新建检验类型为在线检，缺陷记录时段不允许跨班次;即8:00、20:00两个时间点
         if (QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType())) {
             if (dto.getDefectStartTime() != null && dto.getDefectEndTime() != null) {
@@ -289,6 +293,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
             //json名字
             qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
+            if(qtCheckTask.getMaterialWorkshop() != null) qtCheckTaskListVo.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
                 QtRecheckTask recheckTask = qtRecheckTaskService.getOne(new LambdaQueryWrapper<QtRecheckTask>().eq(QtRecheckTask::getRecheckId, id),false);
@@ -349,6 +354,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtCheckTaskCopyDetailsDTO copyDetailsVO = new QtCheckTaskCopyDetailsDTO();
                 if (qtCheckTaskCopy != null) {
                     BeanUtils.copyProperties(qtCheckTaskCopy, copyDetailsVO);
+                    copyDetailsVO.setAnalystTime(qtCheckTaskCopy.getAnalystTime()==null?null: qtCheckTaskCopy.getAnalystTime().toLocalDate());
                 }
                 qtCheckTaskDetailCopyVO.setCopyDetails(copyDetailsVO);
                 copy.add(qtCheckTaskDetailCopyVO);
