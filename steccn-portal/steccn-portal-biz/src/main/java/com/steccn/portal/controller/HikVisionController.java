@@ -32,6 +32,8 @@ public class HikVisionController {
      */
     @GetMapping("/getToken")
     public R<String> getToken(@RequestParam("userCode") String userCode) {
-        return R.success(hikVisionService.getToken(userCode));
+        R<String> r = R.success();
+        r.setData(hikVisionService.getToken(userCode));
+        return r;
     }
 }
