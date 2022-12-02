@@ -10,10 +10,13 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
+import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -25,10 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +42,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         implements EpMeterReadService {
 
     private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
+
+    private final EpPartitionMapper epPartitionMapper;
+
+    private final EpPartitionService epPartitionService;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -69,7 +73,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             localDateList = LocalDateUtil.getCurrentMonthDateAll(selectMonth);
         }
 
-        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(readMonth,meterType);
+        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(readMonth, meterType);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
                 .stream()
                 .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()
@@ -97,7 +101,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             for (LocalDate localDate : localDateList) {
-                List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(),localDate)).collect(Collectors.toList());
+                List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
                 if (CollectionUtils.isNotEmpty(filterList)) {
                     BigDecimal total = filterList.stream().map(MeterReadMapperVO::getAdminValue).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -135,13 +139,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Override
     public Boolean add(EpMeterReadAddDTO dto) {
         EpMeterRead epMeterRead = new EpMeterRead();
-        BeanUtils.copyProperties(dto,epMeterRead);
+        BeanUtils.copyProperties(dto, epMeterRead);
         epMeterRead.setAdminValue(dto.getReadValue());
         if (dto.getAdminFlag().equals(1)) {
             epMeterRead.setReadValue(null);
             epMeterRead.setAdminTime(LocalDateTime.now());
             epMeterRead.setAdminValue(dto.getReadValue());
-        }else {
+        } else {
             epMeterRead.setReadTime(LocalDateTime.now());
         }
         save(epMeterRead);
@@ -164,12 +168,36 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         if (Objects.nonNull(epMeterReadDetailsVO) && epMeterReadDetailsVO.getStatus().equals(0)) {
             throw new BusinessException("仪表不存在或停用");
         }
+        if (Objects.nonNull(epMeterReadDetailsVO)) {
+            List<EpPartition> list = epPartitionService.list();
+            Optional<EpPartition> optional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+            if (optional.isPresent() && Objects.isNull(optional.get().getParentId())) {
+                epMeterReadDetailsVO.setPartitionNode(optional.get().getOfficeName());
+            } else {
+                StringBuilder sb = new StringBuilder();
+                Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+                if (partitionOptional.isPresent()) {
+                    sb.insert(0,partitionOptional.get().getOfficeName());
+                    partitionRecursion(list, partitionOptional.get(), sb);
+                    epMeterReadDetailsVO.setPartitionNode(sb.toString());
+                }
+            }
+        }
+        return epMeterReadDetailsVO;
+    }
+
+    private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {
+        Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(partition.getParentId())).findAny();
+        if (partitionOptional.isPresent() && Objects.nonNull(partitionOptional.get().getParentId())) {
+            sb.insert(0, partitionOptional.get().getOfficeName()+"/");
+            return partitionRecursion(list,partitionOptional.get(),sb);
+        }
         return null;
     }
 
     private List<MeterReadListVO> recursion(List<MeterReadListVO> meterReadListVOList, Long partitionNode) {
         return meterReadListVOList.stream().filter(meterReadMapper -> Objects.equals(meterReadMapper.getParentId(), partitionNode)).peek(
-                meterReadListVO ->{
+                meterReadListVO -> {
                     meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
                     //如果是虚拟仪表
                     if (meterReadListVO.getEntityTable().equals(2)) {

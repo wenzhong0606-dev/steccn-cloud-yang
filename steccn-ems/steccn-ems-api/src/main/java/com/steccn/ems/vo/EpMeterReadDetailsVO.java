@@ -16,7 +16,7 @@ public class EpMeterReadDetailsVO {
     private String meterName;
     private Integer meterType;
     private String meterTypeName;
-    private BigDecimal meterValue;
+    private BigDecimal readValue;
     private Long partitionId;
     private String partitionNode;
     private Integer status;
