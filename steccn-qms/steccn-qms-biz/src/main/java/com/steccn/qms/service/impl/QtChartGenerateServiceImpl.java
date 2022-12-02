@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
@@ -758,7 +759,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //根据日期分组
             Map<LocalDate, List<ProducePassRateVO>> groupByDate = rList.stream().collect(Collectors.groupingBy(ProducePassRateVO::getDate));
             //根据班次、产线、车间分bar类型
-            Map<String, QtChartBarSeriesVO> barMap = MapUtil.newHashMap();
+            Map<String, QtChartBarSeriesVO> barMap = Maps.newLinkedHashMap();
             //若按照班次分则只有两个
             if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
                 QtChartBarSeriesVO<String> bar1 = new QtChartBarSeriesVO<>();
@@ -881,6 +882,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                     }
                 }else {
+                    //对key值进行排序
+                    barMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEachOrdered(e->barMap.put(e.getKey(),e.getValue()));
                     for (Map.Entry<String, QtChartBarSeriesVO> entry : barMap.entrySet()) {
                         if (dataMap.get(entry.getKey()) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
