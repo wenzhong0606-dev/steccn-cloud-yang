@@ -1,5 +1,6 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -47,20 +48,28 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //当前时间
         LocalDateTime now = LocalDateTime.now();
         //当前日期
-        LocalDate currentLocalDateTime = now.toLocalDate();
+        LocalDate currentLocalDate = now.toLocalDate();
         //当前时间
         LocalTime currentTime = now.toLocalTime();
         LocalTime localTime = LocalTime.of(9, 0, 0);
-        //当前月第一天
-        LocalDate firstDayOfMonth = currentLocalDateTime.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate selectMonth = LocalDate.parse(readMonth + "-01", DatePattern.NORM_DATE_FORMATTER);
+        //查询的第一天
+        LocalDate firstDayOfMonth = selectMonth.with(TemporalAdjusters.firstDayOfMonth());
         //查询的最后一天
-        LocalDate endDay = currentLocalDateTime;
-        if (currentTime.isBefore(localTime)) {
-            endDay = currentLocalDateTime.plusDays(1);
+        LocalDate endDay = currentLocalDate;
+        //获取需要查询的日期
+        List<LocalDate> localDateList;
+        //如果查询的月份是当月
+        if (selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+            if (currentTime.isBefore(localTime)) {
+                endDay = currentLocalDate.plusDays(1);
+            }
+            localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
+        } else {
+            localDateList = LocalDateUtil.getCurrentMonthDateAll(selectMonth);
         }
-        //AND r.read_date LIKE CONCAT( #{readMonth}, '%')
-        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
-        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(meterType);
+
+        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(readMonth,meterType);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
                 .stream()
                 .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()

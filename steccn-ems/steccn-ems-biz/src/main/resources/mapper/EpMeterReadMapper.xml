@@ -53,6 +53,7 @@
         WHERE
             a.status = 1
 	        AND a.meter_type = #{meterType}
+	        AND (r.read_date LIKE CONCAT( #{readMonth}, '%') or r.read_date is null )
     </select>
 
     <select id="selectByReadDateAndMeterId" resultType="com.steccn.ems.vo.EpMeterReadDetailsVO">
