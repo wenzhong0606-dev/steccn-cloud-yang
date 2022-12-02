@@ -34,9 +34,14 @@ public class EpProductUnitConsumeStandardController {
 
     @PostMapping("/select")
     @ApiOperation(value = "查询产品单耗标准分页列表")
-    //TODO:查询产品单耗标准分页列表
     public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody
                                                                                        EpProductUnitStandardPageDTO dto){
         return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "根据id查询产品单耗标准")
+    public R<EpProductUnitConsumeStandardVO> getProductUnitStandardVO(@PathVariable("id") Integer id) {
+        return R.success(unitConsumeStandardService.getProductUnitStandardVO(id));
     }
 }

@@ -29,4 +29,11 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      * @return
      */
     Boolean addOrEdit(EpProductUnitStandardDTO dto);
+
+    /**
+     * 根据id查询产品单耗标准
+     * @param id
+     * @return
+     */
+    EpProductUnitConsumeStandardVO getProductUnitStandardVO(Integer id);
 }

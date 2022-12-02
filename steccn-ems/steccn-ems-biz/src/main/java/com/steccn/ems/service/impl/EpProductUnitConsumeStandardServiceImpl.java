@@ -17,6 +17,7 @@ import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
+import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
@@ -97,6 +98,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             s.setProductThickName(dictMap.get(s.getProductThick()));
             s.setMeasureUnitName(dictMap.get(s.getMeasureUnit()));
             s.setEnergyTypeName(energyTypeMap.get(s.getEnergyType()));
+            s.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(s.getProductType()).getName());
         });
         return page.setRecords(standardVOS);
     }
@@ -109,9 +111,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName()));
         if (Objects.isNull(dto.getId())){
-            Assert.isTrue(size ==0, "产品单耗的名称不能重复");
+            Assert.isTrue(size ==0, "产品单耗标准的名称不能重复");
         }else {
-            Assert.isTrue(size <=1, "产品单耗的名称不能重复");
+            Assert.isTrue(size <=1, "产品单耗标准的名称不能重复");
         }
 
         //创建domain实体类对象
@@ -143,8 +145,6 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 }
                 throw new BusinessException("与现有标准"+names+"有效期有重叠");
             }
-
-
         }
 
         if (Objects.isNull(dto.getId())){
@@ -153,6 +153,33 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             updateById(unitConsumeStandard);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public EpProductUnitConsumeStandardVO getProductUnitStandardVO(Integer id) {
+        Assert.notNull(id,"id不能为空");
+        //根据id查询单耗标准
+        EpProductUnitConsumeStandard standard = getById(id);
+        //设置返回实体类对象
+        EpProductUnitConsumeStandardVO vo = new EpProductUnitConsumeStandardVO();
+        BeanUtils.copyProperties(standard,vo);
+        EpEnergyTypeVO epAddEnergyTypeVO = epEnergyTypeService.getEpAddEnergyTypeVO(standard.getEnergyType());
+        //设置能源类型名称
+        vo.setEnergyTypeName(epAddEnergyTypeVO.getName());
+        //TODO:如果应用部门不为空,设置应用部门 取自能耗分区树
+
+        Set<Long> dictSet = Sets.newHashSet();
+        Collections.addAll(dictSet,standard.getStandardType()
+                ,standard.getProductThick(),standard.getMeasureUnit());
+        if (CollUtil.isNotEmpty(dictSet)){
+            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            vo.setStandardTypeName(dictMap.get(vo.getStandardType()));
+            vo.setProductThickName(dictMap.get(vo.getProductThick()));
+            vo.setMeasureUnitName(dictMap.get(vo.getMeasureUnit()));
+        }
+        //设置产品类型
+            vo.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(vo.getProductType()).getName());
+        return vo;
     }
 }
 

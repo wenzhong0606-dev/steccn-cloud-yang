@@ -39,8 +39,8 @@ public class EpInstrumentAccountController {
     }
 
     @PostMapping
-    @ApiOperation(value = "新增仪表台账")
-    @SysLog("新增仪表台账")
+    @ApiOperation(value = "新增或编辑仪表台账")
+    @SysLog("新增或编辑仪表台账")
     public R<Boolean> addOrEdit(@Valid @RequestBody EpInstrumentAccountDTO dto) {
         return R.success(epInstrumentAccountService.addOrEdit(dto));
     }

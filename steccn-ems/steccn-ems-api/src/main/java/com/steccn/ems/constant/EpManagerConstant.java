@@ -18,6 +18,27 @@ public interface EpManagerConstant {
 
 
     /**
+     * 产品单耗标准的产品类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum EpProductTypes{
+        SUBSTRATE(0L,"基片"),
+        DEEPPROCESSING(1L,"深加工");
+        private Long id;
+        private String name;
+        //根据code查找值
+        public static EpProductTypes getProductType(Long id) {
+            for (EpProductTypes value : EpProductTypes.values()) {
+                if (value.getId().equals(id)){
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
      * 关联图表
      */
     @Getter
