@@ -77,7 +77,7 @@ public class PmsCodeUtil {
      */
     public final static Integer NUM_BIT_4 = 4;
     /**
-     * 数字位数-8
+     * 数字位数-0
      */
     public final static Integer DEFAULT_PADDING = 0;
 
