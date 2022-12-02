@@ -238,10 +238,10 @@ public class EpChartGraphUtil {
         return xAxis1;
     }
 
-//    public static void main(String[] args) {
-//        EpChartGraphDTO<Integer, String, BigDecimal> vo = generateData();
-//        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = convert(vo, Boolean.TRUE);
-//        log.info("{}", convert);
-//    }
+    public static void main(String[] args) {
+        EpChartGraphDTO<Integer, String, BigDecimal> vo = generateData();
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = convert(vo, Boolean.TRUE);
+        log.info("{}", convert);
+    }
 
 }

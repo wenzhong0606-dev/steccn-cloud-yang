@@ -3,8 +3,11 @@ package com.steccn.ems.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
+import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -38,4 +41,12 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return
      */
     EpMeterReadDetailsVO details(String readDate, Integer meterId);
+
+    /**
+     * 批量修改
+     *
+     * @param dtoList
+     * @return
+     */
+    Boolean updateBatch(List<EpMeterReadUpdateDTO> dtoList);
 }

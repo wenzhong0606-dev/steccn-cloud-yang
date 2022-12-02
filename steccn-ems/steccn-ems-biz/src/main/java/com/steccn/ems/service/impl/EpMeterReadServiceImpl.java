@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
@@ -12,9 +13,11 @@ import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
+import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.mapper.EpPartitionMapper;
+import com.steccn.ems.service.EpMeterOperationRecordService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
@@ -46,6 +49,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private final EpPartitionMapper epPartitionMapper;
 
     private final EpPartitionService epPartitionService;
+
+    private final EpMeterOperationRecordService epMeterOperationRecordService;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -152,10 +157,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         SteccnUser user = SecurityUtils.getUser();
         EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
-        epMeterOperationRecord.setOpNode(dto.getPartitionId().intValue());
+        epMeterOperationRecord.setOpNode(dto.getPartitionId());
         epMeterOperationRecord.setOpBy(user.getUserId());
         epMeterOperationRecord.setOpName(user.getName());
         epMeterOperationRecord.setOpValueOld(dto.getReadValue());
+        epMeterOperationRecord.setOpTime(LocalDateTime.now());
 
         epMeterOperationRecordMapper.insert(epMeterOperationRecord);
 
@@ -184,6 +190,42 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
         }
         return epMeterReadDetailsVO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateBatch(List<EpMeterReadUpdateDTO> dtoList) {
+        Set<LocalDate> localDateSet = dtoList.stream().map(EpMeterReadUpdateDTO::getReadDate).collect(Collectors.toSet());
+        Set<Integer> meterIdSet = dtoList.stream().map(EpMeterReadUpdateDTO::getMeterId).collect(Collectors.toSet());
+        List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).in(EpMeterRead::getReadDate, localDateSet));
+        SteccnUser user = SecurityUtils.getUser();
+
+        List<EpMeterOperationRecord> epMeterOperationRecordList = new ArrayList<>();
+        for (EpMeterRead epMeterRead : list) {
+            Optional<EpMeterReadUpdateDTO> optional = dtoList.stream().filter(meterReadUpdateDTO -> meterReadUpdateDTO.getMeterId().equals(epMeterRead.getMeterId())
+                    && meterReadUpdateDTO.getReadDate().isEqual(epMeterRead.getReadDate())).findAny();
+            if (optional.isPresent()) {
+                EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
+                epMeterOperationRecord.setReadId(epMeterRead.getId());
+                epMeterOperationRecord.setOpNode(optional.get().getPartitionId());
+                epMeterOperationRecord.setOpBy(user.getUserId());
+                epMeterOperationRecord.setOpName(user.getName());
+                epMeterOperationRecord.setOpValueNew(optional.get().getReadValue());
+                epMeterOperationRecord.setOpTime(LocalDateTime.now());
+                epMeterOperationRecord.setOpValueOld(epMeterRead.getAdminValue());
+                epMeterOperationRecordList.add(epMeterOperationRecord);
+
+                epMeterRead.setAdminValue(optional.get().getReadValue());
+                if (optional.get().getAdminFlag().equals(0)){
+                    epMeterRead.setReadValue(optional.get().getReadValue());
+                }
+            }
+
+            epMeterOperationRecordService.saveBatch(epMeterOperationRecordList);
+            updateBatchById(list);
+        }
+        return true;
+
     }
 
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {
