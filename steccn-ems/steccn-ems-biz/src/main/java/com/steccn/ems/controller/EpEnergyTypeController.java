@@ -42,6 +42,7 @@ public class EpEnergyTypeController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "删除能源类型")
+    @SysLog("删除能源类型")
     public R<Boolean> delete(@PathVariable("id") Integer id){
         return R.success(epEnergyTypeService.delete(id));
     }

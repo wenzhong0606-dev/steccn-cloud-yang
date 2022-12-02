@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpInstrumentAccountDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpInstrumentAccountService extends IService<EpInstrumentAccount> {
 
+    /**
+     * 新增仪表台账
+     * @param dto
+     * @return
+     */
+    Boolean addOrEdit(EpInstrumentAccountDTO dto);
 }

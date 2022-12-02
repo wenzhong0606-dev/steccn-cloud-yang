@@ -1,7 +1,10 @@
 package com.steccn.ems.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
+import com.steccn.ems.dto.EpEnergyTypeDTO;
+import com.steccn.ems.dto.EpInstrumentAccountDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.service.EpInstrumentAccountService;
@@ -33,5 +36,12 @@ public class EpInstrumentAccountController {
                                                                                 EpInstrumentAccountPageDTO dto){
         EpInstrumentAccountVO epInstrumentAccountVO = new EpInstrumentAccountVO();
         return R.success(epInstrumentAccountVO);
+    }
+
+    @PostMapping
+    @ApiOperation(value = "新增仪表台账")
+    @SysLog("新增仪表台账")
+    public R<Boolean> addOrEdit(@Valid @RequestBody EpInstrumentAccountDTO dto) {
+        return R.success(epInstrumentAccountService.addOrEdit(dto));
     }
 }

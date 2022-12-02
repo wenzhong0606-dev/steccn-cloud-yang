@@ -63,6 +63,14 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         }else {
             Assert.isTrue(size <=1 , "能源类型的名称不能重复");
         }
+        long sizeMeasureMeterName = count(new LambdaQueryWrapper<EpEnergyType>()
+                .eq(EpEnergyType::getMeasureMeterName, dto.getMeasureMeterName())
+                .eq(EpEnergyType::getShowFlag, MpConstant.YES));
+        if (Objects.isNull(dto.getId())){
+            Assert.isTrue(sizeMeasureMeterName ==0 , "计量仪表名称不能重复");
+        }else {
+            Assert.isTrue(sizeMeasureMeterName <=1 , "计量仪表名称不能重复");
+        }
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
         //link table是否合法
