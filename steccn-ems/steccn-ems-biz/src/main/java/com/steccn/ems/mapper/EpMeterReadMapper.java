@@ -21,11 +21,10 @@ public interface EpMeterReadMapper extends BaseMapper<EpMeterRead> {
     /**
      * 根据类型和抄表月份查询
      *
-     * @param readMonth
      * @param meterType
      * @return
      */
-    List<MeterReadMapperVO> selectAllByReadMonth(@Param("readMonth") String readMonth,@Param("meterType") Integer meterType);
+    List<MeterReadMapperVO> selectAllByReadMonth(@Param("meterType") Integer meterType);
 
     /**
      * 根据仪表id和抄表日期查询

@@ -1,11 +1,11 @@
 package com.steccn.ems.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 仪表操作记录
@@ -17,7 +17,7 @@ public class EpMeterOperationRecord implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

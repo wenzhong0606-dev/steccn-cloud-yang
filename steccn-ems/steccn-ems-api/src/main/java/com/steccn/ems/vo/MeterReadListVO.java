@@ -10,7 +10,7 @@ import java.util.List;
  */
 @Data
 public class MeterReadListVO {
-    private Long meterId;
+    private Integer meterId;
     private String meterName;
     private Long partitionNode;
     private String partitionNodeName;

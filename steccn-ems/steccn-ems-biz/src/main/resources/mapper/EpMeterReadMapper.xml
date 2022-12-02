@@ -40,7 +40,7 @@
 	        a.partition_node partitionId,
 	        a.entity_table entityTable,
 	        a.meter_name meterName,
-	        r.meter_id meterId,
+	        a.id meterId,
 	        r.read_date readDate,
 	        r.class_id classId,
 	        r.admin_value adminValue,
@@ -52,8 +52,7 @@
 	        LEFT JOIN ep_meter_read r ON a.id = r.meter_id
         WHERE
             a.status = 1
-	        AND r.meter_type = #{meterType}
-	        AND read_date LIKE CONCAT( #{readMonth}, '%')
+	        AND a.meter_type = #{meterType}
     </select>
 
     <select id="selectByReadDateAndMeterId" resultType="com.steccn.ems.vo.EpMeterReadDetailsVO">

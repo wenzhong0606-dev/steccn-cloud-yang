@@ -58,8 +58,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         if (currentTime.isBefore(localTime)) {
             endDay = currentLocalDateTime.plusDays(1);
         }
+        //AND r.read_date LIKE CONCAT( #{readMonth}, '%')
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
-        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(readMonth, meterType);
+        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(meterType);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
                 .stream()
                 .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()
@@ -70,16 +71,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         for (Map.Entry<String, List<MeterReadMapperVO>> entry : groupBy.entrySet()) {
             MeterReadListVO meterReadListVO = new MeterReadListVO();
             String[] keys = entry.getKey().split(",");
-            if (StringUtils.isNotBlank(keys[0])) {
+            if (StringUtils.isNotBlank(keys[0]) && !"null".equals(keys[0])) {
                 meterReadListVO.setParentId(Long.parseLong(keys[0]));
             }
-            if (StringUtils.isNotBlank(keys[1])) {
-                meterReadListVO.setMeterId(Long.parseLong(keys[1]));
+            if (StringUtils.isNotBlank(keys[1]) && !"null".equals(keys[1])) {
+                meterReadListVO.setMeterId(Integer.parseInt(keys[1]));
             }
-            if (StringUtils.isNotBlank(keys[3])) {
+            if (StringUtils.isNotBlank(keys[3]) && !"null".equals(keys[3])) {
                 meterReadListVO.setPartitionNode(Long.parseLong(keys[3]));
             }
-            if (StringUtils.isNotBlank(keys[5])) {
+            if (StringUtils.isNotBlank(keys[5]) && !"null".equals(keys[5])) {
                 meterReadListVO.setEntityTable(Integer.parseInt(keys[5]));
             }
             meterReadListVO.setMeterName(keys[2]);
@@ -87,18 +88,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             for (LocalDate localDate : localDateList) {
-                List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> meterReadMapperVO.getReadDate().isEqual(localDate)).collect(Collectors.toList());
+                List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(),localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
                 if (CollectionUtils.isNotEmpty(filterList)) {
                     BigDecimal total = filterList.stream().map(MeterReadMapperVO::getAdminValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    readValueListVO.setMeterId(filterList.get(0).getMeterId());
-                    readValueListVO.setReadDate(filterList.get(0).getReadDate());
                     readValueListVO.setEntityTable(filterList.get(0).getEntityTable());
                     readValueListVO.setReadValue(total);
-                    readValueListVOList.add(readValueListVO);
-                } else {
-                    readValueListVO.setReadDate(localDate);
                 }
+                readValueListVO.setReadDate(localDate);
+                readValueListVO.setMeterId(meterReadListVO.getMeterId());
+                readValueListVOList.add(readValueListVO);
             }
             meterReadListVO.setReadValueList(readValueListVOList);
             meterReadListVOList.add(meterReadListVO);
@@ -136,6 +135,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         }else {
             epMeterRead.setReadTime(LocalDateTime.now());
         }
+        save(epMeterRead);
         SteccnUser user = SecurityUtils.getUser();
         EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
         epMeterOperationRecord.setReadId(epMeterRead.getId().longValue());
@@ -144,7 +144,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         epMeterOperationRecord.setOpName(user.getName());
         epMeterOperationRecord.setOpValueOld(dto.getReadValue());
 
-        save(epMeterRead);
         epMeterOperationRecordMapper.insert(epMeterOperationRecord);
 
         return true;
@@ -167,7 +166,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     if (meterReadListVO.getEntityTable().equals(2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
-                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream().map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream()
+                                    .filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue()))
+                                    .map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
                             meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
                         }
                     }

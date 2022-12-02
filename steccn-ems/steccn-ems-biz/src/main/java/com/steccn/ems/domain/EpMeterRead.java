@@ -1,12 +1,12 @@
 package com.steccn.ems.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 抄表
@@ -18,7 +18,7 @@ public class EpMeterRead implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Integer id;
 
     /**
