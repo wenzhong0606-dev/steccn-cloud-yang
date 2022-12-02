@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
@@ -52,6 +53,11 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         if (Objects.isNull(dto.getId())){
             save(epInstrumentAccount);
         }else {
+            EpInstrumentAccount instrumentAccount = getById(dto.getId());
+            Assert.notNull(instrumentAccount,"编辑的仪表台账不存在");
+            if (MpConstant.NO==epInstrumentAccount.getShowFlag()){
+                throw new BusinessException("该仪表台账已删除无法编辑");
+            }
             updateById(epInstrumentAccount);
         }
         return Boolean.TRUE;

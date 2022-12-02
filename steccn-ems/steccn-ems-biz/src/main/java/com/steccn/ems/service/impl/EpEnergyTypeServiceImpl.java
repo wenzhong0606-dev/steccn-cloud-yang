@@ -81,6 +81,9 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
             EpEnergyType oldEnergy = getById(dto.getId());
             Assert.notNull(oldEnergy,"编辑的能源类型不存在");
             Assert.isTrue(!DEFAULT_ENERGY_SET.contains(oldEnergy.getName()), "前五项已写死,无法修改");
+            if (MpConstant.NO==epEnergyType.getShowFlag()){
+                throw new BusinessException("该能源类型已删除无法编辑");
+            }
             updateById(epEnergyType);
         }
         return Boolean.TRUE;
@@ -170,7 +173,6 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         Assert.isTrue(!DEFAULT_ENERGY_SET.contains(epEnergyType.getName()), "前五项已写死,无法删除");
         //TODO:校验是否存在该能源类型的仪表(仪表台账,产品单耗),如果存在无法逻辑删除
 
-
         epEnergyType.setShowFlag(MpConstant.NO);
         updateById(epEnergyType);
         return Boolean.TRUE;
@@ -201,9 +203,8 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         if (CollUtil.isNotEmpty(ids)){
             List<EpEnergyType> epEnergyTypes = list(new LambdaQueryWrapper<EpEnergyType>().in(EpEnergyType::getId, ids));
             if (CollUtil.isNotEmpty(epEnergyTypes)){
-                List<EpEnergyTypeVO> epEnergyTypeVOS = BeanUtil.copyToList(epEnergyTypes, EpEnergyTypeVO.class);
-                for (EpEnergyTypeVO epEnergyTypeVO : epEnergyTypeVOS) {
-                    resHasMap.put(epEnergyTypeVO.getId(),epEnergyTypeVO.getName());
+                for (EpEnergyType epEnergyType : epEnergyTypes) {
+                    resHasMap.put(epEnergyType.getId(),epEnergyType.getName());
                 }
             }
         }

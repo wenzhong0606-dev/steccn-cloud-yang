@@ -10,7 +10,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
@@ -56,7 +58,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 //产品厚度
                 .eq(Objects.nonNull(dto.getProductThickness()), EpProductUnitConsumeStandard::getProductThick, dto.getProductThickness())
                 //标准名称
-                .like(Objects.nonNull(dto.getStandardName()), EpProductUnitConsumeStandard::getName, dto.getStandardName());
+                .like(Objects.nonNull(dto.getStandardName()), EpProductUnitConsumeStandard::getName, dto.getStandardName())
+                //查询所有可展示的
+                .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES);
 
         //2.定义排序条件
         if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
@@ -107,7 +111,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
-        //去数据库中根据名称查询产品单耗个数
+        //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName()));
         if (Objects.isNull(dto.getId())){
@@ -150,6 +154,11 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         if (Objects.isNull(dto.getId())){
             save(unitConsumeStandard);
         }else {
+            EpProductUnitConsumeStandard standard = getById(dto.getId());
+            Assert.notNull(standard,"编辑的产品单耗标准不存在");
+            if (MpConstant.NO==unitConsumeStandard.getShowFlag()){
+                throw new BusinessException("该产品单耗标准已删除无法编辑");
+            }
             updateById(unitConsumeStandard);
         }
         return Boolean.TRUE;
@@ -160,6 +169,10 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Assert.notNull(id,"id不能为空");
         //根据id查询单耗标准
         EpProductUnitConsumeStandard standard = getById(id);
+        Assert.notNull(standard,"该产品单耗标准不存在");
+        if (MpConstant.NO==standard.getShowFlag()){
+            throw new BusinessException("该产品单耗标准已删除");
+        }
         //设置返回实体类对象
         EpProductUnitConsumeStandardVO vo = new EpProductUnitConsumeStandardVO();
         BeanUtils.copyProperties(standard,vo);
@@ -180,6 +193,16 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //设置产品类型
             vo.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(vo.getProductType()).getName());
         return vo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(Integer id) {
+        EpProductUnitConsumeStandard epStandard = getById(id);
+        Assert.notNull(epStandard,"该产品单耗标准不存在,无法删除");
+        epStandard.setShowFlag(MpConstant.NO);
+        updateById(epStandard);
+        return Boolean.TRUE;
     }
 }
 

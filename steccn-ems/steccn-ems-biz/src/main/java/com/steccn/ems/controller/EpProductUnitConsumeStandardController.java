@@ -44,4 +44,11 @@ public class EpProductUnitConsumeStandardController {
     public R<EpProductUnitConsumeStandardVO> getProductUnitStandardVO(@PathVariable("id") Integer id) {
         return R.success(unitConsumeStandardService.getProductUnitStandardVO(id));
     }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "删除产品单耗标准")
+    @SysLog("删除产品单耗标准")
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
+        return R.success(unitConsumeStandardService.delete(id));
+    }
 }

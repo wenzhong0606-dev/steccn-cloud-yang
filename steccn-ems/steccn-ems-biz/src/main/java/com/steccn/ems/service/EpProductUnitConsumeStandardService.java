@@ -36,4 +36,11 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      * @return
      */
     EpProductUnitConsumeStandardVO getProductUnitStandardVO(Integer id);
+
+    /**
+     * 删除产品单耗标准
+     * @param id
+     * @return
+     */
+    Boolean delete(Integer id);
 }
