@@ -160,6 +160,17 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         });
         return page.setRecords(eqpSpareVOList);
     }
+
+    @Override
+    public List<EqpSpareVO> listCondition(SpareDTO spareDTO) {
+        List<EqpSpareVO> list = Lists.newArrayList();
+        if (Objects.nonNull(spareDTO)) {
+            List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(spareDTO.getName()), SysEqpSpare::getName, spareDTO.getName())
+                    .like(StrUtil.isNotBlank(spareDTO.getCode()), SysEqpSpare::getCode, spareDTO.getCode()));
+            list= BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
+        }
+        return list;
+    }
 }
 
 

@@ -57,6 +57,6 @@
                a.code,
                a.name
         FROM sys_eqp_spare a
-        WHERE a.code LIKE CONCAT('%', #{code}, '%')
+        WHERE a.code = #{code}
     </select>
 </mapper>

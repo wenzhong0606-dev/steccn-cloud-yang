@@ -88,4 +88,11 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      * @return
      */
     Page<EqpSpareVO> listPage(SparePageDTO sparePageDTO);
+
+    /**
+     * 根据条件筛选
+     * @param spareDTO
+     * @return
+     */
+    List<EqpSpareVO> listCondition(SpareDTO spareDTO);
 }

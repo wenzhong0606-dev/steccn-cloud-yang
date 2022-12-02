@@ -67,4 +67,10 @@ public class EqpSpareController {
         return R.success(eqpSpareService.listPage(sparePageDTO));
     }
 
+    @PostMapping("/list")
+    @ApiOperation("获取备件列表")
+    public List<EqpSpareVO> list(@RequestBody SpareDTO spareDTO) {
+        return eqpSpareService.listCondition(spareDTO);
+    }
+
 }
