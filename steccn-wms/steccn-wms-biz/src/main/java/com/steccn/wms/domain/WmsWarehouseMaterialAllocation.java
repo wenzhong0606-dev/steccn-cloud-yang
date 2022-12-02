@@ -76,27 +76,33 @@ public class WmsWarehouseMaterialAllocation implements Serializable {
     /**
      * 更新人id
      */
-    @TableField
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
-    @TableField
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
      * 更新人时间
      */
-    @TableField
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
      * 是否删除标识：0否 1是
      */
-    @TableField
+    @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    @TableField(exist = false)
+    private String deliveryPeriodUnitName;//送货周期单位
+    @TableField(exist = false)
+    private String materialUnitName;//物料标准单位
 }

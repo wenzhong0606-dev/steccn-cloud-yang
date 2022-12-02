@@ -1,10 +1,10 @@
 package com.steccn.wms.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 盘点单
@@ -16,7 +16,7 @@ public class WmsCheckOrder implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -35,7 +35,7 @@ public class WmsCheckOrder implements Serializable {
     private Long type;
 
     /**
-     * 状态
+     * 状态  0-已创建 1-执行中 2-已完成 3-已关闭
      */
     private Integer status;
 

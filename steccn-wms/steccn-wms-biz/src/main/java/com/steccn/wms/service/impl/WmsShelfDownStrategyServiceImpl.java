@@ -3,7 +3,6 @@ package com.steccn.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
 * @author W10
@@ -33,6 +33,11 @@ public class WmsShelfDownStrategyServiceImpl extends ServiceImpl<WmsShelfDownStr
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
+    /***
+     * 获取下架策略列表
+     * @param dto
+     * @return
+     */
     @Override
     public Page<WmsShelfDownStrategyVO> getShelfDownStrategyList(WmsShelfDownStrategyDTO dto) {
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
@@ -62,31 +67,33 @@ public class WmsShelfDownStrategyServiceImpl extends ServiceImpl<WmsShelfDownStr
         return resPage;
     }
 
+    /***
+     * 新增或者编辑下架策略
+     * @param dto
+     * @return
+     */
     @Override
-    public R<Boolean> addOrUpdateShelfDownStrategy(WmsShelfDownStrategy dto) {
+    public Boolean addOrUpdateShelfDownStrategy(WmsShelfDownStrategy dto) {
         Integer result;
-        if(dto.getId() == null ){
-            dto.setCreateBy( SecurityUtils.getUser().getUserId());
-            dto.setCreateName( SecurityUtils.getUser().getName());
+        if(Objects.isNull(dto.getId())){
             result = baseMapper.insert(dto);
         }else{
             WmsShelfDownStrategy wmsShelfDownStrategy = baseMapper.selectById(dto.getId());
-            if(wmsShelfDownStrategy == null) return R.failure("未查询到下架策略信息");
-            dto.setUpdateBy( SecurityUtils.getUser().getUserId());
-            dto.setUpdateName( SecurityUtils.getUser().getName());
+            if(wmsShelfDownStrategy == null) return false;
             result = baseMapper.updateById(dto);
         }
-        return result >0 ?R.success(true):R.failure(true);
+        return result >0 ?true:true;
     }
 
+    /**
+     * 删除下架策略
+     * @param dto
+     * @return
+     */
     @Override
-    public R<Boolean> delShelfDownStrategy(WmsShelfDownStrategy dto) {
-        WmsShelfDownStrategy wmsShelfDownStrategy = baseMapper.selectById(dto.getId());
-        wmsShelfDownStrategy.setDelFlag(1);
-        wmsShelfDownStrategy.setUpdateBy( SecurityUtils.getUser().getUserId());
-        wmsShelfDownStrategy.setUpdateName( SecurityUtils.getUser().getName());
-        int reulst = baseMapper.updateById(wmsShelfDownStrategy);
-        return reulst>0?R.success(true):R.failure(false);
+    public Boolean delShelfDownStrategy(WmsShelfDownStrategy dto) {
+
+        return removeById(dto);
     }
 }
 

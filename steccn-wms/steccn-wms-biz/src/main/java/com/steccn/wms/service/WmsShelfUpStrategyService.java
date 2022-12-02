@@ -2,7 +2,6 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsShelfUpStrategy;
 import com.steccn.wms.dto.WmsShelfUpStrategyDTO;
 
@@ -13,9 +12,24 @@ import com.steccn.wms.dto.WmsShelfUpStrategyDTO;
 */
 public interface WmsShelfUpStrategyService extends IService<WmsShelfUpStrategy> {
 
+    /***
+     * 获取上架策略列表
+     * @param dto
+     * @return
+     */
     Page<WmsShelfUpStrategy> getShelfUpStrategyList( WmsShelfUpStrategyDTO dto);
 
-    R<Boolean> addOrUpdateShelfUpStrategy( WmsShelfUpStrategy dto);
+    /***
+     * 新增或者编辑上架策略
+     * @param dto
+     * @return
+     */
+    Boolean addOrUpdateShelfUpStrategy( WmsShelfUpStrategy dto);
 
-    R<Boolean> delShelfUpStrategy( WmsShelfUpStrategy dto);
+    /***
+     * 删除上架策略
+     * @param dto
+     * @return
+     */
+    Boolean delShelfUpStrategy( WmsShelfUpStrategy dto);
 }

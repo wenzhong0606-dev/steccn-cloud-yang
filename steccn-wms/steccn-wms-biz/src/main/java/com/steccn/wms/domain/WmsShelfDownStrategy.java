@@ -65,13 +65,13 @@ public class WmsShelfDownStrategy implements Serializable {
     /**
      * 更新人id
      */
-    @TableField
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
     /**
      * 更新人名称
      */
-    @TableField
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateName;
 
     /**
@@ -83,7 +83,8 @@ public class WmsShelfDownStrategy implements Serializable {
     /**
      * 是否删除标识：0否 1是
      */
-    @TableField
+    @TableLogic
+    @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 
     @TableField(exist = false)

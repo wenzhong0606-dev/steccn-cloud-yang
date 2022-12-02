@@ -9,10 +9,7 @@ import com.steccn.wms.vo.WmsShelfDownStrategyVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -33,7 +30,7 @@ public class WmsShelfDownStrategyController {
      * @explain: 获取下架策略列表
      * @Date
      **/
-    @PostMapping("/getShelfDownStrategyList")
+    @GetMapping("/getShelfDownStrategyList")
     @ApiOperation(value = "获取下架策略列表")
     public R<Page<WmsShelfDownStrategyVO>> getShelfDownStrategyList(@RequestBody WmsShelfDownStrategyDTO dto) {
 
@@ -43,12 +40,12 @@ public class WmsShelfDownStrategyController {
     @PostMapping("/addOrUpdateShelfDownStrategy")
     @ApiOperation(value = "新增或者编辑下架策略")
     public R<Boolean> addOrUpdateShelfDownStrategy(@RequestBody WmsShelfDownStrategy dto) {
-        return wmsShelfDownStrategyService.addOrUpdateShelfDownStrategy(dto);
+        return R.success(wmsShelfDownStrategyService.addOrUpdateShelfDownStrategy(dto));
     }
-    @PostMapping("/delShelfDownStrategy")
+    @DeleteMapping("/delShelfDownStrategy")
     @ApiOperation(value = "删除下架策略")
-    public R<Boolean> delShelfDownStrategy(@RequestBody WmsShelfDownStrategy dto) {
-        return wmsShelfDownStrategyService.delShelfDownStrategy(dto);
+    public R<Boolean> delShelfDownStrategy( WmsShelfDownStrategy dto) {
+        return R.success(wmsShelfDownStrategyService.delShelfDownStrategy(dto));
     }
 
 }

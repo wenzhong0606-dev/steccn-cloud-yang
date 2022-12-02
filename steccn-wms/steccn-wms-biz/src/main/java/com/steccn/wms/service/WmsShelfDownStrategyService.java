@@ -2,7 +2,6 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsShelfDownStrategy;
 import com.steccn.wms.dto.WmsShelfDownStrategyDTO;
 import com.steccn.wms.vo.WmsShelfDownStrategyVO;
@@ -14,10 +13,25 @@ import com.steccn.wms.vo.WmsShelfDownStrategyVO;
 */
 public interface WmsShelfDownStrategyService extends IService<WmsShelfDownStrategy> {
 
+    /***
+     * 获取下架策略列表
+     * @param dto
+     * @return
+     */
     Page<WmsShelfDownStrategyVO> getShelfDownStrategyList(WmsShelfDownStrategyDTO dto);
 
-    R<Boolean> addOrUpdateShelfDownStrategy(WmsShelfDownStrategy dto);
+    /***
+     * 新增或者编辑下架策略
+     * @param dto
+     * @return
+     */
+    Boolean addOrUpdateShelfDownStrategy(WmsShelfDownStrategy dto);
 
-    R<Boolean> delShelfDownStrategy( WmsShelfDownStrategy dto);
+    /***
+     * 删除下架策略
+     * @param dto
+     * @return
+     */
+    Boolean delShelfDownStrategy( WmsShelfDownStrategy dto);
 
 }

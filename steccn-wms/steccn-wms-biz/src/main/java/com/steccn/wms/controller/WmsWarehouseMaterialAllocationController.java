@@ -8,10 +8,7 @@ import com.steccn.wms.service.WmsWarehouseMaterialAllocationService;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -23,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/wms/material/configure")
-public class PmsWarehouseMaterialAllocationController {
+public class WmsWarehouseMaterialAllocationController {
 
     @Autowired
     private WmsWarehouseMaterialAllocationService pmsWarehouseMaterialAllocationService;
@@ -32,9 +29,9 @@ public class PmsWarehouseMaterialAllocationController {
      * @explain: 获取仓储物料配置列表
      * @Date
      **/
-    @PostMapping("/getMaterialConfigureList")
+    @GetMapping("/getMaterialConfigureList")
     @ApiOperation(value = "获取仓储物料配置列表分页")
-    public R<Page<WmsWarehouseMaterialAllocation>> getMaterialConfigureList(@RequestBody WmsWarehouseMaterialAllocationDTO dto) {
+    public R<Page<WmsWarehouseMaterialAllocation>> getMaterialConfigureList( WmsWarehouseMaterialAllocationDTO dto) {
 
         return R.success(pmsWarehouseMaterialAllocationService.getMaterialConfigureList(dto));
     }
@@ -42,12 +39,12 @@ public class PmsWarehouseMaterialAllocationController {
     @PostMapping("/addOrUpdateMaterialConfigure")
     @ApiOperation(value = "新增或者编辑获取仓储物料配置")
     public R<Boolean> addOrUpdateMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
-        return pmsWarehouseMaterialAllocationService.addOrUpdateMaterialConfigure(dto);
+        return R.success(pmsWarehouseMaterialAllocationService.addOrUpdateMaterialConfigure(dto));
     }
-    @PostMapping("/delMaterialConfigure")
+    @DeleteMapping("/delMaterialConfigure")
     @ApiOperation(value = "删除仓储物料配置")
-    public R<Boolean> delMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
-        return pmsWarehouseMaterialAllocationService.delMaterialConfigure(dto);
+    public R<Boolean> delMaterialConfigure( WmsWarehouseMaterialAllocation dto) {
+        return R.success(pmsWarehouseMaterialAllocationService.delMaterialConfigure(dto));
     }
 
 }

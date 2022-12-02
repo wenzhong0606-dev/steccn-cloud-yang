@@ -32,4 +32,15 @@
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+
+    <select id="getShelfUpStrategyList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
+        select
+          a.*
+        from wms_check_order a
+        where a.del_flag = 0
+        order by a.create_time desc
+    </select>
+
+
+
 </mapper>
