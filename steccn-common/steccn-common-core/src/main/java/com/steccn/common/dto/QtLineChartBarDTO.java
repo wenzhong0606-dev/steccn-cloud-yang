@@ -11,7 +11,7 @@ import java.util.List;
  * 折线图VO
  *
  * @param
- * @author 王志雄
+ * @author yequan
  */
 @Data
 @NoArgsConstructor
