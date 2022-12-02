@@ -7,6 +7,16 @@ import lombok.Getter;
 import java.util.Set;
 
 public interface EpManagerConstant {
+    //排序字段
+    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "标准名称";
+    String  EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "能源类型";
+    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE="标准类型";
+    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="产品类型";
+    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="产品厚度" ;
+    String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "单耗标准值";
+    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "有效期";
+
+
     /**
      * 关联图表
      */
@@ -16,9 +26,9 @@ public interface EpManagerConstant {
         ENERGYPARTITION(0, "能耗分区对比"),
         ENERGYHISTORY(1, "能耗历史对比"),
         CONSUMPTIONPARTITION(2, "单耗分区对比"),
-        CONSUMPTIONSHIFT(3, "单耗班组对比"),
+        CONSUMPTIONSHIFT(3, "单耗历史对比"),
         ENERGYFLOW(4, "能源流向"),
-        CONSUMPTIONHISTORY(5, "单耗历史对比"),
+        CONSUMPTIONHISTORY(5, "单耗班组对比"),
         PEAKGUPINGPARTITION(6, "峰谷平分区对比"),
         PEAKGUPINGHISTORY(7, "峰谷平历史对比");
 

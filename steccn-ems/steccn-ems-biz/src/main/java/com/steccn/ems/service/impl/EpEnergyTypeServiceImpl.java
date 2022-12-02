@@ -1,5 +1,6 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -57,7 +58,11 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         long size = count(new LambdaQueryWrapper<EpEnergyType>()
                 .eq(EpEnergyType::getName, dto.getName())
                 .eq(EpEnergyType::getShowFlag, MpConstant.YES));
-        Assert.isTrue(size ==0 , "能源类型的名称不能重复");
+        if (Objects.isNull(dto.getId())){
+            Assert.isTrue(size ==0 , "能源类型的名称不能重复");
+        }else {
+            Assert.isTrue(size <=1 , "能源类型的名称不能重复");
+        }
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
         //link table是否合法
@@ -180,6 +185,21 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
             }
         });
         return idAndMeasures;
+    }
+
+    @Override
+    public Map<Integer, String> getBySetIds(Set<Integer> ids) {
+        HashMap<Integer, String> resHasMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(ids)){
+            List<EpEnergyType> epEnergyTypes = list(new LambdaQueryWrapper<EpEnergyType>().in(EpEnergyType::getId, ids));
+            if (CollUtil.isNotEmpty(epEnergyTypes)){
+                List<EpEnergyTypeVO> epEnergyTypeVOS = BeanUtil.copyToList(epEnergyTypes, EpEnergyTypeVO.class);
+                for (EpEnergyTypeVO epEnergyTypeVO : epEnergyTypeVOS) {
+                    resHasMap.put(epEnergyTypeVO.getId(),epEnergyTypeVO.getName());
+                }
+            }
+        }
+        return resHasMap;
     }
 
 }

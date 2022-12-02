@@ -51,5 +51,4 @@ public class EpEnergyTypeController {
     public R<Map<Integer,EpEnergyTypeVO>> getBylinkTable(@PathVariable("code") Integer code){
         return R.success(epEnergyTypeService.getBylinkTable(code));
     }
-
 }

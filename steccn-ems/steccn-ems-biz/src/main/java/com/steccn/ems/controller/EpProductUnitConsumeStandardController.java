@@ -1,5 +1,6 @@
 package com.steccn.ems.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpEnergyTypeDTO;
@@ -34,7 +35,7 @@ public class EpProductUnitConsumeStandardController {
     @PostMapping("/select")
     @ApiOperation(value = "查询产品单耗标准分页列表")
     //TODO:查询产品单耗标准分页列表
-    public R<List<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody
+    public R<Page<EpProductUnitConsumeStandardVO>> getEpProductUnitConsumeStandardList(@Valid @RequestBody
                                                                                        EpProductUnitStandardPageDTO dto){
         return R.success(unitConsumeStandardService.getEpProductUnitConsumeStandardList(dto));
     }
