@@ -32,7 +32,7 @@ public class WmsShelfDownStrategyController {
      **/
     @GetMapping("/getShelfDownStrategyList")
     @ApiOperation(value = "获取下架策略列表")
-    public R<Page<WmsShelfDownStrategyVO>> getShelfDownStrategyList(@RequestBody WmsShelfDownStrategyDTO dto) {
+    public R<Page<WmsShelfDownStrategyVO>> getShelfDownStrategyList( WmsShelfDownStrategyDTO dto) {
 
         return R.success(wmsShelfDownStrategyService.getShelfDownStrategyList(dto));
     }
