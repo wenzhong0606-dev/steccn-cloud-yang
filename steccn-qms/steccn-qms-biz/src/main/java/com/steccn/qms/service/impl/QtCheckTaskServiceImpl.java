@@ -593,6 +593,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     deleteCondition.put("task_id", dto.getId());
                     copyDetailModel.setTaskId(dto.getId());
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
+                    copyDetailModel.setAnalystTime(valueTmp.getCopyDetails().getAnalystTime().atStartOfDay());
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
