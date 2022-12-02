@@ -257,22 +257,25 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(paramDTO);
         //过滤图表数据
         if(CollUtil.isNotEmpty(qtChartSubDetailDTOS)&&CollUtil.isNotEmpty(dto.getFilters())){
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
-                //对班次进行处理
-                List<String> workOrderCode = new ArrayList<>();
-                if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.NIGHT.getName())){
-                    workOrderCode.add(QtManagerConstant.QtClassesEnum.NIGHT.getName());
+            //不对比为null
+            if(dto.getCompare()!=null){
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                    //对班次进行处理
+                    List<String> workOrderCode = new ArrayList<>();
+                    if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.NIGHT.getName())){
+                        workOrderCode.add(QtManagerConstant.QtClassesEnum.NIGHT.getName());
+                    }
+                    if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.DAY.getName())){
+                        workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getName());
+                    }
+                    qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
                 }
-                if(dto.getFilters().contains(QtManagerConstant.QtClassesEnum.DAY.getName())){
-                    workOrderCode.add(QtManagerConstant.QtClassesEnum.DAY.getName());
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                    qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
                 }
-                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->workOrderCode.contains(s.getWorkOrder())).collect(Collectors.toList());
-            }
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
-                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductLineName())).collect(Collectors.toList());
-            }
-            if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
-                qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductWorkShopName())).collect(Collectors.toList());
+                if(dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                    qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().filter(s->dto.getFilters().contains(s.getProductWorkShopName())).collect(Collectors.toList());
+                }
             }
         }
         //先排序
