@@ -46,7 +46,7 @@ public class PmsShelfUpStrategyController {
     }
     @PostMapping("/delShelfUpStrategy")
     @ApiOperation(value = "删除上架策略")
-    public R<String> delShelfUpStrategy(@RequestBody WmsShelfUpStrategy dto) {
+    public R<Boolean> delShelfUpStrategy(@RequestBody WmsShelfUpStrategy dto) {
         return wmsShelfUpStrategyService.delShelfUpStrategy(dto);
     }
 
