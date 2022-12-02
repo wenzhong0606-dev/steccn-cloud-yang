@@ -6,6 +6,7 @@ import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -15,14 +16,14 @@ import java.util.List;
 public interface EpEnergyTypeService extends IService<EpEnergyType> {
 
     /**
-     * 新增能源类型
+     * 新增或编辑能源类型
      * @param dto
      * @return
      */
     Boolean addOrEdit(EpEnergyTypeDTO dto);
 
     /**
-     *
+     *根据id查询
      * @param id
      * @return
      */
@@ -35,9 +36,16 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
     List<EpEnergyTypeVO> getEpEnergyTypeVOList();
 
     /**
-     *
+     *根据id逻辑删除
      * @param id
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 根据关联图表的code查询能源类型id以及能源单位
+     * @param code
+     * @return
+     */
+    Map<Integer,EpEnergyTypeVO> getBylinkTable(Integer code);
 }

@@ -2,7 +2,7 @@ server:
   port: 9120
 spring:
   application:
-    name: steccn-wms
+    name: steccn-ems
   cloud:
     nacos:
       discovery:

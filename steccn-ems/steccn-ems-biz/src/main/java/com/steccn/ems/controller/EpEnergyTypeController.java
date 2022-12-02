@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @Api("能源类型")
 @RestController
@@ -21,8 +22,8 @@ public class EpEnergyTypeController {
     private final EpEnergyTypeService epEnergyTypeService;
 
     @PostMapping
-    @ApiOperation(value = "新增能源类型")
-    @SysLog("新增能源类型")
+    @ApiOperation(value = "新增或编辑能源类型")
+    @SysLog("新增或编辑能源类型")
     public R<Boolean> addOrEdit(@Valid @RequestBody EpEnergyTypeDTO dto) {
         return R.success(epEnergyTypeService.addOrEdit(dto));
     }
@@ -44,4 +45,11 @@ public class EpEnergyTypeController {
     public R<Boolean> delete(@PathVariable("id") Integer id){
         return R.success(epEnergyTypeService.delete(id));
     }
+
+    @GetMapping("/linkTable/{code}")
+    @ApiOperation(value = "根据关联图表的code查询能源类型id以及能源单位")
+    public R<Map<Integer,EpEnergyTypeVO>> getBylinkTable(@PathVariable("code") Integer code){
+        return R.success(epEnergyTypeService.getBylinkTable(code));
+    }
+
 }

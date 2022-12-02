@@ -16,8 +16,8 @@ public interface WmsWarehouseMaterialAllocationService extends IService<WmsWareh
 
     Page<WmsWarehouseMaterialAllocation> getMaterialConfigureList(WmsWarehouseMaterialAllocationDTO dto);
 
-    R<String> addOrUpdateMaterialConfigure( WmsWarehouseMaterialAllocation dto);
+    R<Boolean> addOrUpdateMaterialConfigure( WmsWarehouseMaterialAllocation dto);
 
-    R<String> delMaterialConfigure( WmsWarehouseMaterialAllocation dto);
+    R<Boolean> delMaterialConfigure( WmsWarehouseMaterialAllocation dto);
 
 }

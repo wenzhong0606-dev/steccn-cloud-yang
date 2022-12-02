@@ -41,12 +41,12 @@ public class PmsWarehouseMaterialAllocationController {
 
     @PostMapping("/addOrUpdateMaterialConfigure")
     @ApiOperation(value = "新增或者编辑获取仓储物料配置")
-    public R<String> addOrUpdateMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
+    public R<Boolean> addOrUpdateMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
         return pmsWarehouseMaterialAllocationService.addOrUpdateMaterialConfigure(dto);
     }
     @PostMapping("/delMaterialConfigure")
     @ApiOperation(value = "删除仓储物料配置")
-    public R<String> delMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
+    public R<Boolean> delMaterialConfigure(@RequestBody WmsWarehouseMaterialAllocation dto) {
         return pmsWarehouseMaterialAllocationService.delMaterialConfigure(dto);
     }
 

@@ -1,10 +1,10 @@
 package com.steccn.wms.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 下架策略
@@ -16,7 +16,7 @@ public class WmsShelfDownStrategy implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -65,13 +65,13 @@ public class WmsShelfDownStrategy implements Serializable {
     /**
      * 更新人id
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField
     private Long updateBy;
 
     /**
      * 更新人名称
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField
     private String updateName;
 
     /**
@@ -83,8 +83,7 @@ public class WmsShelfDownStrategy implements Serializable {
     /**
      * 是否删除标识：0否 1是
      */
-    @TableLogic
-    @TableField(fill = FieldFill.INSERT)
+    @TableField
     private Integer delFlag;
 
     @TableField(exist = false)

@@ -55,6 +55,11 @@ public class EpInstrumentAccount implements Serializable {
     private Long site;
 
     /**
+     * 资产编码
+     */
+    private String assetsCode;
+
+    /**
      * 备注
      */
     private String note;
