@@ -151,7 +151,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         save(epMeterRead);
         SteccnUser user = SecurityUtils.getUser();
         EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
-        epMeterOperationRecord.setReadId(epMeterRead.getId().longValue());
+        epMeterOperationRecord.setReadId(epMeterRead.getId());
         epMeterOperationRecord.setOpNode(dto.getPartitionId().intValue());
         epMeterOperationRecord.setOpBy(user.getUserId());
         epMeterOperationRecord.setOpName(user.getName());

@@ -19,7 +19,7 @@ public class EpMeterRead implements Serializable {
      * 主键id
      */
     @TableId(type = IdType.ASSIGN_ID)
-    private Integer id;
+    private Long id;
 
     /**
      * 仪表id
