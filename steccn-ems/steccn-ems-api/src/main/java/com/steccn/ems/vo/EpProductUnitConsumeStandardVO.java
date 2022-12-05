@@ -97,14 +97,14 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
     private LocalDate validEnd;
 
     /**
+     * 有效期
+     */
+    private String validity;
+
+    /**
      * 备注
      */
     private String note;
-
-    /**
-     * 是否删除 0 否 1是
-     */
-    private Integer delFlag;
 
     /**
      * 创建人id
@@ -115,6 +115,21 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
      * 创建人名称
      */
     private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 更新人id
+     */
+    private Long updateBy;
+
+    /**
+     * 更新人名称
+     */
+    private String updateName;
 
     /**
      * 更新人时间

@@ -45,6 +45,11 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
 
+    /**
+     * 默认生产类型
+     */
+    private final Set<Long> DEFAULT_PRODUCT_SET = Sets.newHashSet(0L,1L);
+
     @Override
     public Page<EpProductUnitConsumeStandardVO> getEpProductUnitConsumeStandardList(EpProductUnitStandardPageDTO dto) {
         //自定义查询条件
@@ -102,7 +107,10 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             s.setProductThickName(dictMap.get(s.getProductThick()));
             s.setMeasureUnitName(dictMap.get(s.getMeasureUnit()));
             s.setEnergyTypeName(energyTypeMap.get(s.getEnergyType()));
-            s.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(s.getProductType()).getName());
+            s.setValidity(s.getValidStart().toString()+"~"+s.getValidEnd());
+            if (Objects.nonNull(s.getEnergyType()) && DEFAULT_PRODUCT_SET.contains(s.getProductType())){
+                s.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(s.getProductType()).getName());
+            }
         });
         return page.setRecords(standardVOS);
     }
