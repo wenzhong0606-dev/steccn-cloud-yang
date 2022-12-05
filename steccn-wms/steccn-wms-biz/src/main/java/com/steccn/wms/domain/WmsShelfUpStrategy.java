@@ -90,4 +90,13 @@ public class WmsShelfUpStrategy implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private String note;
+
+    @TableField(exist = false)
+    private String materialUnitName;//物料单位
 }

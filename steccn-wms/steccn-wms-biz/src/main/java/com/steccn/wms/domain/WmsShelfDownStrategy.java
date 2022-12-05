@@ -89,4 +89,10 @@ public class WmsShelfDownStrategy implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+    /**
+     * 创建人名称
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private String note;
+
 }

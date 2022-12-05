@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 盘点单
@@ -41,10 +43,22 @@ public class WmsCheckOrderDTO  extends BasePageDTO implements Serializable {
     private String checkName;
 
     @ApiModelProperty("创建时间 时间区间（日期），根据单据创建时间介于区间搜索默认值：开始——当前日期减30天；结束——默认当前日期")
-    private String createTimeTem;
+    private List<LocalDate> createTimeTem;
+    @ApiModelProperty("创建时间开始")
+    private LocalDate beginCreateTime;
+    @ApiModelProperty("创建时间结束")
+    private LocalDate endCreateTime;
 
     @ApiModelProperty("盘点开始时间 时间区间（日期），根据单据创建时间介于区间搜索  默认值：开始——当前日期减30天；结束——默认当前日期")
-    private String checkTimeTem;
+    private List<LocalDate> checkTimeTem;
+    @ApiModelProperty("盘点开始时间开始")
+    private LocalDate beginCheckTime;
+    @ApiModelProperty("盘点开始时间结束")
+    private LocalDate endCheckTime;
+
+    private List<Long> typeList;//类型数组
+
+    private List<Integer> statusList;//状态数组
 
     private static final long serialVersionUID = 1L;
 }

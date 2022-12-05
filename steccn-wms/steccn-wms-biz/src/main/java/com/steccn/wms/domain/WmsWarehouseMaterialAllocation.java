@@ -105,4 +105,10 @@ public class WmsWarehouseMaterialAllocation implements Serializable {
     private String deliveryPeriodUnitName;//送货周期单位
     @TableField(exist = false)
     private String materialUnitName;//物料标准单位
+
+    /**
+     * 创建人名称
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private String note;
 }

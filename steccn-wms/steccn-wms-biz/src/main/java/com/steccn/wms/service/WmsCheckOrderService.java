@@ -33,4 +33,26 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      * @return
      */
     Boolean delCheckOrder( WmsCheckOrder dto);
+
+    /***
+     * 盘点管理详情
+     * @param id
+     * @return
+     */
+    WmsCheckOrderVO getByIdCheckOrderDetail(  Long id);
+
+    /****
+     * 盘点差异调整
+     * @param id
+     * @return
+     */
+    Boolean varianceAdjustmentCheckOrder(Long id);
+
+    /****
+     * 手机端 获取盘点单列表
+     * @param id
+     * @return
+     */
+    Page<WmsCheckOrderVO> getApiCheckOrderList(Integer current,Integer size,Integer status, String beginTime,
+                                               String endTime,Integer post);
 }

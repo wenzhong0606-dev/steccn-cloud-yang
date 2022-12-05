@@ -2,13 +2,19 @@ package com.steccn.wms.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.common.vo.R;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.wms.domain.WmsShelfUpStrategy;
 import com.steccn.wms.dto.WmsShelfUpStrategyDTO;
 import com.steccn.wms.mapper.WmsShelfUpStrategyMapper;
 import com.steccn.wms.service.WmsShelfUpStrategyService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -17,9 +23,11 @@ import java.util.Objects;
 * @createDate 2022-11-30 09:45:17
 */
 @Service
+@RequiredArgsConstructor
 public class WmsShelfUpStrategyServiceImpl extends ServiceImpl<WmsShelfUpStrategyMapper, WmsShelfUpStrategy>
     implements WmsShelfUpStrategyService{
 
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
     /***
      * 获取上架策略列表
      * @param dto
@@ -29,6 +37,12 @@ public class WmsShelfUpStrategyServiceImpl extends ServiceImpl<WmsShelfUpStrateg
     public Page<WmsShelfUpStrategy> getShelfUpStrategyList(WmsShelfUpStrategyDTO dto) {
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         List<WmsShelfUpStrategy> wmsShelfUpStrategyVOList = baseMapper.getShelfUpStrategyList(page,  dto);
+        for (WmsShelfUpStrategy up:wmsShelfUpStrategyVOList ) {
+            List<Long> materialIds = new ArrayList<>();
+            materialIds.add(up.getMaterialId());
+            R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
+            if(materialInfo.getData().size()>0) up.setMaterialUnitName(materialInfo.getData().get(up.getMaterialId()).getUnit());
+        }
         return  page.setRecords(wmsShelfUpStrategyVOList);
     }
 
