@@ -177,7 +177,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
             //获取基片缺陷总数、深加工缺陷总数的日环比和周同比
             if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type) || QtManagerConstant.QtChatTargetValue.SJGQX.getCode().equals(type)) {
                 //获取合格率
-                passRateOverViewVO.setValue(endDatePassRate.toString());
+                passRateOverViewVO.setValue(endDatePassRate.multiply(BigDecimalUtil.HUNDRED));
                 BigDecimal value = endDatePassRate.subtract(datePassList.get(datePassList.size() - 2));
                 if (value.compareTo(BigDecimal.ZERO) < 0) {
                     passRateOverViewVO.setDayFlag(0);
@@ -190,35 +190,36 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                 }
                 //获取日环比
                 if (datePassList.get(datePassList.size() - 2).equals(BigDecimal.ZERO)) {
-                    passRateOverViewVO.setDayValue("-");
+                    passRateOverViewVO.setDayValue(BigDecimal.ZERO);
                 } else {
                     BigDecimal dayValue = BigDecimalUtil.divide(value, datePassList.get(datePassList.size() - 2), 4);
-                    passRateOverViewVO.setDayValue(decimalFormat.format(dayValue));
+                    passRateOverViewVO.setDayValue(dayValue.multiply(BigDecimalUtil.HUNDRED));
                 }
             } else {
-                passRateOverViewVO.setValue(decimalFormat.format(endDatePassRate));
+                passRateOverViewVO.setValue(endDatePassRate.multiply(BigDecimalUtil.HUNDRED));
                 //获取日环比
                 if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) < 0) {
                     passRateOverViewVO.setDayFlag(0);
-                    passRateOverViewVO.setDayValue(decimalFormat.format(datePassList.get(datePassList.size() - 2).subtract(endDatePassRate)));
+                    passRateOverViewVO.setDayValue(datePassList.get(datePassList.size() - 2).subtract(endDatePassRate).multiply(BigDecimalUtil.HUNDRED));
                 } else if (endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).compareTo(BigDecimal.ZERO) == 0) {
                     passRateOverViewVO.setDayFlag(2);
                 } else {
                     passRateOverViewVO.setDayFlag(1);
-                    passRateOverViewVO.setDayValue(decimalFormat.format(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2))));
+                    passRateOverViewVO.setDayValue(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2).multiply(BigDecimalUtil.HUNDRED)));
                 }
             }
             //获取周同比
             BigDecimal weekValue = BigDecimal.ZERO;
             if (startDatePassRate.equals(BigDecimal.ZERO)) {
                 passRateOverViewVO.setWeekFlag(2);
-                passRateOverViewVO.setWeekValue("-");
+                passRateOverViewVO.setWeekValue(BigDecimal.ZERO);
             } else {
                 BigDecimal subtract = BigDecimalUtil.subtract(endDatePassRate, startDatePassRate);
-                weekValue = BigDecimalUtil.divide(subtract, startDatePassRate, 4);
+                weekValue = BigDecimalUtil.subtract(endDatePassRate, startDatePassRate);
                 if (weekValue.compareTo(BigDecimal.ZERO) < 0) {
-                    BigDecimal subtract1 = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
-                    weekValue = BigDecimalUtil.divide(subtract1, startDatePassRate, 4);
+                    weekValue = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
+                    //subtract1 = BigDecimalUtil.subtract(startDatePassRate, endDatePassRate);
+//                    weekValue = BigDecimalUtil.divide(subtract1, startDatePassRate, 4);
                     passRateOverViewVO.setWeekFlag(0);
                 } else if (weekValue.compareTo(BigDecimal.ZERO) == 0) {
                     passRateOverViewVO.setWeekFlag(2);
@@ -226,7 +227,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                     passRateOverViewVO.setWeekFlag(1);
                 }
             }
-            passRateOverViewVO.setWeekValue(decimalFormat.format(weekValue));
+            passRateOverViewVO.setWeekValue(weekValue.multiply(BigDecimalUtil.HUNDRED));
 
             String tooltip;
             LocalDate endDate = passRateOverViewVO.getXData().get(passRateOverViewVO.getXData().size() - 1);
