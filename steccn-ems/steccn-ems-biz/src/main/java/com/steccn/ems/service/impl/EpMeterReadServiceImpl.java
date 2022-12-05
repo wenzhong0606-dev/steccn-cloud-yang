@@ -21,6 +21,8 @@ import com.steccn.ems.service.EpMeterOperationRecordService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -51,6 +53,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private final EpPartitionService epPartitionService;
 
     private final EpMeterOperationRecordService epMeterOperationRecordService;
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -199,12 +203,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Set<Integer> meterIdSet = dtoList.stream().map(EpMeterReadUpdateDTO::getMeterId).collect(Collectors.toSet());
         List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).in(EpMeterRead::getReadDate, localDateSet));
         SteccnUser user = SecurityUtils.getUser();
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode("0", "sys_shift").getData();
 
         List<EpMeterOperationRecord> epMeterOperationRecordList = new ArrayList<>();
+        EpMeterRead meterRead = new EpMeterRead();
         for (EpMeterRead epMeterRead : list) {
             Optional<EpMeterReadUpdateDTO> optional = dtoList.stream().filter(meterReadUpdateDTO -> meterReadUpdateDTO.getMeterId().equals(epMeterRead.getMeterId())
                     && meterReadUpdateDTO.getReadDate().isEqual(epMeterRead.getReadDate())).findAny();
             if (optional.isPresent()) {
+                //实体远传表白班的数据不修改
+                if (optional.get().getEntityTable().equals(0) && epMeterRead.getClassId().equals(sysDictVO.getId())) {
+                    BeanUtils.copyProperties(epMeterRead,meterRead);
+                    continue;
+                }
+
                 EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
                 epMeterOperationRecord.setReadId(epMeterRead.getId());
                 epMeterOperationRecord.setOpNode(optional.get().getPartitionId());
@@ -215,9 +227,18 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 epMeterOperationRecord.setOpValueOld(epMeterRead.getAdminValue());
                 epMeterOperationRecordList.add(epMeterOperationRecord);
 
-                epMeterRead.setAdminValue(optional.get().getReadValue());
-                if (optional.get().getAdminFlag().equals(0)){
-                    epMeterRead.setReadValue(optional.get().getReadValue());
+                if (optional.get().getEntityTable().equals(0)) {
+                    Optional<EpMeterRead> readOptional = list.stream().filter(read -> read.getReadDate().isEqual(epMeterRead.getReadDate()) && read.getClassId().equals(sysDictVO.getId())).findAny();
+                    if (readOptional.isPresent()) {
+                        BigDecimal readValue = readOptional.get().getReadValue();
+                        BigDecimal updateReadValue = optional.get().getReadValue();
+                        epMeterRead.setAdminValue(updateReadValue.subtract(readValue));
+                    }
+                } else {
+                    epMeterRead.setAdminValue(optional.get().getReadValue());
+                    if (optional.get().getAdminFlag().equals(0)){
+                        epMeterRead.setReadValue(optional.get().getReadValue());
+                    }
                 }
             }
 
