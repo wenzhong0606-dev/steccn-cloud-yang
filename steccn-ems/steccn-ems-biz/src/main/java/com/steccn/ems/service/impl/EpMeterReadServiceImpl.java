@@ -67,7 +67,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         LocalTime localTime = LocalTime.of(9, 0, 0);
         LocalDate selectMonth = LocalDate.parse(readMonth + "-01", DatePattern.NORM_DATE_FORMATTER);
         //查询的第一天
-        LocalDate firstDayOfMonth = selectMonth.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate firstDayOfMonth = selectMonth.with(TemporalAdjusters.firstDayOfMonth()).minusDays(1);
         //查询的最后一天
         LocalDate endDay = currentLocalDate;
         //获取需要查询的日期
@@ -82,7 +82,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             localDateList = LocalDateUtil.getCurrentMonthDateAll(selectMonth);
         }
 
-        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(readMonth, meterType);
+        List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(firstDayOfMonth, endDay, meterType);
         Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
                 .stream()
                 .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()
@@ -139,6 +139,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         ).collect(Collectors.toList());
 
         EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
+        localDateList.remove(0);
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
@@ -187,7 +188,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 StringBuilder sb = new StringBuilder();
                 Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
                 if (partitionOptional.isPresent()) {
-                    sb.insert(0,partitionOptional.get().getOfficeName());
+                    sb.insert(0, partitionOptional.get().getOfficeName());
                     partitionRecursion(list, partitionOptional.get(), sb);
                     epMeterReadDetailsVO.setPartitionNode(sb.toString());
                 }
@@ -213,7 +214,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             if (optional.isPresent()) {
                 //实体远传表白班的数据不修改
                 if (optional.get().getEntityTable().equals(0) && epMeterRead.getClassId().equals(sysDictVO.getId())) {
-                    BeanUtils.copyProperties(epMeterRead,meterRead);
+                    BeanUtils.copyProperties(epMeterRead, meterRead);
                     continue;
                 }
 
@@ -236,7 +237,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     }
                 } else {
                     epMeterRead.setAdminValue(optional.get().getReadValue());
-                    if (optional.get().getAdminFlag().equals(0)){
+                    if (optional.get().getAdminFlag().equals(0)) {
                         epMeterRead.setReadValue(optional.get().getReadValue());
                     }
                 }
@@ -252,8 +253,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {
         Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(partition.getParentId())).findAny();
         if (partitionOptional.isPresent() && Objects.nonNull(partitionOptional.get().getParentId())) {
-            sb.insert(0, partitionOptional.get().getOfficeName()+"/");
-            return partitionRecursion(list,partitionOptional.get(),sb);
+            sb.insert(0, partitionOptional.get().getOfficeName() + "/");
+            return partitionRecursion(list, partitionOptional.get(), sb);
         }
         return null;
     }

@@ -108,10 +108,5 @@ public class ReadCorrectScheduledTask {
         } finally {
             lock.unlock();
         }
-
-    }
-
-    public static void main(String[] args) {
-        System.out.println(LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8")));
     }
 }
