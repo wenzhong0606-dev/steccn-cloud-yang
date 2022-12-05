@@ -48,4 +48,23 @@ public class CalculateDateUtil {
         return result;
     }
 
+    /**
+     * 计算是否跨班次
+     * true 表示没有跨班次
+     * false 表示跨班次
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static Boolean isSameClassType(LocalDateTime startTime,LocalDateTime endTime){
+        QtTaskClassCalculate defectStart = calculateClassTime(startTime);
+        QtTaskClassCalculate defectEnd = calculateClassTime(endTime);
+        //判断是否跨班次和跨时间维度
+        if(defectStart.getClassType().equals(defectEnd.getClassType()) && defectStart.getClassDate().toLocalDate().equals(defectEnd.getClassDate().toLocalDate())){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
 }
