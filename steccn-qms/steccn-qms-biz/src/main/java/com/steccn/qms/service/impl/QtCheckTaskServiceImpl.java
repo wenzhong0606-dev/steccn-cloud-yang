@@ -36,9 +36,11 @@ import com.steccn.common.dto.BiStackGraphDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -141,8 +143,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //如果新建检验类型为在线检，缺陷记录时段不允许跨班次;即8:00、20:00两个时间点
         if (QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(dto.getTaskType())) {
             if (dto.getDefectStartTime() != null && dto.getDefectEndTime() != null) {
-                QtTaskClassCalculate defectStart = calculateDateTime(dto.getDefectStartTime());
-                QtTaskClassCalculate defectEnd = calculateDateTime(dto.getDefectEndTime());
+                QtTaskClassCalculate defectStart = CalculateDateUtil.calculateClassTime(dto.getDefectStartTime());
+                QtTaskClassCalculate defectEnd = CalculateDateUtil.calculateClassTime(dto.getDefectEndTime());
                 //判断是否跨班次和跨时间维度
                 if(defectStart.getClassType().equals(defectEnd.getClassType()) && defectStart.getClassDate().toLocalDate().equals(defectEnd.getClassDate().toLocalDate())){
                     qtCheckTask.setClassesId(defectStart.getClassType());
@@ -528,7 +530,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
             qtCheckTask.setFinishedTime(LocalDateTime.now());
             //计算班次时间
-            QtTaskClassCalculate taskClassCalculate = this.calculateDateTime(qtCheckTask.getFinishedTime());
+            QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
             qtCheckTask.setClassesId(taskClassCalculate.getClassType());
             qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
         }
@@ -915,7 +917,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             taskModel.setFinishedName(SecurityUtils.getUser().getName());
             taskModel.setFinishedTime(LocalDateTime.now());
             //计算班次时间
-            QtTaskClassCalculate taskClassCalculate = this.calculateDateTime(taskModel.getFinishedTime());
+            QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
             taskModel.setClassesId(taskClassCalculate.getClassType());
             taskModel.setClassTime(taskClassCalculate.getClassDate());
         }
@@ -937,7 +939,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setFinishedName(SecurityUtils.getUser().getName());
         qtCheckTask.setFinishedTime(LocalDateTime.now());
         //计算班次时间
-        QtTaskClassCalculate taskClassCalculate = this.calculateDateTime(qtCheckTask.getFinishedTime());
+        QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
         qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
         return updateById(qtCheckTask);
@@ -2797,36 +2799,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
         }
         return currentMax;
-    }
-
-    public QtTaskClassCalculate calculateDateTime(LocalDateTime time) {
-        QtTaskClassCalculate result = new QtTaskClassCalculate();
-        //早班开始时间
-        LocalDateTime zaoStartTime = time;
-        zaoStartTime = zaoStartTime.withHour(8).withMinute(0).withSecond(0);
-        //早班结束时间
-        LocalDateTime zaoEndTime = time;
-        zaoEndTime = zaoEndTime.withHour(20).withMinute(0).withSecond(0);
-
-        //在早班开始之前
-        if (time.isBefore(zaoStartTime)) {
-            result.setClassType(1);
-            result.setClassDate(zaoStartTime.minusDays(1).withHour(0).withMinute(1));
-            return result;
-        }
-        //在早班的范围内[8:00,20:00)
-        if ((time.isAfter(zaoStartTime) || time.isEqual(zaoStartTime)) && time.isBefore(zaoEndTime)) {
-            result.setClassType(0);
-            result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
-            return result;
-        }
-        //在早班之后[20:00,8:00)
-        if (time.isAfter(zaoEndTime) || time.isEqual(zaoEndTime)) {
-            result.setClassType(1);
-            result.setClassDate(zaoStartTime.withHour(0).withMinute(1));
-            return result;
-        }
-        return result;
     }
 
     private static Predicate<QtIQCAcceptabilityDetailVO> predicate(Integer compare, List<String> filterList, List<QtIQCAcceptabilityDetailVO> list) {

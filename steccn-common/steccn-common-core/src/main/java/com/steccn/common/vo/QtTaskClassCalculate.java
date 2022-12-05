@@ -1,4 +1,4 @@
-package com.steccn.qms.dto;
+package com.steccn.common.vo;
 
 import lombok.Data;
 
@@ -6,13 +6,15 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 班次类
+ * 班次时间
  *
  * @author AndrewLuo
- * @date 2022/11/15
+ * @date 2022/12/05
  */
 @Data
-public class QtTaskClassCalculate implements Serializable {
+public class QtTaskClassCalculate implements Serializable{
+    private static final long serialVersionUID = 1L;
+
     /**
      * 班次类型 0早班 1晚班
      */

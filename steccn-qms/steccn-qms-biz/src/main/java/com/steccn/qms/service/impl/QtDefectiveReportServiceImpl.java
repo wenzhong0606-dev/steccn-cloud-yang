@@ -18,8 +18,10 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -32,7 +34,6 @@ import com.steccn.qms.domain.QtItemCategory;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtCheckTaskConditionDTO;
 import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
-import com.steccn.qms.dto.QtTaskClassCalculate;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
@@ -263,7 +264,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
                         //根据缺陷记录时段计算完成时间
-                        QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(qtCheckTask.getDefectEndTime());
+                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectEndTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
