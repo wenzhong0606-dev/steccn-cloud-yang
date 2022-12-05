@@ -22,4 +22,9 @@ public interface LockConstant {
      * 生产订单新增
      */
     String TABLE_PMS_PRODUCE_ORDER = "TABLE_PMS_PRODUCE_ORDER";
+
+    /**
+     * 纠偏定时任务
+     */
+    String READ_CORRECT_SCHEDULED_TASK = "READ_CORRECT_SCHEDULED_TASK";
 }
