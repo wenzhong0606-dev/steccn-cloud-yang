@@ -22,6 +22,8 @@ import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -44,6 +46,8 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     implements EpProductUnitConsumeStandardService{
     private final EpEnergyTypeService epEnergyTypeService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
+    private final EpPartitionServiceImpl epPartitionService;
 
     /**
      * 默认生产类型
@@ -150,6 +154,11 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     .lt(EpProductUnitConsumeStandard::getValidStart,dto.getValidEnd())
                     //老的结束时间小于等于dto的有效开始时间,表明时间有重叠
                     .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart()));
+           if (Objects.nonNull(dto.getId())){
+               EpProductUnitConsumeStandard ep = getById(dto.getId());
+               //编辑的时候移除对自身的判断
+               dataList.remove(ep);
+           }
             String names = new String();
             if (CollUtil.isNotEmpty(dataList)){
                 for (EpProductUnitConsumeStandard data : dataList) {
@@ -187,8 +196,12 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         EpEnergyTypeVO epAddEnergyTypeVO = epEnergyTypeService.getEpAddEnergyTypeVO(standard.getEnergyType());
         //设置能源类型名称
         vo.setEnergyTypeName(epAddEnergyTypeVO.getName());
-        //TODO:如果应用部门不为空,设置应用部门 取自能耗分区树
-
+        //如果应用部门不为空,设置应用部门
+        if (CollUtil.isNotEmpty(standard.getApplyOffice())){
+            Map<Integer, SysOfficeVO> integerSysOfficeVOMap =
+                    FeignOptional.of(remoteOfficeFeign.listById(standard.getApplyOffice())).get();
+          vo.setApplyOffice(integerSysOfficeVOMap);
+        }
         Set<Long> dictSet = Sets.newHashSet();
         Collections.addAll(dictSet,standard.getStandardType()
                 ,standard.getProductThick(),standard.getMeasureUnit());

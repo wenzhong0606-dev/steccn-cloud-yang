@@ -21,4 +21,6 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<String,List<EpPartitionVO>> getEpEnergyTypeVOList(Integer energyType);
+
+
 }

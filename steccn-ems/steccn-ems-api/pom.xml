@@ -51,6 +51,11 @@
             <artifactId>steccn-common-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-platform-api</artifactId>
+        </dependency>
+
         <!-- easyExcel-->
         <dependency>
             <groupId>com.alibaba</groupId>

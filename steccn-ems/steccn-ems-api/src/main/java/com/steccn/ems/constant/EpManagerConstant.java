@@ -14,7 +14,7 @@ public interface EpManagerConstant {
     String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="productTypeName";
     String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="productThickName" ;
     String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
-    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validity";
+    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validStart";
 
 
     /**
