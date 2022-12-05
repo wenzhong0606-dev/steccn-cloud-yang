@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.Data;
 
 /**
@@ -28,12 +30,12 @@ public class EpEnergyPricePlanDetail implements Serializable {
     /**
      * 开始时间
      */
-    private BigDecimal start;
+    private LocalTime start;
 
     /**
      * 结束时间
      */
-    private BigDecimal end;
+    private LocalTime end;
 
     /**
      * 能源方案id
