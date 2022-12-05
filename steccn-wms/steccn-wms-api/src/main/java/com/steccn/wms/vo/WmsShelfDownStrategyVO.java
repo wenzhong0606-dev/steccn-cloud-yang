@@ -79,4 +79,6 @@ public class WmsShelfDownStrategyVO implements Serializable {
     private Integer delFlag;
 
     private static final long serialVersionUID = 1L;
+
+    private String note;//备注
 }

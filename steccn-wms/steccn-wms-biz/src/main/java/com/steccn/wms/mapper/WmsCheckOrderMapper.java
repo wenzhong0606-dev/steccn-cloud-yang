@@ -22,7 +22,10 @@ public interface WmsCheckOrderMapper extends BaseMapper<WmsCheckOrder> {
 
     List<WmsCheckOrderVO> getCheckOrderList(Page<WmsCheckOrderDTO> iPage, @Param("form") WmsCheckOrderDTO dto);
 
-
+    List<WmsCheckOrderVO> getApiCheckOrderList(Page<WmsCheckOrderDTO> iPage,@Param("status")  Integer status,
+                                               @Param("beginTime") String beginTime,
+                                               @Param("endTime") String endTime,
+                                               @Param("post") Integer post);
 }
 
 

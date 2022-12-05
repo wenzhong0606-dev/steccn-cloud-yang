@@ -53,7 +53,7 @@
         WHERE
             a.status = 1
 	        AND a.meter_type = #{meterType}
-	        AND (r.read_date LIKE CONCAT( #{readMonth}, '%') or r.read_date is null )
+	        AND (r.read_date &gt;= #{startDate} and r.read_date &lt;= #{endDate} or r.read_date is null )
     </select>
 
     <select id="selectByReadDateAndMeterId" resultType="com.steccn.ems.vo.EpMeterReadDetailsVO">
@@ -75,5 +75,28 @@
             a.status = 1
 	        AND r.read_date = #{readDate}
 	        AND r.meter_id = #{meterId}
+    </select>
+    <select id="selectByMeterId" resultType="com.steccn.ems.vo.ReadCorrectVO">
+        SELECT
+            meter_id meterId,
+            read_time readTime,
+            id,
+            read_value readValue
+        FROM
+        (
+            SELECT
+                r.meter_id,
+                r.read_time,
+                r.id,
+                r.read_value,
+                row_number() over ( PARTITION BY r.meter_id ORDER BY r.read_time DESC ) AS ranking
+            FROM
+                ep_meter_read r
+                INNER JOIN ep_instrument_account a ON r.meter_id = a.id
+            WHERE
+                a.entity_table = 1
+        ) t
+        WHERE
+            ranking &lt;= 2
     </select>
 </mapper>

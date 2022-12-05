@@ -45,7 +45,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
         }
-        //递归返回一棵树
+        //QtManagerConstant.THE_CALCULATION_RESULTS返回一棵树
         return recursiveTree(dataList);
     }
 

@@ -8,13 +8,13 @@ import java.util.Set;
 
 public interface EpManagerConstant {
     //排序字段
-    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "标准名称";
-    String  EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "能源类型";
-    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE="标准类型";
-    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="产品类型";
-    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="产品厚度" ;
-    String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "单耗标准值";
-    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "有效期";
+    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "name";
+    String  EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "energyTypeName";
+    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE="standardTypeName";
+    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="productTypeName";
+    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="productThickName" ;
+    String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
+    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validity";
 
 
     /**
@@ -24,7 +24,7 @@ public interface EpManagerConstant {
     @AllArgsConstructor
     enum EpProductTypes{
         SUBSTRATE(0L,"基片"),
-        DEEPPROCESSING(1L,"深加工");
+        DEEP_PROCESSING(1L,"深加工");
         private Long id;
         private String name;
         //根据code查找值
@@ -44,14 +44,14 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum EpEnergyTypes {
-        ENERGYPARTITION(0, "能耗分区对比"),
-        ENERGYHISTORY(1, "能耗历史对比"),
-        CONSUMPTIONPARTITION(2, "单耗分区对比"),
-        CONSUMPTIONSHIFT(3, "单耗历史对比"),
-        ENERGYFLOW(4, "能源流向"),
-        CONSUMPTIONHISTORY(5, "单耗班组对比"),
-        PEAKGUPINGPARTITION(6, "峰谷平分区对比"),
-        PEAKGUPINGHISTORY(7, "峰谷平历史对比");
+        ENERGY_PARTITION(0, "能耗分区对比"),
+        ENERGY_HISTORY(1, "能耗历史对比"),
+        CONSUMPTION_PARTITION(2, "单耗分区对比"),
+        CONSUMPTION_SHIFT(3, "单耗历史对比"),
+        ENERGY_FLOW(4, "能源流向"),
+        CONSUMPTION_HISTORY(5, "单耗班组对比"),
+        PEAK_PARTITION(6, "峰谷平分区对比"),
+        PEAK_HISTORY(7, "峰谷平历史对比");
 
         private Integer code;
         private String name;
@@ -75,4 +75,31 @@ public interface EpManagerConstant {
         }
     }
 
+    /**
+     * 能耗分区
+     */
+    @Getter
+    @AllArgsConstructor
+    enum EnergyPartitioningTree {
+        POWER_CONSUMPTION_PARTITION(1,"电耗分区"),
+        WATER_CONSUMPTION_PARTITION(2,"水耗分区"),
+        GAS_CONSUMPTION_PARTITION(3,"气耗分区"),
+        FUEL_CONSUMPTION_PARTITION(4,"油耗分区"),
+        GAS_FUEL_CONSUMPTION_PARTITION(5,"气耗/油耗分区"),
+        ENERGY_PARTITION(6,"能耗分区");
+
+
+        private Integer energyType;
+        private String name;
+
+        //根据energyType查找能耗分区
+        public static EnergyPartitioningTree getByEnergyType(Integer energyType) {
+            for (EnergyPartitioningTree value : EnergyPartitioningTree.values()) {
+                if (value.energyType.equals(energyType)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
 }

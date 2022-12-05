@@ -33,14 +33,70 @@
         update_time,del_flag
     </sql>
 
-    <select id="getShelfUpStrategyList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
+    <select id="getCheckOrderList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
         select
-          a.*
+           a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,
+          ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
+				  else '' end ) AS statusName
         from wms_check_order a
         where a.del_flag = 0
+        <if test="form.code!=null and form.code!=''">
+            and a.code like CONCAT('%',#{form.code},'%')
+        </if>
+        <if test="form.name!=null and form.name!=''">
+            and a.name like CONCAT('%',#{form.name},'%')
+        </if>
+        <if test="form.typeList!=null and form.typeList.size() >0 ">
+            <foreach collection="form.typeList" open=" and a.type in(" close=")" item="type" separator=",">
+                #{type}
+            </foreach>
+        </if>
+        <if test="form.statusList!=null and form.statusList.size() >0 ">
+            <foreach collection="form.statusList" open=" and a.status in(" close=")" item="status" separator=",">
+                #{status}
+            </foreach>
+        </if>
+        <if test="form.batch!=null and form.batch!=''">
+            and a.id in (select check_order_id from wms_check_order_info where batch like CONCAT('%',#{form.batch},'%'))
+        </if>
+        <if test="form.caseNo!=null and form.caseNo!=''">
+            and a.id in (select check_order_id from wms_check_order_info where case_no like CONCAT('%',#{form.caseNo},'%'))
+        </if>
+        <if test="form.createName!=null and form.createName!=''">
+            and a.create_name like CONCAT('%',#{form.createName},'%')
+        </if>
+        <if test="form.checkName!=null and form.checkName!=''">
+            and a.id in (select check_order_id from wms_check_order_info where check_name like CONCAT('%',#{form.checkName},'%'))
+        </if>
+        <if test="form.createTimeTem!=null and form.createTimeTem.size() >0 ">
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d' )  <![CDATA[>= ]]> #{form.beginCreateTime}
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d' )  <![CDATA[<= ]]> #{form.endCreateTime}
+        </if>
+        <if test="form.checkTimeTem!=null and form.checkTimeTem.size() >0 ">
+            and DATE_FORMAT(a.check_time,'%Y-%m-%d' )  <![CDATA[>= ]]> #{form.beginCheckTime}
+            and DATE_FORMAT(a.check_time,'%Y-%m-%d' )  <![CDATA[<= ]]> #{form.endCheckTime}
+        </if>
         order by a.create_time desc
     </select>
 
-
+    <select id="getApiCheckOrderList" resultType="com.steccn.wms.vo.WmsCheckOrderVO">
+        select
+        a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,a.check_area,
+        ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
+        else '' end ) AS statusName
+        from wms_check_order a
+        where a.del_flag = 0
+        <if test="status!=null and status!=''">
+            and a.status #{status}
+        </if>
+        <if test="post!=null and post!=''">
+            and a.post #{post}
+        </if>
+        <if test="beginTime !=null and beginTime!='' ">
+            and  a.create_time  <![CDATA[>= ]]> #{beginTime}
+            and  a.create_time  <![CDATA[<= ]]> #{endTime}
+        </if>
+        order by a.create_time desc
+    </select>
 
 </mapper>

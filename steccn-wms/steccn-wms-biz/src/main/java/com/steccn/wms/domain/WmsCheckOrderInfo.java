@@ -51,9 +51,9 @@ public class WmsCheckOrderInfo implements Serializable {
     private String caseNo;
 
     /**
-     * 单位id
+     * 单位
      */
-    private Long unit;
+    private String unit;
 
     /**
      * 结果
@@ -86,9 +86,10 @@ public class WmsCheckOrderInfo implements Serializable {
     private String note;
 
     /**
-     * 状态（0：正常 1：异常）
+     * ("状态（0：未执行 1：已执行）")
      */
     private Integer status;
+
 
     /**
      * 盘点单id

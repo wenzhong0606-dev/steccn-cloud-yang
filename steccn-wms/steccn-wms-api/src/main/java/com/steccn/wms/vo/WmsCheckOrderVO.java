@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 盘点单
@@ -22,6 +23,9 @@ public class WmsCheckOrderVO implements Serializable {
     @ApiModelProperty("盘点名称")
     private String name;
 
+    @ApiModelProperty("类型")
+    private Long type;
+
     @ApiModelProperty("类型名称")
     private String typeName;
 
@@ -30,6 +34,9 @@ public class WmsCheckOrderVO implements Serializable {
 
     @ApiModelProperty("状态名称")
     private String statusName;
+
+    @ApiModelProperty("盘点岗位")
+    private Integer post;
 
     @ApiModelProperty("盘点岗位名称")
     private String postName;
@@ -43,5 +50,9 @@ public class WmsCheckOrderVO implements Serializable {
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
 
+    @ApiModelProperty("盘点明细")
+    private List<WmsCheckOrderInfoVO> wmsCheckOrderInfoVOList;
+    @ApiModelProperty("盘点区域")
+    private Object checkArea;
     private static final long serialVersionUID = 1L;
 }

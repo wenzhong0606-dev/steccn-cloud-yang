@@ -43,7 +43,7 @@ public class EpMeterReadController {
         return R.success(epMeterReadService.details(readDate,meterId));
     }
 
-    @PostMapping("/updateBatch")
+    @PutMapping("/updateBatch")
     @ApiOperation(value = "抄表管理批量修改")
     public R<Boolean> updateBatch(@RequestBody List<EpMeterReadUpdateDTO> dtoList) {
         return R.success(epMeterReadService.updateBatch(dtoList));
