@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,4 +68,9 @@ public class PmsProduceOrderFeignController {
         return R.success(pmsWorkOrderBatchService.getByOrderId(id));
     }
 
+    @ApiOperation("根据班次时间查询物料id")
+    @GetMapping("/getMaterialIdByClassTime")
+    public R<Long> getMaterialIdByClassTime(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime")LocalDateTime endTime) {
+        return R.success(pmsProduceOrderService.getMaterialIdByClassTime(startTime,endTime));
+    }
 }
