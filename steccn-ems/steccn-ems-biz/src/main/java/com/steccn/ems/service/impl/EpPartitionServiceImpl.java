@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 * @createDate 2022-11-29 19:27:28
 */
 @Service
-@AllArgsConstructor
 @Slf4j
 public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPartition>
     implements EpPartitionService{

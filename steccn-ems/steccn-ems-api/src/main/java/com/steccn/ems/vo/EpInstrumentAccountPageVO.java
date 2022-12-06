@@ -25,7 +25,7 @@ public class EpInstrumentAccountPageVO implements Serializable {
     /**
      * 所属分区节点名称
      */
-    private String partitionNodeName;
+    private EpPartitionVO partitionNodeName;
 
     /**
      * 远传表映射编码

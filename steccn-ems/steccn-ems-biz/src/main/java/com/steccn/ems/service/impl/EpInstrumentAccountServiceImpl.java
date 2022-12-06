@@ -45,14 +45,12 @@ import java.util.stream.Collectors;
 * @createDate 2022-11-29 19:27:28
 */
 @Service
-@AllArgsConstructor
 @Slf4j
 public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAccountMapper, EpInstrumentAccount>
     implements EpInstrumentAccountService{
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
-    @Lazy
     @Autowired
     private EpPartitionService epPartitionService;
 
@@ -145,11 +143,11 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
         Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
         instrumentAccountVOS.forEach(s -> {
-            if (CollUtil.isNotEmpty(dictMap)) {
+            if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
                 s.setSiteName(dictMap.get(s.getSite()));
             }
-            if (CollUtil.isNotEmpty(epPartitionNameListVO)){
-                s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
+            if (CollUtil.isNotEmpty(epPartitionNameListVO)&&Objects.nonNull(s.getPartitionNode())){
+                s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()));
             }
 
             //TODO:设置最后抄表时间
