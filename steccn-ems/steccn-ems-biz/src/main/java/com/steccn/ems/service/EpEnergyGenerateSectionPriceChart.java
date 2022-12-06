@@ -1,6 +1,8 @@
 package com.steccn.ems.service;
 
 
+import com.steccn.qms.vo.QtChartPieValueVO;
+
 import java.math.BigDecimal;
 
 /**
@@ -10,5 +12,5 @@ import java.math.BigDecimal;
  * @date 2022/12/05
  */
 public interface EpEnergyGenerateSectionPriceChart {
-//    QtChartPieVO<BigDecimal>
+
 }
