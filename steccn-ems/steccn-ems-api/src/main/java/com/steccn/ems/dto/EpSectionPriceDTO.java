@@ -2,6 +2,7 @@ package com.steccn.ems.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -28,5 +29,6 @@ public class EpSectionPriceDTO implements Serializable {
     /**
      * 节点id
      */
-    private Integer nodeId;
+    @NotNull(message = "节点id不能为空")
+    private Integer partitionId;
 }
