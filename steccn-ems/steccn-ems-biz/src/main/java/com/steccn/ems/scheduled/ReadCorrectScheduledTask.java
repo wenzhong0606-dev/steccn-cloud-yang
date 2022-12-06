@@ -102,9 +102,10 @@ public class ReadCorrectScheduledTask {
                 EpMeterRead epMeterRead = new EpMeterRead();
                 epMeterRead.setId(readCorrect1.getId());
                 epMeterRead.setCorrectValue(correctValue);
+                epMeterRead.setAdminValue(correctValue);
                 epMeterReadList.add(epMeterRead);
             }
-            epMeterReadService.saveBatch(epMeterReadList);
+            epMeterReadService.updateBatchById(epMeterReadList);
         } finally {
             lock.unlock();
         }
