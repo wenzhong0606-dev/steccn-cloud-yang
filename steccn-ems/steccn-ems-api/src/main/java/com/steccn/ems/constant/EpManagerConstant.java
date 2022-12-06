@@ -7,7 +7,7 @@ import lombok.Getter;
 import java.util.Set;
 
 public interface EpManagerConstant {
-    //排序字段
+    //产品单耗排序字段
     String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "name";
     String  EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "energyTypeName";
     String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE="standardTypeName";
@@ -15,6 +15,13 @@ public interface EpManagerConstant {
     String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="productThickName" ;
     String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
     String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validStart";
+    //仪表名称排序字段
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE = "distantMapCode";
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME = "meterName";
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
+    String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
+
+
 
 
     /**

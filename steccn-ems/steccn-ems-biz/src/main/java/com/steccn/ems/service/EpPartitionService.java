@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionVO;
 
 import java.util.List;
@@ -20,7 +21,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @param energyType
      * @return
      */
-    Map<String,List<EpPartitionVO>> getEpEnergyTypeVOList(Integer energyType);
+    EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType);
 
 
+    /**
+     * 根据能源分区的ids获取能源分区的集合
+     */
+    Map<Long,EpPartitionVO> getEpPartitionNameListVO(Set<Long> ids);
 }

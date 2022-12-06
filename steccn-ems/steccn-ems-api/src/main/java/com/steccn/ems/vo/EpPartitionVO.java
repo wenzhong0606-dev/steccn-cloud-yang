@@ -17,11 +17,6 @@ public class EpPartitionVO implements Serializable {
     private Integer type;
 
     /**
-     * 能耗分区名称
-     */
-    private String partitionName;
-
-    /**
      * 组织机构id
      */
     private Integer officeId;
@@ -42,9 +37,9 @@ public class EpPartitionVO implements Serializable {
     private Long parentId;
 
     /**
-     * 父级节点名称
+     * 是否关联仪表 0 否 1 是
      */
-    private String parentName;
+    private Integer isLinkTable;
 
     /**
      * 子级节点
