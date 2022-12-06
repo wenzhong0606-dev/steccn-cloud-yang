@@ -34,7 +34,7 @@ public class EpMeterRead implements Serializable {
     /**
      * 班次id 0早班 1晚班
      */
-    private Long classId;
+    private Integer classId;
 
     /**
      * 厚度
