@@ -16,6 +16,7 @@ import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
+import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpPartitionService;
@@ -32,6 +33,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -55,6 +57,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     private EpPartitionService epPartitionService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addOrEdit(EpInstrumentAccountDTO dto) {
         long count = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 //所属分区节点
@@ -177,6 +180,16 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             });
         }
         return partitionNodesVO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean reviseStatus(EpInstrumentAccountStatusDTO dto) {
+        EpInstrumentAccount epInstrumentAccount = getById(dto.getId());
+        Assert.notNull(epInstrumentAccount,"该仪表台账不存在");
+        epInstrumentAccount.setStatus(dto.getStatus());
+        updateById(epInstrumentAccount);
+        return Boolean.TRUE;
     }
 
     /**
