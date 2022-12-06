@@ -1,14 +1,10 @@
 package com.steccn.qms.vo;
 
-import com.steccn.qms.dto.QtBaseIdNameDTO;
-import com.steccn.qms.dto.QtThirdPartyDefectContentDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 部门分析驾驶舱返回VO
@@ -29,17 +25,17 @@ public class QtDefectChartVO<K,V,T> {
     /**
      * 部门驾驶舱概览的成品率，合格率，缺陷总数等值
      */
-    private String value;
+    private BigDecimal value;
 
     /**
      * 日环比%
      */
-    private String dayValue;
+    private BigDecimal dayValue;
 
     /**
      * 周同比%
      */
-    private String weekValue;
+    private BigDecimal weekValue;
 
     /**
      * 日环比  0 下降

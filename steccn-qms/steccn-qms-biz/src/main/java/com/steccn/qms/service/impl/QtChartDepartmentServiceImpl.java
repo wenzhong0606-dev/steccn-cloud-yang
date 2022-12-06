@@ -205,7 +205,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
                     passRateOverViewVO.setDayFlag(2);
                 } else {
                     passRateOverViewVO.setDayFlag(1);
-                    passRateOverViewVO.setDayValue(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2).multiply(BigDecimalUtil.HUNDRED)));
+                    passRateOverViewVO.setDayValue(endDatePassRate.subtract(datePassList.get(datePassList.size() - 2)).multiply(BigDecimalUtil.HUNDRED));
                 }
             }
             //获取周同比

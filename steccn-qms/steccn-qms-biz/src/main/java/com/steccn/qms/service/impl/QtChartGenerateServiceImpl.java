@@ -691,9 +691,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //如果为0，则显示为-
             if (dayRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setDayValue("");
+                vo.setDayValue(BigDecimal.ZERO);
             } else {
-                vo.setDayValue(new DecimalFormat("0.00%").format(dayRate.abs()));
+                vo.setDayValue(dayRate.abs().multiply(BigDecimalUtil.HUNDRED));
             }
             //算周同比
             pmsDTO.setBeginDate(fullDate.minusDays(6));
@@ -706,9 +706,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 }
             }
             if (weekRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setWeekValue("");
+                vo.setWeekValue(BigDecimal.ZERO);
             } else {
-                vo.setWeekValue(new DecimalFormat("0.00%").format(weekRate));
+                vo.setWeekValue(weekRate.multiply(BigDecimalUtil.HUNDRED));
             }
             if (weekRate.compareTo(BigDecimal.ZERO) < 0) {
                 vo.setWeekFlag(0);
@@ -723,9 +723,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         vo.setXData(xData);
         vo.setYData(yData);
         if (yData.size() == 0) {
-            vo.setValue("0.00%");
+            vo.setValue(BigDecimal.ZERO);
         } else {
-            vo.setValue(new DecimalFormat("0.00%").format(yData.get(yData.size() - 1)));
+            vo.setValue(yData.get(yData.size() - 1).multiply(BigDecimalUtil.HUNDRED));
         }
         QtChartTargetValue qtChartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1));
         if (Objects.nonNull(qtChartTargetValue)) {
