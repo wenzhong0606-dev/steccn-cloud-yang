@@ -55,7 +55,8 @@
     <select id="getByCode" resultType="com.steccn.platform.vo.EqpSpareVO">
         SELECT a.id,
                a.code,
-               a.name
+               a.name,
+               a.thick_quantity thickQuantity
         FROM sys_eqp_spare a
         WHERE a.code = #{code}
     </select>

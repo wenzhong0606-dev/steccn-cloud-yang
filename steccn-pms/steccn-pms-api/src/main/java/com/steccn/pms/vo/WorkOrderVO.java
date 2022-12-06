@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 public class WorkOrderVO {
 
-    private Long materialId;
+    private String materialCode;
 
     private LocalDateTime endTime;
 }

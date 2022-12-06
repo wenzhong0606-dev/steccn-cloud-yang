@@ -6,7 +6,6 @@ import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.vo.ReadCorrectVO;
-import com.steccn.pms.feign.RemotePmsFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -37,8 +36,6 @@ public class ReadCorrectScheduledTask {
     private final EpMeterReadService epMeterReadService;
 
     private final RedissonClient redissonClient;
-
-    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Async
     @Scheduled(cron = "0 3 9 * * ?")

@@ -791,11 +791,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public Long getMaterialIdByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+    public WorkOrderVO getMaterialCodeByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
         WorkOrderVO workOrderVO = this.baseMapper.selectByClassTime(startTime, endTime);
         long second = ChronoUnit.SECONDS.between(workOrderVO.getEndTime(), endTime);
         if (second < 60) {
-           return workOrderVO.getMaterialId();
+           return workOrderVO;
         }
         return null;
     }

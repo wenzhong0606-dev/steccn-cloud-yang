@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.PmsWorkOrderBatchVO;
-import com.steccn.pms.vo.ProduceOrderTrackReportVO;
-import com.steccn.pms.vo.ReportWorkOrderVO;
+import com.steccn.pms.vo.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -207,5 +204,5 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @param endTime
      * @return
      */
-    Long getMaterialIdByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+    WorkOrderVO getMaterialCodeByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 }

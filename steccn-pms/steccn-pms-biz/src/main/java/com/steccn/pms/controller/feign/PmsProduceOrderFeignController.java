@@ -7,6 +7,7 @@ import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -63,14 +64,14 @@ public class PmsProduceOrderFeignController {
     @ApiOperation("查询当前批次信息")
     @GetMapping("/batch/id")
     @SysLog("查询当前批次信息")
-    public R<PmsWorkOrderBatch> getByOrderId(@RequestParam("id") Long id){
+    public R<PmsWorkOrderBatch> getByOrderId(@RequestParam("id") Long id) {
 
         return R.success(pmsWorkOrderBatchService.getByOrderId(id));
     }
 
     @ApiOperation("根据班次时间查询物料id")
     @GetMapping("/getMaterialIdByClassTime")
-    public R<Long> getMaterialIdByClassTime(@RequestParam("startTime")LocalDateTime startTime,@RequestParam("endTime")LocalDateTime endTime) {
-        return R.success(pmsProduceOrderService.getMaterialIdByClassTime(startTime,endTime));
+    public R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime) {
+        return R.success(pmsProduceOrderService.getMaterialCodeByClassTime(startTime, endTime));
     }
 }

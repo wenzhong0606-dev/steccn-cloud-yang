@@ -5,6 +5,7 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -80,5 +81,5 @@ public interface RemotePmsFeignApi {
 
     @ApiOperation("根据班次时间查询物料id")
     @GetMapping("/feign/pms/produce/order/getThickByClassTime")
-    R<Long> getMaterialIdByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
+    R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
 }

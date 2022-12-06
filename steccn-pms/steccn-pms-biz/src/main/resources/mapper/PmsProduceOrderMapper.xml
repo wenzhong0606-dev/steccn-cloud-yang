@@ -210,7 +210,7 @@
     </select>
     <select id="selectByClassTime" resultType="com.steccn.pms.vo.WorkOrderVO">
         SELECT
-	        o.material_id materialId,
+	        o.material_code materialCode,
 	        w.end_time endTime
         FROM
 	        pms_produce_order o
