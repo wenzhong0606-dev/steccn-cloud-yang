@@ -1,12 +1,15 @@
 package com.steccn.ems.vo;
 
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Data
 public class EpProductUnitConsumeStandardVO implements Serializable {
@@ -49,7 +52,7 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
     /**
      * 应用部门
      */
-    private BaseSelectVO<Integer> applyOffice;
+    private Map<Integer, SysOfficeVO> applyOffice;
 
     /**
      * 产品类型【基片、深加工】

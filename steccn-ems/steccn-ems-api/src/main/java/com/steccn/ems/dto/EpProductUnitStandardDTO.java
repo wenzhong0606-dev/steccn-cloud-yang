@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 产品单耗标准新增编辑dto
@@ -46,7 +47,7 @@ public class EpProductUnitStandardDTO implements Serializable {
     /**
      * 应用部门
      */
-    private List<Long> applyOffice;
+    private Set<Integer> applyOffice;
 
     /**
      * 产品类型【基片、深加工】

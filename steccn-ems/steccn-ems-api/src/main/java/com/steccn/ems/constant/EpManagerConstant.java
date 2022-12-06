@@ -14,7 +14,7 @@ public interface EpManagerConstant {
     String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="productTypeName";
     String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="productThickName" ;
     String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
-    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validity";
+    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validStart";
 
 
     /**
@@ -100,6 +100,35 @@ public interface EpManagerConstant {
                 }
             }
             return null;
+        }
+    }
+
+    /**
+     * 时间粒度-天、周、月、无粒度
+     */
+    @Getter
+    @AllArgsConstructor
+    enum EpGranularity {
+        DAY(0, "天"),
+        WEEK(1, "周"),
+        MONTH(2, "月"),
+        NONE(3, "无粒度");
+        private Integer code;
+        private String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static EpGranularity getProductType(Long code) {
+            for (EpGranularity value : EpGranularity.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return NONE;
         }
     }
 }

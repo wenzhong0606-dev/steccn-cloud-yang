@@ -37,7 +37,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     @Override
     public Map<String,List<EpPartitionVO>> getEpEnergyTypeVOList(Integer energyType) {
         //根据传过来的能源类型先获取全量数据
-        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getType, energyType));
+        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
         Map<String, List<EpPartitionVO>> voMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合

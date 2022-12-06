@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.steccn.common.vo.BaseSelectVO;
@@ -48,7 +50,7 @@ public class EpProductUnitConsumeStandard implements Serializable {
      * 应用部门
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private BaseSelectVO<Long> applyOffice;
+    private Set<Integer> applyOffice;
 
     /**
      * 产品类型【基片、深加工】
