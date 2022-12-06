@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Data
 public class EpProductUnitConsumeStandardVO implements Serializable {
@@ -52,7 +53,12 @@ public class EpProductUnitConsumeStandardVO implements Serializable {
     /**
      * 应用部门
      */
-    private Map<Integer, SysOfficeVO> applyOffice;
+    private Set<Integer> applyOffice;
+
+    /**
+     * 应用部门vo
+     */
+    private List<SysOfficeVO> applyOfficeVO;
 
     /**
      * 产品类型【基片、深加工】

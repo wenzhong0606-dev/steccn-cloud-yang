@@ -23,6 +23,7 @@
         <module>steccn-monitor</module>
         <module>steccn-wms</module>
         <module>steccn-ems</module>
+        <module>steccn-data-platform</module>
     </modules>
 
     <properties>

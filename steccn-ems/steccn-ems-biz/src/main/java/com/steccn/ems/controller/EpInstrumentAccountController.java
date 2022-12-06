@@ -8,6 +8,7 @@ import com.steccn.ems.dto.EpInstrumentAccountDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.service.EpInstrumentAccountService;
+import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import io.swagger.annotations.Api;
@@ -31,11 +32,9 @@ public class EpInstrumentAccountController {
 
     @PostMapping("/page")
     @ApiOperation(value = "查询仪表台账分页列表")
-    //TODO:查询仪表台账分页列表
-    public R<EpInstrumentAccountVO> getEpProductUnitConsumeStandardList(@Valid @RequestBody
+    public R<Page<EpInstrumentAccountPageVO>> getEpInstrumentAccountVOPage(@Valid @RequestBody
                                                                                 EpInstrumentAccountPageDTO dto){
-        EpInstrumentAccountVO epInstrumentAccountVO = new EpInstrumentAccountVO();
-        return R.success(epInstrumentAccountVO);
+        return R.success(epInstrumentAccountService.getEpInstrumentAccountVOPage(dto));
     }
 
     @PostMapping

@@ -1,5 +1,7 @@
 package com.steccn.ems.vo;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -27,15 +29,34 @@ public class EpInstrumentAccountVO implements Serializable {
     private String partitionNodeName;
 
     /**
-     * 仪表名称
+     * 仪表类型
      */
-    @NotNull(message = "仪表名称不能为空")
-    private String meterName;
+    private Integer meterType;
+
+    /**
+     * 计量单位
+     */
+    private Long measureUnit;
+
+    /**
+     * 计量单位名称
+     */
+    private String measureUnitName;
+
+    /**
+     * 0实体远传仪表、1实体非远传仪表、2虚拟仪表
+     */
+    private Integer entityTable;
 
     /**
      * 远传表映射编码
      */
     private String distantMapCode;
+
+    /**
+     * 仪表名称
+     */
+    private String meterName;
 
     /**
      * 安装位置数据字典id
@@ -48,12 +69,49 @@ public class EpInstrumentAccountVO implements Serializable {
     private String siteName;
 
     /**
-     * 最后抄表时间
+     * 资产编码
      */
-    private LocalDateTime lastReadingTime;
+    private String assetsCode;
+
+    /**
+     * 备注
+     */
+    private String note;
 
     /**
      * 0停用 1启用
      */
     private Integer status;
+
+    /**
+     * 创建人id
+     */
+    private Long createBy;
+
+    /**
+     * 创建人名称
+     */
+    private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 更新人id
+     */
+    private Long updateBy;
+
+    /**
+     * 更新人名称
+     */
+    private String updateName;
+
+    /**
+     * 更新人时间
+     */
+    private LocalDateTime updateTime;
+
+    private static final long serialVersionUID = 1L;
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -20,10 +21,12 @@ import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.vo.EpEnergyTypeVO;
+import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.qms.vo.QtSpcReportDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -89,26 +92,50 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }else {
             condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
         }
-        //3.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //4.查询分页数据
-        IPage resPage = page(page, condition);
-        //5.拷贝page信息
-        BeanUtil.copyProperties(resPage,page);
-        //6.拷贝返回信息
-        List<EpProductUnitConsumeStandardVO> standardVOS = BeanUtil.copyToList(resPage.getRecords(), EpProductUnitConsumeStandardVO.class);
-        //7.处理返回数据
+        //3.根据条件查询数据库
+        List<EpProductUnitConsumeStandard> standards = list(condition);
+        //4.拷贝返回信息
+        List<EpProductUnitConsumeStandardVO> standardVOS = BeanUtil.copyToList(standards, EpProductUnitConsumeStandardVO.class);
+        //5.处理返回数据
+        //自定义分页对象
+        Page<EpProductUnitConsumeStandardVO> page = new Page<>();
+        if (CollUtil.isEmpty(standards)){
+            return page;
+        }
         Set<Long> dictSet = Sets.newHashSet();
         Set<Integer> energyTypeSet = Sets.newHashSet();
-        standardVOS.forEach(s->{
-            Collections.addAll(dictSet,s.getStandardType(),s.getProductThick(),s.getMeasureUnit());
-            energyTypeSet.add(s.getEnergyType());
-        });
+        Set<Integer> officeSet = Sets.newHashSet();
+        standardVOS.stream().filter(v ->Objects.nonNull(v)&& Objects.nonNull(v.getStandardType())
+                        && Objects.nonNull(v.getMeasureUnit())
+                        && Objects.nonNull(v.getEnergyType()))
+                .forEach(s -> {
+                    Collections.addAll(dictSet, s.getStandardType(), s.getMeasureUnit());
+                    if (Objects.nonNull(s.getProductThick())){
+                        dictSet.add(s.getProductThick());
+                    }
+                    if (CollUtil.isNotEmpty(s.getApplyOffice())){
+                        s.getApplyOffice().forEach(q->{
+                            officeSet.add(q);
+                        });
+                    }
+                    energyTypeSet.add(s.getEnergyType());
+                });
         Map<Integer, String> energyTypeMap= epEnergyTypeService.getBySetIds(energyTypeSet);
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+        Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(remoteOfficeFeign.listById(officeSet)).get();
         standardVOS.forEach(s->{
             s.setStandardTypeName(dictMap.get(s.getStandardType()));
-            s.setProductThickName(dictMap.get(s.getProductThick()));
+            if (Objects.nonNull(s)&&Objects.nonNull(s.getProductThick())){
+                s.setProductThickName(dictMap.get(s.getProductThick()));
+            }
+            if (CollUtil.isNotEmpty(officeVOMap)&&CollUtil.isNotEmpty(s.getApplyOffice())){
+                List<SysOfficeVO> sysOfficeVOS = Lists.newArrayList();
+              s.getApplyOffice().forEach(v->{
+                  SysOfficeVO sysOfficeVO = officeVOMap.get(v);
+                  sysOfficeVOS.add(sysOfficeVO);
+              });
+                s.setApplyOfficeVO(sysOfficeVOS);
+            }
             s.setMeasureUnitName(dictMap.get(s.getMeasureUnit()));
             s.setEnergyTypeName(energyTypeMap.get(s.getEnergyType()));
             s.setValidity(s.getValidStart().toString()+"~"+s.getValidEnd());
@@ -116,7 +143,17 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 s.setProductTypeName(EpManagerConstant.EpProductTypes.getProductType(s.getProductType()).getName());
             }
         });
-        return page.setRecords(standardVOS);
+
+        //排序+逻辑分页
+        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
+        //排序
+        List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        page.setCurrent(dto.getCurrent());
+        page.setTotal(standardVOS.size());
+        page.setSize(dto.getSize());
+        page.setRecords(collect);
+
+        return page;
     }
 
 
@@ -136,10 +173,12 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
         //复制传进来的dto
         BeanUtils.copyProperties(dto,unitConsumeStandard);
-        long sum = count();
-        String code = "BZ"+String.format("%06d", sum+1);
-        //设置标准编码
-        unitConsumeStandard.setCode(code);
+        if (Objects.isNull(dto.getId())){
+            long sum = count();
+            String code = "BZ"+String.format("%06d", sum+1);
+            //新建的时候设置标准编码
+            unitConsumeStandard.setCode(code);
+        }
         //检测有效期是否有重叠部分,如果有提示“与现有标准【#现有标准的名称#】有效期有重叠”，无法保存
         if (Objects.nonNull(dto.getStandardType())
                 &&Objects.nonNull(dto.getEnergyType())
@@ -198,9 +237,13 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         vo.setEnergyTypeName(epAddEnergyTypeVO.getName());
         //如果应用部门不为空,设置应用部门
         if (CollUtil.isNotEmpty(standard.getApplyOffice())){
-            Map<Integer, SysOfficeVO> integerSysOfficeVOMap =
-                    FeignOptional.of(remoteOfficeFeign.listById(standard.getApplyOffice())).get();
-          vo.setApplyOffice(integerSysOfficeVOMap);
+            Map<Integer, SysOfficeVO> voMap = FeignOptional.of(remoteOfficeFeign.listById(standard.getApplyOffice())).get();
+           List<SysOfficeVO> sysOfficeVOS = Lists.newArrayList();
+            standard.getApplyOffice().forEach(v->{
+                SysOfficeVO sysOfficeVO = voMap.get(v);
+                sysOfficeVOS.add(sysOfficeVO);
+            });
+            vo.setApplyOfficeVO(sysOfficeVOS);
         }
         Set<Long> dictSet = Sets.newHashSet();
         Collections.addAll(dictSet,standard.getStandardType()

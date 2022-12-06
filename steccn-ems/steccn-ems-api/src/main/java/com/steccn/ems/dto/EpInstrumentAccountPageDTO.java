@@ -4,6 +4,7 @@ import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class EpInstrumentAccountPageDTO extends BasePageDTO implements Serializable {
@@ -11,5 +12,10 @@ public class EpInstrumentAccountPageDTO extends BasePageDTO implements Serializa
      * 仪表名称
      */
     private String meterName;
+
+    /**
+     * 所属分区节点id
+     */
+    private List<Long> partitionNode;
 
 }
