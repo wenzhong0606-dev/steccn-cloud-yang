@@ -1,8 +1,10 @@
 package com.steccn.ems.controller;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
-import com.steccn.ems.dto.EpEnergyTypeDTO;
+import com.steccn.ems.dto.EpTableDTO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 
 /**
  * @author yequan
@@ -25,7 +28,13 @@ public class EpConsumePartitionChartController {
 
     @PostMapping
     @ApiOperation(value = "能耗分区对比")
-    public R<Boolean> consumePartitionContrast(@Valid @RequestBody EpEnergyTypeDTO dto) {
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionContrast(@Valid @RequestBody EpTableDTO dto) {
+        return R.success();
+    }
+
+    @PostMapping
+    @ApiOperation(value = "能耗历史对比")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
         return R.success();
     }
 
