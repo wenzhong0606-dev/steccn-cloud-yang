@@ -101,6 +101,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         if (Objects.isNull(epEnergyType)) {
             return null;
         }
+        Assert.isTrue(MpConstant.YES==epEnergyType.getShowFlag(),"该能源类型已删除");
         EpEnergyTypeVO epEnergyTypeVO = new EpEnergyTypeVO();
         BeanUtils.copyProperties(epEnergyType, epEnergyTypeVO);
         //设置单位名称

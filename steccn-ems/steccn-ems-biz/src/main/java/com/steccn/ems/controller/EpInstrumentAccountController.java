@@ -44,4 +44,10 @@ public class EpInstrumentAccountController {
     public R<Boolean>  reviseStatus(@RequestBody EpInstrumentAccountStatusDTO dto) {
         return R.success(epInstrumentAccountService.reviseStatus(dto));
     }
+
+    @GetMapping("/{id}")
+    @ApiOperation(value = "根据id查询仪表台账")
+    public R<EpInstrumentAccountVO> getEpInstrumentAccountVO(@PathVariable("id") Integer id){
+        return R.success(epInstrumentAccountService.getEpInstrumentAccountVO(id));
+    }
 }

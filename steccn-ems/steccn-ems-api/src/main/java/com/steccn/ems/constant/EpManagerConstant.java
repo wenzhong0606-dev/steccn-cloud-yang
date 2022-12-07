@@ -106,7 +106,7 @@ public interface EpManagerConstant {
                     return value;
                 }
             }
-            return null;
+            return ENERGY_PARTITION;
         }
     }
 

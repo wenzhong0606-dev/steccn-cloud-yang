@@ -44,4 +44,11 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @return
      */
     Boolean reviseStatus(EpInstrumentAccountStatusDTO dto);
+
+    /**
+     * 根据id查询仪表台账详情
+     * @param id
+     * @return
+     */
+    EpInstrumentAccountVO getEpInstrumentAccountVO(Integer id);
 }

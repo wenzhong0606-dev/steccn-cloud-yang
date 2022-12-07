@@ -17,9 +17,11 @@ import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
 import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
+import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 import com.steccn.ems.vo.EpPartitionVO;
@@ -55,6 +57,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private EpPartitionService epPartitionService;
+    @Autowired
+    private EpEnergyTypeService epEnergyTypeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -190,6 +194,45 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         epInstrumentAccount.setStatus(dto.getStatus());
         updateById(epInstrumentAccount);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public EpInstrumentAccountVO getEpInstrumentAccountVO(Integer id) {
+       Assert.notNull(id,"查询id不能为空");
+        EpInstrumentAccount epInstrumentAccount = getById(id);
+        if (Objects.isNull(epInstrumentAccount)){
+            return null;
+        }
+        Assert.isTrue(MpConstant.YES==epInstrumentAccount.getShowFlag(),"该仪表台账已删除");
+        //设置返回实体类对象
+        EpInstrumentAccountVO epInstrumentAccountVO = new EpInstrumentAccountVO();
+        BeanUtils.copyProperties(epInstrumentAccount,epInstrumentAccountVO);
+        Set<Long> partitionIds = Sets.newHashSet();
+        partitionIds.add(epInstrumentAccount.getPartitionNode());
+        Map<Long, EpPartitionVO> epPartitionVOMap = epPartitionService.getEpPartitionNameListVO(partitionIds);
+        if (CollUtil.isNotEmpty(epPartitionVOMap)) {
+            EpPartitionVO epPartitionVO = epPartitionVOMap.get(epInstrumentAccountVO.getPartitionNode());
+            if (Objects.nonNull(epPartitionVO)) {
+                //设置所属分区节点
+                epInstrumentAccountVO.setPartitionNodeName(epPartitionVO.getOfficeName());
+            }
+        }
+        EpEnergyTypeVO energyTypeVO = epEnergyTypeService.getEpAddEnergyTypeVO(epInstrumentAccountVO.getMeterType());
+        if (Objects.nonNull(energyTypeVO)){
+            //设置仪表名称
+            epInstrumentAccountVO.setMeterTypeName(energyTypeVO.getMeasureMeterName());
+            //设置计量单位
+            epInstrumentAccountVO.setMeasureUnitName(energyTypeVO.getMeasureUnitName());
+        }
+        if (Objects.nonNull(epInstrumentAccountVO.getSite())){
+            Set<Long> dictSet = Sets.newHashSet();
+            dictSet.add(epInstrumentAccountVO.getSite());
+            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            if (CollUtil.isNotEmpty(dictMap)){
+                epInstrumentAccountVO.setSiteName(dictMap.get(epInstrumentAccountVO.getSite()));
+            }
+        }
+        return epInstrumentAccountVO;
     }
 
     /**

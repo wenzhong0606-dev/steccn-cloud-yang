@@ -34,6 +34,11 @@ public class EpInstrumentAccountVO implements Serializable {
     private Integer meterType;
 
     /**
+     * 仪表类型名称
+     */
+    private String meterTypeName;
+
+    /**
      * 计量单位
      */
     private Long measureUnit;

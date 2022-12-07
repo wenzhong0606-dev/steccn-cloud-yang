@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,14 +44,17 @@ import java.util.stream.Collectors;
 * @createDate 2022-11-29 19:27:28
 */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProductUnitConsumeStandardMapper, EpProductUnitConsumeStandard>
     implements EpProductUnitConsumeStandardService{
-    private final EpEnergyTypeService epEnergyTypeService;
-    private final RemoteDictFeignApi remoteDictFeignApi;
-    private final RemoteOfficeFeign remoteOfficeFeign;
-    private final EpPartitionServiceImpl epPartitionService;
+    @Autowired
+    private  EpEnergyTypeService epEnergyTypeService;
+    @Autowired
+    private  RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private  RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private  EpPartitionServiceImpl epPartitionService;
 
     /**
      * 默认生产类型
@@ -174,9 +178,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //复制传进来的dto
         BeanUtils.copyProperties(dto,unitConsumeStandard);
         if (Objects.isNull(dto.getId())){
+            //新建的时候设置标准编码
             long sum = count();
             String code = "BZ"+String.format("%06d", sum+1);
-            //新建的时候设置标准编码
             unitConsumeStandard.setCode(code);
         }
         //检测有效期是否有重叠部分,如果有提示“与现有标准【#现有标准的名称#】有效期有重叠”，无法保存
@@ -225,8 +229,10 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Assert.notNull(id,"id不能为空");
         //根据id查询单耗标准
         EpProductUnitConsumeStandard standard = getById(id);
-        Assert.notNull(standard,"该产品单耗标准不存在");
-        if (MpConstant.NO==standard.getShowFlag()){
+        if (Objects.isNull(standard)) {
+            return null;
+        }
+        if (MpConstant.NO == standard.getShowFlag()) {
             throw new BusinessException("该产品单耗标准已删除");
         }
         //设置返回实体类对象
