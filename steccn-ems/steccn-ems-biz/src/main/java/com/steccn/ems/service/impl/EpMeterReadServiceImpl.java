@@ -3,17 +3,20 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
-import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpPartition;
@@ -22,6 +25,7 @@ import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.mapper.EpPartitionMapper;
+import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpMeterOperationRecordService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
@@ -29,8 +33,8 @@ import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,22 +52,25 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-30 15:05:32
  */
 @Service
-@RequiredArgsConstructor
 public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMeterRead>
         implements EpMeterReadService {
 
-    private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
-
-    private final EpPartitionMapper epPartitionMapper;
-    private final EpPartitionService epPartitionService;
-
-    private final EpMeterOperationRecordService epMeterOperationRecordService;
-
-    private final RemoteDictFeignApi remoteDictFeignApi;
-
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
-
-    private final RemotePmsFeignApi remotePmsFeignApi;
+    @Autowired
+    private  EpMeterOperationRecordMapper epMeterOperationRecordMapper;
+    @Autowired
+    private  EpPartitionMapper epPartitionMapper;
+    @Autowired
+    private  EpPartitionService epPartitionService;
+    @Autowired
+    private  EpInstrumentAccountService epInstrumentAccountService;
+    @Autowired
+    private  EpMeterOperationRecordService epMeterOperationRecordService;
+    @Autowired
+    private  RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private  RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private  RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -155,6 +162,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
         localDateList.remove(0);
+        localDateList.remove(localDateList.size()-1);
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
@@ -277,21 +285,35 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
-    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList) {
+    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Integer> officeIdList) {
+        Assert.notEmpty(officeIdList, "组织机构不能为空");
+        Assert.notNull(energyType, "能源类型不能为空");
+        //1.查询全量数据表
+        List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getMeterType, energyType)
+                .in(EpInstrumentAccount::getPartitionNode, officeIdList)
+                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode));
+        SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
+        //获取仪表id集合
+        Map<Integer, Long> meterPartitionMap = Maps.newHashMap();
+        instrumentAccountList.forEach(ele -> {
+            meterPartitionMap.put(ele.getId(), ele.getPartitionNode());
+        });
+
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterIdList)) {
+        if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterPartitionMap)) {
             //获取集合最小的日期
             List<LocalDate> sortedDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
             LocalDate minLocalDate = sortedDateList.get(0);
             sortedDateList.add(minLocalDate);
             //根据条件获取数据
             List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
-                    .in(EpMeterRead::getMeterId, meterIdList)
+                    .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
                     .in(EpMeterRead::getReadDate, sortedDateList)
                     .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart, EpMeterRead::getEnd)));
             if (CollUtil.isNotEmpty(dataList)) {
                 //存放仪表的班次日期的抄表数据
-                Map<Integer,Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
+                Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
                 //将数据按照班次日期分组
                 dataList.forEach(ele -> {
                     map.compute(ele.getMeterId(), (k, v) -> {
@@ -320,16 +342,19 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             for (EpMeterRead epMeterRead : curEpMeterReadDataList) {
                                 EpMeterReadAllDataVO vo = new EpMeterReadAllDataVO();
                                 BeanUtils.copyProperties(epMeterRead, vo);
+                                vo.setOfficeId(meterPartitionMap.get(vo.getMeterId()));
                                 vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
                                 preValue = vo.getConsume();
                                 //最小日期仅仅是为了计算差值，不需要返回
-                                if(!entry1.equals(minLocalDate)){
+                                if (!entry1.equals(minLocalDate)) {
                                     resList.add(vo);
                                 }
                             }
                         }
                     }
                 }
+                //构造整个虚拟节点
+
             }
         }
         return resList;

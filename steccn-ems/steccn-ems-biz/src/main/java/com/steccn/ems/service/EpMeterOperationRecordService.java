@@ -2,6 +2,10 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.vo.EpMeterOperationRecordVO;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +14,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpMeterOperationRecordService extends IService<EpMeterOperationRecord> {
 
+    /**
+     * 查询操作记录列表
+     *
+     * @param meterId
+     * @param readDate
+     * @return
+     */
+    List<EpMeterOperationRecordVO> list(Integer meterId, LocalDate readDate);
 }

@@ -21,6 +21,11 @@ public interface EpManagerConstant {
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
     String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
 
+    String EP_UNIT_CONSUME_ALARM_SORT_ALARM_DATE = "alarmDate";
+    String EP_UNIT_CONSUME_ALARM_SORT_ENERGY_TYPE = "energyType";
+    String EP_UNIT_CONSUME_ALARM_SORT_OFFICE_ID = "officeId";
+    String EP_UNIT_CONSUME_ALARM_SORT_ALARM_TYPE = "alarmType";
+
 
 
 
@@ -164,6 +169,34 @@ public interface EpManagerConstant {
             for (InstrumentType value : InstrumentType.values()) {
                 if (value.getCode().equals(code)) {
                     return value;
+                }
+            }
+            return null;
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    enum OperationType {
+        //移动端上传
+        APP(0, "移动端上传"),
+        //电脑端上传
+        PC(1, "电脑端上传"),
+        //管理员修改
+        ADMIN(2, "管理员修改");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static String getNameByCode(Integer code) {
+            for (OperationType value : OperationType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
                 }
             }
             return null;

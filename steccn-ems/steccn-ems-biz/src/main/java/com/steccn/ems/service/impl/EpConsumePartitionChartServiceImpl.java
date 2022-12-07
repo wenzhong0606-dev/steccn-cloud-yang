@@ -47,16 +47,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //②时间区间内所有班次集合
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
 
-        //2.查询全量数据表
-        List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
-                .eq(EpInstrumentAccount::getMeterType, dto.getEnergyType())
-                .in(EpInstrumentAccount::getPartitionNode, dto.getOfficeIdList())
-                .select(EpInstrumentAccount::getId));
-        SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
-        //获取仪表id集合
-        Set<Integer> meterIdSet = instrumentAccountList.stream().map(EpInstrumentAccount::getId).collect(Collectors.toSet());
-
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), meterIdSet);
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), dto.getEnergyType(),dto.getOfficeIdList());
         log.info("classDateAllData -> {}",classDateAllData);
         return null;
     }

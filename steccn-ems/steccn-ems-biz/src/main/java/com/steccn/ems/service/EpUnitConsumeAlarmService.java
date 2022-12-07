@@ -1,7 +1,10 @@
 package com.steccn.ems.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.ems.domain.EpUnitConsumeAlarm;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpUnitConsumeAlarmDTO;
+import com.steccn.ems.vo.EpUnitConsumeAlarmVO;
 
 /**
 * @author yequan
@@ -10,4 +13,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpUnitConsumeAlarmService extends IService<EpUnitConsumeAlarm> {
 
+    /**
+     * 单耗告警分页列表
+     *
+     * @param dto
+     * @return
+     */
+    Page<EpUnitConsumeAlarmVO> page(EpUnitConsumeAlarmDTO dto);
 }
