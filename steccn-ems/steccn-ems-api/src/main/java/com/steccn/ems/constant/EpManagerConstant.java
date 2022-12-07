@@ -138,4 +138,35 @@ public interface EpManagerConstant {
             return NONE;
         }
     }
+
+    /**
+     * 仪表类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum InstrumentType {
+        //远传仪表
+        REMOTE(0, "实体远传仪表"),
+        //非远传仪表
+        NON_REMOTE(1, "实体非远传仪表"),
+        //虚拟仪表
+        VIRTUAL(2, "虚拟仪表");
+        private Integer code;
+        private String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static InstrumentType getInstrumentType(Integer code) {
+            for (InstrumentType value : InstrumentType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
 }
