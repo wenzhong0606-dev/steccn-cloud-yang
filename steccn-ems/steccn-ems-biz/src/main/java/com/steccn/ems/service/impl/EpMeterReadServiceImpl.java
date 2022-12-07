@@ -352,6 +352,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         }
                     }
                 }
+                //构造整个虚拟节点
+
             }
         }
         return resList;
