@@ -202,11 +202,11 @@ return null;
         if(CollUtil.isEmpty(vo.getChildren())){
             return vo;
         }
-        for(int i = 0; i < vo.getChildren().size(); i++){
-            if(vo.getChildren().get(i).getId().equals(partitionId)){
-                return vo.getChildren().get(i);
+        if (!vo.getId().equals(partitionId)) {
+            for(int i = 0; i < vo.getChildren().size(); i++){
+                return getChild(vo.getChildren().get(i),partitionId);
             }
-            this.getChild(vo.getChildren().get(i),partitionId);
+
         }
         return vo;
     }
@@ -228,6 +228,11 @@ return null;
             return ids;
         }
         for(int i = 0; i < vo.getChildren().size(); i++){
+            Set<Long> results = Sets.newHashSet();
+            if(vo.getEntityTable()!=null && !vo.getEntityTable().equals(EpManagerConstant.InstrumentType.VIRTUAL.getCode())){
+                results.add(vo.getId());
+            }
+            ids.addAll(results);
             this.getRealMeter(vo.getChildren().get(i),ids);
         }
         return ids;
@@ -252,6 +257,14 @@ return null;
             return vo;
         }
         for(int i = 0; i < vo.getChildren().size(); i++){
+            //获取表详情
+            EpInstrumentAccount meter = epInstrumentAccountService.getOne(new LambdaQueryWrapper<EpInstrumentAccount>().
+                    eq(EpInstrumentAccount::getPartitionNode,vo.getId()),false);
+            if(meter != null){
+                vo.setEntityTable(meter.getEntityTable());
+                vo.setMeterStatus(meter.getStatus());
+                vo.setMeterId(meter.getId());
+            }
             this.setTreeDetail(vo.getChildren().get(i));
         }
         return vo;
