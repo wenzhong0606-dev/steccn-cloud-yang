@@ -47,7 +47,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //②时间区间内所有班次集合
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
 
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), dto.getEnergyType(),dto.getOfficeIdList());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), dto.getEnergyType(),dto.getPartitionIdList());
         log.info("classDateAllData -> {}",classDateAllData);
         return null;
     }

@@ -3,6 +3,7 @@ package com.steccn.ems.dto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -40,6 +41,6 @@ public class EpTableDTO implements Serializable {
     @ApiModelProperty("分区-组织机构id")
     @NotNull(message = "组织机构不能为空")
     @Size(min = 1, message = "组织机构不能为空")
-    private List<Integer> officeIdList;
+    private List<Long> partitionIdList;
 
 }

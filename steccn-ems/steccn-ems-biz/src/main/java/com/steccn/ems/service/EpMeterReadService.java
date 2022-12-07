@@ -59,8 +59,8 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      *
      * @param dateList      日期集合
      * @param energyType    能源类型id
-     * @param officeIdList  机构id集合
+     * @param partitionIdList  机构id集合
      * @return 全量数据表
      */
-    List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Integer> officeIdList);
+    List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList);
 }
