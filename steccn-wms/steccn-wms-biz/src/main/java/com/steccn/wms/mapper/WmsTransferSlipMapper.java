@@ -1,8 +1,13 @@
 package com.steccn.wms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.dto.WmsTransferSlipPageDTO;
+import com.steccn.wms.vo.WmsTransferSlipVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author W10
@@ -13,6 +18,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface WmsTransferSlipMapper extends BaseMapper<WmsTransferSlip> {
 
+    /**
+     * 调拨单条件筛选分页列表
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<WmsTransferSlipVO> pageList(@Param("page") Page page, @Param("dto") WmsTransferSlipPageDTO dto);
 }
 
 

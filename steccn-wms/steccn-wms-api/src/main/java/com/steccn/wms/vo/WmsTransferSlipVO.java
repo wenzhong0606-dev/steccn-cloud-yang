@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 类说明
@@ -57,5 +58,8 @@ public class WmsTransferSlipVO {
 
     @ApiModelProperty("备注")
     private String note;
+
+    @ApiModelProperty("详情")
+    private List<WmsTransferSlipInfoVO> list;
 
 }

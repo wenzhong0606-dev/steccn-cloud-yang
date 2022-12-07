@@ -17,7 +17,7 @@ public class WmsTransferSlipInfo implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -31,14 +31,44 @@ public class WmsTransferSlipInfo implements Serializable {
     private Integer sourceShelf;
 
     /**
+     * 来源货架名称
+     */
+    private String sourceShelfName;
+
+    /**
+     * 来源货架编码
+     */
+    private String sourceShelfCode;
+
+    /**
      * 目标货架
      */
     private Integer targetShelf;
 
     /**
+     * 目标货架名称
+     */
+    private String targetShelfName;
+
+    /**
+     * 目标货架编码
+     */
+    private String targetShelfCode;
+
+    /**
      * 物料id
      */
     private Long materialId;
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
 
     /**
      * 数量
