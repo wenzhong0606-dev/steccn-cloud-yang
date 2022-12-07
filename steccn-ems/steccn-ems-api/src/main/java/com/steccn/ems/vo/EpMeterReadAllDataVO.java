@@ -24,7 +24,7 @@ public class EpMeterReadAllDataVO implements Serializable {
     private Integer meterId;
 
     @ApiModelProperty("机构树id")
-    private Integer officeId;
+    private Long officeId;
 
     @ApiModelProperty("抄表日期")
     private LocalDate readDate;

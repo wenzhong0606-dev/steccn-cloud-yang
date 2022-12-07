@@ -57,9 +57,10 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
     /**
      * 班次日期和组织机构筛选条件下的全量数据表
      *
-     * @param dateList    日期集合
-     * @param meterIdList 仪表id集合
+     * @param dateList      日期集合
+     * @param energyType    能源类型id
+     * @param officeIdList  机构id集合
      * @return 全量数据表
      */
-    List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList);
+    List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Integer> officeIdList);
 }
