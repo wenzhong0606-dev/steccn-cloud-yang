@@ -14,7 +14,6 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
-import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -34,8 +33,8 @@ import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,24 +52,25 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-30 15:05:32
  */
 @Service
-@RequiredArgsConstructor
 public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMeterRead>
         implements EpMeterReadService {
 
-    private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
-
-    private final EpPartitionMapper epPartitionMapper;
-    private final EpPartitionService epPartitionService;
-
-    private final EpInstrumentAccountService epInstrumentAccountService;
-
-    private final EpMeterOperationRecordService epMeterOperationRecordService;
-
-    private final RemoteDictFeignApi remoteDictFeignApi;
-
-    private final RemoteSpareFeignApi remoteSpareFeignApi;
-
-    private final RemotePmsFeignApi remotePmsFeignApi;
+    @Autowired
+    private  EpMeterOperationRecordMapper epMeterOperationRecordMapper;
+    @Autowired
+    private  EpPartitionMapper epPartitionMapper;
+    @Autowired
+    private  EpPartitionService epPartitionService;
+    @Autowired
+    private  EpInstrumentAccountService epInstrumentAccountService;
+    @Autowired
+    private  EpMeterOperationRecordService epMeterOperationRecordService;
+    @Autowired
+    private  RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private  RemoteSpareFeignApi remoteSpareFeignApi;
+    @Autowired
+    private  RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -162,6 +162,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
         localDateList.remove(0);
+        localDateList.remove(localDateList.size()-1);
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;

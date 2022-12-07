@@ -174,4 +174,32 @@ public interface EpManagerConstant {
             return null;
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    enum OperationType {
+        //移动端上传
+        APP(0, "移动端上传"),
+        //电脑端上传
+        PC(1, "电脑端上传"),
+        //管理员修改
+        ADMIN(2, "管理员修改");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static String getNameByCode(Integer code) {
+            for (OperationType value : OperationType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
 }
