@@ -2,6 +2,9 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpEnergyParamDTO;
+import com.steccn.ems.dto.EpEnergyTreeDTO;
+import com.steccn.ems.dto.EpPartitionDTO;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionVO;
 
