@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -13,6 +14,7 @@ import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpEnergyParamDTO;
 import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.dto.EpPartitionDTO;
+import com.steccn.ems.dto.EpPartitionListDTO;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.mapper.EpPartitionMapper;
@@ -27,6 +29,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,8 +87,48 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean edit(EpPartitionDTO dto) {
-return null;
+        //需要新增的list
+        List<EpPartition> addPartitionList = Lists.newArrayList();
+        //需要删除的list
+        List<Long> deletePartitionList = Lists.newArrayList();
+        //根据能源类型查询出能源分区的主id和officeid
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
+        List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
+        Map<Integer,EpPartition> longIntegerMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(epPartitions)){
+            epPartitions.forEach(v->{
+                longIntegerMap.put(v.getOfficeId(),v);
+            });
+        }
+
+        for (EpPartitionListDTO partitionDTO : dto.getEpPartitionListDTO()) {
+            EpPartition epPartition = new EpPartition();
+            BeanUtils.copyProperties(partitionDTO,epPartition);
+            if (Objects.isNull(partitionDTO.getId())){
+                long mainId = IdUtil.getSnowflake().nextId();
+                epPartition.setId(mainId);
+                //设置能源分区树里的父id
+                if (Objects.nonNull(partitionDTO)&&Objects.nonNull(partitionDTO.getParentId())){
+                    if (officeIds.contains(partitionDTO.getParentId())){
+                        epPartition.setParentId(longIntegerMap.get(partitionDTO.getParentId()).getId());
+                    }
+                }
+                addPartitionList.add(epPartition);
+            }else {
+                if (partitionDTO.getIsDelete()==MpConstant.YES){
+                    deletePartitionList.add(epPartition.getId());
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(addPartitionList)){
+            saveBatch(addPartitionList);
+        }
+        if (CollUtil.isNotEmpty(deletePartitionList)){
+            removeByIds(deletePartitionList);
+        }
+    return Boolean.TRUE;
     }
 
     /**

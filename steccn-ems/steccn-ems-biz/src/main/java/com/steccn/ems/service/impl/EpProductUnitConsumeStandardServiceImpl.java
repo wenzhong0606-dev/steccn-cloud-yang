@@ -72,9 +72,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 //产品类型
                 .eq(Objects.nonNull(dto.getProductType()), EpProductUnitConsumeStandard::getProductType, dto.getProductType())
                 //产品厚度
-                .eq(Objects.nonNull(dto.getProductThickness()), EpProductUnitConsumeStandard::getProductThick, dto.getProductThickness())
+                .eq(Objects.nonNull(dto.getProductThick()), EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
                 //标准名称
-                .like(Objects.nonNull(dto.getStandardName()), EpProductUnitConsumeStandard::getName, dto.getStandardName())
+                .like(Objects.nonNull(dto.getName()), EpProductUnitConsumeStandard::getName, dto.getName())
                 //查询所有可展示的
                 .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES);
 

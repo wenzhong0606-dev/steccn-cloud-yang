@@ -5,16 +5,14 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
- * 能耗分区
+ * 能耗分区树
  */
 @Data
 public class EpPartitionDTO implements Serializable {
-    /**
-     * 主键
-     */
-    private Long id;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 能源类型id
@@ -23,24 +21,8 @@ public class EpPartitionDTO implements Serializable {
     private Integer type;
 
     /**
-     * 组织机构id
+     * 机构集合
      */
-    @NotNull(message = "组织机构id不能为空")
-    private Integer officeId;
+    private List<EpPartitionListDTO> epPartitionListDTO;
 
-    /**
-     * 组织机构名称
-     */
-    @NotBlank(message = "组织机构名称不能为空")
-    private String officeName;
-
-    /**
-     * 排序
-     */
-    private Integer sort;
-
-    /**
-     * 父节点id
-     */
-    private Long parentId;
 }
