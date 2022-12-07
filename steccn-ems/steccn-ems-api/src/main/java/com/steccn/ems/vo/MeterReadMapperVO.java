@@ -68,4 +68,6 @@ public class MeterReadMapperVO {
 
     private Integer meterReadId;
 
+    private Integer status;
+
 }

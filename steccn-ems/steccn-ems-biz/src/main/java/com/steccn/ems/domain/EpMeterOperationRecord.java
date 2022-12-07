@@ -28,7 +28,7 @@ public class EpMeterOperationRecord implements Serializable {
     /**
      * 操作节点
      */
-    private Long opNode;
+    private Integer opNode;
 
     /**
      * 操作人id

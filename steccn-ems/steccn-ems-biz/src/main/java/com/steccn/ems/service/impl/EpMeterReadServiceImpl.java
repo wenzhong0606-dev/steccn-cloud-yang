@@ -10,7 +10,6 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
-import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
@@ -26,10 +25,7 @@ import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
-import com.steccn.pms.vo.WorkOrderVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -98,7 +94,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 .stream()
                 .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()
                         + "," + meterReadMapperVO.getMeterId() + "," + meterReadMapperVO.getMeterName() + ","
-                        + meterReadMapperVO.getPartitionId() + "," + meterReadMapperVO.getOfficeName() + "," + meterReadMapperVO.getEntityTable()));
+                        + meterReadMapperVO.getPartitionId() + "," + meterReadMapperVO.getOfficeName() + ","
+                        + meterReadMapperVO.getEntityTable()));
 
         List<MeterReadListVO> meterReadListVOList = new ArrayList<>();
         for (Map.Entry<String, List<MeterReadMapperVO>> entry : groupBy.entrySet()) {
@@ -109,6 +106,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
             if (StringUtils.isNotBlank(keys[1]) && !"null".equals(keys[1])) {
                 meterReadListVO.setMeterId(Integer.parseInt(keys[1]));
+                meterReadListVO.setIsBindingMeter(1);
+            } else {
+                meterReadListVO.setIsBindingMeter(0);
             }
             if (StringUtils.isNotBlank(keys[3]) && !"null".equals(keys[3])) {
                 meterReadListVO.setPartitionNode(Long.parseLong(keys[3]));
@@ -116,6 +116,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             if (StringUtils.isNotBlank(keys[5]) && !"null".equals(keys[5])) {
                 meterReadListVO.setEntityTable(Integer.parseInt(keys[5]));
             }
+            meterReadListVO.setMeterStatus(entry.getValue().get(0).getStatus());
             meterReadListVO.setMeterName(keys[2]);
             meterReadListVO.setPartitionNodeName(keys[4]);
 
@@ -173,7 +174,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         SteccnUser user = SecurityUtils.getUser();
         EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
-//        epMeterOperationRecord.setOpNode(dto.getPartitionId());
+        epMeterOperationRecord.setOpNode(0);
         epMeterOperationRecord.setOpBy(user.getUserId());
         epMeterOperationRecord.setOpName(user.getName());
         epMeterOperationRecord.setOpValueOld(dto.getReadValue());
@@ -215,92 +216,57 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Set<Integer> meterIdSet = dtoList.stream().map(EpMeterReadUpdateDTO::getMeterId).collect(Collectors.toSet());
         List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).in(EpMeterRead::getReadDate, localDateSet));
         SteccnUser user = SecurityUtils.getUser();
-        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
-        SysDictVO dayClass = new SysDictVO();
-        SysDictVO nightClass = new SysDictVO();
-        for (SysDictVO sysDictVO : sysDictVOList) {
-            if (SysDictConstant.CODE_0.equals(sysDictVO.getCode())) {
-                BeanUtils.copyProperties(sysDictVO, dayClass);
-            } else {
-                BeanUtils.copyProperties(sysDictVO, nightClass);
-            }
-        }
 
         //获取需要修改的数据
         List<EpMeterOperationRecord> epMeterOperationRecordList = new ArrayList<>();
-        EpMeterRead meterRead = new EpMeterRead();
         for (EpMeterRead epMeterRead : list) {
             Optional<EpMeterReadUpdateDTO> optional = dtoList.stream().filter(meterReadUpdateDTO -> meterReadUpdateDTO.getMeterId().equals(epMeterRead.getMeterId())
                     && meterReadUpdateDTO.getReadDate().isEqual(epMeterRead.getReadDate())).findAny();
             if (optional.isPresent()) {
-                //实体远传表白班的数据不修改
-                if (optional.get().getEntityTable().equals(0) && epMeterRead.getClassId().equals(0)) {
-                    BeanUtils.copyProperties(epMeterRead, meterRead);
-                    continue;
-                }
 
                 EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
                 epMeterOperationRecord.setReadId(epMeterRead.getId());
-                epMeterOperationRecord.setOpNode(optional.get().getPartitionId());
+                epMeterOperationRecord.setOpNode(2);
                 epMeterOperationRecord.setOpBy(user.getUserId());
                 epMeterOperationRecord.setOpName(user.getName());
                 epMeterOperationRecord.setOpValueNew(optional.get().getReadValue());
                 epMeterOperationRecord.setOpTime(LocalDateTime.now());
                 epMeterOperationRecord.setOpValueOld(epMeterRead.getAdminValue());
                 epMeterOperationRecordList.add(epMeterOperationRecord);
-                //实体远传表夜班
-                if (optional.get().getEntityTable().equals(0)) {
-                    BigDecimal updateReadValue = optional.get().getReadValue();
-                    LocalDate localDate = epMeterRead.getReadDate();
-                    LocalTime startTime = LocalTime.of(20, 0, 0);
-                    LocalTime endTime = LocalTime.of(8, 0, 0);
-                    LocalDateTime startDateTime = LocalDateTime.of(localDate, startTime);
-                    LocalDateTime endDateTime = LocalDateTime.of(localDate.plusDays(1), endTime);
-                    WorkOrderVO workOrderVO = remotePmsFeignApi.getMaterialCodeByClassTime(startDateTime, endDateTime).getData();
-                    if (Objects.nonNull(workOrderVO)) {
-                        EqpSpareVO eqpSpareVO = remoteSpareFeignApi.getByCode(workOrderVO.getMaterialCode()).getData();
-                    }
-                    Optional<EpMeterRead> readOptional = list.stream().filter(read -> read.getReadDate().isEqual(epMeterRead.getReadDate()) && read.getClassId().equals(1)).findAny();
-                    if (readOptional.isPresent()) {
-                        BigDecimal readValue = readOptional.get().getReadValue();
-                        epMeterRead.setAdminValue(updateReadValue.subtract(readValue));
-                    } else {
-                        epMeterRead.setAdminValue(updateReadValue);
-                    }
-                } else {
-                    epMeterRead.setAdminValue(optional.get().getReadValue());
-                    if (optional.get().getAdminFlag().equals(0)) {
-                        epMeterRead.setReadValue(optional.get().getReadValue());
-                    }
+
+                epMeterRead.setAdminTime(LocalDateTime.now());
+                epMeterRead.setAdminValue(optional.get().getReadValue());
+                if (optional.get().getAdminFlag().equals(0)) {
+                    epMeterRead.setReadValue(optional.get().getReadValue());
+                    epMeterRead.setReadTime(LocalDateTime.now());
                 }
             }
         }
 
-        List<EpMeterRead> meterReadList = new ArrayList<>();
+        //获取新增数据
         for (EpMeterReadUpdateDTO epMeterReadUpdateDTO : dtoList) {
             List<EpMeterRead> epMeterReadList = list.stream().filter(epMeterRead -> epMeterRead.getMeterId().equals(epMeterReadUpdateDTO.getMeterId())
                     && epMeterRead.getReadDate().isEqual(epMeterReadUpdateDTO.getReadDate())).collect(Collectors.toList());
-            boolean whether = epMeterReadUpdateDTO.getEntityTable().equals(0) && epMeterReadList.size() == 1 && epMeterReadList.get(0).getClassId().equals(0);
-            if (CollectionUtils.isEmpty(epMeterReadList) || whether) {
+            if (CollectionUtils.isEmpty(epMeterReadList)) {
                 EpMeterRead epMeterRead = new EpMeterRead();
                 epMeterRead.setMeterId(epMeterReadUpdateDTO.getMeterId());
                 epMeterRead.setAdminValue(epMeterReadUpdateDTO.getReadValue());
                 epMeterRead.setAdminTime(LocalDateTime.now());
                 epMeterRead.setAdminFlag(epMeterReadUpdateDTO.getAdminFlag());
                 epMeterRead.setReadDate(epMeterReadUpdateDTO.getReadDate());
-                if (epMeterReadUpdateDTO.getEntityTable().equals(0)) {
-                    Optional<EpMeterRead> optional = epMeterReadList.stream().filter(epMeterRead1 -> epMeterRead1.getClassId().equals(0)).findAny();
-                    if (optional.isPresent()) {
-                        epMeterRead.setAdminValue(epMeterReadUpdateDTO.getReadValue().subtract(optional.get().getAdminValue()));
-                    } else {
-                        epMeterRead.setAdminValue(epMeterReadUpdateDTO.getReadValue());
-                    }
-                    epMeterRead.setClassId(1);
-                }
-                meterReadList.add(epMeterRead);
+                epMeterRead.setReadTime(LocalDateTime.now());
+                save(epMeterRead);
+
+                EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
+                epMeterOperationRecord.setReadId(epMeterRead.getId());
+                epMeterOperationRecord.setOpNode(1);
+                epMeterOperationRecord.setOpBy(user.getUserId());
+                epMeterOperationRecord.setOpName(user.getName());
+                epMeterOperationRecord.setOpValueNew(epMeterReadUpdateDTO.getReadValue());
+                epMeterOperationRecord.setOpTime(LocalDateTime.now());
+                epMeterOperationRecordList.add(epMeterOperationRecord);
             }
         }
-        saveBatch(meterReadList);
         epMeterOperationRecordService.saveBatch(epMeterOperationRecordList);
         updateBatchById(list);
         return true;
@@ -337,7 +303,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 meterReadListVO -> {
                     meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
                     //如果是虚拟仪表
-                    if (meterReadListVO.getEntityTable().equals(2)) {
+                    if (Objects.equals(meterReadListVO.getEntityTable(),2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
                             BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream()

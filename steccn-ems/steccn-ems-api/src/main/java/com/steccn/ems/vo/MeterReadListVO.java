@@ -16,6 +16,14 @@ public class MeterReadListVO {
     private String partitionNodeName;
     private Long parentId;
     /**
+     * 是否绑定仪表 0否，1是
+     */
+    private Integer isBindingMeter;
+    /**
+     * 仪表状态
+     */
+    private Integer meterStatus;
+    /**
      * 0实体远传仪表、1实体非远传仪表、2虚拟仪表
      */
     private Integer entityTable;

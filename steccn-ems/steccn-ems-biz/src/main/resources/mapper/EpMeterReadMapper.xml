@@ -37,10 +37,11 @@
         SELECT
 	        p.parent_id parentId,
 	        p.office_name officeName,
-	        a.partition_node partitionId,
+	        p.id partitionId,
 	        a.entity_table entityTable,
 	        a.meter_name meterName,
 	        a.id meterId,
+	        a.status status,
 	        r.read_date readDate,
 	        r.class_id classId,
 	        r.admin_value adminValue,
@@ -51,8 +52,7 @@
 	        LEFT JOIN ep_instrument_account a ON p.id = a.partition_node
 	        LEFT JOIN ep_meter_read r ON a.id = r.meter_id
         WHERE
-            a.status = 1
-	        AND a.meter_type = #{meterType}
+	         (a.meter_type = #{meterType} OR a.meter_type IS NULL)
 	        AND (r.read_date &gt;= #{startDate} and r.read_date &lt;= #{endDate} or r.read_date is null )
     </select>
 
