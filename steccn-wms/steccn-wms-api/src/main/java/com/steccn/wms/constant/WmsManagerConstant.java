@@ -25,4 +25,21 @@ public interface WmsManagerConstant {
 
     }
 
+    /**
+     * 状态:0 ：已创建  1：已确认  2：部分确认 3：已完成 4:已删除 ）
+     */
+    @Getter
+    @AllArgsConstructor
+    enum OrderStateEnum {
+        ZERO(0, "已创建"),
+        ONE(1, "已确认"),
+        TWO(2,"部分确认"),
+        THREE(3, "已完成"),
+        FOUR(4, "已删除");
+
+        private final Integer code;
+
+        private final String name;
+    }
+
 }

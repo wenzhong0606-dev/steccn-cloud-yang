@@ -20,6 +20,8 @@ import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.dto.EpEnergyParamDTO;
+import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
@@ -285,7 +287,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
-    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Integer> officeIdList) {
+    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> officeIdList) {
         Assert.notEmpty(officeIdList, "组织机构不能为空");
         Assert.notNull(energyType, "能源类型不能为空");
         //1.查询全量数据表
@@ -354,6 +356,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     }
                 }
                 //构造整个虚拟节点
+                EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
+                energyParamDTO.setPartitionId(officeIdList);
+                energyParamDTO.setType(energyType);
+                EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
 
             }
         }

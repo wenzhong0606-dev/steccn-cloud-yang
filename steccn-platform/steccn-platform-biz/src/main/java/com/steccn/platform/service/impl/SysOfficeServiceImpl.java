@@ -175,6 +175,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, typeList));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
+
             //复制查询结果到新的集合
             List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
             //从上往下递归查询
@@ -187,9 +188,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                     rootVOList = entry.getValue();
                 }
             }
-            for (SysOfficeVO sysOffice : rootVOList) {
-                List<SysOfficeVO> children = getChildren(sysOfficeVOS, sysOffice.getOfficeCode());
-                sysOffice.setChildren(children);
+            for (SysOfficeVO root : rootVOList) {
+                List<SysOfficeVO> children = getChildren(sysOfficeVOS, root.getOfficeCode(),root.getId(),root.getOfficeName());
+                root.setChildren(children);
             }
         }
         return rootVOList;
@@ -203,13 +204,16 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
      * @param parentCode
      * @return
      */
-    public List<SysOfficeVO> getChildren(List<SysOfficeVO> childrenList, String parentCode) {
+    public List<SysOfficeVO> getChildren(List<SysOfficeVO> childrenList, String parentCode,Integer id,String name) {
         ArrayList<SysOfficeVO> result = new ArrayList<>();
         //遍历集合设置子节点
         for (SysOfficeVO sysOfficeVO : childrenList) {
             if (sysOfficeVO.getParentCode().equals(parentCode)) {
+                sysOfficeVO.setParentId(id);
+                sysOfficeVO.setParentName(name);
                 //递归方法找到子节点
-                List<SysOfficeVO> children = getChildren(childrenList, sysOfficeVO.getOfficeCode());
+                List<SysOfficeVO> children =
+                        getChildren(childrenList, sysOfficeVO.getOfficeCode(),sysOfficeVO.getId(),sysOfficeVO.getOfficeName());
                 sysOfficeVO.setChildren(children);
                 result.add(sysOfficeVO);
             }

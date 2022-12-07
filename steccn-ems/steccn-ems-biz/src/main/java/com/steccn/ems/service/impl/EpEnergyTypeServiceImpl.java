@@ -47,6 +47,8 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private EpPartitionService partitionService;
+    @Autowired
+    private EpInstrumentAccountService instrumentAccountService;
 
     /**
      * 默认能源,不可修改列表
@@ -183,6 +185,10 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         List<Long> partitionIds = partitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, id))
                 .stream().map(EpPartition::getId).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(partitionIds)){
+//            long count = instrumentAccountService.count(new LambdaQueryWrapper<EpInstrumentAccount>()
+//                    .in(EpInstrumentAccount::getPartitionNode, partitionIds)
+//                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
+//            Assert.isTrue(count==0,"该能源类型下有绑定仪表,无法删除");
             partitionService.removeByIds(partitionIds);
         }
 

@@ -27,4 +27,9 @@ public interface LockConstant {
      * 纠偏定时任务
      */
     String READ_CORRECT_SCHEDULED_TASK = "READ_CORRECT_SCHEDULED_TASK";
+
+    /**
+     * 仓储调拨单
+     */
+    String TABLE_WMS_TRANSFER_SLIP = "TABLE_WMS_TRANSFER_SLIP";
 }

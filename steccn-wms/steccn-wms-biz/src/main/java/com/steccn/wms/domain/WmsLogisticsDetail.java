@@ -17,7 +17,7 @@ public class WmsLogisticsDetail implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

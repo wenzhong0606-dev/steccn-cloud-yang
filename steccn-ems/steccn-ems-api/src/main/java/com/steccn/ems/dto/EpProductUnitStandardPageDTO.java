@@ -28,10 +28,10 @@ public class EpProductUnitStandardPageDTO extends BasePageDTO implements Seriali
     /**
      * 产品厚度
      */
-    private Long productThickness;
+    private Long productThick;
 
     /**
      * 标准名称
      */
-    private String standardName;
+    private String name;
 }

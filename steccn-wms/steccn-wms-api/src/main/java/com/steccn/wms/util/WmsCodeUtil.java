@@ -16,12 +16,15 @@ public class WmsCodeUtil {
      */
     public final static String SHORT_LINE = "-";
 
-
     /**
      * 前缀
      */
     public final static String PREFIX_PMS_BATCH = "SP";
 
+    /**
+     * 调拨单前缀
+     */
+    public final static String PREFIX_WMS_TRANSFER_SLIP = "SM";
     /**
      * 数字位数-4
      */
