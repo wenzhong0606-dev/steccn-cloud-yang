@@ -21,6 +21,11 @@ public interface EpManagerConstant {
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
     String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
 
+    String EP_UNIT_CONSUME_ALARM_SORT_ALARM_DATE = "alarmDate";
+    String EP_UNIT_CONSUME_ALARM_SORT_ENERGY_TYPE = "energyType";
+    String EP_UNIT_CONSUME_ALARM_SORT_OFFICE_ID = "officeId";
+    String EP_UNIT_CONSUME_ALARM_SORT_ALARM_TYPE = "alarmType";
+
 
 
 

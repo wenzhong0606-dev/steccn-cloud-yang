@@ -1,10 +1,10 @@
 package com.steccn.ems.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Data;
 
 /**
  * 单耗告警表
@@ -43,6 +43,11 @@ public class EpUnitConsumeAlarm implements Serializable {
      * 告警类别
      */
     private Integer alarmType;
+
+    /**
+     * 告警详情
+     */
+    private String content;
 
     /**
      * 是否删除 0 否 1是
