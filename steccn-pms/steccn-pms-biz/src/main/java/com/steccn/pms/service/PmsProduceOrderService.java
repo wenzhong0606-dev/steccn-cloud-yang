@@ -1,13 +1,13 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsProduceOrder;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
-import io.swagger.models.auth.In;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,4 +196,13 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Map<Long, PmsProduceOrderVO> listByMaterialIds(Set<Long> materialIds);
+
+    /**
+     * 根据班次时间段获取物料id
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    WorkOrderVO getMaterialCodeByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 }

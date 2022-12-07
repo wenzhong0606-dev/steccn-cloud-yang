@@ -5,6 +5,7 @@ import com.steccn.ems.domain.EpInstrumentAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
+import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 
@@ -36,4 +37,11 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @return
      */
     List<Long> getPartitionNodes ();
+
+    /**
+     * 修改仪表台账状态
+     * @param dto
+     * @return
+     */
+    Boolean reviseStatus(EpInstrumentAccountStatusDTO dto);
 }

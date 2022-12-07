@@ -3,10 +3,7 @@ package com.steccn.ems.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
-import com.steccn.ems.dto.EpEnergyTypeDTO;
-import com.steccn.ems.dto.EpInstrumentAccountDTO;
-import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
-import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
@@ -14,10 +11,7 @@ import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -42,5 +36,12 @@ public class EpInstrumentAccountController {
     @SysLog("新增或编辑仪表台账")
     public R<Boolean> addOrEdit(@Valid @RequestBody EpInstrumentAccountDTO dto) {
         return R.success(epInstrumentAccountService.addOrEdit(dto));
+    }
+
+    @PostMapping("/reviseStatus")
+    @ApiOperation(value = "修改仪表台账状态")
+    @SysLog("修改仪表台账状态")
+    public R<Boolean>  reviseStatus(@RequestBody EpInstrumentAccountStatusDTO dto) {
+        return R.success(epInstrumentAccountService.reviseStatus(dto));
     }
 }

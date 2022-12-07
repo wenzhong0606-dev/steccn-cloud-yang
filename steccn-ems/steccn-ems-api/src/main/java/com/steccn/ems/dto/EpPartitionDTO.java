@@ -6,6 +6,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
+/**
+ * 能耗分区
+ */
 @Data
 public class EpPartitionDTO implements Serializable {
     /**

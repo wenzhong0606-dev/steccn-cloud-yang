@@ -23,7 +23,11 @@ import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.vo.WorkOrderVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -56,6 +60,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private final EpMeterOperationRecordService epMeterOperationRecordService;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -241,6 +249,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //实体远传表夜班
                 if (optional.get().getEntityTable().equals(0)) {
                     BigDecimal updateReadValue = optional.get().getReadValue();
+                    LocalDate localDate = epMeterRead.getReadDate();
+                    LocalTime startTime = LocalTime.of(20,0,0);
+                    LocalTime endTime = LocalTime.of(8,0,0);
+                    LocalDateTime startDateTime = LocalDateTime.of(localDate,startTime);
+                    LocalDateTime endDateTime = LocalDateTime.of(localDate.plusDays(1),endTime);
+                    WorkOrderVO workOrderVO = remotePmsFeignApi.getMaterialCodeByClassTime(startDateTime, endDateTime).getData();
+                    if (Objects.nonNull(workOrderVO)) {
+                        EqpSpareVO eqpSpareVO = remoteSpareFeignApi.getByCode(workOrderVO.getMaterialCode()).getData();
+                    }
                     Optional<EpMeterRead> readOptional = list.stream().filter(read -> read.getReadDate().isEqual(epMeterRead.getReadDate()) && read.getClassId().equals(1)).findAny();
                     if (readOptional.isPresent()) {
                         BigDecimal readValue = readOptional.get().getReadValue();

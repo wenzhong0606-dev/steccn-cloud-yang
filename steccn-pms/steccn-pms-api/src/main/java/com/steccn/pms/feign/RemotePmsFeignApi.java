@@ -5,12 +5,16 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,4 +78,8 @@ public interface RemotePmsFeignApi {
     @GetMapping("/feign/pms/produce/order/batch/id")
     @ApiOperation("根据物料查询当前正在执行订单信息")
     R<PmsWorkOrderBatchVO> getByOrderId(@RequestParam("id") Long id);
+
+    @ApiOperation("根据班次时间查询物料id")
+    @GetMapping("/feign/pms/produce/order/getThickByClassTime")
+    R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
 }

@@ -2,7 +2,6 @@ package com.steccn.platform.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -61,4 +60,8 @@ public class EqpSpareVO implements Serializable {
 
     @ApiModelProperty("规格")
     private String specifications;
+
+    private BigDecimal thickQuantity;
+
+    private Long thickUnitId;
 }

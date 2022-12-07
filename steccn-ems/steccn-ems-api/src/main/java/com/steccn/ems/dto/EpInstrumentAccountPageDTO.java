@@ -6,6 +6,9 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * 仪表台账分页dto
+ */
 @Data
 public class EpInstrumentAccountPageDTO extends BasePageDTO implements Serializable {
     /**

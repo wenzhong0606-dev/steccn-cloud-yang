@@ -208,4 +208,15 @@
                 o.production_line_id
             </if>
     </select>
+    <select id="selectByClassTime" resultType="com.steccn.pms.vo.WorkOrderVO">
+        SELECT
+	        o.material_code materialCode,
+	        w.end_time endTime
+        FROM
+	        pms_produce_order o
+	        INNER JOIN pms_report_work w ON w.produce_order_id = o.id
+        WHERE
+	        w.end_time &gt;= #{startTime} and w.end_time &lt; #{endTime}
+	        ORDER BY w.end_time DESC LIMIT 1
+    </select>
 </mapper>

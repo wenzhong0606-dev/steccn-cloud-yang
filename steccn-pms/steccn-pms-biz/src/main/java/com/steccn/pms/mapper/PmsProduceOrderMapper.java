@@ -1,15 +1,15 @@
 package com.steccn.pms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProduceOrder;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.dto.ProduceOrderAcceptPageDTO;
-import com.steccn.pms.dto.ProduceOrderTrackReportDTO;
 import com.steccn.pms.dto.ReportWorkOrderPageDTO;
 import com.steccn.pms.vo.CompleteStorageCountVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProduceOrderTrackReportVO;
+import com.steccn.pms.vo.WorkOrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -69,6 +69,15 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
             , @Param("startTime")LocalDateTime startTime
             , @Param("endTime")LocalDateTime endTime
             , @Param("group") Integer group);
+
+    /**
+     * 根据班次时间查询数据
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    WorkOrderVO selectByClassTime(@Param("startTime")LocalDateTime startTime,@Param("endTime")LocalDateTime endTime);
 }
 
 
