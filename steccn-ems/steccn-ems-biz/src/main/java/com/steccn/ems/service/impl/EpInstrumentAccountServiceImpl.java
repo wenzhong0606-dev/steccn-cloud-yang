@@ -191,6 +191,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     public Boolean reviseStatus(EpInstrumentAccountStatusDTO dto) {
         EpInstrumentAccount epInstrumentAccount = getById(dto.getId());
         Assert.notNull(epInstrumentAccount,"该仪表台账不存在");
+        Assert.isTrue(MpConstant.YES==epInstrumentAccount.getShowFlag(),"该仪表台账已删除");
         epInstrumentAccount.setStatus(dto.getStatus());
         updateById(epInstrumentAccount);
         return Boolean.TRUE;

@@ -13,15 +13,21 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
+import com.steccn.ems.domain.EpInstrumentAccount;
+import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.mapper.EpEnergyTypeMapper;
+import com.steccn.ems.service.EpInstrumentAccountService;
+import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,12 +40,13 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-29 19:27:28
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpEnergyType>
         implements EpEnergyTypeService {
-
-    private final RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private RemoteDictFeignApi remoteDictFeignApi;
+    @Autowired
+    private EpPartitionService partitionService;
 
     /**
      * 默认能源,不可修改列表
@@ -172,7 +179,12 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         EpEnergyType epEnergyType = getById(id);
         Assert.notNull(epEnergyType,"该id图表不存在,无法删除");
         Assert.isTrue(!DEFAULT_ENERGY_SET.contains(epEnergyType.getName()), "前五项已写死,无法删除");
-        //TODO:校验是否存在该能源类型的仪表(仪表台账,产品单耗),如果存在无法逻辑删除
+        //删除能源分区树
+        List<Long> partitionIds = partitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, id))
+                .stream().map(EpPartition::getId).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(partitionIds)){
+            partitionService.removeByIds(partitionIds);
+        }
 
         epEnergyType.setShowFlag(MpConstant.NO);
         updateById(epEnergyType);

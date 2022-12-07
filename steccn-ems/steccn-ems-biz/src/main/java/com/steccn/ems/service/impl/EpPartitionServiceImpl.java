@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.dto.EpPartitionDTO;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.mapper.EpPartitionMapper;
@@ -47,22 +48,21 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType) {
-        //根据传过来的能源类型先获取全量数据
+
+        EpPartitionNameListVO epPartitionNameListVO = new EpPartitionNameListVO();
+        if (DEFAULT_ENERGY_SET.contains(energyType)) {
+            epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.getByEnergyType(energyType).getName());
+        } else {
+            epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
+        }
+            //根据传过来的能源类型先获取全量数据
         List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
         if (CollUtil.isNotEmpty(dataList)) {
-            EpPartitionNameListVO epPartitionNameListVO = new EpPartitionNameListVO();
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList);
-            if (DEFAULT_ENERGY_SET.contains(energyType)) {
-                epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.getByEnergyType(energyType).getName());
                epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
-            } else {
-                epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
-                epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
             }
-            return epPartitionNameListVO;
-        }
-        return null;
+        return epPartitionNameListVO;
     }
 
     @Override
@@ -78,6 +78,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         }
         return epPartitionVOMap;
+    }
+
+    @Override
+    public Boolean edit(EpPartitionDTO dto) {
+return null;
     }
 
     /**
