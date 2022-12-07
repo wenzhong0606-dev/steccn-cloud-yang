@@ -1,5 +1,6 @@
 package com.steccn.ems.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -45,4 +46,22 @@ public class EpPartitionVO implements Serializable {
      * 子级节点
      */
     private List<EpPartitionVO> children;
+
+    /**
+     * 表id
+     */
+    @JsonIgnore
+    private Integer meterId;
+
+    /**
+     * 实体表类型
+     */
+    @JsonIgnore
+    private Integer entityTable;
+
+    /**
+     * 0停用 1启用
+     */
+    @JsonIgnore
+    private Integer meterStatus;
 }

@@ -2,6 +2,8 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpEnergyParamDTO;
+import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionVO;
 
@@ -28,4 +30,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * 根据能源分区的ids获取能源分区的集合
      */
     Map<Long,EpPartitionVO> getEpPartitionNameListVO(Set<Long> ids);
+
+    /**
+     * 获取子树的节点
+     * @param dto
+     * @return
+     */
+    EpEnergyTreeDTO getChildTree(EpEnergyParamDTO dto);
 }

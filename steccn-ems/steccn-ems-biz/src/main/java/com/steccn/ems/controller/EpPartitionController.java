@@ -1,6 +1,8 @@
 package com.steccn.ems.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.ems.dto.EpEnergyParamDTO;
+import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpPartitionNameListVO;
@@ -27,4 +29,11 @@ public class EpPartitionController {
     public R<EpPartitionNameListVO> getEpEnergyTypeVOList(@PathVariable("energyType") Integer energyType){
         return R.success(epPartitionService.getEpEnergyTypeVOList(energyType));
     }
+
+    @PostMapping("/test1")
+    @ApiOperation(value = "根据能源类型id查询能耗分区树列表")
+    public R<EpEnergyTreeDTO> test(@RequestBody EpEnergyParamDTO dto){
+        return R.success(epPartitionService.getChildTree(dto));
+    }
+
 }

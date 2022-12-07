@@ -51,9 +51,14 @@ public class EpEnergyMoney implements Serializable {
     private Integer type;
 
     /**
-     * 电耗
+     * 开始读数
      */
-    private BigDecimal consume;
+    private BigDecimal startValue;
+
+    /**
+     * 结束读数
+     */
+    private BigDecimal endValue;
 
     /**
      * 单价
