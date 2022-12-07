@@ -13,6 +13,7 @@ import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取仪表id集合
         Set<Integer> meterIdSet = instrumentAccountList.stream().map(EpInstrumentAccount::getId).collect(Collectors.toSet());
 
-        List<EpMeterRead> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), meterIdSet);
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet()), meterIdSet);
         log.info("classDateAllData -> {}",classDateAllData);
         return null;
     }

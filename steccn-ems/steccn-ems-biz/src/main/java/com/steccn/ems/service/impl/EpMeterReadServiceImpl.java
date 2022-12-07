@@ -1,6 +1,7 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -10,6 +11,8 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
@@ -52,7 +55,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private final EpMeterOperationRecordMapper epMeterOperationRecordMapper;
 
     private final EpPartitionMapper epPartitionMapper;
-
     private final EpPartitionService epPartitionService;
 
     private final EpMeterOperationRecordService epMeterOperationRecordService;
@@ -275,17 +277,60 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
-    public List<EpMeterRead> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList) {
-        List<EpMeterRead> resList = Lists.newArrayList();
+    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList) {
+        List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterIdList)) {
             //获取集合最小的日期
-            LocalDate minLocalDate = dateList.stream().min(Comparator.comparing(x -> x)).get();
-            dateList.add(minLocalDate);
+            List<LocalDate> sortedDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
+            LocalDate minLocalDate = sortedDateList.get(0);
+            sortedDateList.add(minLocalDate);
             //根据条件获取数据
-            List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>()
+            List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
                     .in(EpMeterRead::getMeterId, meterIdList)
-                    .in(EpMeterRead::getReadDate, dateList));
-            resList.addAll(list);
+                    .in(EpMeterRead::getReadDate, sortedDateList)
+                    .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart, EpMeterRead::getEnd)));
+            if (CollUtil.isNotEmpty(dataList)) {
+                //存放仪表的班次日期的抄表数据
+                Map<Integer,Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
+                //将数据按照班次日期分组
+                dataList.forEach(ele -> {
+                    map.compute(ele.getMeterId(), (k, v) -> {
+                        if (Objects.isNull(v)) {
+                            v = new LinkedHashMap<>();
+                        }
+                        v.compute(ele.getReadDate(), (p, q) -> {
+                            if (Objects.isNull(q)) {
+                                q = Lists.newArrayList();
+                            }
+                            q.add(ele);
+                            return q;
+                        });
+                        return v;
+                    });
+                });
+                //遍历仪表
+                for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> entry : map.entrySet()) {
+                    //记录每个仪表的数据
+                    BigDecimal preValue = null;
+                    Map<LocalDate, List<EpMeterRead>> childEntry = entry.getValue();
+                    for (Map.Entry<LocalDate, List<EpMeterRead>> entry1 : childEntry.entrySet()) {
+                        //获取到班次日期的数据
+                        List<EpMeterRead> curEpMeterReadDataList = entry1.getValue();
+                        if (CollUtil.isNotEmpty(curEpMeterReadDataList)) {
+                            for (EpMeterRead epMeterRead : curEpMeterReadDataList) {
+                                EpMeterReadAllDataVO vo = new EpMeterReadAllDataVO();
+                                BeanUtils.copyProperties(epMeterRead, vo);
+                                vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
+                                preValue = vo.getConsume();
+                                //最小日期仅仅是为了计算差值，不需要返回
+                                if(!entry1.equals(minLocalDate)){
+                                    resList.add(vo);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         return resList;
     }

@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
 
 /**
  * 抄表
+ *
  * @TableName ep_meter_read
  */
-@TableName(value ="ep_meter_read")
+@TableName(value = "ep_meter_read")
 @Data
 public class EpMeterRead implements Serializable {
     /**
@@ -39,7 +40,18 @@ public class EpMeterRead implements Serializable {
     /**
      * 厚度
      */
-    private Long thick;
+    private BigDecimal thick;
+
+    /**
+     * 开始时间
+     */
+    private LocalDateTime start;
+
+    /**
+     * 结束时间
+     */
+    private LocalDateTime end;
+
 
     /**
      * 管理员操作值

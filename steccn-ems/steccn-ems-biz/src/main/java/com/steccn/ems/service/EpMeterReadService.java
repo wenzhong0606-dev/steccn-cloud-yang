@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
+import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
 
@@ -60,5 +61,5 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @param meterIdList 仪表id集合
      * @return 全量数据表
      */
-    List<EpMeterRead> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList);
+    List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList);
 }
