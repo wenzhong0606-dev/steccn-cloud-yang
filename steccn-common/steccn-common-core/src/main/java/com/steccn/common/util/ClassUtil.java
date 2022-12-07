@@ -19,12 +19,12 @@ public class ClassUtil {
     /**
      * 早班开始时间
      */
-    private static final LocalTime MORNING_START_TIME = LocalTime.of(8, 0, 0);
+    public static final LocalTime MORNING_START_TIME = LocalTime.of(8, 0, 0);
 
     /**
      * 晚班开始时间
      */
-    private static final LocalTime NIGHT_START_TIME = LocalTime.of(20, 0, 0);
+    public static final LocalTime NIGHT_START_TIME = LocalTime.of(20, 0, 0);
 
     /**
      * 0-早班 1-夜班
@@ -55,7 +55,6 @@ public class ClassUtil {
             resList.add(classAndDate(adjustStart));
             adjustStart = adjustStart.plusHours(12);
         }
-
         return resList;
     }
 

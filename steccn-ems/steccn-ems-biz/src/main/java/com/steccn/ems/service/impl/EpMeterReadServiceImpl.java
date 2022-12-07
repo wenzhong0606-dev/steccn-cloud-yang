@@ -1,10 +1,12 @@
 package com.steccn.ems.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
@@ -250,10 +252,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 if (optional.get().getEntityTable().equals(0)) {
                     BigDecimal updateReadValue = optional.get().getReadValue();
                     LocalDate localDate = epMeterRead.getReadDate();
-                    LocalTime startTime = LocalTime.of(20,0,0);
-                    LocalTime endTime = LocalTime.of(8,0,0);
-                    LocalDateTime startDateTime = LocalDateTime.of(localDate,startTime);
-                    LocalDateTime endDateTime = LocalDateTime.of(localDate.plusDays(1),endTime);
+                    LocalTime startTime = LocalTime.of(20, 0, 0);
+                    LocalTime endTime = LocalTime.of(8, 0, 0);
+                    LocalDateTime startDateTime = LocalDateTime.of(localDate, startTime);
+                    LocalDateTime endDateTime = LocalDateTime.of(localDate.plusDays(1), endTime);
                     WorkOrderVO workOrderVO = remotePmsFeignApi.getMaterialCodeByClassTime(startDateTime, endDateTime).getData();
                     if (Objects.nonNull(workOrderVO)) {
                         EqpSpareVO eqpSpareVO = remoteSpareFeignApi.getByCode(workOrderVO.getMaterialCode()).getData();
@@ -303,6 +305,22 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         updateBatchById(list);
         return true;
 
+    }
+
+    @Override
+    public List<EpMeterRead> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList) {
+        List<EpMeterRead> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterIdList)) {
+            //获取集合最小的日期
+            LocalDate minLocalDate = dateList.stream().min(Comparator.comparing(x -> x)).get();
+            dateList.add(minLocalDate);
+            //根据条件获取数据
+            List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>()
+                    .in(EpMeterRead::getMeterId, meterIdList)
+                    .in(EpMeterRead::getReadDate, dateList));
+            resList.addAll(list);
+        }
+        return resList;
     }
 
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {

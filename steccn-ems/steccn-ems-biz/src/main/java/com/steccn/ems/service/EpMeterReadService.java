@@ -7,7 +7,9 @@ import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.vo.EpMeterReadDetailsVO;
 import com.steccn.ems.vo.EpMeterReadVO;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -49,4 +51,14 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return
      */
     Boolean updateBatch(List<EpMeterReadUpdateDTO> dtoList);
+
+
+    /**
+     * 班次日期和组织机构筛选条件下的全量数据表
+     *
+     * @param dateList    日期集合
+     * @param meterIdList 仪表id集合
+     * @return 全量数据表
+     */
+    List<EpMeterRead> classDateAllData(Set<LocalDate> dateList, Set<Integer> meterIdList);
 }
