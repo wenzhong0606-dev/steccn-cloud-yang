@@ -31,7 +31,7 @@ public class EpTableDTO implements Serializable {
     private LocalDate end;
 
     @ApiModelProperty("厚度")
-    private BigDecimal thick;
+    private List<BigDecimal> thick;
 
     @ApiModelProperty("时间-天、周、月、无粒度")
     @NotNull(message = "时间粒度不能为空")
