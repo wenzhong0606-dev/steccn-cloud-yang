@@ -86,7 +86,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
             localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
         } else {
-            localDateList = LocalDateUtil.getCurrentMonthDateAll(selectMonth);
+            endDay = selectMonth.with(TemporalAdjusters.lastDayOfMonth()).plusDays(1);
+            localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth,endDay);
         }
 
         List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByReadMonth(firstDayOfMonth, endDay, meterType);
