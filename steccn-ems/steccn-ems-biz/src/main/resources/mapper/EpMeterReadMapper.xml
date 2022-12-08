@@ -46,7 +46,8 @@
 	        r.class_id classId,
 	        r.admin_value adminValue,
 	        r.correct_value correctValue,
-	        r.read_value readValue
+	        r.read_value readValue,
+	        r.end endTime
         FROM
 	        ep_partition p
 	        LEFT JOIN ep_instrument_account a ON p.id = a.partition_node
