@@ -26,6 +26,7 @@ import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -72,6 +73,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         if (Objects.nonNull(byCode) && !QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             shardDateTime = ClassUtil.cutDateRange(byCode.getType(), start, end);
             Assert.notEmpty(shardDateTime, "时间分片为空");
+        } else if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+            shardDateTime = Lists.newArrayList(LocalDateTime.now(), LocalDateTime.now());
         }
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
@@ -80,22 +83,29 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             LocalDateTime dataStart = shardDateTime.get(i - 1);
             LocalDateTime dataEnd = shardDateTime.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-            epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
+            if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+                epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
+                classDateAllData = classDateAllData.stream()
+                        .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
+                                && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
+            }
             List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
             //遍历所有的分区节点
             for (Long partitionId : dto.getPartitionIdList()) {
                 //获取分区数据集合
-                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream()
-                        .filter(v -> !LocalDateTime.of(v.getReadDate(),ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                  && LocalDateTime.of(v.getReadDate(),ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1)))
-                        .filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
                 List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
                 pole.setField2(poleList);
                 //根据厚度遍历
                 for (BigDecimal thick : dto.getThick()) {
-                    List<EpMeterReadAllDataVO> thickData = dataSet.stream().filter(v -> Objects.nonNull(thick) && Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                    List<EpMeterReadAllDataVO> thickData ;
+                    if(Objects.isNull(thick)){
+                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                    }else {
+                        thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                    }
                     BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(String.valueOf(thick), reduce);
                     poleList.add(stack);
@@ -108,6 +118,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         epChartGraphDTO.setDataList(dataList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
+        if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+            convert.getXData().setData(Lists.newArrayList());
+        }
         return convert;
     }
 }
