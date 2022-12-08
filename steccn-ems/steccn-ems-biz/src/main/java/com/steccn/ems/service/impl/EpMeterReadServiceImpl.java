@@ -442,16 +442,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         ele.setConsume(reduce);
                         BeanUtils.copyProperties(ep, ele);
                         String[] s = thickEntry.getKey().split("_");
-                        if(!Objects.equals(s[0],"null")) {
+                        if (!Objects.equals(s[0], "null")) {
                             ele.setClassId(Integer.parseInt(s[0]));
                         }
-                        if(!Objects.equals(s[1],"null")) {
+                        if (!Objects.equals(s[1], "null")) {
                             ele.setThick(new BigDecimal(s[1]));
                         }
                         ele.setReadDate(classDate);
-                        if (!existDataSet.contains(classDate + "_" + ele.getMeterId())) {
+                        if (!existDataSet.contains(classDate + "_" + ele.getMeterId() + "+" + ele.getClassId() + "_" + ele.getThick())) {
                             resList.add(ele);
-                            existDataSet.add(classDate + "_" + ele.getMeterId());
+                            existDataSet.add(classDate + "_" + ele.getMeterId() + "+" + ele.getClassId() + "_" + ele.getThick());
                             MapUtil.biCompute(map, ele.getMeterId(), classDate, ele);
                         }
                     }
@@ -461,9 +461,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     BeanUtils.copyProperties(ep, epMeterReadAllDataVO);
                     epMeterReadAllDataVO.setReadDate(classDate);
                     epMeterReadAllDataVO.setConsume(sum);
-                    if (!existDataSet.contains(classDate + "_" + epMeterReadAllDataVO.getMeterId())) {
+                    if (!existDataSet.contains(classDate + "_" + epMeterReadAllDataVO.getMeterId() + "_" + epMeterReadAllDataVO.getClassId() + "_" + epMeterReadAllDataVO.getThick())) {
                         resList.add(epMeterReadAllDataVO);
-                        existDataSet.add(classDate + "_" + epMeterReadAllDataVO.getMeterId());
+                        existDataSet.add(classDate + "_" + epMeterReadAllDataVO.getMeterId() + "_" + epMeterReadAllDataVO.getClassId() + "_" + epMeterReadAllDataVO.getThick());
                         MapUtil.biCompute(map, epMeterReadAllDataVO.getMeterId(), classDate, epMeterReadAllDataVO);
                     }
                 }
