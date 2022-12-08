@@ -145,18 +145,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<EpPartitionVO> childTree = Lists.newArrayList();
         EpEnergyTreeDTO result = new EpEnergyTreeDTO();
         dto.getPartitionId().forEach(partitionTmp -> {
-            //叶子节点则不传
-            EpPartition one = this.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionTmp),false);
-            if(one == null){
-                EpPartitionVO vo = new EpPartitionVO();
-                EpPartition partitionOne = this.getById(partitionTmp);
-                BeanUtils.copyProperties(partitionOne,vo);
-                childTree.add(vo);
-            }else {
-                //过滤子树信息
-                EpPartitionVO child = getChild(treeList.get(0), partitionTmp);
-                childTree.add(child);
-            }
+            //过滤子树信息
+            EpPartitionVO resTmp = new EpPartitionVO();
+            EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
+            childTree.add(child);
         });
         //根据子树信息返回详情
         Set<Long> partitionIdResult = Sets.newHashSet();
@@ -241,17 +233,20 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param partitionId
      * @return
      */
-    private EpPartitionVO getChild(EpPartitionVO vo,Long partitionId){
+    private EpPartitionVO getChild(EpPartitionVO vo,Long partitionId,EpPartitionVO res){
         if(CollUtil.isEmpty(vo.getChildren())){
-            return vo;
-        }
-        if (!vo.getId().equals(partitionId)) {
-            for(int i = 0; i < vo.getChildren().size(); i++){
-                return getChild(vo.getChildren().get(i),partitionId);
+            if(vo.getId().equals(partitionId)){
+                res = vo;
             }
-
+            return res;
         }
-        return vo;
+        for(int i = 0; i < vo.getChildren().size(); i++) {
+            if (vo.getId().equals(partitionId)) {
+                res = vo;
+            }
+            res = this.getChild(vo.getChildren().get(i), partitionId,res);
+        }
+        return res;
     }
 
     /**
