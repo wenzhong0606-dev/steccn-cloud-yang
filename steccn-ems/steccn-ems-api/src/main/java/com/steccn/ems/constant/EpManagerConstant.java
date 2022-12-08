@@ -202,4 +202,36 @@ public interface EpManagerConstant {
             return null;
         }
     }
+
+
+    /**
+     * 峰 平 谷
+     */
+    @Getter
+    @AllArgsConstructor
+    enum ElectricType {
+        //峰
+        PEAK(0, "峰"),
+        //平
+        FLAT(1, "平"),
+        //谷
+        VALLEY(2, "谷");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static String getNameByCode(Integer code) {
+            for (ElectricType value : ElectricType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
 }
