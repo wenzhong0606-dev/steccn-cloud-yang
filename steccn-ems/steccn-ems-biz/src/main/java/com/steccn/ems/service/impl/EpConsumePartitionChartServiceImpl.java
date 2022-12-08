@@ -166,6 +166,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 rowVO.setClassDate(classDateEntry.getKey());
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                 if(!"null".equals(s[1])){
+                    rowVO.setThick(new BigDecimal(s[1]));
                     rowVO.setThickStr(s[1]);
                 }
                 if(!"null".equals(s[0])){
@@ -192,6 +193,23 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //1级排序：按班次日期升序排列
         //2级排序：班次，白班在上、夜班在下、“无”在最下
         //3级排序：按产品厚度升序排列，“无”在最下
+        resList.sort(Comparator.comparing(EpConsumeDetailRowVO::getClassDate).thenComparing((o1, o2) -> {
+            if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId())) {
+                return o1.getClassId() - o2.getClassId();
+            } else if (Objects.isNull(o1.getClassId())) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }).thenComparing((o1, o2) -> {
+            if (Objects.nonNull(o1.getThick()) && Objects.nonNull(o2.getThick())) {
+                return o1.getThick().compareTo(o2.getThick());
+            } else if (Objects.isNull(o1.getThick())) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }));
 
         Page<EpConsumeDetailRowVO> page = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
         resVo.setDataList(page);
