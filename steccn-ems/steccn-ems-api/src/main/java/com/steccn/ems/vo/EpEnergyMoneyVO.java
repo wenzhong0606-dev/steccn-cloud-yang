@@ -33,7 +33,7 @@ public class EpEnergyMoneyVO implements Serializable {
     private String typeName;
 
     /**
-     * 峰0 谷1 平2
+     * 峰0 平1 谷2
      */
     private Integer type;
 

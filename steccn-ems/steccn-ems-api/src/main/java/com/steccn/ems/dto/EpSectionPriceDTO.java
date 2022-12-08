@@ -1,5 +1,6 @@
 package com.steccn.ems.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -13,7 +14,7 @@ import java.time.LocalDate;
  * @date 2022/12/06
  */
 @Data
-public class EpSectionPriceDTO implements Serializable {
+public class EpSectionPriceDTO extends BasePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -30,5 +31,5 @@ public class EpSectionPriceDTO implements Serializable {
      * 节点id
      */
     @NotNull(message = "节点id不能为空")
-    private Integer partitionId;
+    private Long partitionId;
 }
