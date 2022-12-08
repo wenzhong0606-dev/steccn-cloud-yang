@@ -4,9 +4,9 @@ import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Lists;
 import com.steccn.common.dto.TupleDTO;
 import lombok.extern.slf4j.Slf4j;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+
+import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,6 +58,113 @@ public class ClassUtil {
         return resList;
     }
 
+
+    /**
+     * 切割时间段
+     *
+     * @param dateType 交易類型 Y/Q/M/W/D/H -->每年/每季度/每月/每周/每天/每小時
+     * @param start    yyyy-MM-dd HH:mm:ss
+     * @param end      yyyy-MM-dd HH:mm:ss
+     * @return
+     */
+    public static List<LocalDateTime> cutDateRange(String dateType, LocalDateTime start, LocalDateTime end) {
+        List<LocalDateTime> listDate = new ArrayList<>();
+        while (end.isAfter(start)) {
+            switch (dateType) {
+                case "Y":
+                    //年
+                    listDate.add(LocalDateUtil.getFirstDayOfYearStr(start.toLocalDate()));
+                    start = start.plusYears(1);
+                    start = LocalDateTime.of(LocalDate.of(start.getYear(), 1, 1), MORNING_START_TIME);
+                    //永远加最后一个元素
+                    if (!end.isAfter(start)) {
+                        listDate.add(LocalDateUtil.getLastDayOfYearStr(end.toLocalDate()));
+                    }
+                    break;
+                case "Q":
+                    //季度
+                    int currentMonth = start.getMonthValue();
+                    if (currentMonth >= 1 && currentMonth <= 3) {
+                        start = LocalDateTime.of(LocalDate.of(start.getYear(), 1, 1), MORNING_START_TIME);
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(), 3, 31), MORNING_START_TIME));
+                        }
+                        start = start.plusMonths(3);
+                    } else if (currentMonth >= 4 && currentMonth <= 6) {
+                        start = LocalDateTime.of(LocalDate.of(start.getYear(), 4, 1), MORNING_START_TIME);
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(), 6, 30), MORNING_START_TIME));
+                        }
+                        start = start.plusMonths(3);
+                    } else if (currentMonth >= 7 && currentMonth <= 9) {
+                        start = LocalDateTime.of(LocalDate.of(start.getYear(), 7, 1), MORNING_START_TIME);
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(), 9, 30), MORNING_START_TIME));
+                        }
+                        start = start.plusMonths(3);
+                    } else if (currentMonth >= 10 && currentMonth <= 12) {
+                        start = LocalDateTime.of(LocalDate.of(start.getYear(), 10, 1), MORNING_START_TIME);
+                        listDate.add(start);
+                        if (end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(), 12, 31), MORNING_START_TIME));
+                        }
+                        start = start.plusMonths(3);
+                    }
+                    break;
+                case "M":
+                    start = LocalDateTime.of(LocalDate.of(start.getYear(), start.getMonth(), 1), MORNING_START_TIME);
+                    listDate.add(start);
+                    start = start.plusMonths(1);
+                    if (!end.isAfter(start)) {
+                        LocalDateTime lastDayOfMonthStr = LocalDateUtil.getLastDayOfMonthStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(LocalDate.of(lastDayOfMonthStr.getYear(), lastDayOfMonthStr.getMonth(),
+                                lastDayOfMonthStr.getDayOfMonth()), MORNING_START_TIME));
+                    }
+                    break;
+                case "W":
+                    LocalDateTime firstDayOfWeekStr = LocalDateUtil.getFirstDayOfWeekStr(start.toLocalDate());
+                    firstDayOfWeekStr = LocalDateTime.of(firstDayOfWeekStr.toLocalDate(), MORNING_START_TIME);
+                    listDate.add(firstDayOfWeekStr);
+                    start = start.plusWeeks(1);
+                    start = start.with(DayOfWeek.MONDAY);
+                    start = LocalDateTime.of(start.toLocalDate(), MORNING_START_TIME);
+                    if (!end.isAfter(start)) {
+                        LocalDateTime lastDayOfWeekStr = LocalDateUtil.getLastDayOfWeekStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(LocalDate.of(lastDayOfWeekStr.getYear(), lastDayOfWeekStr.getMonth(),
+                                lastDayOfWeekStr.getDayOfMonth()), MORNING_START_TIME));
+                    }
+                    break;
+                case "D":
+                    listDate.add(start);
+                    start = start.plusDays(1);
+                    if (!end.isAfter(start)) {
+                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(LocalDate.of(endTimeOfDayStr.getYear(), endTimeOfDayStr.getMonth()
+                                , endTimeOfDayStr.getDayOfMonth()), MORNING_START_TIME));
+                    }
+                    break;
+                case "H":
+                    listDate.add(start);
+                    start = start.plusHours(1);
+                    if (!end.isAfter(start)) {
+                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
+                        listDate.add(LocalDateTime.of(LocalDate.of(endTimeOfDayStr.getYear(), endTimeOfDayStr.getMonth()
+                                , endTimeOfDayStr.getDayOfMonth()), MORNING_START_TIME));
+                    }
+                    break;
+                case "N":
+                    //无粒度
+                    break;
+            }
+
+        }
+        return listDate;
+    }
+
+
     /**
      * 班次时间和日期
      *
@@ -107,4 +214,12 @@ public class ClassUtil {
 //
 //    }
 
+
+//    public static void main(String[] args) {
+//        LocalDateTime start = LocalDateTime.of(2022, 8, 28, 8, 0, 0);
+//        LocalDateTime end = LocalDateTime.of(2022, 8, 30, 8, 0, 0);
+////
+//        List<LocalDateTime> d = cutDateRange("Q", start, end);
+//        log.info("{}", d);
+//    }
 }

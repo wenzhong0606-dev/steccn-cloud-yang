@@ -69,23 +69,21 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<LocalDateTime> shardDateTime = Lists.newArrayList();
         //时间粒度
         QtManagerConstant.QtGranularityEnum byCode = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
-        if(Objects.nonNull(byCode) && !QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())){
+        if (Objects.nonNull(byCode) && !QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             shardDateTime = ShardTimeUtil.cutDateRange(byCode.getType(), start, end);
-            Assert.notEmpty(shardDateTime,"时间分片为空");
+            Assert.notEmpty(shardDateTime, "时间分片为空");
         }
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
         for (LocalDateTime date : shardDateTime) {
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-            epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode,date));
+            epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, date));
+            List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
             //遍历所有的分区节点
             for (Long partitionId : dto.getPartitionIdList()) {
                 //获取分区数据集合
                 List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
-                //根据厚度分组
-                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
-
                 List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
@@ -98,8 +96,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     poleList.add(stack);
                 }
                 data.add(pole);
-                epChartGraphxAxisDTO.setData(data);
             }
+            epChartGraphxAxisDTO.setData(data);
             dataList.add(epChartGraphxAxisDTO);
         }
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
