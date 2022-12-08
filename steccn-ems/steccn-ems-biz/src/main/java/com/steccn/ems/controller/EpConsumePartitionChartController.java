@@ -37,8 +37,8 @@ public class EpConsumePartitionChartController {
 
     @PostMapping("/contrast/detail")
     @ApiOperation(value = "能耗分区对比-明细")
-    public R<Page<EpConsumeDetailVO>> consumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+    public R<EpConsumeDetailVO> consumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.consumePartitionContrastDetail(dto));
     }
 
     @PostMapping("/history/chart")

@@ -1,5 +1,6 @@
 package com.steccn.ems.vo;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -16,7 +17,7 @@ import java.util.List;
 public class EpConsumeDetailVO implements Serializable {
 
     @ApiModelProperty("数据集合")
-    private List<EpConsumeDetailRowVO> dataList;
+    private Page<EpConsumeDetailRowVO> dataList;
 
     @ApiModelProperty("表头数据")
     private List<String> headData;

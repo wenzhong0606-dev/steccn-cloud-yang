@@ -1,9 +1,12 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
@@ -20,7 +23,10 @@ import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.vo.EpConsumeDetailRowVO;
+import com.steccn.ems.vo.EpConsumeDetailVO;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
@@ -122,5 +128,74 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
+    }
+
+    @Override
+    public EpConsumeDetailVO consumePartitionContrastDetail(EpTableDTO dto) {
+        //1.列出在区间 [起始日期8:00:00, 终止日期+1 8:00:00) 内的所有班次集合A
+        //①区间 [起始日期8:00:00, 终止日期+1 8:00:00)
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        //时间排序
+        CollUtil.sort(dateSet, Comparator.comparing(v -> v));
+
+        //定义返回集合
+        EpConsumeDetailVO resVo = new EpConsumeDetailVO();
+        List<EpConsumeDetailRowVO> resList = Lists.newArrayList();
+        Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
+
+        //定义表头
+        List<String> headData = Lists.newArrayList();
+        for (Map.Entry<Long, String> partitionEntry : partitionIdNameMap.entrySet()) {
+            headData.add(partitionEntry.getValue());
+        }
+
+
+        Map<LocalDate, List<EpMeterReadAllDataVO>> classDateMap = classDateAllData.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
+        for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateMap.entrySet()) {
+            Map<String, List<EpMeterReadAllDataVO>> thickMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
+            for (Map.Entry<String, List<EpMeterReadAllDataVO>> thickEntry : thickMap.entrySet()) {
+                String[] s = thickEntry.getKey().split("_");
+                EpConsumeDetailRowVO rowVO = new EpConsumeDetailRowVO();
+                rowVO.setClassDate(classDateEntry.getKey());
+                rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
+                if(!"null".equals(s[1])){
+                    rowVO.setThickStr(s[1]);
+                }
+                if(!"null".equals(s[0])){
+                    rowVO.setClassId(Integer.parseInt(s[0]));
+                    QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(rowVO.getClassId());
+                    rowVO.setClassIdStr(Objects.nonNull(code) ? code.getName() : null);
+                }
+                Map<Long ,BigDecimal> consumeMap = Maps.newHashMap();
+                thickEntry.getValue().forEach(ele -> consumeMap.put(ele.getOfficeId(),ele.getConsume()));
+                List<String> rowList = Lists.newArrayList();
+                for (Map.Entry<Long, String> partitionEntry : partitionIdNameMap.entrySet()) {
+                    BigDecimal consume = consumeMap.get(partitionEntry.getKey());
+                    if(Objects.nonNull(consume)){
+                        rowList.add(BigDecimalUtil.format(consume));
+                    }else{
+                        rowList.add(null);
+                    }
+                }
+                rowVO.setConsumeList(rowList);
+                resList.add(rowVO);
+            }
+        }
+        //行排序规则为
+        //1级排序：按班次日期升序排列
+        //2级排序：班次，白班在上、夜班在下、“无”在最下
+        //3级排序：按产品厚度升序排列，“无”在最下
+
+        Page<EpConsumeDetailRowVO> page = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+        resVo.setDataList(page);
+        resVo.setHeadData(headData);
+        return resVo;
     }
 }
