@@ -8,18 +8,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
-import com.steccn.wms.dto.WmsTransferSlipInfoDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
@@ -201,6 +198,9 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(order.getStatus())
                 , "当前状态不可确认");
         order.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+        order.setAffirmBy(SecurityUtils.getUser().getUserId());
+        order.setAffirmName(SecurityUtils.getUser().getName());
+        order.setAffirmTime(LocalDateTime.now());
         //todo 获取订单详情信息 调用mes库存接口 减少库存中原始货架可用库存数量，减少原始货架占用库存数量，增加目标货架可用库存数量，减少目标货架在途库存数量
         return updateById(order);
     }
@@ -244,8 +244,12 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 .eq(WmsTransferSlipInfo::getTransferSlipId, order.getId()));
         //5.处理详情数据
         if (CollUtil.isNotEmpty(list)) {
+            Set<Long> dictSet = Sets.newHashSet();
             List<WmsTransferSlipInfoVO> infoVOList = BeanUtil.copyToList(list, WmsTransferSlipInfoVO.class);
+            infoVOList.forEach( info ->dictSet.add(info.getUnit()));
             wmsTransferSlipVO.setList(infoVOList);
+            Map<Long, String> dict = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            infoVOList.forEach( info ->info.setUnitName(dict.get(info.getUnit())));
         }
         return wmsTransferSlipVO;
     }

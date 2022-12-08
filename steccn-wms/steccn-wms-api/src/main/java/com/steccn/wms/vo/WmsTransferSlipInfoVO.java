@@ -29,7 +29,7 @@ public class WmsTransferSlipInfoVO {
     private Integer targetShelf;
 
     @ApiModelProperty("目标货架名称")
-    private Integer targetShelfName;
+    private String targetShelfName;
 
     @ApiModelProperty("物料id")
     private Long materialId;
@@ -53,7 +53,7 @@ public class WmsTransferSlipInfoVO {
     private String caseNo;
 
     @ApiModelProperty("单位")
-    private String unit;
+    private Long unit;
 
     @ApiModelProperty("单位名称")
     private String unitName;

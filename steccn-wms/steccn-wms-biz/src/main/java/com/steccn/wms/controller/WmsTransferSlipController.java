@@ -6,7 +6,6 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.service.WmsTransferSlipService;
