@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author yequan
@@ -26,6 +27,9 @@ public class EpMeterReadAllDataVO implements Serializable {
     @ApiModelProperty("机构树id")
     private Long officeId;
 
+    @ApiModelProperty("机构名称")
+    private String officeName;
+
     @ApiModelProperty("抄表日期")
     private LocalDate readDate;
 
@@ -35,12 +39,6 @@ public class EpMeterReadAllDataVO implements Serializable {
     @ApiModelProperty("厚度")
     private BigDecimal thick;
 
-    @ApiModelProperty("开始时间")
-    private LocalDateTime start;
-
-    @ApiModelProperty("结束时间")
-    private LocalDateTime end;
-
     @ApiModelProperty("管理员操作的值")
     private BigDecimal consume;
 
@@ -49,6 +47,12 @@ public class EpMeterReadAllDataVO implements Serializable {
 
     @ApiModelProperty("管理员调整标识 0否 1是")
     private Integer adminFlag;
+
+    @ApiModelProperty("报工id集合")
+    private List<Long> reportWorkIdList;
+
+    @ApiModelProperty("产量集合")
+    private BigDecimal productNum;
 
     private static final long serialVersionUID = 1L;
 
