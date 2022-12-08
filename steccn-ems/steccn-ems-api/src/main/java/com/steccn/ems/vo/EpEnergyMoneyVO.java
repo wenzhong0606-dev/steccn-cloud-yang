@@ -23,6 +23,12 @@ public class EpEnergyMoneyVO implements Serializable {
     private LocalDate classDate;
 
     /**
+     * 班次日期String
+     */
+    @JsonIgnore
+    private String classDateStr;
+
+    /**
      * 分区节点
      */
     private String partitionName;
@@ -43,9 +49,19 @@ public class EpEnergyMoneyVO implements Serializable {
     private LocalDateTime start;
 
     /**
+     *开始时间str
+     */
+    private String startStr;
+
+    /**
      * 结束时间
      */
     private LocalDateTime end;
+
+    /**
+     * 结束时间str
+     */
+    private String endStr;
 
     /**
      * 单价数值

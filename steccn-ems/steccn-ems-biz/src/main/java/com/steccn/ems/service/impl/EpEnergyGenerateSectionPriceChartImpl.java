@@ -1,6 +1,9 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import com.alibaba.excel.util.MapUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
@@ -8,6 +11,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CollectorsUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -17,6 +21,7 @@ import com.steccn.ems.dto.EpEnergyParamDTO;
 import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.service.*;
+import com.steccn.ems.util.DownloadUtil;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
 import com.steccn.ems.vo.EpEnergyChartPieValueVO;
 import com.steccn.ems.vo.EpEnergyMoneyVO;
@@ -27,10 +32,12 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -77,13 +84,31 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
     }
 
     @Override
-    public Page<EpEnergyMoneyVO> getDetails(EpSectionPriceDTO dto) {
+    public Page<EpEnergyMoneyVO> getDistributionDetails(EpSectionPriceDTO dto) {
         //先生成全量数据表
         List<EpEnergyMoneyVO> results = generateSectionData(dto);
         //排序
         results = results.stream().sorted(Comparator.comparing(EpEnergyMoneyVO::getClassDate).thenComparing(EpEnergyMoneyVO::getType)).collect(Collectors.toList());
+        //根据filters过滤
+        if(CollUtil.isNotEmpty(dto.getFilters())){
+            results = results.stream().filter(t -> dto.getFilters().contains(t.getTypeName())).collect(Collectors.toList());
+        }
         Page<EpEnergyMoneyVO> page = LogicalPageUtil.page(results, dto.getCurrent(), dto.getSize());
         return page;
+    }
+
+    @SneakyThrows
+    @Override
+    public void downloadDistribution(EpSectionPriceDTO dto, HttpServletResponse response) {
+        Page<EpEnergyMoneyVO> page = getDistributionDetails(dto);
+        List<EpEnergyMoneyVO> data = page.getRecords();
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
+        String excelName = "峰谷平分布(电)_"
+                + LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN) + ".xlsx";
+        DownloadUtil.downloadTemplate(response,EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_FGPDB,excelName,map,data,dto.getBase64());
     }
 
     /**
@@ -155,6 +180,11 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
                 //电费
                 vo.setFeeNum(BigDecimalUtil.multiply(vo.getPrice(),vo.getConsumptionNum()));
                 vo.setFee(new DecimalFormat("0.00").format(vo.getFeeNum()) + "元");
+                //班次日期
+                vo.setClassDateStr(LocalDateUtil.localDateFormat(vo.getClassDate(),DatePattern.NORM_DATE_PATTERN));
+                //开始 结束时间str
+                vo.setStartStr(LocalDateTimeUtil.format(vo.getStart(),DatePattern.NORM_DATETIME_PATTERN));
+                vo.setEndStr(LocalDateTimeUtil.format(vo.getEnd(),DatePattern.NORM_DATETIME_PATTERN));
                 results.add(vo);
             }
         }else {

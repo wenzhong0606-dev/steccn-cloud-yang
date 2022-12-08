@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 峰谷平分布接收参数类
@@ -32,4 +33,14 @@ public class EpSectionPriceDTO extends BasePageDTO implements Serializable {
      */
     @NotNull(message = "节点id不能为空")
     private Long partitionId;
+
+    /**
+     * 过滤
+     */
+    private List<String> filters;
+
+    /**
+     * 图片base64
+     */
+    private String base64;
 }

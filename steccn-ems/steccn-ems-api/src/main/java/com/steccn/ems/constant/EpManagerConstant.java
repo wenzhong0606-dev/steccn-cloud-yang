@@ -26,7 +26,8 @@ public interface EpManagerConstant {
     String EP_UNIT_CONSUME_ALARM_SORT_OFFICE_ID = "officeId";
     String EP_UNIT_CONSUME_ALARM_SORT_ALARM_TYPE = "alarmType";
 
-
+    //下载模版名称
+    String EP_DOWNLOAD_MODEL_NAME_FGPDB = "fgpdb.xlsx";
 
 
     /**

@@ -5,7 +5,10 @@ import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
 import com.steccn.ems.vo.EpEnergyMoneyVO;
 import com.steccn.ems.vo.EqEnergyChartPieVO;
+import com.steccn.qms.dto.AccessoryAcceptabilityDownDTO;
+import lombok.SneakyThrows;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -17,7 +20,7 @@ import java.util.List;
  */
 public interface EpEnergyGenerateSectionPriceChart {
     /**
-     * 生成峰谷平分布数据
+     * 生成峰谷平图表
      * @param dto
      * @return
      */
@@ -28,5 +31,12 @@ public interface EpEnergyGenerateSectionPriceChart {
      * @param dto
      * @return
      */
-    Page<EpEnergyMoneyVO> getDetails(EpSectionPriceDTO dto);
+    Page<EpEnergyMoneyVO> getDistributionDetails(EpSectionPriceDTO dto);
+
+    /**
+     * 下载峰谷平分布
+     * @param dto
+     * @param response
+     */
+    void downloadDistribution(EpSectionPriceDTO dto, HttpServletResponse response);
 }
