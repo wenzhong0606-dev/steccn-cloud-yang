@@ -84,16 +84,17 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 //获取分区数据集合
                 List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
                 //根据厚度分组
-                Map<BigDecimal, List<EpMeterReadAllDataVO>> thickMap = dataSet.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getThick));
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
 
                 List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
                 pole.setField2(poleList);
-                for (Map.Entry<BigDecimal, List<EpMeterReadAllDataVO>> thickEntry : thickMap.entrySet()) {
-                    BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    TupleDTO<String, BigDecimal> stack = new TupleDTO<>(BigDecimalUtil.format(thickEntry.getKey()),reduce);
+                //根据厚度遍历
+                for (BigDecimal thick : dto.getThick()) {
+                    List<EpMeterReadAllDataVO> thickData = dataSet.stream().filter(v -> Objects.nonNull(thick) && Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                    BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    TupleDTO<String, BigDecimal> stack = new TupleDTO<>(String.valueOf(thick), reduce);
                     poleList.add(stack);
                 }
                 data.add(pole);
