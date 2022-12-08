@@ -9,6 +9,8 @@ import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
 
+import java.util.Map;
+
 /**
 * @author W10
 * @description 针对表【wms_check_order(盘点单)】的数据库操作Service
@@ -28,7 +30,7 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      * @param dto
      * @return
      */
-    Boolean addOrUpdateCheckOrder(WmsCheckOrder dto);
+    String addOrUpdateCheckOrder(WmsCheckOrder dto);
 
     /***
      * 删除盘点管理
@@ -42,14 +44,14 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      * @param id
      * @return
      */
-    WmsCheckOrderVO getByIdCheckOrderDetail(  Long id);
+    Map getByIdCheckOrderDetail(Long id,Integer current, Integer size);
 
     /****
      * 盘点差异调整
      * @param id
      * @return
      */
-    Boolean varianceAdjustmentCheckOrder(Long id);
+    String varianceAdjustmentCheckOrder(Long id);
 
     /****
      * 手机端 获取盘点单列表
