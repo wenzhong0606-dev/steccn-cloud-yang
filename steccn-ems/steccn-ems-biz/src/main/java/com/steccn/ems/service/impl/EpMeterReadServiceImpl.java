@@ -449,6 +449,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             ele.setThick(new BigDecimal(s[1]));
                         }
                         ele.setReadDate(classDate);
+                        ele.setOfficeId(ep.getId());
+                        ele.setOfficeName(ep.getOfficeName());
                         if (!existDataSet.contains(classDate + "_" + ele.getMeterId() + "+" + ele.getClassId() + "_" + ele.getThick())) {
                             resList.add(ele);
                             existDataSet.add(classDate + "_" + ele.getMeterId() + "+" + ele.getClassId() + "_" + ele.getThick());
@@ -459,6 +461,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     //其他，孩子节点既有实体远传又有实体非远传
                     EpMeterReadAllDataVO epMeterReadAllDataVO = new EpMeterReadAllDataVO();
                     BeanUtils.copyProperties(ep, epMeterReadAllDataVO);
+                    epMeterReadAllDataVO.setOfficeId(ep.getId());
+                    epMeterReadAllDataVO.setOfficeName(ep.getOfficeName());
                     epMeterReadAllDataVO.setReadDate(classDate);
                     epMeterReadAllDataVO.setConsume(sum);
                     if (!existDataSet.contains(classDate + "_" + epMeterReadAllDataVO.getMeterId() + "_" + epMeterReadAllDataVO.getClassId() + "_" + epMeterReadAllDataVO.getThick())) {
@@ -471,12 +475,25 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //实体远传节点
                 List<EpMeterReadAllDataVO> epMeterReads = map.getOrDefault(meterId, Maps.newHashMap()).getOrDefault(classDate, Lists.newArrayList());
                 sum = epMeterReads.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                if(CollUtil.isNotEmpty(ep.getChildren())){
+                    for (EpPartitionVO child : ep.getChildren()) {
+                        BigDecimal cycle = cycle(map, classDate, child, resList, existDataSet);
+                        sum = BigDecimalUtil.add(sum, cycle);
+                    }
+                }
+
             } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(entityTable)) {
                 //实体非远传节点
                 List<EpMeterReadAllDataVO> epMeterReads = map.getOrDefault(meterId, Maps.newHashMap()).getOrDefault(classDate, Lists.newArrayList());
                 if (CollUtil.isNotEmpty(epMeterReads)) {
                     EpMeterReadAllDataVO epMeterRead = epMeterReads.get(0);
                     sum = epMeterRead.getConsume();
+                }
+                if(CollUtil.isNotEmpty(ep.getChildren())){
+                    for (EpPartitionVO child : ep.getChildren()) {
+                        BigDecimal cycle = cycle(map, classDate, child, resList, existDataSet);
+                        sum = BigDecimalUtil.add(sum, cycle);
+                    }
                 }
             }
         }
