@@ -177,6 +177,18 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Long, EpPartitionVO> parentInfo(Set<Long> childList) {
+        Map<Long,EpPartitionVO> resMap = Maps.newHashMap();
+        List<EpPartitionVO> epPartitionVOS = baseMapper.listParentInfo(childList);
+        if (CollUtil.isNotEmpty(epPartitionVOS)){
+            for (EpPartitionVO epPartitionVO : epPartitionVOS) {
+                resMap.put(epPartitionVO.getChildrenId(),epPartitionVO);
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 根据全量数据递归构造一棵树
      * @param dataList

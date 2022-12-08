@@ -235,4 +235,32 @@ public interface EpManagerConstant {
             return null;
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    enum EnergyPriceType {
+        //峰时段
+        PEAK_PERIOD(1, "峰时段"),
+        //平时段
+        USUALLY_PERIOD(2, "平时段"),
+        //谷时段
+        VALLEY_PERIOD(3, "谷时段");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据code获取名称
+         *
+         * @param code
+         * @return
+         */
+        public static String getNameByCode(Integer code) {
+            for (OperationType value : OperationType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
 }

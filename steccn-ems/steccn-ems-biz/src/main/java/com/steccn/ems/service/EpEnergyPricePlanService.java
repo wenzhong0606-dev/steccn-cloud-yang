@@ -2,6 +2,7 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpEnergyPricePlan;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpEnergyPriceDTO;
 
 /**
 * @author yequan
@@ -10,4 +11,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpEnergyPricePlanService extends IService<EpEnergyPricePlan> {
 
+    /**
+     * 编辑或新增能源价格方案
+     * @param dto
+     * @return
+     */
+    Boolean addOrEdit(EpEnergyPriceDTO dto);
 }
