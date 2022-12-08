@@ -29,11 +29,20 @@ public class MessMaterialConsumeDTO implements Serializable {
     @ApiModelProperty("物料id")
     private Long materialId;
 
+    @ApiModelProperty("物料编码")
+    private String materialCode;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
+
     @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("实际数量")
     private BigDecimal quantity;
+
+    @ApiModelProperty("总数量")
+    private BigDecimal totalQuantity;
 
     @ApiModelProperty("仓库code")
     private String warehouseCode;
@@ -46,4 +55,10 @@ public class MessMaterialConsumeDTO implements Serializable {
 
     @ApiModelProperty("打包时间")
     private LocalDateTime packTime;
+
+    @ApiModelProperty("单位")
+    private Long unit;
+
+    @ApiModelProperty("单位名称")
+    private String unitName;
 }

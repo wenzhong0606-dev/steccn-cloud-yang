@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -24,6 +26,16 @@ public class WmsTransferSlipInfo implements Serializable {
      * 调拨单id
      */
     private Long transferSlipId;
+
+    /**
+     * 源库存id
+     */
+    private Long sourceInventoryId;
+
+    /**
+     * 目标库存id
+     */
+    private Long targetInventoryId;
 
     /**
      * 来源货架

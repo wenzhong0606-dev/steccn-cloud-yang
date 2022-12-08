@@ -28,6 +28,12 @@ public class WmsTransferSlipInfoDTO {
     @ApiModelProperty("物料id")
     private Long materialId;
 
+    @ApiModelProperty("源库存id")
+    private Long sourceInventoryId;
+
+    @ApiModelProperty("目标库存id")
+    private Long targetInventoryId;
+
     @ApiModelProperty("源货架")
     private Integer sourceShelf;
 
@@ -48,6 +54,12 @@ public class WmsTransferSlipInfoDTO {
 
     @ApiModelProperty("数量")
     private BigDecimal quantity;
+
+    @ApiModelProperty("原始数量")
+    private BigDecimal originalQuantity;
+
+    @ApiModelProperty("原始箱号")
+    private String originalCaseNo;
 
     @ApiModelProperty("关联单据")
     private String associatedNo;
