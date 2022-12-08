@@ -1,5 +1,6 @@
 package com.steccn.common.util;
 
+import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.common.dto.*;
@@ -34,7 +35,7 @@ public class EpChartGraphUtil {
      * @param onlyStack       图例，显示堆叠true ， 显示x轴false
      * @return 对应结构
      */
-    public static EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert(EpChartGraphDTO<Integer, String, BigDecimal> epChartGraphDTO, Boolean onlyStack) {
+    public static EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert(EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, Boolean onlyStack) {
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> resDTO = new EpChartGraphVO<>();
 
         //第一个x轴
@@ -46,7 +47,7 @@ public class EpChartGraphUtil {
         //图例的标识
         boolean onlyX = !onlyStack;
 
-        Map<Integer, String> officeMap = epChartGraphDTO.getOfficeMap();
+        Map<Long, String> officeMap = epChartGraphDTO.getOfficeMap();
         List<EpChartUnitConsumeAlarmVO> alarmList = Lists.newArrayList();
         resDTO.setAlarmList(alarmList);
 
@@ -55,16 +56,16 @@ public class EpChartGraphUtil {
 
         //遍历x轴的所有数据  xData表示一个x轴的点-需要考虑是否需要预警
         int idx = 0;
-        for (EpChartGraphxAxisDTO<Integer, String, BigDecimal> x1 : epChartGraphDTO.getDataList()) {
+        for (EpChartGraphxAxisDTO<Long, String, BigDecimal> x1 : epChartGraphDTO.getDataList()) {
             x1List.add(x1.getXAxis());
             //获取x轴一个点下的所有柱子
-            List<TupleDTO<Integer, List<TupleDTO<String, BigDecimal>>>> x2Data = x1.getData();
+            List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> x2Data = x1.getData();
 
             //存放第一个x轴的数据
             dataMap.put(idx, Maps.newLinkedHashMap());
             //柱子的下标
             int xPostIdx = 0;
-            for (TupleDTO<Integer, List<TupleDTO<String, BigDecimal>>> x2 : x2Data) {
+            for (TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> x2 : x2Data) {
                 //获取第一个x轴的数据
                 Map<Integer, List<BigDecimal>> xDataMap = dataMap.get(idx);
                 xDataMap.put(xPostIdx, Lists.newArrayList());
@@ -132,19 +133,24 @@ public class EpChartGraphUtil {
      * @param epChartGraphDTO 请求dto
      * @param alarmList       预警集合
      */
-    private static void checkStandard(Integer officeId, BigDecimal value, EpChartGraphDTO<Integer, String, BigDecimal> epChartGraphDTO, List<EpChartUnitConsumeAlarmVO> alarmList) {
+    private static void checkStandard(Long officeId, BigDecimal value, EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, List<EpChartUnitConsumeAlarmVO> alarmList) {
         //行业标准和企业标准
-        for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
-            if (standardVO.getValue().compareTo(value) < 0) {
-                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), standardVO.getType());
-                alarmList.add(vo);
+        if(CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())){
+            for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
+                if (standardVO.getValue().compareTo(value) < 0) {
+                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), standardVO.getType());
+                    alarmList.add(vo);
+                }
             }
         }
+
         //部门标准
-        BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
-        if (Objects.nonNull(officeStandardValue) && officeStandardValue.compareTo(value) < 0) {
-            EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
-            alarmList.add(vo);
+        if(CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())){
+            BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
+            if (Objects.nonNull(officeStandardValue) && officeStandardValue.compareTo(value) < 0) {
+                EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
+                alarmList.add(vo);
+            }
         }
     }
 
@@ -158,7 +164,7 @@ public class EpChartGraphUtil {
      * @param standardType    标准类型 0行业标准 1企业标准 2部门标准
      * @return
      */
-    private static EpChartUnitConsumeAlarmVO setAlarm(Integer officeId, BigDecimal value, EpChartGraphDTO<Integer, String, BigDecimal> epChartGraphDTO, BigDecimal standardValue, Integer standardType) {
+    private static EpChartUnitConsumeAlarmVO setAlarm(Long officeId, BigDecimal value, EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, BigDecimal standardValue, Integer standardType) {
         EpChartUnitConsumeAlarmVO vo = new EpChartUnitConsumeAlarmVO();
         vo.setEnergyType(epChartGraphDTO.getEnergyType());
         vo.setOfficeId(officeId);

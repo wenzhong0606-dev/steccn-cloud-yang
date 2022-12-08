@@ -28,7 +28,7 @@ public class EpChartGraphDTO<E1, E2, E3> implements Serializable {
     private Integer energyType;
 
     @ApiModelProperty("组织机构map")
-    private Map<Integer, String> officeMap;
+    private Map<E1, String> officeMap;
 
     @ApiModelProperty("部门标准map")
     private Map<E1, E3> standardMap;
