@@ -2,8 +2,10 @@ package com.steccn.pms.feign;
 
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
+import com.steccn.pms.vo.WmsStockVO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -87,4 +89,37 @@ public interface RemoteMessFeignApi {
     @ResponseBody
     Map<Long, BigDecimal> listMaterialInventory(@RequestBody List<MessMaterialStorageDTO> list);
 
+
+    /**
+     * 根据货架获取库存列表
+     *
+     * @param materialIds
+     * @return
+     */
+    @PostMapping(value = "/web/eqp/eqpSpareInventory/shelfInventory")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Map<String, List<WmsStockVO>> shelfInventory(@RequestBody Set<String> shelfs);
+
+    /**
+     * 根据物料获取库存列表
+     *
+     * @param materialIds
+     * @return
+     */
+    @PostMapping(value = "/web/eqp/eqpSpareInventory/material/inventory")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Map<Long, List<WmsStockVO>> inventory(@RequestBody Set<Long> materials);
+
+    /**
+     * 根据物料获取库存列表
+     *
+     * @param materialIds
+     * @return
+     */
+    @GetMapping(value = "/web/mesClassification/tree")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Object tree();
 }

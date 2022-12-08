@@ -2,8 +2,11 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
+import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
+import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
 
 /**
@@ -55,4 +58,18 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      */
     Page<WmsCheckOrderVO> getApiCheckOrderList(Integer current,Integer size,Integer status, String beginTime,
                                                String endTime,Integer post);
+
+    /****
+     * 手机端 获取盘点单明细列表
+     * @param checkOrderId
+     * @return
+     */
+    R<Page<WmsCheckOrderInfoVO>> getApiCheckOrderDetailList(Long checkOrderId, Integer current, Integer size,Integer status);
+
+    /****
+     * 手机端 盘点单操作正常明细状态变更
+     * @param wmsCheckOrderInfoDTO
+     * @return
+     */
+    Boolean adjNormalOrDifferenceCheckOrderItem( WmsCheckOrderInfoDTO wmsCheckOrderInfoDTO);
 }

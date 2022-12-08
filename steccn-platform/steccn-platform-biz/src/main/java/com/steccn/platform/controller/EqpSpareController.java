@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -71,6 +72,13 @@ public class EqpSpareController {
     @ApiOperation("获取备件列表")
     public List<EqpSpareVO> list(@RequestBody SpareDTO spareDTO) {
         return eqpSpareService.listCondition(spareDTO);
+    }
+
+
+    @PostMapping("/getByTypeIdSpareList")
+    @ApiOperation("根据分类获取物料信息")
+    public R<List<EqpSpareVO>> getByTypeIdSpareList(@RequestBody  Set<String> types) {
+        return R.success(eqpSpareService.getByTypeIdSpareList(types));
     }
 
 }

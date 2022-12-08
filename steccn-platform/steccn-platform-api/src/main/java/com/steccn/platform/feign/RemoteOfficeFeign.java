@@ -2,8 +2,10 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
-import com.steccn.platform.dto.*;
-import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeParentIdsDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
@@ -172,6 +174,6 @@ public interface RemoteOfficeFeign {
     R<List<SysOfficeParentVO>> getListSysOfficeList(@RequestBody SysOfficeParentIdsDTO dto);
 
     @GetMapping("/feign/platform/sys/office/getByIdSysOfficeInfo")
-    @ApiOperation("根据主键获取结构信息")
+    @ApiOperation("根据主键获取结构信息code")
     R<String> getByIdSysOfficeInfo(@RequestParam("id") Long id);
 }

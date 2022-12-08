@@ -37,7 +37,7 @@
         select
            a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,
           ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
-				  else '' end ) AS statusName
+             when 4  then   '已归档'	  else '' end ) AS statusName,a.check_area
         from wms_check_order a
         where a.del_flag = 0
         <if test="form.code!=null and form.code!=''">
@@ -83,14 +83,14 @@
         select
         a.id,a.code,a.name,a.type,a.status,a.post,a.check_time,a.create_name,a.create_time,a.check_area,
         ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
-        else '' end ) AS statusName
+        when 4  then   '已归档' else '' end ) AS statusName
         from wms_check_order a
         where a.del_flag = 0
         <if test="status!=null and status!=''">
-            and a.status #{status}
+            and a.status = #{status}
         </if>
         <if test="post!=null and post!=''">
-            and a.post #{post}
+            and a.post = #{post}
         </if>
         <if test="beginTime !=null and beginTime!='' ">
             and  a.create_time  <![CDATA[>= ]]> #{beginTime}

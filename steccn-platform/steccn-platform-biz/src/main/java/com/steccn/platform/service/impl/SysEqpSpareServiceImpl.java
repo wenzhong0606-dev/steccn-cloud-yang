@@ -10,18 +10,14 @@ import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.platform.domain.SysDict;
-import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.domain.SysEqpSpare;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.mapper.SysEqpSpareMapper;
 import com.steccn.platform.service.SysDictService;
 import com.steccn.platform.service.SysEqpSpareService;
-import com.steccn.platform.mapper.SysEqpSpareMapper;
 import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -170,6 +166,19 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             list= BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
         }
         return list;
+    }
+
+    @Override
+    public List<EqpSpareVO> getByTypeIdSpareList(Set<String> types) {
+        List<EqpSpareVO> lists = new ArrayList<>();
+        if (types.size()>0) {
+            for (String type:types) {
+                List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().eq( SysEqpSpare::getType, type));
+                List<EqpSpareVO>  list= BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
+                lists.addAll(list);
+            }
+        }
+        return lists;
     }
 }
 
