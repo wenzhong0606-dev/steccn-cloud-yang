@@ -16,6 +16,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterOperationRecord;
 import com.steccn.ems.domain.EpMeterRead;
@@ -35,6 +36,7 @@ import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
  * @createDate 2022-11-30 15:05:32
  */
 @Service
+@Slf4j
 public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMeterRead>
         implements EpMeterReadService {
 
@@ -287,13 +290,21 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
-    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> officeIdList) {
-        Assert.notEmpty(officeIdList, "组织机构不能为空");
+    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
+        Assert.notEmpty(partitionIdList, "组织机构不能为空");
         Assert.notNull(energyType, "能源类型不能为空");
-        //1.查询全量数据表
+
+        //根据选中的组织机构查询出树
+        EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
+        energyParamDTO.setPartitionId(partitionIdList);
+        energyParamDTO.setType(energyType);
+        EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
+        Assert.notEmpty(childTree.getPartitionIds(), "组织机构中没有实体仪表");
+
+        //查询全量数据表
         List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getMeterType, energyType)
-                .in(EpInstrumentAccount::getPartitionNode, officeIdList)
+                .in(EpInstrumentAccount::getPartitionNode, childTree.getPartitionIds())
                 .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode));
         SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
         //获取仪表id集合
@@ -356,14 +367,73 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     }
                 }
                 //构造整个虚拟节点
-                EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
-                energyParamDTO.setPartitionId(officeIdList);
-                energyParamDTO.setType(energyType);
-                EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
-
+                for (LocalDate classDate : sortedDateList) {
+                    for (EpPartitionVO ep : childTree.getTree()) {
+                        cycle(map, classDate, ep , resList);
+//                        EpMeterReadAllDataVO vo = new EpMeterReadAllDataVO();
+//                        BeanUtils.copyProperties(ep,vo);
+//                        vo.setConsume(consume);
+                    }
+                }
             }
         }
         return resList;
+    }
+
+    /**
+     * 递归计算节点
+     * @param map 数据集合
+     * @param classDate 班次日期
+     * @param ep 能耗信息
+     * @param resList 返回集合
+     * @return
+     */
+    private BigDecimal cycle(Map<Integer, Map<LocalDate, List<EpMeterRead>>> map, LocalDate classDate, EpPartitionVO ep, List<EpMeterReadAllDataVO> resList) {
+        Integer meterId = ep.getMeterId();
+        Integer entityTable = ep.getEntityTable();
+        BigDecimal sum = null;
+        if (Objects.nonNull(meterId) && Objects.nonNull(entityTable)) {
+            //孩子不为空，就可以往下走，自己可能没有挂仪表，也可能挂了仪表
+            if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(entityTable)) {
+                boolean flag = Boolean.FALSE;
+                //是虚拟节点
+                if (CollUtil.isNotEmpty(ep.getChildren())) {
+                    for (EpPartitionVO child : ep.getChildren()) {
+                        BigDecimal cycle = cycle(map, classDate, child, resList);
+                        sum = BigDecimalUtil.add(sum, cycle);
+                    }
+                    Set<Integer> entityTableCollect = ep.getChildren().stream().map(v -> v.getEntityTable()).collect(Collectors.toSet());
+                    if(entityTableCollect.size() == 1 && EpManagerConstant.InstrumentType.REMOTE.getCode().equals(entityTableCollect.stream().findFirst().get())){
+                        flag  =Boolean.TRUE;
+                    }
+                }
+                //N以下各级子节点关联的实体仪表只有实体远传仪表或只有实体非远传仪表
+                if(flag){
+                    //只有实体远传
+
+                }else {
+                   //其他
+
+                }
+
+            } else if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(entityTable)) {
+                //实体远传节点
+                List<EpMeterRead> epMeterReads = map.getOrDefault(meterId, Maps.newHashMap()).get(classDate);
+                epMeterReads.sort(Comparator.comparing(EpMeterRead::getEnd));
+                if (CollUtil.isNotEmpty(epMeterReads)) {
+                    EpMeterRead epMeterRead = epMeterReads.get(epMeterReads.size() - 1);
+                    sum = epMeterRead.getAdminValue();
+                }
+            } else {
+                //实体非远传节点
+                List<EpMeterRead> epMeterReads = map.getOrDefault(meterId, Maps.newHashMap()).get(classDate);
+                if (CollUtil.isNotEmpty(epMeterReads)) {
+                    EpMeterRead epMeterRead = epMeterReads.get(0);
+                    sum = epMeterRead.getAdminValue();
+                }
+            }
+        }
+        return sum;
     }
 
     private EpPartition partitionRecursion(List<EpPartition> list, EpPartition partition, StringBuilder sb) {
