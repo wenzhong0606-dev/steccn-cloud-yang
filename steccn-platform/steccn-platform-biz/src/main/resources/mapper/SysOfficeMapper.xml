@@ -54,7 +54,9 @@
             sys_office
         WHERE
             parent_code = ( SELECT office_code FROM sys_office WHERE id = #{id} )
-          AND office_type = #{officeType}
+            <if test="officeType!=null and officeType!=''">
+                AND office_type = #{officeType}
+            </if>
     </select>
     <select id="listByParentIds" resultType="com.steccn.platform.vo.SysOfficeVO">
         SELECT

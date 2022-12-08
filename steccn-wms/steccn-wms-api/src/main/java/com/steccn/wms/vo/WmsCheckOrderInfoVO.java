@@ -18,12 +18,12 @@ public class WmsCheckOrderInfoVO implements Serializable {
     private Long id;
 
     @ApiModelProperty("仓库")
-    private Integer warehouse;
+    private String warehouse;
     @ApiModelProperty("仓库名字")
     private String warehouseName;
 
     @ApiModelProperty("货架")
-    private Integer shelf;
+    private String shelf;
     @ApiModelProperty("货架名字")
     private String shelfName;
 
@@ -32,8 +32,11 @@ public class WmsCheckOrderInfoVO implements Serializable {
     @ApiModelProperty("物料名称")
     private String materialName;
 
-    @ApiModelProperty("数量")
+    @ApiModelProperty("可用数量")
     private BigDecimal quantity;
+
+    @ApiModelProperty("总数量")
+    private BigDecimal totalQuantity;
 
     @ApiModelProperty("批次")
     private String batch;
@@ -65,7 +68,6 @@ public class WmsCheckOrderInfoVO implements Serializable {
 
     @ApiModelProperty("状态（0：未执行 1：已执行）")
     private Integer status;
-
 
     @ApiModelProperty("盘点单id")
     private Long checkOrderId;

@@ -1,13 +1,11 @@
 package com.steccn.platform.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.platform.dto.SpareDTO;
-import com.steccn.platform.domain.SysEqpSpare;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.domain.SysEqpSpare;
+import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import io.swagger.models.auth.In;
 
 import java.util.List;
 import java.util.Map;
@@ -95,4 +93,12 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      * @return
      */
     List<EqpSpareVO> listCondition(SpareDTO spareDTO);
+
+    /***
+     * 根据分类获取物料信息
+     * @param type
+     * @return
+     */
+    List<EqpSpareVO> getByTypeIdSpareList(Set<String> types);
+
 }

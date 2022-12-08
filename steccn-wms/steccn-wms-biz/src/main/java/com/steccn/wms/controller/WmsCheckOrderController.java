@@ -2,9 +2,12 @@ package com.steccn.wms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
+import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
 import com.steccn.wms.service.WmsCheckOrderService;
+import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +30,7 @@ public class WmsCheckOrderController {
 
     @Autowired
     private WmsCheckOrderService wmsCheckOrderService;
-
+    private final RemoteMessFeignApi remoteMessFeignApi;
     /**
      * @explain: 获取盘点管理列表
      * @Date
@@ -82,6 +85,18 @@ public class WmsCheckOrderController {
     public R<Boolean> varianceAdjustmentCheckOrder(Long id) {
         return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id));
     }
+
+    /*****
+     * 获取盘点单分类列表
+     * @param dto
+     * @return
+     */
+    @GetMapping("/getTypeTreeList")
+    @ApiOperation(value = "获取盘点单分类列表")
+    public  R  getTypeTreeList( ) {
+        return  R.success(remoteMessFeignApi.tree());
+    }
+
     /*****
      * 手机端 获取盘点单列表
      * @param dto
@@ -95,5 +110,35 @@ public class WmsCheckOrderController {
         if(Objects.isNull(size)) return R.failure("每页显示条数不可为空");
         return R.success(wmsCheckOrderService.getApiCheckOrderList(current,size,status,beginTime,endTime,post));
     }
+
+    /*****
+     * 手机端 获取盘点单明细列表
+     * @param dto
+     * @return
+     */
+    @GetMapping("/api/getApiCheckOrderDetailList")
+    @ApiOperation(value = "手机端 获取盘点单明细列表")
+    public   R<Page<WmsCheckOrderInfoVO>>  getApiCheckOrderDetailList(Long checkOrderId, Integer current,
+                                                                      Integer size,Integer status) {
+        if(Objects.isNull(checkOrderId)) return R.failure("盘点单主键不可为空");
+        return  wmsCheckOrderService.getApiCheckOrderDetailList(checkOrderId,current,size,status);
+    }
+
+    /*****
+     * 手机端 调整盘点单操作正常或者差异调整明细
+     * @param dto
+     * @return
+     */
+    @PostMapping("/api/adjNormalOrDifferenceCheckOrderItem")
+    @ApiOperation(value = "手机端 调整盘点单操作正常或者差异调整明细")
+    public  R<Boolean> adjNormalOrDifferenceCheckOrderItem(@RequestBody WmsCheckOrderInfoDTO wmsCheckOrderInfoDTO) {
+        if(Objects.isNull(wmsCheckOrderInfoDTO.getShelf()) || Objects.isNull(wmsCheckOrderInfoDTO.getWarehouse())
+                || Objects.isNull(wmsCheckOrderInfoDTO.getMaterialId()) ||  Objects.isNull(wmsCheckOrderInfoDTO.getBatch())
+                || Objects.isNull(wmsCheckOrderInfoDTO.getCaseNo()) ||
+                Objects.isNull(wmsCheckOrderInfoDTO.getCheckOrderId()))  return R.failure("参数不全");
+        return  R.success(wmsCheckOrderService.adjNormalOrDifferenceCheckOrderItem(wmsCheckOrderInfoDTO));
+    }
+
+
 
 }

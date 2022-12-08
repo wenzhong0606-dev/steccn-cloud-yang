@@ -74,4 +74,11 @@ public interface RemoteSpareFeignApi {
     @PostMapping("/feign/platform/eqpSpare/listPage")
     @ApiOperation("获取备件分页列表")
     R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO);
+
+
+    @PostMapping("/platform/eqpSpare/getByTypeIdSpareList")
+    @ApiOperation("根据分类获取物料信息")
+    R<List<EqpSpareVO>> getByTypeIdSpareList(@RequestBody Set<String> types);
+
+
 }

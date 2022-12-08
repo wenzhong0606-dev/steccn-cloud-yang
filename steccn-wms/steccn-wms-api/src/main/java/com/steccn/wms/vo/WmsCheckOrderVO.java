@@ -54,5 +54,10 @@ public class WmsCheckOrderVO implements Serializable {
     private List<WmsCheckOrderInfoVO> wmsCheckOrderInfoVOList;
     @ApiModelProperty("盘点区域")
     private Object checkArea;
+
+    @ApiModelProperty("盘点范围（0：仓库 1：货架 2：物料分类 3：物料）")
+    private Integer checkScope;
+
+
     private static final long serialVersionUID = 1L;
 }
