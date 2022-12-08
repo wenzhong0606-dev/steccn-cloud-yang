@@ -45,4 +45,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     EpEnergyTreeDTO getChildTree(EpEnergyParamDTO dto);
+
+    /**
+     * 根据id获取名字
+     * @param partitionIdList 分区节点id
+     * @return map
+     */
+    Map<Long, String> listByIdCh(List<Long> partitionIdList);
 }

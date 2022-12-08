@@ -372,7 +372,8 @@ public interface QtManagerConstant {
         WEEK(2,"周","W"),
         MONTH(3,"月","M"),
         QUARTER(4,"季度","Q"),
-        YEAR(5,"年","Y");
+        YEAR(5,"年","Y"),
+        NONE(6,"无粒度","N");
 
         private Integer code;
         private String name;
@@ -381,6 +382,20 @@ public interface QtManagerConstant {
         public static QtGranularityEnum getByName(String name){
             for (QtGranularityEnum value : QtGranularityEnum.values()) {
                 if(value.getName().equals(name)){
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 根据code去查询时间粒度
+         * @param code code
+         * @return 时间粒度
+         */
+        public static QtGranularityEnum getByCode(Integer code){
+            for (QtGranularityEnum value : QtGranularityEnum.values()) {
+                if(value.getCode().equals(code)){
                     return value;
                 }
             }
