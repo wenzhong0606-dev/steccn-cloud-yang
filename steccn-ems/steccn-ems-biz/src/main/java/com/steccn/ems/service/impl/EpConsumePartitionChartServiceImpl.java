@@ -70,20 +70,25 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //时间粒度
         QtManagerConstant.QtGranularityEnum byCode = QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity());
         if (Objects.nonNull(byCode) && !QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-            shardDateTime = ShardTimeUtil.cutDateRange(byCode.getType(), start, end);
+            shardDateTime = ClassUtil.cutDateRange(byCode.getType(), start, end);
             Assert.notEmpty(shardDateTime, "时间分片为空");
         }
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
-        for (LocalDateTime date : shardDateTime) {
+        for (int i = 1; i < shardDateTime.size(); i++) {
+            LocalDateTime dataStart = shardDateTime.get(i - 1);
+            LocalDateTime dataEnd = shardDateTime.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-            epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, date));
+            epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
             List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
             //遍历所有的分区节点
             for (Long partitionId : dto.getPartitionIdList()) {
                 //获取分区数据集合
-                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream()
+                        .filter(v -> !LocalDateTime.of(v.getReadDate(),ClassUtil.MORNING_START_TIME).isBefore(dataStart)
+                                  && LocalDateTime.of(v.getReadDate(),ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1)))
+                        .filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
                 List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
