@@ -32,6 +32,12 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     @NotNull(message = "结束日期不能为空")
     private LocalDate end;
 
+    @ApiModelProperty("历史开始日期")
+    private LocalDate historyStart;
+
+    @ApiModelProperty("历史结束日期")
+    private LocalDate historyEnd;
+
     @ApiModelProperty("厚度")
     private List<BigDecimal> thick;
 

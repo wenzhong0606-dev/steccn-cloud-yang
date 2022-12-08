@@ -44,7 +44,7 @@ public class EpConsumePartitionChartController {
     @PostMapping("/history/chart")
     @ApiOperation(value = "能耗历史对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+        return R.success(epConsumePartitionChartService.consumeHistoryContrast(dto));
     }
 
     @PostMapping("/history/detail")

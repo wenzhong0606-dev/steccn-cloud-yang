@@ -30,4 +30,12 @@ public interface EpConsumePartitionChartService {
      * @return 分页对象
      */
     EpConsumeDetailVO consumePartitionContrastDetail(EpTableDTO dto);
+
+    /**
+     * 能耗历史对比
+     *
+     * @param dto dto
+     * @return 柱状图
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumeHistoryContrast(EpTableDTO dto);
 }
