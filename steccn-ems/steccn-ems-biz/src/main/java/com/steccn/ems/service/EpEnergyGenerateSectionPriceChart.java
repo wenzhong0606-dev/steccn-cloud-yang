@@ -2,8 +2,10 @@ package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.ems.dto.EpSectionPriceDTO;
+import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpSectionPriceLeaderDTO;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
+import com.steccn.ems.vo.EpEnergyChartPieHisVO;
 import com.steccn.ems.vo.EpEnergyMoneyVO;
 import com.steccn.ems.vo.EqEnergyChartPieVO;
 import com.steccn.qms.dto.AccessoryAcceptabilityDownDTO;
@@ -47,4 +49,26 @@ public interface EpEnergyGenerateSectionPriceChart {
      * @param response
      */
     void downloadDistribution(EpSectionPriceDTO dto, HttpServletResponse response);
+
+    /**
+     * 生成峰谷平历史图表
+     * @param dto
+     * @return
+     */
+    EpEnergyChartPieHisVO generateHistory(EpSectionPriceHisDTO dto);
+
+
+    /**
+     * 峰谷平历史详情页
+     * @param dto
+     * @return
+     */
+    Page<EpEnergyMoneyVO> getHistoryDetails(EpSectionPriceHisDTO dto);
+
+    /**
+     * 下载峰谷平分布
+     * @param dto
+     * @param response
+     */
+    void downloadHistory(EpSectionPriceHisDTO dto, HttpServletResponse response);
 }

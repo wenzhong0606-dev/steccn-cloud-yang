@@ -17,16 +17,10 @@ import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpPartition;
-import com.steccn.ems.dto.EpEnergyParamDTO;
-import com.steccn.ems.dto.EpEnergyTreeDTO;
-import com.steccn.ems.dto.EpSectionPriceDTO;
-import com.steccn.ems.dto.EpSectionPriceLeaderDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.service.*;
 import com.steccn.ems.util.DownloadUtil;
-import com.steccn.ems.vo.EpEnergyChartPieDisVO;
-import com.steccn.ems.vo.EpEnergyChartPieValueVO;
-import com.steccn.ems.vo.EpEnergyMoneyVO;
-import com.steccn.ems.vo.EqEnergyChartPieVO;
+import com.steccn.ems.vo.*;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -42,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -220,7 +215,7 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         }else {
             return results;
         }
-        //因为使用的同一种加个方案所以查到的数据必然拥有相同的开始时间和结束时间,所以合并节点的值
+        //因为使用的同一种价格方案所以查到的数据必然拥有相同的开始时间和结束时间,所以合并节点的值
         results = results.stream()
                 //startTime如果有重复的,那么从EpEnergyMoneyVO对象中筛选出一个,这里选择o1,
                 //并把id重复,需要将nums和sums与o1进行合并的o2,赋值给o1,最后返回o1
@@ -234,6 +229,103 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
                     return o1;
                 })).values().stream().collect(Collectors.toList());
         return results;
+    }
+
+    @Override
+    public EpEnergyChartPieHisVO generateHistory(EpSectionPriceHisDTO dto) {
+        EpEnergyChartPieHisVO VOS = new EpEnergyChartPieHisVO();
+        //计算时间范围
+        dto = calculateTime(dto);
+        //获取全量数据表
+        //获取dto1
+        EpSectionPriceDTO dto1 = new EpSectionPriceDTO();
+        dto1.setPartitionId(dto.getPartitionId());
+        dto1.setDateStart(dto.getDateStart1());
+        dto1.setDateEnd(dto.getDateEnd1());
+        List<EpEnergyMoneyVO> epEnergyMoneyVO1 = generateSectionData(dto1);
+        //生成dto1
+        if(CollUtil.isEmpty(epEnergyMoneyVO1)){
+            EqEnergyChartPieVO<BigDecimal> resultPieVO = new EqEnergyChartPieVO<>();
+            List<EpEnergyChartPieValueVO<BigDecimal>> pies = Lists.newArrayList();
+            resultPieVO.setData(pies);
+            VOS.setEnergy1(resultPieVO);
+            VOS.setPrice1(resultPieVO);
+        }else {
+            //电耗加总
+            Map<Integer, BigDecimal> consumption = new LinkedHashMap<>();
+            consumption = epEnergyMoneyVO1.stream().collect(Collectors.groupingBy(EpEnergyMoneyVO::getType, CollectorsUtil.summingBigDecimal(EpEnergyMoneyVO::getConsumptionNum)));
+            VOS.setEnergy1(generatePie(consumption));
+            //电费加总
+            Map<Integer, BigDecimal> money = new LinkedHashMap<>();
+            money = epEnergyMoneyVO1.stream().collect(Collectors.groupingBy(EpEnergyMoneyVO::getType, CollectorsUtil.summingBigDecimal(EpEnergyMoneyVO::getFeeNum)));
+            VOS.setPrice1(generatePie(money));
+        }
+        //获取dto2
+        EpSectionPriceDTO dto2 = new EpSectionPriceDTO();
+        dto2.setPartitionId(dto.getPartitionId());
+        dto2.setDateStart(dto.getDateStart2());
+        dto2.setDateEnd(dto.getDateEnd2());
+        List<EpEnergyMoneyVO> epEnergyMoneyVO2 = generateSectionData(dto2);
+        //生成dto2
+        if(CollUtil.isEmpty(epEnergyMoneyVO2)){
+            EqEnergyChartPieVO<BigDecimal> resultPieVO = new EqEnergyChartPieVO<>();
+            List<EpEnergyChartPieValueVO<BigDecimal>> pies = Lists.newArrayList();
+            resultPieVO.setData(pies);
+            VOS.setEnergy2(resultPieVO);
+            VOS.setPrice2(resultPieVO);
+        }else {
+            //电耗加总
+            Map<Integer, BigDecimal> consumption = new LinkedHashMap<>();
+            consumption = epEnergyMoneyVO2.stream().collect(Collectors.groupingBy(EpEnergyMoneyVO::getType, CollectorsUtil.summingBigDecimal(EpEnergyMoneyVO::getConsumptionNum)));
+            VOS.setEnergy2(generatePie(consumption));
+            //电费加总
+            Map<Integer, BigDecimal> money = new LinkedHashMap<>();
+            money = epEnergyMoneyVO2.stream().collect(Collectors.groupingBy(EpEnergyMoneyVO::getType, CollectorsUtil.summingBigDecimal(EpEnergyMoneyVO::getFeeNum)));
+            VOS.setPrice2(generatePie(money));
+        }
+        return VOS;
+    }
+
+    /**
+     * 生成峰谷平历史数据
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<EpEnergyMoneyVO> getHistoryDetails(EpSectionPriceHisDTO dto) {
+        //计算时间范围
+        dto = calculateTime(dto);
+        //获取全量数据表
+        //获取dto1
+        EpSectionPriceDTO dto1 = new EpSectionPriceDTO();
+        dto1.setPartitionId(dto.getPartitionId());
+        dto1.setDateStart(dto.getDateStart1());
+        dto1.setDateEnd(dto.getDateEnd1());
+        List<EpEnergyMoneyVO> epEnergyMoneyVO1 = generateSectionData(dto1);
+        //获取dto2
+        EpSectionPriceDTO dto2 = new EpSectionPriceDTO();
+        dto2.setPartitionId(dto.getPartitionId());
+        dto2.setDateStart(dto.getDateStart2());
+        dto2.setDateEnd(dto.getDateEnd2());
+        List<EpEnergyMoneyVO> epEnergyMoneyVO2 = generateSectionData(dto2);
+        epEnergyMoneyVO1.addAll(epEnergyMoneyVO2);
+        //根据峰 谷 平过滤
+        if(CollUtil.isNotEmpty(dto.getFilters())){
+            List<String> filters = dto.getFilters();
+            epEnergyMoneyVO1 = epEnergyMoneyVO1.stream().filter(t -> filters.contains(t.getTypeName())).collect(Collectors.toList());
+        }
+        //防止重复的时间分片,需要对相同班次日期的同一个开始时间去重
+        epEnergyMoneyVO1 = epEnergyMoneyVO1.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(tmp -> tmp.getClassDateStr() + ";" + tmp.getStartStr()))), ArrayList::new));
+        //排序
+        epEnergyMoneyVO1 = epEnergyMoneyVO1.stream().sorted(Comparator.comparing(EpEnergyMoneyVO::getClassDate).thenComparing(EpEnergyMoneyVO::getType)).collect(Collectors.toList());
+        //分页
+        Page<EpEnergyMoneyVO> page = LogicalPageUtil.page(epEnergyMoneyVO1, dto.getCurrent(), dto.getSize());
+        return page;
+    }
+
+    @Override
+    public void downloadHistory(EpSectionPriceHisDTO dto, HttpServletResponse response) {
+
     }
 
     /**
@@ -256,5 +348,21 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         }
         resultPieVO.setData(pies);
         return resultPieVO;
+    }
+
+    private EpSectionPriceHisDTO calculateTime(EpSectionPriceHisDTO dto){
+        //选择的天数必须和“日期范围”选择框的天数相同：
+        Period period1 = Period.between(dto.getDateStart1(),dto.getDateEnd1());
+        Period period2 = Period.between(dto.getDateStart2(),dto.getDateEnd2());
+        int duration = period2.getDays() - period1.getDays();
+        //1）天数比后者少时，在结束日期之后补全
+        if(duration < 0) {
+            dto.setDateEnd2(dto.getDateEnd2().plusDays(Math.abs(duration)));
+        }
+        //2）天数比后者多时，从开始日期往后截取和后者相同的天数
+        if(duration > 0){
+            dto.setDateEnd2(dto.getDateStart2().plusDays(period1.getDays()));
+        }
+        return dto;
     }
 }

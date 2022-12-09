@@ -7,10 +7,12 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpSectionPriceDTO;
+import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpSectionPriceLeaderDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpEnergyGenerateSectionPriceChart;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
+import com.steccn.ems.vo.EpEnergyChartPieHisVO;
 import com.steccn.ems.vo.EpEnergyMoneyVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartYieldDownloadDTO;
@@ -58,6 +60,18 @@ public class EpEnergyGenerateSectionPriceChartController {
     @ApiOperation(value = "峰平谷对比-图表-领导驾驶舱")
     public R<EpEnergyChartPieDisVO> getDisChartLeader(@RequestBody EpSectionPriceLeaderDTO dto) {
         return R.success(epEnergyGenerateSectionPriceChart.generateDistributionLeader(dto));
+    }
+
+    @PostMapping("/history/detail")
+    @ApiOperation(value = "峰平谷历史对比-详情")
+    public R<Page<EpEnergyMoneyVO>> getHisDetail(@RequestBody EpSectionPriceHisDTO dto) {
+        return R.success(epEnergyGenerateSectionPriceChart.getHistoryDetails(dto));
+    }
+
+    @PostMapping("/history/chart")
+    @ApiOperation(value = "峰平谷历史对比-图表")
+    public R<EpEnergyChartPieHisVO> getHisChart(@RequestBody EpSectionPriceHisDTO dto) {
+        return R.success(epEnergyGenerateSectionPriceChart.generateHistory(dto));
     }
 
     @PostMapping("/download")
