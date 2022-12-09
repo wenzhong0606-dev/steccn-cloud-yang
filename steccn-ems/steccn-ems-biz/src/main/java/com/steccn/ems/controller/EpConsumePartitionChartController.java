@@ -6,6 +6,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
+import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,19 +38,19 @@ public class EpConsumePartitionChartController {
 
     @PostMapping("/contrast/detail")
     @ApiOperation(value = "能耗分区对比-明细")
-    public R<Page<EpConsumeDetailVO>> consumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+    public R<EpConsumeDetailVO> consumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.consumePartitionContrastDetail(dto));
     }
 
     @PostMapping("/history/chart")
     @ApiOperation(value = "能耗历史对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+        return R.success(epConsumePartitionChartService.consumeHistoryContrast(dto));
     }
 
     @PostMapping("/history/detail")
     @ApiOperation(value = "能耗历史对比-明细")
-    public R<Page<EpConsumeDetailVO>> consumeHistoryContrastDetail(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+    public R<Page<ConsumeHistoryContrastDetailVO>> consumeHistoryContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
 }

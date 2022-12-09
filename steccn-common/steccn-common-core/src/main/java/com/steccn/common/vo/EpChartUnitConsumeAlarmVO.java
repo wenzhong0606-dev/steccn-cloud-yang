@@ -21,7 +21,7 @@ public class EpChartUnitConsumeAlarmVO implements Serializable {
     private Integer energyType;
 
     @ApiModelProperty("组织机构id")
-    private Integer officeId;
+    private Long officeId;
 
     @ApiModelProperty("组织机构name")
     private String officeName;

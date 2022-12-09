@@ -3,7 +3,7 @@ package com.steccn.ems.dto;
 import com.steccn.common.dto.BasePageDTO;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author chenhuan
@@ -11,8 +11,8 @@ import java.time.LocalDate;
  */
 @Data
 public class EpUnitConsumeAlarmDTO extends BasePageDTO {
-    private LocalDate endDate;
+    private LocalDateTime endDate;
     private Integer energyType;
     private String partitionId;
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 }

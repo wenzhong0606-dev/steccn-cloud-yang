@@ -1,19 +1,21 @@
 package com.steccn.platform.controller;
 
 
+import com.steccn.common.vo.R;
+import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.dto.SysOfficeDTO;
-import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.service.SysOfficeService;
 import com.steccn.platform.vo.StationLineVO;
 import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.common.vo.R;
-import com.steccn.platform.service.SysOfficeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -101,4 +103,15 @@ public class SysOfficeController {
     public R<List<SysOfficeVO>> getListByTypeAndKey(@RequestBody SysOfficeTypeKeyDTO dto){
         return R.success(sysOfficeService.getListByTypeAndKey(dto));
     }
+
+    @ApiOperation("获取组织结构信息")
+    @GetMapping("/sysOfficeInfo/{id}")
+    public R<SysOfficeVO> sysOfficeInfo(@PathVariable("id") Integer id) {
+        SysOfficeVO sysOfficeVO = new SysOfficeVO();
+        SysOffice sysOffice =  sysOfficeService.getById(id);
+        BeanUtils.copyProperties(sysOffice,sysOfficeVO);
+        return R.success(sysOfficeVO);
+    }
+
+
 }

@@ -1,8 +1,11 @@
 package com.steccn.ems.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.dto.EpTableDTO;
+import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
+import com.steccn.ems.vo.EpConsumeDetailVO;
 
 import java.math.BigDecimal;
 
@@ -21,4 +24,26 @@ public interface EpConsumePartitionChartService {
      * @return 柱状图
      */
     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto);
+
+    /**
+     * 能耗分区对比-明细
+     * @param dto dto
+     * @return 分页对象
+     */
+    EpConsumeDetailVO consumePartitionContrastDetail(EpTableDTO dto);
+
+    /**
+     * 能耗历史对比-柱状图
+     *
+     * @param dto dto
+     * @return 柱状图
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumeHistoryContrast(EpTableDTO dto);
+
+    /**
+     * 能耗历史对比-明细
+     * @param dto dto
+     * @return 分页列表
+     */
+    Page<ConsumeHistoryContrastDetailVO> consumeHistoryContrastDetail(EpTableDTO dto);
 }

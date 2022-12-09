@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -49,8 +50,8 @@ public class WmsCheckOrderController {
      */
     @PostMapping("/addOrUpdateCheckOrder")
     @ApiOperation(value = "新增或者编辑盘点管理")
-    public R<Boolean> addOrUpdateCheckOrder(@RequestBody WmsCheckOrder dto) {
-        return R.success(wmsCheckOrderService.addOrUpdateCheckOrder(dto));
+    public R<String> addOrUpdateCheckOrder(@RequestBody WmsCheckOrder dto) {
+        return R.success(wmsCheckOrderService.addOrUpdateCheckOrder(dto),null);
     }
 
     /****
@@ -71,8 +72,8 @@ public class WmsCheckOrderController {
      */
     @GetMapping("/getByIdCheckOrderDetail")
     @ApiOperation(value = "盘点管理详情")
-    public R<WmsCheckOrderVO> getByIdCheckOrderDetail(Long id) {
-        return R.success(wmsCheckOrderService.getByIdCheckOrderDetail(id));
+    public R<Map> getByIdCheckOrderDetail(Long id,Integer current, Integer size) {
+        return R.success(wmsCheckOrderService.getByIdCheckOrderDetail(id,current,size));
     }
 
     /*****
@@ -82,7 +83,7 @@ public class WmsCheckOrderController {
      */
     @GetMapping("/varianceAdjustmentCheckOrder")
     @ApiOperation(value = "盘点差异调整")
-    public R<Boolean> varianceAdjustmentCheckOrder(Long id) {
+    public R<String> varianceAdjustmentCheckOrder(Long id) {
         return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id));
     }
 

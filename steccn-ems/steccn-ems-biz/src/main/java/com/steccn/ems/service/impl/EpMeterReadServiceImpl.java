@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -143,8 +142,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
                 if (CollectionUtils.isNotEmpty(filterList)) {
-                    BigDecimal total = filterList.stream().map(MeterReadMapperVO::getAdminValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    readValueListVO.setReadValue(total);
+                    List<MeterReadMapperVO> collect = filterList.stream().sorted(Comparator.comparing(MeterReadMapperVO::getEndTime).reversed()).collect(Collectors.toList());
+                    readValueListVO.setReadValue(collect.get(0).getReadValue());
                 }
                 readValueListVO.setEntityTable(readValueListVO.getEntityTable());
                 readValueListVO.setReadDate(localDate);

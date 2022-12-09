@@ -116,34 +116,34 @@ public interface EpManagerConstant {
         }
     }
 
-    /**
-     * 时间粒度-天、周、月、无粒度
-     */
-    @Getter
-    @AllArgsConstructor
-    enum EpGranularity {
-        DAY(0, "天"),
-        WEEK(1, "周"),
-        MONTH(2, "月"),
-        NONE(3, "无粒度");
-        private Integer code;
-        private String name;
-
-        /**
-         * 根据
-         *
-         * @param code
-         * @return
-         */
-        public static EpGranularity getProductType(Long code) {
-            for (EpGranularity value : EpGranularity.values()) {
-                if (value.getCode().equals(code)) {
-                    return value;
-                }
-            }
-            return NONE;
-        }
-    }
+//    /**
+//     * 时间粒度-天、周、月、无粒度
+//     */
+//    @Getter
+//    @AllArgsConstructor
+//    enum EpGranularity {
+//        DAY(0, "天"),
+//        WEEK(1, "周"),
+//        MONTH(2, "月"),
+//        NONE(3, "无粒度");
+//        private Integer code;
+//        private String name;
+//
+//        /**
+//         * 根据
+//         *
+//         * @param code
+//         * @return
+//         */
+//        public static EpGranularity getProductType(Long code) {
+//            for (EpGranularity value : EpGranularity.values()) {
+//                if (value.getCode().equals(code)) {
+//                    return value;
+//                }
+//            }
+//            return NONE;
+//        }
+//    }
 
     /**
      * 仪表类型
@@ -228,6 +228,34 @@ public interface EpManagerConstant {
          */
         public static String getNameByCode(Integer code) {
             for (ElectricType value : ElectricType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    enum EnergyPriceType {
+        //峰时段
+        PEAK_PERIOD(1, "峰时段"),
+        //平时段
+        USUALLY_PERIOD(2, "平时段"),
+        //谷时段
+        VALLEY_PERIOD(3, "谷时段");
+        private final Integer code;
+        private final String name;
+
+        /**
+         * 根据code获取名称
+         *
+         * @param code
+         * @return
+         */
+        public static String getNameByCode(Integer code) {
+            for (OperationType value : OperationType.values()) {
                 if (value.getCode().equals(code)) {
                     return value.getName();
                 }

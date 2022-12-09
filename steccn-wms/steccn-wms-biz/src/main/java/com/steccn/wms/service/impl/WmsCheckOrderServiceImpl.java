@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -34,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,6 +74,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         for (WmsCheckOrderVO vo:list) {
             //盘点类型
             vo.setTypeName(typeName(vo.getType()));
+            vo.setPostName(Objects.isNull(remoteOfficeFeign.sysOfficeInfo(vo.getPost()).getData())?null
+                    :remoteOfficeFeign.sysOfficeInfo(vo.getPost()).getData().getOfficeName());
         }
         return  page.setRecords(list);
     }
@@ -84,7 +86,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      * @return
      */
     @Override
-    public Boolean addOrUpdateCheckOrder(WmsCheckOrder dto) {
+    public String addOrUpdateCheckOrder(WmsCheckOrder dto) {
         Integer result;
         if(Objects.isNull(dto.getId())){
             dto.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_PMS_BATCH, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
@@ -92,7 +94,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         }else{
             result = baseMapper.updateById(dto);
         }
-        return result >0 ? true:false;
+        return result >0 ? dto.getCode():"操作失败";
     }
 
     /***
@@ -115,41 +117,45 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      * @return
      */
     @Override
-    public WmsCheckOrderVO getByIdCheckOrderDetail(Long id) {
-        WmsCheckOrderVO wmsCheckOrderVO = new WmsCheckOrderVO();
+    public Map getByIdCheckOrderDetail(Long id, Integer current, Integer size) {
+        Map map = new HashMap();
         //获取盘点信息
         WmsCheckOrder wmsCheckOrder = getById(id);
-        BeanUtils.copyProperties(wmsCheckOrder,wmsCheckOrderVO);
+        if(Objects.isNull(current)) current =1;
+        if(Objects.isNull(size)) size =10;
+        Page page = new Page<>(current, size);
         //获取明细信息
         QueryWrapper<WmsCheckOrderInfo> orderInfoQueryWrapper = new QueryWrapper<>();
         orderInfoQueryWrapper.eq("check_order_id",id).eq("del_flag",0);
         orderInfoQueryWrapper.orderByDesc("create_time");
-        List<WmsCheckOrderInfo> infoList = wmsCheckOrderInfoService.list(orderInfoQueryWrapper);
+        Page resPage = wmsCheckOrderInfoService.page(page, orderInfoQueryWrapper);
         List<WmsCheckOrderInfoVO> infoVOList = new ArrayList<>();
-        for (WmsCheckOrderInfo info:infoList) {
+        resPage.getRecords().forEach(vo->{
             WmsCheckOrderInfoVO wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
-            BeanUtils.copyProperties(info,wmsCheckOrderInfoVO);
+            BeanUtils.copyProperties(vo,wmsCheckOrderInfoVO);
             //仓库
-            if(Objects.nonNull(info.getWarehouse())){
-                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouse(info.getWarehouse());
+            if(Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse())){
+                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(wmsCheckOrderInfoVO.getWarehouse()));
                 wmsCheckOrderInfoVO.setWarehouseName(warehouseInfo.getData().getOfficeName());
             }
             //货架
-            if(Objects.nonNull(info.getShelf())){
-                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouse(info.getShelf());
+            if(Objects.nonNull(wmsCheckOrderInfoVO.getShelf())){
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(wmsCheckOrderInfoVO.getShelf()));
                 wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             }
             //物料
-            if(Objects.nonNull(info.getShelf())){
+            if(Objects.nonNull(wmsCheckOrderInfoVO.getShelf())){
                 List<Long> materialIds = new ArrayList<>();
-                materialIds.add(info.getMaterialId());
+                materialIds.add(wmsCheckOrderInfoVO.getMaterialId());
                 R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
-                if(materialInfo.getData().size()>0) wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(info.getMaterialId()).getName());
+                if(materialInfo.getData().size()>0) wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
             }
             infoVOList.add(wmsCheckOrderInfoVO);
-        }
-        wmsCheckOrderVO.setWmsCheckOrderInfoVOList(infoVOList);
-        return wmsCheckOrderVO;
+        });
+        resPage.setRecords(infoVOList);
+        map.put("wmsCheckOrder",wmsCheckOrder);
+        map.put("wmsCheckOrderInfo",resPage);
+        return map;
     }
 
     /****
@@ -158,8 +164,30 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      * @return
      */
     @Override
-    public Boolean varianceAdjustmentCheckOrder(Long id) {
-        return null;
+    public String varianceAdjustmentCheckOrder(Long id) {
+        //获取盘点信息
+        WmsCheckOrder wmsCheckOrder = getById(id);
+        if(Objects.isNull(wmsCheckOrder)) return "未查询到盘点单信息";
+        Page<WmsCheckOrderInfoVO> orderInfoVOPage = getNowCheckOrderItemStockList( wmsCheckOrder.getCheckArea(), wmsCheckOrder.getCheckScope(),
+                id,1,10000,null);
+        if(orderInfoVOPage.getRecords().size() == 0) return  "盘点库存不存在，无法调整";
+        List<WmsCheckOrderInfoVO> orderInfoVOList = orderInfoVOPage.getRecords();
+        if(orderInfoVOList.stream().filter(m-> Objects.isNull(m.getStatus())).findAny().isPresent()) return "盘点未完成";
+        for (WmsCheckOrderInfoVO vo:orderInfoVOList) {
+            //差额为正数，则盘盈；盘盈生成对应的入库单，类型为盘点入库，关联单据为盘点单号，入库单自动确认
+            if(vo.getDifference().compareTo(BigDecimal.ZERO) ==1){
+
+            }
+
+            //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认
+            if(vo.getDifference().compareTo(BigDecimal.ZERO) == -1){
+
+            }
+        }
+        //更新盘点单信息
+        wmsCheckOrder.setStatus(4);
+        updateById(wmsCheckOrder);
+        return "差异调整完成";
     }
 
     @Override
@@ -181,54 +209,13 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      */
     @Override
     public R<Page<WmsCheckOrderInfoVO>> getApiCheckOrderDetailList(Long checkOrderId,Integer current, Integer size,Integer status) {
-        Set<String> shelfs = new HashSet<>();
-        Set<Long> materials = new HashSet<>();
         //获取盘点信息
         WmsCheckOrder wmsCheckOrder = getById(checkOrderId);
         if(Objects.isNull(wmsCheckOrder)) return R.failure("未查询到盘点信息");
         Object checkArea = wmsCheckOrder.getCheckArea();
         if(Objects.isNull(checkArea)) return R.failure("盘点信息区域为空，请联系管理员");
-        //盘点区域
-        List<WmsCheckAreaVO> checkAreaList = JSON.parseArray(checkArea.toString(), WmsCheckAreaVO.class);
-        if(wmsCheckOrder.getCheckScope() == WmsManagerConstant.CheckScope.WAREHOUSE.getCode()){
-            //根据仓库获取货架
-            checkAreaList.forEach(vo->{
-                SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
-                sysOfficeParentDTO.setId(vo.getId().intValue());
-                R<List<SysOfficeVO>> listR = remoteOfficeFeign.listByParentId(sysOfficeParentDTO);
-                listR.getData().forEach(a->{
-                    shelfs.add(a.getOfficeCode());
-                });
-            });
-            return  R.success(getStockList(  checkOrderId,  getShelfNewStockList(shelfs),current, size,status));
-        }
-        if(wmsCheckOrder.getCheckScope() == WmsManagerConstant.CheckScope.SHELVES.getCode()){
-            //根据货架获取关联库存
-            checkAreaList.forEach(vo->{
-                shelfs.add(remoteOfficeFeign.getByIdSysOfficeInfo(vo.getId()).getMsg());
-            });
-            return R.success(getStockList(  checkOrderId,  getShelfNewStockList(shelfs),current, size,status));
-        }
-        if(wmsCheckOrder.getCheckScope() == WmsManagerConstant.CheckScope.MATERIALCLASSIFICATION.getCode()){
-            //根据分类查询物料
-            Set<String> typeRelationMaterials = new HashSet<>();
-            checkAreaList.forEach(vo->{
-                typeRelationMaterials.add(vo.getId().toString());
-            });
-            R<List<EqpSpareVO>> listR = remoteSpareFeignApi.getByTypeIdSpareList(typeRelationMaterials);
-            listR.getData().forEach(vo->{
-                materials.add(vo.getId());
-            });
-            return  R.success(getStockList(  checkOrderId, getMaterialsNewStockList(materials),current, size,status));
-        }
-        if(wmsCheckOrder.getCheckScope() == WmsManagerConstant.CheckScope.MATERIAL.getCode()){
-            //获取物料下关联库存
-            checkAreaList.forEach(vo->{
-                materials.add(vo.getId());
-            });
-            return R.success(getStockList(  checkOrderId, getMaterialsNewStockList(materials),current, size,status));
-        }
-        return R.success();
+        return R.success(getNowCheckOrderItemStockList( checkArea, wmsCheckOrder.getCheckScope(),
+                checkOrderId,current,size,status));
     }
 
     @Override
@@ -263,6 +250,62 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         }
         return result;
     }
+
+
+    /*****
+     * 得到当前盘点单关联库存信息
+     * @param checkArea
+     * @param checkScope
+     * @param checkOrderId
+     * @param current
+     * @param size
+     * @param status
+     * @return
+     */
+    public  Page<WmsCheckOrderInfoVO>  getNowCheckOrderItemStockList(Object checkArea,Integer checkScope,Long checkOrderId,
+                                                                     Integer current,Integer size,Integer status){
+        Set<String> shelfs = new HashSet<>();
+        Set<Long> materials = new HashSet<>();
+        //盘点区域
+        List<WmsCheckAreaVO> checkAreaList = JSON.parseArray(checkArea.toString(), WmsCheckAreaVO.class);
+        if(checkScope == WmsManagerConstant.CheckScope.WAREHOUSE.getCode()){
+            //根据仓库获取货架
+            checkAreaList.forEach(vo->{
+                SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+                sysOfficeParentDTO.setId(vo.getId().intValue());
+                R<List<SysOfficeVO>> listR = remoteOfficeFeign.listByParentId(sysOfficeParentDTO);
+                listR.getData().forEach(a->{
+                    shelfs.add(a.getOfficeCode());
+                });
+            });
+        }
+        if(checkScope == WmsManagerConstant.CheckScope.SHELVES.getCode()){
+            //根据货架获取关联库存
+            checkAreaList.forEach(vo->{
+                shelfs.add(remoteOfficeFeign.getByIdSysOfficeInfo(vo.getId()).getMsg());
+            });
+        }
+        if(checkScope == WmsManagerConstant.CheckScope.MATERIALCLASSIFICATION.getCode()){
+            //根据分类查询物料
+            Set<String> typeRelationMaterials = new HashSet<>();
+            checkAreaList.forEach(vo->{
+                typeRelationMaterials.add(vo.getId().toString());
+            });
+            R<List<EqpSpareVO>> listR = remoteSpareFeignApi.getByTypeIdSpareList(typeRelationMaterials);
+            listR.getData().forEach(vo->{
+                materials.add(vo.getId());
+            });
+        }
+        if(checkScope == WmsManagerConstant.CheckScope.MATERIAL.getCode()){
+            //获取物料下关联库存
+            checkAreaList.forEach(vo->{
+                materials.add(vo.getId());
+            });
+        }
+      return  getStockList(checkOrderId,(checkScope == 0 || checkScope == 1)?getShelfNewStockList(shelfs)
+              :getMaterialsNewStockList(materials),current, size,status);
+    }
+
 
     /***
      * 根据物料获取最新库存列表
@@ -357,7 +400,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        WmsCheckOrder maxCodeModel = getOne(new LambdaQueryWrapper<WmsCheckOrder>().orderByDesc(WmsCheckOrder::getCode).last(MpConstant.STR_LIMIT_1));
+        WmsCheckOrder maxCodeModel = baseMapper.getCurrentDayMaxCodeOrder();
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {

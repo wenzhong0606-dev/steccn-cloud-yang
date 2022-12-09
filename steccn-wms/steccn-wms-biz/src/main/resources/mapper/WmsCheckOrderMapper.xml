@@ -99,4 +99,13 @@
         order by a.create_time desc
     </select>
 
+    <select id="getCurrentDayMaxCodeOrder" resultType="com.steccn.wms.domain.WmsCheckOrder">
+        select
+            id,code,name, type,status,post, check_time,check_scope,check_area,
+            note,create_by,create_name,  create_time,update_by,update_name, update_time,del_flag
+        from wms_check_order
+        where  del_flag = 0
+        and DATE_FORMAT(create_time,'%Y-%m-%d' )  = DATE_FORMAT(now(),'%Y-%m-%d' )
+        order by code desc limit 1
+    </select>
 </mapper>

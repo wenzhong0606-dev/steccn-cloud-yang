@@ -176,4 +176,9 @@ public interface RemoteOfficeFeign {
     @GetMapping("/feign/platform/sys/office/getByIdSysOfficeInfo")
     @ApiOperation("根据主键获取结构信息code")
     R<String> getByIdSysOfficeInfo(@RequestParam("id") Long id);
+
+    @ApiOperation("获取组织结构信息")
+    @GetMapping("/platform/sys/office/sysOfficeInfo/{id}")
+    R<SysOfficeVO> sysOfficeInfo(@PathVariable("id") Integer id);
+
 }

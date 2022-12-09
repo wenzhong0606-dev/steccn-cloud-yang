@@ -2,7 +2,11 @@ package com.steccn.ems.mapper;
 
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.ems.vo.EpPartitionVO;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -13,6 +17,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface EpPartitionMapper extends BaseMapper<EpPartition> {
 
+
+    List<EpPartitionVO> listParentInfo(Set<Long> childList);
 }
 
 

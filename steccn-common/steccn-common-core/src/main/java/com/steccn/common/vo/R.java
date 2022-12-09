@@ -100,6 +100,15 @@ public class R<T> {
         return r;
     }
 
+    public static R success(String msg,Integer type) {
+        R r = new R();
+        r.code = ResultCode.SUCCESS.getCode();
+        r.msg = null;
+        r.data = msg;
+
+        return r;
+    }
+
     public static <K> R<K> failure(K data) {
         R<K> r = new R<>();
         r.code = ResultCode.FAILURE.getCode();

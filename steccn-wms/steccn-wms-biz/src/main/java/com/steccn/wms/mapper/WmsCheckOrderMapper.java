@@ -26,6 +26,8 @@ public interface WmsCheckOrderMapper extends BaseMapper<WmsCheckOrder> {
                                                @Param("beginTime") String beginTime,
                                                @Param("endTime") String endTime,
                                                @Param("post") Integer post);
+
+    WmsCheckOrder getCurrentDayMaxCodeOrder();
 }
 
 

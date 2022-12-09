@@ -1,5 +1,6 @@
 package com.steccn.ems.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 @ApiModel("能耗图表dto")
 @Data
-public class EpTableDTO implements Serializable {
+public class EpTableDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("能源类型id")
     @NotNull(message = "能源类型不能为空")
@@ -30,6 +31,12 @@ public class EpTableDTO implements Serializable {
     @ApiModelProperty("结束日期")
     @NotNull(message = "结束日期不能为空")
     private LocalDate end;
+
+    @ApiModelProperty("历史开始日期")
+    private LocalDate historyStart;
+
+    @ApiModelProperty("历史结束日期")
+    private LocalDate historyEnd;
 
     @ApiModelProperty("厚度")
     private List<BigDecimal> thick;

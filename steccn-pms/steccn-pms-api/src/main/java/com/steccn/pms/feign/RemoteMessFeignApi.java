@@ -1,5 +1,6 @@
 package com.steccn.pms.feign;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.WmsStockVO;
@@ -122,4 +123,5 @@ public interface RemoteMessFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     Object tree();
+
 }

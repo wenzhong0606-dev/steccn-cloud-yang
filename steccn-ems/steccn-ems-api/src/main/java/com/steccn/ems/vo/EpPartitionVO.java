@@ -1,6 +1,7 @@
 package com.steccn.ems.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -41,6 +42,9 @@ public class EpPartitionVO implements Serializable {
      * 是否关联仪表 0 否 1 是
      */
     private Integer isLinkTable;
+
+    @ApiModelProperty("子级节点id(根据该id 获取父级节点)")
+    private Long childrenId;
 
     /**
      * 子级节点

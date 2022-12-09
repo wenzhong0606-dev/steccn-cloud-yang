@@ -27,4 +27,25 @@
         update_by,update_name,update_time,
         del_flag
     </sql>
+    <select id="listParentInfo" resultType="com.steccn.ems.vo.EpPartitionVO">
+        SELECT
+        a.id as childrenId,
+        b.id id,
+        b.type type ,
+        b.office_id ,
+        b.office_name,
+        c.id as parentId,
+        c.office_id as  parentOfficeId,
+        c.office_name as parentOfficeName
+        from
+        ep_partition a
+        inner join ep_partition b on a.parent_id = b.parent_id
+        inner join ep_partition c on b.parent_id = c.parent_id
+        where
+        a.id in
+        <foreach collection="childList" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+
+    </select>
 </mapper>

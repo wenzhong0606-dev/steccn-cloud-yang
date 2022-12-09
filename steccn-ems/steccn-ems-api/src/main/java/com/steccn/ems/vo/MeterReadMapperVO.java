@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author chenhuan
@@ -69,5 +70,7 @@ public class MeterReadMapperVO {
     private Integer meterReadId;
 
     private Integer status;
+
+    private LocalDateTime endTime;
 
 }
