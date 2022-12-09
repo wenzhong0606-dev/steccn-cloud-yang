@@ -20,6 +20,7 @@ import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpEnergyParamDTO;
 import com.steccn.ems.dto.EpEnergyTreeDTO;
 import com.steccn.ems.dto.EpSectionPriceDTO;
+import com.steccn.ems.dto.EpSectionPriceLeaderDTO;
 import com.steccn.ems.service.*;
 import com.steccn.ems.util.DownloadUtil;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
@@ -81,6 +82,28 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         money = data.stream().collect(Collectors.groupingBy(EpEnergyMoneyVO::getType, CollectorsUtil.summingBigDecimal(EpEnergyMoneyVO::getFeeNum)));
         result.setPrice(generatePie(money));
         return result;
+    }
+
+    /**
+     * 生成峰谷平-领导驾驶舱
+     * @param dto
+     * @return
+     */
+    @Override
+    public EpEnergyChartPieDisVO generateDistributionLeader(EpSectionPriceLeaderDTO dto) {
+        EpSectionPriceDTO tmpDto = new EpSectionPriceDTO();
+        tmpDto.setDateStart(dto.getStartDate().minusDays(6));
+        tmpDto.setDateEnd(dto.getStartDate());
+        //查到电耗根节点
+        EpPartition epPartition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>()
+                .eq(EpPartition::getType, EpManagerConstant.EnergyPartitioningTree.POWER_CONSUMPTION_PARTITION.getEnergyType())
+                .isNull(EpPartition::getParentId),false);
+        if(epPartition == null){
+            tmpDto.setPartitionId(Long.parseLong(MpConstant.YES.toString()));
+        }else {
+            tmpDto.setPartitionId(epPartition.getId());
+        }
+        return generateDistribution(tmpDto);
     }
 
     @Override
@@ -154,7 +177,7 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
             epEnergyParam.setType(EpManagerConstant.EnergyPartitioningTree.POWER_CONSUMPTION_PARTITION.getEnergyType());
             EpEnergyTreeDTO childTree = epPartitionService.getChildTree(epEnergyParam);
             if(CollUtil.isNotEmpty(childTree.getPartitionIds())){
-                partitionIds.addAll(childTree.getPartitionIds());
+                partitionIdList.addAll(childTree.getPartitionIds());
             } else {
                 //没有下级节点则为空
                 return results;
@@ -224,11 +247,11 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         /**
          * 遍历节点
          */
-        BigDecimal sum = dataMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+//        BigDecimal sum = dataMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         for(Map.Entry<Integer,BigDecimal> entry:dataMap.entrySet()){
             EpEnergyChartPieValueVO<BigDecimal> pie = new EpEnergyChartPieValueVO<>();
-            pie.setName(EpManagerConstant.ElectricType.getNameByCode(entry.getKey()));
-            pie.setValue(BigDecimalUtil.divide(entry.getValue(),sum));
+            pie.setName(EpManagerConstant.ElectricType.getNameByCode(entry.getKey()) + "时段");
+            pie.setValue(entry.getValue().setScale(2));
             pies.add(pie);
         }
         resultPieVO.setData(pies);

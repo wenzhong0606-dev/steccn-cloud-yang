@@ -7,6 +7,7 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpSectionPriceDTO;
+import com.steccn.ems.dto.EpSectionPriceLeaderDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpEnergyGenerateSectionPriceChart;
 import com.steccn.ems.vo.EpEnergyChartPieDisVO;
@@ -51,6 +52,12 @@ public class EpEnergyGenerateSectionPriceChartController {
     @ApiOperation(value = "峰平谷对比-图表")
     public R<EpEnergyChartPieDisVO> getDisChart(@RequestBody EpSectionPriceDTO dto) {
         return R.success(epEnergyGenerateSectionPriceChart.generateDistribution(dto));
+    }
+
+    @PostMapping("/chart/leader")
+    @ApiOperation(value = "峰平谷对比-图表-领导驾驶舱")
+    public R<EpEnergyChartPieDisVO> getDisChartLeader(@RequestBody EpSectionPriceLeaderDTO dto) {
+        return R.success(epEnergyGenerateSectionPriceChart.generateDistributionLeader(dto));
     }
 
     @PostMapping("/download")
