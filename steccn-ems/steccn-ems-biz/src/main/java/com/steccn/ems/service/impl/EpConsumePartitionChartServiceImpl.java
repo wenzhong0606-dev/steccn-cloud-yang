@@ -105,14 +105,17 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 pole.setField2(poleList);
                 //根据厚度遍历
                 for (BigDecimal thick : dto.getThick()) {
+                    String thickName = null;
                     List<EpMeterReadAllDataVO> thickData;
-                    if (Objects.isNull(thick)) {
+                    if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
                         thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                        thickName = "无";
                     } else {
                         thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                        thickName = String.valueOf(thick);
                     }
                     BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    TupleDTO<String, BigDecimal> stack = new TupleDTO<>(String.valueOf(thick), reduce);
+                    TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
                     poleList.add(stack);
                 }
                 data.add(pole);
@@ -269,14 +272,17 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             pole.setField2(poleList);
             //根据厚度遍历
             for (BigDecimal thick : dto.getThick()) {
+                String thickName = null;
                 List<EpMeterReadAllDataVO> thickData;
-                if (Objects.isNull(thick)) {
+                if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
                     thickData = dataVOList.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                    thickName = "无";
                 } else {
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                    thickName = String.valueOf(thick);
                 }
                 BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                TupleDTO<String, BigDecimal> stack = new TupleDTO<>(String.valueOf(thick), reduce);
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
                 poleList.add(stack);
             }
             data.add(pole);
