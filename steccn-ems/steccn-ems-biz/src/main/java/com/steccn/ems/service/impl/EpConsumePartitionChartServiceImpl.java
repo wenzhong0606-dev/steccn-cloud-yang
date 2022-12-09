@@ -15,6 +15,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.EpChartGraphUtil;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -333,5 +334,48 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //3级排序：按产品厚度升序排列，“无”在最下
         detailComparator(resList);
         return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+
+    @Override
+    public List<BaseSelectVO<BigDecimal>> thick(EpTableDTO dto) {
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        Set<BigDecimal> thickSet = thickSelect(start, end, dto.getEnergyType(), dto.getPartitionIdList());
+        if (Objects.nonNull(dto.getHistoryStart()) && Objects.nonNull(dto.getHistoryStart())) {
+            LocalDateTime historyStart = LocalDateTime.of(dto.getHistoryStart(), ClassUtil.MORNING_START_TIME);
+            LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+            thickSet.addAll(thickSelect(historyStart, historyEnd, dto.getEnergyType(), dto.getPartitionIdList()));
+        }
+        List<BigDecimal> sort = CollUtil.sort(thickSet, Comparator.nullsLast(Comparator.comparing(v -> v)));
+
+        List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
+        for (BigDecimal thick : sort) {
+            String name = BigDecimalUtil.format(thick);
+            if (Objects.isNull(thick)) {
+                thick = BigDecimal.valueOf(-1);
+                name = "无";
+            }
+            BaseSelectVO<BigDecimal> baseSelectVO = new BaseSelectVO<>(thick, name);
+            resList.add(baseSelectVO);
+        }
+        return resList;
+    }
+
+    /**
+     * 根据时间范围和组织结构树，查询厚度下拉选项
+     *
+     * @param start           开始时间
+     * @param end             结束时间
+     * @param energyType      能源类型id
+     * @param partitionIdList 分区节点id集合
+     */
+    private Set<BigDecimal> thickSelect(LocalDateTime start, LocalDateTime end, Integer energyType, List<Long> partitionIdList) {
+        //时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        return classDateAllData.stream().map(v -> v.getThick()).collect(Collectors.toSet());
     }
 }

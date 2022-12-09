@@ -1,6 +1,7 @@
 package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.dto.EpTableDTO;
@@ -8,6 +9,7 @@ import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 能耗分区图表生成
@@ -46,4 +48,11 @@ public interface EpConsumePartitionChartService {
      * @return 分页列表
      */
     Page<ConsumeHistoryContrastDetailVO> consumeHistoryContrastDetail(EpTableDTO dto);
+
+    /**
+     * 厚度下拉选项
+     * @param dto dto
+     * @return
+     */
+    List<BaseSelectVO<BigDecimal>> thick(EpTableDTO dto);
 }
