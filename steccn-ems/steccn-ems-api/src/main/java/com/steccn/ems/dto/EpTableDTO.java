@@ -50,4 +50,7 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     @Size(min = 1, message = "组织机构不能为空")
     private List<Long> partitionIdList;
 
+    @ApiModelProperty(value = "图表的过滤条件")
+    private List<String> filters;
+
 }
