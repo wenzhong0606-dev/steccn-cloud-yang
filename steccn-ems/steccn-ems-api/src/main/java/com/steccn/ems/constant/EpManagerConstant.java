@@ -212,11 +212,11 @@ public interface EpManagerConstant {
     @AllArgsConstructor
     enum ElectricType {
         //峰
-        PEAK(0, "峰"),
+        PEAK(1, "峰"),
         //平
-        FLAT(1, "平"),
+        FLAT(2, "平"),
         //谷
-        VALLEY(2, "谷");
+        VALLEY(3, "谷");
         private final Integer code;
         private final String name;
 

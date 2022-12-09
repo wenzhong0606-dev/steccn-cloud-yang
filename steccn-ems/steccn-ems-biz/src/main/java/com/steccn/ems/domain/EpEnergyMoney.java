@@ -46,7 +46,7 @@ public class EpEnergyMoney implements Serializable {
     private LocalDateTime end;
 
     /**
-     * 峰0 谷1 平2
+     * 峰1 平2 谷3
      */
     private Integer type;
 

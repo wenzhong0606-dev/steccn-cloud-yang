@@ -41,6 +41,7 @@ public class EpEnergyMoneyVO implements Serializable {
     /**
      * 峰0 平1 谷2
      */
+    @JsonIgnore
     private Integer type;
 
     /**
@@ -51,6 +52,7 @@ public class EpEnergyMoneyVO implements Serializable {
     /**
      *开始时间str
      */
+    @JsonIgnore
     private String startStr;
 
     /**
@@ -61,6 +63,7 @@ public class EpEnergyMoneyVO implements Serializable {
     /**
      * 结束时间str
      */
+    @JsonIgnore
     private String endStr;
 
     /**

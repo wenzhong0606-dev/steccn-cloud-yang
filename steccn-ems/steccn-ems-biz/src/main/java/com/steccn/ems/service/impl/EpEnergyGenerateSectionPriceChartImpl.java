@@ -120,6 +120,9 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         List<EpEnergyMoneyVO> results = Lists.newArrayList();
         //先拿到节点名字
         EpPartition epPartition = epPartitionService.getById(dto.getPartitionId());
+        if(Objects.isNull(epPartition)){
+            return results;
+        }
         String partitionName = epPartition.getOfficeName();
         //电表类型为1
         if(!epPartition.getType().equals(MpConstant.YES)){
@@ -158,6 +161,10 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
             }
         }
 
+        if(CollUtil.isEmpty(partitionIdList)){
+            return results;
+        }
+
         //2、查全量数据表
         LambdaQueryWrapper<EpEnergyMoney> moneyCondition = new LambdaQueryWrapper<EpEnergyMoney>()
                 .in(EpEnergyMoney::getPartitionId,partitionIdList)
@@ -171,7 +178,7 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
                 EpEnergyMoneyVO vo = new EpEnergyMoneyVO();
                 BeanUtils.copyProperties(tmp,vo);
                 vo.setPartitionName(partitionName);
-                vo.setTypeName(EpManagerConstant.InstrumentType.getInstrumentType(tmp.getType()).getName());
+                vo.setTypeName(EpManagerConstant.ElectricType.getNameByCode(tmp.getType()));
                 //电耗
                 vo.setConsumptionNum(BigDecimalUtil.subtract(tmp.getEndValue(),tmp.getStartValue()));
                 vo.setConsumption(new DecimalFormat("0.00").format(vo.getConsumptionNum()) + "kWh");
