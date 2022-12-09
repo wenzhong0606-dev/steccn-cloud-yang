@@ -59,5 +59,4 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> listByIdCh(List<Long> partitionIdList);
-
 }

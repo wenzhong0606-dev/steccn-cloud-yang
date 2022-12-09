@@ -15,6 +15,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
+import com.steccn.ems.dto.EpInstrumentAccountDownloadDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
 import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
 import com.steccn.ems.service.EpEnergyTypeService;
@@ -26,21 +27,25 @@ import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.vo.QtSpcReportDetailVO;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.net.URLEncoder;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -234,6 +239,62 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
         }
         return epInstrumentAccountVO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(Integer id) {
+        EpInstrumentAccount epInstrumentAccount = getById(id);
+        Assert.notNull(epInstrumentAccount,"该仪表台账不存在,无法删除");
+        epInstrumentAccount.setShowFlag(MpConstant.NO);
+        updateById(epInstrumentAccount);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+        String line;
+        StringBuilder sb = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            sb.append(line);
+        }
+        br.close();
+        String base = sb.toString();
+        if (!StringUtils.isEmpty(base)) {
+            OutputStream out = null;
+            try {
+                String base64 = base.split(",")[1];
+                byte[] bytes = new BASE64Decoder().decodeBuffer(base64);
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        bytes[i] += 256;
+                    }
+                }
+                // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+                String fileName = "资产卡片".replaceAll("-", "")+".jpg";
+                String realPath = request.getSession().getServletContext().getRealPath("")+ "/normalFiles/workOrderAttach/";
+
+                response.setContentType("image/jpg");
+                response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+                response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".jpg");
+                File file = new File(realPath);
+                if (!file.exists() || !file.isDirectory()) {
+                    file.mkdirs();
+                }
+                out = new FileOutputStream(realPath + "/" + fileName);
+                out.write(bytes);
+                out.flush();
+                response.getOutputStream().write(bytes);
+                response.getOutputStream().flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                if (out != null) {
+                    out.close();
+                }
+            }
+        }
     }
 
     /**

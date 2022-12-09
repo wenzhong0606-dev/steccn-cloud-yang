@@ -1,6 +1,7 @@
 package com.steccn.platform.controller;
 
 
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -18,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -113,5 +116,23 @@ public class SysOfficeController {
         return R.success(sysOfficeVO);
     }
 
+
+    public static void main(String[] args) {
+        int[] arr = new int[48];
+        //峰谷平电
+        int start = 0 ;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] != arr[start]) {
+                //说明电的类型变化了
+                //结算start - i 这一段区间 电的类型是arr[start]
+                BigDecimal startBig = BigDecimalUtil.divide(BigDecimal.valueOf(start),BigDecimal.valueOf(2));
+                BigDecimal endBig = BigDecimalUtil.divide(BigDecimal.valueOf(i),BigDecimal.valueOf(2));
+
+
+
+               start =i;
+            }
+        }
+    }
 
 }

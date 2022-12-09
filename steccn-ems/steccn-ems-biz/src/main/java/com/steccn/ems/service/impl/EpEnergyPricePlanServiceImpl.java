@@ -119,6 +119,42 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
 //        System.out.println(getTimeList("H").size());
 //    }
 
+    public static void main(String[] args) {
+        int[] arr = new int[]{
+                1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1
+        };
+        //峰谷平电
+        int start = 0;
+        int i = 0 ;
+        for (i = 0; i < arr.length; i++) {
+            if (arr[i] != arr[start]) {
+                //说明电的类型变化了
+                //结算start - i 这一段区间 电的类型是arr[start]
+                cal(arr[start],start,i);
+                start = i;
+            }
+        }
+        //加上最后一个数据
+        cal(arr[start],start,i);
+    }
+
+    private static void cal(int electricType ,int start , int end){
+        Integer startInteger = start * 30;
+        Integer endInteger = end * 30;
+
+        LocalTime startLdt = LocalTime.of(startInteger / 60, startInteger % 60);
+        LocalTime endLdt;
+        if (endInteger == 24 * 60) {
+            endLdt = LocalTime.of(0, 0);
+        } else {
+            endLdt = LocalTime.of(endInteger / 60, endInteger % 60);
+        }
+        log.info("类型{}:  {} - {}",electricType, startLdt, endLdt);
+    }
+
 }
 
 

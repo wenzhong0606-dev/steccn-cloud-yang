@@ -50,11 +50,6 @@ public class EpEnergyTypeVO implements Serializable {
     private String note;
 
     /**
-     * 是否删除 0 否 1是
-     */
-    private Integer delFlag;
-
-    /**
      * 创建人id
      */
     private Long createBy;

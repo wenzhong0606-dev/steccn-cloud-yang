@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpInstrumentAccountDTO;
+import com.steccn.ems.dto.EpInstrumentAccountDownloadDTO;
 import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
 import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -51,4 +54,18 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @return
      */
     EpInstrumentAccountVO getEpInstrumentAccountVO(Integer id);
+
+    /**
+     * 根据id删除仪表台账
+     * @param id
+     * @return
+     */
+    Boolean delete(Integer id);
+
+    /**
+     * 下载资产卡片图片
+     * @param response
+     * @param request
+     */
+    void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception;
 }
