@@ -51,6 +51,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-pms-biz</artifactId>
+        </dependency>
     </dependencies>
 
     <properties>
