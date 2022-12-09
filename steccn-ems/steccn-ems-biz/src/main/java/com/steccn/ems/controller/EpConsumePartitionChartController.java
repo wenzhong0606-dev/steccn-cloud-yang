@@ -6,6 +6,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
+import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -49,7 +50,7 @@ public class EpConsumePartitionChartController {
 
     @PostMapping("/history/detail")
     @ApiOperation(value = "能耗历史对比-明细")
-    public R<Page<EpConsumeDetailVO>> consumeHistoryContrastDetail(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+    public R<Page<ConsumeHistoryContrastDetailVO>> consumeHistoryContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
 }

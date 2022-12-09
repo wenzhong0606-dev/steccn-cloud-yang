@@ -15,25 +15,7 @@ import java.util.List;
  */
 @Data
 @ApiModel("能耗明细行数据视图对象")
-public class EpConsumeDetailRowVO implements Serializable {
-
-    @ApiModelProperty("班次日期")
-    private LocalDate classDate;
-
-    @ApiModelProperty("班次日期字符串")
-    private String classDateStr;
-
-    @ApiModelProperty("班次id")
-    private Integer classId;
-
-    @ApiModelProperty("白班夜班字符串")
-    private String classIdStr;
-
-    @ApiModelProperty("厚度")
-    private BigDecimal thick;
-
-    @ApiModelProperty("厚度字符串")
-    private String thickStr;
+public class EpConsumeDetailRowVO extends EpDetailVO implements Serializable {
 
     @ApiModelProperty("能耗数据集合")
     private List<String> consumeList;
