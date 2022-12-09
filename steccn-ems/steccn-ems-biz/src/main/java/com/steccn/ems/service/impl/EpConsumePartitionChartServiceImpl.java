@@ -366,10 +366,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
-            String name = BigDecimalUtil.format(thick);
+            String name = null;
             if (Objects.isNull(thick)) {
                 thick = BigDecimal.valueOf(-1);
                 name = "无";
+            }else {
+                thick = thick.setScale(1);
+                name = String.valueOf(thick);
             }
             BaseSelectVO<BigDecimal> baseSelectVO = new BaseSelectVO<>(thick, name);
             resList.add(baseSelectVO);
