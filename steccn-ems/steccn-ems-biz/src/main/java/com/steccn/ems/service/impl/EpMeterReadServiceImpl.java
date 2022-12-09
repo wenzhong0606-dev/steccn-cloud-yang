@@ -173,7 +173,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
         localDateList.remove(0);
-        localDateList.remove(localDateList.size()-1);
+        if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+            localDateList.remove(localDateList.size()-1);
+        }
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;

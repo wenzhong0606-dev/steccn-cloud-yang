@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,8 +70,8 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
     }
 
     @Override
-    public List<QtCheckTaskDetailItemMaterialVO> getByClassTime(LocalDate startDate, LocalDate endDate) {
-        return this.baseMapper.selectAllByClassTime(startDate,endDate);
+    public List<QtCheckTaskDetailItemMaterialVO> getByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+        return this.baseMapper.selectAllByClassTime(startTime,endTime);
     }
 }
 

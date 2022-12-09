@@ -61,7 +61,7 @@
 	        INNER JOIN qt_material m ON t.material_id = m.id
         WHERE
 	        t.task_type = 4
-	        and t.classTime &gt;= #{startDate},
-	        and t.classTime &lt;= #{endDate}
+	        and t.classTime &gt;= #{startTime},
+	        and t.classTime &lt;= #{endTime}
     </select>
 </mapper>

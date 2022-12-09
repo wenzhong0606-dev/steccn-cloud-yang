@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -26,8 +26,8 @@ public class QtCheckTaskDetailFeignController {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
-    @GetMapping
-    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(LocalDate startDate, LocalDate endDate){
-        return R.success(qtCheckTaskDetailService.getByClassTime(startDate, endDate));
+    @GetMapping("/getByClassTime")
+    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(LocalDateTime startTime, LocalDateTime endTime){
+        return R.success(qtCheckTaskDetailService.getByClassTime(startTime, endTime));
     }
 }
