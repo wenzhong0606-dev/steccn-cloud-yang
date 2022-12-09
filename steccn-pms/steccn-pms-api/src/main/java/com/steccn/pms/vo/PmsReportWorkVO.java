@@ -53,10 +53,16 @@ public class PmsReportWorkVO {
     @ApiModelProperty("班次")
     private String classes;
 
+    private Long classesId;
+
     private Integer productLineId;
 
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;
+
+    private Long materialId;
+
+    private String workshopName;
 
 }
