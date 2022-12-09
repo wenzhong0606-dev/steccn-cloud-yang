@@ -46,4 +46,22 @@
             #{id}
         </foreach>)
     </select>
+    <select id="selectAllByClassTime" resultType="com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO">
+        SELECT
+	        i.`name` itemName,
+	        d.check_result checkResult,
+	        t.material_id materialId,
+	        m.thick_quantity thickQuantity,
+	        t.class_time classTime,
+	        t.classes_id classId
+        FROM
+	        qt_check_task t
+	        INNER JOIN qt_check_task_detail d ON t.id = d.task_id
+	        INNER JOIN qt_defective_item i ON d.item_id = i.id
+	        INNER JOIN qt_material m ON t.material_id = m.id
+        WHERE
+	        t.task_type = 4
+	        and t.classTime &gt;= #{startDate},
+	        and t.classTime &lt;= #{endDate}
+    </select>
 </mapper>

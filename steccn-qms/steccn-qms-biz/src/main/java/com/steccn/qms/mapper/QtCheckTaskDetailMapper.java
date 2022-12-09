@@ -2,10 +2,12 @@ package com.steccn.qms.mapper;
 
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import com.steccn.qms.vo.QtSubtableVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +27,15 @@ public interface QtCheckTaskDetailMapper extends BaseMapper<QtCheckTaskDetail> {
      * @return
      */
     List<QtSubtableVO> listByTaskId(@Param("taskIds") Set<Long> taskIds);
+
+    /**
+     * 根据班次日期查询
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    List<QtCheckTaskDetailItemMaterialVO> selectAllByClassTime(@Param("startDate") LocalDate startDate,@Param("endDate") LocalDate endDate);
 }
 
 

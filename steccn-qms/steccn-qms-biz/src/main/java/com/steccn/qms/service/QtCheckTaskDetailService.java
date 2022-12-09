@@ -2,8 +2,10 @@ package com.steccn.qms.service;
 
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityCopyVO;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,4 +23,13 @@ public interface QtCheckTaskDetailService extends IService<QtCheckTaskDetail> {
      * @return
      */
     Map<Long, List<QtIQCAcceptabilityCopyVO>> listByTaskId(Set<Long> taskIds);
+
+    /**
+     * 根据班次日期获取数据
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    List<QtCheckTaskDetailItemMaterialVO> getByClassTime(LocalDate startDate, LocalDate endDate);
 }
