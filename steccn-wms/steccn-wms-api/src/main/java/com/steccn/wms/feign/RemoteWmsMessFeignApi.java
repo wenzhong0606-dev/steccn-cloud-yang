@@ -64,4 +64,6 @@ public interface RemoteWmsMessFeignApi {
     Boolean transferSlipAffirm(@RequestBody List<WmsTransferSlipInfoDTO> list);
 
 
+
+
 }

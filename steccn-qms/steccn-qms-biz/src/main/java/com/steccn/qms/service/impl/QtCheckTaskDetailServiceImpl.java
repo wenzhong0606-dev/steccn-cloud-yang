@@ -2,21 +2,21 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.steccn.qms.domain.QtCheckTaskCopy;
 import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
 import com.steccn.qms.service.QtCheckTaskCopyService;
 import com.steccn.qms.service.QtCheckTaskDetailService;
-import com.steccn.qms.mapper.QtCheckTaskDetailMapper;
+import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityCopyVO;
 import com.steccn.qms.vo.QtSubtableVO;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +67,11 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
         }
         //3.返回数据
         return resMap;
+    }
+
+    @Override
+    public List<QtCheckTaskDetailItemMaterialVO> getByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+        return this.baseMapper.selectAllByClassTime(startTime,endTime);
     }
 }
 

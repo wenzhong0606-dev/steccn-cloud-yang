@@ -1,14 +1,14 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.pms.domain.PmsReportWork;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
-import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -67,5 +67,14 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 产量map
      */
     Map<Long, PmsReportWork> dateProductNum(Integer productLineId, LocalDate date);
+
+    /**
+     * 根据开始结束时间查询数据
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<PmsReportWork> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 
 }

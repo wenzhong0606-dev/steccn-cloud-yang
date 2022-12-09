@@ -1,6 +1,7 @@
 package com.steccn.ems.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
@@ -11,12 +12,10 @@ import com.steccn.ems.vo.EpConsumeDetailVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author yequan
@@ -29,6 +28,12 @@ import java.math.BigDecimal;
 public class EpConsumePartitionChartController {
 
     private final EpConsumePartitionChartService epConsumePartitionChartService;
+
+    @PostMapping("/thick")
+    @ApiOperation(value = "厚度选项")
+    public R<List<BaseSelectVO<BigDecimal>>> thick(@RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.thick(dto));
+    }
 
     @PostMapping("/contrast/chart")
     @ApiOperation(value = "能耗分区对比-柱状图")
