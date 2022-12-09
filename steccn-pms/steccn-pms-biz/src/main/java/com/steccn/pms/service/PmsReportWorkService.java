@@ -75,6 +75,6 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param endTime
      * @return
      */
-    List<PmsReportWork> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+    List<PmsReportWorkVO> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 
 }
