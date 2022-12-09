@@ -34,7 +34,7 @@ public class WmsDeliveryReceipt implements Serializable {
     /**
      * 状态
      */
-    private Integer state;
+    private Integer status;
 
     /**
      * 仓库id

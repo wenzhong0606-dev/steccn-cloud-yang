@@ -31,11 +31,6 @@ public class WmsTransferSlipController {
 
     private final WmsTransferSlipService wmsTransferSlipService;
 
-    @ApiOperation("调拨单分页列表")
-    @PostMapping("/list")
-    public R<Page<WmsTransferSlipVO>> pageList(@RequestBody WmsTransferSlipPageDTO dto) {
-        return R.success(wmsTransferSlipService.pageList(dto));
-    }
 
     @ApiOperation("调拨单新增")
     @PostMapping()

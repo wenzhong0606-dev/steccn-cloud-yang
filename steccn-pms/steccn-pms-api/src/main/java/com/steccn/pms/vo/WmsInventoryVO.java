@@ -1,0 +1,126 @@
+package com.steccn.pms.vo;
+
+import com.baomidou.mybatisplus.annotation.TableId;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * 类说明
+ *
+ * @author Mongknife
+ * @date 2022/12/9
+ */
+@Data
+public class WmsInventoryVO {
+
+    /**
+     * 主键
+     */
+    @ApiModelProperty("主键")
+    private Long id;
+
+    /**
+     * 物料id
+     */
+    @ApiModelProperty("物料主键")
+    private Long materialId;
+
+    /**
+     * 物料名称
+     */
+    @ApiModelProperty("物料名称")
+    private Long materialName;
+
+    /**
+     * 物料编码
+     */
+    @ApiModelProperty("物料编码")
+    private Long materialCode;
+
+    /**
+     * 仓库id
+     */
+    @ApiModelProperty("仓库id")
+    private Long warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    @ApiModelProperty("仓库名称")
+    private Long warehouseName;
+
+    /**
+     * 货架id
+     */
+    @ApiModelProperty("货架id")
+    private Long shelfId;
+
+    /**
+     * 货架名称
+     */
+    @ApiModelProperty("货架名称")
+    private Long shelfName;
+
+    /**
+     * 总数
+     */
+    @ApiModelProperty("总数")
+    private BigDecimal totalQuantity;
+
+    /**
+     * 可用数量
+     */
+    @ApiModelProperty("可用数量")
+    private BigDecimal availableQuantity;
+
+    /**
+     * 在途库存
+     */
+    @ApiModelProperty("在途库存")
+    private BigDecimal stockQuantity;
+
+    /**
+     * 冻结库存
+     */
+    @ApiModelProperty("冻结库存")
+    private BigDecimal freezeQuantity;
+
+    /**
+     * 锁定库存
+     */
+    @ApiModelProperty("锁定库存")
+    private BigDecimal lockQuantity;
+
+    /**
+     * 质检库存
+     */
+    @ApiModelProperty("质检库存")
+    private BigDecimal detectionQuantity;
+
+    /**
+     * 单位id
+     */
+    @ApiModelProperty("单位id")
+    private Long unit;
+
+    /**
+     * 箱号
+     */
+    @ApiModelProperty("箱号")
+    private String caseNo;
+
+    /**
+     * 批次
+     */
+    @ApiModelProperty("批次")
+    private String batch;
+
+    /**
+     * 打包时间
+     */
+    @ApiModelProperty("打包时间")
+    private LocalDateTime packTime;
+}

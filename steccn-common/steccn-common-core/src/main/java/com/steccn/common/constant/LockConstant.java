@@ -32,4 +32,9 @@ public interface LockConstant {
      * 仓储调拨单
      */
     String TABLE_WMS_TRANSFER_SLIP = "TABLE_WMS_TRANSFER_SLIP";
+
+    /**
+     * 仓储出库单
+     */
+    String TABLE_WMS_DELIVERY_RECEIPT = "TABLE_WMS_DELIVERY_RECEIPT";
 }

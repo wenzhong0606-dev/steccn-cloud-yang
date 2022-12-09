@@ -9,6 +9,8 @@ import lombok.Getter;
 public interface WmsManagerConstant {
 
 
+
+
     /**
      * 检验值
      */
@@ -36,6 +38,23 @@ public interface WmsManagerConstant {
         TWO(2,"部分确认"),
         THREE(3, "已完成"),
         FOUR(4, "已删除");
+
+        private final Integer code;
+
+        private final String name;
+    }
+
+
+    /**
+     * 状态:0:加  1：减  ）
+     */
+    @Getter
+    @AllArgsConstructor
+    enum InventoryEnum {
+        ZERO(0, "加"),
+        ONE(1, "减"),
+        TWO(2,"先减后加"),
+        THREE(3,"调整总数量");
 
         private final Integer code;
 

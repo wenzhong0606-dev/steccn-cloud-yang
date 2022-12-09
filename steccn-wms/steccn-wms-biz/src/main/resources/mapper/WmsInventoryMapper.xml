@@ -5,38 +5,85 @@
 <mapper namespace="com.steccn.wms.mapper.WmsInventoryMapper">
 
     <resultMap id="BaseResultMap" type="com.steccn.wms.domain.WmsInventory">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="materialId" column="material_id" jdbcType="BIGINT"/>
-            <result property="warehouseId" column="warehouse_id" jdbcType="BIGINT"/>
-            <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
-            <result property="totalQuantity" column="total_quantity" jdbcType="DECIMAL"/>
-            <result property="availableQuantity" column="available_quantity" jdbcType="DECIMAL"/>
-            <result property="stockQuantity" column="stock_quantity" jdbcType="DECIMAL"/>
-            <result property="freezeQuantity" column="freeze_quantity" jdbcType="DECIMAL"/>
-            <result property="lockQuantity" column="lock_quantity" jdbcType="DECIMAL"/>
-            <result property="detectionQuantity" column="detection_quantity" jdbcType="DECIMAL"/>
-            <result property="unit" column="unit" jdbcType="BIGINT"/>
-            <result property="caseno" column="caseNo" jdbcType="VARCHAR"/>
-            <result property="batch" column="batch" jdbcType="VARCHAR"/>
-            <result property="packTime" column="pack_time" jdbcType="TIMESTAMP"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
-            <result property="note" column="note" jdbcType="VARCHAR"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+        <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+        <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+        <result property="warehouseId" column="warehouse_id" jdbcType="BIGINT"/>
+        <result property="warehouseName" column="warehouse_name" jdbcType="VARCHAR"/>
+        <result property="shelfId" column="shelf_id" jdbcType="BIGINT"/>
+        <result property="shelfName" column="shelf_name" jdbcType="VARCHAR"/>
+        <result property="totalQuantity" column="total_quantity" jdbcType="DECIMAL"/>
+        <result property="availableQuantity" column="available_quantity" jdbcType="DECIMAL"/>
+        <result property="stockQuantity" column="stock_quantity" jdbcType="DECIMAL"/>
+        <result property="freezeQuantity" column="freeze_quantity" jdbcType="DECIMAL"/>
+        <result property="lockQuantity" column="lock_quantity" jdbcType="DECIMAL"/>
+        <result property="detectionQuantity" column="detection_quantity" jdbcType="DECIMAL"/>
+        <result property="unit" column="unit" jdbcType="BIGINT"/>
+        <result property="caseNo" column="case_no" jdbcType="VARCHAR"/>
+        <result property="batch" column="batch" jdbcType="VARCHAR"/>
+        <result property="packTime" column="pack_time" jdbcType="TIMESTAMP"/>
+        <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+        <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+        <result property="note" column="note" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,material_id,warehouse_id,
-        shelf_id,total_quantity,available_quantity,
+        id
+        ,material_id,material_name,material_code,
+        warehouse_id,warehouse_name,
+        shelf_id,shelf_name,total_quantity,available_quantity,
         stock_quantity,freeze_quantity,lock_quantity,
-        detection_quantity,unit,caseNo,
+        detection_quantity,unit,case_no,
         batch,pack_time,create_by,
         create_name,create_time,update_by,
         update_name,update_time,del_flag,
         note
     </sql>
+    <update id="subtractLockQuantity">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update wms_inventory
+            <set>
+                lock_quantity = lock_quantity + #{item.quantity},
+                available_quantity = available_quantity - #{item.quantity}
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
+    <update id="augmentLockQuantity">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update wms_inventory
+            <set>
+                lock_quantity = lock_quantity - #{item.quantity},
+                available_quantity = available_quantity + #{item.quantity}
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
+    <update id="subtractFirstAndThenAddLockQuantity">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update wms_inventory
+            <set>
+                lock_quantity = lock_quantity - #{item.originalQuantity} + #{item.quantity},
+                available_quantity = available_quantity + #{item.originalQuantity} - #{item.quantity}
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
+    <update id="updateLockAndTotalQuantity">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update wms_inventory
+            <set>
+                lock_quantity = lock_quantity - #{item.quantity},
+                available_quantity = available_quantity - #{item.quantity},
+                tatal_quantity = tatal_quantity - #{item.quantity}
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
 </mapper>
