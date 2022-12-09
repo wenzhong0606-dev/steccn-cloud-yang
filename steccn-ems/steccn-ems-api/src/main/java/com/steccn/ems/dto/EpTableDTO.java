@@ -4,7 +4,6 @@ import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -39,10 +38,11 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     private LocalDate historyEnd;
 
     @ApiModelProperty("厚度")
+    @NotNull(message = "厚度不能为空")
+    @Size(min = 1, message = "厚度不能为空")
     private List<BigDecimal> thick;
 
     @ApiModelProperty("时间-天、周、月、无粒度")
-    @NotNull(message = "时间粒度不能为空")
     private Integer granularity;
 
     @ApiModelProperty("分区-组织机构id")

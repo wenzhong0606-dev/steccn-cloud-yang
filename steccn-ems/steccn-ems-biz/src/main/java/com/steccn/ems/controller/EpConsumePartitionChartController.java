@@ -1,5 +1,6 @@
 package com.steccn.ems.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -38,6 +39,7 @@ public class EpConsumePartitionChartController {
     @PostMapping("/contrast/chart")
     @ApiOperation(value = "能耗分区对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         return R.success(epConsumePartitionChartService.consumePartitionContrast(dto));
     }
 
@@ -50,12 +52,17 @@ public class EpConsumePartitionChartController {
     @PostMapping("/history/chart")
     @ApiOperation(value = "能耗历史对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
+        Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrast(dto));
     }
 
     @PostMapping("/history/detail")
     @ApiOperation(value = "能耗历史对比-明细")
     public R<Page<ConsumeHistoryContrastDetailVO>> consumeHistoryContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
+        Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
 }
