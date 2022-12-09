@@ -49,7 +49,7 @@ public class EpEnergyTypeController {
 
     @GetMapping("/linkTable/{code}")
     @ApiOperation(value = "根据关联图表的code查询能源类型id以及能源单位")
-    public R<Map<Integer,EpEnergyTypeVO>> getBylinkTable(@PathVariable("code") Integer code){
+    public R<List<EpEnergyTypeVO>> getBylinkTable(@PathVariable("code") Integer code){
         return R.success(epEnergyTypeService.getBylinkTable(code));
     }
 }

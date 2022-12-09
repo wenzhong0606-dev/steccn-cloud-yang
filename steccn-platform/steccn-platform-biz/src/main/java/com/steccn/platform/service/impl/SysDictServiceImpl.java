@@ -154,6 +154,19 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         return resMap;
     }
 
+    @Override
+    public List<SysDictVO> getByNameAndType(String name, String type) {
+        List<SysDict> sysDicts = list(new LambdaQueryWrapper<SysDict>()
+                .eq(Objects.nonNull(type),SysDict::getType, type)
+                .like(Objects.nonNull(name),SysDict::getName, name));
+        List<SysDictVO> sysDictVOList =Lists.newArrayList();
+        if (CollUtil.isNotEmpty(sysDicts)){
+             sysDictVOList = BeanUtil.copyToList(sysDicts, SysDictVO.class);
+
+        }
+        return sysDictVOList;
+    }
+
 
     /**
      * 根据list递归构造一颗树

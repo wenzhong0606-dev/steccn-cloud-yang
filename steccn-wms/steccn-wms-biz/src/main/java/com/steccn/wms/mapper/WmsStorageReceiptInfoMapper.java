@@ -2,6 +2,7 @@ package com.steccn.wms.mapper;
 
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author W10
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2022-12-09 11:18:09
 * @Entity com.steccn.wms.domain.WmsStorageReceiptInfo
 */
+@Mapper
 public interface WmsStorageReceiptInfoMapper extends BaseMapper<WmsStorageReceiptInfo> {
 
 }

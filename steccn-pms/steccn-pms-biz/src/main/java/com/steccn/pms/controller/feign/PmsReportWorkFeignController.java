@@ -1,8 +1,8 @@
 package com.steccn.pms.controller.feign;
 
 import com.steccn.common.vo.R;
-import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.service.PmsReportWorkService;
+import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class PmsReportWorkFeignController {
 
     @GetMapping("/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    public R<List<PmsReportWork>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+    public R<List<PmsReportWorkVO>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
         return R.success(pmsReportWorkService.listByClassTime(startTime, endTime));
     }
 }

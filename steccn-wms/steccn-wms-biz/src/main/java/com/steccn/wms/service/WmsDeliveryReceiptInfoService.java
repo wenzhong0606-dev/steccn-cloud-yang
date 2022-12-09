@@ -1,7 +1,16 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author W10
@@ -10,4 +19,18 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface WmsDeliveryReceiptInfoService extends IService<WmsDeliveryReceiptInfo> {
 
+
+    /**
+     * 获取原始数量
+     * @param updateIds
+     * @return
+     */
+    Map<Long, BigDecimal> originalQuantity(List<Long> updateIds);
+
+    /**
+     * 获取明细信息
+     * @param id
+     * @return
+     */
+    List<WmsDeliveryReceiptInfoVO> infoList(Long id);
 }

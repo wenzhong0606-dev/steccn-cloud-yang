@@ -4,16 +4,19 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 仓储库存
+ *
  * @TableName wms_inventory
  */
-@TableName(value ="wms_inventory")
+@TableName(value = "wms_inventory")
 @Data
 public class WmsInventory implements Serializable {
     /**
@@ -28,14 +31,39 @@ public class WmsInventory implements Serializable {
     private Long materialId;
 
     /**
+     * 物料名称
+     */
+    private String materialName;
+
+    /**
+     * 物料编码
+     */
+    private String materialCode;
+
+    /**
      * 仓库id
      */
     private Long warehouseId;
 
     /**
+     * 仓库名称
+     */
+    private String warehouseName;
+
+    /**
      * 货架id
      */
     private Long shelfId;
+
+    /**
+     * 货架编码
+     */
+    private String shelfCode;
+
+    /**
+     * 货架名称
+     */
+    private String shelfName;
 
     /**
      * 总数
@@ -75,7 +103,7 @@ public class WmsInventory implements Serializable {
     /**
      * 箱号
      */
-    private String caseno;
+    private String caseNo;
 
     /**
      * 批次

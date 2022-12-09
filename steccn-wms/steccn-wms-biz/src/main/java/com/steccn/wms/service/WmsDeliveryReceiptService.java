@@ -1,7 +1,11 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
+import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 
 /**
 * @author W10
@@ -10,4 +14,47 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> {
 
+    /**
+     * 分页列表
+     * @param dto
+     * @return
+     */
+    Page<WmsDeliveryReceiptVO> pageList(WmsDeliveryReceiptPageDTO dto);
+
+    /**
+     * 新增
+     * @param dto
+     * @return
+     */
+    Boolean add(WmsDeliveryReceiptDTO dto);
+
+    /**
+     * 编辑
+     * @param dto
+     * @return
+     */
+    Boolean edit(WmsDeliveryReceiptDTO dto);
+
+    /**
+     * 确认
+     * @param id
+     * @return
+     */
+    Boolean affirm(Long id);
+
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
+
+
+    /**
+     * 获取详情
+     * @param id
+     * @return
+     */
+    WmsDeliveryReceiptVO get(Long id);
 }

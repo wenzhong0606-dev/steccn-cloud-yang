@@ -92,4 +92,6 @@ public interface SysDictService extends IService<SysDict> {
      * @return
      */
     Map<String, SysDictVO> listByCodes(Set<String> codes);
+
+    List<SysDictVO> getByNameAndType(String name, String type);
 }

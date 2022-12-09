@@ -71,4 +71,10 @@ public class SysDictController {
     public R<Map<Long,String>> getSysDictListByIds(@ApiParam("数据字典主键id的集合") @RequestBody Set<Long> ids){
         return R.success(sysDictService.listByIdCh(ids));
     }
+
+    @GetMapping("/nameAndType")
+    @ApiOperation("根据字典名称模糊查询以及数据字典的类型")
+    public R<List<SysDictVO>> getByNameAndType(@ApiParam("名称") @RequestParam("name") String name,@ApiParam("类型") @RequestParam("type") String type) {
+        return R.success(sysDictService.getByNameAndType(name, type));
+    }
 }

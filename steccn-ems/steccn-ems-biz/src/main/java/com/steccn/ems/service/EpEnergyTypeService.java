@@ -48,7 +48,7 @@ public interface EpEnergyTypeService extends IService<EpEnergyType> {
      * @param code
      * @return
      */
-    Map<Integer,EpEnergyTypeVO> getBylinkTable(Integer code);
+    List<EpEnergyTypeVO> getBylinkTable(Integer code);
 
     /**
      * 根据id集合获每个取能源类型的id和名称

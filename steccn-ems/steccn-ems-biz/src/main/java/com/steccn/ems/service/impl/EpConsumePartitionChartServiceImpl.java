@@ -112,7 +112,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                         thickName = "无";
                     } else {
                         thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
-                        thickName = String.valueOf(thick);
+                        thickName = String.valueOf(thick.setScale(1));
                     }
                     BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
@@ -158,7 +158,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             headData.add(partitionEntry.getValue());
         }
 
-
         Map<LocalDate, List<EpMeterReadAllDataVO>> classDateMap = classDateAllData.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
         for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateMap.entrySet()) {
             Map<String, List<EpMeterReadAllDataVO>> thickMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
@@ -168,8 +167,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 rowVO.setClassDate(classDateEntry.getKey());
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                 if (!"null".equals(s[1])) {
-                    rowVO.setThick(new BigDecimal(s[1]));
-                    rowVO.setThickStr(s[1]);
+                    rowVO.setThick(new BigDecimal(s[1]).setScale(1));
+                    rowVO.setThickStr(String.valueOf(rowVO.getThick()));
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
@@ -196,6 +195,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //2级排序：班次，白班在上、夜班在下、“无”在最下
         //3级排序：按产品厚度升序排列，“无”在最下
         detailComparator(resList);
+
+        //图例过滤
+        if(Objects.nonNull(dto.getFilters())){
+            resList = resList.stream().filter(v -> dto.getFilters().contains(v.getThickStr())).collect(Collectors.toList());
+        }
 
         Page<EpConsumeDetailRowVO> page = LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
         resVo.setDataList(page);
@@ -279,7 +283,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     thickName = "无";
                 } else {
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
-                    thickName = String.valueOf(thick);
+                    thickName = String.valueOf(thick.setScale(1));
                 }
                 BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
@@ -321,8 +325,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 rowVO.setClassDate(classDateEntry.getKey());
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                 if (!"null".equals(s[1])) {
-                    rowVO.setThick(new BigDecimal(s[1]));
-                    rowVO.setThickStr(s[1]);
+                    rowVO.setThick(new BigDecimal(s[1]).setScale(1));
+                    rowVO.setThickStr(String.valueOf(rowVO.getThick()));
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
@@ -339,6 +343,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //2级排序：班次，白班在上、夜班在下、“无”在最下
         //3级排序：按产品厚度升序排列，“无”在最下
         detailComparator(resList);
+
+        //图例过滤
+        if(Objects.nonNull(dto.getFilters())){
+            resList = resList.stream().filter(v -> dto.getFilters().contains(v.getThickStr())).collect(Collectors.toList());
+        }
+
         return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
     }
 
@@ -356,10 +366,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
-            String name = BigDecimalUtil.format(thick);
+            String name = null;
             if (Objects.isNull(thick)) {
                 thick = BigDecimal.valueOf(-1);
                 name = "无";
+            }else {
+                thick = thick.setScale(1);
+                name = String.valueOf(thick);
             }
             BaseSelectVO<BigDecimal> baseSelectVO = new BaseSelectVO<>(thick, name);
             resList.add(baseSelectVO);

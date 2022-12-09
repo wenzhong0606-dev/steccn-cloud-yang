@@ -28,7 +28,7 @@ public interface EpPartitionService extends IService<EpPartition> {
 
 
     /**
-     * 根据能源分区的ids获取能源分区的集合
+     * 根据能源分区的ids获取能源分区树的集合
      */
     Map<Long,EpPartitionVO> getEpPartitionNameListVO(Set<Long> ids);
 
@@ -59,4 +59,5 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> listByIdCh(List<Long> partitionIdList);
+
 }

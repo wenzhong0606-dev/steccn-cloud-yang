@@ -27,7 +27,7 @@ public class WmsInventoryPageDTO  extends BasePageDTO {
     private String caseNo;
 
     @ApiModelProperty("批次")
-    private String batchNo;
+    private String batch;
 
     @ApiModelProperty("仓库")
     private Long warehouseId;

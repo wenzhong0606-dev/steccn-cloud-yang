@@ -25,6 +25,12 @@ public class WmsCodeUtil {
      * 调拨单前缀
      */
     public final static String PREFIX_WMS_TRANSFER_SLIP = "SM";
+
+
+    /**
+     * 出库单前缀
+     */
+    public final static String PREFIX_WMS_DELIVERY_RECEIPT ="SO";
     /**
      * 数字位数-4
      */

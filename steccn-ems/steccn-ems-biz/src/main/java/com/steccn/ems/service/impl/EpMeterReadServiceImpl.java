@@ -397,6 +397,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         return gpDataList;
     }
 
+    @Override
+    public List<EpMeterReadAllDataVO> classDateAllDataUnit(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
+        return null;
+    }
+    
+
     /**
      * 递归计算节点
      * @param map 数据集合
