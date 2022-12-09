@@ -39,6 +39,16 @@ public class EpPartitionVO implements Serializable {
     private Long parentId;
 
     /**
+     * 父节点机构id
+     */
+    private Integer parentOfficeId;
+
+    /**
+     * 父节点机构名称
+     */
+    private String parentOfficeName;
+
+    /**
      * 是否关联仪表 0 否 1 是
      */
     private Integer isLinkTable;

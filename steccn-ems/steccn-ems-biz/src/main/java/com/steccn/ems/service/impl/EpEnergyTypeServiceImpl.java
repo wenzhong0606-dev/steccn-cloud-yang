@@ -198,22 +198,19 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     }
 
     @Override
-    public Map<Integer, EpEnergyTypeVO> getBylinkTable(Integer code) {
+    public List<EpEnergyTypeVO> getBylinkTable(Integer code) {
         //获取能源类型列表
         List<EpEnergyTypeVO> epEnergyTypeVOList = getEpEnergyTypeVOList();
-        if (CollUtil.isEmpty(epEnergyTypeVOList)){
-            throw new BusinessException("数据库无任何能源类型");
-        }
-        Map<Integer, EpEnergyTypeVO> idAndMeasures =Maps.newHashMap();
+        List<EpEnergyTypeVO> epEnergyTypeVOS =Lists.newArrayList();
         epEnergyTypeVOList.stream().filter(s->Objects.nonNull(s)).forEach(s->{
             if (CollUtil.isNotEmpty(s.getLinkTable())){
                 List<Integer> codes = s.getLinkTable().stream().map(BaseSelectVO::getId).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(codes)&&codes.contains(code)){
-                    idAndMeasures.put(s.getId(),s);
+                    epEnergyTypeVOS.add(s);
                 }
             }
         });
-        return idAndMeasures;
+        return epEnergyTypeVOS;
     }
 
     @Override

@@ -31,16 +31,14 @@
         SELECT
         a.id as childrenId,
         b.id id,
-        b.type type ,
-        b.office_id ,
-        b.office_name,
-        c.id as parentId,
-        c.office_id as  parentOfficeId,
-        c.office_name as parentOfficeName
+        b.parent_id,
+        c.id as isParentId,
+        c.office_id parentOfficeId,
+        c.office_name parentOfficeName
         from
         ep_partition a
-        inner join ep_partition b on a.parent_id = b.parent_id
-        inner join ep_partition c on b.parent_id = c.parent_id
+        inner join ep_partition b on a.parent_id = b.id
+        inner join ep_partition c on b.parent_id = c.isParentId
         where
         a.id in
         <foreach collection="childList" item="id" open="(" close=")" separator=",">

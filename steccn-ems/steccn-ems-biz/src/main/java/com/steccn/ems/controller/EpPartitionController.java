@@ -13,6 +13,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.ser.std.ToStringSerializer;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,5 +46,11 @@ public class EpPartitionController {
     @SysLog("编辑能源分区树")
     public R<Boolean> edit(@RequestBody EpPartitionDTO dto){
         return R.success(epPartitionService.edit(dto));
+    }
+
+    @PostMapping("/test2")
+    @ApiOperation(value = "根据孩子id集合查询所有父节点")
+    public R<Map<Long,EpPartitionVO>> parentInfo(@RequestBody Set<Long> childList){
+        return R.success(epPartitionService.parentInfo(childList));
     }
 }
