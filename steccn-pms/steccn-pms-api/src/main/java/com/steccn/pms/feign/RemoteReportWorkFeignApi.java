@@ -2,7 +2,6 @@ package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
-import com.steccn.pms.domain.PmsReportWork;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,5 +18,5 @@ public interface RemoteReportWorkFeignApi {
 
     @GetMapping("/feign/pms/report/work/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    R<List<PmsReportWork>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+    R<List<Object>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 }

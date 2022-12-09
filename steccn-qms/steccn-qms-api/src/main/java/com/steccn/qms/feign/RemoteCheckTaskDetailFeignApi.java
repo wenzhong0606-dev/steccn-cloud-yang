@@ -14,7 +14,7 @@ import java.util.List;
  * @author chenhuan
  * @date 2022/12/9 11:22
  */
-@FeignClient(contextId = "RemoteReportWorkFeignApi", value = FeignConstant.STECCN_QMS_SERVICE_NAME)
+@FeignClient(contextId = "RemoteCheckTaskDetailFeignApi", value = FeignConstant.STECCN_QMS_SERVICE_NAME)
 public interface RemoteCheckTaskDetailFeignApi {
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
