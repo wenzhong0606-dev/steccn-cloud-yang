@@ -2,11 +2,13 @@ package com.steccn.platform.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.service.SysEqpSpareService;
+import com.steccn.platform.vo.EqpSpareOaVO;
 import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -74,6 +76,17 @@ public class EqpSpareController {
         return eqpSpareService.listCondition(spareDTO);
     }
 
+
+    @GetMapping("/all")
+    @ApiOperation("oa获取备件列表")
+    public R<List<EqpSpareOaVO>> all() {
+        EqpSpareOaVO vo = new EqpSpareOaVO();
+        vo.setMaterialCode("物料名称");
+        vo.setMaterialName("物料编码");
+        vo.setCategoryName("物料类别");
+        List<EqpSpareOaVO> resList = Lists.newArrayList(vo);
+        return R.success(resList);
+    }
 
     @PostMapping("/getByTypeIdSpareList")
     @ApiOperation("根据分类获取物料信息")
