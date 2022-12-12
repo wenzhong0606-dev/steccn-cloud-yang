@@ -286,9 +286,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 taskIds.add(tmp.getId());
                             });
                             //获取所有单片掰边重量
-                            List<QtCheckTaskDetail> baiItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(CollUtil.isNotEmpty(baiItemIds),QtCheckTaskDetail::getItemId, baiItemIds));
+                            List<QtCheckTaskDetail> baiItemDetails = Lists.newArrayList();
+                            if(taskIds.size() > 0 && baiItemIds.size() > 0){
+                                baiItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                        .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                        .in(CollUtil.isNotEmpty(baiItemIds),QtCheckTaskDetail::getItemId, baiItemIds));
+                            }
                             if (CollUtil.isNotEmpty(baiItemDetails)) {
                                 for (QtCheckTaskDetail tmp : baiItemDetails) {
                                     if (StrUtil.isNotBlank(tmp.getCheckResult())) {
@@ -299,9 +302,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                             }
                             //获取所有单片重量
-                            List<QtCheckTaskDetail> danItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(CollUtil.isNotEmpty(danItemIds),QtCheckTaskDetail::getItemId, danItemIds));
+                            List<QtCheckTaskDetail> danItemDetails = Lists.newArrayList();
+                            if(taskIds.size() > 0 && danItemIds.size() > 0){
+                                danItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                        .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                        .in(CollUtil.isNotEmpty(danItemIds),QtCheckTaskDetail::getItemId, danItemIds));
+                            }
                             if (CollUtil.isNotEmpty(danItemDetails)) {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
                                     if (StrUtil.isNotBlank(tmp.getCheckResult())) {
@@ -312,9 +318,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                             }
                             //获取所有拉引时速
-                            List<QtCheckTaskDetail> laItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                    .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
-                                    .in(CollUtil.isNotEmpty(laItemIds),QtCheckTaskDetail::getItemId, laItemIds));
+                            List<QtCheckTaskDetail> laItemDetails = Lists.newArrayList();
+                            if(taskIds.size() > 0 && laItemIds.size() > 0){
+                                laItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                        .in(CollUtil.isNotEmpty(taskIds),QtCheckTaskDetail::getTaskId, taskIds)
+                                        .in(CollUtil.isNotEmpty(laItemIds),QtCheckTaskDetail::getItemId, laItemIds));
+                            }
                             if (CollUtil.isNotEmpty(laItemDetails)) {
                                 for (QtCheckTaskDetail tmp : laItemDetails) {
                                     if (StrUtil.isNotBlank(tmp.getCheckResult())) {
