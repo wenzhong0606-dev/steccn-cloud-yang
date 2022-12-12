@@ -9,16 +9,12 @@ import java.io.Serializable;
 @Data
 public class EpPartitionListDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 能源分区树的主键id
-     */
-    private Long id;
 
     /**
      * 组织机构id
      */
     @NotNull(message = "组织机构id不能为空")
-    private Integer officeId;
+    private Integer id;
 
     /**
      * 组织机构名称
@@ -27,17 +23,12 @@ public class EpPartitionListDTO implements Serializable {
     private String officeName;
 
     /**
-     * 排序
+     * 排序字段
      */
-    private Integer sort;
+    private Integer treeLevel;
 
     /**
-     * 父id
+     * 父级officeId
      */
     private Integer parentId;
-
-    /**
-     * 
-     */
-    private Integer isDelete;
 }

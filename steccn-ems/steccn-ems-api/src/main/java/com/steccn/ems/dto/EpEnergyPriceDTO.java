@@ -63,7 +63,7 @@ public class EpEnergyPriceDTO implements Serializable {
      * 能源价格方案详情
      */
     @NotEmpty(message = "单元格不能为空")
-    private List<Integer> pricePlanUnit;
+    private List<Integer> pricePlanType;
 
     private static final long serialVersionUID = 1L;
 }

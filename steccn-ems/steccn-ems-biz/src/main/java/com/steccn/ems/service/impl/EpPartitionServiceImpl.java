@@ -91,36 +91,58 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<EpPartition> addPartitionList = Lists.newArrayList();
         //需要删除的list
         List<Long> deletePartitionList = Lists.newArrayList();
-        //根据能源类型查询出能源分区的主id和officeid
+        //根据能源类型查询出该类型的所有分区树的集合
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
+       //获取数据库中所有officeId
         List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
-        Map<Integer,EpPartition> longIntegerMap = Maps.newHashMap();
+        Map<Integer,Long> partitionMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(epPartitions)){
             epPartitions.forEach(v->{
-                longIntegerMap.put(v.getOfficeId(),v);
+                //根据officeId分组
+                partitionMap.put(v.getOfficeId(),v.getId());
             });
         }
 
-        for (EpPartitionListDTO partitionDTO : dto.getEpPartitionListDTO()) {
-            EpPartition epPartition = new EpPartition();
-            BeanUtils.copyProperties(partitionDTO,epPartition);
-            if (Objects.isNull(partitionDTO.getId())){
-                long mainId = IdUtil.getSnowflake().nextId();
-                epPartition.setId(mainId);
-                //设置能源分区树里的父id
-                if (Objects.nonNull(partitionDTO)&&Objects.nonNull(partitionDTO.getParentId())){
-                    if (officeIds.contains(partitionDTO.getParentId())){
-                        epPartition.setParentId(longIntegerMap.get(partitionDTO.getParentId()).getId());
-                    }
+        if (CollUtil.isNotEmpty(dto.getEpPartitionListDTO())){
+            for (EpPartitionListDTO partitionDTO : dto.getEpPartitionListDTO()) {
+                EpPartition epPartition = new EpPartition();
+                //设置能源类型
+                epPartition.setType(dto.getType());
+                epPartition.setOfficeId(partitionDTO.getId());
+                epPartition.setOfficeName(partitionDTO.getOfficeName());
+                //如果数据库中没有包含该机构的id则新增
+                if (!officeIds.contains(partitionDTO.getId())){
+                    long mainId = IdUtil.getSnowflake().nextId();
+                    epPartition.setId(mainId);
+                    //设置排序字段
+                    epPartition.setSort(partitionDTO.getTreeLevel());
+                    partitionMap.put(partitionDTO.getId(),epPartition.getId());
+                    addPartitionList.add(epPartition);
                 }
-                addPartitionList.add(epPartition);
-            }else {
-                if (partitionDTO.getIsDelete()==MpConstant.YES){
-                    deletePartitionList.add(epPartition.getId());
-                }
+            }
+            //获取dto中office的所有id
+            List<Integer> officeDtoIds = dto.getEpPartitionListDTO().stream().map(EpPartitionListDTO::getId).collect(Collectors.toList());
+            //判断officeDtoIds是否包含数据库中所有officeid 如果不是则要删除数据库中多余的
+            if (!officeDtoIds.containsAll(officeIds)){
+                //去除刚刚新增的officeid,比对剩下的
+                List<Integer> addOfficeIds = addPartitionList.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
+                officeDtoIds.removeAll(addOfficeIds);
+                officeIds.removeAll(officeDtoIds);
+                officeIds.forEach(v->{
+                    deletePartitionList.add(partitionMap.get(v));
+                });
             }
         }
         if (CollUtil.isNotEmpty(addPartitionList)){
+            addPartitionList.forEach(s->{
+                //设置能源分区树里的父id
+                if (Objects.nonNull(s)&&Objects.nonNull(s.getParentId())){
+                    if (officeIds.contains(s.getParentId())){
+                        s.setParentId(partitionMap.get(s.getParentId()));
+                    }
+                }
+            });
+
             saveBatch(addPartitionList);
         }
         if (CollUtil.isNotEmpty(deletePartitionList)){

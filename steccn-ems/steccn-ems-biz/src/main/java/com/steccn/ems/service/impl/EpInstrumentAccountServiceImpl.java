@@ -253,49 +253,43 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
     @Override
     public void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception {
-//        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
-//        String line;
-//        StringBuilder sb = new StringBuilder();
-//        while ((line = br.readLine()) != null) {
-//            sb.append(line);
-//        }
-//        br.close();
-//        String base = sb.toString();
-//        if (!StringUtils.isEmpty(base)) {
-//            OutputStream out = null;
-//            try {
-//                String base64 = base.split(",")[1];
-//                byte[] bytes = new BASE64Decoder().decodeBuffer(base64);
-//                for (int i = 0; i < bytes.length; ++i) {
-//                    if (bytes[i] < 0) {
-//                        bytes[i] += 256;
-//                    }
-//                }
-//                // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-//                String fileName = "资产卡片".replaceAll("-", "")+".jpg";
-//               String realPath = request.getSession().getServletContext().getRealPath("")+ "/normalFiles/workOrderAttach/";
-//
-//                response.setContentType("image/jpg");
-//                response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
-//                response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".jpg");
-//                File file = new File(realPath);
-//
-//                if (!file.exists() || !file.isDirectory()) {
-//                    file.mkdirs();
-//                }
-//                out = new FileOutputStream(realPath + "/" + fileName);
-//                out.write(bytes);
-//                out.flush();
-//                response.getOutputStream().write(bytes);
-//                response.getOutputStream().flush();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }finally {
-//                if (out != null) {
-//                    out.close();
-//                }
-//            }
-//        }
+        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+        String line;
+        StringBuilder sb = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            sb.append(line);
+        }
+        br.close();
+        String base = sb.toString();
+        if (!StringUtils.isEmpty(base)) {
+            OutputStream out = null;
+            try {
+                String base64 = base.split(",")[1];
+                byte[] bytes = new BASE64Decoder().decodeBuffer(base64);
+                for (int i = 0; i < bytes.length; ++i) {
+                    if (bytes[i] < 0) {
+                        bytes[i] += 256;
+                    }
+                }
+                // 这里URLEncoder.encode可以防止中文乱码
+                String fileName = "资产卡片".replaceAll("-", "")+".jpg";
+               String realPath = request.getSession().getServletContext().getRealPath("")+ "/normalFiles/workOrderAttach/";
+                File file = new File(realPath);
+
+                if (!file.exists() || !file.isDirectory()) {
+                    file.mkdirs();
+                }
+                out = new FileOutputStream(realPath + "/" + fileName);
+                out.write(bytes);
+                out.flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                if (out != null) {
+                    out.close();
+                }
+            }
+        }
     }
 
 

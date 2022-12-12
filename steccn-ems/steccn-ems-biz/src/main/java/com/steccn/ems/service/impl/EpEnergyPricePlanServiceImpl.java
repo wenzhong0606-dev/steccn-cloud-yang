@@ -4,9 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyPricePlan;
 import com.steccn.ems.domain.EpEnergyPricePlanDetail;
 import com.steccn.ems.dto.EpEnergyPriceDTO;
@@ -58,7 +56,7 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
         if (Objects.isNull(dto.getId())){
             //新建的时候设置价格方案名称
             long sum = count();
-            epEnergyPricePlan.setName("价格方案"+sum+1);
+            epEnergyPricePlan.setName("价格方案"+(sum+1));
         }
         //保存或更新能源价格方案
         if (Objects.isNull(dto.getId())){
@@ -71,7 +69,7 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
             updateById(epEnergyPricePlan);
         }
         //获取前端传过来的单元格
-        List<Integer> pricePlanUnit = dto.getPricePlanUnit();
+        List<Integer> pricePlanUnit = dto.getPricePlanType();
         //过滤单元格数据 结果为1,2,3的
         pricePlanUnit = pricePlanUnit.stream()
                 .filter(s -> 3 == s || 2 == s || 1 == s).collect(Collectors.toList());
@@ -156,11 +154,14 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
         List<Integer> planDetailIds = energyPricePlanDetailService.list(new LambdaQueryWrapper<EpEnergyPricePlanDetail>()
                         .eq(EpEnergyPricePlanDetail::getPlanId, id)).stream()
                 .map(EpEnergyPricePlanDetail::getId).collect(Collectors.toList());
-        //先删除明细
-        energyPricePlanDetailService.removeByIds(planDetailIds);
-        //删除能源价格方案
-        removeById(id);
-        return Boolean.TRUE;
+        //先删除明细再删除能源价格方案
+        if (energyPricePlanDetailService.removeByIds(planDetailIds)&&removeById(energyPricePlan)){
+            return Boolean.TRUE;
+        }
+
+        return Boolean.FALSE;
+
+
     }
 
 //    public static void main(String[] args) {
