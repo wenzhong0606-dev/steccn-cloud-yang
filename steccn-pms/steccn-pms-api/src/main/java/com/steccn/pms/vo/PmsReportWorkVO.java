@@ -65,4 +65,6 @@ public class PmsReportWorkVO {
 
     private String workshopName;
 
+    private BigDecimal duration;
+
 }

@@ -470,11 +470,16 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public List<PmsReportWorkVO> listByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+
         List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().ge(PmsReportWork::getStartTime, startTime).lt(PmsReportWork::getEndTime, endTime));
+        Set<Integer> productLineIdSet = list.stream().map(PmsReportWork::getProductLineId).collect(Collectors.toSet());
+        Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(productLineIdSet)).getData();
+
         List<PmsReportWorkVO> pmsReportWorkVOList = new ArrayList<>();
         for (PmsReportWork pmsReportWork : list) {
             PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
             BeanUtils.copyProperties(pmsReportWork,pmsReportWorkVO);
+            pmsReportWorkVO.setWorkshopName(parentOfficeMap.get(pmsReportWork.getProductLineId()).getParentName());
             pmsReportWorkVOList.add(pmsReportWorkVO);
         }
         return pmsReportWorkVOList;

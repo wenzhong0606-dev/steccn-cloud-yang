@@ -7,8 +7,10 @@ import com.steccn.ems.service.EpComputeProduceDetailService;
 import com.steccn.ems.vo.EpProduceDetailVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
@@ -18,6 +20,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -40,6 +43,8 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
+    private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
+
 
     @Override
     public List<EpProduceDetailVO> getProduceDetailList(LocalDate startDate, LocalDate endDate) {
@@ -51,16 +56,19 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         List<PmsReportWorkVO> reportWorkVOList = remoteReportWorkFeignApi.listByClassTime(startDateTime, endDateTime).getData();
         List<QtCheckTaskDetailItemMaterialVO> detailItemMaterialVOList = remoteCheckTaskDetailFeignApi.getByClassTime(startDateTime, endDateTime).getData();
         List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
+        SysDictVO unit = remoteDictFeignApi.getByCode("m²", "measure_unit").getData();
+        Set<Long> materialIdSet = reportWorkVOList.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, List<SysSpareUnitConversionVO>> spareUnitMap = remoteSpareUnitConvertFeignApi.convert(materialIdSet).getData();
+
         Long dayClassId = null;
         Long nightClassId = null;
         for (SysDictVO sysDictVO : sysDictVOList) {
-            if (Objects.equals(sysDictVO.getCode(),"0")) {
+            if (Objects.equals(sysDictVO.getCode(), "0")) {
                 dayClassId = sysDictVO.getId();
             } else {
                 nightClassId = sysDictVO.getId();
             }
         }
-
 
         List<EpProduceDetailVO> epProduceDetailVoList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {
@@ -72,7 +80,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                 List<PmsReportWorkVO> pmsReportWorkVOList;
                 List<QtCheckTaskDetailItemMaterialVO> itemMaterialVOList;
                 //获取某天某个班次的报工数
-                if (Objects.equals(i,0)) {
+                if (Objects.equals(i, 0)) {
                     pmsReportWorkVOList = getDayPmsReportWorkVOList(reportWorkVOList, startTime, endTime, dayClassId);
                 } else {
                     pmsReportWorkVOList = getDayPmsReportWorkVOList(reportWorkVOList, startTime, endTime, nightClassId);
@@ -93,10 +101,20 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                         epProduceDetailVO.setThickQuantity(taskDetailItemMaterialVOList.get(0).getThickQuantity());
                     }
                     if (pmsReportWorkVO.getWorkshopName().contains("基片")) {
-                        BigDecimal pullLeadQuantity = getPullLeadQuantity(taskDetailItemMaterialVOList);
+                        BigDecimal pullLeadQuantity = getPullLeadQuantity(taskDetailItemMaterialVOList, pmsReportWorkVO.getDuration());
                         epProduceDetailVO.setYield(pullLeadQuantity);
                     } else if (pmsReportWorkVO.getWorkshopName().contains("深加工")) {
-                        epProduceDetailVO.setYield(pmsReportWorkVO.getProcessQuantity());
+                        //是否配了单位转换
+                        if (CollectionUtils.isNotEmpty(spareUnitMap.get(pmsReportWorkVO.getMaterialId()))) {
+                            Optional<SysSpareUnitConversionVO> optional = spareUnitMap.get(pmsReportWorkVO.getMaterialId())
+                                    .stream().filter(sysSpareUnitConversionVO -> unit.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
+                            if (optional.isPresent()) {
+                                BigDecimal conversionQuantity = optional.get().getConversionQuantity();
+                                BigDecimal quantity = optional.get().getQuantity();
+                                //进行单位转换
+                                epProduceDetailVO.setYield(BigDecimalUtil.divide(pmsReportWorkVO.getProcessQuantity(), quantity).multiply(conversionQuantity));
+                            }
+                        }
                     }
                     epProduceDetailVoList.add(epProduceDetailVO);
                 }
@@ -109,7 +127,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         //把字节的改成父节点
         for (EpProduceDetailVO epProduceDetailVO : epProduceDetailVoList) {
             EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(epProduceDetailVO,parentOfficeMap);
+            BeanUtils.copyProperties(epProduceDetailVO, parentOfficeMap);
             produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
             produceDetailVOList.add(produceDetailVO);
         }
@@ -118,13 +136,13 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         Map<Integer, List<EpProduceDetailVO>> map = produceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
         for (Map.Entry<Integer, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(entry.getValue().get(0),parentProduceDetailVO);
+            BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
             BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);
             parentProduceDetailVO.setYield(sumYield);
             parentProduceDetailList.add(parentProduceDetailVO);
         }
         epProduceDetailVoList.addAll(parentProduceDetailList);
-        recursionParentData(parentProduceDetailList,epProduceDetailVoList);
+        recursionParentData(parentProduceDetailList, epProduceDetailVoList);
 
         return epProduceDetailVoList;
     }
@@ -139,7 +157,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         //把字节的改成父节点
         for (EpProduceDetailVO epProduceDetailVO : parentProduceDetailVOList) {
             EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(epProduceDetailVO,parentOfficeMap);
+            BeanUtils.copyProperties(epProduceDetailVO, parentOfficeMap);
             produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
             produceDetailVOList.add(produceDetailVO);
         }
@@ -148,14 +166,14 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         Map<Integer, List<EpProduceDetailVO>> map = produceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
         for (Map.Entry<Integer, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(entry.getValue().get(0),parentProduceDetailVO);
+            BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
             BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);
             parentProduceDetailVO.setYield(sumYield);
             parentProduceDetailList.add(parentProduceDetailVO);
         }
         produceDetailVoList.addAll(parentProduceDetailList);
         //继续递归父节点数据
-        recursionParentData(parentProduceDetailVOList,produceDetailVoList);
+        recursionParentData(parentProduceDetailVOList, produceDetailVoList);
     }
 
     private List<PmsReportWorkVO> getDayPmsReportWorkVOList(List<PmsReportWorkVO> reportWorkVOList, LocalDateTime startTime, LocalDateTime endTime, Long classId) {
@@ -171,12 +189,23 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             BeanUtils.copyProperties(entry.getValue().get(0), pmsReportWorkVO);
             BigDecimal sum = entry.getValue().stream().map(PmsReportWorkVO::getBadnessQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
             pmsReportWorkVO.setProcessQuantity(sum);
+
+            List<BigDecimal> hoursList = new ArrayList<>();
+            for (PmsReportWorkVO reportWorkVO : entry.getValue()) {
+                LocalDateTime startTime1 = reportWorkVO.getStartTime();
+                LocalDateTime endTime1 = reportWorkVO.getEndTime();
+                Duration duration = Duration.between(startTime1, endTime1);
+                long minutes = duration.toMinutes();
+                //获取生产多少小时
+                hoursList.add(BigDecimalUtil.divide(BigDecimal.valueOf(minutes), BigDecimal.valueOf(60)));
+            }
+            pmsReportWorkVO.setDuration(hoursList.stream().reduce(BigDecimal.ZERO, BigDecimal::add));
             reportWorkVoArrayList.add(pmsReportWorkVO);
         }
         return reportWorkVoArrayList;
     }
 
-    private BigDecimal getPullLeadQuantity(List<QtCheckTaskDetailItemMaterialVO> itemMaterialVOList) {
+    private BigDecimal getPullLeadQuantity(List<QtCheckTaskDetailItemMaterialVO> itemMaterialVOList, BigDecimal hours) {
         //获取每个物料的平均单片掰边重量、平均单片重量、拉引速度
         List<QtCheckTaskDetailItemMaterialVO> snappingList = itemMaterialVOList.stream().filter(item -> item.getItemName().equals("单片掰边重量")).collect(Collectors.toList());
         List<QtCheckTaskDetailItemMaterialVO> singleWeightList = itemMaterialVOList.stream().filter(item -> item.getItemName().equals("单片重量")).collect(Collectors.toList());
