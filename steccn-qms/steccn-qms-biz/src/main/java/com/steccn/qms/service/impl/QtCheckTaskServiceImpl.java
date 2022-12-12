@@ -2065,6 +2065,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = orDefault.get(0);
                     List<String> headList = qtIQCAcceptabilityCopyVO.getList().stream().map(v -> v.getName()).collect(Collectors.toList());
                     task.setDetailTableHead(headList);
+
+                    orDefault.forEach(ele ->{
+                        List<String> eleList = Lists.newArrayList();
+                        ele.getList().forEach(e ->{
+                            eleList.add(e.getValue());
+                        });
+                        ele.setEleList(eleList);
+                    });
                 }
                 task.setDetail(orDefault);
                 task.setMaterialName(materialMap.get(task.getMaterialId()));
