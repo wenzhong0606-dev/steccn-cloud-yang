@@ -2,6 +2,7 @@ package com.steccn.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,10 +12,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.pms.vo.PmBillOfMaterialVO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
+import com.steccn.wms.dto.CaseSiteDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsInventoryPageDTO;
 import com.steccn.wms.service.WmsInventoryService;
@@ -258,6 +259,26 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().subtract(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().add(dto.getQuantity()));
         return updateById(inventory);
+    }
+
+    @Override
+    public Map<String, CaseSiteDTO> stockByCaseNo(Set<String> caseNos) {
+        //定义返回集合
+        Map<String, CaseSiteDTO> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(caseNos)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNos));
+            //处理数据
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(
+                        inventory -> {
+                            CaseSiteDTO caseSiteDTO = new CaseSiteDTO();
+                            BeanUtil.copyProperties(inventory,caseSiteDTO);
+                            map.put(caseSiteDTO.getCaseNo(), caseSiteDTO);
+                        }
+                );
+            }
+        }
+        return map;
     }
 
 

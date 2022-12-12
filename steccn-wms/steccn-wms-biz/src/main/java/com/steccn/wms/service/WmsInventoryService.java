@@ -2,14 +2,15 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.vo.WmsInventoryVO;
-import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.CaseSiteDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsInventoryPageDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -105,4 +106,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean unfreeze(WmsInventoryDTO dto);
+
+    /**
+     * 根据箱号获取仓库货架信息
+     * @param caseNos
+     * @return
+     */
+    Map<String, CaseSiteDTO> stockByCaseNo(Set<String> caseNos);
 }

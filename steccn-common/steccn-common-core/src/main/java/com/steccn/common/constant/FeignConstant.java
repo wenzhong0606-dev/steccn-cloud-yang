@@ -42,4 +42,9 @@ public interface FeignConstant {
      * 质量系统服务名称
      */
     String STECCN_QMS_SERVICE_NAME ="steccn-qms";
+
+    /**
+     * 仓储系统服务名称
+     */
+    String STECCN_WMS_SERVICE_NAME = "steccn-wms";
 }
