@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class PmsReportWorkFeignController {
 
     @GetMapping("/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    public R<List<PmsReportWorkVO>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+    public R<List<PmsReportWorkVO>> listByClassTime(@RequestParam("startTime") LocalDateTime startTime,@RequestParam("endTime") LocalDateTime endTime) {
         return R.success(pmsReportWorkService.listByClassTime(startTime, endTime));
     }
 }

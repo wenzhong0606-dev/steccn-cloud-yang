@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class QtCheckTaskDetailFeignController {
 
     @ApiOperation("根据班次日期查询单片掰边重量、单片重量、拉引速度")
     @GetMapping("/getByClassTime")
-    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(LocalDateTime startTime, LocalDateTime endTime){
+    public R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(@RequestParam("startTime")LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime){
         return R.success(qtCheckTaskDetailService.getByClassTime(startTime, endTime));
     }
 }

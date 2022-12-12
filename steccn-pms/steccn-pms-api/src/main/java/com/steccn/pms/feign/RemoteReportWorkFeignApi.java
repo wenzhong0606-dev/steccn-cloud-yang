@@ -6,6 +6,7 @@ import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,5 +20,5 @@ public interface RemoteReportWorkFeignApi {
 
     @GetMapping("/feign/pms/report/work/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    R<List<PmsReportWorkVO>> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+    R<List<PmsReportWorkVO>> listByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime);
 }
