@@ -121,59 +121,38 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             }
         }
 
-        Set<Integer> officeIdSet = epProduceDetailVoList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(officeIdSet)).getData();
-        List<EpProduceDetailVO> produceDetailVOList = new ArrayList<>();
-        //把字节的改成父节点
-        for (EpProduceDetailVO epProduceDetailVO : epProduceDetailVoList) {
-            EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(epProduceDetailVO, parentOfficeMap);
-            produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
-            produceDetailVOList.add(produceDetailVO);
-        }
-        //汇总父节点数据
-        List<EpProduceDetailVO> parentProduceDetailList = new ArrayList<>();
-        Map<Integer, List<EpProduceDetailVO>> map = produceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
-        for (Map.Entry<Integer, List<EpProduceDetailVO>> entry : map.entrySet()) {
-            EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
-            BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);
-            parentProduceDetailVO.setYield(sumYield);
-            parentProduceDetailList.add(parentProduceDetailVO);
-        }
-        epProduceDetailVoList.addAll(parentProduceDetailList);
-        recursionParentData(parentProduceDetailList, epProduceDetailVoList);
+        recursionParentData(epProduceDetailVoList,epProduceDetailVoList);
 
         return epProduceDetailVoList;
     }
 
-    private void recursionParentData(List<EpProduceDetailVO> parentProduceDetailVOList, List<EpProduceDetailVO> produceDetailVoList) {
-        Set<Integer> officeIdSet = parentProduceDetailVOList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
+    private void recursionParentData(List<EpProduceDetailVO> childProduceDetailVOList, List<EpProduceDetailVO> produceDetailVOList) {
+        Set<Integer> officeIdSet = childProduceDetailVOList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(officeIdSet)).getData();
         if (Objects.isNull(parentOfficeMap)) {
             return;
         }
-        List<EpProduceDetailVO> produceDetailVOList = new ArrayList<>();
+        List<EpProduceDetailVO> parentProduceDetailVOList = new ArrayList<>();
         //把字节的改成父节点
-        for (EpProduceDetailVO epProduceDetailVO : parentProduceDetailVOList) {
+        for (EpProduceDetailVO epProduceDetailVO : childProduceDetailVOList) {
             EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(epProduceDetailVO, parentOfficeMap);
             produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
-            produceDetailVOList.add(produceDetailVO);
+            parentProduceDetailVOList.add(produceDetailVO);
         }
         //汇总父节点数据
-        List<EpProduceDetailVO> parentProduceDetailList = new ArrayList<>();
-        Map<Integer, List<EpProduceDetailVO>> map = produceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
+        List<EpProduceDetailVO> sumParentProduceDetailList = new ArrayList<>();
+        Map<Integer, List<EpProduceDetailVO>> map = parentProduceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
         for (Map.Entry<Integer, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
             BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);
             parentProduceDetailVO.setYield(sumYield);
-            parentProduceDetailList.add(parentProduceDetailVO);
+            sumParentProduceDetailList.add(parentProduceDetailVO);
         }
-        produceDetailVoList.addAll(parentProduceDetailList);
+        produceDetailVOList.addAll(sumParentProduceDetailList);
         //继续递归父节点数据
-        recursionParentData(parentProduceDetailVOList, produceDetailVoList);
+        recursionParentData(sumParentProduceDetailList, produceDetailVOList);
     }
 
     private List<PmsReportWorkVO> getDayPmsReportWorkVOList(List<PmsReportWorkVO> reportWorkVOList, LocalDateTime startTime, LocalDateTime endTime, Long classId) {
@@ -225,6 +204,6 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         }
         //当前班次每个物料的拉引量
 //        BigDecimal pullLeadQuantity = avgPullSpeed.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength), BigDecimal.valueOf(1000000)));
-        return avgSnapping.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength), BigDecimal.valueOf(1000000)));
+        return avgSnapping.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength).multiply(hours), BigDecimal.valueOf(1000000)));
     }
 }
