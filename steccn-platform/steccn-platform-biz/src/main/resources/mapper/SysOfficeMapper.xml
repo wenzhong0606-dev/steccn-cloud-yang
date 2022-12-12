@@ -82,7 +82,8 @@
 
         SELECT
 	        a.id id,
-	        b.id parentId
+	        b.id parentId,
+	        b.office_name parentName
         FROM
 	        sys_office a
 	        INNER JOIN sys_office b ON a.parent_code = b.office_code

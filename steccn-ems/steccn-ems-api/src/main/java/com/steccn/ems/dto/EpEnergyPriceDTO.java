@@ -60,12 +60,6 @@ public class EpEnergyPriceDTO implements Serializable {
     private BigDecimal valleyPrice;
 
     /**
-     * 单位
-     */
-    @NotNull
-    private Long unit;
-
-    /**
      * 能源价格方案详情
      */
     @NotEmpty(message = "单元格不能为空")
