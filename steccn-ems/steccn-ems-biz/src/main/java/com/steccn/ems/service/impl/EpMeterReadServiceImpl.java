@@ -236,6 +236,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateBatch(List<EpMeterReadUpdateDTO> dtoList) {
+        Optional<EpMeterReadUpdateDTO> dtoOptional = dtoList.stream().filter(epMeterReadUpdateDTO -> EpManagerConstant.InstrumentType.REMOTE.getCode().equals(epMeterReadUpdateDTO.getEntityTable())
+                || EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(epMeterReadUpdateDTO.getEntityTable())).findAny();
+        if (dtoOptional.isPresent()) {
+            throw new BusinessException("只能修改实体非远传仪表的值");
+        }
         Set<LocalDate> localDateSet = dtoList.stream().map(EpMeterReadUpdateDTO::getReadDate).collect(Collectors.toSet());
         Set<Integer> meterIdSet = dtoList.stream().map(EpMeterReadUpdateDTO::getMeterId).collect(Collectors.toSet());
         List<EpMeterRead> list = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).in(EpMeterRead::getReadDate, localDateSet));
