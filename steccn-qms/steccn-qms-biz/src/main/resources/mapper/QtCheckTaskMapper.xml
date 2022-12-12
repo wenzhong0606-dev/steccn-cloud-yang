@@ -135,14 +135,15 @@
         a.product_workshop product_workshop,
         a.result result,
         a.finished_time finished_time,
-        b.sampling_time sampling_time,
+--         b.sampling_time sampling_time,
+        (select min(sampling_time) from qt_check_task_copy b where a.id = b.task_id ),
         a.material_id material_id,
         a.supplier supplier,
         IFNULL(a.good_num,0) as good_num,
         IFNULL(a.check_num,0) as check_num
         FROM
         qt_check_task a
-        LEFT JOIN qt_check_task_copy b ON b.task_id = a.id
+--         LEFT JOIN qt_check_task_copy b ON b.task_id = a.id
         LEFT JOIN qt_material c ON c.id = a.material_id
         <where>
             a. task_type = 1 and a.del_flag = 0
