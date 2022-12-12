@@ -118,6 +118,8 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
     @SneakyThrows
     @Override
     public void downloadDistribution(EpSectionPriceDTO dto, HttpServletResponse response) {
+        dto.setCurrent(1);
+        dto.setSize(99999);
         Page<EpEnergyMoneyVO> page = getDistributionDetails(dto);
         List<EpEnergyMoneyVO> data = page.getRecords();
         Map<String, Object> map = MapUtils.newHashMap();
@@ -242,6 +244,8 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         dto1.setPartitionId(dto.getPartitionId());
         dto1.setDateStart(dto.getDateStart1());
         dto1.setDateEnd(dto.getDateEnd1());
+        dto1.setCurrent(1);
+        dto1.setSize(99999);
         List<EpEnergyMoneyVO> epEnergyMoneyVO1 = generateSectionData(dto1);
         //生成dto1
         if(CollUtil.isEmpty(epEnergyMoneyVO1)){
@@ -265,6 +269,8 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         dto2.setPartitionId(dto.getPartitionId());
         dto2.setDateStart(dto.getDateStart2());
         dto2.setDateEnd(dto.getDateEnd2());
+        dto2.setCurrent(1);
+        dto2.setSize(99999);
         List<EpEnergyMoneyVO> epEnergyMoneyVO2 = generateSectionData(dto2);
         //生成dto2
         if(CollUtil.isEmpty(epEnergyMoneyVO2)){
@@ -323,9 +329,25 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         return page;
     }
 
+    @SneakyThrows
     @Override
     public void downloadHistory(EpSectionPriceHisDTO dto, HttpServletResponse response) {
-
+        //默认全部数据
+        dto.setCurrent(1);
+        dto.setSize(99999);
+        Page<EpEnergyMoneyVO> page = getHistoryDetails(dto);
+        List<EpEnergyMoneyVO> data = page.getRecords();
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("dateStart1",LocalDateUtil.localDateFormat(dto.getDateStart1(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd1",LocalDateUtil.localDateFormat(dto.getDateEnd1(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateStart2",LocalDateUtil.localDateFormat(dto.getDateStart2(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd2",LocalDateUtil.localDateFormat(dto.getDateEnd2(),DatePattern.NORM_DATE_PATTERN));
+        String excelName = "峰谷平历史对比(电)_"
+                + LocalDateUtil.localDateFormat(dto.getDateStart1(),DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getDateEnd1(),DatePattern.NORM_DATE_PATTERN) + "-"
+                + LocalDateUtil.localDateFormat(dto.getDateStart2(),DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getDateEnd2(),DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadTemplate(response,EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_FGPLSDB,excelName,map,data,dto.getBase64());
     }
 
     /**

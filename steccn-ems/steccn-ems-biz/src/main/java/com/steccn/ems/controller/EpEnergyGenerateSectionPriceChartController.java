@@ -62,6 +62,17 @@ public class EpEnergyGenerateSectionPriceChartController {
         return R.success(epEnergyGenerateSectionPriceChart.generateDistributionLeader(dto));
     }
 
+    @PostMapping("/download")
+    @ApiOperation(value = "峰平谷下载-图表")
+    public void downloadDis (@RequestBody EpSectionPriceDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epEnergyGenerateSectionPriceChart.downloadDistribution(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     @PostMapping("/history/detail")
     @ApiOperation(value = "峰平谷历史对比-详情")
     public R<Page<EpEnergyMoneyVO>> getHisDetail(@RequestBody EpSectionPriceHisDTO dto) {
@@ -74,11 +85,11 @@ public class EpEnergyGenerateSectionPriceChartController {
         return R.success(epEnergyGenerateSectionPriceChart.generateHistory(dto));
     }
 
-    @PostMapping("/download")
-    @ApiOperation(value = "峰平谷下载-图表")
-    public void downloadDis (@RequestBody EpSectionPriceDTO dto, HttpServletResponse response) throws IOException {
+    @PostMapping("/history/download")
+    @ApiOperation(value = "峰平谷历史下载-图表")
+    public void downloadHis (@RequestBody EpSectionPriceHisDTO dto, HttpServletResponse response) throws IOException {
         try{
-            epEnergyGenerateSectionPriceChart.downloadDistribution(dto,response);
+            epEnergyGenerateSectionPriceChart.downloadHistory(dto,response);
         } catch (Exception e) {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
