@@ -76,16 +76,15 @@ public class EqpSpareController {
         return eqpSpareService.listCondition(spareDTO);
     }
 
-
-    @GetMapping("/all")
+    @GetMapping("/oa/page")
     @ApiOperation("oa获取备件列表")
-    public R<List<EqpSpareOaVO>> all() {
+    public R<Page<EqpSpareOaVO>> all() {
         EqpSpareOaVO vo = new EqpSpareOaVO();
         vo.setMaterialCode("物料名称");
         vo.setMaterialName("物料编码");
         vo.setCategoryName("物料类别");
         List<EqpSpareOaVO> resList = Lists.newArrayList(vo);
-        return R.success(resList);
+        return R.success(new Page<EqpSpareOaVO>().setRecords(resList));
     }
 
     @PostMapping("/getByTypeIdSpareList")
