@@ -3,6 +3,9 @@ package com.steccn.ems.service;
 import com.steccn.ems.domain.EpEnergyPricePlan;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpEnergyPriceDTO;
+import com.steccn.ems.vo.EpEnergyPriceVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -17,4 +20,24 @@ public interface EpEnergyPricePlanService extends IService<EpEnergyPricePlan> {
      * @return
      */
     Boolean addOrEdit(EpEnergyPriceDTO dto);
+
+    /**
+     * 查询所有能源价格方案
+     * @return
+     */
+    List<EpEnergyPriceVO> getEpEnergyPriceVOList();
+
+    /**
+     * 根据id查询能源价格方案
+     * @param id
+     * @return
+     */
+    EpEnergyPriceVO getEpEnergyPriceVO(Long id);
+
+    /**
+     * 根据id删除能源价格方案
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
 }
