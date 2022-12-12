@@ -46,6 +46,14 @@ public interface EpMeterReadMapper extends BaseMapper<EpMeterRead> {
      * @return
      */
     List<ReadCorrectVO> selectByMeterId();
+
+    /**
+     * 根据仪表类型查询数据
+     *
+     * @param meterType
+     * @return
+     */
+    List<MeterReadMapperVO> selectAllByMeterType(@Param("meterType") Integer meterType);
 }
 
 
