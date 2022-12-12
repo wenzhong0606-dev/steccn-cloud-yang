@@ -70,7 +70,7 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
         //自定义sql 获取出库单明细信息
         List<WmsDeliveryReceiptInfoVO> list = Lists.newArrayList();
         //处理数据
-        if (CollUtil.isNotEmpty(list)) {
+        if (Objects.nonNull(id)) {
             list = this.baseMapper.infoList(id);
             Set<Long> dictIds = Sets.newHashSet();
             list.forEach(info -> dictIds.add(info.getUnit()));

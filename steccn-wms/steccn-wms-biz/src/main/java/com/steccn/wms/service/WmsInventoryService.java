@@ -9,6 +9,7 @@ import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsInventoryPageDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author W10
@@ -32,4 +33,76 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean updateLockQuantity(List<WmsInventoryDTO> infoList, Integer state);
+
+    /**
+     * 添加库存
+     * @param infoList
+     * @return
+     */
+    Boolean addInfo(List<WmsInventoryDTO> infoList);
+
+    /**
+     * 还原库存信息
+     * @param infoList
+     * @return
+     */
+    Boolean restore(List<WmsInventoryDTO> infoList);
+
+    /**
+     * 修改库存的信息
+     * @param inventoryDTOList
+     * @return
+     */
+    Boolean updateInventory(List<WmsInventoryDTO> inventoryDTOList);
+
+
+    /**
+     * 确认入库（减少占用库存,增加可用库存以及总库存）
+     * @param inventoryDTOList
+     * @return
+     */
+    Boolean affirm(List<WmsInventoryDTO> inventoryDTOList);
+
+    /**
+     * 添加锁定库存，减少可用库存
+     * @param addList
+     * @return
+     */
+    Boolean addLockQuantity(List<WmsInventoryDTO> addList);
+
+    /**
+     * 还原锁定库存数量
+     * @param deleteList
+     * @return
+     */
+    Boolean restoreLockQuantity(List<WmsInventoryDTO> deleteList);
+
+    /**
+     * 还原锁定库存和可用库存并变更
+     * @param updateList
+     * @return
+     */
+    Boolean editLockQuantity(List<WmsInventoryDTO> updateList);
+
+    /**
+     * 减少锁定库存 减少库存
+     * @param inventoryDTOList
+     * @return
+     */
+    Boolean affirmLockQuantity(List<WmsInventoryDTO> inventoryDTOList);
+
+    /**
+     * 冻结库存
+     * @param dto
+     * @return
+     */
+    Boolean freeze(WmsInventoryDTO dto);
+
+
+    /**
+     * 解冻库存呢
+     * @param dto
+     * @return
+     */
+    Boolean unfreeze(WmsInventoryDTO dto);
 }

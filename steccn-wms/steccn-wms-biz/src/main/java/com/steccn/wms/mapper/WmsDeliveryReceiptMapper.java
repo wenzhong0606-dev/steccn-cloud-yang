@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author W10
@@ -22,7 +23,7 @@ public interface WmsDeliveryReceiptMapper extends BaseMapper<WmsDeliveryReceipt>
      * @param dto
      * @return
      */
-    Page<WmsDeliveryReceiptVO> pageList(Page page, WmsDeliveryReceiptPageDTO dto);
+    Page<WmsDeliveryReceiptVO> pageList(@Param("page") Page page,@Param("dto") WmsDeliveryReceiptPageDTO dto);
 }
 
 

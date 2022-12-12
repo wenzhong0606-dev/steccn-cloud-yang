@@ -107,21 +107,24 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             WmsDeliveryReceipt model = new WmsDeliveryReceipt();
             BeanUtil.copyProperties(dto, model);
             //3.给当前出库单生成编码
-            model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_TRANSFER_SLIP, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+            model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
             model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
             //4.保存出库单信息
             save(model);
             //5.保存出库单明细信息
             if (CollUtil.isNotEmpty(dto.getList())) {
                 List<WmsInventoryDTO> infoList = Lists.newArrayList();
+                List<WmsDeliveryReceiptInfo> receiptInfoList = Lists.newArrayList();
                 dto.getList().forEach(info -> {
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info, wmsInventoryDTO);
                     wmsInventoryDTO.setId(info.getInventoryId());
-                    wmsInventoryDTO.setQuantity(info.getQuantity());
-                    wmsInventoryDTO.setCaseNo(info.getCaseNo());
                     infoList.add(wmsInventoryDTO);
+                    WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+                    BeanUtil.copyProperties(info,wmsDeliveryReceiptInfo);
+                    wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
+                    receiptInfoList.add(wmsDeliveryReceiptInfo);
                 });
-                List<WmsDeliveryReceiptInfo> receiptInfoList = BeanUtil.copyToList(dto.getList(), WmsDeliveryReceiptInfo.class);
                 //调整锁定库存信息
                 wmsInventoryService.updateLockQuantity(infoList, WmsManagerConstant.InventoryEnum.ZERO.getCode());
                 //保存明细信息
@@ -153,16 +156,16 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 List<Long> ids = Lists.newArrayList();
                 List<Long> updateIds = Lists.newArrayList();
                 dto.getList().forEach(info -> {
-                    ids.add(info.getId());
                     WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
                     BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info,wmsInventoryDTO);
                     wmsInventoryDTO.setId(info.getInventoryId());
-                    wmsInventoryDTO.setQuantity(info.getQuantity());
                     if (Objects.isNull(info.getId())) {
                         wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
                         addList.add(wmsInventoryDTO);
                     } else {
+                        ids.add(info.getId());
                         updateIds.add(info.getId());
                         updateList.add(wmsInventoryDTO);
                     }
@@ -173,6 +176,14 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         .notIn(CollUtil.isNotEmpty(ids), WmsDeliveryReceiptInfo::getId, ids);
                 //获取需要删除的数据
                 List<WmsDeliveryReceiptInfo> list = wmsDeliveryReceiptInfoService.list(wrapper);
+                if (CollUtil.isNotEmpty(updateList)) {
+                    //获取原始数量
+                    Map<Long, BigDecimal> originalQuantityMap = wmsDeliveryReceiptInfoService.originalQuantity(updateIds);
+                    updateList.forEach(inventory -> {
+                        inventory.setOriginalQuantity(originalQuantityMap.get(inventory.getId()));
+                    });
+                    wmsInventoryService.editLockQuantity(updateList);
+                }
                 if (CollUtil.isNotEmpty(list)) {
                     List<WmsInventoryDTO> deleteList = Lists.newArrayList();
                     list.forEach(info -> {
@@ -181,21 +192,14 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                         wmsInventoryDTO.setQuantity(info.getQuantity());
                         deleteList.add(wmsInventoryDTO);
                     });
-                    wmsInventoryService.updateLockQuantity(deleteList, WmsManagerConstant.InventoryEnum.ONE.getCode());
+                    wmsInventoryService.restoreLockQuantity(deleteList);
+                    wmsDeliveryReceiptInfoService.remove(wrapper);
                 }
                 if (CollUtil.isNotEmpty(addList)) {
-                    wmsInventoryService.updateLockQuantity(addList, WmsManagerConstant.InventoryEnum.ZERO.getCode());
+                    wmsInventoryService.addLockQuantity(addList);
                 }
-                if (CollUtil.isNotEmpty(updateList)) {
-                    //获取原始数量
-                    Map<Long, BigDecimal> originalQuantityMap = wmsDeliveryReceiptInfoService.originalQuantity(updateIds);
-                    updateList.forEach(inventory -> {
-                        inventory.setOriginalQuantity(originalQuantityMap.get(inventory.getId()));
-                    });
-                    wmsInventoryService.updateLockQuantity(updateList, WmsManagerConstant.InventoryEnum.TWO.getCode());
-                }
+
                 wmsDeliveryReceiptInfoService.saveOrUpdateBatch(wmsDeliveryReceiptInfoList);
-                wmsDeliveryReceiptInfoService.remove(wrapper);
             }
         } finally {
             lock.unlock();
@@ -223,7 +227,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsInventoryDTO.setQuantity(info.getQuantity());
                 inventoryDTOList.add(wmsInventoryDTO);
             });
-            wmsInventoryService.updateLockQuantity(inventoryDTOList, WmsManagerConstant.InventoryEnum.THREE.getCode());
+            wmsInventoryService.affirmLockQuantity(inventoryDTOList);
         }
         //4.修改确认单状态
         receipt.setAffirmName(SecurityUtils.getUser().getName());
@@ -254,7 +258,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 wmsInventoryDTO.setId(info.getInventoryId());
                 deleteList.add(wmsInventoryDTO);
             });
-            wmsInventoryService.updateLockQuantity(deleteList, WmsManagerConstant.InventoryEnum.ONE.getCode());
+            wmsInventoryService.restoreLockQuantity(deleteList);
         }
         return updateById(order);
     }
@@ -267,16 +271,18 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         List<WmsDeliveryReceiptInfoVO> infoVOList = wmsDeliveryReceiptInfoService.infoList(id);
         //处理数据
         WmsDeliveryReceiptVO wmsDeliveryReceiptVO = new WmsDeliveryReceiptVO();
-        wmsDeliveryReceiptVO.setList(infoVOList);
         BeanUtil.copyProperties(order, wmsDeliveryReceiptVO);
         Set<Long> typeSet = Sets.newHashSet();
         Set<Integer> officeSet = Sets.newHashSet();
         typeSet.add(wmsDeliveryReceiptVO.getType());
         officeSet.add(wmsDeliveryReceiptVO.getWarehouseId());
+        infoVOList.forEach(info-> typeSet.add(info.getUnit()));
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
+        infoVOList.forEach(info->info.setUnitName(dictMap.get(info.getUnit())));
         wmsDeliveryReceiptVO.setWarehouseName(officeMap.get(wmsDeliveryReceiptVO.getWarehouseId()));
         wmsDeliveryReceiptVO.setTypeName(dictMap.get(wmsDeliveryReceiptVO.getType()));
+        wmsDeliveryReceiptVO.setList(infoVOList);
         return wmsDeliveryReceiptVO;
     }
 

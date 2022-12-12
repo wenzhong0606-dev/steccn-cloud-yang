@@ -29,4 +29,67 @@
         create_time,update_by,update_name,
         update_time,del_flag,note
     </sql>
+    <select id="pageList" resultType="com.steccn.wms.vo.WmsStorageReceiptVO">
+        SELECT
+        DISTINCT a.id,
+        a.CODE,
+        a.type,
+        a.create_name,
+        a.create_time,
+        a.`status`,
+        a.warehouse_id,
+        a.affirm_time,
+        a.affirm_name,
+        a.note
+        FROM
+        wms_storage_receipt a
+        LEFT JOIN wms_storage_receipt_info b ON a.id = b.storage_receipt_id
+        <where>
+        <if test="dto.status != null">
+            AND a.status = #{dto.status}
+        </if>
+        <if test="dto.code != null and dto.code != ''">
+            and a.code LIKE CONCAT('%',#{dto.code},'%')
+        </if>
+        <if test="dto.type != null and dto.type != ''">
+            and a.type = #{dto.type}
+        </if>
+        <if test="dto.materialName != null and dto.materialName != ''">
+            and b.material_name LIKE CONCAT('%',#{dto.materialName},'%')
+        </if>
+        <if test="dto.materialCode != null and dto.materialCode != ''">
+            and b.material_code LIKE CONCAT('%',#{dto.materialCode},'%')
+        </if>
+        <if test="dto.shelfCode != null and dto.shelfCode != ''">
+            and b.shelf_code LIKE CONCAT('%',#{dto.shelfCode},'%')
+        </if>
+        <if test="dto.shelfName != null and dto.shelfName != ''">
+            and b.shelf_name LIKE CONCAT('%',#{dto.shelfName},'%')
+        </if>
+        <if test="dto.warehouseIds != null and dto.warehouseIds.size > 0">
+            and a.warehouse_id in
+            <foreach collection="dto.warehouseIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="dto.batch != null and dto.batch != ''">
+            and b.batch like CONCAT('%',#{dto.batch},'%')
+        </if>
+        <if test="dto.caseNo != null and dto.caseNo != ''">
+            and b.case_no like CONCAT('%',#{dto.caseNo},'%')
+        </if>
+        <if test="dto.createName != null and dto.createName != ''">
+            and a.create_Name like CONCAT('%',#{dto.createName},'%')
+        </if>
+        <if test="dto.affirmName != null and dto.affirmName != ''">
+            and a.affirm_Name like CONCAT('%',#{dto.affirmName},'%')
+        </if>
+        <if test="dto.createStartTime !=null and dto.createEndTime !=null">
+            and a.create_time between #{dto.createStartTime} and #{dto.createEndTime}
+        </if>
+        <if test="dto.affirmStartTime !=null and dto.affirmEndTime !=null">
+            and a.affirm_time between #{dto.affirmStartTime} and #{dto.affirmEndTime}
+        </if>
+        </where>
+    </select>
 </mapper>

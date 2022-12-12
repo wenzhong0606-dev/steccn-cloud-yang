@@ -70,7 +70,7 @@ public class WmsDeliveryReceiptController {
 
     @ApiOperation("出库凭证详情")
     @GetMapping()
-    public R<WmsDeliveryReceiptVO> get(@ApiParam("调拨单id") @RequestParam("id") Long id){
+    public R<WmsDeliveryReceiptVO> get(@ApiParam("出库单id") @RequestParam("id") Long id){
         return R.success(wmsDeliveryReceiptService.get(id));
     }
 
