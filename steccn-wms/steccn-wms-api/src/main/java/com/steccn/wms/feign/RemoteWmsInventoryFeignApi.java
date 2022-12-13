@@ -3,9 +3,7 @@ package com.steccn.wms.feign;
 import com.steccn.common.constant.FeignConstant;
 
 import com.steccn.common.vo.R;
-import com.steccn.wms.dto.CaseSiteDTO;
-import com.steccn.wms.dto.MaterialInventoryDTO;
-import com.steccn.wms.dto.MaterialStorageDTO;
+import com.steccn.wms.dto.*;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -55,7 +53,18 @@ public interface RemoteWmsInventoryFeignApi {
      * @param materialIds
      * @return
      */
-    @PostMapping("/material/inventory")
+    @PostMapping("/feign/wms/inventory/material/inventory")
     @ApiOperation("获取物料的库存清单")
     R<Map<Long, MaterialInventoryDTO>> materialInventory(@RequestBody Set<Long> materialIds);
+
+
+    /**
+     * 获取物料库存信息
+     *
+     * @param list 物料集合
+     * @return
+     */
+    @PostMapping(value = "/feign/wms/inventory/storageList")
+    @ApiOperation("获取物料的库存清单")
+    R<List<WmsStockInventoryDTO>> materialConsume(@RequestBody List<MaterialStorageInfoDTO> list);
 }

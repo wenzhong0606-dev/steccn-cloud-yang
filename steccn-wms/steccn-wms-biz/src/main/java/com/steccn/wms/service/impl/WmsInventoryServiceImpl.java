@@ -14,6 +14,8 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.MessMaterialConsumeDTO;
+import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
@@ -26,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -330,6 +329,68 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             }
         }
         return map;
+    }
+
+    @Override
+    public List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list) {
+//        //定义集合
+//        //批量查询物料在库存中的存量
+        LinkedList<WmsStockInventoryDTO> materialStorageVOList = new LinkedList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            List<Long> materialIds = Lists.newArrayList();
+            list.forEach(messMaterialStorageDTO -> materialIds.add(messMaterialStorageDTO.getMaterialId()));
+            List<WmsInventory> materialInventoryList = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
+            //获取需要的库存数量，去除多余数量条数
+            if (CollUtil.isNotEmpty(materialInventoryList)) {
+                List<WmsStockInventoryDTO> materialList = Lists.newArrayList();
+                materialInventoryList.forEach(materialInventory -> {
+                    WmsStockInventoryDTO wmsStockInventoryDTO = new WmsStockInventoryDTO();
+                    BeanUtil.copyProperties(materialInventory, wmsStockInventoryDTO);
+                    wmsStockInventoryDTO.setCreateDate(materialInventory.getCreateTime());
+                    materialList.add(wmsStockInventoryDTO);
+                });
+                Map<Long, List<WmsStockInventoryDTO>> materialMap = materialList.stream().collect(Collectors.groupingBy(WmsStockInventoryDTO::getMaterialId));
+                List<WmsStockInventoryDTO> inventoryList = Lists.newArrayList();
+                list.forEach(material -> {
+                    List<WmsStockInventoryDTO> wmsInventoryList = materialMap.getOrDefault(material.getMaterialId(), inventoryList);
+                    if (CollUtil.isNotEmpty(wmsInventoryList)) {
+                        BigDecimal sum = BigDecimal.ZERO;
+                        wmsInventoryList.sort(Comparator.comparing(WmsStockInventoryDTO::getCreateDate));
+                        //过滤库存小于等于O的数据
+                        List<WmsStockInventoryDTO> collect = wmsInventoryList.stream()
+                                .filter(wmsInventory -> wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
+                                .collect(Collectors.toList());
+                        if (CollUtil.isNotEmpty(collect)) {
+                            for (WmsStockInventoryDTO wmsInventory : collect) {
+                                sum = wmsInventory.getAvailableQuantity().add(sum);
+                                wmsInventory.setQuantity(wmsInventory.getAvailableQuantity());
+                                materialStorageVOList.add(wmsInventory);
+                                if (material.getQuantity().compareTo(sum) < 1) {
+                                    WmsStockInventoryDTO last = materialStorageVOList.getLast();
+                                    //计算实际使用数量
+                                    last.setQuantity(last.getAvailableQuantity().subtract(sum.subtract(material.getQuantity())));
+                                    break;
+                                }
+                            }
+                        } else {
+                            WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
+                            materialStorageVO.setMaterialId(material.getMaterialId());
+                            materialStorageVO.setAvailableQuantity(BigDecimal.ZERO);
+                            materialStorageVO.setCreateDate(null);
+                            materialStorageVOList.add(materialStorageVO);
+                        }
+
+                    }else {
+                        WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
+                        materialStorageVO.setMaterialId(material.getMaterialId());
+                        materialStorageVO.setAvailableQuantity(BigDecimal.ZERO);
+                        materialStorageVO.setCreateDate(null);
+                        materialStorageVOList.add(materialStorageVO);
+                    }
+                });
+            }
+        }
+        return materialStorageVOList;
     }
 
 

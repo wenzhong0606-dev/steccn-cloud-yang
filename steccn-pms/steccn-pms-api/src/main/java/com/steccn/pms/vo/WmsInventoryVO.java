@@ -136,4 +136,7 @@ public class WmsInventoryVO {
      */
     @ApiModelProperty("打包时间")
     private LocalDateTime packTime;
+
+
+
 }

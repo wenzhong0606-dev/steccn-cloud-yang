@@ -23,16 +23,16 @@ import java.util.Set;
 @FeignClient(name = "remoteMessFeignApi", url = "${mes.url}", decode404 = true)
 public interface RemoteMessFeignApi {
 
-    /**
-     * 获取物料库存信息
-     *
-     * @param list 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/storeList")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    List<MessMaterialConsumeDTO> materialConsume(@RequestBody List<MessMaterialStorageDTO> list);
+//    /**
+//     * 获取物料库存信息
+//     *
+//     * @param list 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/storeList")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    List<MessMaterialConsumeDTO> materialConsume(@RequestBody List<MessMaterialStorageDTO> list);
 
 
 //    /**

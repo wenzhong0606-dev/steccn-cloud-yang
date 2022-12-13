@@ -1,6 +1,8 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.pms.dto.MessMaterialConsumeDTO;
+import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -141,4 +143,11 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      */
     Map<Long, MaterialInventoryDTO> materialInventory(Set<Long> materialIds);
 
+
+    /**
+     * 根据需求数量返回库存数量信息
+     * @param list
+     * @return
+     */
+    List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list);
 }

@@ -3,6 +3,8 @@ package com.steccn.wms.controller;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.MessMaterialConsumeDTO;
+import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.domain.WmsInventory;
@@ -67,13 +69,16 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.listMaterialInventory(list));
     }
 
-    /**
-     * 获取物料的库存清单
-     */
     @PostMapping("/material/inventory")
     @ResponseBody
     public R<Map<Long, MaterialInventoryDTO>> materialInventory(@RequestBody Set<Long> materialIds) {
         return R.success(wmsInventoryService.materialInventory(materialIds));
+    }
+
+    @PostMapping("/storageList")
+    @ResponseBody
+    public R<List<WmsStockInventoryDTO>> materialConsume(@RequestBody List<MaterialStorageInfoDTO> list){
+        return R.success(wmsInventoryService.materialConsume(list));
     }
 
 

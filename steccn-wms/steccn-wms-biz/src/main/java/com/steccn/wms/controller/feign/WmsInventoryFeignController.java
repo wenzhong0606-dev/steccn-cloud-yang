@@ -1,9 +1,7 @@
 package com.steccn.wms.controller.feign;
 
 import com.steccn.common.vo.R;
-import com.steccn.wms.dto.CaseSiteDTO;
-import com.steccn.wms.dto.MaterialInventoryDTO;
-import com.steccn.wms.dto.MaterialStorageDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,6 +50,10 @@ public class WmsInventoryFeignController {
         return R.success(wmsInventoryService.materialInventory(materialIds));
     }
 
-
+    @PostMapping("/storageList")
+    @ResponseBody
+    public R<List<WmsStockInventoryDTO>> materialConsume(@RequestBody List<MaterialStorageInfoDTO> list){
+        return R.success(wmsInventoryService.materialConsume(list));
+    }
 
 }

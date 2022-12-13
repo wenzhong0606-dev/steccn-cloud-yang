@@ -35,7 +35,7 @@
     </sql>
     <select id="pageList" resultType="com.steccn.wms.vo.WmsTransferSlipVO">
         SELECT
-        a.id,
+        distinct a.id,
         a.`code`,
         a.type,
         a.`status`,

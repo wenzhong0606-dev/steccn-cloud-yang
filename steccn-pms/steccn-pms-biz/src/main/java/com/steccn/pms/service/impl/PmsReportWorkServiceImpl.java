@@ -35,6 +35,10 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.wms.dto.MaterialStorageDTO;
+import com.steccn.wms.dto.MaterialStorageInfoDTO;
+import com.steccn.wms.dto.WmsStockInventoryDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -90,6 +94,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private TransactionTemplate transactionTemplate;
     @Autowired
     private PmsReportWorkConsumeService pmsReportWorkConsumeService;
+    @Autowired
+    private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
 
     @Override
@@ -371,26 +377,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
-            List<MessMaterialStorageDTO> messMaterialStorageList = Lists.newArrayList();
+            List<MaterialStorageInfoDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
             pmsWorkOrderBomList.forEach(ele -> {
                 BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 3, RoundingMode.HALF_UP);
-                MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
+                MaterialStorageInfoDTO storageDTO = new MaterialStorageInfoDTO();
                 storageDTO.setMaterialId(ele.getModuleId());
                 storageDTO.setQuantity(divide);
                 messMaterialStorageList.add(storageDTO);
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
-            List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
+            List<WmsStockInventoryDTO> messList = FeignOptional.of(remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList)).get();
             if (CollUtil.isNotEmpty(messList)) {
-                Set<String> storageSet = Sets.newHashSet();
-                for (MessMaterialConsumeDTO messDto : messList) {
-                    storageSet.add(messDto.getWarehouseCode());
-                    storageSet.add(messDto.getShelfCode());
+                Set<Integer> storageSet = Sets.newHashSet();
+                for (WmsStockInventoryDTO messDto : messList) {
+                    storageSet.add(messDto.getWarehouseId());
+                    storageSet.add(messDto.getShelfId());
                 }
-                Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
+                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-                for (MessMaterialConsumeDTO messDto : messList) {
+                for (WmsStockInventoryDTO messDto : messList) {
                     ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
                     BeanUtils.copyProperties(messDto, resDTO);
                     resDTO.setProduceOrderId(pmsProduceOrder.getId());
@@ -404,10 +410,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     resDTO.setModuleCode(eqpSpareVO.getCode());
                     resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(), 3));
                     resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
-                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
+                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseId(), defaultSysOfficeVO);
                     resDTO.setWarehouseId(warehouse.getId());
                     resDTO.setWarehouseName(warehouse.getOfficeName());
-                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
+                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfId(), defaultSysOfficeVO);
                     resDTO.setShelfId(shelf.getId());
                     resDTO.setShelfName(shelf.getOfficeName());
                     resList.add(resDTO);
