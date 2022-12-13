@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
@@ -32,6 +33,7 @@ import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +78,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private EpEnergyTypeService epEnergyTypeService;
     @Autowired
     private EpComputeProduceDetailService epComputeProduceDetailService;
+    @Autowired
+    private RemoteReportWorkFeignApi remoteReportWorkFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -436,6 +440,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     .in(EpMeterRead::getReadDate, sortedDateList)
                     .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart)));
             if (CollUtil.isNotEmpty(dataList)) {
+
+                //获取报工集合
+                Set<Long> reportWorkIdSet = Sets.newHashSet();
+                dataList.forEach(ep ->{
+                    if(Objects.nonNull(ep.getReportWorkId())){
+                        reportWorkIdSet.add(ep.getReportWorkId());
+                    }
+                });
+                Map<Long, Long> reportMap = FeignOptional.of(remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet)).get();
+
                 //存放仪表的班次日期的抄表数据
                 Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
                 //将数据按照仪表id和班次日期分组
@@ -489,6 +503,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 }
                             });
                             ele.setReportWorkIdList(reportWorkIdList);
+                            Long classGroupId = calClassGroupId(ele,reportMap);
+                            ele.setClassGroupId(classGroupId);
                             ele.setConsume(reduce);
                             gpDataList.add(ele);
                             MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
@@ -506,6 +522,34 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
         }
         return gpDataList;
+    }
+
+    /**
+     * 计算
+     * @param dataVO 元素vo
+     * @param reportMap 报工map
+     * @return 班组id
+     */
+    private Long calClassGroupId(EpMeterReadAllDataVO dataVO, Map<Long, Long> reportMap) {
+        //获取报工id集合
+        List<Long> reportWorkIdList = dataVO.getReportWorkIdList();
+        Map<Long, List<Integer>> dataMap = Maps.newHashMap();
+        reportWorkIdList.forEach(ele -> {
+            Long orDefault = reportMap.get(ele);
+            if (Objects.nonNull(orDefault)) {
+                MapUtil.compute(dataMap, orDefault, 1);
+            }
+        });
+        Integer maxSum = -1;
+        Long classGroupId = null;
+        for (Map.Entry<Long, List<Integer>> entry : dataMap.entrySet()) {
+            int sum1 = entry.getValue().stream().filter(v -> Objects.nonNull(v)).mapToInt(v -> v).sum();
+            if (maxSum < sum1) {
+                maxSum = sum1;
+                classGroupId = entry.getKey();
+            }
+        }
+        return classGroupId;
     }
 
     /**

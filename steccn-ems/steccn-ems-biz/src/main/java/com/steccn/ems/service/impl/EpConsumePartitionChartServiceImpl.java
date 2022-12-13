@@ -30,6 +30,7 @@ import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -45,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -58,7 +60,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
     private final EpMeterReadService epMeterReadService;
     private final EpPartitionService epPartitionService;
-    private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto) {
@@ -396,49 +398,51 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
-        //获取报工集合
-        Set<Long> reportWorkIdSet = Sets.newHashSet();
-        classDateAllData.forEach(ep ->{
-            if(CollUtil.isNotEmpty(ep.getReportWorkIdList())){
-                reportWorkIdSet.addAll(ep.getReportWorkIdList());
+        classDateAllData.forEach(ele -> {
+            if(Objects.isNull(ele.getThick())){
+               ele.setThick(BigDecimal.valueOf(-1));
             }
         });
-        Map<Long, Long> reportMap = FeignOptional.of(remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet)).get();
-        classDateAllData.forEach(ele ->{
-            Long classGroupId = calClassGroupId(ele,reportMap);
-            ele.setClassGroupId(classGroupId);
-        });
-        //时间排序
-        CollUtil.sort(dateSet, Comparator.comparing(v -> v));
-        return null;
-    }
 
-    /**
-     * 计算
-     * @param dataVO 元素vo
-     * @param reportMap 报工map
-     * @return 班组id
-     */
-    private Long calClassGroupId(EpMeterReadAllDataVO dataVO, Map<Long, Long> reportMap) {
-        //获取报工id集合
-        List<Long> reportWorkIdList = dataVO.getReportWorkIdList();
-        Map<Long,List<Integer>> dataMap = Maps.newHashMap();
-        reportWorkIdList.forEach(ele ->{
-            Long orDefault = reportMap.get(ele);
-            if(Objects.nonNull(orDefault)){
-                MapUtil.compute(dataMap,ele,1);
-            }
-        });
-        Integer maxSum = -1;
-        Long classGroupId = null;
-        for (Map.Entry<Long, List<Integer>> entry : dataMap.entrySet()) {
-            int sum1 = entry.getValue().stream().filter(v -> Objects.nonNull(v)).mapToInt(v -> v).sum();
-            if (maxSum < sum1) {
-                maxSum = sum1;
-                classGroupId = entry.getKey();
+        List<EpMeterReadAllDataVO> thickAllDataList = classDateAllData.stream().filter(v -> Objects.nonNull(v.getOfficeId()))
+                .filter(v -> Objects.nonNull(v.getClassGroupId()))
+                .filter(v -> Objects.nonNull(v.getThick()) && v.getThick().equals(dto.getThick().get(0)))
+                .collect(Collectors.toList());
+        SteccnTableAssertUtil.notEmpty(thickAllDataList, "筛选厚度和班组后全量数据表为空");
+
+        //获取班组集合
+        Set<Long> classGroupIdSet = thickAllDataList.stream().map(v -> v.getClassGroupId()).collect(Collectors.toSet());
+        Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(classGroupIdSet)).get();
+
+        //获取分区节点的map
+        Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
+
+        EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
+        List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
+
+        //遍历所有的分区节点
+        for (Map.Entry<Long, String> partitionEntry : partitionIdNameMap.entrySet()) {
+            //班组分类
+            for (Map.Entry<Long, String> classGroupEntry : dictIdNameMap.entrySet()) {
+                //过滤之后的数据
+                List<EpMeterReadAllDataVO> filterData = thickAllDataList.stream().filter(v -> v.getOfficeId().equals(partitionEntry.getKey()) && v.getClassGroupId().equals(classGroupEntry.getKey())).collect(Collectors.toList());
+                //计算单耗的平均值
+                BigDecimal consume = filterData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal productNum = filterData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal divide = BigDecimalUtil.divide(consume, productNum);
+                EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
+                epChartGraphxAxisDTO.setXAxis(Strings.EMPTY);
+                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> list = Lists.newArrayList();
+                TupleDTO tupleDTO = new TupleDTO(partitionEntry.getKey(), Lists.newArrayList(new TupleDTO("单耗平均值", divide)));
+                list.add(tupleDTO);
+                epChartGraphxAxisDTO.setData(list);
+                dataList.add(epChartGraphxAxisDTO);
             }
         }
-        return classGroupId;
+        epChartGraphDTO.setDataList(dataList);
+        epChartGraphDTO.setOfficeMap(partitionIdNameMap);
+        log.info("{}",epChartGraphDTO);
+        return EpChartGraphUtil.convert(epChartGraphDTO,Boolean.TRUE);
     }
 
     /**
