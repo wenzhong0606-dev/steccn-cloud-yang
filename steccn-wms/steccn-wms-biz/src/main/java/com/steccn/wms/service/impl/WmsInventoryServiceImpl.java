@@ -12,6 +12,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
@@ -43,6 +45,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     private final WmsInventoryMapper wmsInventoryMapper;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -85,14 +89,23 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Boolean addInfo(List<WmsInventoryDTO> infoList) {
         if (CollUtil.isNotEmpty(infoList)) {
             List<String> list = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
             infoList.forEach(info -> {
                 //根据箱号获取当前的物料是否存在库存信息
                 list.add(info.getCaseNo());
+                officeIds.add(info.getWarehouseId());
+                officeIds.add(info.getShelfId());
             });
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
             infoList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
+                SysOfficeVO shelfVO = officeVOMap.get(info.getShelfId());
+                SysOfficeVO warehouseVO = officeVOMap.get(info.getWarehouseId());
+                info.setWarehouseName(warehouseVO.getOfficeName());
+                info.setShelfCode(shelfVO.getOfficeCode());
+                info.setShelfName(shelfVO.getOfficeName());
                 if (Objects.isNull(orDefault)) {
                     WmsInventory inventory = new WmsInventory();
                     BeanUtil.copyProperties(info, inventory);
@@ -174,7 +187,6 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Boolean addLockQuantity(List<WmsInventoryDTO> addList) {
         if (CollUtil.isNotEmpty(addList)) {
-            List<String> list = Lists.newArrayList();
             List<Long> ids = Lists.newArrayList();
             addList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
             Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);

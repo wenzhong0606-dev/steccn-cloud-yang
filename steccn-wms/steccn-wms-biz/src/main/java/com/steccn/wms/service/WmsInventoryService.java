@@ -45,7 +45,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Boolean addInfo(List<WmsInventoryDTO> infoList);
 
     /**
-     * 还原库存信息
+     * 还原在途库存信息
      *
      * @param infoList
      * @return
@@ -53,7 +53,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Boolean restore(List<WmsInventoryDTO> infoList);
 
     /**
-     * 修改库存的信息
+     * 编辑在途库存
      *
      * @param inventoryDTOList
      * @return
@@ -62,7 +62,7 @@ public interface WmsInventoryService extends IService<WmsInventory> {
 
 
     /**
-     * 确认入库（减少占用库存,增加可用库存以及总库存）
+     * 确认入库（减少在途库存,增加可用库存以及总库存）
      *
      * @param inventoryDTOList
      * @return

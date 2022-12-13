@@ -33,6 +33,9 @@ public class WmsInventoryDTO {
     @ApiModelProperty("箱号")
     private String caseNo;
 
+    @ApiModelProperty("原始箱号")
+    private String originalCaseNo;
+
     @ApiModelProperty("批次")
     private String batch;
 

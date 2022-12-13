@@ -52,6 +52,9 @@ public class WmsInventoryVO {
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 
+    @ApiModelProperty("仓库编码")
+    private String warehouseCode;
+
     /**
      * 货架id
      */
@@ -63,6 +66,10 @@ public class WmsInventoryVO {
      */
     @ApiModelProperty("货架名称")
     private String shelfName;
+
+
+    @ApiModelProperty("货架编码")
+    private String shelfCode;
 
     /**
      * 总数
