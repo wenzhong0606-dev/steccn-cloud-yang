@@ -31,9 +31,6 @@ public class WmsTransferSlipInfoDTO {
     @ApiModelProperty("源库存id")
     private Long sourceInventoryId;
 
-    @ApiModelProperty("目标库存id")
-    private Long targetInventoryId;
-
     @ApiModelProperty("源货架")
     private Integer sourceShelf;
 

@@ -2,6 +2,7 @@ package com.steccn.wms.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -48,7 +49,7 @@ public class WmsInventoryDTO {
     /**
      * 仓库id
      */
-    private Long warehouseId;
+    private Integer warehouseId;
 
     /**
      * 仓库名称
@@ -58,7 +59,7 @@ public class WmsInventoryDTO {
     /**
      * 货架id
      */
-    private Long shelfId;
+    private Integer shelfId;
 
     /**
      * 货架编码

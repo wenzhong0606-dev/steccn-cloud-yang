@@ -29,7 +29,7 @@ public class WmsStorageReceiptInfoDTO {
     private String materialName;
 
     @ApiModelProperty("货架id")
-    private Long shelfId;
+    private Integer shelfId;
 
     @ApiModelProperty("货架编码")
     private String shelfCode;

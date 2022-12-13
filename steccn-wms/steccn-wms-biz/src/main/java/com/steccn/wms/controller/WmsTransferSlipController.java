@@ -68,4 +68,9 @@ public class WmsTransferSlipController {
         return R.success(wmsTransferSlipService.get(id));
     }
 
+    @ApiOperation("调拨单分页列表")
+    @PostMapping("/list")
+    public R<Page<WmsTransferSlipVO>> pageList(@RequestBody WmsTransferSlipPageDTO dto) {
+        return R.success(wmsTransferSlipService.pageList(dto));
+    }
 }

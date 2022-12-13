@@ -140,4 +140,5 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Map<Long, MaterialInventoryDTO> materialInventory(Set<Long> materialIds);
+
 }

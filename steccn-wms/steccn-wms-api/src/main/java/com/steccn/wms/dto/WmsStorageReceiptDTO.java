@@ -29,7 +29,7 @@ public class WmsStorageReceiptDTO {
     private Long type;
 
     @ApiModelProperty("仓库Id")
-    private Long warehouseId;
+    private Integer warehouseId;
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;

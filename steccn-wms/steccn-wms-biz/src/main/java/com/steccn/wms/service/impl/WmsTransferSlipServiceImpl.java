@@ -14,12 +14,15 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.constant.WmsManagerConstant;
+import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
+import com.steccn.wms.dto.WmsInventoryDTO;
 import com.steccn.wms.dto.WmsTransferSlipDTO;
 import com.steccn.wms.dto.WmsTransferSlipInfoDTO;
 import com.steccn.wms.dto.WmsTransferSlipPageDTO;
 import com.steccn.wms.feign.RemoteWmsMessFeignApi;
+import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.service.WmsTransferSlipInfoService;
 import com.steccn.wms.service.WmsTransferSlipService;
 import com.steccn.wms.mapper.WmsTransferSlipMapper;
@@ -61,6 +64,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     private final RemoteWmsMessFeignApi remoteWmsMessFeignApi;
+
+    private final WmsInventoryService wmsInventoryService;
 
 
     /**
@@ -133,16 +138,25 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             //5.保存调拨单明细信息
             if (CollUtil.isNotEmpty(dto.getList())) {
                 List<WmsTransferSlipInfo> infoList = Lists.newArrayList();
+                List<WmsInventoryDTO> sourceList = Lists.newArrayList();
+                List<WmsInventoryDTO> targetList = Lists.newArrayList();
                 dto.getList().forEach(info -> {
                     WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
                     BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                     wmsTransferSlipInfo.setTransferSlipId(model.getId());
                     infoList.add(wmsTransferSlipInfo);
+                    WmsInventoryDTO source = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info, source);
+                    source.setId(info.getSourceInventoryId());
+                    sourceList.add(source);
+                    WmsInventoryDTO target = new WmsInventoryDTO();
+                    BeanUtil.copyProperties(info,target);
+                    target.setShelfId(info.getTargetShelf());
                 });
                 wmsTransferSlipInfoService.saveBatch(infoList);
-                //todo 调取Mes库存增加库存中原始占用库存数量，增加目标货架在途库存数量
-                Boolean aBoolean = remoteWmsMessFeignApi.transferSlipAdd(dto.getList());
-                Assert.isTrue(aBoolean, "变更库存信息失败");
+//               todo 调取Mes库存增加库存中原始占用库存数量，增加目标货架在途库存数量
+
+
             }
         } finally {
             lock.unlock();
@@ -208,7 +222,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     updateList.forEach(info -> idList.add(info.getId()));
                     Map<Long, BigDecimal> originalQuantityMap = wmsTransferSlipInfoService.originalQuantity(idList);
                     Map<Long, String> originalCaseNoMap = wmsTransferSlipInfoService.originalCaseNo(idList);
-                    updateList.forEach(info ->{
+                    updateList.forEach(info -> {
                         info.setOriginalQuantity(originalQuantityMap.get(info.getId()));
                         info.setOriginalCaseNo(originalCaseNoMap.get(info.getId()));
                     });
@@ -242,10 +256,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //todo 获取订单详情信息 调用mes库存接口 减少库存中原始货架可用库存数量，减少原始货架占用库存数量，增加目标货架可用库存数量，减少目标货架在途库存数量
         //获取明细信息
         List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().eq(WmsTransferSlipInfo::getTransferSlipId, id));
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
             List<WmsTransferSlipInfoDTO> wmsTransferSlipInfoDTOS = BeanUtil.copyToList(list, WmsTransferSlipInfoDTO.class);
             Boolean aBoolean = remoteWmsMessFeignApi.transferSlipAffirm(wmsTransferSlipInfoDTOS);
-            Assert.isTrue(aBoolean,"变更明细信息库存失败");
+            Assert.isTrue(aBoolean, "变更明细信息库存失败");
         }
         return updateById(order);
     }
@@ -263,10 +277,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         //todo 获取订单详情信息 调用mes库存接口 减少原始货架占用库存数量，减少目标货架在途库存数量
         //获取明细信息
         List<WmsTransferSlipInfo> list = wmsTransferSlipInfoService.list(new LambdaQueryWrapper<WmsTransferSlipInfo>().eq(WmsTransferSlipInfo::getTransferSlipId, id));
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
             List<WmsTransferSlipInfoDTO> wmsTransferSlipInfoDTOS = BeanUtil.copyToList(list, WmsTransferSlipInfoDTO.class);
             Boolean aBoolean = remoteWmsMessFeignApi.transferSlipDelete(wmsTransferSlipInfoDTOS);
-            Assert.isTrue(aBoolean,"变更明细信息库存失败");
+            Assert.isTrue(aBoolean, "变更明细信息库存失败");
         }
         return updateById(order);
     }

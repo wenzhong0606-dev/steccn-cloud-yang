@@ -40,7 +40,7 @@ public class WmsInventory implements Serializable {
     /**
      * 仓库id
      */
-    private Long warehouseId;
+    private Integer warehouseId;
 
     /**
      * 仓库名称
@@ -50,7 +50,7 @@ public class WmsInventory implements Serializable {
     /**
      * 货架id
      */
-    private Long shelfId;
+    private Integer shelfId;
 
     /**
      * 货架编码
