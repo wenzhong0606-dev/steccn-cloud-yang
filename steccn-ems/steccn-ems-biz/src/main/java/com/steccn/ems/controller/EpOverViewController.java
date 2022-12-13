@@ -19,7 +19,7 @@ public class EpOverViewController {
     private final EpComputeProduceDetailService epComputeProduceDetailService;
 
 //    @GetMapping("/list")
-//    public R<List<EpProduceDetailVO>> get(@RequestParam("startDate")LocalDate startDate, @RequestParam("endDate")LocalDate endDate) {
+//    public R<List<EpProduceDetailVO>> get(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate")LocalDate endDate) {
 //        return R.success(epComputeProduceDetailService.getProduceDetailList(startDate, endDate));
 //    }
 }

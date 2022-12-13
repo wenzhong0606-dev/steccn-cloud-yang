@@ -80,7 +80,6 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             LocalDateTime startTime = LocalDateTime.of(localDate, localTime);
             LocalDateTime endTime = LocalDateTime.of(localDate.plusDays(1), localTime);
 
-
             for (int i = 0; i < 2; i++) {
                 List<PmsReportWorkVO> pmsReportWorkVOList;
                 List<QtCheckTaskDetailItemMaterialVO> itemMaterialVOList;
@@ -141,7 +140,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         //把字节的改成父节点
         for (EpProduceDetailVO epProduceDetailVO : childProduceDetailVOList) {
             EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
-            BeanUtils.copyProperties(epProduceDetailVO, parentOfficeMap);
+            BeanUtils.copyProperties(epProduceDetailVO, produceDetailVO);
             produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
             parentProduceDetailVOList.add(produceDetailVO);
         }
