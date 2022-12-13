@@ -532,7 +532,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         BeanUtils.copyProperties(epMeterRead, vo);
                         vo.setOfficeId(meterPartitionMap.get(vo.getMeterId()));
                         vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
-                        vo.setReportWorkIdList(Lists.newArrayList(epMeterRead.getReportWorkId()));
+                        if(Objects.nonNull(epMeterRead.getReportWorkId())){
+                            vo.setReportWorkIdList(Lists.newArrayList(epMeterRead.getReportWorkId()));
+                        }
                         preValue = epMeterRead.getAdminValue();
                         //最小日期仅仅是为了计算差值，不需要返回
                         if (!entry1.equals(minLocalDate)) {

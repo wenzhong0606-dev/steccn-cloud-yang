@@ -54,6 +54,8 @@ public class EpMeterReadAllDataVO implements Serializable {
     @ApiModelProperty("产量集合")
     private BigDecimal productNum;
 
-    private static final long serialVersionUID = 1L;
+    @ApiModelProperty("班组id")
+    private Long classGroupId;
 
+    private static final long serialVersionUID = 1L;
 }

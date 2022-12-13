@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
@@ -15,9 +17,11 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.EpChartGraphUtil;
+import com.steccn.common.util.MapUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.common.vo.R;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpTableDTO;
@@ -27,6 +31,7 @@ import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
@@ -53,6 +58,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
     private final EpMeterReadService epMeterReadService;
     private final EpPartitionService epPartitionService;
+    private final RemoteReportWorkFeignApi remoteReportWorkFeignApi;
 
     @Override
     public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto) {
@@ -390,9 +396,49 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        //获取报工集合
+        Set<Long> reportWorkIdSet = Sets.newHashSet();
+        classDateAllData.forEach(ep ->{
+            if(CollUtil.isNotEmpty(ep.getReportWorkIdList())){
+                reportWorkIdSet.addAll(ep.getReportWorkIdList());
+            }
+        });
+        Map<Long, Long> reportMap = FeignOptional.of(remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet)).get();
+        classDateAllData.forEach(ele ->{
+            Long classGroupId = calClassGroupId(ele,reportMap);
+            ele.setClassGroupId(classGroupId);
+        });
         //时间排序
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
         return null;
+    }
+
+    /**
+     * 计算
+     * @param dataVO 元素vo
+     * @param reportMap 报工map
+     * @return 班组id
+     */
+    private Long calClassGroupId(EpMeterReadAllDataVO dataVO, Map<Long, Long> reportMap) {
+        //获取报工id集合
+        List<Long> reportWorkIdList = dataVO.getReportWorkIdList();
+        Map<Long,List<Integer>> dataMap = Maps.newHashMap();
+        reportWorkIdList.forEach(ele ->{
+            Long orDefault = reportMap.get(ele);
+            if(Objects.nonNull(orDefault)){
+                MapUtil.compute(dataMap,ele,1);
+            }
+        });
+        Integer maxSum = -1;
+        Long classGroupId = null;
+        for (Map.Entry<Long, List<Integer>> entry : dataMap.entrySet()) {
+            int sum1 = entry.getValue().stream().filter(v -> Objects.nonNull(v)).mapToInt(v -> v).sum();
+            if (maxSum < sum1) {
+                maxSum = sum1;
+                classGroupId = entry.getKey();
+            }
+        }
+        return classGroupId;
     }
 
     /**

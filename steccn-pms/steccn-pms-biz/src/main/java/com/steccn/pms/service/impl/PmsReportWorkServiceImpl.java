@@ -503,6 +503,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return pmsReportWorkVOList;
     }
 
+    @Override
+    public Map<Long, Long> reportWorkClassGroup(Set<Long> reportWorkIdSet) {
+        Map<Long, Long> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(reportWorkIdSet)) {
+            List<PmsReportWork> pmsReportWorks = listByIds(reportWorkIdSet);
+            if (CollUtil.isNotEmpty(pmsReportWorks)) {
+                pmsReportWorks.forEach(ele -> resMap.put(ele.getId(), ele.getClassGroupId()));
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 获取报工编码
      *

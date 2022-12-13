@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author chenhuan
@@ -24,4 +26,9 @@ public interface RemoteReportWorkFeignApi {
     @PostMapping("/feign/pms/report/work/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
     R<List<PmsReportWorkVO>> listByClassTime(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO);
+
+
+    @ApiOperation("报工班组信息")
+    @PostMapping("feign/pms/report/work/class/group")
+    R<Map<Long, Long>> reportWorkClassGroup(@RequestBody Set<Long> reportWorkIdSet);
 }

@@ -1,6 +1,7 @@
 package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author chenhuan
@@ -32,4 +35,11 @@ public class PmsReportWorkFeignController {
         Assert.notNull(tupleDTO.getField2(),"结束时间不能为空");
         return R.success(pmsReportWorkService.listByClassTime(tupleDTO.getField1(), tupleDTO.getField2()));
     }
+
+    @ApiOperation("报工班组信息")
+    @PostMapping("/class/group")
+    R<Map<Long, Long>> reportWorkClassGroup(@RequestBody Set<Long> reportWorkIdSet) {
+        return R.success(pmsReportWorkService.reportWorkClassGroup(reportWorkIdSet));
+    }
+
 }
