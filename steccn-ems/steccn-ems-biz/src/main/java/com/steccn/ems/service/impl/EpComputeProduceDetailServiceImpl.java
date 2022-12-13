@@ -53,7 +53,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
     public List<EpProduceDetailVO> getProduceDetailList(LocalDate startDate, LocalDate endDate) {
         LocalTime localTime = LocalTime.of(8, 0, 0);
         LocalDateTime startDateTime = LocalDateTime.of(startDate, localTime);
-        LocalDateTime endDateTime = LocalDateTime.of(endDate, localTime);
+        LocalDateTime endDateTime = LocalDateTime.of(endDate, localTime).plusDays(1);
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate, endDate);
         R<List<PmsReportWorkVO>> listR = remoteReportWorkFeignApi.listByClassTime(new TupleDTO<>(startDateTime, endDateTime));
 
