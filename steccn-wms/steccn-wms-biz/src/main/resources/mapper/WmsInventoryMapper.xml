@@ -94,7 +94,7 @@
         wms_inventory a
         WHERE
         <foreach collection="list" item="dto" open="(" separator="OR" close=")">
-            ( a.material_id = #{dto.materialId} and a.shelf_id in
+            ( a.material_id = #{dto.materialId} and a.shelf_code in
             <foreach collection="dto.shelfCodes" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>

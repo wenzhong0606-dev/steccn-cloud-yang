@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.wms.dto.*;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
@@ -99,6 +100,6 @@ public interface RemoteWmsInventoryFeignApi {
      */
     @PostMapping(value = "/feign/wms/inventory/stockByCaseNo")
     @ResponseBody
-    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
+    R<Map<String, CaseSiteDTO>> caseSite(@RequestBody Set<String> caseNoSet);
 
 }

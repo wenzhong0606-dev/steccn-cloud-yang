@@ -68,16 +68,16 @@ public interface RemoteMessFeignApi {
 //    @ResponseBody
 //    MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
 
-    /**
-     * 获取箱子位置
-     *
-     * @param caseNoSet 箱子位置
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/stockByCaseNo")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
+//    /**
+//     * 获取箱子位置
+//     *
+//     * @param caseNoSet 箱子位置
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/stockByCaseNo")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
 
 //    /**
 //     * 获取物料在货架中的库存数量
