@@ -4,12 +4,17 @@ import com.steccn.common.constant.FeignConstant;
 
 import com.steccn.common.vo.R;
 import com.steccn.wms.dto.CaseSiteDTO;
+import com.steccn.wms.dto.MaterialStorageDTO;
+import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,4 +36,15 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping("/feign/wms/inventory/stockByCaseNo")
     @ApiOperation("根据产线查询当前正在执行订单信息")
     R<Map<String, CaseSiteDTO>> stockByCaseNo(@RequestBody Set<String> caseNos);
+
+
+    /**
+     * 获取物料在货架中的库存数量
+     *
+     * @param list
+     * @return
+     */
+    @PostMapping(value = "/feign/wms/inventory/list/material")
+    @ApiOperation("获取物料在货架中的库存数量")
+    R<Map<Long, BigDecimal>> listMaterialInventory(@RequestBody List<MaterialStorageDTO> list);
 }

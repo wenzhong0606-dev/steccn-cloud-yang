@@ -15,9 +15,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.dto.CaseSiteDTO;
-import com.steccn.wms.dto.WmsInventoryDTO;
-import com.steccn.wms.dto.WmsInventoryPageDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +23,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +41,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         implements WmsInventoryService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final WmsInventoryMapper wmsInventoryMapper;
 
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
@@ -246,7 +247,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Boolean freeze(WmsInventoryDTO dto) {
         WmsInventory inventory = getById(dto.getId());
-        Assert.notNull(inventory,"库存信息不存在");
+        Assert.notNull(inventory, "库存信息不存在");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().add(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().subtract(dto.getQuantity()));
         return updateById(inventory);
@@ -255,7 +256,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Boolean unfreeze(WmsInventoryDTO dto) {
         WmsInventory inventory = getById(dto.getId());
-        Assert.notNull(inventory,"库存信息不存在");
+        Assert.notNull(inventory, "库存信息不存在");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().subtract(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().add(dto.getQuantity()));
         return updateById(inventory);
@@ -272,8 +273,46 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 list.forEach(
                         inventory -> {
                             CaseSiteDTO caseSiteDTO = new CaseSiteDTO();
-                            BeanUtil.copyProperties(inventory,caseSiteDTO);
+                            BeanUtil.copyProperties(inventory, caseSiteDTO);
                             map.put(caseSiteDTO.getCaseNo(), caseSiteDTO);
+                        }
+                );
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> listMaterialInventory(List<MaterialStorageDTO> list) {
+        Map<Long, BigDecimal> map = Maps.newHashMap();
+        //自定义sql 获取库存信息
+        if (CollUtil.isNotEmpty(list)) {
+            List<WmsInventory> inventoryDTOList = wmsInventoryMapper.listMaterialInventory(list);
+            if (CollUtil.isNotEmpty(inventoryDTOList)) {
+                Map<Long, List<WmsInventory>> collect = inventoryDTOList.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialId));
+                for (Map.Entry<Long, List<WmsInventory>> longListEntry : collect.entrySet()) {
+                    BigDecimal quantity = BigDecimal.ZERO;
+                    for (WmsInventory wmsInventory : longListEntry.getValue()) {
+                        quantity = quantity.add(wmsInventory.getAvailableQuantity());
+                    }
+                    map.put(longListEntry.getKey(), quantity);
+                }
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, MaterialInventoryDTO> materialInventory(Set<Long> materialIds) {
+        Map<Long, MaterialInventoryDTO> map = Maps.newHashMap();
+        //批量查询物料在库存中的存量
+        if (CollUtil.isNotEmpty(materialIds)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(inventory -> {
+                            MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
+                            BeanUtil.copyProperties(inventory, inventoryDTO);
+                            map.put(inventory.getMaterialId(), inventoryDTO);
                         }
                 );
             }

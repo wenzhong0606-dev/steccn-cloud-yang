@@ -2,6 +2,7 @@ package com.steccn.wms.mapper;
 
 import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -49,6 +50,13 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @return
      */
     Boolean updateLockAndTotalQuantity(@Param("list") List<WmsInventoryDTO> infoList);
+
+    /**
+     * 获取物料在库存中的数量
+     * @param list
+     * @return
+     */
+    List<WmsInventory> listMaterialInventory(@Param("list")List<MaterialStorageDTO> list);
 }
 
 
