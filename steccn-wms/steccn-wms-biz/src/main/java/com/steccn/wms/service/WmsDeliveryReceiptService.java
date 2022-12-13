@@ -57,4 +57,11 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     WmsDeliveryReceiptVO get(Long id);
+
+    /**
+     * 生成出库单
+     * @param dto
+     * @return
+     */
+    Boolean generateDelivery(WmsDeliveryReceiptDTO dto);
 }

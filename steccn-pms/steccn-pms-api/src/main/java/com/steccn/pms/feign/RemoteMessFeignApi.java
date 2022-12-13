@@ -46,27 +46,27 @@ public interface RemoteMessFeignApi {
 //    @ResponseBody
 //    Map<Long, MesMaterialInventoryDTO> materialInventory(@RequestBody Set<Long> materialIds);
 
-    /**
-     * 生成入库单
-     *
-     * @param messDto 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockIn")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
+//    /**
+//     * 生成入库单
+//     *
+//     * @param messDto 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockIn")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
 
-    /**
-     * 生成出库单
-     *
-     * @param messDto 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockOut")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
+//    /**
+//     * 生成出库单
+//     *
+//     * @param messDto 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockOut")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
 
     /**
      * 获取箱子位置

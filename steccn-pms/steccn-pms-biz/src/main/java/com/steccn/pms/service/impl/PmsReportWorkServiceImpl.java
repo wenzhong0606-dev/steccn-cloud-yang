@@ -19,6 +19,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -35,9 +36,7 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
-import com.steccn.wms.dto.MaterialStorageDTO;
-import com.steccn.wms.dto.MaterialStorageInfoDTO;
-import com.steccn.wms.dto.WmsStockInventoryDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -257,11 +256,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //插入数据库中pms_complete_delivery，pms_complete_delivery_info
         List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
         if (CollUtil.isNotEmpty(materialConsumeList)) {
-            List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
+            List<WmsDeliveryReceiptInfoDTO> materialList = Lists.newArrayList();
             PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
             completeDelivery.setId(IdUtil.getSnowflake().nextId());
             List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
             BigDecimal sum = BigDecimal.ZERO;
+            WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = new WmsDeliveryReceiptDTO();
             for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
                 sum = sum.add(materialDTO.getQuantity());
                 PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
@@ -278,9 +278,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 //新增可用数量
                 info.setAvaQuantity(materialDTO.getAvailableQuantity());
                 modelList.add(info);
-                MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
-                BeanUtils.copyProperties(materialDTO, mess);
-                materialList.add(mess);
+                wmsDeliveryReceiptDTO.setWarehouseId(materialDTO.getWarehouseId());
+                wmsDeliveryReceiptDTO.setWarehouseName(materialDTO.getWarehouseName());
+                WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO = new WmsDeliveryReceiptInfoDTO();
+                BeanUtils.copyProperties(materialDTO, wmsDeliveryReceiptInfoDTO);
+                wmsDeliveryReceiptInfoDTO.setMaterialId(materialDTO.getModuleId());
+                materialList.add(wmsDeliveryReceiptInfoDTO);
             }
             SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
             completeDelivery.setCode(maxOutVouchCode());
@@ -296,18 +299,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
             //物料消耗 ，扣除库存
-            MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
-            messDto.setCreateBy(SecurityUtils.getUser().getName());
-            messDto.setCode(completeDelivery.getCode());
-            messDto.setType(sysDictVO.getCode());
-            messDto.setMaterialList(materialList);
-            MessInStorageVoucherVO messInStorageVoucherVO = null;
+
+            wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
+            wmsDeliveryReceiptDTO.setList(materialList);
+            R<Boolean> booleanR = null;
             try {
-                messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+                booleanR = remoteWmsInventoryFeignApi.generateOutStorageVoucher(wmsDeliveryReceiptDTO);
+                if (!booleanR.getData()) {
+                    log.info("生成单据失败");
+                }
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
             }
-            if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
+            Boolean aBoolean = FeignOptional.of(booleanR).get();
+            if (Objects.isNull(aBoolean) || aBoolean.equals(Boolean.FALSE)) {
                 throw new BusinessException("库存变化，请重新报工");
             }
         }

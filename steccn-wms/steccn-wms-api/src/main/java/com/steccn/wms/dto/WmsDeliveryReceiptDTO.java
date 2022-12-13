@@ -3,6 +3,7 @@ package com.steccn.wms.dto;
 import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.util.List;
@@ -30,7 +31,10 @@ public class WmsDeliveryReceiptDTO {
     private Long type;
 
     @ApiModelProperty("仓库Id")
-    private String warehouseId;
+    private Integer warehouseId;
+
+    @ApiModelProperty("仓库名称")
+    private String warehouseName;
 
     @ApiModelProperty("备注")
     private String note;

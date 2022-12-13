@@ -2,11 +2,13 @@ package com.steccn.wms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 
+import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.wms.dto.*;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -50,6 +52,7 @@ public interface RemoteWmsInventoryFeignApi {
 
     /**
      * 获取物料的可用数量
+     *
      * @param materialIds
      * @return
      */
@@ -67,4 +70,24 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/storageList")
     @ApiOperation("获取物料的库存清单")
     R<List<WmsStockInventoryDTO>> materialConsume(@RequestBody List<MaterialStorageInfoDTO> list);
+
+
+    /**
+     * 入库凭证新增
+     * @param dto
+     * @return
+     */
+    @ApiOperation("生成入库单")
+    @PostMapping(value = "/feign/wms/inventory/storage/add")
+    R<Boolean> generateInStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsStorageReceiptDTO dto);
+
+    /**
+     * 出库凭证新增
+     * @param dto
+     * @return
+     */
+    @ApiOperation("生成出库单")
+    @PostMapping(value = "/feign/wms/inventory/delivery/add")
+    R<Boolean> generateOutStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
+
 }

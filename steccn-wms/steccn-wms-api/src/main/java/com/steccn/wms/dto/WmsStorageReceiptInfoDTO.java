@@ -53,7 +53,7 @@ public class WmsStorageReceiptInfoDTO {
     private Long unit;
 
     @ApiModelProperty("单位名称")
-    private Long unitName;
+    private String unitName;
 
     @ApiModelProperty("有效期截至")
     private LocalDate validTime;

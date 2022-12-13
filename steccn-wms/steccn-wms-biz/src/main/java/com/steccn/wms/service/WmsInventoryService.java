@@ -150,4 +150,6 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list);
+
+
 }

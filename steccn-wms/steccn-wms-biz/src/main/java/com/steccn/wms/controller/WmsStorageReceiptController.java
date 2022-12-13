@@ -76,4 +76,5 @@ public class WmsStorageReceiptController {
     public R<WmsStorageReceiptVO> get(@ApiParam("入库单id") @RequestParam("id") Long id){
         return R.success(wmsStorageReceiptService.get(id));
     }
+
 }

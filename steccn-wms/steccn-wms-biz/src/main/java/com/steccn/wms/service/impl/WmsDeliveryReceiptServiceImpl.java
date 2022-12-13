@@ -121,7 +121,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     wmsInventoryDTO.setId(info.getInventoryId());
                     infoList.add(wmsInventoryDTO);
                     WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
-                    BeanUtil.copyProperties(info,wmsDeliveryReceiptInfo);
+                    BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
                     wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
                     receiptInfoList.add(wmsDeliveryReceiptInfo);
                 });
@@ -159,7 +159,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                     WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
                     BeanUtil.copyProperties(info, wmsDeliveryReceiptInfo);
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
-                    BeanUtil.copyProperties(info,wmsInventoryDTO);
+                    BeanUtil.copyProperties(info, wmsInventoryDTO);
                     wmsInventoryDTO.setId(info.getInventoryId());
                     if (Objects.isNull(info.getId())) {
                         wmsDeliveryReceiptInfo.setDeliveryReceiptId(model.getId());
@@ -276,14 +276,61 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         Set<Integer> officeSet = Sets.newHashSet();
         typeSet.add(wmsDeliveryReceiptVO.getType());
         officeSet.add(wmsDeliveryReceiptVO.getWarehouseId());
-        infoVOList.forEach(info-> typeSet.add(info.getUnit()));
+        infoVOList.forEach(info -> typeSet.add(info.getUnit()));
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
-        infoVOList.forEach(info->info.setUnitName(dictMap.get(info.getUnit())));
+        infoVOList.forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
         wmsDeliveryReceiptVO.setWarehouseName(officeMap.get(wmsDeliveryReceiptVO.getWarehouseId()));
         wmsDeliveryReceiptVO.setTypeName(dictMap.get(wmsDeliveryReceiptVO.getType()));
         wmsDeliveryReceiptVO.setList(infoVOList);
         return wmsDeliveryReceiptVO;
+    }
+
+    @Override
+    public Boolean generateDelivery(WmsDeliveryReceiptDTO dto) {
+        //1.校验库存信息是否变化
+        if (CollUtil.isNotEmpty(dto.getList())) {
+            if (judgeInventory(dto.getList())) {
+                //库存发生变化，不生成单据
+                return Boolean.FALSE;
+            } else {
+                //保存出库单
+                return add(dto);
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+
+    /**
+     * 判断物料列表中的物料库存信息是否变化
+     * changeFlag = true 发生变化 反之没变
+     *
+     * @param materialList
+     * @return
+     */
+    private Boolean judgeInventory(List<WmsDeliveryReceiptInfoDTO> materialList) {
+        //定义变更标识
+        Boolean changeFlag = false;
+        if (CollUtil.isNotEmpty(materialList)) {
+            //批量查询物料的库存信息
+            List<Long> inventoryId = Lists.newArrayList();
+            materialList.forEach(materialDTO -> {
+                inventoryId.add(materialDTO.getInventoryId());
+            });
+            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId));
+
+            for (WmsInventory wmsInventory : list) {
+                for (WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO : materialList) {
+                    if (wmsInventory.getId().equals(wmsDeliveryReceiptInfoDTO.getInventoryId())) {
+                        if (wmsDeliveryReceiptInfoDTO.getAvailableQuantity().compareTo(wmsInventory.getAvailableQuantity()) != 0) {
+                            changeFlag = true;
+                        }
+                    }
+                }
+            }
+        }
+        return changeFlag;
     }
 
     /**
