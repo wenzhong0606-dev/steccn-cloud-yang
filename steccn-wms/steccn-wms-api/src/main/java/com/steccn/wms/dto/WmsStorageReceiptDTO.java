@@ -40,6 +40,9 @@ public class WmsStorageReceiptDTO {
     @ApiModelProperty("单据来源类型（0：生产）")
     private Integer sourceType;
 
+    @ApiModelProperty("单据来源单号")
+    private String sourceCode;
+
     @ApiModelProperty("明细集合")
     private List<WmsStorageReceiptInfoDTO> list;
 }

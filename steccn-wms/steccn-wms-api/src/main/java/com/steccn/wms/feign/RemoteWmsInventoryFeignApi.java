@@ -90,4 +90,15 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/delivery/add")
     R<Boolean> generateOutStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
 
+
+    /**
+     * 获取箱子位置
+     *
+     * @param caseNoSet 箱子位置
+     * @return
+     */
+    @PostMapping(value = "/feign/wms/inventory/stockByCaseNo")
+    @ResponseBody
+    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
+
 }

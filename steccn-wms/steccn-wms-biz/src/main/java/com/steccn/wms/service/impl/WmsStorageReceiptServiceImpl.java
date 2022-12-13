@@ -13,6 +13,8 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.WmsInventoryDTO;
@@ -63,6 +65,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final WmsInventoryService wmsInventoryService;
 
     private final WmsStorageReceiptInfoService wmsStorageReceiptInfoService;
+
+    private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -232,7 +236,10 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //3.确认(如果来自生产订单的数据:0)
         if (WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getSourceType())) {
           //变更pms生产订单状态
-
+            PmsCompleteStorageDTO pmsCompleteStorageDTO = new PmsCompleteStorageDTO();
+            pmsCompleteStorageDTO.setCode(receipt.getSourceCode());
+            pmsCompleteStorageDTO.setConfirmName(SecurityUtils.getUser().getName());
+            remoteCompleteStorageFeignApi.completeStorageReviseStatue(pmsCompleteStorageDTO);
         }
         //3.1获取该单据的信息
         List<WmsStorageReceiptInfo> list = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>()

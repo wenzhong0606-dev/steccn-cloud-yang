@@ -346,6 +346,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 materialInventoryList.forEach(materialInventory -> {
                     WmsStockInventoryDTO wmsStockInventoryDTO = new WmsStockInventoryDTO();
                     BeanUtil.copyProperties(materialInventory, wmsStockInventoryDTO);
+                    wmsStockInventoryDTO.setInventoryId(materialInventory.getId());
+                    wmsStockInventoryDTO.setBatchNo(materialInventory.getBatch());
                     wmsStockInventoryDTO.setCreateDate(materialInventory.getCreateTime());
                     materialList.add(wmsStockInventoryDTO);
                 });

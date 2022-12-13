@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
- * 
  * @TableName wms_storage_receipt
  */
-@TableName(value ="wms_storage_receipt")
+@TableName(value = "wms_storage_receipt")
 @Data
 public class WmsStorageReceipt implements Serializable {
     /**
@@ -104,4 +104,10 @@ public class WmsStorageReceipt implements Serializable {
      * 单据来源类型
      */
     private Integer sourceType;
+
+
+    /**
+     * 来源单号
+     */
+    private String sourceCode;
 }
