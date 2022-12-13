@@ -35,16 +35,16 @@ public interface RemoteMessFeignApi {
     List<MessMaterialConsumeDTO> materialConsume(@RequestBody List<MessMaterialStorageDTO> list);
 
 
-    /**
-     * 获取物料可用库存
-     *
-     * @param materialIds
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/materialInventory")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<Long, MesMaterialInventoryDTO> materialInventory(@RequestBody Set<Long> materialIds);
+//    /**
+//     * 获取物料可用库存
+//     *
+//     * @param materialIds
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/materialInventory")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    Map<Long, MesMaterialInventoryDTO> materialInventory(@RequestBody Set<Long> materialIds);
 
     /**
      * 生成入库单

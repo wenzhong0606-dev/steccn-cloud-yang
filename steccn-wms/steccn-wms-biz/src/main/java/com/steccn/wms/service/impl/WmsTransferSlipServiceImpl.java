@@ -310,6 +310,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             list.forEach(info->{
                 WmsInventoryDTO source = new WmsInventoryDTO();
                 BeanUtil.copyProperties(info, source);
+                source.setId(info.getSourceInventoryId());
                 source.setWarehouseId(order.getSourceWarehouse());
                 source.setShelfId(info.getSourceShelf());
                 WmsInventoryDTO target = new WmsInventoryDTO();
