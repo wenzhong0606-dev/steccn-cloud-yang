@@ -133,7 +133,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
     private void recursionParentData(List<EpProduceDetailVO> childProduceDetailVOList, List<EpProduceDetailVO> produceDetailVOList) {
         Set<Integer> officeIdSet = childProduceDetailVOList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(officeIdSet)).getData();
-        if (parentOfficeMap.isEmpty()) {
+        if (Objects.isNull(parentOfficeMap) || parentOfficeMap.isEmpty()) {
             return;
         }
         List<EpProduceDetailVO> parentProduceDetailVOList = new ArrayList<>();
@@ -164,10 +164,10 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         List<PmsReportWorkVO> pmsReportWorkVOList = reportWorkVOList.stream()
                 .filter(reportWorkVO -> reportWorkVO.getStartTime().isAfter(startTime) && reportWorkVO.getEndTime().isBefore(endTime) && reportWorkVO.getClassesId().equals(classId))
                 .collect(Collectors.toList());
-        Map<Long, List<PmsReportWorkVO>> groupBy = pmsReportWorkVOList.stream().collect(Collectors.groupingBy(PmsReportWorkVO::getMaterialId));
+        Map<String, List<PmsReportWorkVO>> groupBy = pmsReportWorkVOList.stream().collect(Collectors.groupingBy(reportWorkVO -> reportWorkVO.getMaterialId() + "," + reportWorkVO.getStationId()));
 
         List<PmsReportWorkVO> reportWorkVoArrayList = new ArrayList<>();
-        for (Map.Entry<Long, List<PmsReportWorkVO>> entry : groupBy.entrySet()) {
+        for (Map.Entry<String, List<PmsReportWorkVO>> entry : groupBy.entrySet()) {
             PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
             BeanUtils.copyProperties(entry.getValue().get(0), pmsReportWorkVO);
             BigDecimal sum = entry.getValue().stream().map(PmsReportWorkVO::getBadnessQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
