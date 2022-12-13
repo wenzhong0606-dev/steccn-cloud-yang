@@ -32,6 +32,8 @@ import com.steccn.pms.vo.MaterialRequisitionInfoVO;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
+import com.steccn.wms.dto.MaterialStorageDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
@@ -63,6 +65,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final RemoteMessFeignApi remoteMessFeignApi;
     private final PmsCompleteDeliveryInfoService pmsCompleteDeliveryInfoService;
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -299,7 +302,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 bomList.forEach(bom -> bomIds.add(bom.getId()));
                 List<BomStationDTO> stationList = pmsWorkOrderBomService.listStation(bomIds);
                 //处理 工位信息
-                List<MessMaterialStorageDTO> inventoryDTOList = Lists.newArrayList();
+                List<MaterialStorageDTO> inventoryDTOList = Lists.newArrayList();
                 Map<Long, List<BomStationDTO>> map = stationList.stream().collect(Collectors.groupingBy(BomStationDTO::getMaterialId));
                 List<MaterialRequisitionPlanVO> splitBomList = Lists.newArrayList();
                 //处理工位与物料
@@ -372,7 +375,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         stationIdSet.add(materialRequisitionPlanVO.getStation());
                     }
                     //处理物料线边库存数据
-                    MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
+
+                    MaterialStorageDTO storageDTO = new MaterialStorageDTO();
                     storageDTO.setMaterialId(bom.getModuleId());
                     storageDTO.setStationId(stationIdSet);
                     inventoryDTOList.add(storageDTO);
@@ -391,8 +395,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     });
                     inventoryDTO.setShelfCodes(warehouseCodes);
                 });
-                List<MessMaterialStorageDTO> collect = inventoryDTOList.stream().filter(inventoryDTO -> inventoryDTO.getShelfCodes().size() > 0).collect(Collectors.toList());
-                Map<Long, BigDecimal> inventoryMap = remoteMessFeignApi.listMaterialInventory(collect);
+                List<MaterialStorageDTO> collect = inventoryDTOList.stream().filter(inventoryDTO -> inventoryDTO.getShelfCodes().size() > 0).collect(Collectors.toList());
+                Map<Long, BigDecimal> inventoryMap = FeignOptional.of(remoteWmsInventoryFeignApi.listMaterialInventory(collect)).get();
                 // 获取物料的数据
                 EqpSpareVO eqpSpareVO = new EqpSpareVO();
                 Map<Long, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
