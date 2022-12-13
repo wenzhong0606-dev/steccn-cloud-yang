@@ -50,14 +50,22 @@ public class EpEnergyPricePlanDetailServiceImpl extends ServiceImpl<EpEnergyPric
       energyPricePlanDetails.forEach(v->{
           LocalTime start = v.getStart();
           LocalTime end = v.getEnd();
-          while (start.isBefore(end)){
-            planTypes.add(v.getType());
-            start=start.plusMinutes(30);
-          }
           if (end.equals(LocalTime.of(0,0))){
-              //加上最后一次
-              planTypes.add(v.getType());
+              end=LocalTime.of(23,59);
           }
+          while (start.isBefore(end)) {
+              planTypes.add(v.getType());
+              if (start.equals(LocalTime.of(23,30))&&end.equals(LocalTime.of(23, 59))) {
+                  break;
+              } else {
+                  start = start.plusMinutes(30);
+              }
+              if (start.isAfter(end)) {
+                  planTypes.add(v.getType());
+                  break;
+              }
+          }
+
       });
       return planTypes;
     }

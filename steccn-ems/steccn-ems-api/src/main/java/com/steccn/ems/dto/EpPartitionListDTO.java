@@ -13,13 +13,11 @@ public class EpPartitionListDTO implements Serializable {
     /**
      * 组织机构id
      */
-    @NotNull(message = "组织机构id不能为空")
     private Integer id;
 
     /**
      * 组织机构名称
      */
-    @NotBlank(message = "组织机构名称不能为空")
     private String officeName;
 
     /**
