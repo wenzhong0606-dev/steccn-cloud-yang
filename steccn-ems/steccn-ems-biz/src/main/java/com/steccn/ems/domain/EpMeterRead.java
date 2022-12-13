@@ -53,6 +53,11 @@ public class EpMeterRead implements Serializable {
     private LocalDateTime start;
 
     /**
+     * 报工id
+     */
+    private Long reportWorkId;
+
+    /**
      * 结束时间
      */
     private LocalDateTime end;

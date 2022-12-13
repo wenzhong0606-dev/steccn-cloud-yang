@@ -363,6 +363,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
                             ele.setConsume(reduce);
                             gpDataList.add(ele);
+
+                            List<Long> reportWorkIdList = Lists.newArrayList();
+                            thickEntry.getValue().forEach(te -> {
+                                if (CollUtil.isNotEmpty(te.getReportWorkIdList())) {
+                                    reportWorkIdList.addAll(te.getReportWorkIdList());
+                                }
+                            });
+                            ele.setReportWorkIdList(reportWorkIdList);
+
                             MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
                         }
                     }
@@ -449,8 +458,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             EpMeterReadAllDataVO ele = new EpMeterReadAllDataVO();
                             BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                             BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
-
-
                             //产量
                             List<EpProduceDetailVO> productNumObjectList = produceDetailList.stream().filter(v -> {
                                 boolean flag1, flag2;
@@ -474,6 +481,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);
                                 ele.setProductNum(yield);
                             }
+
+                            List<Long> reportWorkIdList = Lists.newArrayList();
+                            thickEntry.getValue().forEach(te -> {
+                                if (CollUtil.isNotEmpty(te.getReportWorkIdList())) {
+                                    reportWorkIdList.addAll(te.getReportWorkIdList());
+                                }
+                            });
+                            ele.setReportWorkIdList(reportWorkIdList);
                             ele.setConsume(reduce);
                             gpDataList.add(ele);
                             MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
@@ -517,6 +532,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         BeanUtils.copyProperties(epMeterRead, vo);
                         vo.setOfficeId(meterPartitionMap.get(vo.getMeterId()));
                         vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
+                        vo.setReportWorkIdList(Lists.newArrayList(epMeterRead.getReportWorkId()));
                         preValue = epMeterRead.getAdminValue();
                         //最小日期仅仅是为了计算差值，不需要返回
                         if (!entry1.equals(minLocalDate)) {
