@@ -134,7 +134,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
     private void recursionParentData(List<EpProduceDetailVO> childProduceDetailVOList, List<EpProduceDetailVO> produceDetailVOList) {
         Set<Integer> officeIdSet = childProduceDetailVOList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(officeIdSet)).getData();
-        if (Objects.isNull(parentOfficeMap)) {
+        if (parentOfficeMap.isEmpty()) {
             return;
         }
         List<EpProduceDetailVO> parentProduceDetailVOList = new ArrayList<>();

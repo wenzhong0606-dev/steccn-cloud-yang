@@ -480,13 +480,18 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().ge(PmsReportWork::getStartTime, startTime).lt(PmsReportWork::getEndTime, endTime));
         Set<Integer> productLineIdSet = list.stream().map(PmsReportWork::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(productLineIdSet)).getData();
-
+        Set<Long> orderIdSet = list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet());
+        List<PmsProduceOrder> pmsProduceOrderList = produceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIdSet));
         List<PmsReportWorkVO> pmsReportWorkVOList = new ArrayList<>();
         for (PmsReportWork pmsReportWork : list) {
-            PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
-            BeanUtils.copyProperties(pmsReportWork,pmsReportWorkVO);
-            pmsReportWorkVO.setWorkshopName(parentOfficeMap.get(pmsReportWork.getProductLineId()).getParentName());
-            pmsReportWorkVOList.add(pmsReportWorkVO);
+            Optional<PmsProduceOrder> optional = pmsProduceOrderList.stream().filter(pmsProduceOrder -> pmsProduceOrder.getId().equals(pmsReportWork.getProduceOrderId())).findAny();
+            if (optional.isPresent()) {
+                PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
+                BeanUtils.copyProperties(pmsReportWork,pmsReportWorkVO);
+                pmsReportWorkVO.setWorkshopName(parentOfficeMap.get(pmsReportWork.getProductLineId()).getParentName());
+                pmsReportWorkVO.setMaterialId(optional.get().getMaterialId());
+                pmsReportWorkVOList.add(pmsReportWorkVO);
+            }
         }
         return pmsReportWorkVOList;
     }
