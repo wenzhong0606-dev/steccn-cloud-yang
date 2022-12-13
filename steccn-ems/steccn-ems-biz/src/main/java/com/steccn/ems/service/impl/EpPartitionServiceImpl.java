@@ -197,6 +197,35 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet) {
+        Map<Integer, EpInstrumentAccount> resMap = Maps.newHashMap();
+
+        if (Objects.nonNull(energyType) && CollUtil.isNotEmpty(officeIdSet)) {
+            List<EpPartition> list = list(new LambdaQueryWrapper<EpPartition>()
+                    .eq(EpPartition::getType, energyType)
+                    .in(EpPartition::getOfficeId, officeIdSet));
+            if (CollUtil.isNotEmpty(list)) {
+                Set<Long> partitionIdSet = list.stream().map(v -> v.getId()).collect(Collectors.toSet());
+
+                Map<Long, Integer> officePartitionNodeMap = Maps.newHashMap();
+                list.forEach(ele -> officePartitionNodeMap.put(ele.getId(), ele.getOfficeId()));
+
+                List<EpInstrumentAccount> accountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                        .eq(EpInstrumentAccount::getMeterType, energyType)
+                        .in(EpInstrumentAccount::getPartitionNode, partitionIdSet));
+                if (CollUtil.isNotEmpty(accountList)) {
+                    accountList.forEach(ele -> {
+                        Integer officeId = officePartitionNodeMap.get(ele.getPartitionNode());
+                        if (Objects.nonNull(officeId)) {
+                            resMap.put(officeId, ele);
+                        }
+                    });
+                }
+            }
+        }
+        return resMap;
+    }
 
 
     @Override

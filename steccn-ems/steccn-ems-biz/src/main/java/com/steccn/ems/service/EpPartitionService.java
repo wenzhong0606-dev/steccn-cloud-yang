@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpEnergyParamDTO;
@@ -59,4 +60,12 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> listByIdCh(List<Long> partitionIdList);
+
+    /**
+     * 根据能源类型和组织机构id查询分区节点挂着的仪表
+     * @param energyType 能源类型
+     * @param officeIdSet 组织机构id
+     * @return map key-组织机构id value-仪表对象
+     */
+    Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet);
 }
