@@ -65,4 +65,13 @@ public class EpConsumePartitionChartController {
         Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
+
+    @PostMapping("/unit/chart")
+    @ApiOperation(value = "单耗班组对比-柱状图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitChart(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitChart(dto));
+    }
+
+
 }

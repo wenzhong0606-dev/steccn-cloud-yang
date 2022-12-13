@@ -74,6 +74,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemotePmsFeignApi remotePmsFeignApi;
     @Autowired
     private EpEnergyTypeService epEnergyTypeService;
+    @Autowired
+    private EpComputeProduceDetailService epComputeProduceDetailService;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -403,7 +405,108 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     @Override
     public List<EpMeterReadAllDataVO> classDateAllDataUnit(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
-        return null;
+        Assert.notEmpty(partitionIdList, "组织机构不能为空");
+        Assert.notNull(energyType, "能源类型不能为空");
+        List<EpMeterReadAllDataVO> gpDataList = Lists.newArrayList();
+
+        //根据选中的组织机构查询出树
+        EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
+        energyParamDTO.setPartitionId(partitionIdList);
+        energyParamDTO.setType(energyType);
+        EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
+        Assert.notEmpty(childTree.getPartitionIds(), "组织机构中没有实体仪表");
+
+        //查询全量数据表
+        List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getMeterType, energyType)
+                .in(EpInstrumentAccount::getPartitionNode, childTree.getPartitionIds())
+                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode));
+        SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
+        //获取仪表id集合
+        Map<Integer, Long> meterPartitionMap = Maps.newHashMap();
+        instrumentAccountList.forEach(ele -> {
+            meterPartitionMap.put(ele.getId(), ele.getPartitionNode());
+        });
+
+        List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterPartitionMap)) {
+            //获取集合最小的日期
+            List<LocalDate> sortedDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
+            LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
+            sortedDateList.add(0 , minLocalDate);
+
+            //获取所有的产量信息
+            List<EpProduceDetailVO> produceDetailList = epComputeProduceDetailService.getProduceDetailList(minLocalDate, sortedDateList.get(sortedDateList.size() - 1));
+            log.info("{}",produceDetailList);
+
+
+            //根据条件获取数据
+            List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
+                    .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
+                    .in(EpMeterRead::getReadDate, sortedDateList)
+                    .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart)));
+            if (CollUtil.isNotEmpty(dataList)) {
+                //存放仪表的班次日期的抄表数据
+                Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
+                //将数据按照班次日期分组
+                dataList.forEach(ele -> {
+                    // 2层map的插入，k1和k2相同的元素，存放到集合中
+                    MapUtil.biCompute(map, ele.getMeterId(), ele.getReadDate(), ele);
+                });
+                //遍历仪表
+                for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> entry : map.entrySet()) {
+                    //记录每个仪表的数据
+                    BigDecimal preValue = null;
+                    Map<LocalDate, List<EpMeterRead>> childEntry = entry.getValue();
+                    for (Map.Entry<LocalDate, List<EpMeterRead>> entry1 : childEntry.entrySet()) {
+                        //获取到班次日期的数据
+                        List<EpMeterRead> curEpMeterReadDataList = entry1.getValue();
+                        if (CollUtil.isNotEmpty(curEpMeterReadDataList)) {
+                            for (EpMeterRead epMeterRead : curEpMeterReadDataList) {
+                                //对班次和产品厚度进行分组
+                                EpMeterReadAllDataVO vo = new EpMeterReadAllDataVO();
+                                BeanUtils.copyProperties(epMeterRead, vo);
+                                vo.setOfficeId(meterPartitionMap.get(vo.getMeterId()));
+                                vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
+                                preValue = epMeterRead.getAdminValue();
+                                //最小日期仅仅是为了计算差值，不需要返回
+                                if (!entry1.equals(minLocalDate)) {
+                                    resList.add(vo);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //对班次和产品厚度进行分组累计
+                Map<Integer, Map<LocalDate, List<EpMeterReadAllDataVO>>> calMap = Maps.newHashMap();
+                Map<LocalDate, List<EpMeterReadAllDataVO>> classDateDataMap = resList.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
+                for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateDataMap.entrySet()) {
+                    Map<Integer, List<EpMeterReadAllDataVO>> meterDataMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getMeterId));
+                    for (Map.Entry<Integer, List<EpMeterReadAllDataVO>> meterEntry : meterDataMap.entrySet()) {
+                        Map<String, List<EpMeterReadAllDataVO>> thickDataMap = meterEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
+                        for (Map.Entry<String, List<EpMeterReadAllDataVO>> thickEntry : thickDataMap.entrySet()) {
+                            EpMeterReadAllDataVO epMeterReadAllDataVO = thickEntry.getValue().get(0);
+                            EpMeterReadAllDataVO ele = new EpMeterReadAllDataVO();
+                            BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
+                            ele.setConsume(reduce);
+                            gpDataList.add(ele);
+                            MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
+                        }
+                    }
+                }
+                //构造整个虚拟节点
+                List<LocalDate> originalDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
+                Set<String> existDataSet = Sets.newHashSet();
+                for (LocalDate classDate : originalDateList) {
+                    for (EpPartitionVO ep : childTree.getTree()) {
+                        cycle(calMap, classDate, ep, gpDataList, existDataSet);
+                    }
+                }
+            }
+        }
+        return gpDataList;
     }
 
 

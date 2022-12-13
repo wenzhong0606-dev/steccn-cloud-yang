@@ -55,4 +55,11 @@ public interface EpConsumePartitionChartService {
      * @return
      */
     List<BaseSelectVO<BigDecimal>> thick(EpTableDTO dto);
+
+    /**
+     * 单耗班组对比
+     * @param dto dto请求条件
+     * @return 图表vo
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitChart(EpTableDTO dto);
 }

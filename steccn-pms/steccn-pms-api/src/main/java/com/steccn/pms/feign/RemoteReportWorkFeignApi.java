@@ -1,11 +1,14 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
@@ -18,7 +21,7 @@ import java.util.List;
 @FeignClient(contextId = "RemoteReportWorkFeignApi", value = FeignConstant.STECCN_PMS_SERVICE_NAME)
 public interface RemoteReportWorkFeignApi {
 
-    @GetMapping("/feign/pms/report/work/listByClassTime")
+    @PostMapping("/feign/pms/report/work/listByClassTime")
     @ApiOperation("根据班次时间查询报工信息")
-    R<List<PmsReportWorkVO>> listByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime") LocalDateTime endTime);
+    R<List<PmsReportWorkVO>> listByClassTime(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO);
 }

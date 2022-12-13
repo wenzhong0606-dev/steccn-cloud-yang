@@ -380,6 +380,21 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return resList;
     }
 
+    @Override
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitChart(EpTableDTO dto) {
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        //时间排序
+        CollUtil.sort(dateSet, Comparator.comparing(v -> v));
+        return null;
+    }
+
     /**
      * 根据时间范围和组织结构树，查询厚度下拉选项
      *
