@@ -628,7 +628,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         statusDTO.setStatus(dto.getStatus());
         //组装落板记录详情数据
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())) {
-            QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
                 if (dto.getId() != null) {
@@ -654,6 +653,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
+        }else{
+            saveCheckTaskDestoryInfoRemark(dto.getId(),dto.getDestoryInfoRemark());
         }
         return updateStatus(statusDTO);
     }
@@ -864,6 +865,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
+        }else{
+            saveCheckTaskDestoryInfoRemark(dto.getId(),dto.getDestoryInfoRemark());
         }
         //插入在线检数据
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem() != null) {
@@ -923,6 +926,20 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return updateById(taskModel);
     }
 
+    /****
+     * 保存备注
+     * @param id
+     */
+    public void saveCheckTaskDestoryInfoRemark(Long id ,String destoryInfoRemark){
+        QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
+        if (qtCheckTaskDetailService.getById(id) != null) qtCheckTaskDestoryInfo.setCopy(qtCheckTaskDetailService.getById(id).getCopy());
+        qtCheckTaskDestoryInfo.setTaskId(id);
+        if (qtCheckTaskCopyService.getById(id) != null)   qtCheckTaskDestoryInfo.setSampleNum(qtCheckTaskCopyService.getById(id).getSampleNum());
+        qtCheckTaskDestoryInfo.setCreateName(SecurityUtils.getUser().getName());
+        qtCheckTaskDestoryInfo.setCreateBy(SecurityUtils.getUser().getUserId());
+        qtCheckTaskDestoryInfo.setDestoryInfoRemark(destoryInfoRemark);
+        qtCheckTaskDestoryInfoService.save(qtCheckTaskDestoryInfo);
+    }
     /**
      * 完成任务
      *
