@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 
 import com.steccn.common.vo.R;
 import com.steccn.wms.dto.CaseSiteDTO;
+import com.steccn.wms.dto.MaterialInventoryDTO;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
@@ -47,4 +48,14 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/list/material")
     @ApiOperation("获取物料在货架中的库存数量")
     R<Map<Long, BigDecimal>> listMaterialInventory(@RequestBody List<MaterialStorageDTO> list);
+
+
+    /**
+     * 获取物料的可用数量
+     * @param materialIds
+     * @return
+     */
+    @PostMapping("/material/inventory")
+    @ApiOperation("获取物料的库存清单")
+    R<Map<Long, MaterialInventoryDTO>> materialInventory(@RequestBody Set<Long> materialIds);
 }

@@ -70,7 +70,7 @@ public class WmsInventoryController {
     /**
      * 获取物料的库存清单
      */
-    @PostMapping("materialInventory")
+    @PostMapping("/material/inventory")
     @ResponseBody
     public R<Map<Long, MaterialInventoryDTO>> materialInventory(@RequestBody Set<Long> materialIds) {
         return R.success(wmsInventoryService.materialInventory(materialIds));

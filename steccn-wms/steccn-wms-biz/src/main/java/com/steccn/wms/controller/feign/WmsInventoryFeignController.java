@@ -2,16 +2,14 @@ package com.steccn.wms.controller.feign;
 
 import com.steccn.common.vo.R;
 import com.steccn.wms.dto.CaseSiteDTO;
+import com.steccn.wms.dto.MaterialInventoryDTO;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.service.WmsInventoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,6 +41,15 @@ public class WmsInventoryFeignController {
     @PostMapping("/list/material")
     public R<Map<Long, BigDecimal>> listMaterialInventory(@RequestBody List<MaterialStorageDTO> list) {
         return R.success(wmsInventoryService.listMaterialInventory(list));
+    }
+
+    /**
+     * 获取物料的库存清单
+     */
+    @PostMapping("/material/inventory")
+    @ResponseBody
+    public R<Map<Long, MaterialInventoryDTO>> materialInventory(@RequestBody Set<Long> materialIds) {
+        return R.success(wmsInventoryService.materialInventory(materialIds));
     }
 
 
