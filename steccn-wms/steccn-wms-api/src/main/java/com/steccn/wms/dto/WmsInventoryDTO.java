@@ -2,7 +2,6 @@ package com.steccn.wms.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -114,6 +113,7 @@ public class WmsInventoryDTO {
      * 打包时间
      */
     private LocalDateTime packTime;
+
 
 
 }

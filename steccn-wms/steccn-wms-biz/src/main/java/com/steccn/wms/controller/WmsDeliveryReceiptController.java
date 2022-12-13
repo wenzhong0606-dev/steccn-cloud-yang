@@ -10,13 +10,16 @@ import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.service.WmsDeliveryReceiptService;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
-import com.steccn.wms.vo.WmsTransferSlipVO;
+import com.steccn.wms.vo.WmsScanInventoryVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * 出库凭证控制器
@@ -74,5 +77,18 @@ public class WmsDeliveryReceiptController {
         return R.success(wmsDeliveryReceiptService.get(id));
     }
 
+    @ApiOperation("扫描 根据箱号获取库存信息")
+    @GetMapping("/api/getCaseNoByScanInventoryInfo")
+    public R<WmsScanInventoryVO> getCaseNoByScanInventoryInfo(@ApiParam("箱号") @RequestParam("caseNo") String caseNo){
+        if(StringUtils.isBlank(caseNo)) return R.failure("箱号不可为空");
+        return  wmsDeliveryReceiptService.getCaseNoByScanInventoryInfo(caseNo);
+    }
+
+    @ApiOperation("扫描出库")
+    @PostMapping("/api/scanDeliveryReceipt")
+    public R<String> scanDeliveryReceipt(@RequestBody Map<String, Object> paramMap){
+
+        return  wmsDeliveryReceiptService.scanDeliveryReceipt(paramMap);
+    }
 
 }

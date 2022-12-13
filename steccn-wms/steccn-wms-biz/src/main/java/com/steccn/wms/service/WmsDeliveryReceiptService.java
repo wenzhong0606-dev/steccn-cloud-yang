@@ -1,11 +1,15 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.vo.R;
+import com.steccn.wms.domain.WmsDeliveryReceipt;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsScanInventoryVO;
+
+import java.util.Map;
 
 /**
 * @author W10
@@ -64,4 +68,18 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     Boolean generateDelivery(WmsDeliveryReceiptDTO dto);
+
+    /*****
+     * 扫描 根据箱号获取库存信息
+     * @param caseNo
+     * @return
+     */
+    R<WmsScanInventoryVO> getCaseNoByScanInventoryInfo(String caseNo);
+
+    /****
+     * 手机端 扫描出库
+     * @param paramMap
+     * @return
+     */
+    R<String> scanDeliveryReceipt( Map<String, Object> paramMap);
 }
