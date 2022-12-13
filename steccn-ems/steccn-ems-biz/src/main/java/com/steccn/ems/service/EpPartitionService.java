@@ -50,7 +50,7 @@ public interface EpPartitionService extends IService<EpPartition> {
     EpEnergyTreeDTO getChildTree(EpEnergyParamDTO dto);
 
     /**
-     * 根据孩子id集合查询所有父节点
+     * 根据孩子id集合查询所有对应节点的父节点
      * @param childList
      * @return
      */

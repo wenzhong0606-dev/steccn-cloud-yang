@@ -116,7 +116,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     epPartition.setId(mainId);
                     //设置排序字段
                     epPartition.setSort(partitionDTO.getTreeLevel());
-                    partitionMap.put(partitionDTO.getId(),epPartition.getId());
+                    partitionMap.put(partitionDTO.getId(),mainId);
                     addPartitionList.add(epPartition);
                 }
             }
@@ -232,7 +232,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //先获取该能源类型下的全量数据
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
         EpPartition childPartition = getById(dto.getChildId());
-        Assert.notNull(childPartition,"该子节点已被删除");
+        Assert.notNull(childPartition,"该子节点不存在");
         EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
         BeanUtils.copyProperties(childPartition,childPartitionVO);
        EpPartitionParentVO parentVO = getParentListByChildId(childPartitionVO, epPartitions);

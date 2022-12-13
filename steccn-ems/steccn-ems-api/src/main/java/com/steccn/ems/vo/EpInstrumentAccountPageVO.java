@@ -28,6 +28,11 @@ public class EpInstrumentAccountPageVO implements Serializable {
     private EpPartitionVO partitionNodeName;
 
     /**
+     * 0实体远传仪表、1实体非远传仪表、2虚拟仪表
+     */
+    private Integer entityTable;
+
+    /**
      * 远传表映射编码
      */
     private String distantMapCode;
@@ -46,6 +51,11 @@ public class EpInstrumentAccountPageVO implements Serializable {
      * 最后抄表时间
      */
     private LocalDateTime lastReadingTime;
+
+    /**
+     * 现在时间
+     */
+    private LocalDateTime localDateTimeNow=LocalDateTime.now();
 
     /**
      * 0停用 1启用

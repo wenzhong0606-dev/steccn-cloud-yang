@@ -14,13 +14,12 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
-import com.steccn.ems.dto.EpInstrumentAccountDTO;
-import com.steccn.ems.dto.EpInstrumentAccountDownloadDTO;
-import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
-import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
+import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
+import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
@@ -45,6 +44,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +65,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     private EpPartitionService epPartitionService;
     @Autowired
     private EpEnergyTypeService epEnergyTypeService;
+    @Autowired
+    private EpMeterReadService epMeterReadService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -154,6 +157,23 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         });
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
         Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
+        //去抄表管理微服务中lou出所有数据根据仪表id分组
+        List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
+        Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                .eq(EpMeterRead::getDelFlag, MpConstant.NO)
+                        .in(EpMeterRead::getDistantMapCode,distantCodeList)).stream()
+                .collect(Collectors.groupingBy(EpMeterRead::getMeterId));
+
+        EpEnergyParamDTO epEnergyParamDTO = new EpEnergyParamDTO();
+        List<Long> partitionIdList = Lists.newArrayList();
+        partitionIds.stream().forEach(s->{
+            partitionIdList.add(s);
+        });
+        if (CollUtil.isNotEmpty(partitionIdList)){
+            epEnergyParamDTO.setPartitionId(partitionIdList);
+          //Todo
+        }
+        //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
                 s.setSiteName(dictMap.get(s.getSite()));
@@ -162,19 +182,53 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()));
             }
 
-            //TODO:设置最后抄表时间
+            if (CollUtil.isNotEmpty(groupByMeter)){
+                List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
+                getLastReadTime(s.getEntityTable(),epMeterReads);
+
+
+            }
+
         });
 
         //排序+逻辑分页
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
+            collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+        }
         page.setCurrent(dto.getCurrent());
         page.setTotal(instrumentAccountVOS.size());
         page.setSize(dto.getSize());
         page.setRecords(collect);
 
         return page;
+    }
+
+    private LocalDateTime getLastReadTime(Integer entityTable, List<EpMeterRead> epMeterReads) {
+
+        //先判断仪表的所属类型
+        if (EpManagerConstant.InstrumentType.REMOTE.getCode()==entityTable
+                ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==entityTable){
+            if (CollUtil.isEmpty(epMeterReads)){
+                return null;
+            }else {
+                LocalDateTime lastReadTime = LocalDateTime.now();
+                for (int i = 0; i < epMeterReads.size(); i++) {
+                    lastReadTime =epMeterReads.get(i).getReadTime();
+                    if ((i+1)<epMeterReads.size()){
+                        if (lastReadTime.isBefore(epMeterReads.get(i+1).getReadTime())){
+                            lastReadTime=epMeterReads.get(i+1).getReadTime();
+                        }
+                    }
+                }
+                return lastReadTime;
+            }
+        }else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode()==entityTable){
+
+        }
+        return null;
     }
 
     @Override
