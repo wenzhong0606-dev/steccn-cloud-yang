@@ -99,4 +99,9 @@ public class WmsStorageReceipt implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 单据来源类型
+     */
+    private Integer sourceType;
 }

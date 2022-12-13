@@ -206,6 +206,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         wmsStorageReceiptDTO.setType(sysDictVO.getId());
         //仓库id
         wmsStorageReceiptDTO.setList(materialList);
+        wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         try {
             Boolean aBoolean = FeignOptional.of(remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO)).get();
             //入库必定要成功

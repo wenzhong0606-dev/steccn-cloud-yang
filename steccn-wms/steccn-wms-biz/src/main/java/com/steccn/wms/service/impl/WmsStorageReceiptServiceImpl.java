@@ -229,7 +229,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         //2.判断单状态
         Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getStatus())
                 , "当前状态不可确认");
-        //3.确认
+        //3.确认(如果来自生产订单的数据:0)
+        if (WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getSourceType())) {
+          //变更pms生产订单状态
+
+        }
         //3.1获取该单据的信息
         List<WmsStorageReceiptInfo> list = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
                 .eq(WmsStorageReceiptInfo::getStorageReceiptId, id));
