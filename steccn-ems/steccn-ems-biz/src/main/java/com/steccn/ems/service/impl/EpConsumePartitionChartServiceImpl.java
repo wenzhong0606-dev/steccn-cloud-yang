@@ -442,7 +442,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         log.info("{}",epChartGraphDTO);
-        return EpChartGraphUtil.convert(epChartGraphDTO,Boolean.TRUE);
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
+        convert.getXData().setData(Lists.newArrayList());
+        return convert;
     }
 
     /**
