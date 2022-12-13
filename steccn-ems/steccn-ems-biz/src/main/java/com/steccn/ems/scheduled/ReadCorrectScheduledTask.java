@@ -7,6 +7,7 @@ import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.vo.ReadCorrectVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Async;
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  * @author chenhuan
  * @date 2022/12/5 11:14
  */
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class ReadCorrectScheduledTask {
@@ -39,9 +41,11 @@ public class ReadCorrectScheduledTask {
 
     @Async
     @Scheduled(cron = "0 3 9 * * ?")
+//    @Scheduled(cron = "0/20 * * * * ? ")
     public void execute() {
         RLock lock = redissonClient.getLock(LockConstant.READ_CORRECT_SCHEDULED_TASK);
         lock.lock();
+        log.info("数据开始纠偏");
         try {
             LocalDate now = LocalDate.now();
             LocalTime startTime = LocalTime.of(7, 0, 0);
@@ -60,18 +64,22 @@ public class ReadCorrectScheduledTask {
             for (Map.Entry<Long, List<ReadCorrectVO>> entry : groupBy.entrySet()) {
                 //没有两条数据不计算纠偏值
                 if (entry.getValue().size() < 2) {
+                    log.info("当前仪表只有一次抄表记录");
                     continue;
                 }
-                //如果是管理员操作不计算纠偏值
+                //管理员操作不计算纠偏值
                 if (entry.getValue().get(0).getAdminFlag().equals(1)) {
+                    log.info("管理员操作不计算纠偏值");
                     continue;
                 }
                 //不是今天的数据不计算纠偏值
                 if (entry.getValue().get(0).getReadTime().isAfter(startDateTime) && entry.getValue().get(0).getReadTime().isBefore(endDateTime)) {
+                    log.info("不是今天的数据不计算纠偏值");
                     continue;
                 }
                 //抄表时间等于8点不纠偏
                 if (entry.getValue().get(0).getReadTime().isEqual(localDateTime)) {
+                    log.info("抄表时间等于8点不纠偏");
                     continue;
                 }
 
@@ -79,26 +87,15 @@ public class ReadCorrectScheduledTask {
                 ReadCorrectVO readCorrect2 = entry.getValue().get(1);
                 BigDecimal readValue1 = readCorrect1.getReadValue();
                 BigDecimal readValue2 = readCorrect1.getReadValue();
-                LocalDateTime readTime1 = readCorrect1.getReadTime();
-                LocalDateTime readTime2 = readCorrect2.getReadTime();
-                Long second1 = readTime1.toEpochSecond(ZoneOffset.of("+8"));
-                Long second2 = readTime2.toEpochSecond(ZoneOffset.of("+8"));
-                //8点的时间戳
-                Long second = localDateTime.toEpochSecond(ZoneOffset.of("+8"));
+                //和上次抄表相差的秒数
+                long seconds = ChronoUnit.SECONDS.between(readCorrect1.getReadTime(), readCorrect2.getReadTime());
                 //平均流速
-                BigDecimal vMean = BigDecimalUtil.divide(readValue1.subtract(readValue2),BigDecimal.valueOf(second1-second2));
+                BigDecimal vMean = BigDecimalUtil.divide(readValue1.subtract(readValue2),BigDecimal.valueOf(seconds));
+                //和当天8点相差的秒数
+                long differSecond = ChronoUnit.SECONDS.between(readCorrect1.getReadTime(), localDateTime);
                 //纠偏值
-                BigDecimal correctValue;
-                //如果小于八点
-                if (readTime1.isBefore(localDateTime)) {
-                    //抄表时间和8点相差的秒数
-                    long differSecond = second - second1;
-                    correctValue = readCorrect1.getReadValue().add(BigDecimal.valueOf(differSecond).multiply(vMean));
-                } else {
-                    //抄表时间和8点相差的秒数
-                    long differSecond = second1 - second;
-                    correctValue = readCorrect1.getReadValue().subtract(BigDecimal.valueOf(differSecond).multiply(vMean));
-                }
+                BigDecimal correctValue = readCorrect1.getReadValue().add(BigDecimal.valueOf(differSecond).multiply(vMean));
+
                 EpMeterRead epMeterRead = new EpMeterRead();
                 epMeterRead.setId(readCorrect1.getId());
                 epMeterRead.setCorrectValue(correctValue);
@@ -106,7 +103,10 @@ public class ReadCorrectScheduledTask {
                 epMeterReadList.add(epMeterRead);
             }
             epMeterReadService.updateBatchById(epMeterReadList);
+        }catch (Exception e) {
+            log.error("数据纠偏异常",e);
         } finally {
+            log.info("数据纠偏结束");
             lock.unlock();
         }
     }
