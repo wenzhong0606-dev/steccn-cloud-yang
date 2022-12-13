@@ -27,19 +27,14 @@ import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
-import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,19 +56,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Autowired
     private EpMeterOperationRecordMapper epMeterOperationRecordMapper;
     @Autowired
-    private EpPartitionMapper epPartitionMapper;
-    @Autowired
     private EpPartitionService epPartitionService;
     @Autowired
     private EpInstrumentAccountService epInstrumentAccountService;
     @Autowired
     private EpMeterOperationRecordService epMeterOperationRecordService;
-    @Autowired
-    private RemoteDictFeignApi remoteDictFeignApi;
-    @Autowired
-    private RemoteSpareFeignApi remoteSpareFeignApi;
-    @Autowired
-    private RemotePmsFeignApi remotePmsFeignApi;
     @Autowired
     private EpEnergyTypeService epEnergyTypeService;
     @Autowired
