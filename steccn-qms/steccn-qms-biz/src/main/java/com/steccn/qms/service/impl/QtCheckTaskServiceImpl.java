@@ -931,14 +931,18 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @param id
      */
     public void saveCheckTaskDestoryInfoRemark(Long id ,String destoryInfoRemark){
-        QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
-        if (qtCheckTaskDetailService.getById(id) != null) qtCheckTaskDestoryInfo.setCopy(qtCheckTaskDetailService.getById(id).getCopy());
-        qtCheckTaskDestoryInfo.setTaskId(id);
-        if (qtCheckTaskCopyService.getById(id) != null)   qtCheckTaskDestoryInfo.setSampleNum(qtCheckTaskCopyService.getById(id).getSampleNum());
-        qtCheckTaskDestoryInfo.setCreateName(SecurityUtils.getUser().getName());
-        qtCheckTaskDestoryInfo.setCreateBy(SecurityUtils.getUser().getUserId());
-        qtCheckTaskDestoryInfo.setDestoryInfoRemark(destoryInfoRemark);
-        qtCheckTaskDestoryInfoService.save(qtCheckTaskDestoryInfo);
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(destoryInfoRemark)) {
+            QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
+            if (qtCheckTaskDetailService.getById(id) != null)
+                qtCheckTaskDestoryInfo.setCopy(qtCheckTaskDetailService.getById(id).getCopy());
+            qtCheckTaskDestoryInfo.setTaskId(id);
+            if (qtCheckTaskCopyService.getById(id) != null)
+                qtCheckTaskDestoryInfo.setSampleNum(qtCheckTaskCopyService.getById(id).getSampleNum());
+            qtCheckTaskDestoryInfo.setCreateName(SecurityUtils.getUser().getName());
+            qtCheckTaskDestoryInfo.setCreateBy(SecurityUtils.getUser().getUserId());
+            qtCheckTaskDestoryInfo.setDestoryInfoRemark(destoryInfoRemark);
+            qtCheckTaskDestoryInfoService.save(qtCheckTaskDestoryInfo);
+        }
     }
     /**
      * 完成任务
