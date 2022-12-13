@@ -28,6 +28,11 @@ public class EpMeterRead implements Serializable {
     private Integer meterId;
 
     /**
+     * 远传表映射编码
+     */
+    private String distantMapCode;
+
+    /**
      * 抄表日期
      */
     private LocalDate readDate;
