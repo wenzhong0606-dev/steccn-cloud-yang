@@ -129,4 +129,8 @@ public class SysEqpSpare implements Serializable {
      */
     private Long procurementTypeId;
 
+    /**
+     * 单位
+     */
+    private Long unitId;
 }

@@ -19,6 +19,9 @@ public class WmsTransferSlipInfoVO {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("源库存id")
+    private Long sourceInventoryId;
+
     @ApiModelProperty("来源货架")
     private Integer sourceShelf;
 

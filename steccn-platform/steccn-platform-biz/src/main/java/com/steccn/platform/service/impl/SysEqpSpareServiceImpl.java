@@ -136,7 +136,9 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     @Override
     public Page<EqpSpareVO> listPage(SparePageDTO sparePageDTO) {
         //1.自定义查询条件
-        LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName());
+        LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>()
+                .like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName())
+                .le(StrUtil.isNotBlank(sparePageDTO.getCode()),SysEqpSpare::getCode,sparePageDTO.getCode());
         //2.定义分页对象
         Page page = new Page<>(sparePageDTO.getCurrent(), sparePageDTO.getSize());
         //3.查询分页数据
@@ -149,10 +151,12 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         Set<Long> dictIdSet = Sets.newHashSet();
         eqpSpareVOList.forEach(eqpSpareVO -> {
             dictIdSet.add(eqpSpareVO.getProcurementTypeId());
+            dictIdSet.add(eqpSpareVO.getUnitId());
         });
-        Map<Long, String> longStringMap = sysDictService.listByIdCh(dictIdSet);
+        Map<Long, String> dictMap = sysDictService.listByIdCh(dictIdSet);
         eqpSpareVOList.forEach(eqpSpareVO -> {
-            eqpSpareVO.setProcurementTypeName(longStringMap.get(eqpSpareVO.getProcurementTypeId()));
+            eqpSpareVO.setProcurementTypeName(dictMap.get(eqpSpareVO.getProcurementTypeId()));
+            eqpSpareVO.setUnit(dictMap.get(eqpSpareVO.getUnitId()));
         });
         return page.setRecords(eqpSpareVOList);
     }

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -77,4 +78,10 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      */
     List<PmsReportWorkVO> listByClassTime(LocalDateTime startTime, LocalDateTime endTime);
 
+    /**
+     * 获取报工的班组信息
+     * @param reportWorkIdSet 报工id集合
+     * @return map
+     */
+    Map<Long, Long> reportWorkClassGroup(Set<Long> reportWorkIdSet);
 }

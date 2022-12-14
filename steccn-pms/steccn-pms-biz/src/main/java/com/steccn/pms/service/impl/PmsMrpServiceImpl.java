@@ -30,6 +30,8 @@ import com.steccn.pms.service.PmsMrpService;
 import com.steccn.pms.mapper.PmsMrpMapper;
 import com.steccn.pms.vo.PmsMrpVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.wms.dto.MaterialInventoryDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.compress.utils.Sets;
@@ -54,6 +56,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
     private final PmsMrpInfoService pmsMrpInfoService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
     @Override
     public Page<PmsMrpVO> pageList(PmsMrpPageDTO dto) {
@@ -100,13 +103,13 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         Map<Long, PmsMrpInfo> pmsMrpInfoMap = list.stream().collect(Collectors.toMap(PmsMrpInfo::getMaterialId, Function.identity()));
         PmsMrpInfo pmsMrpInfo = new PmsMrpInfo();
         pmsMrpInfo.setQuantity(BigDecimal.ZERO);
-        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
+        MaterialInventoryDTO mesMaterialInventoryDTO = new MaterialInventoryDTO();
         BigDecimal quantity =  BigDecimal.ZERO;
         mesMaterialInventoryDTO.setAvailableQuantity(quantity);
         //获取库存信息
-        Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
+        Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
         pmsMrpVOList.forEach(pmsMrpVO -> {
-            MesMaterialInventoryDTO inventoryDTO = inventoryDTOMap.getOrDefault(pmsMrpVO.getMaterialId(), mesMaterialInventoryDTO);
+            MaterialInventoryDTO inventoryDTO = inventoryDTOMap.getOrDefault(pmsMrpVO.getMaterialId(), mesMaterialInventoryDTO);
             PmsMrpInfo orDefault = pmsMrpInfoMap.getOrDefault(pmsMrpVO.getMaterialId(), pmsMrpInfo);
             pmsMrpVO.setQuantity(orDefault.getQuantity());
             //计算库存信息,如果不存在库存信息则为0
@@ -136,8 +139,8 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
                 Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
                 //获取订单需求类型id
                 Long mrpRequirementId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
-                Map<Long, MesMaterialInventoryDTO> inventoryDTOMap = remoteMessFeignApi.materialInventory(materialIds);
-                MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
+                Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+                MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
                 inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
                 Map<Long, List<PmsMrpInfo>> infoMap = list.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
                 infoMap.forEach((id, infoList) -> {

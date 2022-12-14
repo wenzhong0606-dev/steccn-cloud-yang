@@ -74,14 +74,15 @@
 	        INNER JOIN ep_energy_type t ON a.meter_type = t.id
         WHERE
 	        r.read_date = #{readDate}
-	        AND r.meter_id = #{meterId}
+	        AND a.id = #{meterId}
     </select>
     <select id="selectByMeterId" resultType="com.steccn.ems.vo.ReadCorrectVO">
         SELECT
             meter_id meterId,
             read_time readTime,
             id,
-            read_value readValue
+            read_value readValue,
+            admin_flag adminFlag
         FROM
         (
             SELECT
@@ -89,6 +90,7 @@
                 r.read_time,
                 r.id,
                 r.read_value,
+                r.admin_flag,
                 row_number() over ( PARTITION BY r.meter_id ORDER BY r.read_time DESC ) AS ranking
             FROM
                 ep_meter_read r

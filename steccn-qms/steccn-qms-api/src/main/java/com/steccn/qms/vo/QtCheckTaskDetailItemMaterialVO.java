@@ -2,7 +2,6 @@ package com.steccn.qms.vo;
 
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -17,11 +16,7 @@ public class QtCheckTaskDetailItemMaterialVO {
 
     private Long materialId;
 
-    private BigDecimal thickQuantity;
-
     private LocalDateTime classTime;
 
     private Integer classId;
-
-    private BigDecimal lengthQuantity;
 }

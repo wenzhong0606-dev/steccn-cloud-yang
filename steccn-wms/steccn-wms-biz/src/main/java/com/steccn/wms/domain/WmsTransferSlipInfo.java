@@ -33,11 +33,6 @@ public class WmsTransferSlipInfo implements Serializable {
     private Long sourceInventoryId;
 
     /**
-     * 目标库存id
-     */
-    private Long targetInventoryId;
-
-    /**
      * 来源货架
      */
     private Integer sourceShelf;

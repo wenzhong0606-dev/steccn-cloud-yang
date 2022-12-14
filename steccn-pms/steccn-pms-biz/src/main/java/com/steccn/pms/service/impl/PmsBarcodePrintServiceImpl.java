@@ -35,6 +35,7 @@ import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -65,6 +66,8 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private PmsProduceOrderService pmsProduceOrderService;
+    @Autowired
+    private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
 
     @Override
@@ -222,16 +225,16 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     public Map<String, CaseSiteDTO> caseSite(Set<String> caseNoSet) {
         Map<String, CaseSiteDTO> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(caseNoSet)) {
-            Map<String, CaseSiteDTO> messMap = remoteMessFeignApi.caseSite(caseNoSet);
-            if (CollUtil.isNotEmpty(messMap)) {
+            Map<String, CaseSiteDTO> caseSiteDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.caseSite(caseNoSet)).get();
+            if (CollUtil.isNotEmpty(caseSiteDTOMap)) {
                 Set<String> siteSet = Sets.newHashSet();
-                for (Map.Entry<String, CaseSiteDTO> entry : messMap.entrySet()) {
+                for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
                     siteSet.add(entry.getValue().getShelfCode());
                     siteSet.add(entry.getValue().getWarehouseCode());
                 }
                 Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(siteSet)).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-                for (Map.Entry<String, CaseSiteDTO> entry : messMap.entrySet()) {
+                for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
                     CaseSiteDTO value = entry.getValue();
                     SysOfficeVO warehouse = sysOfficeMap.getOrDefault(value.getWarehouseCode(), defaultSysOfficeVO);
                     value.setWarehouseId(warehouse.getId());
@@ -240,7 +243,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                     value.setShelfId(shelf.getId());
                     value.setShelfName(shelf.getOfficeName());
                 }
-                resMap = messMap;
+                resMap = caseSiteDTOMap;
             }
         }
         return resMap;

@@ -19,8 +19,18 @@ import java.util.List;
 @ApiModel("出库凭证DTO")
 public class WmsDeliveryReceiptPageDTO extends BasePageDTO {
 
+
+    @ApiModelProperty("编码")
+    private String code;
+
+    @ApiModelProperty("类型")
+    private String type;
+
     @ApiModelProperty("仓库")
     private List<Long> warehouseIds;
+
+    @ApiModelProperty("状态")
+    private Integer status;
 
     @ApiModelProperty("物料名称")
     private String materialName;
@@ -42,6 +52,9 @@ public class WmsDeliveryReceiptPageDTO extends BasePageDTO {
 
     @ApiModelProperty("创建人")
     private String createName;
+
+    @ApiModelProperty("确认人")
+    private String affirmName;
 
     @ApiModelProperty("创建开始日期")
     private LocalDate createStartDate;

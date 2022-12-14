@@ -25,4 +25,5 @@ public class EpPartitionDTO implements Serializable {
      */
     private List<EpPartitionListDTO> epPartitionListDTO;
 
+
 }

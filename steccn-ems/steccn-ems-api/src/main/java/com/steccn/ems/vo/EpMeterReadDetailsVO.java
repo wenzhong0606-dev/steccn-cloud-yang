@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Data
 public class EpMeterReadDetailsVO {
     private Integer entityTable;
-    private Integer id;
+    private Long id;
     private Long meterId;
     private String meterName;
     private Integer meterType;

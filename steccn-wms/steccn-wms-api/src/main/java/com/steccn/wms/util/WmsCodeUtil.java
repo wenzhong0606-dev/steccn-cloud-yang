@@ -28,6 +28,12 @@ public class WmsCodeUtil {
 
 
     /**
+     * 入库单前缀
+     */
+    public final static String PREFIX_WMS_STORAGE_RECEIPT ="SI";
+
+
+    /**
      * 出库单前缀
      */
     public final static String PREFIX_WMS_DELIVERY_RECEIPT ="SO";

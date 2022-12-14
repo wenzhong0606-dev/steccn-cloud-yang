@@ -71,4 +71,9 @@ public class EpInstrumentAccountDTO implements Serializable {
      */
     @Length(max = 100,message = "备注长度不能超过100个文字")
     private String note;
+
+    /**
+     * 0停用 1启用
+     */
+    private Integer status;
 }

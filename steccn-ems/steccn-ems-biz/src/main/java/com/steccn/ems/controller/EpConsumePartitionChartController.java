@@ -1,7 +1,11 @@
 package com.steccn.ems.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.exception.SteccnChartException;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yequan
@@ -64,5 +69,15 @@ public class EpConsumePartitionChartController {
         Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
         Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
+    }
+
+    @PostMapping("/unit/chart")
+    @ApiOperation(value = "单耗班组对比-柱状图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitChart(@Valid @RequestBody EpTableDTO dto) {
+        SteccnTableAssertUtil.notEmpty(dto.getThick(), "产品厚度为空，图表无数据");
+        if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
+            throw new BusinessException("产品厚度只能单选");
+        }
+        return R.success(epConsumePartitionChartService.consumePartitionUnitChart(dto));
     }
 }

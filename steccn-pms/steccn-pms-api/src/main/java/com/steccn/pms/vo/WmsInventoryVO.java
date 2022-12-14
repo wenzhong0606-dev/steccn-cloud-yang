@@ -32,13 +32,13 @@ public class WmsInventoryVO {
      * 物料名称
      */
     @ApiModelProperty("物料名称")
-    private Long materialName;
+    private String materialName;
 
     /**
      * 物料编码
      */
     @ApiModelProperty("物料编码")
-    private Long materialCode;
+    private String materialCode;
 
     /**
      * 仓库id
@@ -50,7 +50,10 @@ public class WmsInventoryVO {
      * 仓库名称
      */
     @ApiModelProperty("仓库名称")
-    private Long warehouseName;
+    private String warehouseName;
+
+    @ApiModelProperty("仓库编码")
+    private String warehouseCode;
 
     /**
      * 货架id
@@ -62,7 +65,11 @@ public class WmsInventoryVO {
      * 货架名称
      */
     @ApiModelProperty("货架名称")
-    private Long shelfName;
+    private String shelfName;
+
+
+    @ApiModelProperty("货架编码")
+    private String shelfCode;
 
     /**
      * 总数
@@ -107,6 +114,12 @@ public class WmsInventoryVO {
     private Long unit;
 
     /**
+     * 单位名称
+     */
+    @ApiModelProperty("单位名称")
+    private String unitName;
+
+    /**
      * 箱号
      */
     @ApiModelProperty("箱号")
@@ -123,4 +136,7 @@ public class WmsInventoryVO {
      */
     @ApiModelProperty("打包时间")
     private LocalDateTime packTime;
+
+
+
 }

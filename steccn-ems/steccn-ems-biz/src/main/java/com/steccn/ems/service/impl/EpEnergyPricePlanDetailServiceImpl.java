@@ -48,19 +48,24 @@ public class EpEnergyPricePlanDetailServiceImpl extends ServiceImpl<EpEnergyPric
     private List<Integer> getPlanTypeList (List<EpEnergyPricePlanDetail> energyPricePlanDetails){
         List<Integer> planTypes = new ArrayList<>();
       energyPricePlanDetails.forEach(v->{
-          if (LocalTime.of(0,0).equals(v.getEnd())){
-              v.setEnd(LocalTime.of(23,30));
-          }
           LocalTime start = v.getStart();
           LocalTime end = v.getEnd();
-          while (start.isBefore(end)){
-            planTypes.add(v.getType());
-            start=start.plusMinutes(30);
+          if (end.equals(LocalTime.of(0,0))){
+              end=LocalTime.of(23,59);
           }
-          if (start.equals(LocalTime.of(23,30))){
-              //加上最后一次
+          while (start.isBefore(end)) {
               planTypes.add(v.getType());
+              if (start.equals(LocalTime.of(23,30))&&end.equals(LocalTime.of(23, 59))) {
+                  break;
+              } else {
+                  start = start.plusMinutes(30);
+              }
+              if (start.isAfter(end)) {
+                  planTypes.add(v.getType());
+                  break;
+              }
           }
+
       });
       return planTypes;
     }

@@ -25,6 +25,9 @@ import com.steccn.pms.mapper.PmsMrpInfoMapper;
 import com.steccn.pms.service.PmsProducePlanService;
 import com.steccn.pms.vo.PmsMrpInfoVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.wms.dto.MaterialInventoryDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import com.steccn.wms.feign.RemoteWmsMessFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
@@ -48,6 +51,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
 
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final RemoteMessFeignApi remoteMessFeignApi;
+    private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
 //    @Override
 //    public Boolean add(PmsProducePlanDTO dto) {
@@ -86,8 +90,8 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         if (CollUtil.isNotEmpty(pmsMrpInfoList)) {
             Map<Long, List<PmsMrpInfo>> collect = pmsMrpInfoList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
             //根据物料id 获取库存信息
-            Map<Long, MesMaterialInventoryDTO> materialInventory = remoteMessFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds()));
-            MesMaterialInventoryDTO inventoryDTO = new MesMaterialInventoryDTO();
+            Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds()))).get();
+            MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
             collect.forEach((key, list) -> {
                 list.sort(Comparator.comparing(PmsMrpInfo::getMrpDate));
                 //修改mrp数据的库存信息
@@ -99,7 +103,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
                     if (availableQuantity.compareTo(BigDecimal.ZERO) < 0) {
                         pmsMrpInfos.add(create(PmManagerConstant.MRP_PLANNED_ORDER, pmsMrpInfo.getAvailableQuantity().negate(),
                                 BigDecimal.ZERO, pmsMrpInfo.getMaterialId(), pmsMrpInfo.getMrpDate(),
-                                pmsMrpInfo.getPlanId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(),null));
+                                pmsMrpInfo.getPlanId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(), null));
 //                        pmsMrpInfo.setAvailableQuantity(BigDecimal.ZERO);
                         availableQuantity = BigDecimal.ZERO;
                     }
@@ -121,7 +125,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
                 //新增独立需求计划 todo 暂不计算安全库存
                 list.add(create(PmManagerConstant.MRP_INDEPENDENT_DEMAND, pmsProducePlan.getQuantity(),
                         BigDecimal.ZERO, pmsProducePlan.getMaterialId(), pmsProducePlan.getPlanDate(),
-                        pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ONE.getCode(),null));
+                        pmsProducePlan.getId(), PmManagerConstant.OrderStateEnum.ONE.getCode(), null));
                 planIds.add(pmsProducePlan.getId());
             });
             //清除已生成的独立需求计划
@@ -136,13 +140,13 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         //1.获取库存信息以及安全库存信息
         Set<Long> materialIds = Sets.newHashSet();
         materialIds.add(dto.getId());
-        Map<Long, MesMaterialInventoryDTO> materialInventory = remoteMessFeignApi.materialInventory(materialIds);
-        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
+        Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+        MaterialInventoryDTO mesMaterialInventoryDTO = new MaterialInventoryDTO();
         mesMaterialInventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
-        MesMaterialInventoryDTO orDefault = materialInventory.getOrDefault(dto.getId(), mesMaterialInventoryDTO);
+        MaterialInventoryDTO orDefault = materialInventory.getOrDefault(dto.getId(), mesMaterialInventoryDTO);
         //2.创建库存信息
         PmsMrpInfo pmsMrpInfo = create(PmManagerConstant.MRP_INVENTORY, null, orDefault.getAvailableQuantity(), dto.getId(),
-                LocalDate.now(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode(),null);
+                LocalDate.now(), null, PmManagerConstant.OrderStateEnum.ZERO.getCode(), null);
         PmsMrpInfoVO infoVO = BeanUtil.copyProperties(pmsMrpInfo, PmsMrpInfoVO.class);
         //3.处理安全库存以及分页逻辑问题
         if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getCurrent())) {
@@ -207,7 +211,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         //创建生产计划数据
         PmsMrpInfo produceInfo = create(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT, model.getQuantity(),
                 planInfo.getAvailableQuantity(), model.getMaterialId(), planInfo.getMrpDate()
-                , model.getMrpId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(),null);
+                , model.getMrpId(), PmManagerConstant.OrderStateEnum.ZERO.getCode(), null);
         //判断当前的计划订单需求数量是否大于生产订单
         if (planInfo.getQuantity().compareTo(produceInfo.getQuantity()) > 0) {
             planInfo.setQuantity(planInfo.getQuantity().subtract(planInfo.getQuantity()));
@@ -273,7 +277,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
      * @return
      */
     @Override
-    public PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status,String mrpElement) {
+    public PmsMrpInfo create(String type, BigDecimal quantity, BigDecimal availableQuantity, Long materialId, LocalDate mrpDate, Long planId, Integer status, String mrpElement) {
         SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(type, PmManagerConstant.MRP_TYPE)).get();
         PmsMrpInfo planOrder = new PmsMrpInfo();
         planOrder.setMrpTypeId(safetyType.getId());

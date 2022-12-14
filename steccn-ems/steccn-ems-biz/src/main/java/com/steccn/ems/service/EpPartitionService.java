@@ -1,11 +1,14 @@
 package com.steccn.ems.service;
 
+import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.EpEnergyParamDTO;
 import com.steccn.ems.dto.EpEnergyTreeDTO;
+import com.steccn.ems.dto.EpPartitionChildTypeDTO;
 import com.steccn.ems.dto.EpPartitionDTO;
 import com.steccn.ems.vo.EpPartitionNameListVO;
+import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 
 import java.util.List;
@@ -47,7 +50,7 @@ public interface EpPartitionService extends IService<EpPartition> {
     EpEnergyTreeDTO getChildTree(EpEnergyParamDTO dto);
 
     /**
-     * 根据孩子id集合查询所有父节点
+     * 根据孩子id集合查询所有对应节点的父节点
      * @param childList
      * @return
      */
@@ -59,4 +62,19 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> listByIdCh(List<Long> partitionIdList);
+
+    /**
+     * 根据孩子id集合查询所有父节点
+     * @param dto
+     * @return
+     */
+    EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto);
+
+    /**
+     * 根据能源类型和组织机构id查询分区节点挂着的仪表
+     * @param energyType 能源类型
+     * @param officeIdSet 组织机构id
+     * @return map key-组织机构id value-仪表对象
+     */
+    Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet);
 }

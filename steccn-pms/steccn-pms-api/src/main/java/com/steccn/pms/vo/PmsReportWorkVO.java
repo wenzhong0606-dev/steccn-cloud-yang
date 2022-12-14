@@ -65,6 +65,7 @@ public class PmsReportWorkVO {
 
     private String workshopName;
 
+    @ApiModelProperty("生产时长（小时）")
     private BigDecimal duration;
 
 }

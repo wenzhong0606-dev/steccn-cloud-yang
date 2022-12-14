@@ -2,6 +2,10 @@ package com.steccn.wms.service;
 
 import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.vo.WmsDeliveryReceiptInfoVO;
+
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author W10
@@ -10,4 +14,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface WmsStorageReceiptInfoService extends IService<WmsStorageReceiptInfo> {
 
+    /**
+     * 获取详情
+     * @param updateIds
+     * @return
+     */
+    Map<Long, WmsStorageReceiptInfo> infoMap(List<Long> updateIds);
 }

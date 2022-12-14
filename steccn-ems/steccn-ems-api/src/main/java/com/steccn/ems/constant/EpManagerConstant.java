@@ -265,4 +265,36 @@ public interface EpManagerConstant {
             return null;
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    enum CardType {
+        /**
+         * 领导驾驶舱卡片类型
+         */
+        SUB_OIL_GAS(1, "基片单耗（油+气）", "所有基片产线的平均单耗（燃料）"),
+        SUB_ELECTRIC_TWO(2, "2.0mm基片单耗（电）", "所有基片产线生产2.0mm玻璃的平均单耗（电）"),
+        DEEP_ELECTRIC_TWO(3, "2.0mm深加工单耗（电）", "所有深加工产线生产2.0mm玻璃的平均单耗（电）"),
+        SUB_ELECTRIC_THREE(4, "3.2mm基片单耗（电）", "所有基片产线生产3.2mm玻璃的平均单耗（电）"),
+        DEEP_ELECTRIC_THREE(5, "3.2mm深加工单耗（电）", "所有深加工产线生产3.2mm玻璃的平均单耗（电）"),
+        DAY_ALARM(6, "日单耗告警", "日单耗超标告警数量");
+        private final Integer code;
+        private final String name;
+        private final String tooltip;
+
+        /**
+         * 根据code获取枚举类型
+         *
+         * @param code
+         * @return
+         */
+        public static CardType getByCode(Integer code) {
+            for (CardType value : CardType.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
 }

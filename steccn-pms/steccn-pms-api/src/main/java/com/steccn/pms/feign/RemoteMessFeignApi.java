@@ -23,72 +23,72 @@ import java.util.Set;
 @FeignClient(name = "remoteMessFeignApi", url = "${mes.url}", decode404 = true)
 public interface RemoteMessFeignApi {
 
-    /**
-     * 获取物料库存信息
-     *
-     * @param list 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/storeList")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    List<MessMaterialConsumeDTO> materialConsume(@RequestBody List<MessMaterialStorageDTO> list);
+//    /**
+//     * 获取物料库存信息
+//     *
+//     * @param list 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/storeList")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    List<MessMaterialConsumeDTO> materialConsume(@RequestBody List<MessMaterialStorageDTO> list);
 
 
-    /**
-     * 获取物料可用库存
-     *
-     * @param materialIds
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/materialInventory")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<Long, MesMaterialInventoryDTO> materialInventory(@RequestBody Set<Long> materialIds);
+//    /**
+//     * 获取物料可用库存
+//     *
+//     * @param materialIds
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/materialInventory")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    Map<Long, MesMaterialInventoryDTO> materialInventory(@RequestBody Set<Long> materialIds);
 
-    /**
-     * 生成入库单
-     *
-     * @param messDto 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockIn")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
+//    /**
+//     * 生成入库单
+//     *
+//     * @param messDto 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockIn")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    MessInStorageVoucherVO generateInStorageVoucher(@RequestBody MessInStorageVoucherDTO messDto);
 
-    /**
-     * 生成出库单
-     *
-     * @param messDto 物料集合
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockOut")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
+//    /**
+//     * 生成出库单
+//     *
+//     * @param messDto 物料集合
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/generateStockOut")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    MessInStorageVoucherVO generateOutStorageVoucher(@RequestBody MessOutStorageVoucherDTO messDto);
 
-    /**
-     * 获取箱子位置
-     *
-     * @param caseNoSet 箱子位置
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/stockByCaseNo")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
+//    /**
+//     * 获取箱子位置
+//     *
+//     * @param caseNoSet 箱子位置
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/stockByCaseNo")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    Map<String, CaseSiteDTO> caseSite(@RequestBody Set<String> caseNoSet);
 
-    /**
-     * 获取物料在货架中的库存数量
-     *
-     * @param list
-     * @return
-     */
-    @PostMapping(value = "/web/eqp/eqpSpareInventory/list/materialInventory")
-    @Headers(value = {"content-type=application/json"})
-    @ResponseBody
-    Map<Long, BigDecimal> listMaterialInventory(@RequestBody List<MessMaterialStorageDTO> list);
+//    /**
+//     * 获取物料在货架中的库存数量
+//     *
+//     * @param list
+//     * @return
+//     */
+//    @PostMapping(value = "/web/eqp/eqpSpareInventory/list/materialInventory")
+//    @Headers(value = {"content-type=application/json"})
+//    @ResponseBody
+//    Map<Long, BigDecimal> listMaterialInventory(@RequestBody List<MessMaterialStorageDTO> list);
 
 
     /**
