@@ -32,7 +32,7 @@ public interface EpManagerConstant {
     String EP_DOWNLOAD_MODEL_NAME_FGPLSDB = "fgplsdb.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_NHFQDB = "nhfqdb.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_NHLSDB = "nhlsdb.xlsx";
-
+    String EP_DOWNLOAD_MODEL_NAME_NYLX = "nylx.xlsx";
 
     /**
      * 产品单耗标准的产品类型
