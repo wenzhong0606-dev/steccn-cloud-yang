@@ -13,6 +13,7 @@
             <result property="distantMapCode" column="distant_map_code" jdbcType="VARCHAR"/>
             <result property="meterName" column="meter_name" jdbcType="VARCHAR"/>
             <result property="site" column="site" jdbcType="BIGINT"/>
+            <result property="siteName" column="site_name" jdbcType="VARCHAR"/>
             <result property="assetsCode" column="assets_code" jdbcType="VARCHAR"/>
             <result property="note" column="note" jdbcType="VARCHAR"/>
             <result property="status" column="status" jdbcType="INTEGER"/>
@@ -29,7 +30,7 @@
     <sql id="Base_Column_List">
         id,partition_node,meter_type,
         measure_unit,entity_table,distant_map_code,
-        meter_name,site,assets_code,note,
+        meter_name,site,site_name,assets_code,note,
         status,create_by,create_name,
         create_time,update_by,update_name,
         update_time,del_flag

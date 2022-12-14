@@ -45,31 +45,37 @@ public class EpInstrumentAccountDTO implements Serializable {
      * 远传表映射编码
      */
     @NotNull(message = "远传表映射编码不能为空")
-    @Length(max=20,message = "远传表映射编码长度不能超过20个文字")
+    @Length(max=20,message = "远传表映射编码长度不能超过20")
     private String distantMapCode;
 
     /**
      * 仪表名称
      */
     @NotBlank(message = "仪表名称不能为空")
-    @Length(max=20,message = "仪表名称长度不能超过20个文字")
+    @Length(max=20,message = "仪表名称长度不能超过20")
     private String meterName;
 
     /**
-     * 安装位置
+     * 安装位置编码(仅电表类型时传编码)
      */
     private Long site;
 
     /**
+     * 安装位置名称
+     */
+    @Length(max = 50,message = "安装位置名称长度不能超过50")
+    private String siteName;
+
+    /**
      * 资产编码
      */
-    @Length(max = 100,message = "资产编码长度不能超过100个文字")
+    @Length(max = 100,message = "资产编码长度不能超过100")
     private String assetsCode;
 
     /**
      * 备注
      */
-    @Length(max = 100,message = "备注长度不能超过100个文字")
+    @Length(max = 100,message = "备注长度不能超过100")
     private String note;
 
     /**

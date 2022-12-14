@@ -50,9 +50,14 @@ public class EpInstrumentAccount implements Serializable {
     private String meterName;
 
     /**
-     * 安装位置
+     * 安装位置编码(电表类型时取自数据字典)
      */
     private Long site;
+
+    /**
+     * 安装位置名称
+     */
+    private String siteName;
 
     /**
      * 资产编码

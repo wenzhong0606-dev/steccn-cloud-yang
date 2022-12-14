@@ -58,7 +58,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
         }
             //根据传过来的能源类型先获取全量数据
-        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
+        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
+                .eq(EpPartition::getDelFlag,MpConstant.NO));
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList);
@@ -225,6 +226,30 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         }
         return resMap;
+    }
+
+    @Override
+    public Map<Long, List<EpPartitionVO>> allNextChildren(Integer type) {
+        Map<Long, List<EpPartitionVO>> linkChildren = Maps.newHashMap();
+        //先找出该能源类型下的所有分区节点
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
+                .eq(EpPartition::getType, type));
+        List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        if (CollUtil.isEmpty(epPartitionVOS)){
+            return linkChildren;
+        }
+
+        epPartitionVOS.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+            List<EpPartitionVO> epPartitionVOList = Lists.newArrayList();
+            epPartitionVOS.stream().filter(v->Objects.nonNull(v)).forEach(v->{
+                if (v.getParentId()==s.getId()){
+                    epPartitionVOList.add(v);
+                }
+            });
+            //获取该类型下每个节点及其下一级子节点的集合
+            linkChildren.put(s.getId(),epPartitionVOList);
+        });
+        return linkChildren;
     }
 
     @Override

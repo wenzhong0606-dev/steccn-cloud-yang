@@ -29,7 +29,6 @@ public interface EpPartitionService extends IService<EpPartition> {
      */
     EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType);
 
-
     /**
      * 根据能源分区的ids获取能源分区树的集合
      */
@@ -77,4 +76,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map key-组织机构id value-仪表对象
      */
     Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet);
+
+    /**
+     * 获取所有下一级子节点
+     * @param type 能源类型
+     * @return
+     */
+    Map<Long,List<EpPartitionVO>> allNextChildren(Integer type);
 }
