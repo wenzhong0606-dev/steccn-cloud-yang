@@ -53,7 +53,7 @@ public class EpProductUnitConsumeStandard implements Serializable {
     private Set<Integer> applyOffice;
 
     /**
-     * 产品类型【基片、深加工】
+     * 产品类型【基片0、深加工1】
      */
     private Long productType;
 

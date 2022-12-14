@@ -4,30 +4,26 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.RegularUtil;
+import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
+import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
-import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.vo.EpEnergyTypeVO;
-import com.steccn.ems.vo.EpPartitionVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.qms.vo.QtSpcReportDetailVO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
@@ -35,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -273,6 +271,48 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         epStandard.setShowFlag(MpConstant.NO);
         updateById(epStandard);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<StandardVO> validStandardList(Integer energyType, LocalDate start, LocalDate end) {
+        //定义返回集合
+        List<StandardVO> resList = Lists.newArrayList();
+
+        if (Objects.nonNull(start) && Objects.nonNull(end) && Objects.nonNull(energyType)) {
+            //获取有效日期范围内的单耗
+            List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                    .eq(EpProductUnitConsumeStandard::getEnergyType, energyType)
+                    .ge(EpProductUnitConsumeStandard::getValidStart, start)
+                    .le(EpProductUnitConsumeStandard::getValidEnd, end));
+            if (CollUtil.isNotEmpty(dataList)) {
+                Set<Long> dictIdSet = Sets.newHashSet();
+                dataList.forEach(ele -> {
+                    StandardVO<BigDecimal> standardVO = new StandardVO<>();
+                    BeanUtils.copyProperties(ele, standardVO);
+                    if (Objects.nonNull(ele.getStandardType())) {
+                        dictIdSet.add(ele.getStandardType());
+                    }
+                    if (Objects.nonNull(ele.getProductThick())) {
+                        dictIdSet.add(ele.getProductThick());
+                    }
+                    standardVO.setValue(ele.getUnitValue());
+                    resList.add(standardVO);
+                });
+
+                //获取数据字典map
+                Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+                resList.forEach(ele -> {
+                    String thickStr = dictIdNameMap.get(ele.getProductThick());
+                    //提取字符串中的数值
+                    ele.setThick(RegularUtil.extractValue(thickStr, null, (x) -> new BigDecimal(x)));
+                    //部门标准，行业标准，公司标准
+                    ele.setStandardTypeName(dictIdNameMap.get(ele.getStandardType()));
+                    EpManagerConstant.EpProductTypes productType = EpManagerConstant.EpProductTypes.getProductType(ele.getProductType());
+                    ele.setProductTypeName(Objects.nonNull(productType) ? productType.getName() : null);
+                });
+            }
+        }
+        return resList;
     }
 }
 

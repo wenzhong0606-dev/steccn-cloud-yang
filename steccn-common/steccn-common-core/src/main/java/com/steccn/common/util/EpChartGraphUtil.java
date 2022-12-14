@@ -135,19 +135,23 @@ public class EpChartGraphUtil {
      */
     private static void checkStandard(Long officeId, BigDecimal value, EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO, List<EpChartUnitConsumeAlarmVO> alarmList) {
         //行业标准和企业标准
-        if(CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())){
+        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardList())) {
             for (StandardVO<BigDecimal> standardVO : epChartGraphDTO.getStandardList()) {
-                if (standardVO.getValue().compareTo(value) < 0) {
-                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), standardVO.getType());
+                if (Objects.nonNull(standardVO.getValue()) && Objects.nonNull(value) && standardVO.getValue().compareTo(value) < 0) {
+                    int type = 1;
+                    if (standardVO.getStandardTypeName().indexOf("行业") != -1) {
+                        type = 0;
+                    }
+                    EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, standardVO.getValue(), type);
                     alarmList.add(vo);
                 }
             }
         }
 
         //部门标准
-        if(CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())){
+        if (CollUtil.isNotEmpty(epChartGraphDTO.getStandardMap())) {
             BigDecimal officeStandardValue = epChartGraphDTO.getStandardMap().get(officeId);
-            if (Objects.nonNull(officeStandardValue) && officeStandardValue.compareTo(value) < 0) {
+            if (Objects.nonNull(officeStandardValue) && Objects.nonNull(value) && officeStandardValue.compareTo(value) < 0) {
                 EpChartUnitConsumeAlarmVO vo = setAlarm(officeId, value, epChartGraphDTO, officeStandardValue, 2);
                 alarmList.add(vo);
             }
@@ -204,11 +208,13 @@ public class EpChartGraphUtil {
         StandardVO<BigDecimal> standardVO1 = new StandardVO();
         standardVO1.setName("企业标准");
         standardVO1.setValue(BigDecimal.valueOf(random.nextInt(100)));
-        standardVO1.setType(1);
+        standardVO1.setStandardType(1L);
+        standardVO1.setStandardTypeName("企业标准");
         StandardVO<BigDecimal> standardVO2 = new StandardVO();
         standardVO2.setName("行业标准");
         standardVO2.setValue(BigDecimal.valueOf(random.nextInt(100)));
-        standardVO2.setType(0);
+        standardVO2.setStandardType(0L);
+        standardVO2.setStandardTypeName("行业标准");
         resVo.setStandardList(Lists.newArrayList(standardVO1, standardVO2));
         resVo.setEnergyType(0);
 

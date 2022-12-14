@@ -6,7 +6,6 @@ import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -16,6 +15,7 @@ import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
+import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
@@ -79,14 +79,15 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
 
-    @PostMapping("/unit/chart")
+    @PostMapping("/unit/class/chart")
     @ApiOperation(value = "单耗班组对比-柱状图")
-    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitChart(@Valid @RequestBody EpTableDTO dto) {
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitClassChart(@Valid @RequestBody EpTableDTO dto) {
         SteccnTableAssertUtil.notEmpty(dto.getThick(), "产品厚度为空，图表无数据");
         if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
             throw new BusinessException("产品厚度只能单选");
         }
-        return R.success(epConsumePartitionChartService.consumePartitionUnitChart(dto));
+        SteccnTableAssertUtil.notEmpty(dto.getPartitionIdList(), "组织机构不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitClassChart(dto));
     }
 
     @PostMapping("/contrast/download")
@@ -114,4 +115,16 @@ public class EpConsumePartitionChartController {
         map.put("message", "下载文件失败" + e.getMessage());
         response.getWriter().println(JSON.toJSONString(map));
     }
+
+    @PostMapping("/unit/class/detail")
+    @ApiOperation(value = "单耗班组对比-明细")
+    public  R<Page<ConsumePartitionUnitClassDetailVO>> consumePartitionUnitClassDetail(@Valid @RequestBody EpTableDTO dto) {
+        SteccnTableAssertUtil.notEmpty(dto.getThick(), "产品厚度为空，图表无数据");
+        if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
+            throw new BusinessException("产品厚度只能单选");
+        }
+        SteccnTableAssertUtil.notEmpty(dto.getPartitionIdList(), "组织机构不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitClassDetail(dto));
+    }
+
 }

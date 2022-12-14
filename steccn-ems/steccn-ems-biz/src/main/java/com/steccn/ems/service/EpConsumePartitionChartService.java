@@ -7,6 +7,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
+import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -66,9 +67,16 @@ public interface EpConsumePartitionChartService {
     List<BaseSelectVO<BigDecimal>> thick(EpTableDTO dto);
 
     /**
-     * 单耗班组对比
+     * 单耗班组对比-柱状图
      * @param dto dto请求条件
      * @return 图表vo
      */
-    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitChart(EpTableDTO dto);
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitClassChart(EpTableDTO dto);
+
+    /**
+     * 单耗班组对比-明细
+     * @param dto dto
+     * @return 分页参数
+     */
+    Page<ConsumePartitionUnitClassDetailVO> consumePartitionUnitClassDetail(EpTableDTO dto);
 }

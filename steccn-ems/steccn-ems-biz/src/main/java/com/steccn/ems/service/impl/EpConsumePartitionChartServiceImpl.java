@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
@@ -25,23 +24,24 @@ import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.ClassUtil;
+import com.steccn.common.util.EpChartGraphUtil;
+import com.steccn.common.vo.*;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.*;
 import com.steccn.ems.util.DownloadUtil;
+import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
-import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,6 +63,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     private final EpPartitionService epPartitionService;
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final EpEnergyTypeService epEnergyTypeService;
+    private final EpProductUnitConsumeStandardService epProductUnitConsumeStandardService;
 
     @Override
     public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto) {
@@ -215,33 +216,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         resVo.setDataList(page);
         resVo.setHeadData(headData);
         return resVo;
-    }
-
-    @SneakyThrows
-    @Override
-    public void downloadConsume(EpTableDTO dto, HttpServletResponse response) {
-        dto.setCurrent(1);
-        dto.setSize(999999);
-        EpConsumeDetailVO detail = consumePartitionContrastDetail(dto);
-        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
-        Map<String, Object> map = MapUtils.newHashMap();
-        map.put("energyType",energyType.getName());
-        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getStart(),DatePattern.NORM_DATE_PATTERN));
-        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN));
-        if(CollUtil.isNotEmpty(dto.getThick())){
-            StringBuilder sb = new StringBuilder();
-            dto.getThick().forEach(tmp->{
-                sb.append(tmp.toString() + "mm ");
-            });
-            map.put("thick",sb.toString());
-        }else {
-            map.put("thick","无");
-        }
-        map.put("granularity",QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
-        String excelName = "能耗分区对比(" + energyType.getName() +  ")_"
-                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
-                + LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN);
-        DownloadUtil.downloadEnergyTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NHFQDB,excelName,map,detail,dto.getBase64());
     }
 
     /**
@@ -470,10 +444,26 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
-        log.info("{}",epChartGraphDTO);
+
+        //部门行业的单耗标准
+        List<StandardVO> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(),dto.getStart(), dto.getEnd());
+        standardVOList = standardVOList.stream().filter(v -> {
+            if (BigDecimalUtil.equals(dto.getThick().get(0), new BigDecimal("-1"))) {
+                return BigDecimalUtil.equals(null, v.getThick());
+            }
+            return BigDecimalUtil.equals(dto.getThick().get(0), v.getThick());
+        }).collect(Collectors.toList());
+        epChartGraphDTO.setStandardList(standardVOList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData(Lists.newArrayList());
         return convert;
+    }
+
+    @Override
+    public Page<ConsumePartitionUnitClassDetailVO> consumePartitionUnitClassDetail(EpTableDTO dto) {
+
+
+        return null;
     }
 
     /**
