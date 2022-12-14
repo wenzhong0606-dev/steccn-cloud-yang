@@ -36,6 +36,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 
 /**
  * @author W10
@@ -125,7 +127,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             if (CollUtil.isNotEmpty(dto.getList())) {
                 List<WmsInventoryDTO> infoList = Lists.newArrayList();
                 List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
-                dto.getList().forEach(info -> {
+                Long currentMax = 0L;
+                List<WmsStorageReceiptInfoDTO> list = dto.getList();
+                for (WmsStorageReceiptInfoDTO info : list) {
+                    if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                        //生成箱号
+                        currentMax = ++currentMax;
+                        info.setCaseNo(model.getCode() +WmsCodeUtil.SHORT_LINE+ currentMax);
+                    }
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                     wmsInventoryDTO.setWarehouseId(dto.getWarehouseId());
                     wmsInventoryDTO.setWarehouseName(dto.getWarehouseName());
@@ -135,7 +144,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
                     infoList.add(wmsInventoryDTO);
                     receiptInfoList.add(wmsStorageReceiptInfo);
-                });
+                }
                 //增加库存信息
                 wmsInventoryService.addInfo(infoList);
                 //保存明细信息
@@ -167,7 +176,15 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfo> updateWmsInventoryList = Lists.newArrayList();
                 List<Long> ids = Lists.newArrayList();
                 List<Long> updateIds = Lists.newArrayList();
-                dto.getList().forEach(info -> {
+                //获取箱号规则
+                Long caseNo = getCaseNo(model.getCode(), model.getId());
+                List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
+                for (WmsStorageReceiptInfoDTO info : infoList) {
+                    if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                        //生成箱号
+                        caseNo = ++caseNo;
+                        info.setCaseNo(model.getCode() +WmsCodeUtil.SHORT_LINE+ caseNo);
+                    }
                     WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
                     BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
                     WmsInventoryDTO wmsInventory = new WmsInventoryDTO();
@@ -183,7 +200,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         updateWmsInventoryList.add(wmsStorageReceiptInfo);
                     }
                     wmsStorageReceiptInfoList.add(wmsStorageReceiptInfo);
-                });
+                }
+
                 LambdaQueryWrapper<WmsStorageReceiptInfo> wrapper = new LambdaQueryWrapper<WmsStorageReceiptInfo>()
                         .eq(WmsStorageReceiptInfo::getStorageReceiptId, model.getId())
                         .notIn(CollUtil.isNotEmpty(ids), WmsStorageReceiptInfo::getId, ids);
@@ -197,14 +215,29 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 if (CollUtil.isNotEmpty(updateWmsInventoryList)) {
                     Map<Long, WmsStorageReceiptInfo> infoMap = wmsStorageReceiptInfoService.infoMap(updateIds);
                     List<WmsInventoryDTO> inventoryDTOList = Lists.newArrayList();
+                    List<WmsInventoryDTO> restore = Lists.newArrayList();
                     updateWmsInventoryList.forEach(info -> {
+                        WmsStorageReceiptInfo wmsStorageReceiptInfo = infoMap.get(info.getId());
                         WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                         BeanUtil.copyProperties(info, wmsInventoryDTO);
-                        wmsInventoryDTO.setOriginalQuantity(infoMap.get(info.getId()).getQuantity());
-                        inventoryDTOList.add(wmsInventoryDTO);
+                        wmsInventoryDTO.setOriginalQuantity(wmsStorageReceiptInfo.getQuantity());
+                        wmsInventoryDTO.setOriginalCaseNo(wmsStorageReceiptInfo.getCaseNo());
+                        if (info.getCaseNo().equals(wmsStorageReceiptInfo.getCaseNo())) {
+                            inventoryDTOList.add(wmsInventoryDTO);
+                        } else {
+                            restore.add(wmsInventoryDTO);
+                        }
                     });
                     //修改库存信息
-                    wmsInventoryService.updateInventory(inventoryDTOList);
+                    if (CollUtil.isNotEmpty(inventoryDTOList)) {
+                        wmsInventoryService.updateInventory(inventoryDTOList);
+                    }
+                    if (CollUtil.isNotEmpty(restore)) {
+                        //先还原原始库存，再新增库存
+                        wmsInventoryService.restore(restore);
+                        wmsInventoryService.addInfo(addWmsInventoryList);
+                    }
+
                 }
                 if (CollUtil.isNotEmpty(list)) {
                     List<WmsInventoryDTO> deleteList = Lists.newArrayList();
@@ -235,7 +268,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 , "当前状态不可确认");
         //3.确认(如果来自生产订单的数据:0)
         if (WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getSourceType())) {
-          //变更pms生产订单状态
+            //变更pms生产订单状态
             PmsCompleteStorageDTO pmsCompleteStorageDTO = new PmsCompleteStorageDTO();
             pmsCompleteStorageDTO.setCode(receipt.getSourceCode());
             pmsCompleteStorageDTO.setConfirmName(SecurityUtils.getUser().getName());
@@ -337,6 +370,29 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             try {
                 //4.解析数值部分
                 String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+
+    private Long getCaseNo(String code,Long id){
+        // 定义返回值
+        Long currentMax = 0L;
+        //获取规则箱号
+        WmsStorageReceiptInfo maxCodeModel = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+                .like(WmsStorageReceiptInfo::getCaseNo, code)
+                .eq(WmsStorageReceiptInfo::getStorageReceiptId, id)
+                .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(maxCodeModel)){
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCaseNo().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_15);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

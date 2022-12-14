@@ -1,7 +1,11 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsLogisticsOrderDTO;
+import com.steccn.wms.dto.WmsLogisticsOrderPageDTO;
+import com.steccn.wms.vo.WmsLogisticsOrderVO;
 
 /**
 * @author W10
@@ -10,4 +14,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
 
+    /**
+     * 物流单分页列表
+     * @param dto
+     * @return
+     */
+    Page<WmsLogisticsOrderVO> pageList(WmsLogisticsOrderPageDTO dto);
+
+    /**
+     * 物流单新增
+     * @param wmsLogisticsOrderDTO
+     * @return
+     */
+    Boolean add(WmsLogisticsOrderDTO wmsLogisticsOrderDTO);
 }

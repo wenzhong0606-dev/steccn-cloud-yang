@@ -61,4 +61,44 @@ public interface WmsManagerConstant {
         private final String name;
     }
 
+
+    /**
+     * 状态:0 ：已创建  1：已确认  2：部分确认 3：已完成 4:已删除 ）
+     */
+    @Getter
+    @AllArgsConstructor
+    enum LogisticsStateEnum {
+        ZERO(0, "已创建"),
+        ONE(1, "运输中"),
+        TWO(2,"已签收");
+
+
+        /**
+         * 编码
+         */
+        private final Integer code;
+
+        /**
+         * 名称
+         */
+        private final String name;
+    }
+
+
+
+    /**
+     * 收发货类型（0：收 1：发）
+     */
+    @Getter
+    @AllArgsConstructor
+    enum LogisticsTypeEnum {
+        ZERO(0, "收货"),
+        ONE(1, "发货");
+
+        private final Integer code;
+
+        private final String name;
+    }
+
+
 }

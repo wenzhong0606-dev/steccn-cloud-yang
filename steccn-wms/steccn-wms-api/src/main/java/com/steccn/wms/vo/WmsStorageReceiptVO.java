@@ -40,7 +40,7 @@ public class WmsStorageReceiptVO {
     private String affirmName;
 
     @ApiModelProperty("确认时间")
-    private String affirmDate;
+    private String affirmTime;
 
     @ApiModelProperty("创建时间")
     private String createTime;

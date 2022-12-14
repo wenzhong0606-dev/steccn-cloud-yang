@@ -56,6 +56,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                .like(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName,dto.getShelfName())
                 .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch());
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
@@ -98,11 +99,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             });
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
             infoList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
-                SysOfficeVO shelfVO = officeVOMap.get(info.getShelfId());
-                SysOfficeVO warehouseVO = officeVOMap.get(info.getWarehouseId());
+                SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
+                SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());
                 info.setWarehouseName(warehouseVO.getOfficeName());
                 info.setShelfCode(shelfVO.getOfficeCode());
                 info.setShelfName(shelfVO.getOfficeName());
@@ -127,13 +128,13 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<String> list = Lists.newArrayList();
             infoList.forEach(info -> {
                 //根据箱号获取当前的物料的库存信息
-                list.add(info.getCaseNo());
+                list.add(info.getOriginalCaseNo());
             });
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
             WmsInventory wmsInventory = new WmsInventory();
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
             infoList.forEach(info -> {
-                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getOriginalCaseNo(), wmsInventory);
                 orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
                 addWmsInventory.add(orDefault);
             });
@@ -382,7 +383,6 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                             materialStorageVO.setCreateDate(null);
                             materialStorageVOList.add(materialStorageVO);
                         }
-
                     }else {
                         WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
                         materialStorageVO.setMaterialId(material.getMaterialId());
@@ -394,6 +394,24 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             }
         }
         return materialStorageVOList;
+    }
+
+    @Override
+    public Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO) {
+        if (Objects.nonNull(wmsCheckCaseNoDTO)){
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
+                    .eq(WmsInventory::getCaseNo, wmsCheckCaseNoDTO.getCaseNo()));
+            if (CollUtil.isNotEmpty(list)){
+                Boolean aBoolean = Boolean.FALSE;
+                for (WmsInventory wmsInventory : list) {
+                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId())){
+                        aBoolean =Boolean.TRUE;
+                    }
+                }
+              return aBoolean;
+            }
+        }
+        return true;
     }
 
 

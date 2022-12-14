@@ -43,6 +43,11 @@ public class WmsInventory implements Serializable {
     private Integer warehouseId;
 
     /**
+     * 仓库编码
+     */
+    private String warehouseCode;
+
+    /**
      * 仓库名称
      */
     private String warehouseName;
