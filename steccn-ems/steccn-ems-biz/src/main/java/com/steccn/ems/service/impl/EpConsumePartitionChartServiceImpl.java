@@ -38,10 +38,12 @@ import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -218,6 +220,34 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return resVo;
     }
 
+    @SneakyThrows
+    @Override
+    public void downloadConsume(EpTableDTO dto, HttpServletResponse response) {
+        dto.setCurrent(1);
+        dto.setSize(999999);
+        EpConsumeDetailVO detail = consumePartitionContrastDetail(dto);
+        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("energyType",energyType.getName());
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getStart(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN));
+        if(CollUtil.isNotEmpty(dto.getThick())){
+            StringBuilder sb = new StringBuilder();
+            dto.getThick().forEach(tmp->{
+                sb.append(tmp.toString() + "mm ");
+            });
+            map.put("thick",sb.toString());
+        }else {
+            map.put("thick","无");
+        }
+        map.put("granularity",QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
+        String excelName = "能耗分区对比(" + energyType.getName() +  ")_"
+                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadEnergyTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NHFQDB,excelName,map,detail,dto.getBase64());
+    }
+
+
     /**
      * 明细比较器
      * 行排序规则为
@@ -392,7 +422,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     }
 
     @Override
-    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitChart(EpTableDTO dto) {
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitClassChart(EpTableDTO dto) {
         LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
         LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
         //②时间区间内所有班次集合
