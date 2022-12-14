@@ -33,11 +33,12 @@
 
     <select id="pageList" resultType="com.steccn.wms.vo.WmsDeliveryReceiptVO">
         SELECT
-        a.id,
+        distinct a.id,
         a.code,
         a.type,
         a.create_name,
         a.create_time,
+        a.update_time,
         a.status,
         a.warehouse_id,
         a.affirm_time,
@@ -94,5 +95,6 @@
                 and a.affirm_time between #{dto.affirmStartTime} and #{dto.affirmEndTime}
             </if>
         </where>
+        order By a.update_time desc
     </select>
 </mapper>

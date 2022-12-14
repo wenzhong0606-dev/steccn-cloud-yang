@@ -129,6 +129,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
                 Long currentMax = 0L;
                 List<WmsStorageReceiptInfoDTO> list = dto.getList();
+                List<String> caseNos = Lists.newArrayList();
                 for (WmsStorageReceiptInfoDTO info : list) {
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
@@ -142,9 +143,12 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
                     wmsStorageReceiptInfo.setStorageReceiptId(model.getId());
                     BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
+                    caseNos.add(wmsInventoryDTO.getCaseNo());
                     infoList.add(wmsInventoryDTO);
                     receiptInfoList.add(wmsStorageReceiptInfo);
                 }
+                long count = infoList.stream().distinct().count();
+                Assert.isFalse(count<infoList.size(),"箱号重复，请修改");
                 //增加库存信息
                 wmsInventoryService.addInfo(infoList);
                 //保存明细信息
@@ -176,6 +180,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<WmsStorageReceiptInfo> updateWmsInventoryList = Lists.newArrayList();
                 List<Long> ids = Lists.newArrayList();
                 List<Long> updateIds = Lists.newArrayList();
+                List<String> caseNos = Lists.newArrayList();
                 //获取箱号规则
                 Long caseNo = getCaseNo(model.getCode(), model.getId());
                 List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
@@ -199,9 +204,11 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                         updateIds.add(info.getId());
                         updateWmsInventoryList.add(wmsStorageReceiptInfo);
                     }
+                    caseNos.add(wmsStorageReceiptInfo.getCaseNo());
                     wmsStorageReceiptInfoList.add(wmsStorageReceiptInfo);
                 }
-
+                long count = wmsStorageReceiptInfoList.stream().distinct().count();
+                Assert.isFalse(count<wmsStorageReceiptInfoList.size(),"箱号重复，请修改");
                 LambdaQueryWrapper<WmsStorageReceiptInfo> wrapper = new LambdaQueryWrapper<WmsStorageReceiptInfo>()
                         .eq(WmsStorageReceiptInfo::getStorageReceiptId, model.getId())
                         .notIn(CollUtil.isNotEmpty(ids), WmsStorageReceiptInfo::getId, ids);
@@ -244,6 +251,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     list.forEach(info -> {
                         WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                         BeanUtil.copyProperties(info, wmsInventoryDTO);
+                        wmsInventoryDTO.setOriginalCaseNo(info.getCaseNo());
+                        wmsInventoryDTO.setOriginalQuantity(info.getQuantity());
                         deleteList.add(wmsInventoryDTO);
                     });
                     //还原之前的库存信息

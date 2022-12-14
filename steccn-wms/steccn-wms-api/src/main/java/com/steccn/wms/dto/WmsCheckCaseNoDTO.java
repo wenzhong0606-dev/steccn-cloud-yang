@@ -20,4 +20,10 @@ public class WmsCheckCaseNoDTO {
 
     @ApiModelProperty("货架id")
     private Integer shelfId;
+
+    @ApiModelProperty("批次")
+    private String batch;
+
+    @ApiModelProperty("物料id")
+    private Long  materialId;
 }

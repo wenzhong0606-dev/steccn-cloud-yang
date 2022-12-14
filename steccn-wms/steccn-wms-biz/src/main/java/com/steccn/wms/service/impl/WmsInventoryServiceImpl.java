@@ -135,7 +135,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
             infoList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getOriginalCaseNo(), wmsInventory);
-                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getOriginalQuantity()));
                 addWmsInventory.add(orDefault);
             });
             updateBatchById(addWmsInventory);
@@ -404,7 +404,9 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             if (CollUtil.isNotEmpty(list)){
                 Boolean aBoolean = Boolean.FALSE;
                 for (WmsInventory wmsInventory : list) {
-                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId())){
+                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId()) &&
+                        wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch())&&
+                        wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())){
                         aBoolean =Boolean.TRUE;
                     }
                 }

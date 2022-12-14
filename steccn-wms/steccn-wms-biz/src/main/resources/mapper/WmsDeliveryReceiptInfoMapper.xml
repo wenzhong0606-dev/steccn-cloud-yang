@@ -30,6 +30,7 @@
     </sql>
     <select id="infoList" resultType="com.steccn.wms.vo.WmsDeliveryReceiptInfoVO">
         SELECT a.id,
+               a.inventory_id,
                b.material_id,
                b.material_name,
                b.material_code,

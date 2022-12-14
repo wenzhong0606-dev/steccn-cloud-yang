@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -41,10 +42,10 @@ public class WmsDeliveryReceiptVO {
     private String affirmName;
 
     @ApiModelProperty("确认时间")
-    private String affirmDate;
+    private LocalDateTime affirmTime;
 
     @ApiModelProperty("创建时间")
-    private String createTime;
+    private LocalDateTime createTime;
 
     @ApiModelProperty("创建名称")
     private String createName;

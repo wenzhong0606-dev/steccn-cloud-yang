@@ -14,16 +14,13 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsDeliveryReceipt;
-import com.steccn.wms.domain.WmsDeliveryReceiptInfo;
-import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.domain.WmsLogisticsOrder;
-import com.steccn.wms.dto.WmsInventoryDTO;
-import com.steccn.wms.dto.WmsLogisticsInfoDTO;
-import com.steccn.wms.dto.WmsLogisticsOrderDTO;
-import com.steccn.wms.dto.WmsLogisticsOrderPageDTO;
+import com.steccn.wms.domain.*;
+import com.steccn.wms.dto.*;
+import com.steccn.wms.service.WmsLogisticsDetailService;
+import com.steccn.wms.service.WmsLogisticsInfoService;
 import com.steccn.wms.service.WmsLogisticsOrderService;
 import com.steccn.wms.mapper.WmsLogisticsOrderMapper;
+import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.WmsLogisticsOrderVO;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +52,12 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final RedissonClient redissonClient;
+
+    private final WmsLogisticsInfoService wmsLogisticsInfoService;
+
+    private final WmsLogisticsDetailService wmsLogisticsDetailService;
+
+    private final WmsLogisticsTransportationService wmsLogisticsTransportationService;
 
     @Override
     public Page<WmsLogisticsOrderVO> pageList(WmsLogisticsOrderPageDTO dto) {
@@ -121,13 +124,50 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             //4.保存物流单信息
             save(model);
             //5.保存收发货信息
-            if (Objects.nonNull(dto.getReceiving())){
+            List<WmsLogisticsInfo> logisticsInfoList = Lists.newArrayList();
+            if (Objects.nonNull(dto.getReceiving())) {
                 WmsLogisticsInfoDTO receiving = dto.getReceiving();
-//                receiving.setType();
+                WmsLogisticsInfo wmsLogisticsInfo = new WmsLogisticsInfo();
+                BeanUtil.copyProperties(receiving, wmsLogisticsInfo);
+                wmsLogisticsInfo.setLogisticsId(model.getId());
+                wmsLogisticsInfo.setType(WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode());
+                logisticsInfoList.add(wmsLogisticsInfo);
+            }
+            if (Objects.nonNull(dto.getShipments())) {
+                WmsLogisticsInfoDTO shipments = dto.getShipments();
+                WmsLogisticsInfo wmsLogisticsInfo = new WmsLogisticsInfo();
+                BeanUtil.copyProperties(shipments, wmsLogisticsInfo);
+                wmsLogisticsInfo.setType(WmsManagerConstant.LogisticsTypeEnum.ONE.getCode());
+                wmsLogisticsInfo.setLogisticsId(model.getId());
+                logisticsInfoList.add(wmsLogisticsInfo);
+            }
+            if (CollUtil.isNotEmpty(logisticsInfoList)) {
+                wmsLogisticsInfoService.saveBatch(logisticsInfoList);
             }
             //6.保存明细信息
-
-
+            if (CollUtil.isNotEmpty(dto.getList())) {
+                List<WmsLogisticsDetail> detailList = Lists.newArrayList();
+                List<WmsLogisticsDetailDTO> detailDTOList = dto.getList();
+                detailDTOList.forEach(wmsLogisticsDetailDTO -> {
+                    WmsLogisticsDetail wmsLogisticsDetail = new WmsLogisticsDetail();
+                    BeanUtil.copyProperties(wmsLogisticsDetailDTO, wmsLogisticsDetail);
+                    wmsLogisticsDetail.setLogisticsId(model.getId());
+                    detailList.add(wmsLogisticsDetail);
+                });
+                wmsLogisticsDetailService.saveBatch(detailList);
+            }
+            //7.保存运输方式
+            if (CollUtil.isNotEmpty(dto.getWayList())) {
+                List<WmsLogisticsTransportationDTO> wayDTOList = dto.getWayList();
+                List<WmsLogisticsTransportation> wayList = Lists.newArrayList();
+                wayDTOList.forEach( wayDto -> {
+                    WmsLogisticsTransportation wmsLogisticsTransportation = new WmsLogisticsTransportation();
+                    BeanUtil.copyProperties(wayDto,wmsLogisticsTransportation);
+                    wmsLogisticsTransportation.setLogisticsId(model.getId());
+                    wayList.add(wmsLogisticsTransportation);
+                });
+                wmsLogisticsTransportationService.saveBatch(wayList);
+            }
         } finally {
             lock.unlock();
         }
