@@ -138,4 +138,16 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.consumePartitionUnitClassDetail(dto));
     }
 
+    @PostMapping("/unit/history/chart")
+    @ApiOperation(value = "单耗历史对比-柱状图")
+    public  R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitHistoryChart(@Valid @RequestBody EpTableDTO dto) {
+        return R.success();
+    }
+
+    @PostMapping("/unit/history/detail")
+    @ApiOperation(value = "单耗历史对比-明细")
+    public  R<Page<ConsumePartitionUnitClassDetailVO>> consumePartitionUnitHistoryDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success();
+    }
+
 }
