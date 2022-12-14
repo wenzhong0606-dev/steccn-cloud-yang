@@ -36,6 +36,7 @@
         a.type,
         a.create_name,
         a.create_time,
+        a.update_time,
         a.`status`,
         a.warehouse_id,
         a.affirm_time,
@@ -91,5 +92,6 @@
             and a.affirm_time between #{dto.affirmStartTime} and #{dto.affirmEndTime}
         </if>
         </where>
+        ORDER BY a.update_time DESC
     </select>
 </mapper>

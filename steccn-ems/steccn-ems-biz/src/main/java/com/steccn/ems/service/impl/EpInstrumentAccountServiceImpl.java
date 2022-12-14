@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.config.FeignConfig;
 import com.steccn.authserver.exception.BusinessException;
@@ -74,30 +75,35 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         long count = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 //所属分区节点
                 .eq(EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
+                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 //可展示的未删除的
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
         getRepeatJudgment(dto.getId(), count,"该节点下已经有仪表,请勿重复创建");
 
         long size = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getDistantMapCode, dto.getDistantMapCode())
+                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
         getRepeatJudgment(dto.getId(), size,"远传表映射编码不能重复");
         long sizeMeterName = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getMeterName, dto.getMeterName())
+                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
        getRepeatJudgment(dto.getId(),sizeMeterName,"仪表名称不能重复");
-        if (Objects.nonNull(dto.getSite())){
+        if (Objects.nonNull(dto.getSite())||StringUtils.isNotBlank(dto.getSiteName())){
             //查询电表下的所有安装位置有无重复
             long sizeSite = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                    .eq(EpInstrumentAccount::getSite, dto.getSite())
+                    .eq(Objects.nonNull(dto.getSite()),EpInstrumentAccount::getSite, dto.getSite())
+                    .eq(StringUtils.isNotBlank(dto.getSiteName()),EpInstrumentAccount::getSiteName,dto.getSiteName())
                     .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
         getRepeatJudgment(dto.getId(),sizeSite,"安装位置不能重复");
         }
-        if (Objects.nonNull(dto.getAssetsCode())){
+        if (StringUtils.isNotBlank(dto.getAssetsCode())){
             //查询数据库中的资产编码
             long sizeAssetsCode = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getAssetsCode, dto.getAssetsCode())
+                    .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                     .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
             getRepeatJudgment(dto.getId(),sizeAssetsCode,"资产编码不能重复");
         }
@@ -120,20 +126,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     public Page<EpInstrumentAccountPageVO> getEpInstrumentAccountVOPage(EpInstrumentAccountPageDTO dto) {
      //自定义查询条件
         LambdaQueryWrapper<EpInstrumentAccount> condition = new LambdaQueryWrapper<EpInstrumentAccount>()
-                //所属分区节点
+                //所属分区节点id数组
                 .in(CollUtil.isNotEmpty(dto.getPartitionNode()),EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
                 //模糊匹配仪表名称
                 .like(Objects.nonNull(dto.getMeterName()),EpInstrumentAccount::getMeterName, dto.getMeterName())
+                //能源类型
+                .eq(EpInstrumentAccount::getMeterType,dto.getEnergyId())
                 //查询所有可展示的
                 .eq(EpInstrumentAccount::getShowFlag,MpConstant.YES);
-        //定义排序条件
-        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpInstrumentAccount::getDistantMapCode);
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpInstrumentAccount::getMeterName);
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpInstrumentAccount::getStatus);
-        }
 
         //3.根据条件查询数据库数据
         List<EpInstrumentAccount> instrumentAccounts = list(condition);
@@ -142,20 +142,27 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //5.处理返回数据
         //自定义分页对象
         Page<EpInstrumentAccountPageVO> page = new Page<>();
-        if (CollUtil.isEmpty(instrumentAccounts)) {
+        //先筛选掉不合条件的数据
+        instrumentAccountVOS = instrumentAccountVOS.stream().filter(s -> Objects.nonNull(s)
+                && Objects.nonNull(s.getPartitionNode())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(instrumentAccountVOS)) {
             //如果为空返回空对象
             return page;
         }
+        //能源分区节点
         Set<Long> partitionIds = Sets.newHashSet();
+        //数据字典
         Set<Long> dictSet = Sets.newHashSet();
-        instrumentAccountVOS.stream().filter(s -> Objects.nonNull(s)
-                && Objects.nonNull(s.getPartitionNode())).forEach(s -> {
+        instrumentAccountVOS.forEach(s -> {
             partitionIds.add(s.getPartitionNode());
             if (Objects.nonNull(s.getSite())) {
                 dictSet.add(s.getSite());
             }
         });
+
+        //去数据字典中查找到所有位置
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+        //去能源分区表中找到所有的分区节点
         Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
         //去抄表管理微服务中lou出所有数据根据仪表id分组
         List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
@@ -164,15 +171,13 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                         .in(EpMeterRead::getDistantMapCode,distantCodeList)).stream()
                 .collect(Collectors.groupingBy(EpMeterRead::getMeterId));
 
-        EpEnergyParamDTO epEnergyParamDTO = new EpEnergyParamDTO();
-        List<Long> partitionIdList = Lists.newArrayList();
-        partitionIds.stream().forEach(s->{
-            partitionIdList.add(s);
+        //获取该类型下所有下一级子节点
+        Map<Long, List<EpPartitionVO>> partitionLinkChildMap = epPartitionService.allNextChildren(dto.getEnergyId());
+        //找到该类型下根据节点分组的全量数据
+        Map<Long,EpInstrumentAccountPageVO> partitionInstrumentVOList = Maps.newHashMap();
+        instrumentAccountVOS.forEach(s->{
+            partitionInstrumentVOList.put(s.getPartitionNode(),s);
         });
-        if (CollUtil.isNotEmpty(partitionIdList)){
-            epEnergyParamDTO.setPartitionId(partitionIdList);
-          //Todo
-        }
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
@@ -182,10 +187,52 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()));
             }
 
+            //设置最后抄表时间
             if (CollUtil.isNotEmpty(groupByMeter)){
-                List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
-                getLastReadTime(s.getEntityTable(),epMeterReads);
-
+                //先判断仪表的所属类型
+                if (EpManagerConstant.InstrumentType.REMOTE.getCode()==s.getEntityTable()
+                        ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==s.getEntityTable()){
+                    List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
+                    if (Objects.nonNull( getLastReadTime(epMeterReads))){
+                        s.setLastReadingTime( getLastReadTime(epMeterReads));
+                    }
+                } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode()==s.getEntityTable()) {
+                    List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
+                    if (CollUtil.isNotEmpty(partitionChildrenList)){
+                        //找到绑定该节点下子节点的仪表的id
+                        List<Integer> instrumentChildIds = Lists.newArrayList();
+                        partitionChildrenList.stream().forEach(p->{
+                            //子节点绑定的仪表
+                            EpInstrumentAccountPageVO epInstrumentAccountPageVO = partitionInstrumentVOList.get(p.getId());
+                            if (Objects.nonNull(epInstrumentAccountPageVO)){
+                                instrumentChildIds.add(epInstrumentAccountPageVO.getId());
+                            }
+                        });
+                        if (CollUtil.isNotEmpty(instrumentChildIds)){
+                            //如果该节点的子节点绑定了仪表设置最后抄表时间(取每个子节点最后抄表时间最早的)
+                            //保证每个子节点仪表的最后抄表时间都不能有空
+                            List<LocalDateTime> timeList = Lists.newArrayList();
+                            instrumentChildIds.forEach(i->{
+                                List<EpMeterRead> epMeterReads = groupByMeter.get(i);
+                                if (Objects.nonNull(getLastReadTime(epMeterReads))){
+                                    timeList.add(getLastReadTime(epMeterReads));
+                                }
+                            });
+                            //如果查询到的子表最后抄表时间的个数等于绑定仪表的个数设置虚拟仪表的最后抄表时间
+                            if (instrumentChildIds.size()==timeList.size()){
+                                //从timeList集合中找到时间最早的
+                                LocalDateTime realLastReadTime = LocalDateTime.now();
+                                for (int i = 0; i < timeList.size(); i++) {
+                                    realLastReadTime=timeList.get(i);
+                                    if ((i+1)<timeList.size() && realLastReadTime.isAfter(timeList.get(i+1))){
+                                        realLastReadTime=timeList.get(i+1);
+                                    }
+                                }
+                                s.setLastReadingTime(realLastReadTime);
+                            }
+                        }
+                    }
+                }
 
             }
 
@@ -196,8 +243,15 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //排序
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
-            collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+            collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())){
+           collect= collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getDistantMapCode).reversed()).collect(Collectors.toList());
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())){
+            collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getMeterName).reversed()).collect(Collectors.toList());
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
+            collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
         }
+
         page.setCurrent(dto.getCurrent());
         page.setTotal(instrumentAccountVOS.size());
         page.setSize(dto.getSize());
@@ -206,14 +260,11 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return page;
     }
 
-    private LocalDateTime getLastReadTime(Integer entityTable, List<EpMeterRead> epMeterReads) {
-
-        //先判断仪表的所属类型
-        if (EpManagerConstant.InstrumentType.REMOTE.getCode()==entityTable
-                ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==entityTable){
+    private LocalDateTime getLastReadTime( List<EpMeterRead> epMeterReads) {
             if (CollUtil.isEmpty(epMeterReads)){
                 return null;
-            }else {
+            }else if (!epMeterReads.stream().filter(m->Objects.isNull(m.getReadTime()))
+                    .findAny().isPresent()){
                 LocalDateTime lastReadTime = LocalDateTime.now();
                 for (int i = 0; i < epMeterReads.size(); i++) {
                     lastReadTime =epMeterReads.get(i).getReadTime();
@@ -225,10 +276,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 }
                 return lastReadTime;
             }
-        }else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode()==entityTable){
-
-        }
-        return null;
+            return null;
     }
 
     @Override

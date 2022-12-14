@@ -153,4 +153,10 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list);
 
 
+    /**
+     * 校验箱号
+     * @param wmsCheckCaseNoDTO
+     * @return
+     */
+    Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO);
 }

@@ -82,5 +82,10 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.materialConsume(list));
     }
 
+    @ApiOperation("校验箱号是否合规")
+    @PostMapping("/checkCaseNo")
+    public R<Boolean> checkCaseNo(@RequestBody WmsCheckCaseNoDTO wmsCheckCaseNoDTO){
+        return R.success(wmsInventoryService.checkCaseNo(wmsCheckCaseNoDTO));
+    }
 
 }

@@ -280,6 +280,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             } else {
                 return -1;
             }
+        }).thenComparing((o1, o2) -> {
+            if (Objects.nonNull(o1.getSort()) && Objects.nonNull(o2.getSort())) {
+                return o1.getSort().compareTo(o2.getSort());
+            } else if (Objects.isNull(o1.getSort())) {
+                return 1;
+            } else {
+                return -1;
+            }
         }));
     }
 
@@ -472,11 +480,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
-        classDateAllData.forEach(ele -> {
-            if(Objects.isNull(ele.getThick())){
-               ele.setThick(BigDecimal.valueOf(-1));
-            }
-        });
 
         List<EpMeterReadAllDataVO> thickAllDataList = classDateAllData.stream().filter(v -> Objects.nonNull(v.getOfficeId()))
                 .filter(v -> Objects.nonNull(v.getClassGroupId()))
@@ -532,9 +535,82 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
     @Override
     public Page<ConsumePartitionUnitClassDetailVO> consumePartitionUnitClassDetail(EpTableDTO dto) {
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "单耗全量数据表为空");
 
+        List<EpMeterReadAllDataVO> thickAllDataList = classDateAllData.stream().filter(v -> Objects.nonNull(v.getOfficeId()))
+                .filter(v -> Objects.nonNull(v.getClassGroupId()))
+                .filter(v -> BigDecimalUtil.equals(v.getThick(), dto.getThick().get(0)))
+                .collect(Collectors.toList());
+        SteccnTableAssertUtil.notEmpty(thickAllDataList, "筛选厚度和班组后全量数据表为空");
 
-        return null;
+        Set<Long> partitionIdSet = thickAllDataList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
+        Set<Long> classGroupIdSet = thickAllDataList.stream().map(v -> v.getClassGroupId()).collect(Collectors.toSet());
+        Map<Long, EpPartition> partitionEntityMap = epPartitionService.listById(partitionIdSet);
+        EpPartition defaultEpPartition = new EpPartition();
+        Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(classGroupIdSet)).get();
+
+        //定义返回集合
+        List<ConsumePartitionUnitClassDetailVO> resList = Lists.newArrayList();
+        //根据班次日期分组
+        Map<LocalDate, List<EpMeterReadAllDataVO>> classDateMap = thickAllDataList.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
+        for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateMap.entrySet()) {
+            //根据班次和厚度分组
+            Map<String, List<EpMeterReadAllDataVO>> thickMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
+            for (Map.Entry<String, List<EpMeterReadAllDataVO>> thickEntry : thickMap.entrySet()) {
+                //根据组织机构id分组
+                Map<Long, List<EpMeterReadAllDataVO>> partitionMap = thickEntry.getValue().stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getOfficeId));
+                for (Map.Entry<Long, List<EpMeterReadAllDataVO>> partitionEntry : partitionMap.entrySet()) {
+                    //分区id
+                    Long partitionId = partitionEntry.getKey();
+                    //基于班组分组
+                    Map<Long, List<EpMeterReadAllDataVO>> classGroupMap = partitionEntry.getValue().stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getClassGroupId));
+                    for (Map.Entry<Long, List<EpMeterReadAllDataVO>> classGroupEntry : classGroupMap.entrySet()) {
+                        String[] s = thickEntry.getKey().split("_");
+                        ConsumePartitionUnitClassDetailVO rowVO = new ConsumePartitionUnitClassDetailVO();
+                        rowVO.setClassDate(classDateEntry.getKey());
+                        rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
+                        if (!"null".equals(s[1])) {
+                            rowVO.setThick(new BigDecimal(s[1]).setScale(1));
+                            if(BigDecimalUtil.equals(rowVO.getThick(),new BigDecimal("-1"))){
+                                rowVO.setThickStr("无");
+                            }else{
+                                rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                            }
+                        }
+                        if (!"null".equals(s[0])) {
+                            rowVO.setClassId(Integer.parseInt(s[0]));
+                            QtManagerConstant.QtClassesEnum code = QtManagerConstant.QtClassesEnum.code(rowVO.getClassId());
+                            rowVO.setClassIdStr(Objects.nonNull(code) ? code.getName() : null);
+                        }
+                        BigDecimal consume = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal productNum = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        rowVO.setUnitValueStr(BigDecimalUtil.format(BigDecimalUtil.divide(consume,productNum)));
+                        EpPartition epPartition = partitionEntityMap.getOrDefault(partitionId, defaultEpPartition);
+                        rowVO.setPartitionName(epPartition.getOfficeName());
+                        rowVO.setSort(Objects.isNull(epPartition.getSort()) ? Integer.MAX_VALUE : epPartition.getSort());
+                        rowVO.setClassGroupName(dictIdNameMap.get(classGroupEntry.getKey()));
+                        resList.add(rowVO);
+                    }
+                }
+            }
+        }
+        //行排序规则为
+        //1级排序：按班次日期升序排列
+        //2级排序：班次，白班在上、夜班在下、“无”在最下
+        //3级排序：按产品厚度升序排列，“无”在最下
+        detailComparator(resList);
+        //图例过滤
+        if (Objects.nonNull(dto.getFilters())) {
+            resList = resList.stream().filter(v -> dto.getFilters().contains(v.getThickStr())).collect(Collectors.toList());
+        }
+        return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
     }
 
     /**
