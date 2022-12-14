@@ -49,8 +49,6 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
 
     private final EpPartitionService epPartitionService;
 
-    private final EpMeterReadService epMeterReadService;
-
     /**
      * 获取能源流向详情数据
      * @param dto

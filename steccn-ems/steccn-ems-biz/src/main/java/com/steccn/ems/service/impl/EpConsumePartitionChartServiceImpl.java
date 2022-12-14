@@ -1,9 +1,11 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.log.Log;
+import com.alibaba.excel.util.MapUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
@@ -14,21 +16,18 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
-import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.util.MapUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
+import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpTableDTO;
-import com.steccn.ems.service.EpConsumePartitionChartService;
-import com.steccn.ems.service.EpInstrumentAccountService;
-import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.service.*;
+import com.steccn.ems.util.DownloadUtil;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -37,10 +36,12 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,6 +62,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     private final EpMeterReadService epMeterReadService;
     private final EpPartitionService epPartitionService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final EpEnergyTypeService epEnergyTypeService;
 
     @Override
     public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto) {
@@ -213,6 +215,33 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         resVo.setDataList(page);
         resVo.setHeadData(headData);
         return resVo;
+    }
+
+    @SneakyThrows
+    @Override
+    public void downloadConsume(EpTableDTO dto, HttpServletResponse response) {
+        dto.setCurrent(1);
+        dto.setSize(999999);
+        EpConsumeDetailVO detail = consumePartitionContrastDetail(dto);
+        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("energyType",energyType.getName());
+        map.put("dateStart",LocalDateUtil.localDateFormat(dto.getStart(),DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN));
+        if(CollUtil.isNotEmpty(dto.getThick())){
+            StringBuilder sb = new StringBuilder();
+            dto.getThick().forEach(tmp->{
+                sb.append(tmp.toString() + "mm ");
+            });
+            map.put("thick",sb.toString());
+        }else {
+            map.put("thick","无");
+        }
+        map.put("granularity",QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
+        String excelName = "能耗分区对比(" + energyType.getName() +  ")_"
+                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getEnd(),DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadEnergyTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NHFQDB,excelName,map,detail,dto.getBase64());
     }
 
     /**

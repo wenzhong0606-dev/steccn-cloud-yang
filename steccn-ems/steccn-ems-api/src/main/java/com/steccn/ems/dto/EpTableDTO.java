@@ -53,4 +53,6 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty(value = "图表的过滤条件")
     private List<String> filters;
 
+    @ApiModelProperty("图片Base64")
+    private String base64;
 }

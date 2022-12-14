@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -33,6 +35,13 @@ public interface EpConsumePartitionChartService {
      * @return 分页对象
      */
     EpConsumeDetailVO consumePartitionContrastDetail(EpTableDTO dto);
+
+    /**
+     * 下载对象
+     * @param dto
+     * @param response
+     */
+    void downloadConsume(EpTableDTO dto, HttpServletResponse response);
 
     /**
      * 能耗历史对比-柱状图

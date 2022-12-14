@@ -2,6 +2,8 @@ package com.steccn.ems.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.exception.SteccnChartException;
@@ -10,17 +12,23 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
+import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -79,5 +87,31 @@ public class EpConsumePartitionChartController {
             throw new BusinessException("产品厚度只能单选");
         }
         return R.success(epConsumePartitionChartService.consumePartitionUnitChart(dto));
+    }
+
+    @PostMapping("/contrast/download")
+    @ApiOperation(value = "能耗分区下载-图表")
+    public void downloadHis (@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epConsumePartitionChartService.downloadConsume(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
+    /**
+     * 对响应异常进行封装
+     * @param response
+     * @throws IOException
+     */
+    protected void exceptionResponse(HttpServletResponse response , Exception e) throws IOException{
+        response.reset();
+        response.setContentType("application/json");
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        Map<String, String> map = MapUtils.newHashMap();
+        map.put("status", "failure");
+        map.put("message", "下载文件失败" + e.getMessage());
+        response.getWriter().println(JSON.toJSONString(map));
     }
 }
