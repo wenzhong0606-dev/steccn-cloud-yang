@@ -79,7 +79,9 @@ public class QtCheckPlanGroupItemServiceImpl extends ServiceImpl<QtCheckPlanGrou
         QtCheckPlanGroupItem qtCheckPlanGroupItem = getById(id);
         //若数据为空则抛出异常
         if(qtCheckPlanGroupItem==null || qtCheckPlanGroupItem.getLinkedDefectiveItem() == null || qtCheckPlanGroupItem.getLinkedDefectiveItem().size()==0){
-            throw new BusinessException("该检验项对应的缺陷项为空");
+//            throw new BusinessException("该检验项对应的缺陷项为空");
+            List<QtCheckTaskDefectVO> result = Lists.newArrayList();
+            return result;
         }
         LambdaQueryWrapper<QtDefectiveItem> condition = new LambdaQueryWrapper<QtDefectiveItem>()
                 .in(QtDefectiveItem::getId,qtCheckPlanGroupItem.getLinkedDefectiveItem())
