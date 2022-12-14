@@ -375,7 +375,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     }
 
     @Override
-    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitChart(EpTableDTO dto) {
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitClassChart(EpTableDTO dto) {
         LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
         LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
         //②时间区间内所有班次集合
@@ -440,6 +440,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData(Lists.newArrayList());
         return convert;
+    }
+
+    @Override
+    public Page<ConsumePartitionUnitClassDetailVO> consumePartitionUnitClassDetail(EpTableDTO dto) {
+
+
+        return null;
     }
 
     /**
