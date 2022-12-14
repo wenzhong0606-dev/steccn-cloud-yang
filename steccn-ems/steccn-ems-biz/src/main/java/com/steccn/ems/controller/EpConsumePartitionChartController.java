@@ -79,6 +79,17 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
     }
 
+    @PostMapping("/history/download")
+    @ApiOperation(value = "能耗历史对比-下载")
+    public void consumeHistoryContrastDownload(@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epConsumePartitionChartService.downloadHistoryConsume(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
     @PostMapping("/unit/class/chart")
     @ApiOperation(value = "单耗班组对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitClassChart(@Valid @RequestBody EpTableDTO dto) {

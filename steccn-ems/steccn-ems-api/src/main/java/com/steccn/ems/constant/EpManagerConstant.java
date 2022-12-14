@@ -31,6 +31,7 @@ public interface EpManagerConstant {
     String EP_DOWNLOAD_MODEL_NAME_FGPDB = "fgpdb.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_FGPLSDB = "fgplsdb.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_NHFQDB = "nhfqdb.xlsx";
+    String EP_DOWNLOAD_MODEL_NAME_NHLSDB = "nhlsdb.xlsx";
 
 
     /**

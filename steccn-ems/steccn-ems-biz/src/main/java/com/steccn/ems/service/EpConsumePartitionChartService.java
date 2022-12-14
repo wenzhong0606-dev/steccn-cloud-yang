@@ -38,7 +38,7 @@ public interface EpConsumePartitionChartService {
     EpConsumeDetailVO consumePartitionContrastDetail(EpTableDTO dto);
 
     /**
-     * 下载对象
+     * 下载能耗分区
      * @param dto
      * @param response
      */
@@ -58,6 +58,13 @@ public interface EpConsumePartitionChartService {
      * @return 分页列表
      */
     Page<ConsumeHistoryContrastDetailVO> consumeHistoryContrastDetail(EpTableDTO dto);
+
+    /**
+     * 下载能耗历史
+     * @param dto
+     * @param response
+     */
+    void downloadHistoryConsume(EpTableDTO dto, HttpServletResponse response);
 
     /**
      * 厚度下拉选项
