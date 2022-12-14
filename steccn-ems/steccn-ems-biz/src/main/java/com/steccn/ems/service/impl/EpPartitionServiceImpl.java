@@ -199,6 +199,20 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
+    public Map<Long, EpPartition> listById(Set<Long> partitionIdList) {
+        Map<Long, EpPartition> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(partitionIdList)) {
+            List<EpPartition> epPartitions = listByIds(partitionIdList);
+            if (CollUtil.isNotEmpty(epPartitions)) {
+                epPartitions.forEach(ele -> {
+                    resMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet) {
         Map<Integer, EpInstrumentAccount> resMap = Maps.newHashMap();
 

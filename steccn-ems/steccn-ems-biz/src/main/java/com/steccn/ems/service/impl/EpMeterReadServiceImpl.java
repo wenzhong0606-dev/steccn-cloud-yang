@@ -377,6 +377,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
             }
         }
+
+        //将全量数据表的厚度为空的都设置成-1
+        gpDataList.forEach(ele -> {
+            if(Objects.isNull(ele.getThick())){
+                ele.setThick(new BigDecimal("-1"));
+            }
+        });
+
         return gpDataList;
     }
 
@@ -508,6 +516,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
             }
         }
+
+        //将全量数据表的厚度为空的都设置成-1
+        gpDataList.forEach(ele -> {
+            if(Objects.isNull(ele.getThick())){
+                ele.setThick(new BigDecimal("-1"));
+            }
+        });
+
         return gpDataList;
     }
 

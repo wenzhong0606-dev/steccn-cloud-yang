@@ -62,6 +62,14 @@ public interface EpPartitionService extends IService<EpPartition> {
      */
     Map<Long, String> listByIdCh(List<Long> partitionIdList);
 
+
+    /**
+     * 根据id获取名字
+     * @param partitionIdList 分区节点id
+     * @return map
+     */
+    Map<Long, EpPartition> listById(Set<Long> partitionIdList);
+
     /**
      * 根据孩子id集合查询所有父节点
      * @param dto
