@@ -430,6 +430,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         //部门行业的单耗标准
         List<StandardVO> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(),dto.getStart(), dto.getEnd());
+        standardVOList = standardVOList.stream().filter(v -> {
+            if (BigDecimalUtil.equals(dto.getThick().get(0), new BigDecimal("-1"))) {
+                return BigDecimalUtil.equals(null, v.getThick());
+            }
+            return BigDecimalUtil.equals(dto.getThick().get(0), v.getThick());
+        }).collect(Collectors.toList());
         epChartGraphDTO.setStandardList(standardVOList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData(Lists.newArrayList());

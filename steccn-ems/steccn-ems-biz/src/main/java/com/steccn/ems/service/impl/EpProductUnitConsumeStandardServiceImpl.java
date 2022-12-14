@@ -295,6 +295,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     if (Objects.nonNull(ele.getProductThick())) {
                         dictIdSet.add(ele.getProductThick());
                     }
+                    standardVO.setValue(ele.getUnitValue());
                     resList.add(standardVO);
                 });
 
@@ -306,6 +307,8 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     ele.setThick(RegularUtil.extractValue(thickStr, null, (x) -> new BigDecimal(x)));
                     //部门标准，行业标准，公司标准
                     ele.setStandardTypeName(dictIdNameMap.get(ele.getStandardType()));
+                    EpManagerConstant.EpProductTypes productType = EpManagerConstant.EpProductTypes.getProductType(ele.getProductType());
+                    ele.setProductTypeName(Objects.nonNull(productType) ? productType.getName() : null);
                 });
             }
         }

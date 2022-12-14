@@ -31,7 +31,7 @@ public class StandardVO<T> implements Serializable {
     private String standardTypeName;
 
     @ApiModelProperty("产品类型")
-    private Integer productType;
+    private Long productType;
 
     @ApiModelProperty("产品类型-名称")
     private String productTypeName;
