@@ -134,7 +134,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 if (CollectionUtils.isNotEmpty(filterList)) {
                     if (meterReadListVO.getEntityTable().equals(EpManagerConstant.InstrumentType.REMOTE.getCode())) {
                         List<MeterReadMapperVO> collect = filterList.stream().filter(meterReadMapperVO -> Objects.nonNull(meterReadMapperVO.getEndTime())).sorted(Comparator.comparing(MeterReadMapperVO::getEndTime).reversed()).collect(Collectors.toList());
-                        readValueListVO.setReadValue(collect.get(0).getAdminValue());
+                        if (CollectionUtils.isNotEmpty(collect)) {
+                            readValueListVO.setReadValue(collect.get(0).getAdminValue());
+                        }
                     } else {
                         readValueListVO.setReadValue(filterList.get(0).getAdminValue());
                     }

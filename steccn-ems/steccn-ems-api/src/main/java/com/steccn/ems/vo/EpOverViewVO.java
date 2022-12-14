@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 public class EpOverViewVO {
     @ApiModelProperty("合格率")
-    private String value;
+    private BigDecimal value;
 
     /**
      * 日环比%
