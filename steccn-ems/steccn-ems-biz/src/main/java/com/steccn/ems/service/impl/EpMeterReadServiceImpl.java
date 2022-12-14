@@ -141,7 +141,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         readValueListVO.setReadValue(filterList.get(0).getAdminValue());
                     }
                 }
-                readValueListVO.setEntityTable(readValueListVO.getEntityTable());
+                readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
                 readValueListVO.setReadDate(localDate);
                 readValueListVO.setMeterId(meterReadListVO.getMeterId());
                 readValueListVOList.add(readValueListVO);
@@ -153,7 +153,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 meterReadListVO -> {
                     meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
                     //如果是虚拟仪表
-                    if (meterReadListVO.getEntityTable().equals(2)) {
+                    if (Objects.equals(meterReadListVO.getEntityTable(),2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
                             BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream().filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue())).map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
