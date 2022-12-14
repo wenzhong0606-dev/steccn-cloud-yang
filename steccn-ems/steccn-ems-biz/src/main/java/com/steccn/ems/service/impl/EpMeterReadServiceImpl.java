@@ -124,7 +124,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 meterReadListVO.setEntityTable(Integer.parseInt(keys[5]));
             }
             meterReadListVO.setMeterStatus(entry.getValue().get(0).getStatus());
-            meterReadListVO.setMeterName(keys[2]);
+            meterReadListVO.setMeterName("null".equals(keys[2])? null : keys[2]);
             meterReadListVO.setPartitionNodeName(keys[4]);
 
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
