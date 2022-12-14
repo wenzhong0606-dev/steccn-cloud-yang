@@ -361,6 +361,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     rangeArrayList.forEach(rangeArrayTmp -> {
                         QtRangeArrayVO qtRangeArrayVo = new QtRangeArrayVO();
                         BeanUtils.copyProperties(rangeArrayTmp, qtRangeArrayVo);
+                        QtCheckItemListVO qtCheckItemListVO2 = qtCheckItemService.info(rangeArrayTmp.getId());
+                        qtRangeArrayVo.setMeasureUnitName(qtCheckItemListVO2.getMeasureUnitName());
                         rangeArrayVos.add(qtRangeArrayVo);
                     });
                     qtCheckPlanItemVo.setRangeArray(rangeArrayVos);
@@ -372,6 +374,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     averageArrayList.forEach(averageArrayTmp -> {
                         QtAverageArrayVO averageArrayVO = new QtAverageArrayVO();
                         BeanUtils.copyProperties(averageArrayTmp, averageArrayVO);
+                        QtCheckItemListVO qtCheckItemListVO2 = qtCheckItemService.info(averageArrayTmp.getId());
+                        averageArrayVO.setMeasureUnitName(qtCheckItemListVO2.getMeasureUnitName());
                         averageArrayVos.add(averageArrayVO);
                     });
                     qtCheckPlanItemVo.setAverageArray(averageArrayVos);
@@ -383,6 +387,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     meanArrayList.forEach(meanArrayTmp -> {
                         QtMeanArrayVO meanArrayVO = new QtMeanArrayVO();
                         BeanUtils.copyProperties(meanArrayTmp, meanArrayVO);
+                        QtCheckItemListVO qtCheckItemListVO2 = qtCheckItemService.info(meanArrayTmp.getId());
+                        meanArrayVO.setMeasureUnitName(qtCheckItemListVO2.getMeasureUnitName());
                         meanArrayVos.add(meanArrayVO);
                     });
                     qtCheckPlanItemVo.setMeanArray(meanArrayVos);
@@ -394,6 +400,8 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
                     endAverageArrayList.forEach(endAverageArrayTmp -> {
                         QtEndAverageArrayVO endAverageArrayVO = new QtEndAverageArrayVO();
                         BeanUtils.copyProperties(endAverageArrayTmp, endAverageArrayVO);
+                        QtCheckItemListVO qtCheckItemListVO2 = qtCheckItemService.info(endAverageArrayTmp.getId());
+                        endAverageArrayVO.setMeasureUnitName(qtCheckItemListVO2.getMeasureUnitName());
                         endAverageArrayVos.add(endAverageArrayVO);
                     });
                     qtCheckPlanItemVo.setEndAverageArray(endAverageArrayVos);

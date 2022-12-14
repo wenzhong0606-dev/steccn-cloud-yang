@@ -362,7 +362,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
                 List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
                 qtCheckTaskDetailCopyVO.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList);
-
             }
 
         }
@@ -477,9 +476,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckPlanDetailsVO.setCopy(copy);
             qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
         }
-        QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
-        QtCheckTaskDestoryInfoVO qtCheckTaskDestoryInfoVO = new QtCheckTaskDestoryInfoVO();
-        List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = Lists.newArrayList();
         //放入落板记录模块数据setQtCheckTaskDestoryInfoVOList
         List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
         if (!qtCheckTaskDestoryInfoList.isEmpty()) {
@@ -677,15 +673,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<String, Object> valueCondition = new HashMap<>();
         valueCondition.put("task_id", dto.getId());
         qtCheckTaskDetailService.removeByMap(valueCondition);
-
-
         //处理样本概况数据
         //样本概况在来料捡,化验抽捡,配料抽检时显示
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()) || tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())) {
             if (CollUtil.isNotEmpty(dto.getSampleInfoList())) {
-                QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
                 Map<String, Object> deleteCondition = new HashMap<>();
-                List<QtCheckTaskCopy> qtCheckTaskCopies = Lists.newArrayList();
                 deleteCondition.put("task_id", dto.getId());
                 //先删除可能暂存的值
                 qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
