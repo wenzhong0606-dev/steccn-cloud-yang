@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.EpTreeGraphVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpEnergyFlowDTO;
+import com.steccn.ems.dto.EpEnergyFlowLeaderDTO;
 import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.service.EpEnergyFlowService;
 import com.steccn.ems.vo.EpConsumeDetailVO;
@@ -41,5 +42,11 @@ public class EpEnergyFlowController {
     @ApiOperation(value = "能源流向-图表")
     public R<EpTreeGraphVO> getChart(@RequestBody @Valid EpEnergyFlowDTO dto) {
         return R.success(epEnergyFlowService.generateCharts(dto));
+    }
+
+    @PostMapping("/leader/chart")
+    @ApiOperation(value = "电流流向领导驾驶舱-图表")
+    public R<EpTreeGraphVO> getLeaderChart(@RequestBody @Valid EpEnergyFlowLeaderDTO dto) {
+        return R.success(epEnergyFlowService.generateLeaderCharts(dto));
     }
 }
