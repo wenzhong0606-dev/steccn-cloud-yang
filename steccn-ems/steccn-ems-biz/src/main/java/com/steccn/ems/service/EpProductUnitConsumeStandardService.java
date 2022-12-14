@@ -1,13 +1,14 @@
 package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.ems.dto.EpEnergyTypeDTO;
 import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -43,4 +44,14 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 有效的单耗标准列表
+     *
+     * @param energyType
+     * @param start 有效期-开始时间
+     * @param end 有效期-结束时间
+     * @return list
+     */
+    List<StandardVO> validStandardList(Integer energyType, LocalDate start, LocalDate end);
 }

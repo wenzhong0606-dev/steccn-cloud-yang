@@ -78,6 +78,7 @@ public class EpConsumePartitionChartController {
         if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
             throw new BusinessException("产品厚度只能单选");
         }
+        SteccnTableAssertUtil.notEmpty(dto.getPartitionIdList(), "组织机构不能为空");
         return R.success(epConsumePartitionChartService.consumePartitionUnitChart(dto));
     }
 }

@@ -3,12 +3,9 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.log.Log;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
@@ -17,24 +14,13 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.util.MapUtil;
-import com.steccn.common.vo.BaseSelectVO;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.common.vo.R;
-import com.steccn.ems.domain.EpInstrumentAccount;
-import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.common.vo.*;
 import com.steccn.ems.dto.EpTableDTO;
-import com.steccn.ems.service.EpConsumePartitionChartService;
-import com.steccn.ems.service.EpInstrumentAccountService;
-import com.steccn.ems.service.EpMeterReadService;
-import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
-import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +32,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -61,6 +46,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     private final EpMeterReadService epMeterReadService;
     private final EpPartitionService epPartitionService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final EpProductUnitConsumeStandardService epProductUnitConsumeStandardService;
 
     @Override
     public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionContrast(EpTableDTO dto) {
@@ -441,7 +427,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
-        log.info("{}",epChartGraphDTO);
+
+        //部门行业的单耗标准
+        List<StandardVO> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(),dto.getStart(), dto.getEnd());
+        epChartGraphDTO.setStandardList(standardVOList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData(Lists.newArrayList());
         return convert;
