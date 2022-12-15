@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -68,17 +67,17 @@ public class EpInstrumentAccountController {
         return R.success(epInstrumentAccountService.delete(id));
     }
 
-    @RequestMapping("/download")
-    @ApiOperation(value = "下载资产卡片图片")
-    @SysLog("下载资产卡片图片")
-    public void downloadSubstrate(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try{
-            epInstrumentAccountService.downloadSubstrate(response,request);
-        } catch (Exception e) {
-            // 若有异常则重置response
-            this.exceptionResponse(response,e);
-        }
-    }
+//    @RequestMapping("/download")
+//    @ApiOperation(value = "下载资产卡片图片")
+//    @SysLog("下载资产卡片图片")
+//    public void downloadSubstrate(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        try{
+//            epInstrumentAccountService.downloadSubstrate(response,request);
+//        } catch (Exception e) {
+//            // 若有异常则重置response
+//            this.exceptionResponse(response,e);
+//        }
+//    }
 
 
     /**
