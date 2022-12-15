@@ -22,8 +22,7 @@ import com.steccn.wms.service.WmsLogisticsOrderService;
 import com.steccn.wms.mapper.WmsLogisticsOrderMapper;
 import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.util.WmsCodeUtil;
-import com.steccn.wms.vo.WmsLogisticsInfoVO;
-import com.steccn.wms.vo.WmsLogisticsOrderVO;
+import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
@@ -59,6 +58,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     private final WmsLogisticsDetailService wmsLogisticsDetailService;
 
     private final WmsLogisticsTransportationService wmsLogisticsTransportationService;
+
 
     @Override
     public Page<WmsLogisticsOrderVO> pageList(WmsLogisticsOrderPageDTO dto) {
@@ -110,9 +110,9 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         list.forEach(order -> {
             List<WmsLogisticsInfoVO> orDefault = map.getOrDefault(order.getId(), infoList);
             for (WmsLogisticsInfoVO wmsLogisticsInfoVO : orDefault) {
-                if (WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode().equals(wmsLogisticsInfoVO.getType())){
+                if (WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode().equals(wmsLogisticsInfoVO.getType())) {
                     order.setReceiving(wmsLogisticsInfoVO);
-                }else if (WmsManagerConstant.LogisticsTypeEnum.ONE.getCode().equals(wmsLogisticsInfoVO.getType())){
+                } else if (WmsManagerConstant.LogisticsTypeEnum.ONE.getCode().equals(wmsLogisticsInfoVO.getType())) {
                     order.setShipments(wmsLogisticsInfoVO);
                 }
             }
@@ -187,6 +187,42 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             lock.unlock();
         }
         return true;
+    }
+
+    @Override
+    public WmsLogisticsOrderVO get(Long id) {
+        WmsLogisticsOrder order = getById(id);
+        Assert.notNull(order, "该物流单不存在");
+        //处理数据
+        WmsLogisticsOrderVO wmsLogisticsOrderVO = new WmsLogisticsOrderVO();
+        BeanUtil.copyProperties(order, wmsLogisticsOrderVO);
+        //获取明细数据
+        List<WmsLogisticsDetailVO> detailList = wmsLogisticsDetailService.listByLogisticsId(id);
+        wmsLogisticsOrderVO.setList(detailList);
+        //获取收发货信息
+        List<WmsLogisticsInfo> list = wmsLogisticsInfoService.list(new LambdaQueryWrapper<WmsLogisticsInfo>().in(WmsLogisticsInfo::getLogisticsId, id));
+        Set<Integer> officeIds = Sets.newHashSet();
+        Set<Long> dictIds = Sets.newHashSet();
+        dictIds.add(wmsLogisticsOrderVO.getType());
+        officeIds.add(wmsLogisticsOrderVO.getLogisticsCompany());
+        list.forEach(wmsLogisticsInfo -> officeIds.add(wmsLogisticsInfo.getOfficeId()));
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        list.forEach(wmsLogisticsInfo -> {
+            wmsLogisticsInfo.setOfficeName(officeMap.get(wmsLogisticsInfo.getOfficeId()));
+            WmsLogisticsInfoVO wmsLogisticsInfoVO = new WmsLogisticsInfoVO();
+            BeanUtil.copyProperties(wmsLogisticsInfo, wmsLogisticsInfoVO);
+            if (WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode().equals(wmsLogisticsInfo.getType())) {
+                wmsLogisticsOrderVO.setReceiving(wmsLogisticsInfoVO);
+            } else if (WmsManagerConstant.LogisticsTypeEnum.ONE.getCode().equals(wmsLogisticsInfo.getType())) {
+                wmsLogisticsOrderVO.setShipments(wmsLogisticsInfoVO);
+            }
+        });
+        //获取运输方式数据
+        wmsLogisticsOrderVO.setWayList(wmsLogisticsTransportationService.listByLogisticsId(id));
+        wmsLogisticsOrderVO.setLogisticsCompanyName(officeMap.get(wmsLogisticsOrderVO.getLogisticsCompany()));
+        wmsLogisticsOrderVO.setTypeName(dictMap.get(wmsLogisticsOrderVO.getType()));
+        return wmsLogisticsOrderVO;
     }
 
 

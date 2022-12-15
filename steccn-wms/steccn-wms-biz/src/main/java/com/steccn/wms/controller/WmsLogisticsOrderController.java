@@ -10,13 +10,12 @@ import com.steccn.wms.dto.WmsLogisticsOrderPageDTO;
 import com.steccn.wms.service.WmsLogisticsOrderService;
 import com.steccn.wms.vo.WmsLogisticsInfoVO;
 import com.steccn.wms.vo.WmsLogisticsOrderVO;
+import com.steccn.wms.vo.WmsStorageReceiptVO;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 物流单
@@ -42,5 +41,11 @@ public class WmsLogisticsOrderController {
     @PostMapping("/add")
     public R<Boolean> add(@RequestBody WmsLogisticsOrderDTO wmsLogisticsOrderDTO){
         return R.success(wmsLogisticsOrderService.add(wmsLogisticsOrderDTO));
+    }
+
+    @ApiOperation("物流单详情")
+    @GetMapping()
+    public R<WmsLogisticsOrderVO> get(@ApiParam("物流单id") @RequestParam("id") Long id){
+        return R.success(wmsLogisticsOrderService.get(id));
     }
 }
