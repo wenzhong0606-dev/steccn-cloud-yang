@@ -761,32 +761,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private List<MeterReadMapperVO> getMeterReadMapperVOList(Integer meterType, LocalDate firstDayOfMonth, LocalDate endDay) {
         List<MeterReadMapperVO> readMapperVOList = new ArrayList<>();
         List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByMeterType(meterType);
-        Set<Long> partitionIdSet = meterReadMapperVOList.stream().map(MeterReadMapperVO::getPartitionId).collect(Collectors.toSet());
 
-        List<MeterReadMapperVO> instrumentAccountMeterList = new ArrayList<>();
-        List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>().in(EpInstrumentAccount::getPartitionNode, partitionIdSet).eq(EpInstrumentAccount::getShowFlag,1).eq(EpInstrumentAccount::getMeterType,meterType));
-        for (MeterReadMapperVO meterReadMapperVO : meterReadMapperVOList) {
-            List<EpInstrumentAccount> epInstrumentAccountList = instrumentAccountList.stream().filter(instrumentAccount -> Objects.equals(meterReadMapperVO.getPartitionId(), instrumentAccount.getPartitionNode())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(epInstrumentAccountList)) {
-                for (EpInstrumentAccount epInstrumentAccount : epInstrumentAccountList) {
-                    MeterReadMapperVO readMapperCopyVo = new MeterReadMapperVO();
-                    BeanUtils.copyProperties(meterReadMapperVO,readMapperCopyVo);
-
-                    readMapperCopyVo.setEntityTable(epInstrumentAccount.getEntityTable());
-                    readMapperCopyVo.setMeterName(epInstrumentAccount.getMeterName());
-                    readMapperCopyVo.setMeterId(epInstrumentAccount.getId());
-                    readMapperCopyVo.setStatus(epInstrumentAccount.getStatus());
-                    instrumentAccountMeterList.add(readMapperCopyVo);
-                }
-            } else {
-                instrumentAccountMeterList.add(meterReadMapperVO);
-            }
-
-        }
-
-        Set<Integer> meterIdSet = instrumentAccountMeterList.stream().map(MeterReadMapperVO::getMeterId).collect(Collectors.toSet());
+        Set<Integer> meterIdSet = meterReadMapperVOList.stream().map(MeterReadMapperVO::getMeterId).collect(Collectors.toSet());
         List<EpMeterRead> epMeterReadList = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).ge(EpMeterRead::getReadDate, firstDayOfMonth).le(EpMeterRead::getReadDate, endDay));
-        for (MeterReadMapperVO meterReadMapperVO : instrumentAccountMeterList) {
+        for (MeterReadMapperVO meterReadMapperVO : meterReadMapperVOList) {
             List<EpMeterRead> meterReadList = epMeterReadList.stream().filter(epMeterRead -> Objects.equals(meterReadMapperVO.getMeterId(), epMeterRead.getMeterId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(meterReadList)) {
                 for (EpMeterRead epMeterRead : meterReadList) {

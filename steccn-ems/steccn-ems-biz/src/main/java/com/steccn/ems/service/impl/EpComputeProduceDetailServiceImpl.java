@@ -105,7 +105,10 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                     epProduceDetailVO.setClassDate(localDate);
                     epProduceDetailVO.setClassId(i);
                     epProduceDetailVO.setOfficeId(pmsReportWorkVO.getStationId());
-                    List<QtCheckTaskDetailItemMaterialVO> taskDetailItemMaterialVOList = itemMaterialVOList.stream().filter(itemMaterial -> itemMaterial.getMaterialId().equals(pmsReportWorkVO.getMaterialId())).collect(Collectors.toList());
+                    epProduceDetailVO.setProductLineId(pmsReportWorkVO.getProductLineId());
+                    List<QtCheckTaskDetailItemMaterialVO> taskDetailItemMaterialVOList = itemMaterialVOList.stream()
+                            .filter(itemMaterial -> itemMaterial.getMaterialId().equals(pmsReportWorkVO.getMaterialId())
+                            && itemMaterial.getProductLine().getId().equals(pmsReportWorkVO.getProductLineId())).collect(Collectors.toList());
                     EqpSpareVO spareVO = spareMap.get(pmsReportWorkVO.getMaterialId());
                     if (Objects.nonNull(spareVO)) {
                         epProduceDetailVO.setThickQuantity(spareVO.getThickQuantity());
@@ -131,7 +134,21 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             }
         }
 
-        recursionParentData(epProduceDetailVoList, epProduceDetailVoList);
+        List<EpProduceDetailVO> parentProduceDetailVOList = new ArrayList<>();
+        Set<Integer> officeIdSet = epProduceDetailVoList.stream().map(EpProduceDetailVO::getOfficeId).collect(Collectors.toSet());
+        Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(officeIdSet)).getData();
+        Map<String, List<EpProduceDetailVO>> map = epProduceDetailVoList.stream().collect(Collectors.groupingBy(epProduceDetailVO -> epProduceDetailVO.getClassId()
+                + "," + epProduceDetailVO.getClassDate()
+                + "," + epProduceDetailVO.getMaterialId()
+                + "," + epProduceDetailVO.getProductLineId()));
+        for (Map.Entry<String, List<EpProduceDetailVO>> entry : map.entrySet()) {
+            EpProduceDetailVO epProduceDetailVO = new EpProduceDetailVO();
+            BeanUtils.copyProperties(entry.getValue().get(0),epProduceDetailVO);
+            epProduceDetailVO.setOfficeId(parentOfficeMap.get(entry.getValue().get(0).getOfficeId()).getParentId());
+            parentProduceDetailVOList.add(epProduceDetailVO);
+        }
+        epProduceDetailVoList.addAll(parentProduceDetailVOList);
+        recursionParentData(parentProduceDetailVOList, epProduceDetailVoList);
 
         return epProduceDetailVoList;
     }
