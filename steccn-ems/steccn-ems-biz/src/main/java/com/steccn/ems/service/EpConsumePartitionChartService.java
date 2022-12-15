@@ -6,6 +6,7 @@ import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.dto.EpTableDTO;
+import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
@@ -86,4 +87,11 @@ public interface EpConsumePartitionChartService {
      * @return 分页参数
      */
     Page<ConsumePartitionUnitClassDetailVO> consumePartitionUnitClassDetail(EpTableDTO dto);
+
+    /**
+     * 领导驾驶舱-总体能耗趋势(近7日)-折线图
+     * @param dto dto
+     * @return
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> totalConsumePartitionLine(EpTotalConsumeDTO dto);
 }

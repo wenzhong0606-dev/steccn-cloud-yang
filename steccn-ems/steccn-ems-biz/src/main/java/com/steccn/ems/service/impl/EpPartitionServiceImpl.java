@@ -274,6 +274,21 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
+    public Map<Integer, EpPartition> rootMap(List<Integer> energyType) {
+        Map<Integer, EpPartition> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(energyType)) {
+            //获取能源的所有根节点
+            List<EpPartition> rootList = list(new LambdaQueryWrapper<EpPartition>()
+                    .in(EpPartition::getType, energyType)
+                    .isNull(EpPartition::getParentId));
+            if (CollUtil.isNotEmpty(rootList)) {
+                rootList.forEach(ele -> resMap.put(ele.getType(), ele));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto) {
         //先获取该能源类型下的全量数据
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));

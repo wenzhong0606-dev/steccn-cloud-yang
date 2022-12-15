@@ -91,4 +91,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Long,List<EpPartitionVO>> allNextChildren(Integer type);
+
+    /**
+     * 根据能耗类型查询能耗分区树根节点
+     * @param energyType 能耗类型
+     * @return
+     */
+    Map<Integer, EpPartition> rootMap(List<Integer> energyType);
 }

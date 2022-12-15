@@ -13,6 +13,7 @@ import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpTableDTO;
+import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
@@ -21,15 +22,14 @@ import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yequan
@@ -148,6 +148,14 @@ public class EpConsumePartitionChartController {
     @ApiOperation(value = "单耗历史对比-明细")
     public  R<Page<ConsumePartitionUnitClassDetailVO>> consumePartitionUnitHistoryDetail(@Valid @RequestBody EpTableDTO dto) {
         return R.success();
+    }
+
+    @PostMapping("/total/line")
+    @ApiOperation(value = "领导驾驶舱-总体能耗趋势(近7日)-折线图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> totalConsumePartitionLine(@Valid @RequestBody EpTotalConsumeDTO dto) {
+        dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        dto.setEnergyType(Arrays.asList(1, 2, 3, 4));
+        return R.success(epConsumePartitionChartService.totalConsumePartitionLine(dto));
     }
 
 }
