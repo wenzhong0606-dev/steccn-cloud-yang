@@ -289,15 +289,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
+    public List<EpPartitionVO> getAllChildrenById(Long partitionId) {
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionId));
+        List<EpPartitionVO> epPartitionVOList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        return epPartitionVOList;
+    }
+
+    @Override
     public EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto) {
         //先获取该能源类型下的全量数据
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
         EpPartition childPartition = getById(dto.getChildId());
-        Assert.notNull(childPartition,"该子节点不存在");
+        if (Objects.isNull(childPartition)){
+            return null;
+        }
         EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
         BeanUtils.copyProperties(childPartition,childPartitionVO);
-       EpPartitionParentVO parentVO = getParentListByChildId(childPartitionVO, epPartitions);
-        return parentVO;
+       EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
+        return parentPartitionVO;
     }
 
     private EpPartitionParentVO getParentListByChildId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
@@ -311,7 +320,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }else {
             //如果孩子id的排序不为0则表明其至少有一个父类
             //先lou出所有父节点
-
             getAllParentByParentId(childPartitionVO,epPartitions);
         }
         return childPartitionVO;

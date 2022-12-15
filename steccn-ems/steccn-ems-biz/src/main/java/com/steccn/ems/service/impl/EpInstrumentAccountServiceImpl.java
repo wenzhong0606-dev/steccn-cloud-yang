@@ -22,14 +22,12 @@ import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.vo.EpEnergyTypeVO;
-import com.steccn.ems.vo.EpInstrumentAccountPageVO;
-import com.steccn.ems.vo.EpInstrumentAccountVO;
-import com.steccn.ems.vo.EpPartitionVO;
+import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.vo.QtSpcReportDetailVO;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -78,26 +76,29 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 //可展示的未删除的
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-        getRepeatJudgment(dto.getId(), count,"该节点下已经有仪表,请勿重复创建");
+        getRepeatJudgment(dto.getId(), count,"该节点下已经有仪表,请勿多次创建");
 
-        long size = count(new LambdaQueryWrapper<EpInstrumentAccount>()
-                .eq(EpInstrumentAccount::getDistantMapCode, dto.getDistantMapCode())
-                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-        getRepeatJudgment(dto.getId(), size,"远传表映射编码不能重复");
+        if (StringUtils.isNotBlank(dto.getDistantMapCode())){
+            List<EpInstrumentAccount> list = list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                    .eq(EpInstrumentAccount::getDistantMapCode, dto.getDistantMapCode())
+                    .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
+            getRepeatJudgment(dto.getId(), list.size(),"远传表映射编码不能重复");
+        }
+
         long sizeMeterName = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getMeterName, dto.getMeterName())
                 .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
        getRepeatJudgment(dto.getId(),sizeMeterName,"仪表名称不能重复");
-        if (Objects.nonNull(dto.getSite())||StringUtils.isNotBlank(dto.getSiteName())){
+
+        if (StringUtils.isNotBlank(dto.getSiteName())&&dto.getMeterType()!=1){
             //查询电表下的所有安装位置有无重复
-            long sizeSite = count(new LambdaQueryWrapper<EpInstrumentAccount>()
+            long sizeSiteName = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                    .eq(Objects.nonNull(dto.getSite()),EpInstrumentAccount::getSite, dto.getSite())
-                    .eq(StringUtils.isNotBlank(dto.getSiteName()),EpInstrumentAccount::getSiteName,dto.getSiteName())
+                    .eq(EpInstrumentAccount::getSiteName,dto.getSiteName())
                     .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-        getRepeatJudgment(dto.getId(),sizeSite,"安装位置不能重复");
+        getRepeatJudgment(dto.getId(),sizeSiteName,"安装位置不能重复");
         }
         if (StringUtils.isNotBlank(dto.getAssetsCode())){
             //查询数据库中的资产编码
@@ -144,7 +145,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Page<EpInstrumentAccountPageVO> page = new Page<>();
         //先筛选掉不合条件的数据
         instrumentAccountVOS = instrumentAccountVOS.stream().filter(s -> Objects.nonNull(s)
-                && Objects.nonNull(s.getPartitionNode())).collect(Collectors.toList());
+                && Objects.nonNull(s.getPartitionNode())&&Objects.nonNull(s.getMeterType())).collect(Collectors.toList());
         if (CollUtil.isEmpty(instrumentAccountVOS)) {
             //如果为空返回空对象
             return page;
@@ -184,9 +185,15 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 s.setSiteName(dictMap.get(s.getSite()));
             }
             if (CollUtil.isNotEmpty(epPartitionNameListVO)&&Objects.nonNull(s.getPartitionNode())){
-                s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()));
+                s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
             }
-
+            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
+            epPartitionChildTypeDTO.setType(s.getMeterType());
+            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
+            EpPartitionParentVO parentList = epPartitionService.getParentList(epPartitionChildTypeDTO);
+            if (Objects.nonNull(parentList)){
+                s.setParentList(parentList);
+            }
             //设置最后抄表时间
             if (CollUtil.isNotEmpty(groupByMeter)){
                 //先判断仪表的所属类型

@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EpInstrumentAccountPageVO implements Serializable {
@@ -11,6 +12,11 @@ public class EpInstrumentAccountPageVO implements Serializable {
      * 主键id
      */
     private Integer id;
+
+    /**
+     * 能源类型
+     */
+    private Integer meterType;
 
     /**
      * 仪表名称
@@ -23,9 +29,14 @@ public class EpInstrumentAccountPageVO implements Serializable {
     private Long partitionNode;
 
     /**
+     * 该节点的父节点
+     */
+    private EpPartitionParentVO parentList;
+
+    /**
      * 所属分区节点名称
      */
-    private EpPartitionVO partitionNodeName;
+    private String partitionNodeName;
 
     /**
      * 0实体远传仪表、1实体非远传仪表、2虚拟仪表

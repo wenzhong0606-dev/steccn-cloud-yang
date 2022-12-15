@@ -44,7 +44,6 @@ public class EpInstrumentAccountDTO implements Serializable {
     /**
      * 远传表映射编码
      */
-    @NotNull(message = "远传表映射编码不能为空")
     @Length(max=20,message = "远传表映射编码长度不能超过20")
     private String distantMapCode;
 
