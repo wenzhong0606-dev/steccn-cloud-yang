@@ -45,7 +45,7 @@ public class MeterReadMapperVO {
     /**
      * 班次id
      */
-    private Long classId;
+    private Integer classId;
 
     /**
      * 抄表日期

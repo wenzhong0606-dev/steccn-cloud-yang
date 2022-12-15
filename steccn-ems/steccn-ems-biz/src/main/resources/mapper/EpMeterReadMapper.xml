@@ -105,16 +105,10 @@
         SELECT
 	        p.parent_id parentId,
 	        p.office_name officeName,
-	        p.id partitionId,
-	        a.entity_table entityTable,
-	        a.meter_name meterName,
-	        a.id meterId,
-	        a.status status
+	        p.id partitionId
         FROM
 	        ep_partition p
-	        LEFT JOIN ep_instrument_account a ON p.id = a.partition_node
         WHERE
-            p.del_flag = 0 and
-	         (a.meter_type = #{meterType} OR a.meter_type IS NULL)
+            p.del_flag = 0 and  p.type = #{meterType}
     </select>
 </mapper>
