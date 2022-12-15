@@ -178,19 +178,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     public Boolean add(EpMeterReadAddDTO dto) {
         EpMeterRead epMeterRead = new EpMeterRead();
         BeanUtils.copyProperties(dto, epMeterRead);
-        epMeterRead.setReadValue(dto.getReadValue());
+        EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
+
         if (dto.getAdminFlag().equals(1)) {
-            epMeterRead.setReadValue(null);
             epMeterRead.setAdminTime(LocalDateTime.now());
             epMeterRead.setAdminValue(dto.getReadValue());
+            epMeterOperationRecord.setOpNode(1);
         } else {
             epMeterRead.setReadTime(LocalDateTime.now());
+            epMeterRead.setReadValue(dto.getReadValue());
+            epMeterOperationRecord.setOpNode(0);
         }
         save(epMeterRead);
         SteccnUser user = SecurityUtils.getUser();
-        EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
-        epMeterOperationRecord.setOpNode(0);
         epMeterOperationRecord.setOpBy(user.getUserId());
         epMeterOperationRecord.setOpName(user.getName());
         epMeterOperationRecord.setOpValueOld(dto.getReadValue());
@@ -763,6 +764,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<MeterReadMapperVO> meterReadMapperVOList = this.baseMapper.selectAllByMeterType(meterType);
 
         Set<Integer> meterIdSet = meterReadMapperVOList.stream().map(MeterReadMapperVO::getMeterId).collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(meterIdSet)) {
+            return meterReadMapperVOList;
+        }
         List<EpMeterRead> epMeterReadList = list(new LambdaQueryWrapper<EpMeterRead>().in(EpMeterRead::getMeterId, meterIdSet).ge(EpMeterRead::getReadDate, firstDayOfMonth).le(EpMeterRead::getReadDate, endDay));
         for (MeterReadMapperVO meterReadMapperVO : meterReadMapperVOList) {
             List<EpMeterRead> meterReadList = epMeterReadList.stream().filter(epMeterRead -> Objects.equals(meterReadMapperVO.getMeterId(), epMeterRead.getMeterId())).collect(Collectors.toList());
