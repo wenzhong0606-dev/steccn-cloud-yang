@@ -36,10 +36,10 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
     Page<EpInstrumentAccountPageVO> getEpInstrumentAccountVOPage(EpInstrumentAccountPageDTO dto);
 
     /**
-     * 获取所有未删除仪表所属分区节点id
+     * 根据仪表类型(即能源类型)获取所有未删除仪表所属分区节点id
      * @return
      */
-    List<Long> getPartitionNodes ();
+    List<Long> getPartitionNodes (Integer energyType);
 
     /**
      * 修改仪表台账状态

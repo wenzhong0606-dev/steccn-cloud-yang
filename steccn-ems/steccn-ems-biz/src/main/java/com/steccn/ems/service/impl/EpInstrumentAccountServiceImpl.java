@@ -280,9 +280,10 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     }
 
     @Override
-    public List<Long> getPartitionNodes() {
+    public List<Long> getPartitionNodes(Integer energyType) {
         List<Long> partitionNodesVO = Lists.newArrayList();
         List<Long> partitionNodes = list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getMeterType,energyType)
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES))
                 .stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(partitionNodes)){

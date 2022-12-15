@@ -62,7 +62,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 .eq(EpPartition::getDelFlag,MpConstant.NO));
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
-            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList);
+            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList,energyType);
                epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
             }
         return epPartitionNameListVO;
@@ -334,13 +334,13 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param dataList
      * @return
      */
-    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList){
+    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
         //定义返回数据集合
         List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
-        //去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
-        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes();
+        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
+        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
         //获取所有根节点
-        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId()) || v.getParentId() == 0).collect(Collectors.toList());
+        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(rootList)){
             rootList.sort(Comparator.comparing(EpPartition::getSort));
             //把根节点从全量数据集合中删除
@@ -371,7 +371,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
         //获取当前节点的子级
         List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
-                && parentVO.getId() == v.getParentId()).collect(Collectors.toList());
+                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(children)){
             children.sort(Comparator.comparing(EpPartition::getSort));
             List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);
