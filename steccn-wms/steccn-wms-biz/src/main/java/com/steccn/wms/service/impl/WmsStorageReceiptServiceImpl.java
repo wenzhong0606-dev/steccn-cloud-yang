@@ -124,7 +124,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             //4.保存入库单信息
             save(model);
             //5.保存入库单明细信息
-            if (CollUtil.isNotEmpty(dto.getList())) {
+            if (Objects.nonNull(dto.getList())) {
                 List<WmsInventoryDTO> infoList = Lists.newArrayList();
                 List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
                 Long currentMax = 0L;

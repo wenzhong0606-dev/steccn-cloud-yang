@@ -157,7 +157,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             //3.修改
             updateById(model);
             //3.1 修改详情数据
-            if (CollUtil.isNotEmpty(dto.getList())) {
+            if (Objects.nonNull(dto.getList())) {
                 List<WmsDeliveryReceiptInfo> wmsDeliveryReceiptInfoList = Lists.newArrayList();
                 List<WmsInventoryDTO> addList = Lists.newArrayList();
                 List<WmsInventoryDTO> updateList = Lists.newArrayList();

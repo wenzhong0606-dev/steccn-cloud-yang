@@ -63,7 +63,7 @@ public interface WmsManagerConstant {
 
 
     /**
-     * 状态:0 ：已创建  1：已确认  2：部分确认 3：已完成 4:已删除 ）
+     * 状态:0 ：已创建  1：运输中  2：已签收 ）
      */
     @Getter
     @AllArgsConstructor

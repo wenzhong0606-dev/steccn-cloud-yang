@@ -34,4 +34,8 @@ public class WmsLogisticsInfoVO {
     @ApiModelProperty("联系方式")
     private String contactWay;
 
+    @ApiModelProperty("物流单id")
+    private Long logisticsId;
+
+
 }

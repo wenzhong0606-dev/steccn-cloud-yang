@@ -22,6 +22,7 @@ import com.steccn.wms.service.WmsLogisticsOrderService;
 import com.steccn.wms.mapper.WmsLogisticsOrderMapper;
 import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.util.WmsCodeUtil;
+import com.steccn.wms.vo.WmsLogisticsInfoVO;
 import com.steccn.wms.vo.WmsLogisticsOrderVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
@@ -95,15 +96,29 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         List<WmsLogisticsOrderVO> list = BeanUtil.copyToList(page.getRecords(), WmsLogisticsOrderVO.class);
         Set<Integer> officeIdSet = Sets.newHashSet();
         Set<Long> dictIdSet = Sets.newHashSet();
+        List<Long> orderIds = Lists.newArrayList();
         list.forEach(order -> {
+            orderIds.add(order.getId());
             dictIdSet.add(order.getType());
             officeIdSet.add(order.getLogisticsCompany());
         });
+        // 获取物流收发货机构
+        Map<Long, List<WmsLogisticsInfoVO>> map = wmsLogisticsInfoService.mapByLogisticsId(orderIds);
+        List<WmsLogisticsInfoVO> infoList = Lists.newArrayList();
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
         list.forEach(order -> {
+            List<WmsLogisticsInfoVO> orDefault = map.getOrDefault(order.getId(), infoList);
+            for (WmsLogisticsInfoVO wmsLogisticsInfoVO : orDefault) {
+                if (WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode().equals(wmsLogisticsInfoVO.getType())){
+                    order.setReceiving(wmsLogisticsInfoVO);
+                }else if (WmsManagerConstant.LogisticsTypeEnum.ONE.getCode().equals(wmsLogisticsInfoVO.getType())){
+                    order.setShipments(wmsLogisticsInfoVO);
+                }
+            }
             order.setTypeName(dictMap.get(order.getType()));
             order.setLogisticsCompanyName(officeMap.get(order.getLogisticsCompany()));
+
         });
         return resPage.setRecords(list);
     }
@@ -160,9 +175,9 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             if (CollUtil.isNotEmpty(dto.getWayList())) {
                 List<WmsLogisticsTransportationDTO> wayDTOList = dto.getWayList();
                 List<WmsLogisticsTransportation> wayList = Lists.newArrayList();
-                wayDTOList.forEach( wayDto -> {
+                wayDTOList.forEach(wayDto -> {
                     WmsLogisticsTransportation wmsLogisticsTransportation = new WmsLogisticsTransportation();
-                    BeanUtil.copyProperties(wayDto,wmsLogisticsTransportation);
+                    BeanUtil.copyProperties(wayDto, wmsLogisticsTransportation);
                     wmsLogisticsTransportation.setLogisticsId(model.getId());
                     wayList.add(wmsLogisticsTransportation);
                 });

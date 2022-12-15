@@ -58,4 +58,10 @@ public class WmsLogisticsOrderVO {
 
     @ApiModelProperty("详情")
     private List<WmsLogisticsDetailVO> list;
+
+    @ApiModelProperty("创建人")
+    private String createName;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createTime;
 }
