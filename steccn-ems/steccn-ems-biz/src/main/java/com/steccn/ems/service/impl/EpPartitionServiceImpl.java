@@ -169,22 +169,25 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //1、根据能源类型返回树状数据
         EpPartitionNameListVO epEnergyTypeVOList = this.getEpEnergyTypeVOList(dto.getType());
         List<EpPartitionVO> treeList = epEnergyTypeVOList.getEpPartitionVOList();
-        //准备数据
-        List<EpPartitionVO> childTree = Lists.newArrayList();
         EpEnergyTreeDTO result = new EpEnergyTreeDTO();
-        dto.getPartitionId().forEach(partitionTmp -> {
-            //过滤子树信息
-            EpPartitionVO resTmp = new EpPartitionVO();
-            EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
-            childTree.add(child);
-        });
         //根据子树信息返回详情
         Set<Long> partitionIdResult = Sets.newHashSet();
-        for(EpPartitionVO tmp:childTree){
-            tmp = setTreeDetail(tmp);
-            Set<Long> partitionTmp = Sets.newHashSet();
-            partitionTmp = getRealMeter(tmp,partitionTmp);
-            partitionIdResult.addAll(partitionTmp);
+        //准备数据
+        List<EpPartitionVO> childTree = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(treeList)){
+
+            dto.getPartitionId().forEach(partitionTmp -> {
+                //过滤子树信息
+                EpPartitionVO resTmp = new EpPartitionVO();
+                EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
+                childTree.add(child);
+            });
+            for(EpPartitionVO tmp:childTree){
+                tmp = setTreeDetail(tmp);
+                Set<Long> partitionTmp = Sets.newHashSet();
+                partitionTmp = getRealMeter(tmp,partitionTmp);
+                partitionIdResult.addAll(partitionTmp);
+            }
         }
         result.setTree(childTree);
         result.setPartitionIds(partitionIdResult);

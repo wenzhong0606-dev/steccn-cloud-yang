@@ -102,4 +102,11 @@ public interface EpConsumePartitionChartService {
      * @return 饼图
      */
     List<EpEnergyChartPieValueVO<BigDecimal>> totalConsumeEnergyPie(EpTableDTO dto);
+
+    /**
+     * 单耗历史对比-柱状图
+     * @param dto dto请求
+     * @return
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitHistoryChart(EpTableDTO dto);
 }

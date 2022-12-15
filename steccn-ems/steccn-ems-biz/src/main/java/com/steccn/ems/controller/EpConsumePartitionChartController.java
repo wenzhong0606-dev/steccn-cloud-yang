@@ -64,7 +64,6 @@ public class EpConsumePartitionChartController {
     @PostMapping("/history/chart")
     @ApiOperation(value = "能耗历史对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
-        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
         Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrast(dto));
@@ -140,12 +139,16 @@ public class EpConsumePartitionChartController {
     @PostMapping("/unit/history/chart")
     @ApiOperation(value = "单耗历史对比-柱状图")
     public  R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitHistoryChart(@Valid @RequestBody EpTableDTO dto) {
-        return R.success();
+        Assert.notNull(dto.getHistoryStart(),"对比历史，开始日期不能为空");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，结束日期不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitHistoryChart(dto));
     }
 
     @PostMapping("/unit/history/detail")
     @ApiOperation(value = "单耗历史对比-明细")
     public  R<Page<ConsumePartitionUnitClassDetailVO>> consumePartitionUnitHistoryDetail(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getHistoryStart(),"对比历史，开始日期不能为空");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，结束日期不能为空");
         return R.success();
     }
 

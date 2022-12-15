@@ -722,7 +722,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             //获取分区数据集合
             List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
             BigDecimal reduce = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-            if(!BigDecimalUtil.equals(reduce,BigDecimal.ZERO)){
+            if (!BigDecimalUtil.equals(reduce, BigDecimal.ZERO)) {
                 EpEnergyChartPieValueVO<BigDecimal> vo = new EpEnergyChartPieValueVO<>();
                 vo.setName(partitionIdNameMap.get(partitionId));
                 vo.setValue(reduce);
@@ -731,6 +731,61 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         }
         return resList;
+    }
+
+    @Override
+    public EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitHistoryChart(EpTableDTO dto) {
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+
+        LocalDateTime historyStart = LocalDateTime.of(dto.getHistoryStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime historyEnd = LocalDateTime.of(dto.getHistoryEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> historyTupleDTOS = ClassUtil.classRange(historyStart, historyEnd);
+        //获取全量数据表
+        Set<LocalDate> historyDateSet = historyTupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> historyClassDateAllData = epMeterReadService.classDateAllDataUnit(historyDateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(historyClassDateAllData, "历史全量数据表为空");
+
+        List<String> timeList = Lists.newArrayList();
+        timeList.add(dto.getStart() + "-" + dto.getEnd());
+        timeList.add(dto.getHistoryStart() + "-" + dto.getHistoryEnd());
+        List<List<EpMeterReadAllDataVO>> historyContrastList = Lists.newArrayList(classDateAllData, historyClassDateAllData);
+        EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
+        List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
+        Map<Long, String> officeMap = Maps.newHashMap();
+
+
+        //遍历历史
+        for (int i = 0; i < historyContrastList.size(); i++) {
+            List<EpMeterReadAllDataVO> dataVOList = historyContrastList.get(i);
+            EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
+            epChartGraphxAxisDTO.setXAxis(timeList.get(i));
+            List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
+            List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
+            TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
+            pole.setField1(Long.valueOf(i));
+            pole.setField2(poleList);
+
+            BigDecimal reduce = dataVOList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", reduce);
+            poleList.add(stack);
+            data.add(pole);
+            epChartGraphxAxisDTO.setData(data);
+            dataList.add(epChartGraphxAxisDTO);
+            officeMap.put(Long.valueOf(i), timeList.get(i));
+        }
+        epChartGraphDTO.setOfficeMap(officeMap);
+        epChartGraphDTO.setDataList(dataList);
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
+        convert.getXData().setData(Lists.newArrayList());
+        return convert;
     }
 
     /**
