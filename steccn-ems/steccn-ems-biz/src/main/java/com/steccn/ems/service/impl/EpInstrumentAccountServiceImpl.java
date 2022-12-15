@@ -187,13 +187,19 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             if (CollUtil.isNotEmpty(epPartitionNameListVO)&&Objects.nonNull(s.getPartitionNode())){
                 s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
             }
-            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
-            epPartitionChildTypeDTO.setType(s.getMeterType());
-            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
-            EpPartitionParentVO parentList = epPartitionService.getParentList(epPartitionChildTypeDTO);
-            if (Objects.nonNull(parentList)){
-                s.setParentList(parentList);
-            }
+//            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
+//            epPartitionChildTypeDTO.setType(s.getMeterType());
+//            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
+//            EpPartitionParentVO partitionParent = epPartitionService.getParentList(epPartitionChildTypeDTO);
+//            if (Objects.nonNull(partitionParent)){
+//                List<String> partitionName = Lists.newArrayList();
+//               if (CollUtil.isNotEmpty(partitionParent.getParentList())){
+//                   List<EpPartitionParentVO> parentList = partitionParent.getParentList();
+//                   parentList.
+//               }
+//                partitionName.add(partitionParent.getOfficeName());
+//
+//            }
             //设置最后抄表时间
             if (CollUtil.isNotEmpty(groupByMeter)){
                 //先判断仪表的所属类型

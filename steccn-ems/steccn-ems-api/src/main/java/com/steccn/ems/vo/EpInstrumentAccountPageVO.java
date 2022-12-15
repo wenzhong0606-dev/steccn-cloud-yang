@@ -29,11 +29,6 @@ public class EpInstrumentAccountPageVO implements Serializable {
     private Long partitionNode;
 
     /**
-     * 该节点的父节点
-     */
-    private EpPartitionParentVO parentList;
-
-    /**
      * 所属分区节点名称
      */
     private String partitionNodeName;

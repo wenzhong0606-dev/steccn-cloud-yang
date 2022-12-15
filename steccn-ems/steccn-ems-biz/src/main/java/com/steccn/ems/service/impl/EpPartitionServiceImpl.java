@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -153,10 +154,27 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             List<EpPartition> addPartitionList = BeanUtil.copyToList(dealAddPartitionList, EpPartition.class);
             saveOrUpdateBatch(addPartitionList);
         }
-        if (CollUtil.isNotEmpty(deletePartitionList)){
+        if (CollUtil.isNotEmpty(deletePartitionList)) {
+            List<EpInstrumentAccount> epInstrumentAccounts = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                    .eq(EpInstrumentAccount::getMeterType, dto.getType()));
+            //lou出仪表里面某个类型的所有节点
+            List<Long> partitionList = epInstrumentAccounts.stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
+            Map<Long, String> partionIdNames = Maps.newHashMap();
+            epPartitions.stream().forEach(s -> {
+                partionIdNames.put(s.getId(), s.getOfficeName());
+            });
+            //分区树表中
+            List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
+            //如果有仪表绑定了该节点无法删除
+            deletePartitionList.forEach(s -> {
+                if (partitionList.contains(s) && partitionIds.contains(s)) {
+                    throw new BusinessException("已有仪表绑定节点:" + partionIdNames.get(s) + ",请重新编辑");
+                }
+            });
             removeByIds(deletePartitionList);
         }
-    return Boolean.TRUE;
+        return Boolean.TRUE;
     }
 
     /**
@@ -308,7 +326,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }
         EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
         BeanUtils.copyProperties(childPartition,childPartitionVO);
-       EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
+        EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
         return parentPartitionVO;
     }
 
@@ -322,13 +340,14 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             return childPartitionVO;
         }else {
             //如果孩子id的排序不为0则表明其至少有一个父类
-            //先lou出所有父节点
+            //子挂父
             getAllParentByParentId(childPartitionVO,epPartitions);
         }
         return childPartitionVO;
     }
 
     private void getAllParentByParentId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
+
         List<EpPartition> parentList = epPartitions.stream().filter(s -> Objects.nonNull(childPartitionVO.getParentId())&&
                 childPartitionVO.getParentId().equals(s.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(parentList)){
