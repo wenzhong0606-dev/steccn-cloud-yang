@@ -26,11 +26,11 @@ public class WmsScanInventoryVO implements Serializable {
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("仓库")
-    private Long warehouseId;
+    private Integer warehouseId;
     @ApiModelProperty("仓库名称")
     private String warehouseName;
     @ApiModelProperty("货架id")
-    private Long shelfId;
+    private Integer shelfId;
     @ApiModelProperty("货架名称")
     private String shelfName;
     @ApiModelProperty("物料id")
@@ -41,6 +41,11 @@ public class WmsScanInventoryVO implements Serializable {
     private Integer status;
     @ApiModelProperty("单位名称")
     private String unitName;
+
+    @ApiModelProperty("出库单")
+    private String deliveryReceiptCode;
+    @ApiModelProperty("出库时间")
+    private LocalDateTime deliveryReceiptTime;
 
     private static final long serialVersionUID = 1L;
 }

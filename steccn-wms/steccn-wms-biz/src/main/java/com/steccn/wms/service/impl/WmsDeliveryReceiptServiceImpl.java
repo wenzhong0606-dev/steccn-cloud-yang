@@ -6,7 +6,6 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -351,7 +350,6 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,caseNo);
         WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
         if(Objects.isNull(wmsInventory) ) return R.failure("未查询到此箱号信息，请联系管理员");
-        if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) return R.failure("可用数量不足，请联系管理员");
         //检索当前箱号是否已出库
         LambdaQueryWrapper<WmsDeliveryReceiptInfo> receiptInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
         receiptInfoLambdaQueryWrapper.eq(WmsDeliveryReceiptInfo::getInventoryId,wmsInventory.getId());
@@ -365,8 +363,11 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             units.add(wmsInventory.getUnit());
             R<Map<Long, SysDictVO>> sysDicts = remoteDictFeignApi.listById(units);
             if(sysDicts.getData().size()>0) wmsScanInventoryVO.setUnitName(sysDicts.getData().get(wmsInventory.getUnit()).getName());
+            wmsScanInventoryVO.setDeliveryReceiptCode(wmsDeliveryReceipt.getCode());
+            wmsScanInventoryVO.setDeliveryReceiptTime(wmsDeliveryReceipt.getAffirmTime());
             return R.success(wmsScanInventoryVO);
         }
+        if(wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0 ) return R.failure("可用数量不足，请联系管理员");
         BeanUtils.copyProperties(wmsInventory,wmsScanInventoryVO);
         wmsScanInventoryVO.setInventoryId(wmsInventory.getId());
         return R.success(wmsScanInventoryVO);
