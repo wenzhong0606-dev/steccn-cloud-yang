@@ -402,7 +402,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         energyParamDTO.setPartitionId(partitionIdList);
         energyParamDTO.setType(energyType);
         EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
-        Assert.notEmpty(childTree.getPartitionIds(), "组织机构中没有实体仪表");
+        SteccnTableAssertUtil.notEmpty(childTree.getPartitionIds(), "组织机构中没有实体仪表");
 
         //查询全量数据表
         List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()

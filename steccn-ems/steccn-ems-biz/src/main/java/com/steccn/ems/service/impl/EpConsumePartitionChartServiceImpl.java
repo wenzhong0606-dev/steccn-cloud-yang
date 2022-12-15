@@ -37,6 +37,7 @@ import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.util.XAxisUtil;
 import lombok.RequiredArgsConstructor;
@@ -523,7 +524,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
 
         //部门行业的单耗标准
-        List<StandardVO> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
+        List<StandardVO<BigDecimal>> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
         standardVOList = standardVOList.stream().filter(v -> {
             if (BigDecimalUtil.equals(dto.getThick().get(0), new BigDecimal("-1"))) {
                 return BigDecimalUtil.equals(null, v.getThick());
@@ -751,7 +752,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> historyDateSet = historyTupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> historyClassDateAllData = epMeterReadService.classDateAllDataUnit(historyDateSet, dto.getEnergyType(), dto.getPartitionIdList());
+
         SteccnTableAssertUtil.notEmpty(historyClassDateAllData, "历史全量数据表为空");
+
 
         List<String> timeList = Lists.newArrayList();
         timeList.add(dto.getStart() + "-" + dto.getEnd());
@@ -761,8 +764,22 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
         Map<Long, String> officeMap = Maps.newHashMap();
 
+        //查询这两个时间段内是否有有效期内的部门单耗
+        List<StandardVO<BigDecimal>> leftStandardSource = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
+        List<StandardVO<BigDecimal>> rightStandardSource = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getHistoryStart(), dto.getHistoryEnd());
 
-        //遍历历史
+        SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode("departmental_standard","product_unit_consumption_standard")).get();
+        Assert.notNull(sysDictVO, "部门标准数据字典已被删除");
+        List<StandardVO<BigDecimal>> leftStandard = leftStandardSource.stream().filter(v -> v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
+        List<StandardVO<BigDecimal>> rightStandard = rightStandardSource.stream().filter(v -> v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
+        //条件1：部门标准的有效期覆盖选中的日期范围
+        boolean flag = Boolean.TRUE;
+        if((leftStandard.size() > 1 || rightStandard.size() > 1) || (CollUtil.isEmpty(leftStandard) || CollUtil.isEmpty(rightStandard))){
+            flag = Boolean.FALSE;
+        }
+        List<List<StandardVO<BigDecimal>>> standardList = Lists.newArrayList(leftStandard, rightStandard);
+
+        //遍历2个时间段的集合
         for (int i = 0; i < historyContrastList.size(); i++) {
             List<EpMeterReadAllDataVO> dataVOList = historyContrastList.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
@@ -773,8 +790,16 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             pole.setField1(Long.valueOf(i));
             pole.setField2(poleList);
 
-            BigDecimal reduce = dataVOList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
-            TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", reduce);
+            if(flag){
+                List<StandardVO<BigDecimal>> standardVO = standardList.get(i);
+                StandardVO<BigDecimal> currentStandard = standardVO.get(0);
+                BigDecimal standard = Objects.nonNull(currentStandard) ? currentStandard.getValue() : BigDecimal.ZERO;
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("部门标准", standard);
+                poleList.add(stack);
+            }
+            BigDecimal consume = dataVOList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal productNum = dataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(consume,productNum));
             poleList.add(stack);
             data.add(pole);
             epChartGraphxAxisDTO.setData(data);
@@ -783,8 +808,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         epChartGraphDTO.setOfficeMap(officeMap);
         epChartGraphDTO.setDataList(dataList);
+
+
+        List<StandardVO<BigDecimal>> left = leftStandardSource.stream().filter(v -> !v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
+        List<StandardVO<BigDecimal>> right = rightStandardSource.stream().filter(v -> !v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
+        left.addAll(right);
+        epChartGraphDTO.setStandardList(left);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
-        convert.getXData().setData(Lists.newArrayList());
+        convert.getXData().setData2(Lists.newArrayList());
         return convert;
     }
 

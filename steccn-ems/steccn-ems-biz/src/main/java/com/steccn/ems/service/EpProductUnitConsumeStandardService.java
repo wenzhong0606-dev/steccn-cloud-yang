@@ -8,6 +8,7 @@ import com.steccn.ems.dto.EpProductUnitStandardDTO;
 import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -53,5 +54,5 @@ public interface EpProductUnitConsumeStandardService extends IService<EpProductU
      * @param end 有效期-结束时间
      * @return list
      */
-    List<StandardVO> validStandardList(Integer energyType, LocalDate start, LocalDate end);
+    List<StandardVO<BigDecimal>> validStandardList(Integer energyType, LocalDate start, LocalDate end);
 }

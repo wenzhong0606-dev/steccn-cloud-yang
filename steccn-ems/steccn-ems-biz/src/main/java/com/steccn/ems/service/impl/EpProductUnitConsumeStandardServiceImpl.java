@@ -274,9 +274,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     }
 
     @Override
-    public List<StandardVO> validStandardList(Integer energyType, LocalDate start, LocalDate end) {
+    public List<StandardVO<BigDecimal>> validStandardList(Integer energyType, LocalDate start, LocalDate end) {
         //定义返回集合
-        List<StandardVO> resList = Lists.newArrayList();
+        List<StandardVO<BigDecimal>> resList = Lists.newArrayList();
 
         if (Objects.nonNull(start) && Objects.nonNull(end) && Objects.nonNull(energyType)) {
             //获取有效日期范围内的单耗
