@@ -15,10 +15,7 @@ import com.steccn.qms.vo.QtSubtableVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjuster;
-import java.time.temporal.TemporalField;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,6 +74,7 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
         List<QtCheckTaskDetailItemMaterialVO> resList = this.baseMapper.selectAllByClassTime(startTime, endTime);
         if(Objects.isNull(resList)){
             resList = Lists.newArrayList();
+
         }
         return resList;
     }

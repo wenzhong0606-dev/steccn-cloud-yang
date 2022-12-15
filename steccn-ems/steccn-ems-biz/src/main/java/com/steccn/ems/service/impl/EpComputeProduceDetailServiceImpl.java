@@ -131,7 +131,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             }
         }
 
-        recursionParentData(epProduceDetailVoList,epProduceDetailVoList);
+        recursionParentData(epProduceDetailVoList, epProduceDetailVoList);
 
         return epProduceDetailVoList;
     }
@@ -152,8 +152,11 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         }
         //汇总父节点数据
         List<EpProduceDetailVO> sumParentProduceDetailList = new ArrayList<>();
-        Map<Integer, List<EpProduceDetailVO>> map = parentProduceDetailVOList.stream().collect(Collectors.groupingBy(EpProduceDetailVO::getOfficeId));
-        for (Map.Entry<Integer, List<EpProduceDetailVO>> entry : map.entrySet()) {
+        Map<String, List<EpProduceDetailVO>> map = parentProduceDetailVOList.stream().collect(Collectors.groupingBy(epProduceDetailVO -> epProduceDetailVO.getOfficeId()
+                + "," + epProduceDetailVO.getClassId()
+                + "," + epProduceDetailVO.getClassDate()
+                + "," + epProduceDetailVO.getThickQuantity()));
+        for (Map.Entry<String, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO parentProduceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(entry.getValue().get(0), parentProduceDetailVO);
             BigDecimal sumYield = entry.getValue().stream().filter(parentProduceDetail -> Objects.nonNull(parentProduceDetail.getYield())).map(EpProduceDetailVO::getYield).reduce(BigDecimal.ZERO, BigDecimal::add);

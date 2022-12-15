@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,4 +20,9 @@ public class QtCheckTaskDetailItemMaterialVO {
     private LocalDateTime classTime;
 
     private Integer classId;
+
+    /**
+     * 产线
+     */
+    private QtBaseIdNameDTO productLine;
 }

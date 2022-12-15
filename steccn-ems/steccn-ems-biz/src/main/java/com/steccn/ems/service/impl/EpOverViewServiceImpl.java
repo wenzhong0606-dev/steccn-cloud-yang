@@ -50,7 +50,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         EpOverViewVO epOverViewVO = new EpOverViewVO();
 
         if (type.equals(EpManagerConstant.CardType.SUB_OIL_GAS.getCode())) {
-            yData = getDyData("燃料", "基片制造部", "substrate", selectDate, startLocalDate, null, epOverViewVO);
+            yData = getDyData("燃料(气+油)", "基片制造部", "substrate", selectDate, startLocalDate, null, epOverViewVO);
         } else if (type.equals(EpManagerConstant.CardType.SUB_ELECTRIC_TWO.getCode())) {
             yData = getDyData("电",
                     "基片制造部", "substrate", selectDate, startLocalDate, BigDecimal.valueOf(2), epOverViewVO);
@@ -160,7 +160,9 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         //获取横坐标
         epOverViewVO.setXData(dxData);
         //获取目标值
-        epOverViewVO.setTargetValue(productUnitConsumeStandard.getUnitValue());
+        if (Objects.nonNull(productUnitConsumeStandard)) {
+            epOverViewVO.setTargetValue(productUnitConsumeStandard.getUnitValue());
+        }
         for (LocalDate localDate : dxData) {
             List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> localDate.isEqual(epMeterReadAllDataVO.getReadDate())).collect(Collectors.toList());
             BigDecimal sumConsume = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
