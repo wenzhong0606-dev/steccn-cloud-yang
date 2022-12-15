@@ -67,5 +67,5 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @param response
      * @param request
      */
-    void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception;
+//    void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception;
 }

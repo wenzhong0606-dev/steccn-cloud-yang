@@ -37,7 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sun.misc.BASE64Decoder;
+//import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -361,46 +361,46 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return Boolean.TRUE;
     }
 
-    @Override
-    public void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception {
-        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
-        String line;
-        StringBuilder sb = new StringBuilder();
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-        }
-        br.close();
-        String base = sb.toString();
-        if (!StringUtils.isEmpty(base)) {
-            OutputStream out = null;
-            try {
-                String base64 = base.split(",")[1];
-                byte[] bytes = new BASE64Decoder().decodeBuffer(base64);
-                for (int i = 0; i < bytes.length; ++i) {
-                    if (bytes[i] < 0) {
-                        bytes[i] += 256;
-                    }
-                }
-                // 这里URLEncoder.encode可以防止中文乱码
-                String fileName = "资产卡片".replaceAll("-", "")+".jpg";
-               String realPath = request.getSession().getServletContext().getRealPath("")+ "/normalFiles/workOrderAttach/";
-                File file = new File(realPath);
-
-                if (!file.exists() || !file.isDirectory()) {
-                    file.mkdirs();
-                }
-                out = new FileOutputStream(realPath + "/" + fileName);
-                out.write(bytes);
-                out.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }finally {
-                if (out != null) {
-                    out.close();
-                }
-            }
-        }
-    }
+//    @Override
+//    public void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception {
+//        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+//        String line;
+//        StringBuilder sb = new StringBuilder();
+//        while ((line = br.readLine()) != null) {
+//            sb.append(line);
+//        }
+//        br.close();
+//        String base = sb.toString();
+//        if (!StringUtils.isEmpty(base)) {
+//            OutputStream out = null;
+//            try {
+//                String base64 = base.split(",")[1];
+//                byte[] bytes = new BASE64Decoder().decodeBuffer(base64);
+//                for (int i = 0; i < bytes.length; ++i) {
+//                    if (bytes[i] < 0) {
+//                        bytes[i] += 256;
+//                    }
+//                }
+//                // 这里URLEncoder.encode可以防止中文乱码
+//                String fileName = "资产卡片".replaceAll("-", "")+".jpg";
+//               String realPath = request.getSession().getServletContext().getRealPath("")+ "/normalFiles/workOrderAttach/";
+//                File file = new File(realPath);
+//
+//                if (!file.exists() || !file.isDirectory()) {
+//                    file.mkdirs();
+//                }
+//                out = new FileOutputStream(realPath + "/" + fileName);
+//                out.write(bytes);
+//                out.flush();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }finally {
+//                if (out != null) {
+//                    out.close();
+//                }
+//            }
+//        }
+//    }
 
 
     /**
