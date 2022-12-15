@@ -702,6 +702,37 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return convert;
     }
 
+    @Override
+    public List<EpEnergyChartPieValueVO<BigDecimal>> totalConsumeEnergyPie(EpTableDTO dto) {
+        //1.列出在区间 [起始日期8:00:00, 终止日期+1 8:00:00) 内的所有班次集合A
+        //①区间 [起始日期8:00:00, 终止日期+1 8:00:00)
+        LocalDateTime start = LocalDateTime.of(dto.getStart(), ClassUtil.MORNING_START_TIME);
+        LocalDateTime end = LocalDateTime.of(dto.getEnd().plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集合
+        List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
+        //获取全量数据表
+        Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        //获取
+        Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
+        List<EpEnergyChartPieValueVO<BigDecimal>> resList = Lists.newArrayList();
+        //遍历所有的分区节点
+        for (Long partitionId : dto.getPartitionIdList()) {
+            //获取分区数据集合
+            List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+            BigDecimal reduce = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            if(!BigDecimalUtil.equals(reduce,BigDecimal.ZERO)){
+                EpEnergyChartPieValueVO<BigDecimal> vo = new EpEnergyChartPieValueVO<>();
+                vo.setName(partitionIdNameMap.get(partitionId));
+                vo.setValue(reduce);
+                resList.add(vo);
+            }
+
+        }
+        return resList;
+    }
+
     /**
      * 根据时间范围和组织结构树，查询厚度下拉选项
      *

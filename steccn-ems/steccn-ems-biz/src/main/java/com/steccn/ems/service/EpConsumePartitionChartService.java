@@ -10,6 +10,7 @@ import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
+import com.steccn.ems.vo.EpEnergyChartPieValueVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -94,4 +95,11 @@ public interface EpConsumePartitionChartService {
      * @return
      */
     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> totalConsumePartitionLine(EpTotalConsumeDTO dto);
+
+    /**
+     * 领导驾驶舱-电耗分布(近7日)-饼图
+     * @param dto dto
+     * @return 饼图
+     */
+    List<EpEnergyChartPieValueVO<BigDecimal>> totalConsumeEnergyPie(EpTableDTO dto);
 }

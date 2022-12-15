@@ -11,18 +11,17 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
-import com.steccn.ems.dto.EpSectionPriceHisDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
 import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
+import com.steccn.ems.vo.EpEnergyChartPieValueVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -158,4 +157,17 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.totalConsumePartitionLine(dto));
     }
 
+    @PostMapping("/total/electric/pie")
+    @ApiOperation(value = "领导驾驶舱-电耗分布(近7日)-饼图")
+    public R<List<EpEnergyChartPieValueVO<BigDecimal>>> totalConsumeElectricPie(@Valid @RequestBody EpTableDTO dto) {
+        dto.setEnergyType(1);
+        return R.success(epConsumePartitionChartService.totalConsumeEnergyPie(dto));
+    }
+
+    @PostMapping("/total/water/pie")
+    @ApiOperation(value = "领导驾驶舱-水耗分布(近7日)-饼图")
+    public R<List<EpEnergyChartPieValueVO<BigDecimal>>> totalConsumeWaterPie(@Valid @RequestBody EpTableDTO dto) {
+        dto.setEnergyType(2);
+        return R.success(epConsumePartitionChartService.totalConsumeEnergyPie(dto));
+    }
 }
