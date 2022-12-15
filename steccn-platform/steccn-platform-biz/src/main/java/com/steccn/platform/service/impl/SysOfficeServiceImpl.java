@@ -178,22 +178,34 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
             //复制查询结果到新的集合
             List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
+            //根据一堆元素 ，自己去查询根节点
+            rootVOList = searchRoot(sysOfficeVOS);
             //从上往下递归查询
-            //过滤出层次级别为0的根节点集合
-            Map<Integer, List<SysOfficeVO>> levelMap = sysOfficeVOS.stream().collect(Collectors.groupingBy(SysOfficeVO::getTreeLevel));
-            Integer minLevel = Integer.MAX_VALUE;
-            for (Map.Entry<Integer, List<SysOfficeVO>> entry : levelMap.entrySet()) {
-                if (Objects.nonNull(entry.getKey()) && entry.getKey() < minLevel) {
-                    minLevel = entry.getKey();
-                    rootVOList = entry.getValue();
-                }
-            }
             for (SysOfficeVO root : rootVOList) {
                 List<SysOfficeVO> children = getChildren(sysOfficeVOS, root.getOfficeCode(),root.getId(),root.getOfficeName());
                 root.setChildren(children);
             }
         }
         return rootVOList;
+    }
+
+    /**
+     * 根据一堆元素 ，自己去查询根节点
+     * @param dbList 元素集合
+     * @return
+     */
+    private List<SysOfficeVO> searchRoot(List<SysOfficeVO> dbList) {
+        List<SysOfficeVO> rootList = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(dbList)){
+            for (SysOfficeVO sysOffice : dbList) {
+                //当前节点的父节点不存于数据集合，当前节点便是根节点
+                long count = dbList.stream().filter(v -> v.getOfficeCode().equals(sysOffice.getParentCode())).count();
+                if(count == 0){
+                    rootList.add(sysOffice);
+                }
+            }
+        }
+        return rootList;
     }
 
     /**
