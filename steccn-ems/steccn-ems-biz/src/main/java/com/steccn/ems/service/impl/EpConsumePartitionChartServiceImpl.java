@@ -460,7 +460,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<BaseSelectVO<BigDecimal>> resList = Lists.newArrayList();
         for (BigDecimal thick : sort) {
             String name = null;
-            if (Objects.isNull(thick)) {
+            if (Objects.isNull(thick) || BigDecimalUtil.equals(thick, BigDecimal.valueOf(-1))) {
                 thick = BigDecimal.valueOf(-1);
                 name = "无";
             } else {
@@ -893,7 +893,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, energyType, partitionIdList);
-        SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         return classDateAllData.stream().map(v -> v.getThick()).collect(Collectors.toSet());
     }
 }
