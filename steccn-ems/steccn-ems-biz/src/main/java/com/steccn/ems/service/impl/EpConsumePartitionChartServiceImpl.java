@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.log.Log;
 import com.alibaba.excel.util.MapUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,25 +14,21 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.*;
-import com.steccn.common.vo.BaseSelectVO;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.common.vo.R;
-import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpEnergyType;
-import com.steccn.ems.domain.EpInstrumentAccount;
-import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.EpChartGraphUtil;
-import com.steccn.common.vo.*;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.common.vo.StandardVO;
+import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.*;
 import com.steccn.ems.util.DownloadUtil;
-import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -52,7 +47,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -808,8 +802,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         epChartGraphDTO.setOfficeMap(officeMap);
         epChartGraphDTO.setDataList(dataList);
-
-
         List<StandardVO<BigDecimal>> left = leftStandardSource.stream().filter(v -> !v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
         List<StandardVO<BigDecimal>> right = rightStandardSource.stream().filter(v -> !v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
         left.addAll(right);
@@ -817,6 +809,14 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData2(Lists.newArrayList());
         return convert;
+    }
+
+    @Override
+    public Page<ConsumeHistoryContrastDetailVO> consumePartitionUnitHistoryDetail(EpTableDTO dto) {
+
+
+
+        return null;
     }
 
     /**

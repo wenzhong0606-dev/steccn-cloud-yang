@@ -109,4 +109,11 @@ public interface EpConsumePartitionChartService {
      * @return
      */
     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> consumePartitionUnitHistoryChart(EpTableDTO dto);
+
+    /**
+     * 单耗历史对比-明细
+     * @param dto dto
+     * @return 明细分页列表
+     */
+    Page<ConsumeHistoryContrastDetailVO> consumePartitionUnitHistoryDetail(EpTableDTO dto);
 }
