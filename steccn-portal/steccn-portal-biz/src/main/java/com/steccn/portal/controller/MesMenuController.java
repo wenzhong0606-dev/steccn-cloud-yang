@@ -25,6 +25,7 @@ public class MesMenuController {
     private final MesMenuService mesMenuService;
 
 
+
     @ApiOperation("获取mes系统用户菜单数据")
     @GetMapping("/menuRoute")
     public R menuRoute(@RequestParam("userName") String userName) throws IOException {

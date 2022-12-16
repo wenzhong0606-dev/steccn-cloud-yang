@@ -8,26 +8,16 @@ import com.steccn.common.vo.R;
 import com.steccn.portal.util.MesToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nonapi.io.github.classgraph.json.JSONUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.concurrent.Executor;
 
 /**
  * mes菜单数据
@@ -40,6 +30,9 @@ import java.util.concurrent.Executor;
 @Slf4j
 public class MesMenuService {
 
+    @Value("${mes.url}")
+    private String mesUrl;
+
     /**
      * 获取mes菜单数据
      *
@@ -49,7 +42,8 @@ public class MesMenuService {
         //测试
 //        String url = "http://61.177.139.229:380/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://61.177.139.229:380/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
         //生产
-        String url = "http://61.177.139.244/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://61.177.139.244/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
+        // String url = "http://61.177.139.244/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://61.177.139.244/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
+        String url = "http://" + mesUrl + "/web/sso/" + userName + "/" + getMesToken(userName) + "?url=http://" + mesUrl + "/web/a/menuRoute?p1=v1%26p2=v2&relogin=false";
         HttpGet httpGet = new HttpGet(url);
         //创建HttpClient对象
         CloseableHttpClient httpClient = HttpClients.createDefault();
