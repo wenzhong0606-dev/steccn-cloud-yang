@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.ems.vo.EpOverViewVO;
 import com.steccn.ems.vo.EpSubConsumeContrastVO;
 
@@ -27,4 +28,13 @@ public interface EpOverViewService {
      * @return
      */
     EpSubConsumeContrastVO getSubConsumeContrast(LocalDate selectDate);
+
+    /**
+     * 深加工单耗产线对比（近7日）
+     *
+     * @param selectDate
+     * @param type
+     * @return
+     */
+    EpDeepConsumeContrastVO getDeepConsumeContrast(LocalDate selectDate, Integer type);
 }

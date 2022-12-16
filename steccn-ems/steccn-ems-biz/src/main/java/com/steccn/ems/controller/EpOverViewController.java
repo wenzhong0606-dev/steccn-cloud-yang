@@ -3,6 +3,7 @@ package com.steccn.ems.controller;
 import com.steccn.common.vo.R;
 import com.steccn.ems.service.EpComputeProduceDetailService;
 import com.steccn.ems.service.EpOverViewService;
+import com.steccn.ems.vo.EpDeepConsumeContrastVO;
 import com.steccn.ems.vo.EpOverViewVO;
 import com.steccn.ems.vo.EpProduceDetailVO;
 import com.steccn.ems.vo.EpSubConsumeContrastVO;
@@ -44,5 +45,10 @@ public class EpOverViewController {
     @GetMapping("/sub/consume/workshop/contrast")
     public R<EpSubConsumeContrastVO> subConsumeContrast(@RequestParam("selectDate") LocalDate selectDate) {
         return R.success(epOverViewService.getSubConsumeContrast(selectDate));
+    }
+
+    @GetMapping("deep/consume/production/contrast")
+    public R<EpDeepConsumeContrastVO> deepConsumeContrast(@RequestParam("selectDate") LocalDate selectDate, @RequestParam("type") Integer type) {
+        return R.success(epOverViewService.getDeepConsumeContrast(selectDate, type));
     }
 }
