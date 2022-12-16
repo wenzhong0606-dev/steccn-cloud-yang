@@ -1,6 +1,7 @@
 package com.steccn.ems.service;
 
 import com.steccn.ems.vo.EpOverViewVO;
+import com.steccn.ems.vo.EpSubConsumeContrastVO;
 
 import java.time.LocalDate;
 
@@ -18,4 +19,12 @@ public interface EpOverViewService {
      * @return
      */
     EpOverViewVO getOverViewByType(Integer type, LocalDate selectDate);
+
+    /**
+     * 基片单耗车间对比（近7日）
+     *
+     * @param selectDate
+     * @return
+     */
+    EpSubConsumeContrastVO getSubConsumeContrast(LocalDate selectDate);
 }

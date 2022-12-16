@@ -1,17 +1,14 @@
 package com.steccn.ems.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
-
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.steccn.common.vo.BaseSelectVO;
-import lombok.Data;
 
 /**
  * 产品单耗标准

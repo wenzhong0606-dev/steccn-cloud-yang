@@ -5,6 +5,7 @@ import com.steccn.ems.service.EpComputeProduceDetailService;
 import com.steccn.ems.service.EpOverViewService;
 import com.steccn.ems.vo.EpOverViewVO;
 import com.steccn.ems.vo.EpProduceDetailVO;
+import com.steccn.ems.vo.EpSubConsumeContrastVO;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,5 +39,10 @@ public class EpOverViewController {
     @GetMapping("/card")
     public R<EpOverViewVO> card(@RequestParam("selectDate") LocalDate selectDate, @RequestParam("type") Integer type) {
         return R.success(epOverViewService.getOverViewByType(type, selectDate));
+    }
+
+    @GetMapping("/sub/consume/workshop/contrast")
+    public R<EpSubConsumeContrastVO> subConsumeContrast(@RequestParam("selectDate") LocalDate selectDate) {
+        return R.success(epOverViewService.getSubConsumeContrast(selectDate));
     }
 }

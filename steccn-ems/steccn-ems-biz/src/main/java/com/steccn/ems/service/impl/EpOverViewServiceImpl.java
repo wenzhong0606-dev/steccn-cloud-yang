@@ -11,6 +11,8 @@ import com.steccn.ems.domain.EpUnitConsumeAlarm;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.EpMeterReadAllDataVO;
 import com.steccn.ems.vo.EpOverViewVO;
+import com.steccn.ems.vo.EpSubConsumeContrastVO;
+import com.steccn.ems.vo.EpSubConsumeDataVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
@@ -64,16 +66,16 @@ public class EpOverViewServiceImpl implements EpOverViewService {
             yData = getDyData("电",
                     "深加工制造部", "deep_processing", selectDate, startLocalDate, BigDecimal.valueOf(3.2), epOverViewVO);
         } else {
-            yData = getAlarmDate(selectDate,startLocalDate,epOverViewVO);
+            yData = getAlarmDate(selectDate, startLocalDate, epOverViewVO);
         }
         //获取最近7天单耗
         epOverViewVO.setYData(yData);
         //最后一条数据
-        BigDecimal lastData = yData.get(yData.size()-1);
+        BigDecimal lastData = yData.get(yData.size() - 1);
         //第一条数据
         BigDecimal firstData = yData.get(0);
         //倒数第二条数据
-        BigDecimal lastButOneData = yData.get(yData.size()-2);
+        BigDecimal lastButOneData = yData.get(yData.size() - 2);
         //计算日同比
         BigDecimal dayValue = BigDecimalUtil.divide(lastData.subtract(lastButOneData).abs(), lastButOneData).multiply(BigDecimalUtil.HUNDRED);
         //计算周同比
@@ -103,6 +105,75 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         epOverViewVO.setTooltip(Objects.requireNonNull(EpManagerConstant.CardType.getByCode(type)).getTooltip());
 
         return epOverViewVO;
+    }
+
+    @Override
+    public EpSubConsumeContrastVO getSubConsumeContrast(LocalDate selectDate) {
+        LocalDate startDate = selectDate.minusDays(6);
+        Set<LocalDate> localDateSet = new HashSet<>();
+        localDateSet.add(startDate);
+        localDateSet.add(selectDate);
+        List<Integer> officeIdList = new ArrayList<>();
+        officeIdList.add(75);
+        officeIdList.add(76);
+        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeIdList));
+        List<Long> partitionIdList = partitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
+        List<EpMeterReadAllDataVO> meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, 5, partitionIdList);
+        List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream()
+                .filter(epMeterReadAllDataVO -> partitionIdList.contains(epMeterReadAllDataVO.getOfficeId()))
+                .sorted(Comparator.comparing(EpMeterReadAllDataVO::getOfficeId)).collect(Collectors.toList());
+        Set<Long> officeIdSet = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getOfficeId).collect(Collectors.toSet());
+
+        //标准类型：部门标准
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard").getData();
+        //产品类型：基片
+        SysDictVO productType = remoteDictFeignApi.getByCode("substrate", "product_type").getData();
+
+        EpSubConsumeContrastVO epSubConsumeContrastVO = new EpSubConsumeContrastVO();
+        //获取x轴数据
+        List<String> xData = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getOfficeName).collect(Collectors.toList());
+        epSubConsumeContrastVO.setXAxis(xData);
+        //获取y轴数据
+        LinkedHashMap<Long, List<EpMeterReadAllDataVO>> map = readAllDataVOList.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getOfficeId, LinkedHashMap::new, Collectors.toList()));
+        List<EpSubConsumeDataVO> epSubConsumeDataVOList = new ArrayList<>();
+        epSubConsumeContrastVO.setYData(epSubConsumeDataVOList);
+        for (int i = 0; i < 2; i++) {
+            EpSubConsumeDataVO epSubConsumeDataVO = new EpSubConsumeDataVO();
+            if (Objects.equals(i,0)) {
+                epSubConsumeDataVO.setName("实际能耗");
+            } else {
+                epSubConsumeDataVO.setName("部门标准");
+            }
+            List<BigDecimal> dataList = new ArrayList<>();
+            epSubConsumeDataVO.setDataList(dataList);
+            epSubConsumeDataVOList.add(epSubConsumeDataVO);
+            for (Map.Entry<Long, List<EpMeterReadAllDataVO>> entry : map.entrySet()) {
+                if (Objects.equals(i,0)) {
+                    //汇总能耗值
+                    BigDecimal sumConsume = entry.getValue().stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getConsume()))
+                            .map(EpMeterReadAllDataVO::getConsume)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    //汇总生产值
+                    BigDecimal sumProductNum = entry.getValue().stream().filter(meterReadAllDataVO -> Objects.nonNull(meterReadAllDataVO.getProductNum()))
+                            .map(EpMeterReadAllDataVO::getProductNum)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    //获取单耗值
+                    dataList.add(BigDecimalUtil.divide(sumConsume,sumProductNum));
+                } else {
+                    //获取部门单耗标准
+                    LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                            .eq(EpProductUnitConsumeStandard::getEnergyType, 5)
+                            .gt(EpProductUnitConsumeStandard::getValidStart, startDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
+                            .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
+                            .eq(EpProductUnitConsumeStandard::getProductType, productType.getId())
+                            .like(EpProductUnitConsumeStandard::getApplyOffice,entry.getKey());
+                    //部门单耗标准
+                    EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
+                    dataList.add(productUnitConsumeStandard.getUnitValue());
+                }
+            }
+        }
+        return epSubConsumeContrastVO;
     }
 
     private List<BigDecimal> getAlarmDate(LocalDate selectDate, LocalDate startLocalDate, EpOverViewVO epOverViewVO) {
