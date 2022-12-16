@@ -41,6 +41,26 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         List<EqpSpareVO> eqpSpareVOList = sysEqpSpareMapper.listSpares(name);
         List<EqpSpareVO> collect = Lists.newArrayList();
         if (CollUtil.isNotEmpty(eqpSpareVOList)) {
+            Set<Long> dictIds = Sets.newHashSet();
+            eqpSpareVOList.forEach(vo -> {
+                dictIds.add(vo.getHighUnitId());
+                dictIds.add(vo.getLengthUnitId());
+                dictIds.add(vo.getThickUnitId());
+                dictIds.add(vo.getVolumeUnitId());
+                dictIds.add(vo.getProcurementTypeId());
+                dictIds.add(vo.getWeightUnitId());
+                dictIds.add(vo.getWideUnitId());
+            });
+            Map<Long, String> map = sysDictService.listByIdCh(dictIds);
+            eqpSpareVOList.forEach(vo->{
+                vo.setHighUnitName(map.get(vo.getHighUnitId()));
+                vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
+                vo.setThickUnitName(map.get(vo.getThickUnitId()));
+                vo.setWeightUnitName(map.get(vo.getWeightUnitId()));
+                vo.setWideUnidName(map.get(vo.getWideUnitId()));
+                vo.setProcurementTypeName(map.get(vo.getProcurementTypeId()));
+                vo.setVolumeUnitName(map.get(vo.getVolumeUnitId()));
+            });
             collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(
                     Collectors.toCollection(() -> new TreeSet<>(
                             Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
@@ -55,6 +75,26 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
                 .like(Objects.nonNull(name), SysEqpSpare::getName, name);
         List<SysEqpSpare> list = list(like);
         List<EqpSpareVO> eqpSpareVOS = BeanUtil.copyToList(list, EqpSpareVO.class);
+        Set<Long> dictIds = Sets.newHashSet();
+        eqpSpareVOS.forEach(vo -> {
+            dictIds.add(vo.getHighUnitId());
+            dictIds.add(vo.getLengthUnitId());
+            dictIds.add(vo.getThickUnitId());
+            dictIds.add(vo.getVolumeUnitId());
+            dictIds.add(vo.getProcurementTypeId());
+            dictIds.add(vo.getWeightUnitId());
+            dictIds.add(vo.getWideUnitId());
+        });
+        Map<Long, String> map = sysDictService.listByIdCh(dictIds);
+        eqpSpareVOS.forEach(vo->{
+            vo.setHighUnitName(map.get(vo.getHighUnitId()));
+            vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
+            vo.setThickUnitName(map.get(vo.getThickUnitId()));
+            vo.setWeightUnitName(map.get(vo.getWeightUnitId()));
+            vo.setWideUnidName(map.get(vo.getWideUnitId()));
+            vo.setProcurementTypeName(map.get(vo.getProcurementTypeId()));
+            vo.setVolumeUnitName(map.get(vo.getVolumeUnitId()));
+        });
         return eqpSpareVOS;
     }
 
@@ -138,7 +178,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         //1.自定义查询条件
         LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>()
                 .like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName())
-                .le(StrUtil.isNotBlank(sparePageDTO.getCode()),SysEqpSpare::getCode,sparePageDTO.getCode());
+                .le(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode());
         //2.定义分页对象
         Page page = new Page<>(sparePageDTO.getCurrent(), sparePageDTO.getSize());
         //3.查询分页数据
@@ -152,11 +192,23 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         eqpSpareVOList.forEach(eqpSpareVO -> {
             dictIdSet.add(eqpSpareVO.getProcurementTypeId());
             dictIdSet.add(eqpSpareVO.getUnitId());
+            dictIdSet.add(eqpSpareVO.getHighUnitId());
+            dictIdSet.add(eqpSpareVO.getLengthUnitId());
+            dictIdSet.add(eqpSpareVO.getThickUnitId());
+            dictIdSet.add(eqpSpareVO.getVolumeUnitId());
+            dictIdSet.add(eqpSpareVO.getWeightUnitId());
+            dictIdSet.add(eqpSpareVO.getWideUnitId());
         });
         Map<Long, String> dictMap = sysDictService.listByIdCh(dictIdSet);
         eqpSpareVOList.forEach(eqpSpareVO -> {
             eqpSpareVO.setProcurementTypeName(dictMap.get(eqpSpareVO.getProcurementTypeId()));
             eqpSpareVO.setUnit(dictMap.get(eqpSpareVO.getUnitId()));
+            eqpSpareVO.setHighUnitName(dictMap.get(eqpSpareVO.getHighUnitId()));
+            eqpSpareVO.setLengthUnitName(dictMap.get(eqpSpareVO.getLengthUnitId()));
+            eqpSpareVO.setThickUnitName(dictMap.get(eqpSpareVO.getThickUnitId()));
+            eqpSpareVO.setWeightUnitName(dictMap.get(eqpSpareVO.getWeightUnitId()));
+            eqpSpareVO.setWideUnidName(dictMap.get(eqpSpareVO.getWideUnitId()));
+            eqpSpareVO.setVolumeUnitName(dictMap.get(eqpSpareVO.getVolumeUnitId()));
         });
         return page.setRecords(eqpSpareVOList);
     }
@@ -167,7 +219,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         if (Objects.nonNull(spareDTO)) {
             List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(spareDTO.getName()), SysEqpSpare::getName, spareDTO.getName())
                     .like(StrUtil.isNotBlank(spareDTO.getCode()), SysEqpSpare::getCode, spareDTO.getCode()));
-            list= BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
+            list = BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
         }
         return list;
     }
@@ -175,10 +227,10 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     @Override
     public List<EqpSpareVO> getByTypeIdSpareList(Set<String> types) {
         List<EqpSpareVO> lists = new ArrayList<>();
-        if (types.size()>0) {
-            for (String type:types) {
-                List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().eq( SysEqpSpare::getType, type));
-                List<EqpSpareVO>  list= BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
+        if (types.size() > 0) {
+            for (String type : types) {
+                List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().eq(SysEqpSpare::getType, type));
+                List<EqpSpareVO> list = BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
                 lists.addAll(list);
             }
         }

@@ -13,6 +13,8 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.MessMaterialConsumeDTO;
@@ -48,6 +50,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
@@ -56,15 +60,23 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
                 .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                .like(Objects.nonNull(dto.getShelfName()),WmsInventory::getShelfName,dto.getShelfName())
+                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
                 .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch());
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
         Set<Long> dict = Sets.newHashSet();
-        res.forEach(wmsInventoryVO -> dict.add(wmsInventoryVO.getUnit()));
+        List<Long> materialIds = Lists.newArrayList();
+        res.forEach(wmsInventoryVO -> {
+            dict.add(wmsInventoryVO.getUnit());
+            materialIds.add(wmsInventoryVO.getMaterialId());
+        });
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
         Map<Long, String> map = FeignOptional.of(remoteDictFeignApi.listByIdCh(dict)).get();
-        res.forEach(wmsInventoryVO -> wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit())));
+        res.forEach(wmsInventoryVO -> {
+            wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
+            wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+        });
         page.setRecords(res);
         return page;
     }
@@ -383,7 +395,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                             materialStorageVO.setCreateDate(null);
                             materialStorageVOList.add(materialStorageVO);
                         }
-                    }else {
+                    } else {
                         WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
                         materialStorageVO.setMaterialId(material.getMaterialId());
                         materialStorageVO.setAvailableQuantity(BigDecimal.ZERO);
@@ -398,19 +410,19 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO) {
-        if (Objects.nonNull(wmsCheckCaseNoDTO)){
+        if (Objects.nonNull(wmsCheckCaseNoDTO)) {
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
                     .eq(WmsInventory::getCaseNo, wmsCheckCaseNoDTO.getCaseNo()));
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(list)) {
                 Boolean aBoolean = Boolean.FALSE;
                 for (WmsInventory wmsInventory : list) {
                     if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId()) &&
-                        wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch())&&
-                        wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())){
-                        aBoolean =Boolean.TRUE;
+                            wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch()) &&
+                            wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())) {
+                        aBoolean = Boolean.TRUE;
                     }
                 }
-              return aBoolean;
+                return aBoolean;
             }
         }
         return true;

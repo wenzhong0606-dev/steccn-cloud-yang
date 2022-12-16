@@ -46,7 +46,19 @@
                         a.name,
                         b.id   AS unitId,
                         b.name AS unit,
-                        a.specifications
+                        a.specifications,
+                        a.length_unit_id,
+                        a.length_quantity,
+                        a.high_unit_id,
+                        a.high_quantity,
+                        a.wide_unit_id,
+                        a.wide_quantity,
+                        a.thick_quantity,
+                        a.thick_unit_id,
+                        a.volume_quantity,
+                        a.volume_unit_id,
+                        a.weight_quantity,
+                        a.weight_unit_id
         FROM sys_eqp_spare a
                  JOIN sys_dict b ON a.UNIT = b.name
         WHERE a.name LIKE CONCAT('%', #{name}, '%')

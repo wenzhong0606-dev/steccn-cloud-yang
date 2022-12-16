@@ -1,6 +1,7 @@
 package com.steccn.pms.vo;
 
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.steccn.platform.vo.EqpSpareVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -136,6 +137,9 @@ public class WmsInventoryVO {
      */
     @ApiModelProperty("打包时间")
     private LocalDateTime packTime;
+
+    @ApiModelProperty("物料")
+    private EqpSpareVO eqpSpareVO;
 
 
 
