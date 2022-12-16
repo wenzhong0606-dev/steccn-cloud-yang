@@ -34,6 +34,11 @@ public class EpInstrumentAccountPageVO implements Serializable {
     private String partitionNodeName;
 
     /**
+     * 所属分区节点包括父节点
+     */
+    private String allPartitionNodeName;
+
+    /**
      * 0实体远传仪表、1实体非远传仪表、2虚拟仪表
      */
     private Integer entityTable;

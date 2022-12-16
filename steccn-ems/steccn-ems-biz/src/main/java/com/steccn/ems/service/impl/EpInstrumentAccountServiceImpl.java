@@ -185,19 +185,30 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 s.setSiteName(dictMap.get(s.getSite()));
             }
             if (CollUtil.isNotEmpty(epPartitionNameListVO)&&Objects.nonNull(s.getPartitionNode())){
-                s.setPartitionNodeName(epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
+                s.setPartitionNodeName(Objects.isNull(epPartitionNameListVO.get(s.getPartitionNode()))
+                        ?null:epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
             }
-//            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
-//            epPartitionChildTypeDTO.setType(s.getMeterType());
-//            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
-//            EpPartitionParentVO partitionParent = epPartitionService.getParentList(epPartitionChildTypeDTO);
+            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
+            epPartitionChildTypeDTO.setType(s.getMeterType());
+            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
+            EpPartitionParentVO partitionParent = epPartitionService.getParentList(epPartitionChildTypeDTO);
+            if (Objects.nonNull(partitionParent)) {
+                s.setAllPartitionNodeName(partitionParent.getJoinOfficeNames());
+            }
 //            if (Objects.nonNull(partitionParent)){
 //                List<String> partitionName = Lists.newArrayList();
 //               if (CollUtil.isNotEmpty(partitionParent.getParentList())){
 //                   List<EpPartitionParentVO> parentList = partitionParent.getParentList();
-//                   parentList.
+//                   getParentNameList(partitionParent.getParentList(),partitionName);
 //               }
 //                partitionName.add(partitionParent.getOfficeName());
+//                if (CollUtil.isNotEmpty(partitionName)){
+//                    List<String> nameList = new ArrayList<>();
+//                    for (int i = partitionName.size()-1; i >=0; i--) {
+//                       nameList.add(partitionName.get(i));
+//                    }
+//                    String lastName = nameList.stream().map(String::valueOf).collect(Collectors.joining("/"));
+//                }
 //
 //            }
             //设置最后抄表时间
@@ -271,6 +282,20 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         page.setRecords(collect);
 
         return page;
+    }
+
+    private List<String> getParentNameList(List<EpPartitionParentVO> parentList,List<String> partitionName) {
+            if (CollUtil.isNotEmpty(parentList)){
+                for (EpPartitionParentVO epPartitionParentVO : parentList) {
+                    partitionName.add(epPartitionParentVO.getOfficeName());
+                    if (CollUtil.isNotEmpty(epPartitionParentVO.getParentList())){
+                        for (EpPartitionParentVO partitionParentVO : epPartitionParentVO.getParentList()) {
+                            getParentNameList(partitionParentVO.getParentList(),partitionName);
+                        }
+                    }
+                }
+            }
+            return partitionName;
     }
 
     private LocalDateTime getLastReadTime( List<EpMeterRead> epMeterReads) {

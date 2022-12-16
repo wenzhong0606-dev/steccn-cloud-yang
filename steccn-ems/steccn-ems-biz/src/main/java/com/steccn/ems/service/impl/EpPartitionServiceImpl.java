@@ -48,10 +48,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      */
     private final Set<Integer> DEFAULT_ENERGY_SET = Sets.newHashSet(1,2,3,4,5);
 
-    /***
-     * 组织机构名称集合
-     */
-    private  List<String> joinPartitions = new ArrayList<>();
+
     @Override
     public EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType) {
 
@@ -321,6 +318,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto) {
+        /***
+         * 组织机构名称集合
+         */
+        List<String> joinPartitions = new ArrayList<>();
+//        joinPartitions.clear();
         //先获取该能源类型下的全量数据
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
         EpPartition childPartition = getById(dto.getChildId());
@@ -332,7 +334,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
         //获取拼接名称
         joinPartitions.add(parentPartitionVO.getOfficeName());
-        getJoinPartitionName( parentPartitionVO ,parentPartitionVO.getParentList());
+        getJoinPartitionName( parentPartitionVO ,parentPartitionVO.getParentList(),joinPartitions);
         Collections.reverse(joinPartitions);
         String officeNames = "";
         for (String vo: joinPartitions) {
@@ -342,15 +344,17 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         parentPartitionVO.setJoinOfficeNames(officeNames);
         return parentPartitionVO;
     }
-    public void getJoinPartitionName(EpPartitionParentVO menu ,List<EpPartitionParentVO> menus){
-        for (EpPartitionParentVO mu : menus) {
-            //遍历出父id等于参数的id，add进子节点集合
-            if (menu.getParentId().equals(mu.getId())) {
-                //递归遍历下一级
-                joinPartitions.add(mu.getOfficeName());
-                if(Objects.nonNull(mu.getParentList()))   getJoinPartitionName(mu,mu.getParentList());
-            }
-        }
+    public void getJoinPartitionName(EpPartitionParentVO menu ,List<EpPartitionParentVO> menus,List<String> joinPartitions){
+       if (CollUtil.isNotEmpty(menus)){
+           for (EpPartitionParentVO mu : menus) {
+               //遍历出父id等于参数的id，add进子节点集合
+               if (menu.getParentId().equals(mu.getId())) {
+                   //递归遍历下一级
+                   joinPartitions.add(mu.getOfficeName());
+                   if(Objects.nonNull(mu.getParentList()))   getJoinPartitionName(mu,mu.getParentList(),joinPartitions);
+               }
+           }
+       }
     }
     private EpPartitionParentVO getParentListByChildId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
         List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
