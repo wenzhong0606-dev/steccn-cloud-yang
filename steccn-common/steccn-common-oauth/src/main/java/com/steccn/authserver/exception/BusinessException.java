@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
+ * @author yequan
  * @desc 200 业务异常处理
  */
 @NoArgsConstructor

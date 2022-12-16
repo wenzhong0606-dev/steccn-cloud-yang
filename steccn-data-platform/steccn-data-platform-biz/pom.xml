@@ -93,10 +93,6 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
-            <artifactId>steccn-platform-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
         <!--添加actuator依赖-->
@@ -131,6 +127,12 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-data-platform-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
