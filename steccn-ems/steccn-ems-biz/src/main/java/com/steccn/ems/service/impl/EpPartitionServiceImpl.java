@@ -2,7 +2,6 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,19 +9,19 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.vo.R;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.*;
+import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,6 +48,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      */
     private final Set<Integer> DEFAULT_ENERGY_SET = Sets.newHashSet(1,2,3,4,5);
 
+    /***
+     * 组织机构名称集合
+     */
+    private  List<String> joinPartitions = new ArrayList<>();
     @Override
     public EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType) {
 
@@ -327,9 +330,28 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
         BeanUtils.copyProperties(childPartition,childPartitionVO);
         EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
+        //获取拼接名称
+        joinPartitions.add(parentPartitionVO.getOfficeName());
+        getJoinPartitionName( parentPartitionVO ,parentPartitionVO.getParentList());
+        Collections.reverse(joinPartitions);
+        String officeNames = "";
+        for (String vo: joinPartitions) {
+            officeNames=officeNames+vo+"/";
+        }
+        if(StringUtils.isNotBlank(officeNames)) officeNames = officeNames.substring(0,officeNames.length()-1);
+        parentPartitionVO.setJoinOfficeNames(officeNames);
         return parentPartitionVO;
     }
-
+    public void getJoinPartitionName(EpPartitionParentVO menu ,List<EpPartitionParentVO> menus){
+        for (EpPartitionParentVO mu : menus) {
+            //遍历出父id等于参数的id，add进子节点集合
+            if (menu.getParentId().equals(mu.getId())) {
+                //递归遍历下一级
+                joinPartitions.add(mu.getOfficeName());
+                if(Objects.nonNull(mu.getParentList()))   getJoinPartitionName(mu,mu.getParentList());
+            }
+        }
+    }
     private EpPartitionParentVO getParentListByChildId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
         List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
         if (CollUtil.isEmpty(epPartitions)||!partitionIds.contains(childPartitionVO.getId())){
