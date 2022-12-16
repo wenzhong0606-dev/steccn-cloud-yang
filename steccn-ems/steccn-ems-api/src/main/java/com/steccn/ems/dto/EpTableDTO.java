@@ -20,7 +20,7 @@ import java.util.List;
 public class EpTableDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("能源类型id")
-    @NotNull(message = "能源类型不能为空")
+//    @NotNull(message = "能源类型不能为空")
     private Integer energyType;
 
     @ApiModelProperty("开始日期")
@@ -38,8 +38,8 @@ public class EpTableDTO extends BasePageDTO implements Serializable {
     private LocalDate historyEnd;
 
     @ApiModelProperty("厚度")
-    @NotNull(message = "厚度不能为空")
-    @Size(min = 1, message = "厚度不能为空")
+//    @NotNull(message = "厚度不能为空")
+//    @Size(min = 1, message = "厚度不能为空")
     private List<BigDecimal> thick;
 
     @ApiModelProperty("时间-天、周、月、无粒度")
