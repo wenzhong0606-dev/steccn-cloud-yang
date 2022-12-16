@@ -41,4 +41,6 @@ public class EpPartitionParentVO implements Serializable {
      * 父节点集合
      */
     private List<EpPartitionParentVO> parentList;
+
+    private String joinOfficeNames;//名称拼接
 }
