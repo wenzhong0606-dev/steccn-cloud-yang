@@ -13,7 +13,9 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -127,7 +129,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 //如果是在线检则根据缺陷记录时段算班次日期
                 if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
-                    QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(tmp.getDefectStartTime());
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(tmp.getDefectStartTime());
                     tmp.setDate(df.format(qtTaskClassCalculate.getClassDate()));
                 }else {
                     tmp.setDate(df.format(tmp.getClassTime()));
