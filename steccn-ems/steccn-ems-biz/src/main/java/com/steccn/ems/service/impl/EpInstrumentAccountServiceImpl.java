@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -165,12 +166,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
         //去能源分区表中找到所有的分区节点
         Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
-        //去抄表管理微服务中lou出所有数据根据仪表id分组
-        List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
-        Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
-                .eq(EpMeterRead::getDelFlag, MpConstant.NO)
-                        .in(EpMeterRead::getDistantMapCode,distantCodeList)).stream()
-                .collect(Collectors.groupingBy(EpMeterRead::getMeterId));
 
         //获取该类型下所有下一级子节点
         Map<Long, List<EpPartitionVO>> partitionLinkChildMap = epPartitionService.allNextChildren(dto.getEnergyId());
@@ -179,6 +174,19 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         instrumentAccountVOS.forEach(s->{
             partitionInstrumentVOList.put(s.getPartitionNode(),s);
         });
+
+        //先lou出仪表台账里面所有仪表id以及远传映射编码
+        List<Integer> instrumentIds = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getId).collect(Collectors.toList());
+        List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
+        //查询最后抄表时间
+        Map<Integer, Map<String, List<EpMeterRead>>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+                        .eq(EpMeterRead::getDelFlag, MpConstant.NO)
+                        .in(CollUtil.isNotEmpty(distantCodeList), EpMeterRead::getDistantMapCode, distantCodeList)
+                        .in(CollUtil.isNotEmpty(instrumentIds), EpMeterRead::getMeterId, instrumentIds))
+                .stream()
+                .collect(Collectors.groupingBy(EpMeterRead::getMeterId, Collectors.groupingBy(EpMeterRead::getDistantMapCode)));
+
+
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
@@ -195,12 +203,17 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             if (Objects.nonNull(partitionParent)) {
                 s.setAllPartitionNodeName(partitionParent.getJoinOfficeNames());
             }
+
             //设置最后抄表时间
             if (CollUtil.isNotEmpty(groupByMeter)){
                 //先判断仪表的所属类型
                 if (EpManagerConstant.InstrumentType.REMOTE.getCode()==s.getEntityTable()
                         ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==s.getEntityTable()){
-                    List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
+                    Map<String, List<EpMeterRead>> stringListMap = groupByMeter.get(s.getId());
+                    List<EpMeterRead> epMeterReads = new ArrayList<>();
+                    if (CollUtil.isNotEmpty(stringListMap)){
+                        epMeterReads = stringListMap.get(s.getDistantMapCode());
+                    }
                     if (Objects.nonNull( getLastReadTime(epMeterReads))){
                         s.setLastReadingTime( getLastReadTime(epMeterReads));
                     }
@@ -221,7 +234,11 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                             //保证每个子节点仪表的最后抄表时间都不能有空
                             List<LocalDateTime> timeList = Lists.newArrayList();
                             instrumentChildIds.forEach(i->{
-                                List<EpMeterRead> epMeterReads = groupByMeter.get(i);
+                                Map<String, List<EpMeterRead>> stringListMap = groupByMeter.get(s.getId());
+                                List<EpMeterRead> epMeterReads = new ArrayList<>();
+                                if (CollUtil.isNotEmpty(stringListMap)){
+                                    epMeterReads = stringListMap.get(s.getDistantMapCode());
+                                }
                                 if (Objects.nonNull(getLastReadTime(epMeterReads))){
                                     timeList.add(getLastReadTime(epMeterReads));
                                 }
