@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.wms.domain.WmsLogisticsTransportation;
+import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.mapper.WmsLogisticsTransportationMapper;
 import com.steccn.wms.vo.WmsLogisticsTransportationVO;
@@ -28,17 +29,25 @@ public class WmsLogisticsTransportationServiceImpl extends ServiceImpl<WmsLogist
     @Override
     public List<WmsLogisticsTransportationVO> listByLogisticsId(Long id) {
         List<WmsLogisticsTransportationVO> list = Lists.newArrayList();
-        if (Objects.nonNull(id)){
+        if (Objects.nonNull(id)) {
             List<WmsLogisticsTransportation> logisticsTransportations = list(new LambdaQueryWrapper<WmsLogisticsTransportation>().in(WmsLogisticsTransportation::getLogisticsId, id));
-            if (CollUtil.isNotEmpty(logisticsTransportations)){
-                logisticsTransportations.forEach( way ->{
+            if (CollUtil.isNotEmpty(logisticsTransportations)) {
+                logisticsTransportations.forEach(way -> {
                     WmsLogisticsTransportationVO wmsLogisticsTransportationVO = new WmsLogisticsTransportationVO();
-                    BeanUtil.copyProperties(way,wmsLogisticsTransportationVO);
+                    BeanUtil.copyProperties(way, wmsLogisticsTransportationVO);
                     list.add(wmsLogisticsTransportationVO);
                 });
             }
         }
         return list;
+    }
+
+    @Override
+    public Boolean edit(WmsLogisticsOrderDTO dto) {
+        remove(new LambdaQueryWrapper<WmsLogisticsTransportation>()
+                .eq(WmsLogisticsTransportation::getLogisticsId, dto.getId()));
+        List<WmsLogisticsTransportation> wayList = BeanUtil.copyToList(dto.getWayList(), WmsLogisticsTransportation.class);
+        return saveOrUpdateBatch(wayList);
     }
 }
 

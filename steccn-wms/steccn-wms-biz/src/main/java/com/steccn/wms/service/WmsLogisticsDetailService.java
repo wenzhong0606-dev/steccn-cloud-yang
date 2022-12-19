@@ -1,7 +1,10 @@
 package com.steccn.wms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsLogisticsDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsLogisticsDetailDTO;
+import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.vo.WmsLogisticsDetailVO;
 
 import java.util.List;
@@ -19,4 +22,19 @@ public interface WmsLogisticsDetailService extends IService<WmsLogisticsDetail> 
      * @return
      */
     List<WmsLogisticsDetailVO> listByLogisticsId(Long id);
+
+
+    /**
+     * 根据物流单获取详情列表
+     * @param dto
+     * @return
+     */
+    Page<WmsLogisticsDetailVO> receiptInfo(WmsLogisticsDetailDTO dto);
+
+    /**
+     * 明细编辑
+     * @param dto
+     * @return
+     */
+    Boolean edit(WmsLogisticsOrderDTO dto);
 }

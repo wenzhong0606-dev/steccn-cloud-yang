@@ -29,6 +29,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -228,8 +229,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     @Override
     public Boolean transport(Long id) {
         WmsLogisticsOrder order = getById(id);
-        Assert.notNull(order,"物流单不存在");
-        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ZERO.getCode().equals(order.getStatus()),"当前状态不可运输");
+        Assert.notNull(order, "物流单不存在");
+        Assert.isTrue(WmsManagerConstant.LogisticsStateEnum.ZERO.getCode().equals(order.getStatus()), "当前状态不可运输");
         order.setStatus(WmsManagerConstant.LogisticsStateEnum.ONE.getCode());
         return updateById(order);
     }
@@ -237,10 +238,54 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     @Override
     public Boolean receipt(Long id) {
         WmsLogisticsOrder order = getById(id);
-        Assert.notNull(order,"物流单不存在");
-        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ONE.getCode().equals(order.getStatus()),"当前状态不可签收");
-
+        Assert.notNull(order, "物流单不存在");
+        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ONE.getCode().equals(order.getStatus()), "当前状态不可签收");
         return null;
+    }
+
+    @Override
+    public Boolean edit(WmsLogisticsOrderDTO dto) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
+        lock.lock();
+        try {
+            //1.校验数据是否存在
+            Assert.isTrue(Objects.nonNull(dto), "调拨单信息为空");
+            //2.定义数据模型
+            WmsLogisticsOrder model = new WmsLogisticsOrder();
+            BeanUtil.copyProperties(dto, model);
+            //3.修改
+            updateById(model);
+            //4.修改详情数据
+            if (Objects.nonNull(dto.getList())) {
+              wmsLogisticsDetailService.edit(dto);
+            }
+            //5.修改运输方式
+            if (Objects.nonNull(dto.getWayList())){
+                wmsLogisticsTransportationService.edit(dto);
+            }
+            //6.保存收发货数据
+            List<WmsLogisticsInfo> logisticsInfoList = Lists.newArrayList();
+            if (Objects.nonNull(dto.getReceiving())) {
+                WmsLogisticsInfoDTO receiving = dto.getReceiving();
+                WmsLogisticsInfo wmsLogisticsInfo = new WmsLogisticsInfo();
+                BeanUtil.copyProperties(receiving, wmsLogisticsInfo);
+                wmsLogisticsInfo.setLogisticsId(model.getId());
+                wmsLogisticsInfo.setType(WmsManagerConstant.LogisticsTypeEnum.ZERO.getCode());
+                logisticsInfoList.add(wmsLogisticsInfo);
+            }
+            if (Objects.nonNull(dto.getShipments())) {
+                WmsLogisticsInfoDTO shipments = dto.getShipments();
+                WmsLogisticsInfo wmsLogisticsInfo = new WmsLogisticsInfo();
+                BeanUtil.copyProperties(shipments, wmsLogisticsInfo);
+                wmsLogisticsInfo.setType(WmsManagerConstant.LogisticsTypeEnum.ONE.getCode());
+                wmsLogisticsInfo.setLogisticsId(model.getId());
+                logisticsInfoList.add(wmsLogisticsInfo);
+            }
+            wmsLogisticsInfoService.saveOrUpdateBatch(logisticsInfoList);
+        } finally {
+            lock.unlock();
+        }
+        return true;
     }
 
 
