@@ -34,4 +34,18 @@ public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
      * @return
      */
     WmsLogisticsOrderVO get(Long id);
+
+    /**
+     * 物流单运输
+     * @param id
+     * @return
+     */
+    Boolean transport(Long id);
+
+    /**
+     * 物流单签收
+     * @param id
+     * @return
+     */
+    Boolean receipt(Long id);
 }

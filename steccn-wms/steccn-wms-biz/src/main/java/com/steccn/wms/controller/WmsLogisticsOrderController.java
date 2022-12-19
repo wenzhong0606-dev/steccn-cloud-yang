@@ -1,7 +1,10 @@
 package com.steccn.wms.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.domain.WmsLogisticsOrder;
 import com.steccn.wms.dto.WmsInventoryPageDTO;
@@ -47,5 +50,21 @@ public class WmsLogisticsOrderController {
     @GetMapping()
     public R<WmsLogisticsOrderVO> get(@ApiParam("物流单id") @RequestParam("id") Long id){
         return R.success(wmsLogisticsOrderService.get(id));
+    }
+
+    @ApiOperation("物流单运输")
+    @PutMapping("/transport")
+    @SysLog("物流单运输")
+    public R<Boolean> transport(@RequestBody WmsLogisticsOrderDTO dto) {
+        Assert.notNull(dto.getId(),"物流单id不能为空");
+        return R.success(wmsLogisticsOrderService.transport(dto.getId()));
+    }
+
+    @ApiOperation("物流单签收")
+    @PutMapping("/receipt")
+    @SysLog("物流单签收")
+    public R<Boolean> receipt(@RequestBody WmsLogisticsOrderDTO dto){
+        Assert.notNull(dto.getId(),"物流单id不能为空");
+        return R.success(wmsLogisticsOrderService.receipt(dto.getId()));
     }
 }

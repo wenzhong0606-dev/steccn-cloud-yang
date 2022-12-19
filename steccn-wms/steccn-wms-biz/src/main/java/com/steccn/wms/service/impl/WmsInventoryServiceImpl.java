@@ -98,6 +98,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         return aBoolean;
     }
 
+
     @Override
     public Boolean addInfo(List<WmsInventoryDTO> infoList) {
         if (CollUtil.isNotEmpty(infoList)) {
@@ -130,6 +131,34 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 }
             });
             saveOrUpdateBatch(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean add(List<WmsInventoryDTO> infoList) {
+        if (CollUtil.isNotEmpty(infoList)) {
+            Set<Integer> officeIds = Sets.newHashSet();
+            infoList.forEach(info -> {
+                //根据箱号获取当前的物料是否存在库存信息
+                officeIds.add(info.getWarehouseId());
+                officeIds.add(info.getShelfId());
+            });
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+            infoList.forEach(info -> {
+                SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
+                SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());
+                info.setId(null);
+                info.setWarehouseName(warehouseVO.getOfficeName());
+                info.setShelfCode(shelfVO.getOfficeCode());
+                info.setShelfName(shelfVO.getOfficeName());
+                WmsInventory inventory = new WmsInventory();
+                BeanUtil.copyProperties(info, inventory);
+                inventory.setStockQuantity(info.getQuantity());
+                addWmsInventory.add(inventory);
+            });
+            saveBatch(addWmsInventory);
         }
         return true;
     }
