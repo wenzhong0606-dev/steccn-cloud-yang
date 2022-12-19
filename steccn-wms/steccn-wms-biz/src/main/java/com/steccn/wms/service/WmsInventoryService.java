@@ -40,12 +40,21 @@ public interface WmsInventoryService extends IService<WmsInventory> {
     Boolean updateLockQuantity(List<WmsInventoryDTO> infoList, Integer state);
 
     /**
-     * 添加库存
+     * 添加库存(根据箱号，有则编辑库存，无则新增)
      *
      * @param infoList
      * @return
      */
     Boolean addInfo(List<WmsInventoryDTO> infoList);
+
+
+    /**
+     * 新增库存(新增)
+     *
+     * @param infoList
+     * @return
+     */
+    Boolean add(List<WmsInventoryDTO> infoList);
 
     /**
      * 还原在途库存信息

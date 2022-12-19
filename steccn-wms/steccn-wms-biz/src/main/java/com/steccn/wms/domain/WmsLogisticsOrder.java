@@ -37,7 +37,7 @@ public class WmsLogisticsOrder implements Serializable {
     /**
      * 物流方
      */
-    private Integer logisticsCompany;
+    private Long logisticsCompany;
 
     /**
      * 关联单据

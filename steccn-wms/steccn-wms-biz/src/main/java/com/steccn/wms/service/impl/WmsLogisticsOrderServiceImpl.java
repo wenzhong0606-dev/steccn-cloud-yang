@@ -94,18 +94,18 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Page<WmsLogisticsOrderVO> resPage = new Page<>();
         BeanUtil.copyProperties(page, resPage);
         List<WmsLogisticsOrderVO> list = BeanUtil.copyToList(page.getRecords(), WmsLogisticsOrderVO.class);
-        Set<Integer> officeIdSet = Sets.newHashSet();
+        Set<Long> officeIdSet = Sets.newHashSet();
         Set<Long> dictIdSet = Sets.newHashSet();
         List<Long> orderIds = Lists.newArrayList();
         list.forEach(order -> {
             orderIds.add(order.getId());
             dictIdSet.add(order.getType());
-            officeIdSet.add(order.getLogisticsCompany());
+            dictIdSet.add(order.getLogisticsCompany());
         });
         // 获取物流收发货机构
         Map<Long, List<WmsLogisticsInfoVO>> map = wmsLogisticsInfoService.mapByLogisticsId(orderIds);
         List<WmsLogisticsInfoVO> infoList = Lists.newArrayList();
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        //获取物流类型
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
         list.forEach(order -> {
             List<WmsLogisticsInfoVO> orDefault = map.getOrDefault(order.getId(), infoList);
@@ -117,7 +117,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 }
             }
             order.setTypeName(dictMap.get(order.getType()));
-            order.setLogisticsCompanyName(officeMap.get(order.getLogisticsCompany()));
+            order.setLogisticsCompanyName(dictMap.get(order.getLogisticsCompany()));
 
         });
         return resPage.setRecords(list);
@@ -204,7 +204,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
         dictIds.add(wmsLogisticsOrderVO.getType());
-        officeIds.add(wmsLogisticsOrderVO.getLogisticsCompany());
+        dictIds.add(wmsLogisticsOrderVO.getLogisticsCompany());
         list.forEach(wmsLogisticsInfo -> officeIds.add(wmsLogisticsInfo.getOfficeId()));
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
@@ -220,9 +220,27 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         });
         //获取运输方式数据
         wmsLogisticsOrderVO.setWayList(wmsLogisticsTransportationService.listByLogisticsId(id));
-        wmsLogisticsOrderVO.setLogisticsCompanyName(officeMap.get(wmsLogisticsOrderVO.getLogisticsCompany()));
+        wmsLogisticsOrderVO.setLogisticsCompanyName(dictMap.get(wmsLogisticsOrderVO.getLogisticsCompany()));
         wmsLogisticsOrderVO.setTypeName(dictMap.get(wmsLogisticsOrderVO.getType()));
         return wmsLogisticsOrderVO;
+    }
+
+    @Override
+    public Boolean transport(Long id) {
+        WmsLogisticsOrder order = getById(id);
+        Assert.notNull(order,"物流单不存在");
+        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ZERO.getCode().equals(order.getStatus()),"当前状态不可运输");
+        order.setStatus(WmsManagerConstant.LogisticsStateEnum.ONE.getCode());
+        return updateById(order);
+    }
+
+    @Override
+    public Boolean receipt(Long id) {
+        WmsLogisticsOrder order = getById(id);
+        Assert.notNull(order,"物流单不存在");
+        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ONE.getCode().equals(order.getStatus()),"当前状态不可签收");
+
+        return null;
     }
 
 

@@ -32,6 +32,12 @@ public class WmsLogisticsTransportation implements Serializable {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private String way;
 
+
+    /**
+     * 运输方式id
+     */
+    private Long classificationId;
+
     /**
      * 创建人id
      */

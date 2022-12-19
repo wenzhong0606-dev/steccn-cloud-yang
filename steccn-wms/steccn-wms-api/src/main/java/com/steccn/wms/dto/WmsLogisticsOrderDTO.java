@@ -31,7 +31,7 @@ public class WmsLogisticsOrderDTO {
     private Integer status;
 
     @ApiModelProperty("物流方")
-    private Integer logisticsCompany;
+    private Long logisticsCompany;
 
     @ApiModelProperty("物流方名称")
     private String logisticsCompanyName;
@@ -50,6 +50,9 @@ public class WmsLogisticsOrderDTO {
 
     @ApiModelProperty("发货机构")
     private WmsLogisticsInfoDTO shipments;
+
+    @ApiModelProperty("备注")
+    private String note;
 
     @ApiModelProperty("运输方式")
     private List<WmsLogisticsTransportationDTO> wayList;

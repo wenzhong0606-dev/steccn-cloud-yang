@@ -15,6 +15,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
+import com.steccn.wms.domain.WmsStorageReceiptInfo;
 import com.steccn.wms.domain.WmsTransferSlip;
 import com.steccn.wms.domain.WmsTransferSlipInfo;
 import com.steccn.wms.dto.WmsInventoryDTO;
@@ -140,7 +141,11 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 List<WmsTransferSlipInfo> infoList = Lists.newArrayList();
                 List<WmsInventoryDTO> sourceList = Lists.newArrayList();
                 List<WmsInventoryDTO> targetList = Lists.newArrayList();
-                dto.getList().forEach(info -> {
+                //获取箱号规则
+                Long caseNo = getCaseNo(model.getCode(), model.getId());
+
+                List<WmsTransferSlipInfoDTO> list = dto.getList();
+                for (WmsTransferSlipInfoDTO info : list) {
                     WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
                     BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                     wmsTransferSlipInfo.setTransferSlipId(model.getId());
@@ -153,15 +158,18 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     sourceList.add(source);
                     WmsInventoryDTO target = new WmsInventoryDTO();
                     BeanUtil.copyProperties(info, target);
+                    //生成箱号
+                    caseNo = ++caseNo;
+                    target.setCaseNo(model.getCode() + WmsCodeUtil.SHORT_LINE + caseNo);
                     target.setShelfId(info.getTargetShelf());
                     target.setWarehouseId(model.getTargetWarehouse());
                     targetList.add(target);
-                });
+                }
                 wmsTransferSlipInfoService.saveBatch(infoList);
                 //增加库存中原始占用库存数量,减少可用库存
                 wmsInventoryService.addLockQuantity(sourceList);
                 //增加目标货架在途库存数量
-                wmsInventoryService.addInfo(sourceList);
+                wmsInventoryService.add(sourceList);
             }
         } finally {
             lock.unlock();
@@ -194,7 +202,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 List<WmsTransferSlipInfo> list = Lists.newArrayList();
                 List<WmsTransferSlipInfoDTO> addList = Lists.newArrayList();
                 List<WmsTransferSlipInfoDTO> updateList = Lists.newArrayList();
-                dto.getList().forEach(info -> {
+                //获取箱号规则
+                Long caseNo = getCaseNo(model.getCode(), model.getId());
+                List<WmsTransferSlipInfoDTO> dtoList = dto.getList();
+                for (WmsTransferSlipInfoDTO info : dtoList) {
                     WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
                     BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                     ids.add(info.getId());
@@ -205,7 +216,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         addList.add(info);
                     }
                     list.add(wmsTransferSlipInfo);
-                });
+                }
                 LambdaQueryWrapper<WmsTransferSlipInfo> wrapper = new LambdaQueryWrapper<WmsTransferSlipInfo>()
                         .eq(WmsTransferSlipInfo::getTransferSlipId, dto.getId())
                         .notIn(CollUtil.isNotEmpty(ids), WmsTransferSlipInfo::getId, ids);
@@ -239,21 +250,22 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 if (CollUtil.isNotEmpty(addList)) {
                     List<WmsInventoryDTO> sourceList = Lists.newArrayList();
                     List<WmsInventoryDTO> targetList = Lists.newArrayList();
-                    addList.forEach(
-                            info -> {
-                                WmsInventoryDTO source = new WmsInventoryDTO();
-                                BeanUtil.copyProperties(info, source);
-                                source.setId(info.getSourceInventoryId());
-                                source.setShelfId(info.getSourceShelf());
-                                source.setWarehouseId(model.getSourceWarehouse());
-                                sourceList.add(source);
-                                WmsInventoryDTO target = new WmsInventoryDTO();
-                                BeanUtil.copyProperties(info, target);
-                                target.setShelfId(info.getTargetShelf());
-                                target.setWarehouseId(model.getTargetWarehouse());
-                                targetList.add(target);
-                            }
-                    );
+                    for (WmsTransferSlipInfoDTO info : addList) {
+                        WmsInventoryDTO source = new WmsInventoryDTO();
+                        BeanUtil.copyProperties(info, source);
+                        source.setId(info.getSourceInventoryId());
+                        source.setShelfId(info.getSourceShelf());
+                        source.setWarehouseId(model.getSourceWarehouse());
+                        sourceList.add(source);
+                        WmsInventoryDTO target = new WmsInventoryDTO();
+                        BeanUtil.copyProperties(info, target);
+                        //生成箱号
+                        caseNo = ++caseNo;
+                        target.setCaseNo(model.getCode() + WmsCodeUtil.SHORT_LINE + caseNo);
+                        target.setShelfId(info.getTargetShelf());
+                        target.setWarehouseId(model.getTargetWarehouse());
+                        targetList.add(target);
+                    }
                     //增加库存中原始占用库存数量,减少可用库存
                     wmsInventoryService.addLockQuantity(sourceList);
                     //增加目标货架在途库存数量
@@ -312,7 +324,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         if (CollUtil.isNotEmpty(list)) {
             List<WmsInventoryDTO> sourceList = Lists.newArrayList();
             List<WmsInventoryDTO> targetList = Lists.newArrayList();
-            list.forEach(info->{
+            list.forEach(info -> {
                 WmsInventoryDTO source = new WmsInventoryDTO();
                 BeanUtil.copyProperties(info, source);
                 source.setId(info.getSourceInventoryId());
@@ -425,6 +437,29 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             try {
                 //4.解析数值部分
                 String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_TRANSFER_SLIP.length() + WmsCodeUtil.NUM_BIT_12);
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+
+    private Long getCaseNo(String code, Long id) {
+        // 定义返回值
+        Long currentMax = 0L;
+        //获取规则箱号
+        WmsTransferSlipInfo maxCodeModel = wmsTransferSlipInfoService.getOne(new LambdaQueryWrapper<WmsTransferSlipInfo>()
+                .like(WmsTransferSlipInfo::getCaseNo, code)
+                .eq(WmsTransferSlipInfo::getTransferSlipId, id)
+                .orderByDesc(WmsTransferSlipInfo::getCaseNo)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCaseNo().substring(WmsCodeUtil.PREFIX_WMS_TRANSFER_SLIP.length() + WmsCodeUtil.NUM_BIT_15);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

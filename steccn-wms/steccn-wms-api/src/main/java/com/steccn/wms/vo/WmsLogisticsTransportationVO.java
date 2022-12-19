@@ -19,4 +19,7 @@ public class WmsLogisticsTransportationVO {
     @ApiModelProperty("运输方式")
     private String way;
 
+    @ApiModelProperty("分类id")
+    private Long classificationId;
+
 }

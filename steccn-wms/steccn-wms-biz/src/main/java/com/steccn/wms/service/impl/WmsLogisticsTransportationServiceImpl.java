@@ -8,6 +8,8 @@ import com.steccn.wms.domain.WmsLogisticsTransportation;
 import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.mapper.WmsLogisticsTransportationMapper;
 import com.steccn.wms.vo.WmsLogisticsTransportationVO;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
