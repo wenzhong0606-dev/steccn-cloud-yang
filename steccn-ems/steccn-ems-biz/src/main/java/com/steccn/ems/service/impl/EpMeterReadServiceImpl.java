@@ -205,7 +205,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Override
     public EpMeterReadDetailsVO details(String readDate, Integer meterId) {
         EpInstrumentAccount instrumentAccount = epInstrumentAccountService.getById(meterId);
-        if (Objects.isNull(instrumentAccount) || instrumentAccount.getStatus().equals(0)) {
+        if (Objects.isNull(instrumentAccount) || instrumentAccount.getStatus().equals(0) || !instrumentAccount.getEntityTable().equals(1)) {
             throw new BusinessException("仪表不存在或停用");
         }
         LocalDate now = LocalDate.now();
