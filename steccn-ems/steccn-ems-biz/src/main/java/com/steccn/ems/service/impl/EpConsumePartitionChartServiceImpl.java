@@ -27,6 +27,7 @@ import com.steccn.common.vo.StandardVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyType;
 import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.domain.EpProductUnitConsumeStandard;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.*;
@@ -891,6 +892,26 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
+        //获取部门标准
+        LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
+        queryWrapper.and(query -> {
+            for (int i = 0; i<dto.getPartitionIdList().size(); i++) {
+                if (i == dto.getPartitionIdList().size() - 1) {
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice,dto.getPartitionIdList().get(i));
+                } else {
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice,dto.getPartitionIdList().get(i)).or();
+                }
+            }
+        });
+        queryWrapper.ge(EpProductUnitConsumeStandard::getValidStart,dto.getStart()).le(EpProductUnitConsumeStandard::getValidEnd,dto.getEnd());
+        queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType,dto.getEnergyType());
+        if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
+            queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
+        } else {
+            // 产品厚度
+        }
+        List<EpProductUnitConsumeStandard> consumeStandardList = epProductUnitConsumeStandardService.list(queryWrapper);
+
         //根据时间粒度分区
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
@@ -927,6 +948,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
                 pole.setField2(poleList);
+                //部门标准list
+                List<TupleDTO<String, BigDecimal>> departmentStandardList = Lists.newArrayList();
+                TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> departmentStandard = new TupleDTO<>();
+                departmentStandard.setField1(partitionId);
+                pole.setField2(departmentStandardList);
                 //根据厚度遍历
                 for (BigDecimal thick : dto.getThick()) {
                     String thickName = null;
@@ -940,11 +966,21 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     }
                     BigDecimal sumConsume = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal sumProductNum = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
-
+                    //获取单耗值
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, BigDecimalUtil.divide(sumConsume,sumProductNum));
                     poleList.add(stack);
+                    //获取部门标准
+                    BigDecimal standard = null;
+                    Optional<EpProductUnitConsumeStandard> optional = consumeStandardList.stream().filter(consumestandard -> consumestandard.getApplyOffice().contains(partitionId.intValue())).findAny();
+                    if (optional.isPresent()) {
+                        standard = optional.get().getUnitValue();
+                    }
+                    TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>(thickName, standard);
+                    departmentStandardList.add(standardTupleDTO);
                 }
+
                 data.add(pole);
+                data.add(departmentStandard);
             }
             epChartGraphxAxisDTO.setData(data);
             dataList.add(epChartGraphxAxisDTO);
