@@ -2,23 +2,37 @@ package com.steccn.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.pms.vo.PmBillOfMaterialVO;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.CaseSiteDTO;
+import com.steccn.pms.dto.MessMaterialConsumeDTO;
+import com.steccn.pms.dto.MessMaterialStorageDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.WmsInventory;
-import com.steccn.wms.dto.WmsInventoryDTO;
-import com.steccn.wms.dto.WmsInventoryPageDTO;
+import com.steccn.wms.dto.*;
 import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.mapper.WmsInventoryMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author W10
@@ -30,18 +44,39 @@ import java.util.List;
 public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, WmsInventory>
         implements WmsInventoryService {
 
+    private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final WmsInventoryMapper wmsInventoryMapper;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
         LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
-                .eq(WmsInventory::getWarehouseId, dto.getWarehouseId())
-                .like(WmsInventory::getMaterialCode, dto.getMaterialCode())
-                .like(WmsInventory::getMaterialName, dto.getMaterialName())
-                .like(WmsInventory::getCaseNo, dto.getCaseNo())
-                .like(WmsInventory::getBatch, dto.getBatch());
+                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
+                .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
+                .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
+                .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
+                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
+                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch());
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
+        Set<Long> dict = Sets.newHashSet();
+        List<Long> materialIds = Lists.newArrayList();
+        res.forEach(wmsInventoryVO -> {
+            dict.add(wmsInventoryVO.getUnit());
+            materialIds.add(wmsInventoryVO.getMaterialId());
+        });
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+        Map<Long, String> map = FeignOptional.of(remoteDictFeignApi.listByIdCh(dict)).get();
+        res.forEach(wmsInventoryVO -> {
+            wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
+            wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
+        });
         page.setRecords(res);
         return page;
     }
@@ -52,15 +87,370 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         //自定义sql 修改锁定库存信息
         Boolean aBoolean = null;
         if (WmsManagerConstant.InventoryEnum.ZERO.getCode().equals(state)) {
-             aBoolean = this.baseMapper.augmentLockQuantity(infoList);
+            aBoolean = this.baseMapper.augmentLockQuantity(infoList);
         } else if (WmsManagerConstant.InventoryEnum.ONE.getCode().equals(state)) {
             aBoolean = this.baseMapper.subtractLockQuantity(infoList);
-        } else if (WmsManagerConstant.InventoryEnum.TWO.getCode().equals(state)){
+        } else if (WmsManagerConstant.InventoryEnum.TWO.getCode().equals(state)) {
             aBoolean = this.baseMapper.subtractFirstAndThenAddLockQuantity(infoList);
-        }else if (WmsManagerConstant.InventoryEnum.THREE.getCode().equals(state)){
+        } else if (WmsManagerConstant.InventoryEnum.THREE.getCode().equals(state)) {
             aBoolean = this.baseMapper.updateLockAndTotalQuantity(infoList);
         }
         return aBoolean;
+    }
+
+    @Override
+    public Boolean addInfo(List<WmsInventoryDTO> infoList) {
+        if (CollUtil.isNotEmpty(infoList)) {
+            List<String> list = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
+            infoList.forEach(info -> {
+                //根据箱号获取当前的物料是否存在库存信息
+                list.add(info.getCaseNo());
+                officeIds.add(info.getWarehouseId());
+                officeIds.add(info.getShelfId());
+            });
+            Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+            infoList.forEach(info -> {
+                WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
+                SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
+                SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());
+                info.setWarehouseName(warehouseVO.getOfficeName());
+                info.setShelfCode(shelfVO.getOfficeCode());
+                info.setShelfName(shelfVO.getOfficeName());
+                if (Objects.isNull(orDefault)) {
+                    WmsInventory inventory = new WmsInventory();
+                    BeanUtil.copyProperties(info, inventory);
+                    inventory.setStockQuantity(info.getQuantity());
+                    addWmsInventory.add(inventory);
+                } else {
+                    orDefault.setStockQuantity(orDefault.getStockQuantity().add(info.getQuantity()));
+                    addWmsInventory.add(orDefault);
+                }
+            });
+            saveOrUpdateBatch(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean restore(List<WmsInventoryDTO> infoList) {
+        if (CollUtil.isNotEmpty(infoList)) {
+            List<String> list = Lists.newArrayList();
+            infoList.forEach(info -> {
+                //根据箱号获取当前的物料的库存信息
+                list.add(info.getOriginalCaseNo());
+            });
+            Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
+            WmsInventory wmsInventory = new WmsInventory();
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            infoList.forEach(info -> {
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getOriginalCaseNo(), wmsInventory);
+                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getOriginalQuantity()));
+                addWmsInventory.add(orDefault);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean updateInventory(List<WmsInventoryDTO> inventoryDTOList) {
+        if (CollUtil.isNotEmpty(inventoryDTOList)) {
+            List<String> caseNoList = Lists.newArrayList();
+            inventoryDTOList.forEach(wmsInventoryDTO -> {
+                caseNoList.add(wmsInventoryDTO.getCaseNo());
+            });
+            Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(caseNoList);
+            WmsInventory wmsInventory = new WmsInventory();
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            inventoryDTOList.forEach(info -> {
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getOriginalQuantity()).add(info.getQuantity()));
+                addWmsInventory.add(orDefault);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean affirm(List<WmsInventoryDTO> inventoryDTOList) {
+        if (CollUtil.isNotEmpty(inventoryDTOList)) {
+            List<String> caseNoList = Lists.newArrayList();
+            inventoryDTOList.forEach(wmsInventoryDTO -> {
+                caseNoList.add(wmsInventoryDTO.getCaseNo());
+            });
+            Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(caseNoList);
+            WmsInventory wmsInventory = new WmsInventory();
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            inventoryDTOList.forEach(info -> {
+                WmsInventory orDefault = inventoryByCaseNo.getOrDefault(info.getCaseNo(), wmsInventory);
+                orDefault.setStockQuantity(orDefault.getStockQuantity().subtract(info.getQuantity()));
+                orDefault.setAvailableQuantity(orDefault.getAvailableQuantity().add(info.getQuantity()));
+                orDefault.setTotalQuantity(orDefault.getTotalQuantity().add(info.getQuantity()));
+                addWmsInventory.add(orDefault);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean addLockQuantity(List<WmsInventoryDTO> addList) {
+        if (CollUtil.isNotEmpty(addList)) {
+            List<Long> ids = Lists.newArrayList();
+            addList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
+            Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            addList.forEach(info -> {
+                WmsInventory wmsInventory = inventoryMap.get(info.getId());
+                wmsInventory.setLockQuantity(wmsInventory.getLockQuantity().add(info.getQuantity()));
+                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(info.getQuantity()));
+                addWmsInventory.add(wmsInventory);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean restoreLockQuantity(List<WmsInventoryDTO> deleteList) {
+        if (CollUtil.isNotEmpty(deleteList)) {
+            List<Long> ids = Lists.newArrayList();
+            deleteList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
+            Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            deleteList.forEach(info -> {
+                WmsInventory wmsInventory = inventoryMap.get(info.getId());
+                wmsInventory.setLockQuantity(wmsInventory.getLockQuantity().subtract(info.getQuantity()));
+                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(info.getQuantity()));
+                addWmsInventory.add(wmsInventory);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean editLockQuantity(List<WmsInventoryDTO> updateList) {
+        if (CollUtil.isNotEmpty(updateList)) {
+            List<Long> ids = Lists.newArrayList();
+            updateList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
+            Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            updateList.forEach(info -> {
+                WmsInventory wmsInventory = inventoryMap.get(info.getId());
+                wmsInventory.setLockQuantity(wmsInventory.getLockQuantity().subtract(info.getOriginalQuantity()).add(info.getQuantity()));
+                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(info.getOriginalQuantity()).subtract(info.getQuantity()));
+                addWmsInventory.add(wmsInventory);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean affirmLockQuantity(List<WmsInventoryDTO> inventoryDTOList) {
+        if (CollUtil.isNotEmpty(inventoryDTOList)) {
+            List<Long> ids = Lists.newArrayList();
+            inventoryDTOList.forEach(wmsInventoryDTO -> ids.add(wmsInventoryDTO.getId()));
+            Map<Long, WmsInventory> inventoryMap = getInventoryId(ids);
+            List<WmsInventory> addWmsInventory = Lists.newArrayList();
+            inventoryDTOList.forEach(info -> {
+                WmsInventory orDefault = inventoryMap.get(info.getId());
+                orDefault.setLockQuantity(orDefault.getLockQuantity().subtract(info.getQuantity()));
+                orDefault.setTotalQuantity(orDefault.getTotalQuantity().subtract(info.getQuantity()));
+                addWmsInventory.add(orDefault);
+            });
+            updateBatchById(addWmsInventory);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean freeze(WmsInventoryDTO dto) {
+        WmsInventory inventory = getById(dto.getId());
+        Assert.notNull(inventory, "库存信息不存在");
+        inventory.setFreezeQuantity(inventory.getFreezeQuantity().add(dto.getQuantity()));
+        inventory.setAvailableQuantity(inventory.getAvailableQuantity().subtract(dto.getQuantity()));
+        return updateById(inventory);
+    }
+
+    @Override
+    public Boolean unfreeze(WmsInventoryDTO dto) {
+        WmsInventory inventory = getById(dto.getId());
+        Assert.notNull(inventory, "库存信息不存在");
+        inventory.setFreezeQuantity(inventory.getFreezeQuantity().subtract(dto.getQuantity()));
+        inventory.setAvailableQuantity(inventory.getAvailableQuantity().add(dto.getQuantity()));
+        return updateById(inventory);
+    }
+
+    @Override
+    public Map<String, CaseSiteDTO> stockByCaseNo(Set<String> caseNos) {
+        //定义返回集合
+        Map<String, CaseSiteDTO> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(caseNos)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNos));
+            //处理数据
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(
+                        inventory -> {
+                            CaseSiteDTO caseSiteDTO = new CaseSiteDTO();
+                            BeanUtil.copyProperties(inventory, caseSiteDTO);
+                            map.put(caseSiteDTO.getCaseNo(), caseSiteDTO);
+                        }
+                );
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, BigDecimal> listMaterialInventory(List<MaterialStorageDTO> list) {
+        Map<Long, BigDecimal> map = Maps.newHashMap();
+        //自定义sql 获取库存信息
+        if (CollUtil.isNotEmpty(list)) {
+            List<WmsInventory> inventoryDTOList = wmsInventoryMapper.listMaterialInventory(list);
+            if (CollUtil.isNotEmpty(inventoryDTOList)) {
+                Map<Long, List<WmsInventory>> collect = inventoryDTOList.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialId));
+                for (Map.Entry<Long, List<WmsInventory>> longListEntry : collect.entrySet()) {
+                    BigDecimal quantity = BigDecimal.ZERO;
+                    for (WmsInventory wmsInventory : longListEntry.getValue()) {
+                        quantity = quantity.add(wmsInventory.getAvailableQuantity());
+                    }
+                    map.put(longListEntry.getKey(), quantity);
+                }
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public Map<Long, MaterialInventoryDTO> materialInventory(Set<Long> materialIds) {
+        Map<Long, MaterialInventoryDTO> map = Maps.newHashMap();
+        //批量查询物料在库存中的存量
+        if (CollUtil.isNotEmpty(materialIds)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(inventory -> {
+                            MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
+                            BeanUtil.copyProperties(inventory, inventoryDTO);
+                            map.put(inventory.getMaterialId(), inventoryDTO);
+                        }
+                );
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list) {
+//        //定义集合
+//        //批量查询物料在库存中的存量
+        LinkedList<WmsStockInventoryDTO> materialStorageVOList = new LinkedList<>();
+        if (CollUtil.isNotEmpty(list)) {
+            List<Long> materialIds = Lists.newArrayList();
+            list.forEach(messMaterialStorageDTO -> materialIds.add(messMaterialStorageDTO.getMaterialId()));
+            List<WmsInventory> materialInventoryList = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
+            //获取需要的库存数量，去除多余数量条数
+            if (CollUtil.isNotEmpty(materialInventoryList)) {
+                List<WmsStockInventoryDTO> materialList = Lists.newArrayList();
+                materialInventoryList.forEach(materialInventory -> {
+                    WmsStockInventoryDTO wmsStockInventoryDTO = new WmsStockInventoryDTO();
+                    BeanUtil.copyProperties(materialInventory, wmsStockInventoryDTO);
+                    wmsStockInventoryDTO.setInventoryId(materialInventory.getId());
+                    wmsStockInventoryDTO.setBatchNo(materialInventory.getBatch());
+                    wmsStockInventoryDTO.setCreateDate(materialInventory.getCreateTime());
+                    materialList.add(wmsStockInventoryDTO);
+                });
+                Map<Long, List<WmsStockInventoryDTO>> materialMap = materialList.stream().collect(Collectors.groupingBy(WmsStockInventoryDTO::getMaterialId));
+                List<WmsStockInventoryDTO> inventoryList = Lists.newArrayList();
+                list.forEach(material -> {
+                    List<WmsStockInventoryDTO> wmsInventoryList = materialMap.getOrDefault(material.getMaterialId(), inventoryList);
+                    if (CollUtil.isNotEmpty(wmsInventoryList)) {
+                        BigDecimal sum = BigDecimal.ZERO;
+                        wmsInventoryList.sort(Comparator.comparing(WmsStockInventoryDTO::getCreateDate));
+                        //过滤库存小于等于O的数据
+                        List<WmsStockInventoryDTO> collect = wmsInventoryList.stream()
+                                .filter(wmsInventory -> wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
+                                .collect(Collectors.toList());
+                        if (CollUtil.isNotEmpty(collect)) {
+                            for (WmsStockInventoryDTO wmsInventory : collect) {
+                                sum = wmsInventory.getAvailableQuantity().add(sum);
+                                wmsInventory.setQuantity(wmsInventory.getAvailableQuantity());
+                                materialStorageVOList.add(wmsInventory);
+                                if (material.getQuantity().compareTo(sum) < 1) {
+                                    WmsStockInventoryDTO last = materialStorageVOList.getLast();
+                                    //计算实际使用数量
+                                    last.setQuantity(last.getAvailableQuantity().subtract(sum.subtract(material.getQuantity())));
+                                    break;
+                                }
+                            }
+                        } else {
+                            WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
+                            materialStorageVO.setMaterialId(material.getMaterialId());
+                            materialStorageVO.setAvailableQuantity(BigDecimal.ZERO);
+                            materialStorageVO.setCreateDate(null);
+                            materialStorageVOList.add(materialStorageVO);
+                        }
+                    } else {
+                        WmsStockInventoryDTO materialStorageVO = new WmsStockInventoryDTO();
+                        materialStorageVO.setMaterialId(material.getMaterialId());
+                        materialStorageVO.setAvailableQuantity(BigDecimal.ZERO);
+                        materialStorageVO.setCreateDate(null);
+                        materialStorageVOList.add(materialStorageVO);
+                    }
+                });
+            }
+        }
+        return materialStorageVOList;
+    }
+
+    @Override
+    public Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO) {
+        if (Objects.nonNull(wmsCheckCaseNoDTO)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
+                    .eq(WmsInventory::getCaseNo, wmsCheckCaseNoDTO.getCaseNo()));
+            if (CollUtil.isNotEmpty(list)) {
+                Boolean aBoolean = Boolean.FALSE;
+                for (WmsInventory wmsInventory : list) {
+                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId()) &&
+                            wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch()) &&
+                            wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())) {
+                        aBoolean = Boolean.TRUE;
+                    }
+                }
+                return aBoolean;
+            }
+        }
+        return true;
+    }
+
+
+    private Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
+        Map<String, WmsInventory> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(caseNo)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNo));
+            list.forEach(wmsInventory -> {
+                        map.put(wmsInventory.getCaseNo(), wmsInventory);
+                    }
+            );
+        }
+        return map;
+    }
+
+    private Map<Long, WmsInventory> getInventoryId(List<Long> ids) {
+        Map<Long, WmsInventory> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(ids)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, ids));
+            list.forEach(wmsInventory -> {
+                        map.put(wmsInventory.getId(), wmsInventory);
+                    }
+            );
+        }
+        return map;
     }
 }
 

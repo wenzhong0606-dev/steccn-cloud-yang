@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -34,7 +35,7 @@ public class EpChartGraphVO<T, Q> implements Serializable {
     /**
      * 标准值 企业标准 | 行业标准
      */
-    private List<StandardVO> standard;
+    private List<StandardVO<BigDecimal>> standard;
 
     /**
      * 单耗预警信息

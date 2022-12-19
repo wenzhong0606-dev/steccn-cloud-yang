@@ -4,10 +4,12 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpEnergyParamDTO;
 import com.steccn.ems.dto.EpEnergyTreeDTO;
+import com.steccn.ems.dto.EpPartitionChildTypeDTO;
 import com.steccn.ems.dto.EpPartitionDTO;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpPartitionNameListVO;
+import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -40,7 +42,6 @@ public class EpPartitionController {
         return R.success(epPartitionService.getChildTree(dto));
     }
 
-
     @PostMapping
     @ApiOperation("编辑能源分区树")
     @SysLog("编辑能源分区树")
@@ -48,9 +49,9 @@ public class EpPartitionController {
         return R.success(epPartitionService.edit(dto));
     }
 
-    @PostMapping("/test2")
-    @ApiOperation(value = "根据孩子id集合查询所有父节点")
-    public R<Map<Long,EpPartitionVO>> parentInfo(@RequestBody Set<Long> childList){
-        return R.success(epPartitionService.parentInfo(childList));
+    @PostMapping("/parent")
+    @ApiOperation(value = "根据孩子id递归查询所有父节点")
+    public R<EpPartitionParentVO> getParentList(@RequestBody EpPartitionChildTypeDTO dto){
+        return R.success(epPartitionService.getParentList(dto));
     }
 }

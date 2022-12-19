@@ -34,4 +34,9 @@ public class EpEnergyFlowDTO extends BasePageDTO implements Serializable {
      */
     @NotNull(message = "能源类型不能为空")
     private Integer energyTypeId;
+
+    /**
+     * 图片base64编码
+     */
+    private String base64;
 }

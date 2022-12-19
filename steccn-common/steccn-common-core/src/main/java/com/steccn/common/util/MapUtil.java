@@ -47,7 +47,7 @@ public class MapUtil {
      * @param <K>   key泛型
      * @param <V>   value泛型
      */
-    public static <K, V> void compute(Map<K, Collection<V>> map, K key, V value) {
+    public static <K, V> void compute(Map<K, List<V>> map, K key, V value) {
         map.compute(key, (k, v) -> {
             if (Objects.isNull(v)) {
                 v = Lists.newArrayList();

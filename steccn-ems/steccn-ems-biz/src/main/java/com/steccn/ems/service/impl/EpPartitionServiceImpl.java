@@ -7,28 +7,26 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.steccn.ems.dto.*;
+import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.service.EpPartitionService;
-import com.steccn.ems.mapper.EpPartitionMapper;
 import com.steccn.ems.vo.EpPartitionNameListVO;
+import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
-import com.steccn.platform.vo.SysOfficeVO;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +48,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      */
     private final Set<Integer> DEFAULT_ENERGY_SET = Sets.newHashSet(1,2,3,4,5);
 
+
     @Override
     public EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType) {
 
@@ -60,10 +59,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
         }
             //根据传过来的能源类型先获取全量数据
-        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
+        List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
+                .eq(EpPartition::getDelFlag,MpConstant.NO));
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
-            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList);
+            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList,energyType);
                epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
             }
         return epPartitionNameListVO;
@@ -87,46 +87,94 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(EpPartitionDTO dto) {
-        //需要新增的list
-        List<EpPartition> addPartitionList = Lists.newArrayList();
+
+        //用来处理新增的List
+        List<EpPartitionVO> dealAddPartitionList = Lists.newArrayList();
+
         //需要删除的list
         List<Long> deletePartitionList = Lists.newArrayList();
-        //根据能源类型查询出能源分区的主id和officeid
-        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
+        //根据能源类型查询出该类型的所有分区树的集合
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
+                .eq(EpPartition::getType, dto.getType())
+                .eq(EpPartition::getDelFlag,MpConstant.NO));
+       //获取数据库中所有officeId
         List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
-        Map<Integer,EpPartition> longIntegerMap = Maps.newHashMap();
+       //机构的id以及分区树idMap集合
+        Map<Integer,Long> partitionMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(epPartitions)){
             epPartitions.forEach(v->{
-                longIntegerMap.put(v.getOfficeId(),v);
+                //根据officeId分组
+                partitionMap.put(v.getOfficeId(),v.getId());
             });
         }
 
-        for (EpPartitionListDTO partitionDTO : dto.getEpPartitionListDTO()) {
-            EpPartition epPartition = new EpPartition();
-            BeanUtils.copyProperties(partitionDTO,epPartition);
-            if (Objects.isNull(partitionDTO.getId())){
-                long mainId = IdUtil.getSnowflake().nextId();
-                epPartition.setId(mainId);
-                //设置能源分区树里的父id
-                if (Objects.nonNull(partitionDTO)&&Objects.nonNull(partitionDTO.getParentId())){
-                    if (officeIds.contains(partitionDTO.getParentId())){
-                        epPartition.setParentId(longIntegerMap.get(partitionDTO.getParentId()).getId());
-                    }
-                }
-                addPartitionList.add(epPartition);
-            }else {
-                if (partitionDTO.getIsDelete()==MpConstant.YES){
-                    deletePartitionList.add(epPartition.getId());
+        if (CollUtil.isNotEmpty(dto.getEpPartitionListDTO())){
+            //先过滤掉前端传过来不符合要求的数据
+            List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
+            for (EpPartitionListDTO partitionDTO : dtoList) {
+                //如果数据库中没有包含该机构的id则新增
+                if (!officeIds.contains(partitionDTO.getId())){
+                    EpPartitionVO epPartitionVO = new EpPartitionVO();
+                    //设置能源分区树主键id
+                    long mainId = IdUtil.getSnowflake().nextId();
+                    epPartitionVO.setId(mainId);
+                    //设置能源类型
+                    epPartitionVO.setType(dto.getType());
+                    //设置机构id
+                    epPartitionVO.setOfficeId(partitionDTO.getId());
+                    //设置机构父id
+                    epPartitionVO.setParentOfficeId(partitionDTO.getParentId());
+                    //设置机构名称
+                    epPartitionVO.setOfficeName(partitionDTO.getOfficeName());
+                    //设置排序字段
+                    epPartitionVO.setSort(partitionDTO.getTreeLevel());
+                    partitionMap.put(partitionDTO.getId(),mainId);
+                    dealAddPartitionList.add(epPartitionVO);
                 }
             }
+            //获取dto中office的所有id
+            List<Integer> officeDtoIds = dtoList.stream().map(EpPartitionListDTO::getId).collect(Collectors.toList());
+            //判断officeDtoIds是否包含数据库中所有officeid 如果不是则要删除数据库中多余的
+            if (!officeDtoIds.containsAll(officeIds)){
+                //去除刚刚新增的officeid,比对剩下的
+                List<Integer> addOfficeIds = dealAddPartitionList.stream().map(EpPartitionVO::getOfficeId).collect(Collectors.toList());
+                officeDtoIds.removeAll(addOfficeIds);
+                officeIds.removeAll(officeDtoIds);
+                officeIds.forEach(v->{
+                    deletePartitionList.add(partitionMap.get(v));
+                });
+            }
         }
-        if (CollUtil.isNotEmpty(addPartitionList)){
-            saveBatch(addPartitionList);
+        if (CollUtil.isNotEmpty(dealAddPartitionList)){
+            dealAddPartitionList.stream().filter(s->Objects.nonNull(s)
+                    &&Objects.nonNull(s.getParentOfficeId())).forEach(s->{
+                //设置能源分区树里的父id
+                s.setParentId(partitionMap.get(s.getParentOfficeId()));
+            });
+            List<EpPartition> addPartitionList = BeanUtil.copyToList(dealAddPartitionList, EpPartition.class);
+            saveOrUpdateBatch(addPartitionList);
         }
-        if (CollUtil.isNotEmpty(deletePartitionList)){
+        if (CollUtil.isNotEmpty(deletePartitionList)) {
+            List<EpInstrumentAccount> epInstrumentAccounts = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                    .eq(EpInstrumentAccount::getMeterType, dto.getType()));
+            //lou出仪表里面某个类型的所有节点
+            List<Long> partitionList = epInstrumentAccounts.stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
+            Map<Long, String> partionIdNames = Maps.newHashMap();
+            epPartitions.stream().forEach(s -> {
+                partionIdNames.put(s.getId(), s.getOfficeName());
+            });
+            //分区树表中
+            List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
+            //如果有仪表绑定了该节点无法删除
+            deletePartitionList.forEach(s -> {
+                if (partitionList.contains(s) && partitionIds.contains(s)) {
+                    throw new BusinessException("已有仪表绑定节点:" + partionIdNames.get(s) + ",请重新编辑");
+                }
+            });
             removeByIds(deletePartitionList);
         }
-    return Boolean.TRUE;
+        return Boolean.TRUE;
     }
 
     /**
@@ -139,22 +187,25 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //1、根据能源类型返回树状数据
         EpPartitionNameListVO epEnergyTypeVOList = this.getEpEnergyTypeVOList(dto.getType());
         List<EpPartitionVO> treeList = epEnergyTypeVOList.getEpPartitionVOList();
-        //准备数据
-        List<EpPartitionVO> childTree = Lists.newArrayList();
         EpEnergyTreeDTO result = new EpEnergyTreeDTO();
-        dto.getPartitionId().forEach(partitionTmp -> {
-            //过滤子树信息
-            EpPartitionVO resTmp = new EpPartitionVO();
-            EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
-            childTree.add(child);
-        });
         //根据子树信息返回详情
         Set<Long> partitionIdResult = Sets.newHashSet();
-        for(EpPartitionVO tmp:childTree){
-            tmp = setTreeDetail(tmp);
-            Set<Long> partitionTmp = Sets.newHashSet();
-            partitionTmp = getRealMeter(tmp,partitionTmp);
-            partitionIdResult.addAll(partitionTmp);
+        //准备数据
+        List<EpPartitionVO> childTree = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(treeList)){
+
+            dto.getPartitionId().forEach(partitionTmp -> {
+                //过滤子树信息
+                EpPartitionVO resTmp = new EpPartitionVO();
+                EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
+                childTree.add(child);
+            });
+            for(EpPartitionVO tmp:childTree){
+                tmp = setTreeDetail(tmp);
+                Set<Long> partitionTmp = Sets.newHashSet();
+                partitionTmp = getRealMeter(tmp,partitionTmp);
+                partitionIdResult.addAll(partitionTmp);
+            }
         }
         result.setTree(childTree);
         result.setPartitionIds(partitionIdResult);
@@ -175,7 +226,167 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Long, EpPartition> listById(Set<Long> partitionIdList) {
+        Map<Long, EpPartition> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(partitionIdList)) {
+            List<EpPartition> epPartitions = listByIds(partitionIdList);
+            if (CollUtil.isNotEmpty(epPartitions)) {
+                epPartitions.forEach(ele -> {
+                    resMap.put(ele.getId(), ele);
+                });
+            }
+        }
+        return resMap;
+    }
 
+    @Override
+    public Map<Integer, EpInstrumentAccount> listByOfficeId(Integer energyType, Set<Integer> officeIdSet) {
+        Map<Integer, EpInstrumentAccount> resMap = Maps.newHashMap();
+
+        if (Objects.nonNull(energyType) && CollUtil.isNotEmpty(officeIdSet)) {
+            List<EpPartition> list = list(new LambdaQueryWrapper<EpPartition>()
+                    .eq(EpPartition::getType, energyType)
+                    .in(EpPartition::getOfficeId, officeIdSet));
+            if (CollUtil.isNotEmpty(list)) {
+                Set<Long> partitionIdSet = list.stream().map(v -> v.getId()).collect(Collectors.toSet());
+
+                Map<Long, Integer> officePartitionNodeMap = Maps.newHashMap();
+                list.forEach(ele -> officePartitionNodeMap.put(ele.getId(), ele.getOfficeId()));
+
+                List<EpInstrumentAccount> accountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                        .eq(EpInstrumentAccount::getMeterType, energyType)
+                        .in(EpInstrumentAccount::getPartitionNode, partitionIdSet));
+                if (CollUtil.isNotEmpty(accountList)) {
+                    accountList.forEach(ele -> {
+                        Integer officeId = officePartitionNodeMap.get(ele.getPartitionNode());
+                        if (Objects.nonNull(officeId)) {
+                            resMap.put(officeId, ele);
+                        }
+                    });
+                }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, List<EpPartitionVO>> allNextChildren(Integer type) {
+        Map<Long, List<EpPartitionVO>> linkChildren = Maps.newHashMap();
+        //先找出该能源类型下的所有分区节点
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
+                .eq(EpPartition::getType, type));
+        List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        if (CollUtil.isEmpty(epPartitionVOS)){
+            return linkChildren;
+        }
+
+        epPartitionVOS.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+            List<EpPartitionVO> epPartitionVOList = Lists.newArrayList();
+            epPartitionVOS.stream().filter(v->Objects.nonNull(v)).forEach(v->{
+                if (v.getParentId()==s.getId()){
+                    epPartitionVOList.add(v);
+                }
+            });
+            //获取该类型下每个节点及其下一级子节点的集合
+            linkChildren.put(s.getId(),epPartitionVOList);
+        });
+        return linkChildren;
+    }
+
+    @Override
+    public Map<Integer, EpPartition> rootMap(List<Integer> energyType) {
+        Map<Integer, EpPartition> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(energyType)) {
+            //获取能源的所有根节点
+            List<EpPartition> rootList = list(new LambdaQueryWrapper<EpPartition>()
+                    .in(EpPartition::getType, energyType)
+                    .isNull(EpPartition::getParentId));
+            if (CollUtil.isNotEmpty(rootList)) {
+                rootList.forEach(ele -> resMap.put(ele.getType(), ele));
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public List<EpPartitionVO> getAllChildrenById(Long partitionId) {
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionId));
+        List<EpPartitionVO> epPartitionVOList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        return epPartitionVOList;
+    }
+
+    @Override
+    public EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto) {
+        /***
+         * 组织机构名称集合
+         */
+        List<String> joinPartitions = new ArrayList<>();
+//        joinPartitions.clear();
+        //先获取该能源类型下的全量数据
+        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
+        EpPartition childPartition = getById(dto.getChildId());
+        if (Objects.isNull(childPartition)){
+            return null;
+        }
+        EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
+        BeanUtils.copyProperties(childPartition,childPartitionVO);
+        EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
+        //获取拼接名称
+        joinPartitions.add(parentPartitionVO.getOfficeName());
+        getJoinPartitionName( parentPartitionVO ,parentPartitionVO.getParentList(),joinPartitions);
+        Collections.reverse(joinPartitions);
+        String officeNames = "";
+        for (String vo: joinPartitions) {
+            officeNames=officeNames+vo+"/";
+        }
+        if(StringUtils.isNotBlank(officeNames)) officeNames = officeNames.substring(0,officeNames.length()-1);
+        parentPartitionVO.setJoinOfficeNames(officeNames);
+        return parentPartitionVO;
+    }
+    public void getJoinPartitionName(EpPartitionParentVO menu ,List<EpPartitionParentVO> menus,List<String> joinPartitions){
+       if (CollUtil.isNotEmpty(menus)){
+           for (EpPartitionParentVO mu : menus) {
+               //遍历出父id等于参数的id，add进子节点集合
+               if (menu.getParentId().equals(mu.getId())) {
+                   //递归遍历下一级
+                   joinPartitions.add(mu.getOfficeName());
+                   if(Objects.nonNull(mu.getParentList()))   getJoinPartitionName(mu,mu.getParentList(),joinPartitions);
+               }
+           }
+       }
+    }
+    private EpPartitionParentVO getParentListByChildId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
+        List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(epPartitions)||!partitionIds.contains(childPartitionVO.getId())){
+            //该能源类型下没有树结构或者不包含子id返回空数据
+            return childPartitionVO;
+        }
+        if (0==childPartitionVO.getSort()){
+            return childPartitionVO;
+        }else {
+            //如果孩子id的排序不为0则表明其至少有一个父类
+            //子挂父
+            getAllParentByParentId(childPartitionVO,epPartitions);
+        }
+        return childPartitionVO;
+    }
+
+    private void getAllParentByParentId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
+
+        List<EpPartition> parentList = epPartitions.stream().filter(s -> Objects.nonNull(childPartitionVO.getParentId())&&
+                childPartitionVO.getParentId().equals(s.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(parentList)){
+            parentList.sort(Comparator.comparing(EpPartition::getSort));
+            List<EpPartitionParentVO> epPartitionParentVOS = BeanUtil.copyToList(parentList, EpPartitionParentVO.class);
+            childPartitionVO.setParentList(epPartitionParentVOS);
+            epPartitions.removeAll(parentList);
+            for (EpPartitionParentVO partitionParentVO : epPartitionParentVOS) {
+                getAllParentByParentId(partitionParentVO,epPartitions);
+            }
+        }
+
+    }
 
     @Override
     public Map<Long, EpPartitionVO> parentInfo(Set<Long> childList) {
@@ -194,13 +405,13 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param dataList
      * @return
      */
-    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList){
+    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
         //定义返回数据集合
         List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
-        //去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
-        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes();
+        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
+        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
         //获取所有根节点
-        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId()) || v.getParentId() == 0).collect(Collectors.toList());
+        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(rootList)){
             rootList.sort(Comparator.comparing(EpPartition::getSort));
             //把根节点从全量数据集合中删除
@@ -231,7 +442,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
         //获取当前节点的子级
         List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
-                && parentVO.getId() == v.getParentId()).collect(Collectors.toList());
+                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(children)){
             children.sort(Comparator.comparing(EpPartition::getSort));
             List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);

@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class EpChartGraphDTO<E1, E2, E3> implements Serializable {
     private List<EpChartGraphxAxisDTO<E1, E2, E3>> dataList;
 
     @ApiModelProperty("标准-企业，行业")
-    private List<StandardVO> standardList;
+    private List<StandardVO<BigDecimal>> standardList;
 
     @ApiModelProperty("能源类型")
     private Integer energyType;

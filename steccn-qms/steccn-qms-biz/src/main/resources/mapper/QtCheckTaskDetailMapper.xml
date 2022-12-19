@@ -24,6 +24,18 @@
     <!--        create_time,update_by,update_name,-->
     <!--        update_time,del_flag-->
     <!--    </sql>-->
+
+    <resultMap id="TaskResultMap" type="com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO">
+
+        <result property="materialId" column="materialId" jdbcType="INTEGER"/>
+        <result property="productLine" column="productLine"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="classId" column="classId" jdbcType="INTEGER"/>
+        <result property="classTime" column="classTime" jdbcType="TIMESTAMP"/>
+        <result property="itemName" column="itemName" jdbcType="VARCHAR"/>
+        <result property="checkResult" column="checkResult" jdbcType="VARCHAR"/>
+    </resultMap>
+
     <select id="listByTaskId" resultType="com.steccn.qms.vo.QtSubtableVO">
         SELECT
         a.id AS label,
@@ -46,22 +58,21 @@
             #{id}
         </foreach>)
     </select>
-    <select id="selectAllByClassTime" resultType="com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO">
+    <select id="selectAllByClassTime" resultMap="TaskResultMap">
         SELECT
 	        i.`name` itemName,
 	        d.check_result checkResult,
 	        t.material_id materialId,
-	        m.thick_quantity thickQuantity,
 	        t.class_time classTime,
-	        t.classes_id classId
+	        t.classes_id classId,
+	        t.product_line productLine
         FROM
 	        qt_check_task t
 	        INNER JOIN qt_check_task_detail d ON t.id = d.task_id
 	        INNER JOIN qt_defective_item i ON d.item_id = i.id
-	        INNER JOIN qt_material m ON t.material_id = m.id
         WHERE
 	        t.task_type = 4
-	        and t.classTime &gt;= #{startTime},
-	        and t.classTime &lt;= #{endTime}
+	        and t.class_time &gt;= #{startTime}
+	        and t.class_time &lt;= #{endTime}
     </select>
 </mapper>

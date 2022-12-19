@@ -84,7 +84,7 @@ public class WmsCheckOrderController {
     @GetMapping("/varianceAdjustmentCheckOrder")
     @ApiOperation(value = "盘点差异调整")
     public R<String> varianceAdjustmentCheckOrder(Long id) {
-        return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id));
+        return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id),null);
     }
 
     /*****
@@ -136,7 +136,7 @@ public class WmsCheckOrderController {
         if(Objects.isNull(wmsCheckOrderInfoDTO.getShelf()) || Objects.isNull(wmsCheckOrderInfoDTO.getWarehouse())
                 || Objects.isNull(wmsCheckOrderInfoDTO.getMaterialId()) ||  Objects.isNull(wmsCheckOrderInfoDTO.getBatch())
                 || Objects.isNull(wmsCheckOrderInfoDTO.getCaseNo()) ||
-                Objects.isNull(wmsCheckOrderInfoDTO.getCheckOrderId()))  return R.failure("参数不全");
+                Objects.isNull(wmsCheckOrderInfoDTO.getCheckOrderId()))  return R.failure("参数不全，物料id、货架主键、仓库主键、批次、箱号不可为空");
         return  R.success(wmsCheckOrderService.adjNormalOrDifferenceCheckOrderItem(wmsCheckOrderInfoDTO));
     }
 

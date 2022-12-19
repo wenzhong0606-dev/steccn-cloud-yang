@@ -33,12 +33,11 @@ public class EpProduceDetailVO {
     private Integer officeId;
 
     /**
-     * 工位id
-     */
-    private Integer stationId;
-
-    /**
      * 基片拉引量、深加工产量
      */
     private BigDecimal yield;
+
+    private Long materialId;
+
+    private Integer productLineId;
 }

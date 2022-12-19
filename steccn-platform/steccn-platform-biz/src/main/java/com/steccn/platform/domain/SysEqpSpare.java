@@ -125,8 +125,42 @@ public class SysEqpSpare implements Serializable {
     private BigDecimal wideQuantity;
 
     /**
+     *厚度单位
+     */
+    private Long thickUnitId;
+
+    /**
+     * 厚度
+     */
+    private BigDecimal thickQuantity;
+
+    /**
+     * 体积
+     */
+    private BigDecimal volumeQuantity;
+
+    /**
+     * 体积单位
+     */
+    private Long volumeUnitId;
+
+    /**
+     * 重量
+     */
+    private BigDecimal weightQuantity;
+
+    /**
+     * 重量单位
+     */
+    private Long weightUnitId;
+
+    /**
      * 采购类型id
      */
     private Long procurementTypeId;
 
+    /**
+     * 单位
+     */
+    private Long unitId;
 }

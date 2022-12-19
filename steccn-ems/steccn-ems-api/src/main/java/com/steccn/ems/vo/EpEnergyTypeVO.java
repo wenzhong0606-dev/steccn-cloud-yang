@@ -1,5 +1,7 @@
 package com.steccn.ems.vo;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.BaseSelectVO;
@@ -58,6 +60,11 @@ public class EpEnergyTypeVO implements Serializable {
      * 创建人名称
      */
     private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
     /**
      * 更新人时间

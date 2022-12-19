@@ -35,6 +35,9 @@ import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.wms.dto.WmsStorageReceiptDTO;
+import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
@@ -72,6 +75,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
     private RemoteMessFeignApi remoteMessFeignApi;
+    @Autowired
+    private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
 
     @Override
@@ -145,7 +150,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
         Assert.notNull(pmsProduceOrder, "生产订单不存在");
         pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
-        List<MessInStorageVoucherListDTO> materialList = Lists.newArrayList();
+        List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
 
         Set<Integer> storageSet = Sets.newHashSet();
         List<Long> eqpList = Lists.newArrayList();
@@ -163,6 +168,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Map<String, PmsBarcodePrint> caseMap = pmsBarcodePrintService.caseMap(caseNoSet);
         PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
 
+        WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
+
         for (CompleteStorageScanDTO caseInfo : dtoList) {
             PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
             BeanUtils.copyProperties(caseInfo, modelInfo);
@@ -175,14 +182,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
             modelInfoList.add(modelInfo);
 
-            MessInStorageVoucherListDTO mess = new MessInStorageVoucherListDTO();
-            BeanUtils.copyProperties(caseInfo, mess);
-            mess.setQuantity(sumQuantity);
-            mess.setUnit(caseInfo.getUnitName());
-            mess.setSpecifications(eqpSpareVOMap.getOrDefault(caseInfo.getMaterialId(), defaultEqpSpareVO).getName());
-            mess.setWarehouse(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeCode());
-            mess.setShelf(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
-            materialList.add(mess);
+            WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
+            BeanUtils.copyProperties(caseInfo, wmsStorageReceiptInfoDTO);
+            wmsStorageReceiptInfoDTO.setQuantity(sumQuantity);
+            wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
+            wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
+            wmsStorageReceiptDTO.setWarehouseId(wmsStorageReceiptDTO.getWarehouseId());
+            wmsStorageReceiptDTO.setWarehouseName(wmsStorageReceiptDTO.getWarehouseName());
+            materialList.add(wmsStorageReceiptInfoDTO);
         }
         completeStorageInfoService.saveBatch(modelInfoList);
         //生成code 规则：SI-20220905-0001
@@ -195,16 +202,16 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
         save(pmsCompleteStorage);
         //生成入库单
-        MessInStorageVoucherDTO messDto = new MessInStorageVoucherDTO();
-        messDto.setCreateBy(SecurityUtils.getUser().getName());
-        messDto.setCode(pmsCompleteStorage.getCode());
-        messDto.setType(sysDictVO.getCode());
-        messDto.setMaterialList(materialList);
+
+        wmsStorageReceiptDTO.setType(sysDictVO.getId());
+        //仓库id
+        wmsStorageReceiptDTO.setList(materialList);
+        wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         try {
-            MessInStorageVoucherVO messInStorageVoucherVO = remoteMessFeignApi.generateInStorageVoucher(messDto);
+            Boolean aBoolean = FeignOptional.of(remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO)).get();
             //入库必定要成功
-            if (Objects.nonNull(messInStorageVoucherVO) && messInStorageVoucherVO.getResult()) {
-                log.info("入库单 -> " + messInStorageVoucherVO.getMessage());
+            if (!aBoolean) {
+                log.info("入库单 -> 失败" );
             }
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());

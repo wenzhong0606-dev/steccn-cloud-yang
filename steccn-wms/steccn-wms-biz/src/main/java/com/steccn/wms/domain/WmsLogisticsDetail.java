@@ -68,7 +68,7 @@ public class WmsLogisticsDetail implements Serializable {
     /**
      * 批次
      */
-    private String bacth;
+    private String batch;
 
     /**
      * 箱号

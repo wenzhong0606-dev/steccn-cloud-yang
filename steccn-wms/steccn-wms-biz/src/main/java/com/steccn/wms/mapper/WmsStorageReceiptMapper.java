@@ -1,8 +1,13 @@
 package com.steccn.wms.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
+import com.steccn.wms.vo.WmsDeliveryReceiptVO;
+import com.steccn.wms.vo.WmsStorageReceiptVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author W10
@@ -13,6 +18,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface WmsStorageReceiptMapper extends BaseMapper<WmsStorageReceipt> {
 
+    /**
+     * 分页列表
+     * @param page
+     * @param dto
+     * @return
+     */
+    Page<WmsStorageReceiptVO> pageList(@Param("page") Page page, @Param("dto") WmsStorageReceiptPageDTO dto);
 }
 
 

@@ -1,7 +1,9 @@
 package com.steccn.platform.constant;
 
 import io.swagger.annotations.ApiModel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 
 /**
  * @author yequan
@@ -29,4 +31,33 @@ public interface SysOfficeConstant {
      * 车间类型
      */
     String WORKSHOP = "8";
+
+    /**
+     * 进站0  出站1
+     */
+    @Getter
+    @AllArgsConstructor
+    enum ARRIVALS_OR_OUTBOUND {
+        //远传仪表
+        ARRIVALS(0, "进站"),
+        //非远传仪表
+        OUTBOUND(1, "出站");
+        private Integer code;
+        private String name;
+
+        /**
+         * 根据
+         *
+         * @param code
+         * @return
+         */
+        public static ARRIVALS_OR_OUTBOUND getInstrumentType(Integer code) {
+            for (ARRIVALS_OR_OUTBOUND value : ARRIVALS_OR_OUTBOUND.values()) {
+                if (value.getCode().equals(code)) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
 }

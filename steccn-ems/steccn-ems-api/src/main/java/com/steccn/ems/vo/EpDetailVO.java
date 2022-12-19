@@ -34,4 +34,7 @@ public class EpDetailVO implements Serializable {
     @ApiModelProperty("厚度字符串")
     private String thickStr;
 
+    @ApiModelProperty("组织机构的sort")
+    private Integer sort;
+
 }

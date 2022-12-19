@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -18,11 +19,10 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.constant.WmsManagerConstant;
-import com.steccn.wms.domain.WmsCheckOrder;
-import com.steccn.wms.domain.WmsCheckOrderInfo;
+import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
 import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
-import com.steccn.wms.mapper.WmsCheckOrderMapper;
+import com.steccn.wms.mapper.*;
 import com.steccn.wms.service.WmsCheckOrderInfoService;
 import com.steccn.wms.service.WmsCheckOrderService;
 import com.steccn.wms.util.WmsCodeUtil;
@@ -34,7 +34,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
     private final RemoteMessFeignApi remoteMessFeignApi;
+
+    private final WmsInventoryMapper wmsInventoryMapper;
+    private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
+    private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
+    private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
+    private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
 
 
     /***
@@ -132,7 +140,9 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         List<WmsCheckOrderInfoVO> infoVOList = new ArrayList<>();
         resPage.getRecords().forEach(vo->{
             WmsCheckOrderInfoVO wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
-            BeanUtils.copyProperties(vo,wmsCheckOrderInfoVO);
+            BeanUtils.copyProperties((WmsCheckOrderInfo)vo,wmsCheckOrderInfoVO);
+            wmsCheckOrderInfoVO.setShelf(((WmsCheckOrderInfo) vo).getShelf().toString());
+            wmsCheckOrderInfoVO.setWarehouse(((WmsCheckOrderInfo) vo).getWarehouse().toString());
             //仓库
             if(Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse())){
                 R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(wmsCheckOrderInfoVO.getWarehouse()));
@@ -173,15 +183,75 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         if(orderInfoVOPage.getRecords().size() == 0) return  "盘点库存不存在，无法调整";
         List<WmsCheckOrderInfoVO> orderInfoVOList = orderInfoVOPage.getRecords();
         if(orderInfoVOList.stream().filter(m-> Objects.isNull(m.getStatus())).findAny().isPresent()) return "盘点未完成";
-        for (WmsCheckOrderInfoVO vo:orderInfoVOList) {
-            //差额为正数，则盘盈；盘盈生成对应的入库单，类型为盘点入库，关联单据为盘点单号，入库单自动确认
-            if(vo.getDifference().compareTo(BigDecimal.ZERO) ==1){
-
+        //差额为正数，则盘盈；盘盈生成对应的入库单，类型为盘点入库，关联单据为盘点单号，入库单自动确认
+        List<WmsCheckOrderInfoVO> surplusList = orderInfoVOList.stream().filter(WmsCheckOrderInfoVO ->
+                WmsCheckOrderInfoVO.getDifference().compareTo(BigDecimal.ZERO) == 1).collect(Collectors.toList());
+        Map<String, List<WmsCheckOrderInfoVO>> warehouseSurplusList = surplusList.stream().collect(Collectors.groupingBy(t -> t.getWarehouse()));
+        for (Map.Entry<String, List<WmsCheckOrderInfoVO>> surplusEntry : warehouseSurplusList.entrySet()) {
+            //保存入库单
+            WmsStorageReceipt wmsStorageReceipt = new WmsStorageReceipt();
+            wmsStorageReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT, WmsCodeUtil.NUM_BIT_4, getStorageReceiptCurrentMaxCode()));
+            wmsStorageReceipt.setType(wmsCheckOrder.getType());
+            wmsStorageReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+            wmsStorageReceipt.setWarehouseId(Long.parseLong(surplusEntry.getKey()));
+            wmsStorageReceipt.setAffirmTime(LocalDateTime.now());
+            wmsStorageReceipt.setAffirmName(SecurityUtils.getUser().getName());
+            wmsStorageReceipt.setNote(wmsCheckOrder.getNote());
+            wmsStorageReceiptMapper.insert(wmsStorageReceipt);
+            //保存入库明细
+            for (WmsCheckOrderInfoVO vo:surplusEntry.getValue()) {
+                WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
+                BeanUtils.copyProperties(vo,wmsStorageReceiptInfo);
+                wmsStorageReceiptInfo.setStorageReceiptId(wmsStorageReceipt.getId());
+                List<Long> materialIds = new ArrayList<>();
+                materialIds.add(vo.getMaterialId());
+                R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
+                if(materialInfo.getData().size()>0) wmsStorageReceiptInfo.setMaterialCode(materialInfo.getData().get(vo.getMaterialId()).getCode());
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(vo.getShelf()));
+                if(Objects.nonNull(shelfInfo.getData()))  wmsStorageReceiptInfo.setShelfCode(shelfInfo.getData().getOfficeCode());
+                wmsStorageReceiptInfo.setQuantity(vo.getResult());
+                //获取库存信息
+                LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
+                WmsInventory wmsInventory = wmsInventoryMapper.selectOne(inventoryLambdaQueryWrapper);
+                wmsStorageReceiptInfo.setUnit(Objects.isNull(wmsInventory)?null:wmsInventory.getUnit());
+                wmsStorageReceiptInfoMapper.insert(wmsStorageReceiptInfo);
+                //更新库存
+                wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().add(vo.getResult()));
+                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(vo.getResult()));
+                wmsInventoryMapper.updateById(wmsInventory);
             }
-
-            //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认
-            if(vo.getDifference().compareTo(BigDecimal.ZERO) == -1){
-
+        }
+        //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认
+        List<WmsCheckOrderInfoVO> lossList = orderInfoVOList.stream().filter(WmsCheckOrderInfoVO ->
+                WmsCheckOrderInfoVO.getDifference().compareTo(BigDecimal.ZERO) == -1).collect(Collectors.toList());
+        Map<String, List<WmsCheckOrderInfoVO>> warehouseLossList = lossList.stream().collect(Collectors.groupingBy(t -> t.getWarehouse()));
+        for (Map.Entry<String, List<WmsCheckOrderInfoVO>> lossEntry : warehouseLossList.entrySet()) {
+            //保存出库信息
+            WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+            wmsDeliveryReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, getDeliveryReceiptCurrentMaxCode()));
+            wmsDeliveryReceipt.setType(wmsCheckOrder.getType());
+            wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+            wmsDeliveryReceipt.setWarehouseId(Long.parseLong(lossEntry.getKey()));
+            wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
+            wmsDeliveryReceipt.setAffirmName(SecurityUtils.getUser().getName());
+            wmsDeliveryReceiptMapper.insert(wmsDeliveryReceipt);
+            for (WmsCheckOrderInfoVO vo:lossEntry.getValue()) {
+                LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
+                WmsInventory wmsInventory = wmsInventoryMapper.selectOne(inventoryLambdaQueryWrapper);
+                //保存出库明细
+                BigDecimal availableQuantity = vo.getResult();//数量
+                WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+                wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
+                wmsDeliveryReceiptInfo.setMaterialId(vo.getMaterialId());
+                wmsDeliveryReceiptInfo.setInventoryId(wmsInventory.getId());
+                wmsDeliveryReceiptInfo.setQuantity(availableQuantity);
+                wmsDeliveryReceiptInfoMapper.insert(wmsDeliveryReceiptInfo);
+                //更新库存
+                wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getResult()));
+                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getResult()));
+                wmsInventoryMapper.updateById(wmsInventory);
             }
         }
         //更新盘点单信息
@@ -274,9 +344,11 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
                 sysOfficeParentDTO.setId(vo.getId().intValue());
                 R<List<SysOfficeVO>> listR = remoteOfficeFeign.listByParentId(sysOfficeParentDTO);
-                listR.getData().forEach(a->{
-                    shelfs.add(a.getOfficeCode());
-                });
+                if(Objects.nonNull(listR.getData())){
+                    listR.getData().forEach(a->{
+                        shelfs.add(a.getOfficeCode());
+                    });
+                }
             });
         }
         if(checkScope == WmsManagerConstant.CheckScope.SHELVES.getCode()){
@@ -406,6 +478,65 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             try {
                 //4.解析数值部分
                 String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.NUM_BIT_12);
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+    /**
+     * 当前最大的code值
+     * 入库凭证
+     * @return 数值类型，可能为null
+     */
+    private Long getStorageReceiptCurrentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        WmsStorageReceipt maxCodeModel = wmsStorageReceiptMapper.selectOne(new LambdaQueryWrapper<WmsStorageReceipt>()
+                .between(WmsStorageReceipt::getCreateTime, min, max)
+                .orderByDesc(WmsStorageReceipt::getCode)
+                .last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
+                //赋值
+                long l = Long.parseLong(substringVal);
+                currentMax = l;
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return currentMax;
+    }
+
+    /**
+     * 当前最大的code值
+     *
+     * @return 数值类型，可能为null
+     */
+    private Long getDeliveryReceiptCurrentMaxCode() {
+        //1.定义返回值
+        Long currentMax = 0L;
+        //2.获取系统最大code
+        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        WmsDeliveryReceipt maxCodeModel = wmsDeliveryReceiptMapper.selectOne(new LambdaQueryWrapper<WmsDeliveryReceipt>()
+                .between(WmsDeliveryReceipt::getCreateTime, min, max)
+                .orderByDesc(WmsDeliveryReceipt::getCode)
+                .last(MpConstant.STR_LIMIT_1));
+        //3.如果最大code不为空
+        if (Objects.nonNull(maxCodeModel)) {
+            try {
+                //4.解析数值部分
+                String substringVal = maxCodeModel.getCode().substring(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT.length() + WmsCodeUtil.NUM_BIT_12);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

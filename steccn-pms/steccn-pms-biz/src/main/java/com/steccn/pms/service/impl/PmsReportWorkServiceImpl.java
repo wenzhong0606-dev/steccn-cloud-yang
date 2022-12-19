@@ -19,6 +19,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -35,6 +36,8 @@ import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
+import com.steccn.wms.dto.*;
+import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -90,6 +93,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private TransactionTemplate transactionTemplate;
     @Autowired
     private PmsReportWorkConsumeService pmsReportWorkConsumeService;
+    @Autowired
+    private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
 
 
     @Override
@@ -251,11 +256,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //插入数据库中pms_complete_delivery，pms_complete_delivery_info
         List<ProcessReportWorkMaterialListDTO> materialConsumeList = dto.getMaterialConsumeList();
         if (CollUtil.isNotEmpty(materialConsumeList)) {
-            List<MessOutStorageVoucherListDTO> materialList = Lists.newArrayList();
+            List<WmsDeliveryReceiptInfoDTO> materialList = Lists.newArrayList();
             PmsCompleteDelivery completeDelivery = new PmsCompleteDelivery();
             completeDelivery.setId(IdUtil.getSnowflake().nextId());
             List<PmsCompleteDeliveryInfo> modelList = new ArrayList<>(materialConsumeList.size());
             BigDecimal sum = BigDecimal.ZERO;
+            WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = new WmsDeliveryReceiptDTO();
             for (ProcessReportWorkMaterialListDTO materialDTO : materialConsumeList) {
                 sum = sum.add(materialDTO.getQuantity());
                 PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
@@ -272,9 +278,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 //新增可用数量
                 info.setAvaQuantity(materialDTO.getAvailableQuantity());
                 modelList.add(info);
-                MessOutStorageVoucherListDTO mess = new MessOutStorageVoucherListDTO();
-                BeanUtils.copyProperties(materialDTO, mess);
-                materialList.add(mess);
+                wmsDeliveryReceiptDTO.setWarehouseId(materialDTO.getWarehouseId());
+                wmsDeliveryReceiptDTO.setWarehouseName(materialDTO.getWarehouseName());
+                WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO = new WmsDeliveryReceiptInfoDTO();
+                BeanUtils.copyProperties(materialDTO, wmsDeliveryReceiptInfoDTO);
+                wmsDeliveryReceiptInfoDTO.setMaterialId(materialDTO.getModuleId());
+                materialList.add(wmsDeliveryReceiptInfoDTO);
             }
             SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
             completeDelivery.setCode(maxOutVouchCode());
@@ -290,18 +299,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             completeDeliveryService.save(completeDelivery);
             completeDeliveryInfoService.saveBatch(modelList);
             //物料消耗 ，扣除库存
-            MessOutStorageVoucherDTO messDto = new MessOutStorageVoucherDTO();
-            messDto.setCreateBy(SecurityUtils.getUser().getName());
-            messDto.setCode(completeDelivery.getCode());
-            messDto.setType(sysDictVO.getCode());
-            messDto.setMaterialList(materialList);
-            MessInStorageVoucherVO messInStorageVoucherVO = null;
+
+            wmsDeliveryReceiptDTO.setType(sysDictVO.getId());
+            wmsDeliveryReceiptDTO.setList(materialList);
+            R<Boolean> booleanR = null;
             try {
-                messInStorageVoucherVO = remoteMessFeignApi.generateOutStorageVoucher(messDto);
+                booleanR = remoteWmsInventoryFeignApi.generateOutStorageVoucher(wmsDeliveryReceiptDTO);
+                if (!booleanR.getData()) {
+                    log.info("生成单据失败");
+                }
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
             }
-            if (Objects.isNull(messInStorageVoucherVO) || !messInStorageVoucherVO.getResult()) {
+            Boolean aBoolean = FeignOptional.of(booleanR).get();
+            if (Objects.isNull(aBoolean) || aBoolean.equals(Boolean.FALSE)) {
                 throw new BusinessException("库存变化，请重新报工");
             }
         }
@@ -371,26 +382,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
             Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
 
-            List<MessMaterialStorageDTO> messMaterialStorageList = Lists.newArrayList();
+            List<MaterialStorageInfoDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
             pmsWorkOrderBomList.forEach(ele -> {
                 BigDecimal divide = ele.getQuantity().multiply(dto.getProcessQuantity()).divide(pmsProduceOrder.getQuantity(), 3, RoundingMode.HALF_UP);
-                MessMaterialStorageDTO storageDTO = new MessMaterialStorageDTO();
+                MaterialStorageInfoDTO storageDTO = new MaterialStorageInfoDTO();
                 storageDTO.setMaterialId(ele.getModuleId());
                 storageDTO.setQuantity(divide);
                 messMaterialStorageList.add(storageDTO);
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
-            List<MessMaterialConsumeDTO> messList = remoteMessFeignApi.materialConsume(messMaterialStorageList);
+            List<WmsStockInventoryDTO> messList = FeignOptional.of(remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList)).get();
             if (CollUtil.isNotEmpty(messList)) {
-                Set<String> storageSet = Sets.newHashSet();
-                for (MessMaterialConsumeDTO messDto : messList) {
-                    storageSet.add(messDto.getWarehouseCode());
-                    storageSet.add(messDto.getShelfCode());
+                Set<Integer> storageSet = Sets.newHashSet();
+                for (WmsStockInventoryDTO messDto : messList) {
+                    storageSet.add(messDto.getWarehouseId());
+                    storageSet.add(messDto.getShelfId());
                 }
-                Map<String, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(storageSet)).get();
+                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-                for (MessMaterialConsumeDTO messDto : messList) {
+                for (WmsStockInventoryDTO messDto : messList) {
                     ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
                     BeanUtils.copyProperties(messDto, resDTO);
                     resDTO.setProduceOrderId(pmsProduceOrder.getId());
@@ -404,10 +415,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     resDTO.setModuleCode(eqpSpareVO.getCode());
                     resDTO.setQuantity(BigDecimalUtil.setScale(messDto.getQuantity(), 3));
                     resDTO.setAvailableQuantity(messDto.getAvailableQuantity());
-                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseCode(), defaultSysOfficeVO);
+                    SysOfficeVO warehouse = sysOfficeCodeMap.getOrDefault(messDto.getWarehouseId(), defaultSysOfficeVO);
                     resDTO.setWarehouseId(warehouse.getId());
                     resDTO.setWarehouseName(warehouse.getOfficeName());
-                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfCode(), defaultSysOfficeVO);
+                    SysOfficeVO shelf = sysOfficeCodeMap.getOrDefault(messDto.getShelfId(), defaultSysOfficeVO);
                     resDTO.setShelfId(shelf.getId());
                     resDTO.setShelfName(shelf.getOfficeName());
                     resList.add(resDTO);
@@ -470,19 +481,38 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
     @Override
     public List<PmsReportWorkVO> listByClassTime(LocalDateTime startTime, LocalDateTime endTime) {
+        List<PmsReportWorkVO> pmsReportWorkVOList = new ArrayList<>();
 
         List<PmsReportWork> list = list(new LambdaQueryWrapper<PmsReportWork>().ge(PmsReportWork::getStartTime, startTime).lt(PmsReportWork::getEndTime, endTime));
         Set<Integer> productLineIdSet = list.stream().map(PmsReportWork::getProductLineId).collect(Collectors.toSet());
         Map<Integer, SysOfficeVO> parentOfficeMap = remoteOfficeFeign.getParentOfficeMap(new ArrayList<>(productLineIdSet)).getData();
-
-        List<PmsReportWorkVO> pmsReportWorkVOList = new ArrayList<>();
-        for (PmsReportWork pmsReportWork : list) {
-            PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
-            BeanUtils.copyProperties(pmsReportWork,pmsReportWorkVO);
-            pmsReportWorkVO.setWorkshopName(parentOfficeMap.get(pmsReportWork.getProductLineId()).getParentName());
-            pmsReportWorkVOList.add(pmsReportWorkVO);
+        Set<Long> orderIdSet = list.stream().map(PmsReportWork::getProduceOrderId).collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(orderIdSet)) {
+            List<PmsProduceOrder> pmsProduceOrderList = produceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIdSet));
+            for (PmsReportWork pmsReportWork : list) {
+                Optional<PmsProduceOrder> optional = pmsProduceOrderList.stream().filter(pmsProduceOrder -> pmsProduceOrder.getId().equals(pmsReportWork.getProduceOrderId())).findAny();
+                if (optional.isPresent()) {
+                    PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
+                    BeanUtils.copyProperties(pmsReportWork, pmsReportWorkVO);
+                    pmsReportWorkVO.setWorkshopName(parentOfficeMap.get(pmsReportWork.getProductLineId()).getParentName());
+                    pmsReportWorkVO.setMaterialId(optional.get().getMaterialId());
+                    pmsReportWorkVOList.add(pmsReportWorkVO);
+                }
+            }
         }
         return pmsReportWorkVOList;
+    }
+
+    @Override
+    public Map<Long, Long> reportWorkClassGroup(Set<Long> reportWorkIdSet) {
+        Map<Long, Long> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(reportWorkIdSet)) {
+            List<PmsReportWork> pmsReportWorks = listByIds(reportWorkIdSet);
+            if (CollUtil.isNotEmpty(pmsReportWorks)) {
+                pmsReportWorks.forEach(ele -> resMap.put(ele.getId(), ele.getClassGroupId()));
+            }
+        }
+        return resMap;
     }
 
     /**

@@ -28,13 +28,30 @@ public class WmsCodeUtil {
 
 
     /**
+     * 入库单前缀
+     */
+    public final static String PREFIX_WMS_STORAGE_RECEIPT ="SI";
+
+
+    /**
      * 出库单前缀
      */
     public final static String PREFIX_WMS_DELIVERY_RECEIPT ="SO";
+
+    /**
+     * 物流单前缀
+     */
+    public final static String PREFIX_WMS_LOGISTICS_ORDER = "DO";
+
     /**
      * 数字位数-4
      */
     public final static Integer NUM_BIT_4 = 4;
+
+    /**
+     * 数字位数-4
+     */
+    public final static Integer NUM_BIT_15 = 15;
 
     /**
      * 数字位数-12

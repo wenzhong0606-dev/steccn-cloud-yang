@@ -20,6 +20,9 @@ public class WmsDeliveryReceiptInfoVO {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("库存id")
+    private Long inventoryId;
+
     @ApiModelProperty("物料id")
     private Long materialId;
 

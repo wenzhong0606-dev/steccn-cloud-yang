@@ -35,7 +35,7 @@
     </sql>
     <select id="pageList" resultType="com.steccn.wms.vo.WmsTransferSlipVO">
         SELECT
-        a.id,
+        distinct a.id,
         a.`code`,
         a.type,
         a.`status`,
@@ -43,6 +43,7 @@
         a.target_warehouse,
         a.create_name,
         a.create_time,
+        a.update_time,
         a.affirm_name,
         a.affirm_time,
         note
@@ -103,5 +104,6 @@
                 and a.affirm_time BETWEEN #{dto.affirmStartTime} and #{dto.affirmEndTime}
             </if>
         </where>
+        ORDER BY a.update_time DESC
     </select>
 </mapper>

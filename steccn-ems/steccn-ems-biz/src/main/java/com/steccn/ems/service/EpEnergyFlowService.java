@@ -2,7 +2,10 @@ package com.steccn.ems.service;
 
 import com.steccn.common.vo.EpTreeGraphVO;
 import com.steccn.ems.dto.EpEnergyFlowDTO;
+import com.steccn.ems.dto.EpEnergyFlowLeaderDTO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 能源流向service
@@ -24,4 +27,18 @@ public interface EpEnergyFlowService {
      * @return
      */
     EpTreeGraphVO generateCharts(EpEnergyFlowDTO dto);
+
+    /**
+     * 生成领导驾驶舱图表数据
+     * @param dto
+     * @return
+     */
+    EpTreeGraphVO generateLeaderCharts(EpEnergyFlowLeaderDTO dto);
+
+    /**
+     * 下载全量数据表
+     * @param dto
+     * @param response
+     */
+    void downloadFlow(EpEnergyFlowDTO dto, HttpServletResponse response);
 }

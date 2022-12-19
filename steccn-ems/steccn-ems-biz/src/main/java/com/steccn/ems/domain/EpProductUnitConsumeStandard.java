@@ -1,17 +1,14 @@
 package com.steccn.ems.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
-
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.steccn.common.vo.BaseSelectVO;
-import lombok.Data;
 
 /**
  * 产品单耗标准
@@ -53,7 +50,7 @@ public class EpProductUnitConsumeStandard implements Serializable {
     private Set<Integer> applyOffice;
 
     /**
-     * 产品类型【基片、深加工】
+     * 产品类型【基片0、深加工1】
      */
     private Long productType;
 

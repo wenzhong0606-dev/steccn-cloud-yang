@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 物流单分页DTO
@@ -49,4 +50,16 @@ public class WmsLogisticsOrderPageDTO extends BasePageDTO {
 
     @ApiModelProperty("实际送达结束日期")
     private LocalDate practicalEndDate;
+
+    @ApiModelProperty("预计送达开始时间")
+    private LocalDateTime predictStartTime;
+
+    @ApiModelProperty("预计送达结束时间")
+    private LocalDateTime predictEndTime;
+
+    @ApiModelProperty("实际送达开始时间")
+    private LocalDateTime practicalStartTime;
+
+    @ApiModelProperty("实际送达结束时间")
+    private LocalDateTime practicalEndTime;
 }

@@ -1,22 +1,34 @@
 package com.steccn.ems.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpTableDTO;
+import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
+import com.steccn.ems.vo.ConsumePartitionUnitClassDetailVO;
 import com.steccn.ems.vo.EpConsumeDetailVO;
+import com.steccn.ems.vo.EpEnergyChartPieValueVO;
+import com.steccn.qms.constant.QtManagerConstant;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yequan
@@ -52,7 +64,6 @@ public class EpConsumePartitionChartController {
     @PostMapping("/history/chart")
     @ApiOperation(value = "能耗历史对比-柱状图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumeHistoryContrast(@Valid @RequestBody EpTableDTO dto) {
-        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
         Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrast(dto));
@@ -64,5 +75,104 @@ public class EpConsumePartitionChartController {
         Assert.notNull(dto.getHistoryStart(),"对比开始时间不可为空");
         Assert.notNull(dto.getHistoryEnd(),"对比结束时间不可为空");
         return R.success(epConsumePartitionChartService.consumeHistoryContrastDetail(dto));
+    }
+
+    @PostMapping("/history/download")
+    @ApiOperation(value = "能耗历史对比-下载")
+    public void consumeHistoryContrastDownload(@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epConsumePartitionChartService.downloadHistoryConsume(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
+    @PostMapping("/unit/class/chart")
+    @ApiOperation(value = "单耗班组对比-柱状图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitClassChart(@Valid @RequestBody EpTableDTO dto) {
+        SteccnTableAssertUtil.notEmpty(dto.getThick(), "产品厚度为空，图表无数据");
+        if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
+            throw new BusinessException("产品厚度只能单选");
+        }
+        SteccnTableAssertUtil.notEmpty(dto.getPartitionIdList(), "组织机构不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitClassChart(dto));
+    }
+
+    @PostMapping("/contrast/download")
+    @ApiOperation(value = "能耗分区下载-图表")
+    public void downloadHis (@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epConsumePartitionChartService.downloadConsume(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
+
+    /**
+     * 对响应异常进行封装
+     * @param response
+     * @throws IOException
+     */
+    protected void exceptionResponse(HttpServletResponse response , Exception e) throws IOException{
+        response.reset();
+        response.setContentType("application/json");
+        response.setCharacterEncoding(QtManagerConstant.QT_CHART_EXCEL_ENCODE);
+        Map<String, String> map = MapUtils.newHashMap();
+        map.put("status", "failure");
+        map.put("message", "下载文件失败" + e.getMessage());
+        response.getWriter().println(JSON.toJSONString(map));
+    }
+
+    @PostMapping("/unit/class/detail")
+    @ApiOperation(value = "单耗班组对比-明细")
+    public  R<Page<ConsumePartitionUnitClassDetailVO>> consumePartitionUnitClassDetail(@Valid @RequestBody EpTableDTO dto) {
+        SteccnTableAssertUtil.notEmpty(dto.getThick(), "产品厚度为空，图表无数据");
+        if (CollUtil.isNotEmpty(dto.getThick()) && dto.getThick().size() != 1) {
+            throw new BusinessException("产品厚度只能单选");
+        }
+        SteccnTableAssertUtil.notEmpty(dto.getPartitionIdList(), "组织机构不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitClassDetail(dto));
+    }
+
+    @PostMapping("/unit/history/chart")
+    @ApiOperation(value = "单耗历史对比-柱状图")
+    public  R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> consumePartitionUnitHistoryChart(@Valid @RequestBody EpTableDTO dto) {
+        Assert.isTrue(dto.getPartitionIdList().size() == 1 ,"对比历史只能选择一个组织节点");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，开始日期不能为空");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，结束日期不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitHistoryChart(dto));
+    }
+
+    @PostMapping("/unit/history/detail")
+    @ApiOperation(value = "单耗历史对比-明细")
+    public R<Page<ConsumeHistoryContrastDetailVO>> consumePartitionUnitHistoryDetail(@Valid @RequestBody EpTableDTO dto) {
+        Assert.isTrue(dto.getPartitionIdList().size() == 1 ,"对比历史只能选择一个组织节点");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，开始日期不能为空");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，结束日期不能为空");
+        return R.success(epConsumePartitionChartService.consumePartitionUnitHistoryDetail(dto));
+    }
+
+    @PostMapping("/total/line")
+    @ApiOperation(value = "领导驾驶舱-总体能耗趋势(近7日)-折线图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> totalConsumePartitionLine(@Valid @RequestBody EpTotalConsumeDTO dto) {
+        dto.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        dto.setEnergyType(Arrays.asList(1, 2, 3, 4));
+        return R.success(epConsumePartitionChartService.totalConsumePartitionLine(dto));
+    }
+
+    @PostMapping("/total/electric/pie")
+    @ApiOperation(value = "领导驾驶舱-电耗分布(近7日)-饼图")
+    public R<List<EpEnergyChartPieValueVO<BigDecimal>>> totalConsumeElectricPie(@Valid @RequestBody EpTableDTO dto) {
+        dto.setEnergyType(1);
+        return R.success(epConsumePartitionChartService.totalConsumeEnergyPie(dto));
+    }
+
+    @PostMapping("/total/water/pie")
+    @ApiOperation(value = "领导驾驶舱-水耗分布(近7日)-饼图")
+    public R<List<EpEnergyChartPieValueVO<BigDecimal>>> totalConsumeWaterPie(@Valid @RequestBody EpTableDTO dto) {
+        dto.setEnergyType(2);
+        return R.success(epConsumePartitionChartService.totalConsumeEnergyPie(dto));
     }
 }

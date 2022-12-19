@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
@@ -27,7 +29,8 @@ public class WmsLogisticsTransportation implements Serializable {
     /**
      * 运输方式
      */
-    private Object way;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private String way;
 
     /**
      * 创建人id

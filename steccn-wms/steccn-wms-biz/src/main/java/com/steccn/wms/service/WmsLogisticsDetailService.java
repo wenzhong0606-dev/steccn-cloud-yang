@@ -2,6 +2,9 @@ package com.steccn.wms.service;
 
 import com.steccn.wms.domain.WmsLogisticsDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.vo.WmsLogisticsDetailVO;
+
+import java.util.List;
 
 /**
 * @author W10
@@ -10,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface WmsLogisticsDetailService extends IService<WmsLogisticsDetail> {
 
+    /**
+     * 根据物流单id获取明细信息
+     * @param id
+     * @return
+     */
+    List<WmsLogisticsDetailVO> listByLogisticsId(Long id);
 }

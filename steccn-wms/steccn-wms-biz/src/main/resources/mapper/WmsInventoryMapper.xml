@@ -59,8 +59,8 @@
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update wms_inventory
             <set>
-                lock_quantity = lock_quantity - #{item.quantity},
-                available_quantity = available_quantity + #{item.quantity}
+                lock_quantity = lock_quantity + #{item.quantity},
+                available_quantity = available_quantity - #{item.quantity}
             </set>
             where id = #{item.id}
         </foreach>
@@ -86,4 +86,19 @@
             where id = #{item.id}
         </foreach>
     </update>
+    <select id="listMaterialInventory" resultType="com.steccn.wms.domain.WmsInventory">
+        SELECT
+        a.material_id,
+        a.available_quantity AS availableQuantity
+        FROM
+        wms_inventory a
+        WHERE
+        <foreach collection="list" item="dto" open="(" separator="OR" close=")">
+            ( a.material_id = #{dto.materialId} and a.shelf_code in
+            <foreach collection="dto.shelfCodes" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            )
+        </foreach>
+    </select>
 </mapper>

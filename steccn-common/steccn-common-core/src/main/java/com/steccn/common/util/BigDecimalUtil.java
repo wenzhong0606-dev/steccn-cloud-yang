@@ -209,4 +209,20 @@ public class BigDecimalUtil {
         return res;
     }
 
+    /**
+     * 判断val1 == val2
+     *
+     * @param val1 val1
+     * @param val2 val2
+     * @return true or false
+     */
+    public static Boolean equals(BigDecimal val1, BigDecimal val2) {
+        if (Objects.isNull(val1) && Objects.isNull(val2)) {
+            return Boolean.TRUE;
+        } else if (Objects.nonNull(val1) && Objects.nonNull(val2)) {
+            return val1.equals(val2);
+        }
+        return Boolean.FALSE;
+    }
+
 }

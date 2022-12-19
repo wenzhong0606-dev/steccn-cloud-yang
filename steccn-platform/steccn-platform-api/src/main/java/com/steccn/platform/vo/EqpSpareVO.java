@@ -43,11 +43,17 @@ public class EqpSpareVO implements Serializable {
     @ApiModelProperty("长度单位")
     private Long lengthUnitId;
 
+    @ApiModelProperty("长度单位名称")
+    private String lengthUnitName;
+
     @ApiModelProperty("长度")
     private BigDecimal lengthQuantity;
 
     @ApiModelProperty("高度单位")
     private Long highUnitId;
+
+    @ApiModelProperty("高度单位名称")
+    private String highUnitName;
 
     @ApiModelProperty("高度")
     private BigDecimal highQuantity;
@@ -55,13 +61,39 @@ public class EqpSpareVO implements Serializable {
     @ApiModelProperty("宽度单位")
     private Long wideUnitId;
 
+    @ApiModelProperty("宽度单位名称")
+    private String wideUnidName;
+
     @ApiModelProperty("宽度")
     private BigDecimal wideQuantity;
 
     @ApiModelProperty("规格")
     private String specifications;
 
+    @ApiModelProperty("厚度")
     private BigDecimal thickQuantity;
 
+    @ApiModelProperty("厚度单位id")
     private Long thickUnitId;
+
+    @ApiModelProperty("厚度单位名称")
+    private String thickUnitName;
+
+    @ApiModelProperty("体积")
+    private BigDecimal volumeQuantity;
+
+    @ApiModelProperty("体积单位id")
+    private Long volumeUnitId;
+
+    @ApiModelProperty("体积单位名称")
+    private String volumeUnitName;
+
+    @ApiModelProperty("重量")
+    private BigDecimal weightQuantity;
+
+    @ApiModelProperty("重量单位名称")
+    private String weightUnitName;
+
+    @ApiModelProperty("重量单位id")
+    private Long weightUnitId;
 }
