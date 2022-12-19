@@ -195,22 +195,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             if (Objects.nonNull(partitionParent)) {
                 s.setAllPartitionNodeName(partitionParent.getJoinOfficeNames());
             }
-//            if (Objects.nonNull(partitionParent)){
-//                List<String> partitionName = Lists.newArrayList();
-//               if (CollUtil.isNotEmpty(partitionParent.getParentList())){
-//                   List<EpPartitionParentVO> parentList = partitionParent.getParentList();
-//                   getParentNameList(partitionParent.getParentList(),partitionName);
-//               }
-//                partitionName.add(partitionParent.getOfficeName());
-//                if (CollUtil.isNotEmpty(partitionName)){
-//                    List<String> nameList = new ArrayList<>();
-//                    for (int i = partitionName.size()-1; i >=0; i--) {
-//                       nameList.add(partitionName.get(i));
-//                    }
-//                    String lastName = nameList.stream().map(String::valueOf).collect(Collectors.joining("/"));
-//                }
-//
-//            }
             //设置最后抄表时间
             if (CollUtil.isNotEmpty(groupByMeter)){
                 //先判断仪表的所属类型
@@ -377,6 +361,15 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
             if (CollUtil.isNotEmpty(dictMap)){
                 epInstrumentAccountVO.setSiteName(dictMap.get(epInstrumentAccountVO.getSite()));
+            }
+        }
+        if (Objects.nonNull(epInstrumentAccountVO.getPartitionNode())&&Objects.nonNull(epInstrumentAccountVO.getMeterType())){
+            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
+            epPartitionChildTypeDTO.setChildId(epInstrumentAccountVO.getPartitionNode());
+            epPartitionChildTypeDTO.setType(epInstrumentAccountVO.getMeterType());
+            EpPartitionParentVO parentVO = epPartitionService.getParentList(epPartitionChildTypeDTO);
+            if (Objects.nonNull(parentVO)&&Objects.nonNull(parentVO.getJoinOfficeNames())){
+                epInstrumentAccountVO.setAllPartitionNodeName(parentVO.getJoinOfficeNames());
             }
         }
         return epInstrumentAccountVO;
