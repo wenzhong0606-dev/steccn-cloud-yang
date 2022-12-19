@@ -74,40 +74,47 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         long count = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 //所属分区节点
                 .eq(EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
+                //所属能源类型
                 .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
                 //可展示的未删除的
-                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
+                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                //编辑时去除对自身的判断
+                .ne(Objects.nonNull(dto.getId()),EpInstrumentAccount::getId,dto.getId()));
         getRepeatJudgment(dto.getId(), count,"该节点下已经有仪表,请勿多次创建");
 
-        if (StringUtils.isNotBlank(dto.getDistantMapCode())){
+        if (StringUtils.isNotBlank(dto.getDistantMapCode())) {
             List<EpInstrumentAccount> list = list(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getDistantMapCode, dto.getDistantMapCode())
                     .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
-                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-            getRepeatJudgment(dto.getId(), list.size(),"远传表映射编码不能重复");
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                    .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
+            getRepeatJudgment(dto.getId(), list.size(), "远传表映射编码不能与其他仪表重复");
         }
 
         long sizeMeterName = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getMeterName, dto.getMeterName())
-                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-       getRepeatJudgment(dto.getId(),sizeMeterName,"仪表名称不能重复");
+                .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
+                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
+        getRepeatJudgment(dto.getId(), sizeMeterName, "仪表名称不能与其他仪表重复");
 
-        if (StringUtils.isNotBlank(dto.getSiteName())&&dto.getMeterType()!=1){
+        if (StringUtils.isNotBlank(dto.getSiteName()) && dto.getMeterType() != 1) {
             //查询电表下的所有安装位置有无重复
             long sizeSiteName = count(new LambdaQueryWrapper<EpInstrumentAccount>()
-                    .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                    .eq(EpInstrumentAccount::getSiteName,dto.getSiteName())
-                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-        getRepeatJudgment(dto.getId(),sizeSiteName,"安装位置不能重复");
+                    .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
+                    .eq(EpInstrumentAccount::getSiteName, dto.getSiteName())
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                    .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
+            getRepeatJudgment(dto.getId(), sizeSiteName, "安装位置不能与其他仪表重复");
         }
         if (StringUtils.isNotBlank(dto.getAssetsCode())){
             //查询数据库中的资产编码
             long sizeAssetsCode = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getAssetsCode, dto.getAssetsCode())
                     .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
-                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-            getRepeatJudgment(dto.getId(),sizeAssetsCode,"资产编码不能重复");
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                    .ne(Objects.nonNull(dto.getId()),EpInstrumentAccount::getId,dto.getId()));
+            getRepeatJudgment(dto.getId(),sizeAssetsCode,"资产编码不能与其他仪表重复");
         }
         EpInstrumentAccount epInstrumentAccount = new EpInstrumentAccount();
         BeanUtils.copyProperties(dto,epInstrumentAccount);
@@ -185,7 +192,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                         .in(CollUtil.isNotEmpty(instrumentIds), EpMeterRead::getMeterId, instrumentIds))
                 .stream()
                 .collect(Collectors.groupingBy(EpMeterRead::getMeterId, Collectors.groupingBy(EpMeterRead::getDistantMapCode)));
-
 
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
@@ -396,7 +402,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         EpInstrumentAccount epInstrumentAccount = getById(id);
-        Assert.notNull(epInstrumentAccount,"该仪表台账不存在,无法删除");
+        Assert.notNull(epInstrumentAccount,"该仪表台账不存在或已删除");
         epInstrumentAccount.setShowFlag(MpConstant.NO);
         updateById(epInstrumentAccount);
         return Boolean.TRUE;
@@ -451,12 +457,13 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
      * @param mistake
      */
     private void getRepeatJudgment(Integer id, long size,String mistake) {
-        if (Objects.isNull(id)){
-            Assert.isTrue(size ==0 , mistake);
-        }else {
-            //编辑时允许与自身重复
-            Assert.isTrue(size <=1 , mistake);
-        }
+        Assert.isTrue(size ==0 , mistake);
+//        if (Objects.isNull(id)){
+//            Assert.isTrue(size ==0 , mistake);
+//        }else {
+//            //编辑时允许与自身重复
+//            Assert.isTrue(size <=1 , mistake);
+//        }
     }
 }
 

@@ -164,7 +164,8 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
         //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
-                .eq(EpProductUnitConsumeStandard::getName, dto.getName()));
+                .eq(EpProductUnitConsumeStandard::getName, dto.getName())
+                .ne(Objects.nonNull(dto.getId()),EpProductUnitConsumeStandard::getId,dto.getId()));
         if (Objects.isNull(dto.getId())){
             Assert.isTrue(size ==0, "产品单耗标准的名称不能重复");
         }else {
@@ -267,7 +268,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         EpProductUnitConsumeStandard epStandard = getById(id);
-        Assert.notNull(epStandard,"该产品单耗标准不存在,无法删除");
+        Assert.notNull(epStandard,"该产品单耗标准不存在或已删除");
         epStandard.setShowFlag(MpConstant.NO);
         updateById(epStandard);
         return Boolean.TRUE;
