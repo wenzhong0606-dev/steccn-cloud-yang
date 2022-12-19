@@ -175,4 +175,11 @@ public class EpConsumePartitionChartController {
         dto.setEnergyType(2);
         return R.success(epConsumePartitionChartService.totalConsumeEnergyPie(dto));
     }
+
+    @PostMapping("/unit/contrast/chart")
+    @ApiOperation(value = "单耗分区对比-柱状图")
+    public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> unitConsumePartitionContrastChart(@Valid @RequestBody EpTableDTO dto) {
+        Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
+        return R.success(epConsumePartitionChartService.unitConsumePartitionContrastChart(dto));
+    }
 }

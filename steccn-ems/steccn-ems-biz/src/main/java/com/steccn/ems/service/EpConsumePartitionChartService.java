@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.ems.dto.EpSectionPriceDTO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.dto.EpTotalConsumeDTO;
 import com.steccn.ems.vo.ConsumeHistoryContrastDetailVO;
@@ -116,4 +115,12 @@ public interface EpConsumePartitionChartService {
      * @return 明细分页列表
      */
     Page<ConsumeHistoryContrastDetailVO> consumePartitionUnitHistoryDetail(EpTableDTO dto);
+
+    /**
+     * 单耗分区对比-柱状图
+     *
+     * @param dto
+     * @return
+     */
+    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> unitConsumePartitionContrastChart(EpTableDTO dto);
 }
