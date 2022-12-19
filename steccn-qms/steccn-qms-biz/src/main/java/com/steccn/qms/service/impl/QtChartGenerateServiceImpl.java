@@ -25,10 +25,7 @@ import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.dto.QtChartSubDetailDTO;
-import com.steccn.qms.dto.QtOnlineCheckDefectDTO;
-import com.steccn.qms.dto.QtTimeDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.*;
 import com.steccn.qms.util.CollectorsUtil;
 import com.steccn.qms.vo.*;
@@ -128,7 +125,13 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         if (CollUtil.isNotEmpty(taskList)) {
             for (QtCheckTask tmp : taskList) {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                tmp.setDate(df.format(tmp.getClassTime()));
+                //如果是在线检则根据缺陷记录时段算班次日期
+                if(tmp.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+                    QtTaskClassCalculate qtTaskClassCalculate = qtCheckTaskService.calculateDateTime(tmp.getDefectStartTime());
+                    tmp.setDate(df.format(qtTaskClassCalculate.getClassDate()));
+                }else {
+                    tmp.setDate(df.format(tmp.getClassTime()));
+                }
                 tmp.setProductLineId(tmp.getProductLine().getId());
             }
             //根据班次日期进行分组
@@ -434,30 +437,35 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 });
                             }
                             //拿到所有在线检data的数据
-                            List<QtCheckTaskDetail> onlineDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(CollUtil.isNotEmpty(onlineTaskIds),QtCheckTaskDetail::getTaskId, onlineTaskIds));
+                            List<QtCheckTaskDetail> onlineDetails = Lists.newArrayList();
+                            if(CollUtil.isNotEmpty(onlineTaskIds)){
+                                onlineDetails =  qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(CollUtil.isNotEmpty(onlineTaskIds),QtCheckTaskDetail::getTaskId, onlineTaskIds));
+                            }
                             Map<String, Integer> defectCounts = MapUtil.newHashMap();
-                            //把在线检中的details数据放入
-                            for(QtCheckTaskDetail tmp:onlineDetails){
-                                if(CollUtil.isNotEmpty(tmp.getDefectNum())){
-                                    //避免转换报错
-                                    String s1 = JSONObject.toJSONString(tmp.getDefectNum());
-                                    List<QtOnlineCheckDefectDTO> defectNum = JSON.parseArray(s1,QtOnlineCheckDefectDTO.class);
-                                    //遍历defectNum
-                                    for(QtOnlineCheckDefectDTO numTmp:defectNum){
-                                        if (defectCounts.get(numTmp.getDefectName()) == null) {
-                                            Integer res = 1;
-                                            if(numTmp.getDefectNum() != null){
-                                                res = numTmp.getDefectNum();
+                            if(onlineDetails.size() > 0){
+                                //把在线检中的details数据放入
+                                for(QtCheckTaskDetail tmp:onlineDetails){
+                                    if(CollUtil.isNotEmpty(tmp.getDefectNum())){
+                                        //避免转换报错
+                                        String s1 = JSONObject.toJSONString(tmp.getDefectNum());
+                                        List<QtOnlineCheckDefectDTO> defectNum = JSON.parseArray(s1,QtOnlineCheckDefectDTO.class);
+                                        //遍历defectNum
+                                        for(QtOnlineCheckDefectDTO numTmp:defectNum){
+                                            if (defectCounts.get(numTmp.getDefectName()) == null) {
+                                                Integer res = 1;
+                                                if(numTmp.getDefectNum() != null){
+                                                    res = numTmp.getDefectNum();
+                                                }
+                                                defectCounts.put(numTmp.getDefectName(), res);
+                                            } else {
+                                                Integer res = 1;
+                                                if(numTmp.getDefectNum() != null){
+                                                    res = numTmp.getDefectNum();
+                                                }
+                                                Integer i = defectCounts.get(numTmp.getDefectName());
+                                                i = i + res;
+                                                defectCounts.put(numTmp.getDefectName(), i);
                                             }
-                                            defectCounts.put(numTmp.getDefectName(), res);
-                                        } else {
-                                            Integer res = 1;
-                                            if(numTmp.getDefectNum() != null){
-                                                res = numTmp.getDefectNum();
-                                            }
-                                            Integer i = defectCounts.get(numTmp.getDefectName());
-                                            i = i + res;
-                                            defectCounts.put(numTmp.getDefectName(), i);
                                         }
                                     }
                                 }
@@ -683,9 +691,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //如果为0，则显示为-
             if (dayRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setDayValue("");
+                vo.setDayValue(BigDecimal.ZERO);
             } else {
-                vo.setDayValue(new DecimalFormat("0.00%").format(dayRate.abs()));
+                vo.setDayValue(dayRate.abs().multiply(BigDecimalUtil.HUNDRED));
             }
             //算周同比
             pmsDTO.setBeginDate(fullDate.minusDays(6));
@@ -698,9 +706,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 }
             }
             if (weekRate.compareTo(BigDecimal.ZERO) == 0) {
-                vo.setWeekValue("");
+                vo.setWeekValue(BigDecimal.ZERO);
             } else {
-                vo.setWeekValue(new DecimalFormat("0.00%").format(weekRate));
+                vo.setWeekValue(weekRate.multiply(BigDecimalUtil.HUNDRED));
             }
             if (weekRate.compareTo(BigDecimal.ZERO) < 0) {
                 vo.setWeekFlag(0);
@@ -715,9 +723,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         vo.setXData(xData);
         vo.setYData(yData);
         if (yData.size() == 0) {
-            vo.setValue("0.00%");
+            vo.setValue(BigDecimal.ZERO);
         } else {
-            vo.setValue(new DecimalFormat("0.00%").format(yData.get(yData.size() - 1)));
+            vo.setValue(yData.get(yData.size() - 1).multiply(BigDecimalUtil.HUNDRED));
         }
         QtChartTargetValue qtChartTargetValue = qtChartTargetValueService.getOne(new LambdaQueryWrapper<QtChartTargetValue>().eq(QtChartTargetValue::getTarget, 1));
         if (Objects.nonNull(qtChartTargetValue)) {

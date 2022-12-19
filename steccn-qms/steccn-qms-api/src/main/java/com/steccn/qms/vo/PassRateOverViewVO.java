@@ -16,20 +16,20 @@ import java.util.List;
 public class PassRateOverViewVO implements Serializable {
 
     @ApiModelProperty("合格率")
-    private String value;
+    private BigDecimal value;
 
     /**
      * 日环比%
      */
     @ApiModelProperty("日环比")
-    private String dayValue;
+    private BigDecimal dayValue;
 
 
     /**
      * 周同比%
      */
     @ApiModelProperty("周同比")
-    private String weekValue;
+    private BigDecimal weekValue;
 
     /**
      * 最近7天合格率

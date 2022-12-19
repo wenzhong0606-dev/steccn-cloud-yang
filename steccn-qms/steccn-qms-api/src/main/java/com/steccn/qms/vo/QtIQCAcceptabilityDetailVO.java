@@ -2,6 +2,7 @@ package com.steccn.qms.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -85,6 +86,10 @@ public class QtIQCAcceptabilityDetailVO implements Serializable {
      */
     @JsonIgnore
     private Integer goodNum;
+
+
+    @ApiModelProperty("明细表表头")
+    private List<String> detailTableHead;
 
     /**
      * 来料检合格率明细表样本明细

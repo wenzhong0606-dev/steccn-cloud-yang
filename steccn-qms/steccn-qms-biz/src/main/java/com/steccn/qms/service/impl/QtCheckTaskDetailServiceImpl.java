@@ -52,16 +52,12 @@ public class QtCheckTaskDetailServiceImpl extends ServiceImpl<QtCheckTaskDetailM
             for (Map.Entry<Long, List<QtSubtableVO>> entry : map.entrySet()) {
                 List<QtIQCAcceptabilityCopyVO> copyVOList = Lists.newArrayList();
                 Map<Integer, List<QtSubtableVO>> tableMap = entry.getValue().stream().collect(Collectors.groupingBy(QtSubtableVO::getCopy));
-                List<QtSubtableVO> voList = Lists.newArrayList();
-                entry.getValue().forEach(
-                        qtSubtableVO -> {
-                            List<QtSubtableVO> orDefault = tableMap.getOrDefault(qtSubtableVO.getCopy(), voList);
-                            QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
-                            BeanUtil.copyProperties(qtSubtableVO,qtIQCAcceptabilityCopyVO);
-                            qtIQCAcceptabilityCopyVO.setList(orDefault);
-                            copyVOList.add(qtIQCAcceptabilityCopyVO);
-                        }
-                );
+                for (Map.Entry<Integer, List<QtSubtableVO>> copyEntry : tableMap.entrySet()) {
+                    QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = new QtIQCAcceptabilityCopyVO();
+                    BeanUtil.copyProperties(copyEntry.getValue().get(0) , qtIQCAcceptabilityCopyVO);
+                    qtIQCAcceptabilityCopyVO.setList(copyEntry.getValue());
+                    copyVOList.add(qtIQCAcceptabilityCopyVO);
+                }
                 resMap.put(entry.getKey(), copyVOList);
             }
         }

@@ -219,12 +219,14 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
             QtItemCategory qtItemCategory = qtItemCategoryService.getById(tmp.getCategoryId());
             QtDefectiveItemVO vo = new QtDefectiveItemVO();
             BeanUtils.copyProperties(tmp, vo);
-            if (mapData.get(qtItemCategory.getName()) == null) {
-                List<QtDefectiveItemVO> vos = Lists.newArrayList();
-                vos.add(vo);
-                mapData.put(qtItemCategory.getName(), vos);
-            } else {
-                mapData.get(qtItemCategory.getName()).add(vo);
+            if(qtItemCategory!=null){
+                if (mapData.get(qtItemCategory.getName()) == null) {
+                    List<QtDefectiveItemVO> vos = Lists.newArrayList();
+                    vos.add(vo);
+                    mapData.put(qtItemCategory.getName(), vos);
+                } else {
+                    mapData.get(qtItemCategory.getName()).add(vo);
+                }
             }
         });
         List<QtDefectiveItemTreeVo> vos = Lists.newArrayList();

@@ -597,6 +597,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     deleteCondition.put("task_id", dto.getId());
                     copyDetailModel.setTaskId(dto.getId());
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
+                    copyDetailModel.setAnalystTime(valueTmp.getCopyDetails().getAnalystTime().atStartOfDay());
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
@@ -2064,6 +2065,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //处理详情数据
             filterList.forEach(task -> {
                 List<QtIQCAcceptabilityCopyVO> orDefault = taskInfoMap.getOrDefault(task.getId(), orCopyList);
+                if(CollUtil.isNotEmpty(orDefault)){
+                    QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = orDefault.get(0);
+                    List<String> headList = qtIQCAcceptabilityCopyVO.getList().stream().map(v -> v.getName()).collect(Collectors.toList());
+                    task.setDetailTableHead(headList);
+                }
                 task.setDetail(orDefault);
                 task.setMaterialName(materialMap.get(task.getMaterialId()));
             });
