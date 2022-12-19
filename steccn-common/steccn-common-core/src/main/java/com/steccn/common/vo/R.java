@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 类说明
  *
@@ -18,7 +20,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel("接口返回结果数据结构")
-public class R<T> {
+public class R<T> implements Serializable {
     @ApiModelProperty("结果代码")
     private int code;
     @ApiModelProperty("结果说明")

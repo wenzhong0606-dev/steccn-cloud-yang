@@ -68,6 +68,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-redis</artifactId>
+        </dependency>
         <!--Swagger3增加工具-->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

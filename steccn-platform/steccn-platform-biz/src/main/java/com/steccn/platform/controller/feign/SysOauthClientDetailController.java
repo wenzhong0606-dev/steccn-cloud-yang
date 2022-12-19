@@ -1,5 +1,6 @@
 package com.steccn.platform.controller.feign;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.CacheConstant;
 import com.steccn.common.vo.R;
@@ -9,6 +10,7 @@ import com.steccn.platform.service.SysOauthClientDetailService;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
