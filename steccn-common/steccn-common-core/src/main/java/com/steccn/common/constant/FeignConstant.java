@@ -47,4 +47,9 @@ public interface FeignConstant {
      * 仓储系统服务名称
      */
     String STECCN_WMS_SERVICE_NAME = "steccn-wms";
+
+    /**
+     * 数据中台服务名称
+     */
+    String STECCN_DATA_PLATFORM_SERVICE_NAME = "steccn-data-platform";
 }

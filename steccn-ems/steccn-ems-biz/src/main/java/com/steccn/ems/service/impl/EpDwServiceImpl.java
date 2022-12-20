@@ -5,7 +5,9 @@ import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.dto.DwConditionDTO;
+import com.steccn.ems.dto.DwEpMeterCollectVO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpDwService;
@@ -33,6 +35,7 @@ public class EpDwServiceImpl implements EpDwService {
 
     private final EpInstrumentAccountMapper epInstrumentAccountMapper;
     private final RemotePmsFeignApi remotePmsFeignApi;
+    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
     @Override
     public Boolean meterRead(LocalDate date) {
@@ -52,6 +55,8 @@ public class EpDwServiceImpl implements EpDwService {
                 dwConditionDTO(dwList, meter, lineList);
                 dwConditionDTO(dwList, meter, stationList);
             }
+//            List<DwEpMeterCollectVO> dwDataList = remoteDataPlatformFeignApi.meterRead(dwList);
+
         }
         log.info("dwList -> {}", dwList);
         return Boolean.TRUE;
@@ -59,7 +64,6 @@ public class EpDwServiceImpl implements EpDwService {
 
 
     /**
-     *
      * @param dwList
      * @param meter
      * @param reportWorkDTO
