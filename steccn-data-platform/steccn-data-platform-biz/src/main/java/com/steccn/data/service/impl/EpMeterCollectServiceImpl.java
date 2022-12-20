@@ -29,13 +29,14 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         List<DwEpMeterCollectVO> resList = Lists.newArrayList();
         LambdaQueryWrapper<EpMeterCollect> lqw = new LambdaQueryWrapper<>();
         if (CollUtil.isNotEmpty(dwList)) {
-            lqw.or();
-            dwList.forEach(ele -> {
-                lqw.eq(EpMeterCollect::getCode, ele.getCode()).eq(EpMeterCollect::getRecordTime, ele.getStart());
-            });
+            for (DwConditionDTO ele : dwList) {
+                lqw = lqw.or(l -> {
+                    l.eq(EpMeterCollect::getCode, ele.getCode()).eq(EpMeterCollect::getRecordTime, ele.getStart());
+                });
+            }
         }
         List<EpMeterCollect> dbList = list(lqw);
-        if (CollUtil.isEmpty(dbList)) {
+        if (CollUtil.isNotEmpty(dbList)) {
             resList = BeanUtil.copyToList(dbList, DwEpMeterCollectVO.class);
         }
         return resList;
