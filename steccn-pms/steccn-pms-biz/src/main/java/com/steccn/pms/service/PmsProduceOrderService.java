@@ -7,6 +7,7 @@ import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -205,4 +206,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     WorkOrderVO getMaterialCodeByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 查询当前班次日期的所有报工记录
+     * @param currentDate 当前班次日期
+     * @return list
+     */
+    List<DwCurrentReportWorkDTO> currentDateReportWork(LocalDate currentDate);
 }

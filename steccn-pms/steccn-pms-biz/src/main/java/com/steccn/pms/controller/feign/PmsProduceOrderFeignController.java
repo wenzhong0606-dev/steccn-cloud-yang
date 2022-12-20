@@ -1,8 +1,10 @@
 package com.steccn.pms.controller.feign;
 
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
+import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
@@ -13,10 +15,14 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -36,6 +42,16 @@ public class PmsProduceOrderFeignController {
     private final PmsProduceOrderService pmsProduceOrderService;
 
     private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+
+    @PostMapping("/report")
+    @ApiOperation("查询当前班次日期的所有报工记录")
+    R<List<DwCurrentReportWorkDTO>> currentDateReportWork(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO){
+        LocalDate currentDate = tupleDTO.getField1();
+        if(Objects.isNull(currentDate)){
+            return R.success(Lists.newArrayList());
+        }
+        return R.success(pmsProduceOrderService.currentDateReportWork(currentDate));
+    }
 
     @PostMapping("/line/ids")
     @ApiOperation("根据产线查询当前正在执行订单信息")

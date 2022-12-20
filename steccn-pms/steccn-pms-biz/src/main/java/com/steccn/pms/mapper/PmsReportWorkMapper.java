@@ -3,6 +3,7 @@ package com.steccn.pms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsReportWork;
+import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.ProcessReportWorkPageDTO;
 import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
@@ -78,6 +79,15 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @return list
      */
     List<FurtherIngredientMapperVO> furtherIngredient(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+
+    /**
+     * 查询班次日期内所有的报工记录
+     *
+     * @param start 班次开始时间
+     * @param end   班次结束时间
+     * @return 所有的报工记录
+     */
+    List<DwCurrentReportWorkDTO> currentDateReportWork(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
 
 

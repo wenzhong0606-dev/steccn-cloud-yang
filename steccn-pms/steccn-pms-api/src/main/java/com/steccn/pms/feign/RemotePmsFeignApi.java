@@ -1,10 +1,13 @@
 package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
+import com.steccn.pms.vo.ReportWorkOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -14,7 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,6 +32,16 @@ import java.util.Set;
 @FeignClient(contextId = "RemotePmsFeignApi", value = FeignConstant.STECCN_PMS_SERVICE_NAME)
 public interface RemotePmsFeignApi {
 
+
+    /**
+     * 根据班次日期 查询当前班次日期的所有报工记录
+     *
+     * @param currentDate 当前日期
+     * @return
+     */
+    @PostMapping("/feign/pms/produce/order/report")
+    @ApiOperation("根据班次日期 查询当前班次日期的所有报工记录")
+    R<List<DwCurrentReportWorkDTO>> currentReportWork(@RequestBody TupleDTO<LocalDate, LocalDate> currentDate);
 
     /**
      * 根据产线id批量获取当前产线下正在执行中的订单信息

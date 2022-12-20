@@ -253,4 +253,20 @@
             prw.process_id
 
     </select>
+    <select id="currentDateReportWork" resultType="com.steccn.pms.dto.DwCurrentReportWorkDTO">
+        SELECT
+        prw.product_line_id,
+        prw.station_id,
+        prw.start_time as start,
+        prw.end_time as end,
+        prw.id as reportWorkId,
+        ppo.material_id
+        FROM
+        pms_report_work prw
+        JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
+        WHERE
+        prw.start_time &gt;= #{start}
+        AND prw.start_time &lt;= #{end}
+
+    </select>
 </mapper>

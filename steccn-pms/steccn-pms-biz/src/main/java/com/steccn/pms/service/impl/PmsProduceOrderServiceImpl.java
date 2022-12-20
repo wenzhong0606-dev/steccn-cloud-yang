@@ -19,7 +19,9 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
@@ -27,6 +29,7 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
+import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
@@ -66,6 +69,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final PmsProducePlanService pmsProducePlanService;
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final RedissonClient redissonClient;
+    private final PmsReportWorkMapper pmsReportWorkMapper;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
      * 新增生产订单信息
@@ -798,6 +803,26 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
            return workOrderVO;
         }
         return null;
+    }
+
+    @Override
+    public List<DwCurrentReportWorkDTO> currentDateReportWork(LocalDate currentDate) {
+        //计算整个班次日期的时间段
+        LocalDateTime start = LocalDateTime.of(currentDate, LocalTime.of(8, 0, 0));
+        LocalDateTime end = LocalDateTime.of(currentDate.plusDays(1), LocalTime.of(8, 0, 0));
+        //查询这段时间内的所有报工记录
+        List<DwCurrentReportWorkDTO> resList = pmsReportWorkMapper.currentDateReportWork(start, end);
+        if (CollUtil.isNotEmpty(resList)) {
+            Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSet))).get();
+            EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+            resList.forEach(ele -> {
+                BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();
+                ele.setThick(thick);
+                ele.setClassDate(currentDate);
+            });
+        }
+        return Objects.isNull(resList) ? Lists.newArrayList() : resList;
     }
 
     /**
