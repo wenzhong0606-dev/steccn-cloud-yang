@@ -519,6 +519,9 @@ public class QtCheckPlanServiceImpl extends ServiceImpl<QtCheckPlanMapper, QtChe
         });
         resVo.setCheckGroup(qtCheckPlanGroupVOS);
         resVo.setOnlineItem(onlineCheckResult);
+        if(CollUtil.isEmpty(resVo.getCheckGroup())){
+            return resVo;
+        }
         //如果是method是1，则只返回items给前端
         if(resVo.getCheckMethod() == 1 && resVo.getCheckGroup()!=null && resVo.getCheckGroup().get(0).getItems()!=null){
             List<QtCheckPlanItemVO> items  = resVo.getCheckGroup().get(0).getItems();
