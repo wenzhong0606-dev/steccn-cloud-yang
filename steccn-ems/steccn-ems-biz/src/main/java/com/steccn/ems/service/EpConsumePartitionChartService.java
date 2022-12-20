@@ -123,4 +123,12 @@ public interface EpConsumePartitionChartService {
      * @return
      */
     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> unitConsumePartitionContrastChart(EpTableDTO dto);
+
+    /**
+     * 单耗分区对比-明细
+     *
+     * @param dto
+     * @return
+     */
+    EpConsumeDetailVO unitConsumePartitionContrastDetail(EpTableDTO dto);
 }

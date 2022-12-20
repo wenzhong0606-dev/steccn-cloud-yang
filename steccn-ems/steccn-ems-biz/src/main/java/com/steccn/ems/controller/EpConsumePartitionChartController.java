@@ -182,4 +182,10 @@ public class EpConsumePartitionChartController {
         Assert.notNull(dto.getGranularity(),"时间粒度不可为空");
         return R.success(epConsumePartitionChartService.unitConsumePartitionContrastChart(dto));
     }
+
+    @PostMapping("/unit/contrast/detail")
+    @ApiOperation(value = "单耗分区对比-明细")
+    public R<EpConsumeDetailVO> unitConsumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
+        return R.success(epConsumePartitionChartService.unitConsumePartitionContrastDetail(dto));
+    }
 }
