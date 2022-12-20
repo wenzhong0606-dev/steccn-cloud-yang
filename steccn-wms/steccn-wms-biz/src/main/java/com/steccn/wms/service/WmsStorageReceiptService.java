@@ -56,4 +56,11 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @return
      */
     WmsStorageReceiptVO get(Long id);
+
+    /**
+     * 创建单据
+     * @param wmsStorageReceiptDTO
+     * @return
+     */
+    Boolean createOrder(WmsStorageReceiptDTO wmsStorageReceiptDTO);
 }

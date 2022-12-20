@@ -80,14 +80,17 @@ public class WmsLogisticsDetailServiceImpl extends ServiceImpl<WmsLogisticsDetai
                 materialIds.add(detailVO.getMaterialId());
                 dictIds.add(detailVO.getWeightUnit());
                 dictIds.add(detailVO.getVolumeUnit());
+                dictIds.add(detailVO.getUnitId());
             });
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
             list.forEach(detailVO -> {
+                detailVO.setUnpackFlag(0);
                 detailVO.setVolumeUnitName(dictMap.get(detailVO.getVolumeUnit()));
                 detailVO.setWeightUnitName(dictMap.get(detailVO.getWeightUnit()));
                 detailVO.setMaterialCode(materialMap.get(detailVO.getMaterialId()).getCode());
                 detailVO.setMaterialName(materialMap.get(detailVO.getMaterialId()).getName());
+                detailVO.setUnitName(dictMap.get(detailVO.getUnitId()));
             });
         }
         return resPage.setRecords(list);

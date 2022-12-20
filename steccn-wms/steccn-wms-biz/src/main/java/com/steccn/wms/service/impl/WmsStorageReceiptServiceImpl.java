@@ -127,14 +127,14 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             if (Objects.nonNull(dto.getList())) {
                 List<WmsInventoryDTO> infoList = Lists.newArrayList();
                 List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
-                Long currentMax = 0L;
+                Long caseNo = getCaseNo();
                 List<WmsStorageReceiptInfoDTO> list = dto.getList();
                 List<String> caseNos = Lists.newArrayList();
                 for (WmsStorageReceiptInfoDTO info : list) {
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
-                        currentMax = ++currentMax;
-                        info.setCaseNo(model.getCode() +WmsCodeUtil.SHORT_LINE+ currentMax);
+                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                        caseNo++;
                     }
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                     wmsInventoryDTO.setWarehouseId(dto.getWarehouseId());
@@ -148,7 +148,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     receiptInfoList.add(wmsStorageReceiptInfo);
                 }
                 long count = infoList.stream().distinct().count();
-                Assert.isFalse(count<infoList.size(),"箱号重复，请修改");
+                Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
                 //增加库存信息
                 wmsInventoryService.addInfo(infoList);
                 //保存明细信息
@@ -182,13 +182,13 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 List<Long> updateIds = Lists.newArrayList();
                 List<String> caseNos = Lists.newArrayList();
                 //获取箱号规则
-                Long caseNo = getCaseNo(model.getCode(), model.getId());
+                Long caseNo = getCaseNo();
                 List<WmsStorageReceiptInfoDTO> infoList = dto.getList();
                 for (WmsStorageReceiptInfoDTO info : infoList) {
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
-                        caseNo = ++caseNo;
-                        info.setCaseNo(model.getCode() +WmsCodeUtil.SHORT_LINE+ caseNo);
+                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                        caseNo++;
                     }
                     WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
                     BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
@@ -208,7 +208,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                     wmsStorageReceiptInfoList.add(wmsStorageReceiptInfo);
                 }
                 long count = wmsStorageReceiptInfoList.stream().distinct().count();
-                Assert.isFalse(count<wmsStorageReceiptInfoList.size(),"箱号重复，请修改");
+                Assert.isFalse(count < wmsStorageReceiptInfoList.size(), "箱号重复，请修改");
                 LambdaQueryWrapper<WmsStorageReceiptInfo> wrapper = new LambdaQueryWrapper<WmsStorageReceiptInfo>()
                         .eq(WmsStorageReceiptInfo::getStorageReceiptId, model.getId())
                         .notIn(CollUtil.isNotEmpty(ids), WmsStorageReceiptInfo::getId, ids);
@@ -358,6 +358,53 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return wmsStorageReceiptVO;
     }
 
+    @Override
+    public Boolean createOrder(WmsStorageReceiptDTO dto) {
+        //1.校验数据是否存在
+        Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
+        //2.定义数据模型
+        WmsStorageReceipt model = new WmsStorageReceipt();
+        BeanUtil.copyProperties(dto, model);
+        //3.给当前入库单生成编码
+        model.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+        model.setStatus(WmsManagerConstant.OrderStateEnum.ZERO.getCode());
+        //4.保存入库单信息
+        save(model);
+        //5.保存入库单明细信息
+        if (Objects.nonNull(dto.getList())) {
+            List<WmsInventoryDTO> infoList = Lists.newArrayList();
+            List<WmsStorageReceiptInfo> receiptInfoList = Lists.newArrayList();
+            Long caseNo = getCaseNo();
+            List<WmsStorageReceiptInfoDTO> list = dto.getList();
+            List<String> caseNos = Lists.newArrayList();
+            for (WmsStorageReceiptInfoDTO info : list) {
+                if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                    //生成箱号
+                    info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                    caseNo++;
+                }
+                WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
+                wmsInventoryDTO.setWarehouseId(dto.getWarehouseId());
+                wmsInventoryDTO.setWarehouseName(dto.getWarehouseName());
+                BeanUtil.copyProperties(info, wmsInventoryDTO);
+                WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
+                wmsStorageReceiptInfo.setStorageReceiptId(model.getId());
+                BeanUtil.copyProperties(info, wmsStorageReceiptInfo);
+                caseNos.add(wmsInventoryDTO.getCaseNo());
+                infoList.add(wmsInventoryDTO);
+                receiptInfoList.add(wmsStorageReceiptInfo);
+            }
+            long count = infoList.stream().distinct().count();
+            Assert.isFalse(count < infoList.size(), "箱号重复，请修改");
+            //增加库存信息
+            wmsInventoryService.addInfo(infoList);
+            //保存明细信息
+            wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
+        }
+        //确认
+        return  affirm(model.getId());
+    }
+
 
     /**
      * 当前最大的code值
@@ -389,19 +436,25 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         return currentMax;
     }
 
-    private Long getCaseNo(String code,Long id){
+    private Long getCaseNo() {
         // 定义返回值
         Long currentMax = 0L;
         //获取规则箱号
+        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         WmsStorageReceiptInfo maxCodeModel = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
-                .like(WmsStorageReceiptInfo::getCaseNo, code)
-                .eq(WmsStorageReceiptInfo::getStorageReceiptId, id)
+                .between(WmsStorageReceiptInfo::getCreateTime, min, max)
                 .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
                 .last(MpConstant.STR_LIMIT_1));
-        if (Objects.nonNull(maxCodeModel)){
+//        WmsStorageReceiptInfo maxCodeModel = wmsStorageReceiptInfoService.getOne(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
+//                .like(WmsStorageReceiptInfo::getCaseNo, code)
+//                .eq(WmsStorageReceiptInfo::getStorageReceiptId, id)
+//                .orderByDesc(WmsStorageReceiptInfo::getCaseNo)
+//                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCaseNo().substring(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT.length() + WmsCodeUtil.NUM_BIT_15);
+                String substringVal = maxCodeModel.getCaseNo().substring(WmsCodeUtil.PREFIX_CASE_NO.length() + WmsCodeUtil.NUM_BIT_12);
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

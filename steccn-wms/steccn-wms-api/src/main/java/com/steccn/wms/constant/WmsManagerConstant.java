@@ -8,7 +8,29 @@ import lombok.Getter;
  */
 public interface WmsManagerConstant {
 
+    /**
+     * one
+     */
+    String CODE_ONE = "1";
 
+    /**
+     * 采购类型
+     */
+    String WAREHOUSING_TYPE = "warehousing_type";
+
+    /**
+     * 是否
+     */
+    @Getter
+    @AllArgsConstructor
+    enum YesOrNo {
+        NO(0, "否"),
+        YES(1, "是");
+
+        private Integer code;
+        private String name;
+
+    }
 
 
     /**
@@ -16,11 +38,11 @@ public interface WmsManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum CheckScope{
-        WAREHOUSE(0,"仓库"),
-        SHELVES(1,"货架"),
-        MATERIALCLASSIFICATION(2,"物料分类"),
-        MATERIAL(3,"物料");
+    enum CheckScope {
+        WAREHOUSE(0, "仓库"),
+        SHELVES(1, "货架"),
+        MATERIALCLASSIFICATION(2, "物料分类"),
+        MATERIAL(3, "物料");
 
         private Integer code;
         private String name;
@@ -35,7 +57,7 @@ public interface WmsManagerConstant {
     enum OrderStateEnum {
         ZERO(0, "已创建"),
         ONE(1, "已确认"),
-        TWO(2,"部分确认"),
+        TWO(2, "部分确认"),
         THREE(3, "已完成"),
         FOUR(4, "已删除");
 
@@ -53,8 +75,8 @@ public interface WmsManagerConstant {
     enum InventoryEnum {
         ZERO(0, "加"),
         ONE(1, "减"),
-        TWO(2,"先减后加"),
-        THREE(3,"调整总数量");
+        TWO(2, "先减后加"),
+        THREE(3, "调整总数量");
 
         private final Integer code;
 
@@ -70,7 +92,8 @@ public interface WmsManagerConstant {
     enum LogisticsStateEnum {
         ZERO(0, "已创建"),
         ONE(1, "运输中"),
-        TWO(2,"已签收");
+        TWO(2, "已签收"),
+        THREE(3, "已删除");
 
 
         /**
@@ -83,7 +106,6 @@ public interface WmsManagerConstant {
          */
         private final String name;
     }
-
 
 
     /**

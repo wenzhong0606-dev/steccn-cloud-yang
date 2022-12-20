@@ -45,10 +45,10 @@ public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
 
     /**
      * 物流单签收
-     * @param id
+     * @param dto
      * @return
      */
-    Boolean receipt(Long id);
+    Boolean receipt(WmsLogisticsOrderDTO dto);
 
     /**
      * 物流单编辑
@@ -56,4 +56,11 @@ public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
      * @return
      */
     Boolean edit(WmsLogisticsOrderDTO dto);
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
 }

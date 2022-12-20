@@ -38,8 +38,8 @@ public class CompleteStorageController {
 
     @GetMapping("/scan")
     @ApiOperation("摄像头扫描箱号")
-    public R<CompleteStorageScanDTO> scan(@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
-        return R.success(pmsCompleteStorageService.scan(caseNo));
+    public R<CompleteStorageScanDTO> scan(@ApiParam("货架id") @RequestParam("warehouseId") Integer warehouseId,@ApiParam("箱号") @RequestParam("caseNo") String caseNo) {
+        return R.success(pmsCompleteStorageService.scan(warehouseId,caseNo));
     }
 
     @PostMapping("/generate")

@@ -3,24 +3,24 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.Dict;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.vo.WmsInventoryVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.*;
-import com.steccn.wms.service.WmsLogisticsDetailService;
-import com.steccn.wms.service.WmsLogisticsInfoService;
-import com.steccn.wms.service.WmsLogisticsOrderService;
+import com.steccn.wms.service.*;
 import com.steccn.wms.mapper.WmsLogisticsOrderMapper;
-import com.steccn.wms.service.WmsLogisticsTransportationService;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +60,10 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
 
     private final WmsLogisticsTransportationService wmsLogisticsTransportationService;
 
+    private final WmsShelfUpStrategyService wmsShelfUpStrategyService;
+
+    private final WmsStorageReceiptService wmsStorageReceiptService;
+
 
     @Override
     public Page<WmsLogisticsOrderVO> pageList(WmsLogisticsOrderPageDTO dto) {
@@ -89,7 +93,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 .between(Objects.nonNull(dto.getPredictStartTime()) && Objects.nonNull(dto.getPredictEndTime()),
                         WmsLogisticsOrder::getPredictTime, dto.getPredictStartTime(), dto.getPredictEndTime())
                 .between(Objects.nonNull(dto.getPracticalStartDate()) && Objects.nonNull(dto.getPracticalEndDate()),
-                        WmsLogisticsOrder::getPracticalTime, dto.getPracticalStartTime(), dto.getPracticalEndTime());
+                        WmsLogisticsOrder::getPracticalTime, dto.getPracticalStartTime(), dto.getPracticalEndTime()).
+                        notIn(WmsLogisticsOrder::getStatus, WmsManagerConstant.LogisticsStateEnum.THREE.getCode());
         //3.处理数据
         Page<WmsLogisticsOrder> page = page(new Page<>(dto.getCurrent(), dto.getSize()), eq);
         Page<WmsLogisticsOrderVO> resPage = new Page<>();
@@ -236,11 +241,102 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     }
 
     @Override
-    public Boolean receipt(Long id) {
-        WmsLogisticsOrder order = getById(id);
-        Assert.notNull(order, "物流单不存在");
-        Assert.isFalse(WmsManagerConstant.LogisticsStateEnum.ONE.getCode().equals(order.getStatus()), "当前状态不可签收");
-        return null;
+    public Boolean receipt(WmsLogisticsOrderDTO dto) {
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
+        lock.lock();
+        try {
+            //1.校验状态
+            WmsLogisticsOrder order = getById(dto.getId());
+            Assert.notNull(order, "物流单不存在");
+            Assert.isTrue(WmsManagerConstant.LogisticsStateEnum.ONE.getCode().equals(order.getStatus()), "当前状态不可签收");
+            //2.修改物流单状态信息
+            order.setPracticalTime(LocalDateTime.now());
+            order.setStatus(WmsManagerConstant.LogisticsStateEnum.TWO.getCode());
+            updateById(order);
+            List<WmsLogisticsDetailDTO> list = dto.getList();
+            Assert.isTrue(CollUtil.isNotEmpty(list), "物流单详情明细信息不可为空");
+            //3.保存明细信息
+            List<WmsLogisticsDetail> detailList = BeanUtil.copyToList(list, WmsLogisticsDetail.class);
+            wmsLogisticsDetailService.updateBatchById(detailList);
+            //4.如果为入库类型，生成入库单
+            List<Long> typeIds = Lists.newArrayList();
+            typeIds.add(order.getType());
+            SysDictVO dict = FeignOptional.of(remoteDictFeignApi.listById(typeIds)).get().get(order.getType());
+            if (WmsManagerConstant.WAREHOUSING_TYPE.equals(dict.getType())) {
+                List<WmsStorageReceiptInfoDTO> storageReceiptInfoList = Lists.newArrayList();
+                Set<Long> materialIds = Sets.newHashSet();
+                for (WmsLogisticsDetailDTO detailDTO : list) {
+                    materialIds.add(detailDTO.getMaterialId());
+                    if (WmsManagerConstant.YesOrNo.YES.getCode().equals(detailDTO.getUnpackFlag())) {
+                        //是拆包装
+                        Integer packQuantity = detailDTO.getPackQuantity();
+                        //获取最后一包数量
+                        BigDecimal pack = new BigDecimal(Integer.parseInt(packQuantity.toString()));
+                        BigDecimal remainder = detailDTO.getAogQuantity().remainder(pack);
+                        BigDecimal subtract = detailDTO.getAogQuantity().subtract(remainder);
+                        BigDecimal divide = subtract.divide(pack);
+                        for (int i = 0; i < packQuantity; i++) {
+                            WmsStorageReceiptInfoDTO storageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
+                            BeanUtil.copyProperties(detailDTO, storageReceiptInfoDTO);
+                            storageReceiptInfoDTO.setId(null);
+                            if (i == packQuantity - 1) {
+                                divide = divide.add(remainder);
+                            }
+                            storageReceiptInfoDTO.setQuantity(divide);
+                            storageReceiptInfoDTO.setAssociatedNo(order.getCode());
+                            storageReceiptInfoDTO.setUnit(detailDTO.getUnitId());
+                            if (Objects.isNull(detailDTO.getBatch())) {
+                                storageReceiptInfoDTO.setBatch("0");
+                            }
+                            storageReceiptInfoList.add(storageReceiptInfoDTO);
+                        }
+                    } else {
+                        //不拆包装
+                        WmsStorageReceiptInfoDTO storageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
+                        BeanUtil.copyProperties(detailDTO, storageReceiptInfoDTO);
+                        storageReceiptInfoDTO.setId(null);
+                        storageReceiptInfoDTO.setQuantity(detailDTO.getAogQuantity());
+                        storageReceiptInfoDTO.setAssociatedNo(order.getCode());
+                        storageReceiptInfoDTO.setUnit(detailDTO.getUnitId());
+                        if (Objects.isNull(detailDTO.getBatch())) {
+                            storageReceiptInfoDTO.setBatch("0");
+                        }
+                        storageReceiptInfoList.add(storageReceiptInfoDTO);
+                    }
+                }
+                //获取物料的仓库货架
+                Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = wmsShelfUpStrategyService.materialShelfUpInfo(materialIds);
+                storageReceiptInfoList.forEach(receiptInfo -> {
+                    WmsMaterialShelfUpVO orDefault = materialShelfUpMap.get(receiptInfo.getMaterialId());
+                    Assert.notNull(orDefault,"物料:"+receiptInfo.getMaterialName()+"未配置上架策略");
+                    receiptInfo.setShelfId(orDefault.getShelfId());
+                    receiptInfo.setShelfName(orDefault.getShelfName());
+                    receiptInfo.setShelfCode(orDefault.getShelfCode());
+                });
+                WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
+                //获取入库类型
+                SysDictVO dictVO = FeignOptional.of(remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_ONE, WmsManagerConstant.WAREHOUSING_TYPE)).get();
+                wmsStorageReceiptDTO.setType(dictVO.getId());
+                //获取仓库
+                WmsLogisticsInfo wmsLogisticsInfo = wmsLogisticsInfoService.getOne(new LambdaQueryWrapper<WmsLogisticsInfo>()
+                        .eq(WmsLogisticsInfo::getLogisticsId, order.getId())
+                        .eq(WmsLogisticsInfo::getType, WmsManagerConstant.LogisticsTypeEnum.ZERO));
+                wmsStorageReceiptDTO.setWarehouseId(wmsLogisticsInfo.getOfficeId());
+                wmsStorageReceiptDTO.setWarehouseName(wmsLogisticsInfo.getOfficeName());
+                wmsStorageReceiptDTO.setNote(order.getNote());
+                wmsStorageReceiptDTO.setList(storageReceiptInfoList);
+                try {
+                    Boolean aBoolean = wmsStorageReceiptService.createOrder(wmsStorageReceiptDTO);
+                    Assert.isTrue(aBoolean, "生成入库单失败");
+                } catch (Exception e) {
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -257,10 +353,10 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             updateById(model);
             //4.修改详情数据
             if (Objects.nonNull(dto.getList())) {
-              wmsLogisticsDetailService.edit(dto);
+                wmsLogisticsDetailService.edit(dto);
             }
             //5.修改运输方式
-            if (Objects.nonNull(dto.getWayList())){
+            if (Objects.nonNull(dto.getWayList())) {
                 wmsLogisticsTransportationService.edit(dto);
             }
             //6.保存收发货数据
@@ -286,6 +382,15 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             lock.unlock();
         }
         return true;
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        WmsLogisticsOrder order = getById(id);
+        Assert.notNull(order, "订单信息不存在");
+        Assert.isTrue(WmsManagerConstant.LogisticsStateEnum.ZERO.getCode().equals(order.getStatus()), "仅创建状态订单可删除");
+        order.setStatus(WmsManagerConstant.LogisticsStateEnum.THREE.getCode());
+        return updateById(order);
     }
 
 

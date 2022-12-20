@@ -118,12 +118,14 @@ public class WmsShelfUpStrategyServiceImpl extends ServiceImpl<WmsShelfUpStrateg
                             if (SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())
                                     && Objects.isNull(wmsMaterialShelfUpVO.getWarehouseId())) {
                                 wmsMaterialShelfUpVO.setWarehouseId((Integer) location.getId());
+                                wmsMaterialShelfUpVO.setWarehouseCode(sysOfficeVO.getOfficeCode());
                                 wmsMaterialShelfUpVO.setWarehouseName(sysOfficeVO.getOfficeName());
                             }
                             if (SysOfficeConstant.SHELF_TYPE.equals(sysOfficeVO.getOfficeType())
                                     && Objects.isNull(wmsMaterialShelfUpVO.getShelfId())) {
                                 wmsMaterialShelfUpVO.setShelfId((Integer) location.getId());
                                 wmsMaterialShelfUpVO.setShelfName(sysOfficeVO.getOfficeName());
+                                wmsMaterialShelfUpVO.setShelfCode(sysOfficeVO.getOfficeCode());
                             }
                         }
                     });

@@ -38,6 +38,7 @@ import com.steccn.pms.vo.*;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
 import com.steccn.wms.vo.WmsMaterialShelfUpVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -78,11 +79,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteMessFeignApi remoteMessFeignApi;
     @Autowired
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
-
+    @Autowired
+    private RemoteWmsShelfStrategyFeignApi remoteWmsShelfStrategyFeignApi;
 
 
     @Override
-    public CompleteStorageScanDTO scan(String caseNo) {
+    public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
         //1.判断装箱单（PP-XXXXX）已扫描，入库单为SI-XXXXX
         PmsCompleteStorageInfo pmsCompleteStorageInfo = completeStorageInfoService.getOne(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
                 .eq(PmsCompleteStorageInfo::getCaseNo, caseNo)
@@ -96,27 +98,30 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 .eq(PmsBarcodePrint::getCaseNo, caseNo)
                 .last(MpConstant.STR_LIMIT_1));
         Assert.notNull(pmsBarcodePrint, "箱号不存在");
+
+        //3.存放生产订单中
+        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(pmsBarcodePrint.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不能为空");
+
+        HashSet<Long> set = Sets.newHashSet(pmsProduceOrder.getMaterialId());
+        Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = FeignOptional.of(remoteWmsShelfStrategyFeignApi.materialShelfUpInfo(set)).get();
+        WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
+        WmsMaterialShelfUpVO orDefault = materialShelfUpMap.getOrDefault(pmsProduceOrder.getMaterialId(), wmsMaterialShelfUpVO);
         CompleteStorageScanDTO resDTO = new CompleteStorageScanDTO();
         BeanUtils.copyProperties(pmsBarcodePrint, resDTO);
         //数据字典
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(resDTO.getUnitId()))).get();
         resDTO.setUnitName(dictMap.get(resDTO.getUnitId()));
-
-        //3.存放生产订单中
-        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(pmsBarcodePrint.getProduceOrderId());
-        Assert.notNull(pmsProduceOrder, "生产订单不能为空");
         resDTO.setProduceOrderNo(pmsProduceOrder.getCode());
         resDTO.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
         resDTO.setShelfId(pmsProduceOrder.getDefaultShelfId());
         //4.仓库和货架信息（调整为通过上架策略获取货架）
-        HashSet<Long> set = Sets.newHashSet(pmsProduceOrder.getMaterialId());
-        Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialShelfUpInfo(set)).get();
-        WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
-        WmsMaterialShelfUpVO orDefault = materialShelfUpMap.getOrDefault(pmsProduceOrder.getMaterialId(), wmsMaterialShelfUpVO);
-        resDTO.setWarehouseId(orDefault.getWarehouseId());
-        resDTO.setShelfId(orDefault.getShelfId());
-        resDTO.setWarehouseName(orDefault.getWarehouseName());
-        resDTO.setShelfName(orDefault.getShelfName());
+        if (warehouseId.equals(orDefault.getWarehouseId())) {
+            resDTO.setWarehouseId(orDefault.getWarehouseId());
+            resDTO.setShelfId(orDefault.getShelfId());
+            resDTO.setWarehouseName(orDefault.getWarehouseName());
+            resDTO.setShelfName(orDefault.getShelfName());
+        }
 //        HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
 //        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
 //        resDTO.setWarehouseName(sysOfficeMap.get(pmsProduceOrder.getDefaultWarehouseId()));
@@ -197,6 +202,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             wmsStorageReceiptInfoDTO.setQuantity(sumQuantity);
             wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
             wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
+            wmsStorageReceiptInfoDTO.setBatch("0");
             wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
             wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
             materialList.add(wmsStorageReceiptInfoDTO);

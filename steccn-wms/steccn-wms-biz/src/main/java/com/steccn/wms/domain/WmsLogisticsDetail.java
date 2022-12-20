@@ -91,6 +91,11 @@ public class WmsLogisticsDetail implements Serializable {
     private BigDecimal unitPackQuantity;
 
     /**
+     * 单位
+     */
+    private Long unitId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

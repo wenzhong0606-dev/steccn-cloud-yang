@@ -88,7 +88,11 @@ public class WmsLogisticsDetailVO {
     @ApiModelProperty("单位包装数量")
     private BigDecimal unitPackQuantity;
 
+    @ApiModelProperty("单位id")
+    private Long unitId;
 
+    @ApiModelProperty("单位名称")
+    private String unitName;
 
 
 }

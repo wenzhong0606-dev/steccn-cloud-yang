@@ -32,6 +32,12 @@ public class WmsCodeUtil {
      */
     public final static String PREFIX_WMS_STORAGE_RECEIPT ="SI";
 
+    /**
+     * 箱号前缀
+     */
+    public final static String PREFIX_CASE_NO="PG";
+
+
 
     /**
      * 出库单前缀

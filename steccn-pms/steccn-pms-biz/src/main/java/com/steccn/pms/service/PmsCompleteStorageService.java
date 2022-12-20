@@ -25,9 +25,10 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * 摄像头扫描箱号
      *
      * @param caseNo 箱号
+     * @param warehouseId 货架id
      * @return 完工入库扫描vo
      */
-    CompleteStorageScanDTO scan(String caseNo);
+    CompleteStorageScanDTO scan(Integer warehouseId,String caseNo);
 
     /**
      * 生成入库单

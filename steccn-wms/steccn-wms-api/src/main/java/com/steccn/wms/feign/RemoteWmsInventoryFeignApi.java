@@ -105,15 +105,4 @@ public interface RemoteWmsInventoryFeignApi {
     @ResponseBody
     R<Map<String, CaseSiteDTO>> caseSite(@RequestBody Set<String> caseNoSet);
 
-
-    /**
-     * 获取物料配置的货架信息
-     *
-     * @param materialIds
-     * @return
-     */
-    @PostMapping("/feign/wms/inventory/material/shelf/upInfo")
-    @ApiOperation("物料货架信息")
-    R<Map<Long, WmsMaterialShelfUpVO>> materialShelfUpInfo(@RequestBody Set<Long> materialIds);
-
 }

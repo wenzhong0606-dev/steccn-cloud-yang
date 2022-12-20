@@ -58,12 +58,14 @@ public class CompleteStorageScanDTO implements Serializable {
     private String unitName;
 
     @ApiModelProperty("仓库id")
+    @NotNull(message = "仓库不能为空")
     private Integer warehouseId;
 
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 
     @ApiModelProperty("货架id")
+    @NotNull(message = "货架不能为空")
     private Integer shelfId;
 
     @ApiModelProperty("货架名称")

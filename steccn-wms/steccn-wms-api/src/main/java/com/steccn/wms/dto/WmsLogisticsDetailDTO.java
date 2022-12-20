@@ -84,13 +84,24 @@ public class WmsLogisticsDetailDTO extends BasePageDTO {
      * 包装数量
      */
     @ApiModelProperty("包装数量")
-    private BigDecimal packQuantity;
+    private Integer packQuantity;
 
     /**
      * 单位包装数量
      */
     @ApiModelProperty("单位包装数量")
     private BigDecimal unitPackQuantity;
+
+
+    /**
+     * 单位
+     */
+    @ApiModelProperty("单位")
+    private Long unitId;
+
+
+    @ApiModelProperty("批次")
+    private String batch;
 
 
 }
