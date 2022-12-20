@@ -15,6 +15,7 @@ import com.alibaba.excel.util.MapUtils;
 import com.alibaba.excel.util.StyleUtil;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -444,7 +445,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                             Map<String, Object> simpleMap = new HashMap<>();
 
                             for (QtCheckTaskCopy qtCheckTaskCopy : qtCheckTaskCopies) {
-                                //qtCheckTaskSimpleDTO.setResult();
                                 Map<String, Map<String, Object>> result = new HashMap<>();
                                 if (QtManagerConstant.SAMPLENUM.equals(s)){
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSampleNum());
@@ -460,7 +460,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 } else if (QtManagerConstant.INGREDIENTNUM.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
-                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
+                                    simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTimeArray());
                                 }
                             }
                             qtCheckTaskSimpleDTO.setResult(simpleMap);
@@ -713,8 +713,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                             .get(QtManagerConstant.ANALYST+checkResultNum)));
                                 }
                             }else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
-                                if (StringUtils.isNotBlank(entry.getKey())) {
+                               /* if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DatePattern.NORM_DATETIME_FORMATTER));
+                                }*/
+                                if (StringUtils.isNotBlank(entry.getValue())) {
+                                    objectMap.get(entry.getKey()).setSamplingTimeArray( getSamplingTimeArray(entry.getValue().split(",") ));
                                 }
                             }else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
@@ -747,8 +750,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                         qtCheckTaskCopy.setAnalyst(Integer.valueOf(sampleInfo.getResult().get(QtManagerConstant.ANALYST+checkResultNum)));
                                     }
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(sampleInfo.getId())) {
-                                    if (StringUtils.isNotBlank(entry.getKey())) {
-                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+//                                    if (StringUtils.isNotBlank(entry.getKey())) {
+//                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+//                                    }
+                                    if (StringUtils.isNotBlank(entry.getValue())) {
+                                        qtCheckTaskCopy.setSamplingTimeArray(getSamplingTimeArray(entry.getValue().split(",") ));
                                     }
                                 } else if (QtManagerConstant.ANALYSTIME.equals(sampleInfo.getId())) {
                                     if (StringUtils.isNotBlank(entry.getKey())) {
@@ -922,6 +928,19 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return updateById(taskModel);
     }
 
+    /****
+     * 检验时间字符串转json格式字符串
+     * @param timeArray
+     * @return
+     */
+    public String getSamplingTimeArray(String[] timeArray){
+        List<String> dates = new ArrayList<>();
+        for (String vo:timeArray) {
+            dates.add(vo);
+        }
+        JSONArray jsonArray = new JSONArray(dates);
+        return jsonArray.toString();
+    }
     /****
      * 保存备注
      * @param id

@@ -64,4 +64,7 @@ public class QtCheckTaskCopyDetailsDTO implements Serializable {
      * 标识是哪个样本字段
      */
     private String id;
+
+    private Object samplingTimeArray;//取样时间json数组
+
 }
