@@ -889,7 +889,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
         //获取部门标准
@@ -921,7 +921,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (i == 0) {
                     epChartGraphxAxisDTO.setXAxis("早班");
                 } else {
-                    epChartGraphxAxisDTO.setXAxis("玩班");
+                    epChartGraphxAxisDTO.setXAxis("晚班");
                 }
                 int finalI = i;
                 classDateAllData = classDateAllData.stream().filter(data -> data.getClassId().equals(finalI)).collect(Collectors.toList());
