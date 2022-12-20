@@ -5,10 +5,14 @@ import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsShelfUpStrategy;
 import com.steccn.wms.dto.WmsShelfUpStrategyDTO;
 import com.steccn.wms.service.WmsShelfUpStrategyService;
+import com.steccn.wms.vo.WmsMaterialShelfUpVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -31,7 +35,7 @@ public class WmsShelfUpStrategyController {
      **/
     @GetMapping("/getShelfUpStrategyList")
     @ApiOperation(value = "获取上架策略列表")
-    public R<Page<WmsShelfUpStrategy>> getShelfUpStrategyList( WmsShelfUpStrategyDTO dto) {
+    public R<Page<WmsShelfUpStrategy>> getShelfUpStrategyList(WmsShelfUpStrategyDTO dto) {
 
         return R.success(wmsShelfUpStrategyService.getShelfUpStrategyList(dto));
     }
@@ -41,10 +45,17 @@ public class WmsShelfUpStrategyController {
     public R<Boolean> addOrUpdateShelfUpStrategy(@RequestBody WmsShelfUpStrategy dto) {
         return R.success(wmsShelfUpStrategyService.addOrUpdateShelfUpStrategy(dto));
     }
+
     @DeleteMapping("/delShelfUpStrategy")
     @ApiOperation(value = "删除上架策略")
-    public R<Boolean> delShelfUpStrategy( WmsShelfUpStrategy dto) {
+    public R<Boolean> delShelfUpStrategy(WmsShelfUpStrategy dto) {
         return R.success(wmsShelfUpStrategyService.delShelfUpStrategy(dto));
+    }
+
+    @PostMapping("/material/shelf/upInfo")
+    @ApiOperation("物料货架信息")
+    public R<Map<Long, WmsMaterialShelfUpVO>> materialShelfUpInfo(@RequestBody Set<Long> materialIds) {
+        return R.success(wmsShelfUpStrategyService.materialShelfUpInfo(materialIds));
     }
 
 }

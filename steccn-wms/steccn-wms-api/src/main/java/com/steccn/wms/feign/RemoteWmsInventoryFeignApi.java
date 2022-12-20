@@ -6,6 +6,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.wms.dto.*;
+import com.steccn.wms.vo.WmsMaterialShelfUpVO;
 import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -75,6 +76,7 @@ public interface RemoteWmsInventoryFeignApi {
 
     /**
      * 入库凭证新增
+     *
      * @param dto
      * @return
      */
@@ -84,6 +86,7 @@ public interface RemoteWmsInventoryFeignApi {
 
     /**
      * 出库凭证新增
+     *
      * @param dto
      * @return
      */
@@ -101,5 +104,16 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/stockByCaseNo")
     @ResponseBody
     R<Map<String, CaseSiteDTO>> caseSite(@RequestBody Set<String> caseNoSet);
+
+
+    /**
+     * 获取物料配置的货架信息
+     *
+     * @param materialIds
+     * @return
+     */
+    @PostMapping("/feign/wms/inventory/material/shelf/upInfo")
+    @ApiOperation("物料货架信息")
+    R<Map<Long, WmsMaterialShelfUpVO>> materialShelfUpInfo(@RequestBody Set<Long> materialIds);
 
 }

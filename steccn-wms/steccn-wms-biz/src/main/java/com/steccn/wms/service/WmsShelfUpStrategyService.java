@@ -4,12 +4,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.domain.WmsShelfUpStrategy;
 import com.steccn.wms.dto.WmsShelfUpStrategyDTO;
+import com.steccn.wms.vo.WmsMaterialShelfUpVO;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
-* @author W10
-* @description 针对表【wms_shelf_up_strategy(上架策略)】的数据库操作Service
-* @createDate 2022-11-30 09:45:17
-*/
+ * @author W10
+ * @description 针对表【wms_shelf_up_strategy(上架策略)】的数据库操作Service
+ * @createDate 2022-11-30 09:45:17
+ */
 public interface WmsShelfUpStrategyService extends IService<WmsShelfUpStrategy> {
 
     /***
@@ -17,19 +21,27 @@ public interface WmsShelfUpStrategyService extends IService<WmsShelfUpStrategy> 
      * @param dto
      * @return
      */
-    Page<WmsShelfUpStrategy> getShelfUpStrategyList( WmsShelfUpStrategyDTO dto);
+    Page<WmsShelfUpStrategy> getShelfUpStrategyList(WmsShelfUpStrategyDTO dto);
 
     /***
      * 新增或者编辑上架策略
      * @param dto
      * @return
      */
-    Boolean addOrUpdateShelfUpStrategy( WmsShelfUpStrategy dto);
+    Boolean addOrUpdateShelfUpStrategy(WmsShelfUpStrategy dto);
 
     /***
      * 删除上架策略
      * @param dto
      * @return
      */
-    Boolean delShelfUpStrategy( WmsShelfUpStrategy dto);
+    Boolean delShelfUpStrategy(WmsShelfUpStrategy dto);
+
+
+    /**
+     * 获取物料的上架策略信息
+     * @param materialIds
+     * @return
+     */
+    Map<Long, WmsMaterialShelfUpVO> materialShelfUpInfo(Set<Long> materialIds);
 }
