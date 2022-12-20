@@ -1221,7 +1221,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
             //若拉引量为0，饼状图显示为暂无数据图片
             if(laAmount.compareTo(BigDecimal.ZERO) == 0){
-                return result;
+                SteccnTableAssertUtil.notEmpty(new ArrayList<>(), "数据为空，暂无报表");
             }
             //对所有损耗数据原因进行加总分析
             Map<String,BigDecimal> reasonData = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason,CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
