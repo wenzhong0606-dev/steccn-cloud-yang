@@ -42,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -892,24 +893,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
         //获取部门标准
-        LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
-        queryWrapper.and(query -> {
-            for (int i = 0; i < dto.getPartitionIdList().size(); i++) {
-                if (i == dto.getPartitionIdList().size() - 1) {
-                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i));
-                } else {
-                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i)).or();
-                }
-            }
-        });
-        queryWrapper.ge(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).le(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd());
-        queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
-        if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
-            queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
-        } else {
-            // 产品厚度
-        }
-        List<EpProductUnitConsumeStandard> consumeStandardList = epProductUnitConsumeStandardService.list(queryWrapper);
+        List<EpProductUnitConsumeStandard> consumeStandardList = getDepartmentStandardList(dto);
+        //企业行业标准
+        List<StandardVO<BigDecimal>> standardVOList = getStandardVOList(dto);
 
         //根据时间粒度分区
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -928,69 +914,170 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
 
-        for (int i = 1; i < shardDateTime.size(); i++) {
-            LocalDateTime dataStart = shardDateTime.get(i - 1);
-            LocalDateTime dataEnd = shardDateTime.get(i);
-            EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
-            if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
-                epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                classDateAllData = classDateAllData.stream()
-                        .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
-            }
-            List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
-            //遍历所有的分区节点
-            for (Long partitionId : dto.getPartitionIdList()) {
-                //获取分区数据集合
-                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
-                List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
-                TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
-                pole.setField1(partitionId);
-                pole.setField2(poleList);
-                //部门标准list
-                List<TupleDTO<String, BigDecimal>> departmentStandardList = Lists.newArrayList();
-                TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> departmentStandard = new TupleDTO<>();
-                departmentStandard.setField1(partitionId);
-                pole.setField2(departmentStandardList);
-                //根据厚度遍历
-                for (BigDecimal thick : dto.getThick()) {
-                    String thickName = null;
-                    List<EpMeterReadAllDataVO> thickData;
-                    if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
-                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
-                        thickName = "无";
-                    } else {
-                        thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
-                        thickName = String.valueOf(thick.setScale(1));
-                    }
-                    BigDecimal sumConsume = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal sumProductNum = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    //获取单耗值
-                    TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, BigDecimalUtil.divide(sumConsume, sumProductNum));
-                    poleList.add(stack);
-                    //获取部门标准
-                    BigDecimal standard = null;
-                    Optional<EpProductUnitConsumeStandard> optional = consumeStandardList.stream().filter(consumestandard -> consumestandard.getApplyOffice().contains(partitionId.intValue())).findAny();
-                    if (optional.isPresent()) {
-                        standard = optional.get().getUnitValue();
-                    }
-                    TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>(thickName, standard);
-                    departmentStandardList.add(standardTupleDTO);
+        // 班次分组
+        if (QtManagerConstant.QtGranularityEnum.CLASS.getCode().equals(byCode.getCode())) {
+            for (int i = 0;i<2;i++) {
+                EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
+                if (i == 0) {
+                    epChartGraphxAxisDTO.setXAxis("早班");
+                } else {
+                    epChartGraphxAxisDTO.setXAxis("玩班");
                 }
-
-                data.add(pole);
-                data.add(departmentStandard);
+                int finalI = i;
+                classDateAllData = classDateAllData.stream().filter(data -> data.getClassId().equals(finalI)).collect(Collectors.toList());
+                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> tupleDTOList = getTupleDTOList(dto, classDateAllData, consumeStandardList);
+                epChartGraphxAxisDTO.setData(tupleDTOList);
+                dataList.add(epChartGraphxAxisDTO);
             }
-            epChartGraphxAxisDTO.setData(data);
-            dataList.add(epChartGraphxAxisDTO);
+        } else {
+            //其他类型分组
+            for (int i = 1; i < shardDateTime.size(); i++) {
+                LocalDateTime dataStart = shardDateTime.get(i - 1);
+                LocalDateTime dataEnd = shardDateTime.get(i);
+                EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
+                if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
+                    epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
+                    classDateAllData = classDateAllData.stream()
+                            .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
+                                    && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
+                }
+                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto,classDateAllData,consumeStandardList);
+                epChartGraphxAxisDTO.setData(data);
+                dataList.add(epChartGraphxAxisDTO);
+            }
         }
+
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         epChartGraphDTO.setDataList(dataList);
+        epChartGraphDTO.setStandardList(standardVOList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             convert.getXData().setData(Lists.newArrayList());
         }
         return convert;
+    }
+
+    private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto) {
+        List<EpPartition> partitionList = epPartitionService.listByIds(dto.getPartitionIdList());
+        boolean subFlag = false;
+        boolean deepFlag = false;
+        for (EpPartition epPartition : partitionList) {
+            if (Objects.nonNull(epPartition.getParentId())) {
+                subFlag = true;
+                deepFlag = true;
+                break;
+            }
+            if (epPartition.getOfficeName().contains("基片")) {
+                subFlag = true;
+            }
+            if (epPartition.getOfficeName().contains("深加工")) {
+                deepFlag = true;
+            }
+        }
+
+        List<Long> standardList = new ArrayList<>();
+        //标准类型：企业标准
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
+        //标准类型：行业标准
+        SysDictVO industrialSysDictVO = remoteDictFeignApi.getByCode("industrial_standard", "product_unit_consumption_standard").getData();
+        standardList.add(sysDictVO.getId());
+        standardList.add(industrialSysDictVO.getId());
+        List<Long> productTypeList = new ArrayList<>();
+        if (subFlag) {
+            productTypeList.add(EpManagerConstant.EpProductTypes.SUBSTRATE.getId());
+        }
+        if (deepFlag) {
+            //产品类型：深加工
+            productTypeList.add(EpManagerConstant.EpProductTypes.DEEP_PROCESSING.getId());
+        }
+        LambdaQueryWrapper<EpProductUnitConsumeStandard> standardQueryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+                .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
+                .gt(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).lt(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd())
+                .in(EpProductUnitConsumeStandard::getStandardType, standardList)
+                .in(EpProductUnitConsumeStandard::getProductType, productTypeList);
+        // todo 查询条件差产品厚度
+        List<EpProductUnitConsumeStandard> unitConsumeStandardList = epProductUnitConsumeStandardService.list(standardQueryWrapper);
+        List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
+        for (EpProductUnitConsumeStandard consumeStandard : unitConsumeStandardList) {
+            StandardVO<BigDecimal> standardVO = new StandardVO<>();
+            BeanUtils.copyProperties(consumeStandard,standardVO);
+            if (consumeStandard.getStandardType().equals(sysDictVO.getId())) {
+                standardVO.setStandardTypeName("企业标准");
+            } else {
+                standardVO.setStandardTypeName("行业标准");
+            }
+            standardVOList.add(standardVO);
+        }
+        return standardVOList;
+    }
+
+    private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto) {
+        LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
+        queryWrapper.and(query -> {
+            for (int i = 0; i < dto.getPartitionIdList().size(); i++) {
+                if (i == dto.getPartitionIdList().size() - 1) {
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i));
+                } else {
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i)).or();
+                }
+            }
+        });
+        queryWrapper.ge(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).le(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd());
+        queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
+        if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
+            queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
+        } else {
+            // todo 产品厚度
+        }
+        return epProductUnitConsumeStandardService.list(queryWrapper);
+    }
+
+    private List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> getTupleDTOList(EpTableDTO dto, List<EpMeterReadAllDataVO> classDateAllData, List<EpProductUnitConsumeStandard> consumeStandardList) {
+        List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
+        //遍历所有的分区节点
+        for (Long partitionId : dto.getPartitionIdList()) {
+            //获取分区数据集合
+            List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+            List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
+            TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
+            pole.setField1(partitionId);
+            pole.setField2(poleList);
+            //部门标准list
+            List<TupleDTO<String, BigDecimal>> departmentStandardList = Lists.newArrayList();
+            TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> departmentStandard = new TupleDTO<>();
+            departmentStandard.setField1(partitionId);
+            pole.setField2(departmentStandardList);
+            //根据厚度遍历
+            for (BigDecimal thick : dto.getThick()) {
+                String thickName = null;
+                List<EpMeterReadAllDataVO> thickData;
+                if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
+                    thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                    thickName = "无";
+                } else {
+                    thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
+                    thickName = String.valueOf(thick.setScale(1));
+                }
+                BigDecimal sumConsume = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal sumProductNum = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+                //获取单耗值
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, BigDecimalUtil.divide(sumConsume, sumProductNum));
+                poleList.add(stack);
+                //获取部门标准
+                BigDecimal standard = null;
+                Optional<EpProductUnitConsumeStandard> optional = consumeStandardList.stream().filter(consumestandard -> consumestandard.getApplyOffice().contains(partitionId.intValue())).findAny();
+                if (optional.isPresent()) {
+                    standard = optional.get().getUnitValue();
+                }
+                TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>(thickName, standard);
+                departmentStandardList.add(standardTupleDTO);
+            }
+
+            data.add(pole);
+            data.add(departmentStandard);
+        }
+
+        return data;
     }
 
     /**

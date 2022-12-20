@@ -184,7 +184,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
             thick = BigDecimal.valueOf(3.2);
         }
 
-        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,1));
+        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,1));
         Set<Long> partitionIdSet = partitionList.stream().map(EpPartition::getId).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(partitionIdSet)) {
             partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getParentId, partitionIdSet).eq(EpPartition::getType, 1));
@@ -210,7 +210,9 @@ public class EpOverViewServiceImpl implements EpOverViewService {
 
         EpDeepConsumeContrastVO epDeepConsumeContrastVO = new EpDeepConsumeContrastVO();
         //获取标准值
-        epDeepConsumeContrastVO.setStandardValue(productUnitConsumeStandard.getUnitValue());
+        if (Objects.nonNull(productUnitConsumeStandard)) {
+            epDeepConsumeContrastVO.setStandardValue(productUnitConsumeStandard.getUnitValue());
+        }
         //获取x轴
         List<String> officeNameList = partitionList.stream().map(EpPartition::getOfficeName).collect(Collectors.toList());
         epDeepConsumeContrastVO.setXAxis(officeNameList);

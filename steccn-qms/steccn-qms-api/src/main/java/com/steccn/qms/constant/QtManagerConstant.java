@@ -373,7 +373,8 @@ public interface QtManagerConstant {
         MONTH(3,"月","M"),
         QUARTER(4,"季度","Q"),
         YEAR(5,"年","Y"),
-        NONE(6,"无粒度","N");
+        NONE(6,"无粒度","N"),
+        CLASS(7,"班次","C");
 
         private Integer code;
         private String name;
