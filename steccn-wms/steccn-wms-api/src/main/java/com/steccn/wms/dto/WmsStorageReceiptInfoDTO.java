@@ -74,6 +74,5 @@ public class WmsStorageReceiptInfoDTO {
     private String unitName;
 
     @ApiModelProperty("有效期截至")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "有效期截至不能为空")
     private LocalDate validTime;
 }

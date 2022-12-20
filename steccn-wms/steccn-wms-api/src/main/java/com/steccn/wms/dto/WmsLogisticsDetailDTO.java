@@ -1,5 +1,6 @@
 package com.steccn.wms.dto;
 
+import com.steccn.common.dto.BasePageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -14,10 +15,13 @@ import java.math.BigDecimal;
  */
 @Data
 @ApiModel("物流单详情VO")
-public class WmsLogisticsDetailDTO {
+public class WmsLogisticsDetailDTO extends BasePageDTO {
 
     @ApiModelProperty("主键")
     private Long id;
+
+    @ApiModelProperty("物流单id")
+    private Long logisticsId;
 
     @ApiModelProperty("物料id")
     private Long materialId;
@@ -87,8 +91,6 @@ public class WmsLogisticsDetailDTO {
      */
     @ApiModelProperty("单位包装数量")
     private BigDecimal unitPackQuantity;
-
-
 
 
 }

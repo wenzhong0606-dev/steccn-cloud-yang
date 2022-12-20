@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.steccn.wms.domain.WmsLogisticsTransportation;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.vo.WmsLogisticsTransportationVO;
 
 import java.util.List;
@@ -20,4 +21,11 @@ public interface WmsLogisticsTransportationService extends IService<WmsLogistics
      * @return
      */
     List<WmsLogisticsTransportationVO> listByLogisticsId(Long id);
+
+    /**
+     * 修改运输方式
+     * @param dto
+     * @return
+     */
+    Boolean edit(WmsLogisticsOrderDTO dto);
 }

@@ -66,20 +66,18 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
     public Boolean addOrEdit(EpEnergyTypeDTO dto) {
         long size = count(new LambdaQueryWrapper<EpEnergyType>()
                 .eq(EpEnergyType::getName, dto.getName())
-                .eq(EpEnergyType::getShowFlag, MpConstant.YES));
-        if (Objects.isNull(dto.getId())){
-            Assert.isTrue(size ==0 , "能源类型的名称不能重复");
-        }else {
-            Assert.isTrue(size <=1 , "能源类型的名称不能重复");
-        }
+                .eq(EpEnergyType::getShowFlag, MpConstant.YES)
+                //编辑时去除对自身的判断
+                .ne(Objects.nonNull(dto.getId()), EpEnergyType::getId, dto.getId()));
+        //能源类型的名称不能重复
+        Assert.isTrue(size == 0, "能源类型的名称不能重复");
         long sizeMeasureMeterName = count(new LambdaQueryWrapper<EpEnergyType>()
                 .eq(EpEnergyType::getMeasureMeterName, dto.getMeasureMeterName())
-                .eq(EpEnergyType::getShowFlag, MpConstant.YES));
-        if (Objects.isNull(dto.getId())){
-            Assert.isTrue(sizeMeasureMeterName ==0 , "计量仪表名称不能重复");
-        }else {
-            Assert.isTrue(sizeMeasureMeterName <=1 , "计量仪表名称不能重复");
-        }
+                .eq(EpEnergyType::getShowFlag, MpConstant.YES)
+                .ne(Objects.nonNull(dto.getId()), EpEnergyType::getId, dto.getId()));
+        //计量仪表名称不能重复
+        Assert.isTrue(sizeMeasureMeterName == 0, "计量仪表名称不能重复");
+        //创建接收数据的实体类对象
         EpEnergyType epEnergyType = new EpEnergyType();
         BeanUtils.copyProperties(dto, epEnergyType);
         //link table是否合法
@@ -185,10 +183,11 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         List<Long> partitionIds = partitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, id))
                 .stream().map(EpPartition::getId).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(partitionIds)){
-//            long count = instrumentAccountService.count(new LambdaQueryWrapper<EpInstrumentAccount>()
-//                    .in(EpInstrumentAccount::getPartitionNode, partitionIds)
-//                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
-//            Assert.isTrue(count==0,"该能源类型下有绑定仪表,无法删除");
+            long count = instrumentAccountService.count(new LambdaQueryWrapper<EpInstrumentAccount>()
+                    .in(EpInstrumentAccount::getPartitionNode, partitionIds)
+                    .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES));
+            //若该能源类型下已绑定仪表提示无法删除
+            Assert.isTrue(count==0,"该能源类型下有绑定仪表,无法删除");
             partitionService.removeByIds(partitionIds);
         }
 

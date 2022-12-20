@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.dto.WmsLogisticsOrderPageDTO;
 import com.steccn.wms.vo.WmsLogisticsOrderVO;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 /**
 * @author W10
@@ -48,4 +49,11 @@ public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
      * @return
      */
     Boolean receipt(Long id);
+
+    /**
+     * 物流单编辑
+     * @param dto
+     * @return
+     */
+    Boolean edit(WmsLogisticsOrderDTO dto);
 }

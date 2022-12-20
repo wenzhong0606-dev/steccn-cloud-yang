@@ -53,7 +53,7 @@ public class WmsLogisticsDetailVO {
     private Long weightUnit;
 
     @ApiModelProperty("重量单位名称")
-    private Long weightUnitName;
+    private String weightUnitName;
 
     /**
      * 体积单位
@@ -62,7 +62,7 @@ public class WmsLogisticsDetailVO {
     private Long volumeUnit;
 
     @ApiModelProperty("体积单位名称")
-    private Long volumeUnitName;
+    private String volumeUnitName;
 
     /**
      * 关联单据
