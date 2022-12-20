@@ -188,4 +188,15 @@ public class EpConsumePartitionChartController {
     public R<EpConsumeDetailVO> unitConsumePartitionContrastDetail(@Valid @RequestBody EpTableDTO dto) {
         return R.success(epConsumePartitionChartService.unitConsumePartitionContrastDetail(dto));
     }
+
+    @PostMapping("/unit/contrast/download")
+    @ApiOperation(value = "单耗分区对比-下载")
+    public void unitContrastDownload (@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try{
+            epConsumePartitionChartService.unitContrastDownload(dto,response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response,e);
+        }
+    }
 }

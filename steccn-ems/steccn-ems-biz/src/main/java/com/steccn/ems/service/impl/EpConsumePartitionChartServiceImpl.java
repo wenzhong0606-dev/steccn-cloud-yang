@@ -970,7 +970,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -1033,6 +1033,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         resVo.setDataList(page);
         resVo.setHeadData(headData);
         return resVo;
+    }
+
+    @Override
+    public void unitContrastDownload(EpTableDTO dto, HttpServletResponse response) {
+
     }
 
     private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, Long thickId) {

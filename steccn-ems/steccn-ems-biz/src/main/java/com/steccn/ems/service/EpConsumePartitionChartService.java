@@ -131,4 +131,12 @@ public interface EpConsumePartitionChartService {
      * @return
      */
     EpConsumeDetailVO unitConsumePartitionContrastDetail(EpTableDTO dto);
+
+    /**
+     * 单耗分区对比-下载
+     *
+     * @param dto
+     * @param response
+     */
+    void unitContrastDownload(EpTableDTO dto, HttpServletResponse response);
 }
