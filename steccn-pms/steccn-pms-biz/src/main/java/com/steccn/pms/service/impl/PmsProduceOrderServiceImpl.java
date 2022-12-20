@@ -800,7 +800,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         WorkOrderVO workOrderVO = this.baseMapper.selectByClassTime(startTime, endTime);
         long second = ChronoUnit.SECONDS.between(workOrderVO.getEndTime(), endTime);
         if (second < 60) {
-           return workOrderVO;
+            return workOrderVO;
         }
         return null;
     }
@@ -813,6 +813,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //查询这段时间内的所有报工记录
         List<DwCurrentReportWorkDTO> resList = pmsReportWorkMapper.currentDateReportWork(start, end);
         if (CollUtil.isNotEmpty(resList)) {
+            Set<Long> classIdSet = resList.stream().map(v -> v.getClassesId()).collect(Collectors.toSet());
+            Map<Long, SysDictVO> classMap = FeignOptional.of(remoteDictFeignApi.listById(Lists.newArrayList(classIdSet))).get();
             Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSet))).get();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
@@ -820,6 +822,14 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();
                 ele.setThick(thick);
                 ele.setClassDate(currentDate);
+                SysDictVO sysDictVO = classMap.get(ele.getClassesId());
+                if (Objects.nonNull(sysDictVO)) {
+                    if (sysDictVO.getName().contains("早")) {
+                        ele.setClassId(0);
+                    } else {
+                        ele.setClassId(1);
+                    }
+                }
             });
         }
         return Objects.isNull(resList) ? Lists.newArrayList() : resList;

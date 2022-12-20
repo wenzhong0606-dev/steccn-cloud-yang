@@ -20,6 +20,9 @@ public class DwCurrentReportWorkDTO implements Serializable {
     private LocalDate classDate;
 
     @ApiModelProperty("班次id")
+    private Long classesId;
+
+    @ApiModelProperty("班次id")
     private Integer classId;
 
     @ApiModelProperty("产线")
