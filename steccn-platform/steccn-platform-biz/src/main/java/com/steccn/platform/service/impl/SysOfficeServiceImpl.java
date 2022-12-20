@@ -77,7 +77,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> flatData(String officeType) {
         //根据类型查询所有的数据字典数据
-        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeType, officeType));
+        List<SysOffice> dataList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, officeType)
+                .eq(SysOffice::getStatus,0));
         List<SysOfficeVO> vos = Lists.newArrayList();
         if (!CollUtil.isEmpty(dataList)) {
             dataList.forEach(tmp -> {
