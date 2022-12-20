@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsWarehouseMaterialAllocation;
 import com.steccn.wms.dto.WmsWarehouseMaterialAllocationDTO;
 
@@ -25,7 +26,7 @@ public interface WmsWarehouseMaterialAllocationService extends IService<WmsWareh
      * @param dto
      * @return
      */
-    Boolean addOrUpdateMaterialConfigure( WmsWarehouseMaterialAllocation dto);
+    R<Boolean> addOrUpdateMaterialConfigure(WmsWarehouseMaterialAllocation dto);
 
     /***
      * 删除仓储物料配置

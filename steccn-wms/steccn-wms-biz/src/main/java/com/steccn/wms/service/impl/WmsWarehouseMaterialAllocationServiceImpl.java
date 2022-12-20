@@ -74,16 +74,25 @@ public class WmsWarehouseMaterialAllocationServiceImpl extends ServiceImpl<WmsWa
      * @return
      */
     @Override
-    public Boolean addOrUpdateMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
+    public R<Boolean> addOrUpdateMaterialConfigure(WmsWarehouseMaterialAllocation dto) {
         Integer result;
+        LambdaQueryWrapper<WmsWarehouseMaterialAllocation> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WmsWarehouseMaterialAllocation::getMaterialName,dto.getMaterialName());
+        List<WmsWarehouseMaterialAllocation> allocationList = baseMapper.selectList(queryWrapper);
+        if(allocationList.size() > 0){
+            if (allocationList.size() > 1) return R.success("物料名称不可重复", null);
+            if(Objects.isNull(dto.getId()) && dto.getMaterialName().equals(allocationList.get(0).getMaterialName()))  {
+                return R.success("物料名称不可重复", null);
+            }
+        }
         if(Objects.isNull(dto.getId()) ){
             result = baseMapper.insert(dto);
         }else{
             WmsWarehouseMaterialAllocation wmsWarehouseMaterialAllocationTem = baseMapper.selectById(dto.getId());
-            if(wmsWarehouseMaterialAllocationTem == null) return false;
+            if(wmsWarehouseMaterialAllocationTem == null) return R.success(false);
             result = baseMapper.updateById(dto);
         }
-        return result >0 ?true:false;
+        return result >0 ?R.success(true):R.success(false);
     }
 
     /***
