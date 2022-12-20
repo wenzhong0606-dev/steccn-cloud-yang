@@ -4,10 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.vo.R;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
-import com.steccn.ems.dto.DwConditionDTO;
-import com.steccn.ems.dto.DwEpMeterCollectVO;
+import com.steccn.data.dto.DwConditionDTO;
+import com.steccn.data.dto.DwEpMeterCollectVO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpDwService;
@@ -16,11 +15,9 @@ import com.steccn.pms.feign.RemotePmsFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +52,7 @@ public class EpDwServiceImpl implements EpDwService {
                 dwConditionDTO(dwList, meter, lineList);
                 dwConditionDTO(dwList, meter, stationList);
             }
-//            List<DwEpMeterCollectVO> dwDataList = remoteDataPlatformFeignApi.meterRead(dwList);
+             remoteDataPlatformFeignApi.meterRead(dwList);
 
         }
         log.info("dwList -> {}", dwList);

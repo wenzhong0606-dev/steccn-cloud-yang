@@ -2,6 +2,10 @@ package com.steccn.data.service;
 
 import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.data.dto.DwConditionDTO;
+import com.steccn.data.dto.DwEpMeterCollectVO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +14,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
+    /**
+     * 数仓条件列表
+     * @param dwList
+     * @return
+     */
+    List<DwEpMeterCollectVO> meterRead(List<DwConditionDTO> dwList);
 }
