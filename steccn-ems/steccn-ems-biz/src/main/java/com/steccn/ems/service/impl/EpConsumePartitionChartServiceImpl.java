@@ -892,10 +892,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
+        //产品厚度
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(dto.getThick().get(0) + "mm", "product_thickness_range").getData();
+
         //获取部门标准
-        List<EpProductUnitConsumeStandard> consumeStandardList = getDepartmentStandardList(dto);
+        List<EpProductUnitConsumeStandard> consumeStandardList = getDepartmentStandardList(dto,sysDictVO.getId());
         //企业行业标准
-        List<StandardVO<BigDecimal>> standardVOList = getStandardVOList(dto);
+        List<StandardVO<BigDecimal>> standardVOList = getStandardVOList(dto,sysDictVO.getId());
 
         //根据时间粒度分区
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -957,7 +960,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return convert;
     }
 
-    private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto) {
+    private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, Long thickId) {
         List<EpPartition> partitionList = epPartitionService.listByIds(dto.getPartitionIdList());
         boolean subFlag = false;
         boolean deepFlag = false;
@@ -992,9 +995,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         LambdaQueryWrapper<EpProductUnitConsumeStandard> standardQueryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
-                .gt(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).lt(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd())
+                .le(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).ge(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd())
                 .in(EpProductUnitConsumeStandard::getStandardType, standardList)
-                .in(EpProductUnitConsumeStandard::getProductType, productTypeList);
+                .in(EpProductUnitConsumeStandard::getProductType, productTypeList)
+                .eq(EpProductUnitConsumeStandard::getProductThick, thickId);
         // todo 查询条件差产品厚度
         List<EpProductUnitConsumeStandard> unitConsumeStandardList = epProductUnitConsumeStandardService.list(standardQueryWrapper);
         List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
@@ -1006,12 +1010,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             } else {
                 standardVO.setStandardTypeName("行业标准");
             }
+            standardVO.setValue(consumeStandard.getUnitValue());
             standardVOList.add(standardVO);
         }
         return standardVOList;
     }
 
-    private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto) {
+    private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto,Long thickId) {
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
         queryWrapper.and(query -> {
             for (int i = 0; i < dto.getPartitionIdList().size(); i++) {
@@ -1022,12 +1027,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 }
             }
         });
-        queryWrapper.ge(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).le(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd());
+        queryWrapper.le(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).ge(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd());
         queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
         if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
             queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
         } else {
-            // todo 产品厚度
+            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick,thickId);
         }
         return epProductUnitConsumeStandardService.list(queryWrapper);
     }
@@ -1042,26 +1047,18 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
             pole.setField1(partitionId);
             pole.setField2(poleList);
-            //部门标准list
-            List<TupleDTO<String, BigDecimal>> departmentStandardList = Lists.newArrayList();
-            TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> departmentStandard = new TupleDTO<>();
-            departmentStandard.setField1(partitionId);
-            pole.setField2(departmentStandardList);
             //根据厚度遍历
             for (BigDecimal thick : dto.getThick()) {
-                String thickName = null;
                 List<EpMeterReadAllDataVO> thickData;
                 if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
                     thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
-                    thickName = "无";
                 } else {
                     thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
-                    thickName = String.valueOf(thick.setScale(1));
                 }
                 BigDecimal sumConsume = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
                 BigDecimal sumProductNum = thickData.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
                 //获取单耗值
-                TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, BigDecimalUtil.divide(sumConsume, sumProductNum));
+                TupleDTO<String, BigDecimal> stack = new TupleDTO<>("实际单耗", BigDecimalUtil.divide(sumConsume, sumProductNum));
                 poleList.add(stack);
                 //获取部门标准
                 BigDecimal standard = null;
@@ -1069,12 +1066,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (optional.isPresent()) {
                     standard = optional.get().getUnitValue();
                 }
-                TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>(thickName, standard);
-                departmentStandardList.add(standardTupleDTO);
+                TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>("部门标准", standard);
+                poleList.add(standardTupleDTO);
             }
 
             data.add(pole);
-            data.add(departmentStandard);
         }
 
         return data;
