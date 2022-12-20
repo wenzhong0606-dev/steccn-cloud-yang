@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.models.auth.In;
 import lombok.Data;
 
@@ -42,4 +43,7 @@ public class QtIQCAcceptabilityCopyVO {
      * 取样时间
      */
     private LocalDateTime samplingTime;
+
+    @ApiModelProperty("元素")
+    private List<String> eleList;
 }

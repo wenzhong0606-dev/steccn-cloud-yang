@@ -366,7 +366,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
                 List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = BeanUtil.copyToList(qtCheckTaskDestoryInfoList, QtCheckTaskDestoryInfoVO.class);
                 qtCheckTaskDetailCopyVO.setQtCheckTaskDestoryInfo(qtCheckTaskDestoryInfoVOList);
-
             }
 
         }
@@ -481,9 +480,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             qtCheckPlanDetailsVO.setCopy(copy);
             qtCheckTaskDetailVo.setQtCheckPlanDetailsVO(qtCheckPlanDetailsVO);
         }
-        QtCheckTaskDetailCopyVO qtCheckTaskDetailCopyVO = new QtCheckTaskDetailCopyVO();
-        QtCheckTaskDestoryInfoVO qtCheckTaskDestoryInfoVO = new QtCheckTaskDestoryInfoVO();
-        List<QtCheckTaskDestoryInfoVO> qtCheckTaskDestoryInfoVOList = Lists.newArrayList();
         //放入落板记录模块数据setQtCheckTaskDestoryInfoVOList
         List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = qtCheckTaskDestoryInfoMapper.selectList(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId, id));
         if (!qtCheckTaskDestoryInfoList.isEmpty()) {
@@ -632,7 +628,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         statusDTO.setStatus(dto.getStatus());
         //组装落板记录详情数据
         if (CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())) {
-            QtCheckTaskDetail qtCheckTaskDetail = new QtCheckTaskDetail();
             List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfoList = Lists.newArrayList();
             dto.getQtCheckTaskDestoryInfo().forEach(destoryInfoVO -> {
                 if (dto.getId() != null) {
@@ -658,6 +653,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 }
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
+        }else{
+            saveCheckTaskDestoryInfoRemark(dto.getId(),dto.getDestoryInfoRemark());
         }
         return updateStatus(statusDTO);
     }
@@ -680,15 +677,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Map<String, Object> valueCondition = new HashMap<>();
         valueCondition.put("task_id", dto.getId());
         qtCheckTaskDetailService.removeByMap(valueCondition);
-
-
         //处理样本概况数据
         //样本概况在来料捡,化验抽捡,配料抽检时显示
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()) || tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()) || tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())) {
             if (CollUtil.isNotEmpty(dto.getSampleInfoList())) {
-                QtCheckTaskCopy copyDetailModel = new QtCheckTaskCopy();
                 Map<String, Object> deleteCondition = new HashMap<>();
-                List<QtCheckTaskCopy> qtCheckTaskCopies = Lists.newArrayList();
                 deleteCondition.put("task_id", dto.getId());
                 //先删除可能暂存的值
                 qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
@@ -868,6 +861,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 qtCheckTaskDestoryInfoList.add(qtCheckTaskDestoryInfo);
             });
             qtCheckTaskDestoryInfoService.saveBatch(qtCheckTaskDestoryInfoList);
+        }else{
+            saveCheckTaskDestoryInfoRemark(dto.getId(),dto.getDestoryInfoRemark());
         }
         //插入在线检数据
         if (tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) && dto.getOnlineItem() != null) {
@@ -927,6 +922,24 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return updateById(taskModel);
     }
 
+    /****
+     * 保存备注
+     * @param id
+     */
+    public void saveCheckTaskDestoryInfoRemark(Long id ,String destoryInfoRemark){
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(destoryInfoRemark)) {
+            QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
+            if (qtCheckTaskDetailService.getById(id) != null)
+                qtCheckTaskDestoryInfo.setCopy(qtCheckTaskDetailService.getById(id).getCopy());
+            qtCheckTaskDestoryInfo.setTaskId(id);
+            if (qtCheckTaskCopyService.getById(id) != null)
+                qtCheckTaskDestoryInfo.setSampleNum(qtCheckTaskCopyService.getById(id).getSampleNum());
+            qtCheckTaskDestoryInfo.setCreateName(SecurityUtils.getUser().getName());
+            qtCheckTaskDestoryInfo.setCreateBy(SecurityUtils.getUser().getUserId());
+            qtCheckTaskDestoryInfo.setDestoryInfoRemark(destoryInfoRemark);
+            qtCheckTaskDestoryInfoService.save(qtCheckTaskDestoryInfo);
+        }
+    }
     /**
      * 完成任务
      *
@@ -2069,6 +2082,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     QtIQCAcceptabilityCopyVO qtIQCAcceptabilityCopyVO = orDefault.get(0);
                     List<String> headList = qtIQCAcceptabilityCopyVO.getList().stream().map(v -> v.getName()).collect(Collectors.toList());
                     task.setDetailTableHead(headList);
+
+                    orDefault.forEach(ele ->{
+                        List<String> eleList = Lists.newArrayList();
+                        ele.getList().forEach(e ->{
+                            eleList.add(e.getValue());
+                        });
+                        ele.setEleList(eleList);
+                    });
                 }
                 task.setDetail(orDefault);
                 task.setMaterialName(materialMap.get(task.getMaterialId()));
