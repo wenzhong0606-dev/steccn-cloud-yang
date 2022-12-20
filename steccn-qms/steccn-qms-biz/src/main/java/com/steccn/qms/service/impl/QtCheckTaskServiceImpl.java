@@ -2007,7 +2007,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //计算每条任务的合格率
         flatDataList.forEach(tmp->{
             BigDecimal result = BigDecimalUtil.divide(new BigDecimal(tmp.getGoodNum()),new BigDecimal(tmp.getCheckNum()));
-            tmp.setPassRate(new DecimalFormat("0.00%").format(result));
+            result = BigDecimalUtil.multiply(result,new BigDecimal(100));
+            tmp.setPassRate(new DecimalFormat("0.00").format(result));
         });
 
         //根据检验完成时间升序排列
