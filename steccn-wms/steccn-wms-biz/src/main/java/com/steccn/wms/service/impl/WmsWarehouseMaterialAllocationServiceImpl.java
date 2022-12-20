@@ -80,9 +80,9 @@ public class WmsWarehouseMaterialAllocationServiceImpl extends ServiceImpl<WmsWa
         queryWrapper.eq(WmsWarehouseMaterialAllocation::getMaterialName,dto.getMaterialName());
         List<WmsWarehouseMaterialAllocation> allocationList = baseMapper.selectList(queryWrapper);
         if(allocationList.size() > 0){
-            if (allocationList.size() > 1) return R.success("物料名称不可重复", null);
+            if (allocationList.size() > 1) return R.failure("物料名称不可重复");
             if(Objects.isNull(dto.getId()) && dto.getMaterialName().equals(allocationList.get(0).getMaterialName()))  {
-                return R.success("物料名称不可重复", null);
+                return R.failure("物料名称不可重复");
             }
         }
         if(Objects.isNull(dto.getId()) ){
