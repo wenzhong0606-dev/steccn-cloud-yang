@@ -260,7 +260,8 @@
         prw.start_time as start,
         prw.end_time as end,
         prw.id as reportWorkId,
-        ppo.material_id
+        ppo.material_id,
+        prw.classes_id
         FROM
         pms_report_work prw
         JOIN pms_produce_order ppo ON prw.produce_order_id = ppo.id
