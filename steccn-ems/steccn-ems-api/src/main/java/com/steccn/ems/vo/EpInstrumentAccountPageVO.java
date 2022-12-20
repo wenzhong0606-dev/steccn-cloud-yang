@@ -59,6 +59,11 @@ public class EpInstrumentAccountPageVO implements Serializable {
     private String siteName;
 
     /**
+     * 资产编码
+     */
+    private String assetsCode;
+
+    /**
      * 最后抄表时间
      */
     private LocalDateTime lastReadingTime;
