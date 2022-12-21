@@ -3,6 +3,7 @@ package com.steccn.ems.dto;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import java.io.Serializable;
 
 /**
@@ -15,6 +16,9 @@ public class EpDwMeterPartitionDTO implements Serializable {
 
     @ApiModelProperty("能源类型")
     private Integer energyType;
+
+    @ApiModelProperty("组织机构id")
+    private Long partitionId;
 
     @ApiModelProperty("组织机构id")
     private Integer officeId;

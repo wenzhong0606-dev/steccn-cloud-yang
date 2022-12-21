@@ -17,7 +17,7 @@ import java.util.List;
 public interface EpInstrumentAccountMapper extends BaseMapper<EpInstrumentAccount> {
 
     /**
-     * 获取远传仪表
+     * 获取所有的远传仪表
      * @return
      */
     List<EpDwMeterPartitionDTO> meterPartition();

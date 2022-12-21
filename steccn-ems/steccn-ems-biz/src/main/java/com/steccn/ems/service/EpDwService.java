@@ -16,4 +16,11 @@ public interface EpDwService {
      * @return 是否成功
      */
     Boolean meterRead(LocalDate date);
+
+    /**
+     * 电费归档
+     * @param date 指定日期
+     * @return 是否成功
+     */
+    Boolean electricMoney(LocalDate date);
 }

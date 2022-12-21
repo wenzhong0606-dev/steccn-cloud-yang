@@ -2,9 +2,11 @@ package com.steccn.ems.service;
 
 import com.steccn.ems.domain.EpEnergyPricePlan;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpEnergyPriceDTO;
 import com.steccn.ems.vo.EpEnergyPriceVO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -40,4 +42,12 @@ public interface EpEnergyPricePlanService extends IService<EpEnergyPricePlan> {
      * @return
      */
     Boolean delete(Long id);
+
+
+    /**
+     * 查询指定班次日期有效的能源计费方案明细
+     * @param date 指定班次日期
+     * @return 能源计费方案明细
+     */
+    List<EpDwEnergyPricePlanDTO> currentValidPlan(LocalDate date);
 }

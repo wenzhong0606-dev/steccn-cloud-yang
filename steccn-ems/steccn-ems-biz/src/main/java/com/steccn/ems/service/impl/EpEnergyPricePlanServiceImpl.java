@@ -5,8 +5,11 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.constant.MpConstant;
+import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyPricePlan;
 import com.steccn.ems.domain.EpEnergyPricePlanDetail;
+import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpEnergyPriceDTO;
 import com.steccn.ems.service.EpEnergyPricePlanDetailService;
 import com.steccn.ems.service.EpEnergyPricePlanService;
@@ -19,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -162,6 +166,38 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
         return Boolean.FALSE;
 
 
+    }
+
+    @Override
+    public List<EpDwEnergyPricePlanDTO> currentValidPlan(LocalDate date) {
+        List<EpDwEnergyPricePlanDTO> resList = Lists.newArrayList();
+        //如果日期不为空
+        if (Objects.nonNull(date)) {
+            //1.查询有效期内的方案
+            EpEnergyPricePlan plan = getOne(new LambdaQueryWrapper<EpEnergyPricePlan>()
+                    .le(EpEnergyPricePlan::getValidStart, date)
+                    .ge(EpEnergyPricePlan::getValidEnd, date)
+                    .last(MpConstant.STR_LIMIT_1));
+            if (Objects.nonNull(plan)) {
+                List<EpEnergyPricePlanDetail> detailList = energyPricePlanDetailService.list(new LambdaQueryWrapper<EpEnergyPricePlanDetail>().eq(EpEnergyPricePlanDetail::getPlanId, plan.getId()));
+                if (CollUtil.isNotEmpty(detailList)) {
+                    detailList.forEach(ele ->{
+                        EpDwEnergyPricePlanDTO vo = new EpDwEnergyPricePlanDTO();
+                        BeanUtils.copyProperties(ele,vo);
+                        if(EpManagerConstant.ElectricType.PEAK.getCode().equals(ele.getType())){
+                            vo.setPrice(plan.getPeakPrice());
+                        }else if(EpManagerConstant.ElectricType.VALLEY.getCode().equals(ele.getType())){
+                            vo.setPrice(plan.getValleyPrice());
+                        }else {
+                            vo.setPrice(plan.getPeacePrice());
+                        }
+                        vo.setClassDate(date);
+                        resList.add(vo);
+                    });
+                }
+            }
+        }
+        return resList;
     }
 
 //    public static void main(String[] args) {

@@ -1,17 +1,19 @@
 package com.steccn.ems.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpDwService;
+import com.steccn.ems.service.EpEnergyPricePlanDetailService;
+import com.steccn.ems.service.EpEnergyPricePlanService;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
@@ -38,6 +40,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final RemotePmsFeignApi remotePmsFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final EpMeterReadService epMeterReadService;
+    private final EpEnergyPricePlanService epEnergyPricePlanService;
 
     @Override
     public Boolean meterRead(LocalDate date) {
@@ -82,6 +85,31 @@ public class EpDwServiceImpl implements EpDwService {
             }
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean electricMoney(LocalDate date) {
+        //1.查询所有的远传仪表
+        List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
+        if (CollUtil.isNotEmpty(meterList)) {
+            //2.查询当前班次日期有效的能源计费方案明细
+            List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
+            if (CollUtil.isNotEmpty(priceList)) {
+                //3.获取节点对应的方案
+                List<EpDwEnergyPricePlanDTO> meterPriceList = Lists.newArrayList();
+                for (EpDwMeterPartitionDTO meter : meterList) {
+                    for (EpDwEnergyPricePlanDTO price : priceList) {
+                        EpDwEnergyPricePlanDTO vo = new EpDwEnergyPricePlanDTO();
+                        BeanUtils.copyProperties(price, vo);
+                        vo.setPartitionId(meter.getPartitionId());
+                        vo.setDistantMapCode(meter.getDistantMapCode());
+                        meterPriceList.add(vo);
+                    }
+                }
+
+            }
+        }
+        return null;
     }
 
 
