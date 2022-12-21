@@ -6,15 +6,14 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
-import com.steccn.ems.service.EpDwService;
-import com.steccn.ems.service.EpEnergyPricePlanDetailService;
-import com.steccn.ems.service.EpEnergyPricePlanService;
-import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.service.*;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +44,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final EpMeterReadService epMeterReadService;
     private final EpEnergyPricePlanService epEnergyPricePlanService;
+    private final EpEnergyMoneyService epEnergyMoneyService;
 
     @Override
     public Boolean meterRead(LocalDate date) {
@@ -61,7 +65,14 @@ public class EpDwServiceImpl implements EpDwService {
                 dwConditionDTO(dwList, meter, stationList);
             }
             if (CollUtil.isNotEmpty(dwList)) {
-                List<DwEpMeterCollectVO> sourceData = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwList)).get();
+                List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();
+                dwList.forEach(ele -> {
+                    DwMeterReadDTO readDTO = new DwMeterReadDTO();
+                    BeanUtils.copyProperties(ele, readDTO);
+                    dwMeterReadDTOList.add(readDTO);
+                });
+
+                List<DwEpMeterCollectVO> sourceData = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwMeterReadDTOList)).get();
                 List<EpMeterRead> insertList = Lists.newArrayList();
                 if (CollUtil.isNotEmpty(sourceData)) {
                     //准备插入数据库
@@ -97,19 +108,65 @@ public class EpDwServiceImpl implements EpDwService {
             if (CollUtil.isNotEmpty(priceList)) {
                 //3.获取节点对应的方案
                 List<EpDwEnergyPricePlanDTO> meterPriceList = Lists.newArrayList();
+                List<DwMeterReadDTO> dwConditionDTOList = Lists.newArrayList();
                 for (EpDwMeterPartitionDTO meter : meterList) {
                     for (EpDwEnergyPricePlanDTO price : priceList) {
                         EpDwEnergyPricePlanDTO vo = new EpDwEnergyPricePlanDTO();
                         BeanUtils.copyProperties(price, vo);
                         vo.setPartitionId(meter.getPartitionId());
                         vo.setDistantMapCode(meter.getDistantMapCode());
+                        DwMeterReadDTO condition1 = new DwMeterReadDTO();
+                        //班次日期调整
+                        if (price.getEnd().equals(LocalTime.of(0, 0, 0))) {
+                            condition1.setStart(LocalDateTime.of(date.plusDays(1), price.getEnd()));
+                            condition1.setEnd(LocalDateTime.of(date.plusDays(1), price.getEnd()));
+                        } else {
+                            condition1.setStart(LocalDateTime.of(date, price.getEnd()));
+                            condition1.setEnd(LocalDateTime.of(date, price.getEnd()));
+                        }
+                        condition1.setCode(meter.getDistantMapCode());
+                        dwConditionDTOList.add(condition1);
+                        DwMeterReadDTO condition2 = new DwMeterReadDTO();
+                        condition2.setStart(LocalDateTime.of(date, price.getStart()));
+                        condition2.setEnd(LocalDateTime.of(date, price.getStart()));
+                        condition2.setCode(meter.getDistantMapCode());
+                        dwConditionDTOList.add(condition2);
                         meterPriceList.add(vo);
                     }
                 }
-
+                //4.根据对应方案 去查询读数
+                List<DwEpMeterCollectVO> meterReadList = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwConditionDTOList)).get();
+                if (CollUtil.isNotEmpty(meterReadList)) {
+                    //定义插入表
+                    List<EpEnergyMoney> insertList = Lists.newArrayList();
+                    for (EpDwEnergyPricePlanDTO meterPrice : meterPriceList) {
+                        Optional<DwEpMeterCollectVO> startDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()) && v.getRecordTime().equals(LocalDateTime.of(date, meterPrice.getStart()))).findFirst();
+                        Optional<DwEpMeterCollectVO> endDataOp;
+                        LocalDateTime endLdt = null;
+                        if (meterPrice.getEnd().equals(LocalTime.of(0, 0, 0))) {
+                            endLdt = LocalDateTime.of(date.plusDays(1), meterPrice.getEnd());
+                        } else {
+                            endLdt = LocalDateTime.of(date, meterPrice.getEnd());
+                        }
+                        LocalDateTime finalEndLdt = endLdt;
+                        endDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()) && v.getRecordTime().equals(finalEndLdt)).findFirst();
+                        if (startDataOp.isPresent() && endDataOp.isPresent()) {
+                            EpEnergyMoney model = new EpEnergyMoney();
+                            BeanUtils.copyProperties(meterPrice, model);
+                            model.setStartValue(startDataOp.get().getValue());
+                            model.setEndValue(endDataOp.get().getValue());
+                            model.setStart(LocalDateTime.of(date, meterPrice.getStart()));
+                            model.setEnd(endLdt);
+                            insertList.add(model);
+                        }
+                    }
+                    if (CollUtil.isNotEmpty(insertList)) {
+                        epEnergyMoneyService.saveBatch(insertList);
+                    }
+                }
             }
         }
-        return null;
+        return Boolean.TRUE;
     }
 
 

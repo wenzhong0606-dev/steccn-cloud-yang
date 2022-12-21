@@ -1,10 +1,8 @@
 package com.steccn.ems.dto;
 
-import com.steccn.common.util.BigDecimalUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;

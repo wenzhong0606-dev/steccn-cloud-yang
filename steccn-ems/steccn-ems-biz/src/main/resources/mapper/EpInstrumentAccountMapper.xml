@@ -41,7 +41,8 @@
             office_id,
             ac.distant_map_code,
             ac.meter_name,
-            ac.id as meter_id
+            ac.id as meter_id,
+            ep.id as partitionId
         FROM
             ep_partition ep
                 JOIN ep_instrument_account ac ON ep.id = ac.partition_node

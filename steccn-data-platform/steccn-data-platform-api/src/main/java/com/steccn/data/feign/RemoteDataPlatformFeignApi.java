@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,5 +27,5 @@ public interface RemoteDataPlatformFeignApi {
      */
     @PostMapping("/feign/data/platform/meter/read")
     @ApiOperation("抄表归档")
-    R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwConditionDTO> dwList);
+    R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList);
 }

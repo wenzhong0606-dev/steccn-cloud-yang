@@ -3,6 +3,7 @@ package com.steccn.data.controller.feign;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,7 +28,7 @@ public class DataPlatformFeignController {
 
     @PostMapping("/meter/read")
     @ApiOperation(value = "数仓条件列表")
-    public R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwConditionDTO> dwList) {
+    public R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList) {
         return R.success(epMeterCollectService.meterRead(dwList));
     }
 }

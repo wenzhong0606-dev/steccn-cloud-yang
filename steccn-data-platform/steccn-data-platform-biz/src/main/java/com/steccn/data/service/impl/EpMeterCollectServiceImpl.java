@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import org.apache.commons.compress.utils.Lists;
@@ -25,13 +26,13 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         implements EpMeterCollectService {
 
     @Override
-    public List<DwEpMeterCollectVO> meterRead(List<DwConditionDTO> dwList) {
+    public List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList) {
         List<DwEpMeterCollectVO> resList = Lists.newArrayList();
         LambdaQueryWrapper<EpMeterCollect> lqw = new LambdaQueryWrapper<>();
         if (CollUtil.isNotEmpty(dwList)) {
-            for (DwConditionDTO ele : dwList) {
+            for (DwMeterReadDTO ele : dwList) {
                 lqw = lqw.or(l -> {
-                    l.eq(EpMeterCollect::getCode, ele.getCode()).eq(EpMeterCollect::getRecordTime, ele.getStart());
+                    l.eq(EpMeterCollect::getCode, ele.getCode()).eq(EpMeterCollect::getRecordTime, ele.getEnd());
                 });
             }
         }
