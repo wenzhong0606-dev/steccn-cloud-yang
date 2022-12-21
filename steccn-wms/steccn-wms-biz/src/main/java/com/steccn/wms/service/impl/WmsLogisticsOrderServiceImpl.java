@@ -87,7 +87,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         }//计划开始时间-开始
         //2.根据条件获取数据
         LambdaQueryWrapper<WmsLogisticsOrder> eq = new LambdaQueryWrapper<WmsLogisticsOrder>()
-                .like(Objects.nonNull(dto.getCode()), WmsLogisticsOrder::getCode, dto.getCode())
+                 .like(Objects.nonNull(dto.getCode()), WmsLogisticsOrder::getCode, dto.getCode())
+                .like(Objects.nonNull(dto.getCreateName()),WmsLogisticsOrder::getCreateName,dto.getCreateName())
                 .eq(Objects.nonNull(dto.getType()), WmsLogisticsOrder::getType, dto.getType())
                 .eq(Objects.nonNull(dto.getStatus()), WmsLogisticsOrder::getStatus, dto.getStatus())
                 .eq(Objects.nonNull(dto.getLogisticsCompany()), WmsLogisticsOrder::getLogisticsCompany, dto.getLogisticsCompany())
@@ -101,17 +102,21 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Page<WmsLogisticsOrderVO> resPage = new Page<>();
         BeanUtil.copyProperties(page, resPage);
         List<WmsLogisticsOrderVO> list = BeanUtil.copyToList(page.getRecords(), WmsLogisticsOrderVO.class);
-        Set<Long> officeIdSet = Sets.newHashSet();
         Set<Long> dictIdSet = Sets.newHashSet();
         List<Long> orderIds = Lists.newArrayList();
+        Set<Long> logisticsIds = Sets.newHashSet();
         list.forEach(order -> {
             orderIds.add(order.getId());
+            logisticsIds.add(order.getId());
             dictIdSet.add(order.getType());
             dictIdSet.add(order.getLogisticsCompany());
         });
         // 获取物流收发货机构
         Map<Long, List<WmsLogisticsInfoVO>> map = wmsLogisticsInfoService.mapByLogisticsId(orderIds);
         List<WmsLogisticsInfoVO> infoList = Lists.newArrayList();
+        //获取运输方式
+
+        Map<Long, List<WmsLogisticsTransportationVO>> wayMap = wmsLogisticsTransportationService.mapBySetIds(logisticsIds);
         //获取物流类型
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
         list.forEach(order -> {
@@ -125,8 +130,9 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             }
             order.setTypeName(dictMap.get(order.getType()));
             order.setLogisticsCompanyName(dictMap.get(order.getLogisticsCompany()));
-
+            order.setWayList(wayMap.get(order.getId()));
         });
+
         return resPage.setRecords(list);
     }
 
@@ -311,7 +317,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = wmsShelfUpStrategyService.materialShelfUpInfo(materialIds);
                 storageReceiptInfoList.forEach(receiptInfo -> {
                     WmsMaterialShelfUpVO orDefault = materialShelfUpMap.get(receiptInfo.getMaterialId());
-                    Assert.notNull(orDefault,"物料:"+receiptInfo.getMaterialName()+"未配置上架策略");
+                    Assert.notNull(orDefault, "物料:" + receiptInfo.getMaterialName() + "未配置上架策略");
                     receiptInfo.setShelfId(orDefault.getShelfId());
                     receiptInfo.setShelfName(orDefault.getShelfName());
                     receiptInfo.setShelfCode(orDefault.getShelfCode());
@@ -329,8 +335,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 wmsStorageReceiptDTO.setNote(order.getNote());
                 wmsStorageReceiptDTO.setList(storageReceiptInfoList);
                 try {
-                     code = wmsStorageReceiptService.createOrder(wmsStorageReceiptDTO);
-                    Assert.notNull(code,"生成入库单失败");
+                    code = wmsStorageReceiptService.createOrder(wmsStorageReceiptDTO);
+                    Assert.notNull(code, "生成入库单失败");
                 } catch (Exception e) {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();

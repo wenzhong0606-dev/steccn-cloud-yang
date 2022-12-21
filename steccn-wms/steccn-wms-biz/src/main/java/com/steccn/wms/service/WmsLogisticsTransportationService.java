@@ -6,6 +6,8 @@ import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.vo.WmsLogisticsTransportationVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author W10
@@ -28,4 +30,12 @@ public interface WmsLogisticsTransportationService extends IService<WmsLogistics
      * @return
      */
     Boolean edit(WmsLogisticsOrderDTO dto);
+
+
+    /**
+     * 获取运输方式
+     * @param logisticsIds
+     * @return
+     */
+    Map<Long, List<WmsLogisticsTransportationVO>> mapBySetIds(Set<Long> logisticsIds);
 }

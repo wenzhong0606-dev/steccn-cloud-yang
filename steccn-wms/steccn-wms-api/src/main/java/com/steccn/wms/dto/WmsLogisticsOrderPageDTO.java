@@ -28,7 +28,7 @@ public class WmsLogisticsOrderPageDTO extends BasePageDTO {
     private Integer status;
 
     @ApiModelProperty("物流方")
-    private Integer logisticsCompany;
+    private Long logisticsCompany;
 
     @ApiModelProperty("创建开始日期")
     private LocalDate createStartDate;

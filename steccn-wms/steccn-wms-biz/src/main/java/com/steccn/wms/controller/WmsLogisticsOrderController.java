@@ -3,6 +3,8 @@ package com.steccn.wms.controller;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.WmsInventoryVO;
@@ -21,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -47,7 +50,7 @@ public class WmsLogisticsOrderController {
 
     @ApiOperation("物流单新增")
     @PostMapping("/add")
-    public R<Boolean> add(@RequestBody WmsLogisticsOrderDTO wmsLogisticsOrderDTO) {
+    public R<Boolean> add(@Validated(InsertGroup.class)@RequestBody WmsLogisticsOrderDTO wmsLogisticsOrderDTO) {
         return R.success(wmsLogisticsOrderService.add(wmsLogisticsOrderDTO));
     }
 
@@ -60,7 +63,7 @@ public class WmsLogisticsOrderController {
     @ApiOperation("物流单编辑")
     @PutMapping
     @SysLog("物流单编辑")
-    public R<Boolean> edit(@RequestBody WmsLogisticsOrderDTO dto) {
+    public R<Boolean> edit(@Validated(UpdateGroup.class)@RequestBody WmsLogisticsOrderDTO dto) {
         return R.success(wmsLogisticsOrderService.edit(dto));
     }
 
@@ -91,9 +94,9 @@ public class WmsLogisticsOrderController {
     @ApiOperation("物流单删除")
     @SysLog("物流单删除")
     @DeleteMapping
-    public R<Boolean> delete(@RequestBody WmsLogisticsOrderDTO dto) {
-        Assert.notNull(dto.getId(), "物流单id不能为空");
-        return R.success(wmsLogisticsOrderService.delete(dto.getId()));
+    public R<Boolean> delete(@ApiParam("物流单id") @RequestParam("id") Long id) {
+        Assert.notNull(id, "物流单id不能为空");
+        return R.success(wmsLogisticsOrderService.delete(id));
     }
 
 

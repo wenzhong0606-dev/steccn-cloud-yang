@@ -95,4 +95,8 @@ public class WmsLogisticsDetailVO {
     private String unitName;
 
 
+    @ApiModelProperty("备注")
+    private String note;
+
+
 }

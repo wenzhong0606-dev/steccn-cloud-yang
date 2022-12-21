@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.steccn.wms.domain.WmsLogisticsTransportation;
 import com.steccn.wms.dto.WmsLogisticsOrderDTO;
 import com.steccn.wms.service.WmsLogisticsTransportationService;
@@ -15,7 +16,10 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author W10
@@ -47,7 +51,25 @@ public class WmsLogisticsTransportationServiceImpl extends ServiceImpl<WmsLogist
         remove(new LambdaQueryWrapper<WmsLogisticsTransportation>()
                 .eq(WmsLogisticsTransportation::getLogisticsId, dto.getId()));
         List<WmsLogisticsTransportation> wayList = BeanUtil.copyToList(dto.getWayList(), WmsLogisticsTransportation.class);
+        wayList.forEach( way-> way.setLogisticsId(dto.getId()));
         return saveOrUpdateBatch(wayList);
+    }
+
+    @Override
+    public Map<Long, List<WmsLogisticsTransportationVO>> mapBySetIds(Set<Long> logisticsIds) {
+        Map<Long, List<WmsLogisticsTransportationVO>> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(logisticsIds)){
+            LambdaQueryWrapper<WmsLogisticsTransportation> in = new LambdaQueryWrapper<WmsLogisticsTransportation>().in(WmsLogisticsTransportation::getLogisticsId, logisticsIds);
+            List<WmsLogisticsTransportation> list = list(in);
+            if (CollUtil.isNotEmpty(list)){
+                Map<Long, List<WmsLogisticsTransportation>> collect = list.stream().collect(Collectors.groupingBy(WmsLogisticsTransportation::getLogisticsId));
+                collect.forEach((logistics,wayList) ->{
+                    List<WmsLogisticsTransportationVO> wayVoList = BeanUtil.copyToList(wayList, WmsLogisticsTransportationVO.class);
+                    map.put(logistics,wayVoList);
+                });
+            }
+        }
+        return map;
     }
 }
 
