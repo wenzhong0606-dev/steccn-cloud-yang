@@ -28,7 +28,7 @@ public class EpProductUnitStandardDTO implements Serializable {
      * 标准名称
      */
     @NotBlank(message="标准名称不能为空")
-    @Length( max = 20, message = "标准名称长度不能超过50个中文")
+    @Length( max = 50, message = "标准名称长度不能超过50个中文")
     private String name;
 
     /**
@@ -64,6 +64,7 @@ public class EpProductUnitStandardDTO implements Serializable {
      * 单耗标准值
      */
     @NotNull(message = "单耗标准值不能为空")
+    @Length(max = 16,message = "单耗标准值最大长度不能超过16")
     private BigDecimal unitValue;
 
     /**

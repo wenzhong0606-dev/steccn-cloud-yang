@@ -195,7 +195,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     //老的开始时间小于等于dto的有效期结束时间,表明时间有重叠
                     .lt(EpProductUnitConsumeStandard::getValidStart,dto.getValidEnd().plusDays(1))
                     //老的结束时间大于等于dto的有效开始时间,表明时间有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart().minusDays(1)));
+                    .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart().minusDays(1))
+                   //可展示的
+                   .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES));
            if (Objects.nonNull(dto.getId())){
                EpProductUnitConsumeStandard ep = getById(dto.getId());
                //编辑的时候移除对自身的判断
