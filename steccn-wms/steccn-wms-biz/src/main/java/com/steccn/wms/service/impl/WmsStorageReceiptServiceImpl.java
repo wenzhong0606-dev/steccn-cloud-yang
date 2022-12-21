@@ -359,7 +359,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     }
 
     @Override
-    public Boolean createOrder(WmsStorageReceiptDTO dto) {
+    public String createOrder(WmsStorageReceiptDTO dto) {
         //1.校验数据是否存在
         Assert.isTrue(Objects.nonNull(dto), "入库凭证信息为空");
         //2.定义数据模型
@@ -401,8 +401,9 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             //保存明细信息
             wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
         }
+        affirm(model.getId());
         //确认
-        return  affirm(model.getId());
+        return model.getCode();
     }
 
 

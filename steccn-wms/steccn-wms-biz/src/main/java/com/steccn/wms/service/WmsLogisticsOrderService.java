@@ -1,6 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsLogisticsOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.wms.dto.WmsLogisticsOrderDTO;
@@ -48,7 +49,7 @@ public interface WmsLogisticsOrderService extends IService<WmsLogisticsOrder> {
      * @param dto
      * @return
      */
-    Boolean receipt(WmsLogisticsOrderDTO dto);
+    R<String> receipt(WmsLogisticsOrderDTO dto);
 
     /**
      * 物流单编辑

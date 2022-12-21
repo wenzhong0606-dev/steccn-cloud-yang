@@ -61,7 +61,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
                 .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
                 .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch());
+                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
+                .orderByDesc(WmsInventory::getUpdateTime);
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
@@ -302,6 +303,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Boolean freeze(WmsInventoryDTO dto) {
         WmsInventory inventory = getById(dto.getId());
         Assert.notNull(inventory, "库存信息不存在");
+        Assert.isTrue(inventory.getAvailableQuantity().subtract(dto.getQuantity()).compareTo(BigDecimal.ZERO)<0,"可用库存不足，不可冻结");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().add(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().subtract(dto.getQuantity()));
         return updateById(inventory);
@@ -311,6 +313,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Boolean unfreeze(WmsInventoryDTO dto) {
         WmsInventory inventory = getById(dto.getId());
         Assert.notNull(inventory, "库存信息不存在");
+        BigDecimal subtract = inventory.getFreezeQuantity().subtract(dto.getQuantity());
+        Assert.isTrue(subtract.compareTo(BigDecimal.ZERO)>0,"冻结库存大于解冻库存，请修改");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().subtract(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().add(dto.getQuantity()));
         return updateById(inventory);

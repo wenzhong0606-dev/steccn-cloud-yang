@@ -83,9 +83,9 @@ public class WmsLogisticsOrderController {
     @ApiOperation("物流单签收")
     @PostMapping("/receipt")
     @SysLog("物流单签收")
-    public R<Boolean> receipt(@RequestBody WmsLogisticsOrderDTO dto) {
+    public R<String> receipt(@RequestBody WmsLogisticsOrderDTO dto) {
         Assert.notNull(dto.getId(), "物流单id不能为空");
-        return R.success(wmsLogisticsOrderService.receipt(dto));
+        return wmsLogisticsOrderService.receipt(dto);
     }
 
     @ApiOperation("物流单删除")

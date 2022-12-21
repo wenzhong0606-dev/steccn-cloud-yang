@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysDictVO;
@@ -241,9 +242,11 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     }
 
     @Override
-    public Boolean receipt(WmsLogisticsOrderDTO dto) {
+    public R<String> receipt(WmsLogisticsOrderDTO dto) {
+        R<String> r = new R<>();
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
         lock.lock();
+        String code = null;
         try {
             //1.校验状态
             WmsLogisticsOrder order = getById(dto.getId());
@@ -326,8 +329,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 wmsStorageReceiptDTO.setNote(order.getNote());
                 wmsStorageReceiptDTO.setList(storageReceiptInfoList);
                 try {
-                    Boolean aBoolean = wmsStorageReceiptService.createOrder(wmsStorageReceiptDTO);
-                    Assert.isTrue(aBoolean, "生成入库单失败");
+                     code = wmsStorageReceiptService.createOrder(wmsStorageReceiptDTO);
+                    Assert.notNull(code,"生成入库单失败");
                 } catch (Exception e) {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
@@ -336,7 +339,10 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         } finally {
             lock.unlock();
         }
-        return Boolean.TRUE;
+        r.setData(code);
+        r.setMsg("访问成功");
+        r.setCode(1);
+        return r;
     }
 
     @Override

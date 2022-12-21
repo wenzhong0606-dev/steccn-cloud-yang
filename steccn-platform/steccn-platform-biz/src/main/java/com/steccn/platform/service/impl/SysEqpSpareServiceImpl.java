@@ -178,7 +178,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
         //1.自定义查询条件
         LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>()
                 .like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName())
-                .le(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode());
+                .like(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode());
         //2.定义分页对象
         Page page = new Page<>(sparePageDTO.getCurrent(), sparePageDTO.getSize());
         //3.查询分页数据
