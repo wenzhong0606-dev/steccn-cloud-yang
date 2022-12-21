@@ -44,7 +44,6 @@ public class WmsLogisticsDetailDTO extends BasePageDTO {
     private BigDecimal shippedQuantity;
 
     @ApiModelProperty("到货数量")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "到货数量不能为空")
     private BigDecimal aogQuantity;
 
     /**
@@ -94,7 +93,6 @@ public class WmsLogisticsDetailDTO extends BasePageDTO {
      * 包装数量
      */
     @ApiModelProperty("包装数量")
-    @NotNull(groups = {UpdateGroup.class, InsertGroup.class}, message = "包装数量不能为空")
     private Integer packQuantity;
 
     /**
