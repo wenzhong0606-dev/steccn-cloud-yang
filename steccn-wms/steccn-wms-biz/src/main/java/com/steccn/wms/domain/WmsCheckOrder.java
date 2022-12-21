@@ -103,7 +103,7 @@ public class WmsCheckOrder implements Serializable {
     /**
      * 是否删除标识：0否 1是
      */
-    @TableLogic
+    //@TableLogic
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
 

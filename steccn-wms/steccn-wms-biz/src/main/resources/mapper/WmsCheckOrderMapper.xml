@@ -39,7 +39,7 @@
           ( case  a.status when 0  then   '已创建' when 1  then   '执行中'  when 2  then   '已完成' when 3  then   '已关闭'
              when 4  then   '已归档'	  else '' end ) AS statusName,a.check_area
         from wms_check_order a
-        where a.del_flag = 0
+        where  1=1
         <if test="form.code!=null and form.code!=''">
             and a.code like CONCAT('%',#{form.code},'%')
         </if>
