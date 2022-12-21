@@ -98,6 +98,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         Integer result;
         if(Objects.isNull(dto.getId())){
             dto.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_PMS_BATCH, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+            dto.setStatus(0);
             result = baseMapper.insert(dto);
         }else{
             result = baseMapper.updateById(dto);
