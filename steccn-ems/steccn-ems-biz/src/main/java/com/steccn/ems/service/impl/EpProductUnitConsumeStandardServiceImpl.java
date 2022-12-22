@@ -26,6 +26,7 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -78,9 +79,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
 
         //2.定义排序条件
         if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
+            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
+            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
             condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
@@ -162,6 +163,13 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrEdit(EpProductUnitStandardDTO dto) {
+        if (StringUtils.isNotBlank(dto.getUnitValue().toString())){
+            String unit = dto.getUnitValue().toString();
+            String lastUnit = deleteCharString0(unit, '.');
+            if (lastUnit.length()>16){
+               throw new BusinessException("单耗标准值的长度不能超过16位");
+           }
+        }
         //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName())
@@ -316,6 +324,16 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             }
         }
         return resList;
+    }
+
+    public String deleteCharString0(String sourceString, char chElemData) {
+        String deleteString = "";
+        for (int i = 0; i < sourceString.length(); i++) {
+            if (sourceString.charAt(i) != chElemData) {
+                deleteString += sourceString.charAt(i);
+            }
+        }
+        return deleteString;
     }
 }
 

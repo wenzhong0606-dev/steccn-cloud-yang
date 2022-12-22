@@ -6,6 +6,7 @@ import com.steccn.common.vo.BaseSelectVO;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -64,7 +65,7 @@ public class EpProductUnitStandardDTO implements Serializable {
      * 单耗标准值
      */
     @NotNull(message = "单耗标准值不能为空")
-    @Length(max = 16,message = "单耗标准值最大长度不能超过16")
+    @Digits(integer = 16, fraction=2, message = "单耗标准值格式不正确,整数位最多16位,小数点最多2位且整体不要超16位")
     private BigDecimal unitValue;
 
     /**
