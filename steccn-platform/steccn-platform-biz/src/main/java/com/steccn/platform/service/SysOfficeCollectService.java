@@ -7,6 +7,9 @@ import com.steccn.platform.dto.SysOfficeCollectAddDTO;
 import com.steccn.platform.dto.SysOfficeCollectPageDTO;
 import com.steccn.platform.dto.SysOfficeCollectUpdateDTO;
 import com.steccn.platform.dto.SysStationWarehouseDTO;
+import com.steccn.platform.vo.SysOfficeCollectVO;
+
+import java.util.List;
 
 /**
  * @author yequan
@@ -35,4 +38,12 @@ public interface SysOfficeCollectService extends IService<SysOfficeCollect> {
      * @return
      */
     Boolean edit(SysOfficeCollectUpdateDTO dto);
+
+    /**
+     * 查询工位的进出站的采集点编码配置
+     *
+     * @param type 进站0 出站1
+     * @return
+     */
+    List<SysOfficeCollectVO> listOnlyStation(Integer type);
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOfficeCollect;
@@ -88,6 +89,20 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
         SysOfficeCollect sysOfficeCollect = new SysOfficeCollect();
         BeanUtils.copyProperties(dto,sysOfficeCollect);
         return updateById(sysOfficeCollect);
+    }
+
+    @Override
+    public List<SysOfficeCollectVO> listOnlyStation(Integer type) {
+        List<SysOfficeCollectVO> resList = Lists.newArrayList();
+        if (Objects.nonNull(type)) {
+            List<SysOfficeCollect> dbList = list(new LambdaQueryWrapper<SysOfficeCollect>()
+                    .eq(SysOfficeCollect::getOfficeType, 13)
+                    .eq(SysOfficeCollect::getType, type));
+            if (CollUtil.isNotEmpty(dbList)) {
+                resList = BeanUtil.copyToList(dbList, SysOfficeCollectVO.class);
+            }
+        }
+        return resList;
     }
 }
 
