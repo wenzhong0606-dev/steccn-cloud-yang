@@ -64,4 +64,7 @@ public class WmsLogisticsOrderVO {
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty("备注")
+    private String note;
 }
