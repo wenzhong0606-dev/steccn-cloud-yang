@@ -1,4 +1,4 @@
-package com.steccn.data.dto;
+package com.steccn.data.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -6,20 +6,21 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * @author yequan
- * @desc 数仓抄表数据vo
+ * @desc 生产管理-进出站计数器
  */
-@ApiModel
+@ApiModel("生产管理-进出站计数器")
 @Data
-public class DwEpMeterCollectVO implements Serializable {
+public class DwStationCollectVO implements Serializable {
 
     @ApiModelProperty("主键id")
     private Long id;
 
-    @ApiModelProperty("远传仪表编码")
+    @ApiModelProperty("采集点编码")
     private String code;
 
     @ApiModelProperty("记录时间")

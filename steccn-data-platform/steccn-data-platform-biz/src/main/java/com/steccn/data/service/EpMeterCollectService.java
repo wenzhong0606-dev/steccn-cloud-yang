@@ -2,8 +2,7 @@ package com.steccn.data.service;
 
 import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.data.dto.DwConditionDTO;
-import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 
 import java.util.List;

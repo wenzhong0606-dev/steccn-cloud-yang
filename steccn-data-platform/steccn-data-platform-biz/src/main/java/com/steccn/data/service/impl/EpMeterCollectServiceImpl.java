@@ -5,13 +5,11 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.data.domain.EpMeterCollect;
-import com.steccn.data.dto.DwConditionDTO;
-import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import org.apache.commons.compress.utils.Lists;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

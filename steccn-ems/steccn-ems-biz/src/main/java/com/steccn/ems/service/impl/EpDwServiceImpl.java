@@ -5,7 +5,7 @@ import cn.hutool.core.lang.Assert;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
-import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.domain.EpEnergyMoney;
@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 

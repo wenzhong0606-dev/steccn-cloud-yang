@@ -1,19 +1,95 @@
 package com.steccn.data.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.PmStationCollect;
+import com.steccn.data.dto.DwStationCollectDTO;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.mapper.PmStationCollectMapper;
+import com.steccn.data.vo.DwStationCollectVO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
 /**
-* @author yequan
-* @description 针对表【pm_station_collect(生产管理-进出站计数器)】的数据库操作Service实现
-* @createDate 2022-12-16 13:23:55
-*/
+ * @author yequan
+ * @description 针对表【pm_station_collect(生产管理-进出站计数器)】的数据库操作Service实现
+ * @createDate 2022-12-16 13:23:55
+ */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMapper, PmStationCollect>
-    implements PmStationCollectService{
+        implements PmStationCollectService {
+
+    @Override
+    public List<DwStationCollectVO> stationCollect(DwStationCollectDTO dto) {
+        List<DwStationCollectVO> resList = Lists.newArrayList();
+        //参数异常，直接返回空集合
+        if (CollUtil.isNotEmpty(dto.getCodeList()) && Objects.nonNull(dto.getDate())) {
+            List<PmStationCollect> dbList = list(new LambdaQueryWrapper<PmStationCollect>()
+                    .in(PmStationCollect::getCode, dto.getCodeList())
+                    .ge(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate(), LocalTime.MIN))
+                    .le(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate(), LocalTime.MAX)));
+            if (CollUtil.isNotEmpty(dbList)) {
+                //根据编码分组，查询昨天最大的一条数据，用于差值计算
+                Map<String, BigDecimal> previousMap = lastDay(dto);
+                //遍历查询结果
+                for (int i = 0; i < dbList.size(); i++) {
+                    PmStationCollect currentEle = dbList.get(i);
+                    DwStationCollectVO vo = new DwStationCollectVO();
+                    BeanUtils.copyProperties(currentEle, vo);
+                    //获取前一个元素的值
+                    BigDecimal previousValue = previousMap.getOrDefault(currentEle.getCode(), BigDecimal.ZERO);
+                    //当前元素的值
+                    BigDecimal current = currentEle.getValue();
+                    //计算差值
+                    BigDecimal subtract = BigDecimalUtil.subtract(current, previousValue);
+                    previousMap.put(currentEle.getCode(), current);
+                    vo.setValue(subtract);
+                    resList.add(vo);
+                }
+            }
+        }
+        return resList;
+    }
+
+    /**
+     * 根据编码分组，查询昨天最大的一条数据，用于差值计算
+     *
+     * @param dto dto
+     * @return list
+     */
+    private Map<String, BigDecimal> lastDay(DwStationCollectDTO dto) {
+        Map<String, BigDecimal> previousMap = Maps.newHashMap();
+        List<PmStationCollect> lastDayList = list(new QueryWrapper<PmStationCollect>()
+                .select("code,max(value) as value")
+                .lambda()
+                .in(PmStationCollect::getCode, dto.getCodeList())
+                .ge(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MIN))
+                .le(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MAX))
+                .groupBy(PmStationCollect::getCode));
+        if (Objects.nonNull(lastDayList)) {
+            lastDayList.forEach(ele -> {
+                previousMap.put(ele.getCode(), ele.getValue());
+            });
+        }
+        return previousMap;
+    }
 
 }
 

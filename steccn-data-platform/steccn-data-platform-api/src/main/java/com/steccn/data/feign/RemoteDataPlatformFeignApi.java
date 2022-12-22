@@ -2,9 +2,10 @@ package com.steccn.data.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
-import com.steccn.data.dto.DwConditionDTO;
-import com.steccn.data.dto.DwEpMeterCollectVO;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
+import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.vo.DwStationCollectVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,11 +22,20 @@ public interface RemoteDataPlatformFeignApi {
 
 
     /**
-     * 抄表归档
+     * 能源绩效系统-抄表归档
      * @param dwList 数仓条件列表
      * @return list
      */
     @PostMapping("/feign/data/platform/meter/read")
-    @ApiOperation("抄表归档")
+    @ApiOperation("能源绩效系统-抄表归档")
     R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList);
+
+    /**
+     * 生产管理-进出站计数归档
+     * @param dto 查询条件
+     * @return list
+     */
+    @PostMapping("/feign/data/platform/station/collect")
+    @ApiOperation("生产管理-进出站计数归档")
+    R<List<DwStationCollectVO>> stationCollect(@RequestBody DwStationCollectDTO dto);
 }
