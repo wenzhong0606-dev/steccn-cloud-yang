@@ -32,6 +32,9 @@ public class WmsStorageReceiptInfoVO {
     @ApiModelProperty("货架id")
     private Long shelfId;
 
+    @ApiModelProperty("货架编码")
+    private String shelfCode;
+
     @ApiModelProperty("货架名称")
     private String shelfName;
 

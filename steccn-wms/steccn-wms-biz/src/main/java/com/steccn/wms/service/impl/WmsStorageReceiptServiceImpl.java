@@ -331,7 +331,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     public WmsStorageReceiptVO get(Long id) {
         WmsStorageReceipt order = getById(id);
-        Assert.notNull(order, "该出库单不存在");
+        Assert.notNull(order, "该入库单不存在");
         //获取订单的明细
         List<WmsStorageReceiptInfo> list = wmsStorageReceiptInfoService.list(new LambdaQueryWrapper<WmsStorageReceiptInfo>()
                 .eq(WmsStorageReceiptInfo::getStorageReceiptId, id));
