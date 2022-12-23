@@ -21,6 +21,11 @@ public interface SysOfficeConstant {
     Integer ROOT_LEVEL = 1;
 
     /**
+     * 状态正常
+     */
+    String normal = "0";
+
+    /**
      * 产线类型
      */
     String PRODUCT_LINE="9";

@@ -172,7 +172,9 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> warehouseAndShelf(List<String> typeList) {
         //根据前端传过来的机构类型获取组织机构列表
-        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeType, typeList));
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeType, typeList)
+                .eq(SysOffice::getStatus,SysOfficeConstant.normal));
         List<SysOfficeVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dbList)) {
             //复制查询结果到新的集合
