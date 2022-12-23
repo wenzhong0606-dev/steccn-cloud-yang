@@ -27,7 +27,7 @@ public interface RemoteCompleteStorageFeignApi {
      * @return
      */
     @ApiOperation("完工入库变更状态")
-    @PostMapping("/complete")
+    @PostMapping("/feign/pms/complete/storage/complete")
     R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto);
 
 }
