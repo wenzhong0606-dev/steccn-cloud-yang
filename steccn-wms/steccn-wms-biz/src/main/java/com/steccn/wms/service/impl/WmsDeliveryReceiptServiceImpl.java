@@ -327,7 +327,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             materialList.forEach(materialDTO -> {
                 inventoryId.add(materialDTO.getInventoryId());
             });
-            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId));
+            List<WmsInventory> list = wmsInventoryService.list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId,inventoryId));
 
             for (WmsInventory wmsInventory : list) {
                 for (WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO : materialList) {
