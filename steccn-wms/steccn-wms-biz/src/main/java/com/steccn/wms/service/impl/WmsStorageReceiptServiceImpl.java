@@ -320,6 +320,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             list.forEach(info -> {
                 WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
                 BeanUtil.copyProperties(info, wmsInventoryDTO);
+                wmsInventoryDTO.setOriginalCaseNo(info.getCaseNo());
+                wmsInventoryDTO.setOriginalQuantity(info.getQuantity());
                 deleteList.add(wmsInventoryDTO);
             });
             //还原之前的库存信息

@@ -96,7 +96,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                         WmsLogisticsOrder::getPredictTime, dto.getPredictStartTime(), dto.getPredictEndTime())
                 .between(Objects.nonNull(dto.getPracticalStartDate()) && Objects.nonNull(dto.getPracticalEndDate()),
                         WmsLogisticsOrder::getPracticalTime, dto.getPracticalStartTime(), dto.getPracticalEndTime()).
-                        notIn(WmsLogisticsOrder::getStatus, WmsManagerConstant.LogisticsStateEnum.THREE.getCode());
+                        notIn(WmsLogisticsOrder::getStatus, WmsManagerConstant.LogisticsStateEnum.THREE.getCode())
+                .orderByDesc(WmsLogisticsOrder::getUpdateTime);
         //3.处理数据
         Page<WmsLogisticsOrder> page = page(new Page<>(dto.getCurrent(), dto.getSize()), eq);
         Page<WmsLogisticsOrderVO> resPage = new Page<>();

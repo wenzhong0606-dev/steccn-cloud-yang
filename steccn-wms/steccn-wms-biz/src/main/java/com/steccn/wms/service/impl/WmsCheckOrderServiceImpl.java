@@ -113,7 +113,10 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
      */
     @Override
     public Boolean delCheckOrder(WmsCheckOrder dto) {
-        Boolean result =  removeById(dto);
+        WmsCheckOrder order = getById(dto.getId());
+        order.setStatus(3);
+        order.setDelFlag(1);
+        Boolean result =  updateById(order);
         QueryWrapper<WmsCheckOrderInfo>  orderInfoQueryWrapper = new QueryWrapper<>();
         orderInfoQueryWrapper.eq("check_order_id",dto.getId());
         wmsCheckOrderInfoService.remove(orderInfoQueryWrapper);
