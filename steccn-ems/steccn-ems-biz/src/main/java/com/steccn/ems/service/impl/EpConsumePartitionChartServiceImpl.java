@@ -5,6 +5,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
@@ -892,13 +893,18 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
-        //产品厚度
-        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(dto.getThick().get(0) + "mm", "product_thickness_range").getData();
+        List<EpProductUnitConsumeStandard> consumeStandardList = new ArrayList<>();
+        List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(dto.getThick())) {
+            //产品厚度
+            SysDictVO sysDictVO = remoteDictFeignApi.getByCode(dto.getThick().get(0) + "mm", "product_thickness_range").getData();
 
-        //获取部门标准
-        List<EpProductUnitConsumeStandard> consumeStandardList = getDepartmentStandardList(dto,sysDictVO.getId());
-        //企业行业标准
-        List<StandardVO<BigDecimal>> standardVOList = getStandardVOList(dto,sysDictVO.getId());
+            //获取部门标准
+             consumeStandardList = getDepartmentStandardList(dto,sysDictVO);
+            //企业行业标准
+             standardVOList = getStandardVOList(dto,sysDictVO);
+        }
+
 
         //根据时间粒度分区
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -1035,12 +1041,40 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return resVo;
     }
 
+    @SneakyThrows
     @Override
     public void unitContrastDownload(EpTableDTO dto, HttpServletResponse response) {
-
+        dto.setCurrent(1);
+        dto.setSize(999999);
+        EpConsumeDetailVO detail = unitConsumePartitionContrastDetail(dto);
+        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("energyType", energyType.getName());
+        map.put("dateStart", LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd", LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN));
+        if (CollUtil.isNotEmpty(dto.getThick())) {
+            StringBuilder sb = new StringBuilder();
+            dto.getThick().forEach(tmp -> {
+                sb.append(tmp.toString() + "mm ");
+            });
+            map.put("thick", sb.toString());
+        } else {
+            map.put("thick", "无");
+        }
+        String modelName;
+        if (dto.getEnergyType().equals(5)) {
+            modelName = EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_DHFQDBRL;
+        } else {
+            modelName = EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_DHFQDBW;
+        }
+        map.put("granularity", QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
+        String excelName = "单耗分区对比(" + energyType.getName() + ")_"
+                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadEnergyTemplate(response, modelName, excelName, map, detail, dto.getBase64());
     }
 
-    private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, Long thickId) {
+    private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, SysDictVO thick) {
         List<EpPartition> partitionList = epPartitionService.listByIds(dto.getPartitionIdList());
         boolean subFlag = false;
         boolean deepFlag = false;
@@ -1077,8 +1111,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                 .le(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).ge(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd())
                 .in(EpProductUnitConsumeStandard::getStandardType, standardList)
-                .in(EpProductUnitConsumeStandard::getProductType, productTypeList)
-                .eq(EpProductUnitConsumeStandard::getProductThick, thickId);
+                .in(EpProductUnitConsumeStandard::getProductType, productTypeList);
+        if (Objects.nonNull(thick)) {
+            standardQueryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, thick.getId());
+        }else {
+            standardQueryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
+        }
         List<EpProductUnitConsumeStandard> unitConsumeStandardList = epProductUnitConsumeStandardService.list(standardQueryWrapper);
         List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
         for (EpProductUnitConsumeStandard consumeStandard : unitConsumeStandardList) {
@@ -1095,7 +1133,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         return standardVOList;
     }
 
-    private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto,Long thickId) {
+    private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto,SysDictVO sysDictVO) {
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
         queryWrapper.and(query -> {
             for (int i = 0; i < dto.getPartitionIdList().size(); i++) {
@@ -1111,7 +1149,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
             queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
         } else {
-            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick,thickId);
+            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick,sysDictVO.getId());
         }
         return epProductUnitConsumeStandardService.list(queryWrapper);
     }

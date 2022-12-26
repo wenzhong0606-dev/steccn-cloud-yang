@@ -78,23 +78,23 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES);
 
         //2.定义排序条件
-        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getStandardType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductThick);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getUnitValue);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getValidStart);
-        }else {
-            condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
-        }
+//        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
+//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getStandardType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductThick);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getUnitValue);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getValidStart);
+//        }else {
+//            condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
+//        }
         //3.根据条件查询数据库
         List<EpProductUnitConsumeStandard> standards = list(condition);
         //4.拷贝返回信息
@@ -151,6 +151,53 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName).reversed());
+           }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName).reversed());
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName).reversed());
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName).reversed());
+
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)).reversed());
+           }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue).reversed());
+
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed());
+           }
+        }else {
+            collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime));
+        }
         page.setCurrent(dto.getCurrent());
         page.setTotal(standardVOS.size());
         page.setSize(dto.getSize());
@@ -170,15 +217,18 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                throw new BusinessException("单耗标准值的长度不能超过16位");
            }
         }
+        if (dto.getStandardType()==1597504911367864320L){
+            if (CollUtil.isEmpty(dto.getApplyOffice())){
+                throw new BusinessException("应用部门不能为空");
+            }
+        }
+
         //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName())
+                .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES)
                 .ne(Objects.nonNull(dto.getId()),EpProductUnitConsumeStandard::getId,dto.getId()));
-        if (Objects.isNull(dto.getId())){
             Assert.isTrue(size ==0, "产品单耗标准的名称不能重复");
-        }else {
-            Assert.isTrue(size <=1, "产品单耗标准的名称不能重复");
-        }
 
         //创建domain实体类对象
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
@@ -195,27 +245,32 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 &&Objects.nonNull(dto.getEnergyType())
                 &&Objects.nonNull(dto.getProductType())
                 &&Objects.nonNull(dto.getProductThick())){
-           List<EpProductUnitConsumeStandard> dataList= list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+            List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                     .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
                     .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                     .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
                     .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
+                  //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
                     //老的开始时间小于等于dto的有效期结束时间,表明时间有重叠
-                    .lt(EpProductUnitConsumeStandard::getValidStart,dto.getValidEnd().plusDays(1))
+                    .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
                     //老的结束时间大于等于dto的有效开始时间,表明时间有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart().minusDays(1))
-                   //可展示的
-                   .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES));
-           if (Objects.nonNull(dto.getId())){
-               EpProductUnitConsumeStandard ep = getById(dto.getId());
-               //编辑的时候移除对自身的判断
-               dataList.remove(ep);
-           }
+                    .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
+                    //可展示的
+                    .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
+            if (Objects.nonNull(dto.getId())) {
+                EpProductUnitConsumeStandard ep = getById(dto.getId());
+                //编辑的时候移除对自身的判断
+                dataList.remove(ep);
+            }
             String names = new String();
             if (CollUtil.isNotEmpty(dataList)){
-                for (EpProductUnitConsumeStandard data : dataList) {
-                    names = data.getName()+" ";
-                }
+                    for (int i = 0; i < dataList.size(); i++) {
+                        if (i==(dataList.size()-1)){
+                            names+=dataList.get(i).getName();
+                        }else {
+                            names += dataList.get(i).getName()+",";
+                        }
+                    }
                 throw new BusinessException("与现有标准"+names+"有效期有重叠");
             }
         }

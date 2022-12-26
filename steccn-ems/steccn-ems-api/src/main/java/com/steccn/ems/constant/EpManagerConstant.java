@@ -18,6 +18,7 @@ public interface EpManagerConstant {
     //仪表名称排序字段
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE = "distantMapCode";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME = "meterName";
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME  ="siteName";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
     String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
 
@@ -34,7 +35,6 @@ public interface EpManagerConstant {
     String EP_DOWNLOAD_MODEL_NAME_NHLSDB = "nhlsdb.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_NYLX = "nylx.xlsx";
 
-    String EP_DOWNLOAD_MODEL_NAME_DHFQDB = "dhfqdb2.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_DHFQDBRL = "dhfqdbrl.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_DHFQDBW = "dhfqdbw.xlsx";
 
