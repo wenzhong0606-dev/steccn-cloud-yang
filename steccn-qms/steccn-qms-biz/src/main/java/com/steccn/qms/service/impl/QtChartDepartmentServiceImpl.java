@@ -177,7 +177,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
             //获取基片缺陷总数、深加工缺陷总数的日环比和周同比
             if (QtManagerConstant.QtChatTargetValue.JPQX.getCode().equals(type) || QtManagerConstant.QtChatTargetValue.SJGQX.getCode().equals(type)) {
                 //获取合格率
-                passRateOverViewVO.setValue(endDatePassRate.multiply(BigDecimalUtil.HUNDRED));
+                passRateOverViewVO.setValue(endDatePassRate);
                 BigDecimal value = endDatePassRate.subtract(datePassList.get(datePassList.size() - 2));
                 if (value.compareTo(BigDecimal.ZERO) < 0) {
                     passRateOverViewVO.setDayFlag(0);
