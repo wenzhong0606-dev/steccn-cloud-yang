@@ -78,23 +78,23 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES);
 
         //2.定义排序条件
-        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getStandardType);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductThick);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getUnitValue);
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
-            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getValidStart);
-        }else {
-            condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
-        }
+//        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
+//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getStandardType);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductThick);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getUnitValue);
+//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
+//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getValidStart);
+//        }else {
+//            condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
+//        }
         //3.根据条件查询数据库
         List<EpProductUnitConsumeStandard> standards = list(condition);
         //4.拷贝返回信息
@@ -151,6 +151,53 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName).reversed());
+           }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName).reversed());
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName).reversed());
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName).reversed());
+
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)).reversed());
+           }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue));
+            }else {
+                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue).reversed());
+
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
+           if (dto.getAscFlag()==Boolean.TRUE){
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart));
+           }else {
+               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed());
+           }
+        }else {
+            collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime));
+        }
         page.setCurrent(dto.getCurrent());
         page.setTotal(standardVOS.size());
         page.setSize(dto.getSize());

@@ -18,6 +18,7 @@ public interface EpManagerConstant {
     //仪表名称排序字段
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE = "distantMapCode";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME = "meterName";
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME  ="siteName";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
     String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
 

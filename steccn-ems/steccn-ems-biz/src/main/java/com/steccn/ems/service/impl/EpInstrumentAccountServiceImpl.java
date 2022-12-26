@@ -274,27 +274,34 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //排序
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
-            if (dto.getAscFlag()) {
+            if (dto.getAscFlag()==Boolean.TRUE) {
                 collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
             }else {
                 collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
             }
 
         }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())){
-            if (dto.getAscFlag()){
+            if (dto.getAscFlag()==Boolean.TRUE){
                 collect= collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getDistantMapCode)).collect(Collectors.toList());
             }else {
                 collect= collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getDistantMapCode).reversed()).collect(Collectors.toList());
             }
 
         }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())){
-           if (dto.getAscFlag()){
+           if (dto.getAscFlag()==Boolean.TRUE){
                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getMeterName)).collect(Collectors.toList());
            }else {
                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getMeterName).reversed()).collect(Collectors.toList());
            }
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
-            if(dto.getAscFlag()){
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getSiteName)).collect(Collectors.toList());
+            }else {
+                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getSiteName).reversed()).collect(Collectors.toList());
+
+            }
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
+            if(dto.getAscFlag()==Boolean.TRUE){
                 collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
             }else {
                 collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus)).collect(Collectors.toList());
