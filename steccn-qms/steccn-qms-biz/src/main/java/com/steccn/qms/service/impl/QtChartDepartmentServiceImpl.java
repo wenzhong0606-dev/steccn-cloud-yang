@@ -142,7 +142,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
     private BigDecimal getDefectJp(List<QtCheckTask> qtCheckTaskList, PassRateDateVo passRateDateVo) {
         int badNum = 0;
         List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(qtCheckTask.getTaskType())
-                && (qtCheckTask.getDefectStartTime().isAfter(passRateDateVo.getStartDateTime()) || passRateDateVo.getStartDateTime().isEqual(passRateDateVo.getStartDateTime()))
+                && (qtCheckTask.getDefectStartTime().isAfter(passRateDateVo.getStartDateTime()) || passRateDateVo.getStartDateTime().isEqual(qtCheckTask.getDefectStartTime()))
                 && qtCheckTask.getDefectEndTime().isBefore(passRateDateVo.getEndDateTime())
                 && Objects.nonNull(qtCheckTask.getProductWorkshop())
                 && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
@@ -155,7 +155,7 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
         //初始化缺陷数量
         int badNum = 0;
         List<QtCheckTask> checkTaskList = qtCheckTaskList.stream().filter(qtCheckTask -> QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode().equals(qtCheckTask.getTaskType())
-                && (qtCheckTask.getDefectStartTime().isAfter(passRateDateVo.getStartDateTime()) || passRateDateVo.getStartDateTime().isEqual(passRateDateVo.getStartDateTime()))
+                && (qtCheckTask.getDefectStartTime().isAfter(passRateDateVo.getStartDateTime()) || passRateDateVo.getStartDateTime().isEqual(qtCheckTask.getDefectStartTime()))
                 && qtCheckTask.getDefectEndTime().isBefore(passRateDateVo.getEndDateTime())
                 && Objects.nonNull(qtCheckTask.getProductWorkshop())
                 && StringUtils.isNotBlank(qtCheckTask.getProductWorkshop().getName())
