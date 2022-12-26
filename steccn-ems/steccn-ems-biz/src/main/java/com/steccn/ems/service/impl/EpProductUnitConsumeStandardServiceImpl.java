@@ -170,15 +170,18 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                throw new BusinessException("单耗标准值的长度不能超过16位");
            }
         }
+        if (dto.getStandardType()==1597504911367864320L){
+            if (CollUtil.isEmpty(dto.getApplyOffice())){
+                throw new BusinessException("应用部门不能为空");
+            }
+        }
+
         //去数据库中根据名称查询产品单耗标准个数
         long size = count(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getName, dto.getName())
+                .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES)
                 .ne(Objects.nonNull(dto.getId()),EpProductUnitConsumeStandard::getId,dto.getId()));
-        if (Objects.isNull(dto.getId())){
             Assert.isTrue(size ==0, "产品单耗标准的名称不能重复");
-        }else {
-            Assert.isTrue(size <=1, "产品单耗标准的名称不能重复");
-        }
 
         //创建domain实体类对象
         EpProductUnitConsumeStandard unitConsumeStandard = new EpProductUnitConsumeStandard();
@@ -195,27 +198,32 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 &&Objects.nonNull(dto.getEnergyType())
                 &&Objects.nonNull(dto.getProductType())
                 &&Objects.nonNull(dto.getProductThick())){
-           List<EpProductUnitConsumeStandard> dataList= list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
+            List<EpProductUnitConsumeStandard> dataList = list(new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                     .eq(EpProductUnitConsumeStandard::getStandardType, dto.getStandardType())
                     .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                     .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
                     .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
+                  //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
                     //老的开始时间小于等于dto的有效期结束时间,表明时间有重叠
-                    .lt(EpProductUnitConsumeStandard::getValidStart,dto.getValidEnd().plusDays(1))
+                    .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
                     //老的结束时间大于等于dto的有效开始时间,表明时间有重叠
-                    .gt(EpProductUnitConsumeStandard::getValidEnd,dto.getValidStart().minusDays(1))
-                   //可展示的
-                   .eq(EpProductUnitConsumeStandard::getShowFlag,MpConstant.YES));
-           if (Objects.nonNull(dto.getId())){
-               EpProductUnitConsumeStandard ep = getById(dto.getId());
-               //编辑的时候移除对自身的判断
-               dataList.remove(ep);
-           }
+                    .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
+                    //可展示的
+                    .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
+            if (Objects.nonNull(dto.getId())) {
+                EpProductUnitConsumeStandard ep = getById(dto.getId());
+                //编辑的时候移除对自身的判断
+                dataList.remove(ep);
+            }
             String names = new String();
             if (CollUtil.isNotEmpty(dataList)){
-                for (EpProductUnitConsumeStandard data : dataList) {
-                    names = data.getName()+" ";
-                }
+                    for (int i = 0; i < dataList.size(); i++) {
+                        if (i==(dataList.size()-1)){
+                            names+=dataList.get(i).getName();
+                        }else {
+                            names += dataList.get(i).getName()+",";
+                        }
+                    }
                 throw new BusinessException("与现有标准"+names+"有效期有重叠");
             }
         }
