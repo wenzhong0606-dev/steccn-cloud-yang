@@ -49,6 +49,7 @@
         LEFT JOIN wms_delivery_receipt_info b ON b.delivery_receipt_id = a.id
         LEFT JOIN wms_inventory  c on c.id = b.inventory_id
         <where>
+            a.del_flag = 0 and b.del_flag = 0
             <if test="dto.status != null">
                 AND a.status = #{dto.status}
             </if>
@@ -59,10 +60,10 @@
                 and a.type = #{dto.type}
             </if>
             <if test="dto.materialName != null and dto.materialName != ''">
-                and c.materialName LIKE CONCAT('%',#{dto.materialName},'%')
+                and c.material_name LIKE CONCAT('%',#{dto.materialName},'%')
             </if>
             <if test="dto.materialCode != null and dto.materialCode != ''">
-                and c.materialCode LIKE CONCAT('%',#{dto.materialCode},'%')
+                and c.material_code LIKE CONCAT('%',#{dto.materialCode},'%')
             </if>
             <if test="dto.shelfCode != null and dto.shelfCode != ''">
                 and c.shelf_code LIKE CONCAT('%',#{dto.shelfCode},'%')
