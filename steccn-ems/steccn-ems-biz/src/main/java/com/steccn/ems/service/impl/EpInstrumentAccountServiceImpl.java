@@ -280,20 +280,20 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             if (dto.getAscFlag()==Boolean.TRUE) {
                collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime));
             }else {
-               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed());
+                collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed());
             }
 
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
-            if(dto.getAscFlag()==Boolean.TRUE){
-               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed());
-            }else {
-                collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus));
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())) {
+            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())) {
+            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(dto.getSortField())) {
+            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())) {
+            if (dto.getAscFlag() == Boolean.TRUE) {
+                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
+            } else {
+                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus)).collect(Collectors.toList());
             }
 
         }
