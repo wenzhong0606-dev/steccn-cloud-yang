@@ -337,8 +337,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             for (BigDecimal thick : dto.getThick()) {
                 String thickName = null;
                 List<EpMeterReadAllDataVO> thickData;
-                if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
-                    thickData = dataVOList.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                if (Objects.isNull(thick) || thick.compareTo(new BigDecimal("-1")) == 0) {
+                    thickData = dataVOList.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(new BigDecimal("-1"))).collect(Collectors.toList());
                     thickName = "无";
                 } else {
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
