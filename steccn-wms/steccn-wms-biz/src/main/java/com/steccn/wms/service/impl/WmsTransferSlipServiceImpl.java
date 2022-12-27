@@ -169,7 +169,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 //增加库存中原始占用库存数量,减少可用库存
                 wmsInventoryService.addLockQuantity(sourceList);
                 //增加目标货架在途库存数量
-                wmsInventoryService.add(sourceList);
+                wmsInventoryService.add(targetList);
             }
         } finally {
             lock.unlock();
