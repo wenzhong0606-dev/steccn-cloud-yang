@@ -136,6 +136,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+
         if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
             collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
@@ -419,27 +420,26 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
 
         //创建返回数据集合
         List<EpProductUnitConsumeStandardVO> voList = new ArrayList<>();
-
         if (CollUtil.isNotEmpty(haveDataList)){
-            for (int i = 0; i < haveDataList.size(); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
-                    names.add(haveDataList.get(i).getName());
-                    map.put(haveDataList.get(i).getName(), haveDataList.get(i));
+                    names.add(list.get(i).getName());
+                    map.put(list.get(i).getName(), list.get(i));
                 }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
-                    names.add(haveDataList.get(i).getEnergyTypeName());
-                    map.put(haveDataList.get(i).getEnergyTypeName(),haveDataList.get(i));
+                    names.add(list.get(i).getEnergyTypeName()+i);
+                    map.put(list.get(i).getEnergyTypeName()+i,list.get(i));
                 }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
-                    names.add(haveDataList.get(i).getStandardTypeName());
-                    map.put(haveDataList.get(i).getStandardTypeName(),haveDataList.get(i));
+                    names.add(list.get(i).getStandardTypeName()+i);
+                    map.put(list.get(i).getStandardTypeName()+i,list.get(i));
                 }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
-                    names.add(haveDataList.get(i).getProductTypeName());
-                    map.put(haveDataList.get(i).getProductTypeName(),haveDataList.get(i));
+                    names.add(list.get(i).getProductTypeName()+i);
+                    map.put(list.get(i).getProductTypeName()+i,list.get(i));
                 }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
-                    names.add(haveDataList.get(i).getProductThickName());
-                    map.put(haveDataList.get(i).getProductThickName(),haveDataList.get(i));
+                    names.add(list.get(i).getProductThickName()+i);
+                    map.put(list.get(i).getProductThickName()+i,list.get(i));
                 }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
-                    names.add(haveDataList.get(i).getUnitValue().toString());
-                    map.put(haveDataList.get(i).getUnitValue().toString(),haveDataList.get(i));
+                    names.add(list.get(i).getUnitValue().toString()+i);
+                    map.put(list.get(i).getProductThickName().toString()+i,list.get(i));
                 }
             }
             if (isOrder){
@@ -471,6 +471,82 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 }
             }
         }
+
+//        if (CollUtil.isNotEmpty(haveDataList)){
+//            Collator comparator = Collator.getInstance(Locale.CHINA);
+//            if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getName(), e2.getName());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getName(), e1.getName());
+//                    });
+//                }
+//            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getProductTypeName(), e2.getProductTypeName());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getProductTypeName(), e1.getProductTypeName());
+//                    });
+//                }
+//            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getStandardTypeName(), e2.getStandardTypeName());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getStandardTypeName(), e1.getStandardTypeName());
+//                    });
+//                }
+//            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getProductTypeName(), e2.getProductTypeName());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getProductTypeName(), e1.getProductTypeName());
+//                    });
+//                }
+//            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getProductThickName(), e2.getProductThickName());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getProductThickName(), e1.getProductThickName());
+//                    });
+//                }
+//            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
+//                if (isOrder){
+//                    // 排序实现
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e1.getUnitValue(), e2.getUnitValue());
+//                    });
+//                }else {
+//                    Collections.sort(haveDataList , (e1, e2) -> {
+//                        return comparator.compare(e2.getUnitValue(), e1.getUnitValue());
+//                    });
+//                }
+//            }
+//
+//
+//            haveDataList.forEach(s->{
+//                voList.add(s);
+//            });
+//        }
       //封装该字段为空情况的集合
         if (CollUtil.isNotEmpty(noDataList)){
             noDataList.forEach(s->{

@@ -524,14 +524,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         if (CollUtil.isNotEmpty(haveDataList)){
             for (int i = 0; i < list.size(); i++) {
                 if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-                    names.add(list.get(i).getDistantMapCode());
-                    map.put(list.get(i).getDistantMapCode(), list.get(i));
+                    names.add(list.get(i).getDistantMapCode()+i);
+                    map.put(list.get(i).getDistantMapCode()+i, list.get(i));
                 }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-                    names.add(list.get(i).getMeterName());
-                    map.put(list.get(i).getMeterName(),list.get(i));
+                    names.add(list.get(i).getMeterName()+i);
+                    map.put(list.get(i).getMeterName()+i,list.get(i));
                 }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-                    names.add(list.get(i).getSiteName());
-                    map.put(list.get(i).getSiteName(),list.get(i));
+                    names.add(list.get(i).getSiteName()+i);
+                    map.put(list.get(i).getSiteName()+i,list.get(i));
                 }
             }
             if (isOrder){
