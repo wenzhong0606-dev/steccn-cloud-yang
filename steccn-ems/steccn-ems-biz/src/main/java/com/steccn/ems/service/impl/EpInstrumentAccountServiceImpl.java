@@ -278,11 +278,10 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
             if (dto.getAscFlag()==Boolean.TRUE) {
-               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime));
+                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
             }else {
-                collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed());
+               collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
             }
-
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())) {
             collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())) {
@@ -488,50 +487,90 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         }
         Map<String, EpInstrumentAccountPageVO> map = new HashMap<String, EpInstrumentAccountPageVO>();
         List<String> names = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-                names.add(list.get(i).getDistantMapCode());
-                map.put(list.get(i).getDistantMapCode(), list.get(i));
-            }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-                names.add(list.get(i).getMeterName());
-                map.put(list.get(i).getMeterName(),list.get(i));
-            }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-                names.add(list.get(i).getSiteName());
-                map.put(list.get(i).getSiteName(),list.get(i));
-            }
-        }
-        if (isOrder){
-            Collections.sort(names, new Comparator<String>() {
-                Collator collator = Collator.getInstance(Locale.CHINA);
-
-                @Override
-                public int compare(String o1, String o2) {
-                    CollationKey key1 = collator.getCollationKey(o1);
-                    CollationKey key2 = collator.getCollationKey(o2);
-                    return key1.compareTo(key2);
+        //储存该字段不为空的集合
+        List<EpInstrumentAccountPageVO>  haveDataList = new ArrayList<>();
+        //储存该字段为空的集合
+        List<EpInstrumentAccountPageVO>  noDataList = new ArrayList<>();
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getDistantMapCode())&&StringUtils.isNotBlank(s.getDistantMapCode())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
                 }
             });
-        }else {
-            Collections.sort(names, new Comparator<String>() {
-                Collator collator = Collator.getInstance(Locale.CHINA);
 
-                @Override
-                public int compare(String o1, String o2) {
-                    CollationKey key1 = collator.getCollationKey(o1);
-                    CollationKey key2 = collator.getCollationKey(o2);
-                    return key2.compareTo(key1);
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getMeterName())&&StringUtils.isNotBlank(s.getMeterName())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
+                }
+            });
+
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getSiteName())&&StringUtils.isNotBlank(s.getSiteName())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
                 }
             });
         }
+        //创建返回数据集合
+        List<EpInstrumentAccountPageVO> voList = new ArrayList<>();
 
+        if (CollUtil.isNotEmpty(haveDataList)){
+            for (int i = 0; i < list.size(); i++) {
+                if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
+                    names.add(list.get(i).getDistantMapCode());
+                    map.put(list.get(i).getDistantMapCode(), list.get(i));
+                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
+                    names.add(list.get(i).getMeterName());
+                    map.put(list.get(i).getMeterName(),list.get(i));
+                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
+                    names.add(list.get(i).getSiteName());
+                    map.put(list.get(i).getSiteName(),list.get(i));
+                }
+            }
+            if (isOrder){
+                Collections.sort(names, new Comparator<String>() {
+                    Collator collator = Collator.getInstance(Locale.CHINA);
 
-        list.clear();
-        for (String name : names) {
-            if (map.containsKey(name)) {
-                list.add(map.get(name));
+                    @Override
+                    public int compare(String o1, String o2) {
+                        CollationKey key1 = collator.getCollationKey(o1);
+                        CollationKey key2 = collator.getCollationKey(o2);
+                        return key1.compareTo(key2);
+                    }
+                });
+            }else {
+                Collections.sort(names, new Comparator<String>() {
+                    Collator collator = Collator.getInstance(Locale.CHINA);
+
+                    @Override
+                    public int compare(String o1, String o2) {
+                        CollationKey key1 = collator.getCollationKey(o1);
+                        CollationKey key2 = collator.getCollationKey(o2);
+                        return key2.compareTo(key1);
+                    }
+                });
+            }
+            for (String name : names) {
+                if (map.containsKey(name)) {
+                    voList.add(map.get(name));
+                }
             }
         }
-        return list;
+        //封装该字段为空情况的集合
+        if (CollUtil.isNotEmpty(noDataList)){
+            noDataList.forEach(s->{
+                voList.add(s);
+            });
+        }
+
+        return voList;
     }
 }
 
