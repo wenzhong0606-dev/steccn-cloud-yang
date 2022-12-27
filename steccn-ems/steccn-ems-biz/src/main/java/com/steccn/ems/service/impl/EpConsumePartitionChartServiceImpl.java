@@ -488,7 +488,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         List<EpMeterReadAllDataVO> thickAllDataList = classDateAllData.stream().filter(v -> Objects.nonNull(v.getOfficeId()))
                 .filter(v -> Objects.nonNull(v.getClassGroupId()))
-                .filter(v -> Objects.nonNull(v.getThick()) && v.getThick().equals(dto.getThick().get(0)))
+                .filter(v -> BigDecimalUtil.equals(v.getThick(), dto.getThick().get(0)))
                 .collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(thickAllDataList, "筛选厚度和班组后全量数据表为空");
 

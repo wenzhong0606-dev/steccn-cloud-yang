@@ -220,7 +220,7 @@ public class BigDecimalUtil {
         if (Objects.isNull(val1) && Objects.isNull(val2)) {
             return Boolean.TRUE;
         } else if (Objects.nonNull(val1) && Objects.nonNull(val2)) {
-            return val1.equals(val2);
+            return val1.compareTo(val2) == 0;
         }
         return Boolean.FALSE;
     }
