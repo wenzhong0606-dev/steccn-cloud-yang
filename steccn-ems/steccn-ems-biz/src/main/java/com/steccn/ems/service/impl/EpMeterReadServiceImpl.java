@@ -250,7 +250,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
                 EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();
                 epMeterOperationRecord.setReadId(epMeterRead.getId());
-                epMeterOperationRecord.setOpNode(2);
+                if (optional.get().getAdminFlag().equals(0)){
+                    epMeterOperationRecord.setOpNode(0);
+                } else {
+                    epMeterOperationRecord.setOpNode(2);
+                }
                 epMeterOperationRecord.setOpBy(user.getUserId());
                 epMeterOperationRecord.setOpName(user.getName());
                 epMeterOperationRecord.setOpValueNew(optional.get().getReadValue());
