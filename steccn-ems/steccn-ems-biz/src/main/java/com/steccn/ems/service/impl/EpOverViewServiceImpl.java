@@ -246,8 +246,8 @@ public class EpOverViewServiceImpl implements EpOverViewService {
     }
 
     private List<BigDecimal> getAlarmDate(LocalDate selectDate, LocalDate startLocalDate, EpOverViewVO epOverViewVO) {
-        LocalDate startDate = selectDate.minusDays(5);
-        LocalDate endDate = selectDate.plusDays(1);
+        LocalDate startDate = selectDate.minusDays(6);
+        LocalDate endDate = selectDate;
         LocalDateTime startTime = LocalDateTime.of(startDate, LocalTime.MIN);
         LocalDateTime endTime = LocalDateTime.of(endDate, LocalTime.MAX);
         List<LocalDate> dxData = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, selectDate);
