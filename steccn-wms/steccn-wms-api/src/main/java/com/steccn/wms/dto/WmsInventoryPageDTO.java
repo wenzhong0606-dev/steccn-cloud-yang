@@ -36,5 +36,5 @@ public class WmsInventoryPageDTO  extends BasePageDTO {
     private String shelfName;
 
     @ApiModelProperty("库存id")
-    private String inventoryId;
+    private Long inventoryId;
 }
