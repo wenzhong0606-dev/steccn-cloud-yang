@@ -1,11 +1,31 @@
 package com.steccn.ems.scheduled;
 
+import cn.hutool.core.date.DatePattern;
+import com.alibaba.nacos.common.utils.CollectionUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.vo.EpChartGraphVO;
+import com.steccn.common.vo.EpChartGraphXAxisVO;
+import com.steccn.common.vo.EpChartUnitConsumeAlarmVO;
+import com.steccn.ems.domain.EpPartition;
+import com.steccn.ems.domain.EpUnitConsumeAlarm;
+import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
+import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.service.EpUnitConsumeAlarmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author chenhuan
@@ -18,9 +38,78 @@ public class UnitConsumeAlarmScheduledTask {
 
     private final EpConsumePartitionChartService epConsumePartitionChartService;
 
-    @Async
-    @Scheduled(cron = "0 3 9 * * ?")
-    public void execute() {
+    private final EpPartitionService partitionService;
 
+    private final EpUnitConsumeAlarmService epUnitConsumeAlarmService;
+
+    @Async
+    @Scheduled(cron = "0 15 9 * * ?")
+    public void execute() {
+        List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
+        for (int i = 1; i < 6; i++) {
+            if (i<3) {
+                EpTableDTO epTableSubDTO = getEpTableDTO(i,null,"基片制造部");
+                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
+                consumeAlarmVOList.addAll(subVO.getAlarmList());
+                EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"深加工制造部");
+                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
+                consumeAlarmVOList.addAll(deepVO.getAlarmList());
+            } else {
+                EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"基片制造部");
+                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
+                consumeAlarmVOList.addAll(deepVO.getAlarmList());
+            }
+        }
+
+
+        List<EpUnitConsumeAlarm> epUnitConsumeAlarmList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(consumeAlarmVOList)) {
+            for (EpChartUnitConsumeAlarmVO consumeAlarmVO : consumeAlarmVOList) {
+                EpUnitConsumeAlarm epUnitConsumeAlarm = new EpUnitConsumeAlarm();
+                BeanUtils.copyProperties(consumeAlarmVO, epUnitConsumeAlarm);
+                epUnitConsumeAlarm.setAlarmDate(consumeAlarmVO.getAlarmDateTime());
+                epUnitConsumeAlarm.setAlarmType(0);
+                String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
+                String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过内部标准" + consumeAlarmVO.getStandardValue();
+                epUnitConsumeAlarm.setContent(content);
+                epUnitConsumeAlarmList.add(epUnitConsumeAlarm);
+            }
+        }
+
+        epUnitConsumeAlarmService.saveBatch(epUnitConsumeAlarmList);
+    }
+
+    private void recursion(List<EpPartition> partitionFilterList, List<EpPartition> epPartitionList, List<Long> partitionIdList) {
+        if (CollectionUtils.isEmpty(partitionFilterList)) {
+            return;
+        }
+        List<Long> idList = partitionFilterList.stream().map(EpPartition::getId).collect(Collectors.toList());
+        partitionIdList.addAll(idList);
+
+        List<EpPartition> partitionList = epPartitionList.stream().filter(epPartition -> idList.contains(epPartition.getId())).collect(Collectors.toList());
+        recursion(partitionList, epPartitionList, partitionIdList);
+    }
+
+    private EpTableDTO getEpTableDTO(Integer energyType, BigDecimal thick, String officeName) {
+        List<Long> partitionIdList = new ArrayList<>();
+        LocalDate localDate = LocalDate.now();
+        List<BigDecimal> thickList = new ArrayList<>();
+        if (Objects.nonNull(thick)) {
+            thickList.add(thick);
+        }
+
+        LambdaQueryWrapper<EpPartition> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(EpPartition::getType, energyType);
+        List<EpPartition> epPartitionList = partitionService.list(queryWrapper);
+        List<EpPartition> partitionFilterList = epPartitionList.stream().filter(epPartition -> epPartition.getOfficeName().equals(officeName)).collect(Collectors.toList());
+        recursion(partitionFilterList, epPartitionList, partitionIdList);
+
+        EpTableDTO epTableDTO = new EpTableDTO();
+        epTableDTO.setStart(localDate.minusDays(1));
+        epTableDTO.setEnd(localDate.minusDays(1));
+        epTableDTO.setPartitionIdList(partitionIdList);
+        epTableDTO.setEnergyType(energyType);
+        epTableDTO.setThick(thickList);
+        return epTableDTO;
     }
 }
