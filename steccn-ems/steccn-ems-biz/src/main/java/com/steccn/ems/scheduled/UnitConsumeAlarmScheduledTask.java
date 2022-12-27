@@ -13,6 +13,8 @@ import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.EpConsumePartitionChartService;
 import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.service.EpUnitConsumeAlarmService;
+import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -42,22 +44,45 @@ public class UnitConsumeAlarmScheduledTask {
 
     private final EpUnitConsumeAlarmService epUnitConsumeAlarmService;
 
+    private final RemoteDictFeignApi remoteDictFeignApi;
+
     @Async
     @Scheduled(cron = "0 15 9 * * ?")
     public void execute() {
         List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
+        List<SysDictVO> thickVOList = remoteDictFeignApi.listByType( "product_thickness_range").getData();
+        List<BigDecimal> thickList = thickVOList.stream().map(thick -> new BigDecimal(thick.getCode())).collect(Collectors.toList());
+        thickList.add(BigDecimal.valueOf(-1));
         for (int i = 1; i < 6; i++) {
-            if (i<3) {
+            if (i == 1) {
+                for (BigDecimal thick : thickList) {
+                    EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
+                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
+                    consumeAlarmVOList.addAll(subVO.getAlarmList());
+                    EpTableDTO epTableDeepDTO = getEpTableDTO(i,thick,"深加工制造部");
+                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
+                    consumeAlarmVOList.addAll(deepVO.getAlarmList());
+                }
+            }
+            if (i == 2) {
                 EpTableDTO epTableSubDTO = getEpTableDTO(i,null,"基片制造部");
                 EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
                 consumeAlarmVOList.addAll(subVO.getAlarmList());
                 EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"深加工制造部");
                 EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
                 consumeAlarmVOList.addAll(deepVO.getAlarmList());
-            } else {
+            }
+            if (i == 3){
                 EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"基片制造部");
                 EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
                 consumeAlarmVOList.addAll(deepVO.getAlarmList());
+            }
+            if (i == 4 || i == 5) {
+                for (BigDecimal thick : thickList) {
+                    EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
+                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
+                    consumeAlarmVOList.addAll(subVO.getAlarmList());
+                }
             }
         }
 
