@@ -86,6 +86,7 @@ public class WmsLogisticsDetailServiceImpl extends ServiceImpl<WmsLogisticsDetai
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
             list.forEach(detailVO -> {
                 detailVO.setUnpackFlag(0);
+                detailVO.setAogQuantity(detailVO.getShippedQuantity());
                 detailVO.setVolumeUnitName(dictMap.get(detailVO.getVolumeUnit()));
                 detailVO.setWeightUnitName(dictMap.get(detailVO.getWeightUnit()));
                 detailVO.setMaterialCode(materialMap.get(detailVO.getMaterialId()).getCode());
