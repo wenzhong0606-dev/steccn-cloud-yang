@@ -7,6 +7,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import springfox.documentation.oas.annotations.EnableOpenApi;
 
+/**
+ * @author yequan
+ */
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableOpenApi

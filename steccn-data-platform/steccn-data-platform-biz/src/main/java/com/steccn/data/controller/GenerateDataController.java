@@ -1,6 +1,5 @@
 package com.steccn.data.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
@@ -10,15 +9,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.compress.utils.Lists;
+import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.Objects;
+import java.time.LocalDateTime;
+import java.util.*;
 
+/**
+ * @author yequan
+ */
 @Api("生成数据的controller")
 @RestController
 @RequiredArgsConstructor
@@ -28,12 +28,38 @@ public class GenerateDataController {
 
     private final EpMeterCollectService epMeterCollectService;
 
-    @PostMapping("/generate/em/data")
+    @GetMapping("/generate/em/data")
     @ApiOperation(value = "生成数据")
     public R<Boolean> generateEmData(@RequestParam("date") LocalDate date) {
         Map<String, BigDecimal> linkCodeMap = getLinkCodeMap();
+        Random random = new Random();
+        Map<String, LocalDateTime> dtMap = Maps.newHashMap();
+        List<EpMeterCollect> resList = Lists.newArrayList();
 
-        return R.success();
+        for (Map.Entry<String, BigDecimal> entry : linkCodeMap.entrySet()) {
+            //数据条数
+            int dataCount = random.nextInt(20);
+            for (int i = 0; i < dataCount; i++) {
+                BigDecimal bg = new BigDecimal(String.valueOf(random.nextDouble()));
+                bg = bg.multiply(new BigDecimal("100"));
+                entry.setValue(entry.getValue().add(bg));
+
+                EpMeterCollect collect = new EpMeterCollect();
+                LocalDateTime localDateTime = dtMap.get(entry.getKey());
+                if (Objects.isNull(localDateTime)) {
+                    localDateTime = LocalDateTime.now();
+                }
+                LocalDateTime recordTime = localDateTime.plusSeconds(random.nextInt(300));
+                collect.setRecordTime(recordTime);
+                dtMap.put(entry.getKey(), recordTime);
+                collect.setValue(entry.getValue());
+                collect.setCreateTime(LocalDateTime.now());
+                collect.setCode(entry.getKey());
+                resList.add(collect);
+            }
+        }
+        epMeterCollectService.saveBatch(resList);
+        return R.success(Boolean.TRUE);
     }
 
     private Map<String, BigDecimal> getLinkCodeMap() {
@@ -42,13 +68,12 @@ public class GenerateDataController {
         linkCodeMap.put("B-001", BigDecimal.ZERO);
         linkCodeMap.put("C-001", BigDecimal.ZERO);
         //遍历所有的
-        linkCodeMap.forEach((k, v) -> {
-            EpMeterCollect one = epMeterCollectService.getOne(new QueryWrapper<EpMeterCollect>().select("max(value) as value").lambda().eq(EpMeterCollect::getCode, k));
+        for (Map.Entry<String, BigDecimal> entry : linkCodeMap.entrySet()) {
+            EpMeterCollect one = epMeterCollectService.getOne(new QueryWrapper<EpMeterCollect>().select("max(value) as value").lambda().eq(EpMeterCollect::getCode, entry.getKey()));
             if (Objects.nonNull(one)) {
-                v = one.getValue();
+                entry.setValue(one.getValue());
             }
-        });
-        log.info("{}", linkCodeMap);
+        }
         return linkCodeMap;
     }
 
