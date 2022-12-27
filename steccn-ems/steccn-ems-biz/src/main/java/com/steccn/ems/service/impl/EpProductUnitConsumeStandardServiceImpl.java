@@ -20,6 +20,7 @@ import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
 import com.steccn.ems.vo.EpEnergyTypeVO;
+import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -33,6 +34,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.CollationKey;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,24 +80,6 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 //查询所有可展示的
                 .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES);
 
-        //2.定义排序条件
-//        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getName);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-//            condition.orderBy(true,dto.getAscFlag(),EpProductUnitConsumeStandard::getEnergyType);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
-//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductType);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
-//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getStandardType);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
-//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getProductThick);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getUnitValue);
-//        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
-//            condition.orderBy(true,!dto.getAscFlag(),EpProductUnitConsumeStandard::getValidStart);
-//        }else {
-//            condition.orderByDesc(EpProductUnitConsumeStandard::getCreateTime);
-//        }
         //3.根据条件查询数据库
         List<EpProductUnitConsumeStandard> standards = list(condition);
         //4.拷贝返回信息
@@ -152,51 +137,25 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         //排序
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-           if (dto.getAscFlag()==Boolean.TRUE){
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName));
-           }else {
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getName).reversed());
-           }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName));
-            }else {
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getEnergyTypeName).reversed());
-            }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName));
-            }else {
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductTypeName).reversed());
-            }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName));
-            }else {
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getStandardTypeName).reversed());
-
-            }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
-           if (dto.getAscFlag()==Boolean.TRUE){
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)));
-           }else {
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getProductThickName, Comparator.nullsFirst(String::compareTo)).reversed());
-           }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue));
-            }else {
-                collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue).reversed());
-
-            }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
            if (dto.getAscFlag()==Boolean.TRUE){
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart));
+               collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart)).collect(Collectors.toList());
            }else {
-               collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed());
+               collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed()).collect(Collectors.toList());
            }
         }else {
-            collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime));
+            collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime)).collect(Collectors.toList());
         }
         page.setCurrent(dto.getCurrent());
         page.setTotal(standardVOS.size());
@@ -389,6 +348,74 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             }
         }
         return deleteString;
+    }
+
+    /**
+     * 根据某字段首字母排序
+     * @param list
+     * @param sort
+     * @param isOrder
+     * @return
+     */
+    private List<EpProductUnitConsumeStandardVO> listToSortBySubName(List<EpProductUnitConsumeStandardVO> list, String sort, Boolean isOrder) {
+        if (list == null || list.size() == 0) {
+            return null;
+        }
+        Map<String, EpProductUnitConsumeStandardVO> map = new HashMap<String, EpProductUnitConsumeStandardVO>();
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+                names.add(list.get(i).getName());
+                map.put(list.get(i).getName(), list.get(i));
+            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+                names.add(list.get(i).getEnergyTypeName());
+                map.put(list.get(i).getEnergyTypeName(),list.get(i));
+            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+                names.add(list.get(i).getStandardTypeName());
+                map.put(list.get(i).getStandardTypeName(),list.get(i));
+            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+                names.add(list.get(i).getProductTypeName());
+                map.put(list.get(i).getProductTypeName(),list.get(i));
+            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+                names.add(list.get(i).getProductThickName());
+                map.put(list.get(i).getProductThickName(),list.get(i));
+            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
+                names.add(list.get(i).getUnitValue().toString());
+                map.put(list.get(i).getUnitValue().toString(),list.get(i));
+            }
+        }
+        if (isOrder){
+            Collections.sort(names, new Comparator<String>() {
+                Collator collator = Collator.getInstance(Locale.CHINA);
+
+                @Override
+                public int compare(String o1, String o2) {
+                    CollationKey key1 = collator.getCollationKey(o1);
+                    CollationKey key2 = collator.getCollationKey(o2);
+                    return key1.compareTo(key2);
+                }
+            });
+        }else {
+            Collections.sort(names, new Comparator<String>() {
+                Collator collator = Collator.getInstance(Locale.CHINA);
+
+                @Override
+                public int compare(String o1, String o2) {
+                    CollationKey key1 = collator.getCollationKey(o1);
+                    CollationKey key2 = collator.getCollationKey(o2);
+                    return key2.compareTo(key1);
+                }
+            });
+        }
+
+
+        list.clear();
+        for (String name : names) {
+            if (map.containsKey(name)) {
+                list.add(map.get(name));
+            }
+        }
+        return list;
     }
 }
 

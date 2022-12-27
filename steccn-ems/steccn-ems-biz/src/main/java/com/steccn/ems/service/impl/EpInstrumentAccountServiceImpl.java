@@ -44,9 +44,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
+import java.text.CollationKey;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -275,36 +278,22 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
         if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
             if (dto.getAscFlag()==Boolean.TRUE) {
-                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime));
             }else {
-                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
+               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed());
             }
 
         }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect= collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getDistantMapCode)).collect(Collectors.toList());
-            }else {
-                collect= collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getDistantMapCode).reversed()).collect(Collectors.toList());
-            }
-
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())){
-           if (dto.getAscFlag()==Boolean.TRUE){
-               collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getMeterName)).collect(Collectors.toList());
-           }else {
-               collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getMeterName).reversed()).collect(Collectors.toList());
-           }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE){
-                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getSiteName)).collect(Collectors.toList());
-            }else {
-                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getSiteName).reversed()).collect(Collectors.toList());
-
-            }
+            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())){
             if(dto.getAscFlag()==Boolean.TRUE){
-                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
+               collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed());
             }else {
-                collect=collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus)).collect(Collectors.toList());
+                collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus));
             }
 
         }
@@ -482,14 +471,67 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
      * @param size
      * @param mistake
      */
-    private void getRepeatJudgment(Integer id, long size,String mistake) {
-        Assert.isTrue(size ==0 , mistake);
-//        if (Objects.isNull(id)){
-//            Assert.isTrue(size ==0 , mistake);
-//        }else {
-//            //编辑时允许与自身重复
-//            Assert.isTrue(size <=1 , mistake);
-//        }
+    private void getRepeatJudgment(Integer id, long size, String mistake) {
+        Assert.isTrue(size == 0, mistake);
+    }
+
+    /**
+     * 根据某字段首字母排序
+     * @param list
+     * @param sort
+     * @param isOrder
+     * @return
+     */
+    private List<EpInstrumentAccountPageVO> listToSortBySubName(List<EpInstrumentAccountPageVO> list,String sort,Boolean isOrder) {
+        if (list == null || list.size() == 0) {
+            return null;
+        }
+        Map<String, EpInstrumentAccountPageVO> map = new HashMap<String, EpInstrumentAccountPageVO>();
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
+                names.add(list.get(i).getDistantMapCode());
+                map.put(list.get(i).getDistantMapCode(), list.get(i));
+            }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
+                names.add(list.get(i).getMeterName());
+                map.put(list.get(i).getMeterName(),list.get(i));
+            }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
+                names.add(list.get(i).getSiteName());
+                map.put(list.get(i).getSiteName(),list.get(i));
+            }
+        }
+        if (isOrder){
+            Collections.sort(names, new Comparator<String>() {
+                Collator collator = Collator.getInstance(Locale.CHINA);
+
+                @Override
+                public int compare(String o1, String o2) {
+                    CollationKey key1 = collator.getCollationKey(o1);
+                    CollationKey key2 = collator.getCollationKey(o2);
+                    return key1.compareTo(key2);
+                }
+            });
+        }else {
+            Collections.sort(names, new Comparator<String>() {
+                Collator collator = Collator.getInstance(Locale.CHINA);
+
+                @Override
+                public int compare(String o1, String o2) {
+                    CollationKey key1 = collator.getCollationKey(o1);
+                    CollationKey key2 = collator.getCollationKey(o2);
+                    return key2.compareTo(key1);
+                }
+            });
+        }
+
+
+        list.clear();
+        for (String name : names) {
+            if (map.containsKey(name)) {
+                list.add(map.get(name));
+            }
+        }
+        return list;
     }
 }
 
