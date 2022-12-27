@@ -363,59 +363,121 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }
         Map<String, EpProductUnitConsumeStandardVO> map = new HashMap<String, EpProductUnitConsumeStandardVO>();
         List<String> names = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
-                names.add(list.get(i).getName());
-                map.put(list.get(i).getName(), list.get(i));
-            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
-                names.add(list.get(i).getEnergyTypeName());
-                map.put(list.get(i).getEnergyTypeName(),list.get(i));
-            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
-                names.add(list.get(i).getStandardTypeName());
-                map.put(list.get(i).getStandardTypeName(),list.get(i));
-            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
-                names.add(list.get(i).getProductTypeName());
-                map.put(list.get(i).getProductTypeName(),list.get(i));
-            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
-                names.add(list.get(i).getProductThickName());
-                map.put(list.get(i).getProductThickName(),list.get(i));
-            }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
-                names.add(list.get(i).getUnitValue().toString());
-                map.put(list.get(i).getUnitValue().toString(),list.get(i));
-            }
-        }
-        if (isOrder){
-            Collections.sort(names, new Comparator<String>() {
-                Collator collator = Collator.getInstance(Locale.CHINA);
-
-                @Override
-                public int compare(String o1, String o2) {
-                    CollationKey key1 = collator.getCollationKey(o1);
-                    CollationKey key2 = collator.getCollationKey(o2);
-                    return key1.compareTo(key2);
+        //储存该字段不为空的集合
+        List<EpProductUnitConsumeStandardVO>  haveDataList = new ArrayList<>();
+        //储存该字段为空的集合
+        List<EpProductUnitConsumeStandardVO>  noDataList = new ArrayList<>();
+        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+          list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+              if (Objects.nonNull(s.getName())&&StringUtils.isNotBlank(s.getName())){
+                  haveDataList.add(s);
+              }else {
+                  noDataList.add(s);
+              }
+          });
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getEnergyTypeName())&&StringUtils.isNotBlank(s.getEnergyTypeName())){
+                    haveDataList.add(s);
+                }else {
+                   noDataList.add(s);
                 }
             });
-        }else {
-            Collections.sort(names, new Comparator<String>() {
-                Collator collator = Collator.getInstance(Locale.CHINA);
-
-                @Override
-                public int compare(String o1, String o2) {
-                    CollationKey key1 = collator.getCollationKey(o1);
-                    CollationKey key2 = collator.getCollationKey(o2);
-                    return key2.compareTo(key1);
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getStandardTypeName())&&StringUtils.isNotBlank(s.getStandardTypeName())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
+                }
+            });
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getProductTypeName())&&StringUtils.isNotBlank(s.getProductTypeName())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
+                }
+            });
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getProductThickName())&&StringUtils.isNotBlank(s.getProductThickName())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
+                }
+            });
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
+            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
+                if (Objects.nonNull(s.getUnitValue())){
+                    haveDataList.add(s);
+                }else {
+                    noDataList.add(s);
                 }
             });
         }
 
+        //创建返回数据集合
+        List<EpProductUnitConsumeStandardVO> voList = new ArrayList<>();
 
-        list.clear();
-        for (String name : names) {
-            if (map.containsKey(name)) {
-                list.add(map.get(name));
+        if (CollUtil.isNotEmpty(haveDataList)){
+            for (int i = 0; i < haveDataList.size(); i++) {
+                if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+                    names.add(haveDataList.get(i).getName());
+                    map.put(haveDataList.get(i).getName(), haveDataList.get(i));
+                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+                    names.add(haveDataList.get(i).getEnergyTypeName());
+                    map.put(haveDataList.get(i).getEnergyTypeName(),haveDataList.get(i));
+                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+                    names.add(haveDataList.get(i).getStandardTypeName());
+                    map.put(haveDataList.get(i).getStandardTypeName(),haveDataList.get(i));
+                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+                    names.add(haveDataList.get(i).getProductTypeName());
+                    map.put(haveDataList.get(i).getProductTypeName(),haveDataList.get(i));
+                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+                    names.add(haveDataList.get(i).getProductThickName());
+                    map.put(haveDataList.get(i).getProductThickName(),haveDataList.get(i));
+                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
+                    names.add(haveDataList.get(i).getUnitValue().toString());
+                    map.put(haveDataList.get(i).getUnitValue().toString(),haveDataList.get(i));
+                }
+            }
+            if (isOrder){
+                Collections.sort(names, new Comparator<String>() {
+                    Collator collator = Collator.getInstance(Locale.CHINA);
+
+                    @Override
+                    public int compare(String o1, String o2) {
+                        CollationKey key1 = collator.getCollationKey(o1);
+                        CollationKey key2 = collator.getCollationKey(o2);
+                        return key1.compareTo(key2);
+                    }
+                });
+            }else {
+                Collections.sort(names, new Comparator<String>() {
+                    Collator collator = Collator.getInstance(Locale.CHINA);
+
+                    @Override
+                    public int compare(String o1, String o2) {
+                        CollationKey key1 = collator.getCollationKey(o1);
+                        CollationKey key2 = collator.getCollationKey(o2);
+                        return key2.compareTo(key1);
+                    }
+                });
+            }
+            for (String name : names) {
+                if (map.containsKey(name)) {
+                    voList.add(map.get(name));
+                }
             }
         }
-        return list;
+      //封装该字段为空情况的集合
+        if (CollUtil.isNotEmpty(noDataList)){
+            noDataList.forEach(s->{
+                voList.add(s);
+            });
+        }
+        return voList;
     }
 }
 
