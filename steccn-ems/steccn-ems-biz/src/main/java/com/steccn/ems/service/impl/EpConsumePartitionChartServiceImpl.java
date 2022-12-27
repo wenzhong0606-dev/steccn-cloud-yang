@@ -98,22 +98,22 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         }
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
-
         for (int i = 1; i < shardDateTime.size(); i++) {
+            List<EpMeterReadAllDataVO> filterDataList = null;
             LocalDateTime dataStart = shardDateTime.get(i - 1);
             LocalDateTime dataEnd = shardDateTime.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
             if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
                 epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                classDateAllData = classDateAllData.stream()
+                filterDataList = classDateAllData.stream()
                         .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
+                                && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd)).collect(Collectors.toList());
             }
             List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
             //遍历所有的分区节点
             for (Long partitionId : dto.getPartitionIdList()) {
                 //获取分区数据集合
-                List<EpMeterReadAllDataVO> dataSet = classDateAllData.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+                List<EpMeterReadAllDataVO> dataSet = filterDataList.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
                 List<TupleDTO<String, BigDecimal>> poleList = Lists.newArrayList();
                 TupleDTO<Long, List<TupleDTO<String, BigDecimal>>> pole = new TupleDTO<>();
                 pole.setField1(partitionId);
@@ -123,7 +123,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     String thickName = null;
                     List<EpMeterReadAllDataVO> thickData;
                     if (Objects.isNull(thick) || thick.compareTo(BigDecimal.valueOf(-1)) == 0) {
-                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick())).collect(Collectors.toList());
+                        thickData = dataSet.stream().filter(v -> Objects.isNull(v.getThick()) || v.getThick().equals(new BigDecimal("-1"))).collect(Collectors.toList());
                         thickName = "无";
                     } else {
                         thickData = dataSet.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());

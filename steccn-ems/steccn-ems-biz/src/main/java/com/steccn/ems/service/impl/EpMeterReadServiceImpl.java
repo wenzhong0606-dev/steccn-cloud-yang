@@ -330,9 +330,19 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             //根据条件获取数据
             List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
                     .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
-                    .in(EpMeterRead::getReadDate, sortedDateList)
-                    .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart)));
+                    .in(EpMeterRead::getReadDate, sortedDateList));
             if (CollUtil.isNotEmpty(dataList)) {
+                //排序
+                dataList.sort((o1, o2) -> {
+                    if(Objects.nonNull(o1.getStart()) && Objects.nonNull(o2.getStart())){
+                        return o1.getStart().compareTo(o2.getStart());
+                    }
+                    if(Objects.isNull(o1.getStart())){
+                        return 1;
+                    }
+                    return -1;
+                });
+
                 //存放仪表的班次日期的抄表数据
                 Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
                 //将数据按照班次日期分组
