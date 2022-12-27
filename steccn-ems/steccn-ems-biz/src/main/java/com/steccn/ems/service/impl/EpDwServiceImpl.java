@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -79,11 +80,15 @@ public class EpDwServiceImpl implements EpDwService {
                         EpMeterRead epMeterRead = new EpMeterRead();
                         BeanUtils.copyProperties(ele, epMeterRead);
                         epMeterRead.setDistantMapCode(ele.getCode());
-                        List<DwEpMeterCollectVO> data = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()) && v.getRecordTime().equals(ele.getEnd())).collect(Collectors.toList());
-                        if (CollUtil.isNotEmpty(data)) {
-                            epMeterRead.setAdminValue(data.get(0).getValue());
-                            epMeterRead.setCorrectValue(data.get(0).getValue());
-                            epMeterRead.setReadValue(data.get(0).getValue());
+//                        List<DwEpMeterCollectVO> data = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()) && v.getRecordTime().equals(ele.getEnd())).collect(Collectors.toList());
+
+                        Optional<DwEpMeterCollectVO> max = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()))
+                                .filter(v -> !v.getRecordTime().isAfter(ele.getEnd())).max(Comparator.comparing(DwEpMeterCollectVO::getRecordTime));
+                        if (max.isPresent()) {
+                            DwEpMeterCollectVO dwEpMeterCollectVO = max.get();
+                            epMeterRead.setAdminValue(dwEpMeterCollectVO.getValue());
+                            epMeterRead.setCorrectValue(dwEpMeterCollectVO.getValue());
+                            epMeterRead.setReadValue(dwEpMeterCollectVO.getValue());
                             epMeterRead.setAdminFlag(0);
                             insertList.add(epMeterRead);
                         }

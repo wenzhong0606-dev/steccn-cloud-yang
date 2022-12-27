@@ -16,4 +16,15 @@
         id,code,record_time,
         value,create_time
     </sql>
+    <select id="batchSearch" resultType="com.steccn.data.domain.EpMeterCollect">
+        SELECT
+        *
+        FROM
+        ep_meter_collect
+        WHERE
+        <foreach collection="dwList" item="dw"  open="(" close=")" separator="or">
+           (ID = ( SELECT ID FROM ep_meter_collect WHERE code = #{dw.code} AND record_time &lt;= #{dw.end} ORDER BY record_time DESC LIMIT 1 ))
+        </foreach>
+
+    </select>
 </mapper>

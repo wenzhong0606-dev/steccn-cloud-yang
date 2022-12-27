@@ -26,17 +26,12 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     @Override
     public List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList) {
         List<DwEpMeterCollectVO> resList = Lists.newArrayList();
-        LambdaQueryWrapper<EpMeterCollect> lqw = new LambdaQueryWrapper<>();
         if (CollUtil.isNotEmpty(dwList)) {
-            for (DwMeterReadDTO ele : dwList) {
-                lqw = lqw.or(l -> {
-                    l.eq(EpMeterCollect::getCode, ele.getCode()).eq(EpMeterCollect::getRecordTime, ele.getEnd());
-                });
+            //批量查询
+            List<EpMeterCollect> dbList = this.baseMapper.batchSearch(dwList);
+            if (CollUtil.isNotEmpty(dbList)) {
+                resList = BeanUtil.copyToList(dbList, DwEpMeterCollectVO.class);
             }
-        }
-        List<EpMeterCollect> dbList = list(lqw);
-        if (CollUtil.isNotEmpty(dbList)) {
-            resList = BeanUtil.copyToList(dbList, DwEpMeterCollectVO.class);
         }
         return resList;
     }

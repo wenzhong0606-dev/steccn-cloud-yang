@@ -2,7 +2,11 @@ package com.steccn.data.mapper;
 
 import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.data.dto.DwMeterReadDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +17,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface EpMeterCollectMapper extends BaseMapper<EpMeterCollect> {
 
+    /**
+     * 批量查询数据
+     * @param dwList 数仓条件集合
+     * @return list
+     */
+    List<EpMeterCollect> batchSearch(@Param("dwList") List<DwMeterReadDTO> dwList);
 }
 
 
