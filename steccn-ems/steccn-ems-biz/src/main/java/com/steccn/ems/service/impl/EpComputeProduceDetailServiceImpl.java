@@ -144,7 +144,9 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         for (Map.Entry<String, List<EpProduceDetailVO>> entry : map.entrySet()) {
             EpProduceDetailVO epProduceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(entry.getValue().get(0),epProduceDetailVO);
-            epProduceDetailVO.setOfficeId(parentOfficeMap.get(entry.getValue().get(0).getOfficeId()).getParentId());
+            if (!parentOfficeMap.isEmpty()) {
+                epProduceDetailVO.setOfficeId(parentOfficeMap.get(entry.getValue().get(0).getOfficeId()).getParentId());
+            }
             parentProduceDetailVOList.add(epProduceDetailVO);
         }
         epProduceDetailVoList.addAll(parentProduceDetailVOList);

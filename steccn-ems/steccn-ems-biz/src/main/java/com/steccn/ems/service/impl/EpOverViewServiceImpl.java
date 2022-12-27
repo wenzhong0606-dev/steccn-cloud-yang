@@ -50,19 +50,19 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         EpOverViewVO epOverViewVO = new EpOverViewVO();
 
         if (type.equals(EpManagerConstant.CardType.SUB_OIL_GAS.getCode())) {
-            yData = getDyData("燃料(气+油)", "基片制造部", "substrate", selectDate, startLocalDate, null, epOverViewVO);
+            yData = getDyData("燃料(气+油)", "基片制造部", 0L, selectDate, startLocalDate, null, epOverViewVO);
         } else if (type.equals(EpManagerConstant.CardType.SUB_ELECTRIC_TWO.getCode())) {
             yData = getDyData("电",
-                    "基片制造部", "substrate", selectDate, startLocalDate, BigDecimal.valueOf(2), epOverViewVO);
+                    "基片制造部", 0L, selectDate, startLocalDate, BigDecimal.valueOf(2.0), epOverViewVO);
         } else if (type.equals(EpManagerConstant.CardType.DEEP_ELECTRIC_TWO.getCode())) {
             yData = getDyData("电",
-                    "深加工制造部", "deep_processing", selectDate, startLocalDate, BigDecimal.valueOf(2), epOverViewVO);
+                    "深加工制造部", 1L, selectDate, startLocalDate, BigDecimal.valueOf(2.0), epOverViewVO);
         } else if (type.equals(EpManagerConstant.CardType.SUB_ELECTRIC_THREE.getCode())) {
             yData = getDyData("电",
-                    "基片制造部", "deep_processing", selectDate, startLocalDate, BigDecimal.valueOf(3.2), epOverViewVO);
+                    "基片制造部", 1L, selectDate, startLocalDate, BigDecimal.valueOf(3.2), epOverViewVO);
         } else if (type.equals(EpManagerConstant.CardType.DEEP_ELECTRIC_THREE.getCode())) {
             yData = getDyData("电",
-                    "深加工制造部", "deep_processing", selectDate, startLocalDate, BigDecimal.valueOf(3.2), epOverViewVO);
+                    "深加工制造部", 1L, selectDate, startLocalDate, BigDecimal.valueOf(3.2), epOverViewVO);
         } else {
             yData = getAlarmDate(selectDate, startLocalDate, epOverViewVO);
         }
@@ -265,7 +265,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
 
     private List<BigDecimal> getDyData(String energyType,
                                        String partitionName,
-                                       String productTypeCode,
+                                       Long productTypeCode,
                                        LocalDate selectDate,
                                        LocalDate startLocalDate,
                                        BigDecimal thick,
@@ -275,15 +275,16 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         //标准类型：企业标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
         //产品类型：基片
-        SysDictVO productType = remoteDictFeignApi.getByCode(productTypeCode, "product_type").getData();
+//        SysDictVO productType = remoteDictFeignApi.getByCode(productTypeCode, "product_type").getData();
 
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getEnergyType, epEnergyType.getId())
                 .gt(EpProductUnitConsumeStandard::getValidStart, selectDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
                 .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
-                .eq(EpProductUnitConsumeStandard::getProductType, productType.getId());
+                .eq(EpProductUnitConsumeStandard::getProductType, productTypeCode);
         if (Objects.nonNull(thick)) {
-            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, thick);
+            SysDictVO thickVO = remoteDictFeignApi.getByCode(thick + "mm", "product_thickness_range").getData();
+            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, thickVO.getId());
         }
         EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
 
