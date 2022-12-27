@@ -3,6 +3,7 @@ package com.steccn.platform.dto;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -36,5 +37,14 @@ public class OaProcessNotifyDTO implements Serializable {
      */
     private String creationTimeStr;
 
+    /**
+     * 唯一值
+     */
+    @NotNull(message = "唯一标识不能为空")
+    private String uniqueValue;
+
+    /**
+     * data数据
+     */
     private OaProcessDataDTO data;
 }

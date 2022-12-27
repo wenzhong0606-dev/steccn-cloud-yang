@@ -33,6 +33,11 @@ public class OaResponse implements Serializable {
     private String contentJson;
 
     /**
+     * 唯一值
+     */
+    private String uniqueValue;
+
+    /**
      * 是否删除 0 否 1是
      */
     @TableLogic

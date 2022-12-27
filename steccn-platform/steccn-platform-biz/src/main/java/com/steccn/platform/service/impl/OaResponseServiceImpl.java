@@ -51,6 +51,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
         OaResponse model = new OaResponse();
+        model.setUniqueValue(dto.getUniqueValue());
         model.setType(OaDataConstant.Oa_Data_Type.PROCESS.getCode());
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
@@ -60,6 +61,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     @Override
     public Boolean addMessagePush(OaMessagePushDTO dto) {
         OaResponse model = new OaResponse();
+        model.setUniqueValue(dto.getUniqueValue());
         model.setType(OaDataConstant.Oa_Data_Type.MESSAGE.getCode());
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
@@ -69,6 +71,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     @Override
     public Boolean addProcessNotify(OaProcessNotifyDTO dto) {
         OaResponse model = new OaResponse();
+        model.setUniqueValue(dto.getUniqueValue());
         model.setType(OaDataConstant.Oa_Data_Type.NOTIFY.getCode());
         if(dto.getCreationTime()!=null){
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

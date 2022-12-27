@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.Set;
 
 /**
@@ -41,21 +42,21 @@ public class OaDataController {
 
     @PostMapping("/process/push")
     @ApiOperation(value = "接收oa流程的值")
-    public R<Boolean> addOaProcess(HttpServletRequest request, @RequestBody OaProcessPushDTO dto) {
+    public R<Boolean> addOaProcess(HttpServletRequest request, @Valid @RequestBody OaProcessPushDTO dto) {
         validRequestHeader(request);
         return R.success(oaResponseService.addProcessPush(dto));
     }
 
     @PostMapping("/message/push")
     @ApiOperation(value = "接收oa消息的值")
-    public R<Boolean> addOaMessage(HttpServletRequest request, @RequestBody OaMessagePushDTO dto) {
+    public R<Boolean> addOaMessage(HttpServletRequest request, @Valid @RequestBody OaMessagePushDTO dto) {
         validRequestHeader(request);
         return R.success(oaResponseService.addMessagePush(dto));
     }
 
     @PutMapping("/process/notify")
     @ApiOperation(value = "接收oa消息的值")
-    public R<Boolean> addOaNotify(HttpServletRequest request, @RequestBody OaProcessNotifyDTO dto) {
+    public R<Boolean> addOaNotify(HttpServletRequest request, @Valid @RequestBody OaProcessNotifyDTO dto) {
         validRequestHeader(request);
         return R.success(oaResponseService.addProcessNotify(dto));
     }

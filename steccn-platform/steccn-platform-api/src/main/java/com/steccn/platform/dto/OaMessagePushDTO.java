@@ -2,6 +2,7 @@ package com.steccn.platform.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -43,4 +44,10 @@ public class OaMessagePushDTO implements Serializable {
      * 分类
      */
     private String category;
+
+    /**
+     * 唯一值
+     */
+    @NotNull(message = "唯一标识不能为空")
+    private String uniqueValue;
 }
