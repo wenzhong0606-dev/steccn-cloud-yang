@@ -249,7 +249,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 List<QtOnlineCheckDefectDTO> defectNumList = JSON.parseArray(numString, QtOnlineCheckDefectDTO.class);
                 List<QtOnlineCheckDefectDTO> collect = defectNumList.stream().filter(v -> Objects.nonNull(v.getDefectId())).collect(Collectors.toList());
                 for (QtOnlineCheckDefectDTO de : collect) {
-                    if (Objects.nonNull(de.getDefectId())) {
+                    if (Objects.nonNull(de.getDefectId()) && Objects.nonNull(de.getDefectNum()) && de.getDefectNum() > 0) {
                         QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
                         vo.setDefectId(de.getDefectId());
                         vo.setDefectCategory(categoryMap.get(de.getDefectId()));
