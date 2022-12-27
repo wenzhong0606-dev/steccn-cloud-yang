@@ -303,7 +303,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Boolean freeze(WmsInventoryDTO dto) {
         WmsInventory inventory = getById(dto.getId());
         Assert.notNull(inventory, "库存信息不存在");
-        Assert.isTrue(inventory.getAvailableQuantity().subtract(dto.getQuantity()).compareTo(BigDecimal.ZERO)>0,"可用库存不足，不可冻结");
+        Assert.isTrue(inventory.getAvailableQuantity().subtract(dto.getQuantity()).compareTo(BigDecimal.ZERO) > 0, "可用库存不足，不可冻结");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().add(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().subtract(dto.getQuantity()));
         return updateById(inventory);
@@ -314,7 +314,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         WmsInventory inventory = getById(dto.getId());
         Assert.notNull(inventory, "库存信息不存在");
         BigDecimal subtract = inventory.getFreezeQuantity().subtract(dto.getQuantity());
-        Assert.isTrue(subtract.compareTo(BigDecimal.ZERO)>0,"解冻数可以小于冻结数，但不能大于冻结数");
+        Assert.isTrue(subtract.compareTo(BigDecimal.ZERO) >= 0, "解冻数可以小于冻结数，但不能大于冻结数");
         inventory.setFreezeQuantity(inventory.getFreezeQuantity().subtract(dto.getQuantity()));
         inventory.setAvailableQuantity(inventory.getAvailableQuantity().add(dto.getQuantity()));
         return updateById(inventory);
