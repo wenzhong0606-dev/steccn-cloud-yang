@@ -2,19 +2,21 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
-import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
-import com.steccn.ems.service.*;
+import com.steccn.ems.service.EpDwService;
+import com.steccn.ems.service.EpEnergyMoneyService;
+import com.steccn.ems.service.EpEnergyPricePlanService;
+import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -82,8 +84,6 @@ public class EpDwServiceImpl implements EpDwService {
                         EpMeterRead epMeterRead = new EpMeterRead();
                         BeanUtils.copyProperties(ele, epMeterRead);
                         epMeterRead.setDistantMapCode(ele.getCode());
-//                        List<DwEpMeterCollectVO> data = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()) && v.getRecordTime().equals(ele.getEnd())).collect(Collectors.toList());
-
                         Optional<DwEpMeterCollectVO> max = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()))
                                 .filter(v -> !v.getRecordTime().isAfter(ele.getEnd())).max(Comparator.comparing(DwEpMeterCollectVO::getRecordTime));
                         if (max.isPresent()) {
@@ -142,6 +142,16 @@ public class EpDwServiceImpl implements EpDwService {
                 }
                 //4.根据对应方案 去查询读数
                 List<DwEpMeterCollectVO> meterReadList = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwConditionDTOList)).get();
+                //解析原始数据
+                Map<String, List<DwEpMeterCollectVO>> collect = meterReadList.stream().collect(Collectors.groupingBy(DwEpMeterCollectVO::getCode));
+
+                //meterReadList
+                meterReadList = Lists.newArrayList();
+                for (Map.Entry<String, List<DwEpMeterCollectVO>> entry : collect.entrySet()) {
+                    if (entry.getValue().size() == priceList.size()) {
+                        meterReadList.addAll(entry.getValue());
+                    }
+                }
                 if (CollUtil.isNotEmpty(meterReadList)) {
                     //定义插入表
                     List<EpEnergyMoney> insertList = Lists.newArrayList();
