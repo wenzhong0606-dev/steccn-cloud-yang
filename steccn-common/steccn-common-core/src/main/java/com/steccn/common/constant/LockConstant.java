@@ -28,6 +28,13 @@ public interface LockConstant {
      */
     String READ_CORRECT_SCHEDULED_TASK = "READ_CORRECT_SCHEDULED_TASK";
 
+
+    /**
+     * 仪表读数归档 电费归档
+     */
+    String DW_METER_READ_SCHEDULED_TASK = "DW_METER_READ_SCHEDULED_TASK";
+    String DW_ELECTRIC_MONEY_SCHEDULED_TASK = "DW_ELECTRIC_MONEY_SCHEDULED_TASK";
+
     /**
      * 单耗告警定时任务
      */

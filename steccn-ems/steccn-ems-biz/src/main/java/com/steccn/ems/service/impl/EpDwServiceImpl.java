@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
@@ -28,10 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +56,13 @@ public class EpDwServiceImpl implements EpDwService {
         //获取所有的远传仪表+挂载的分区节点
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         if (CollUtil.isNotEmpty(meterList)) {
+            Set<Integer> meterSet = meterList.stream().map(EpDwMeterPartitionDTO::getMeterId).collect(Collectors.toSet());
+            long count = epMeterReadService.count(new LambdaQueryWrapper<EpMeterRead>()
+                    .eq(EpMeterRead::getReadDate, date).in(EpMeterRead::getMeterId,meterSet));
+            if (count > 0) {
+                log.info("读数归档 班次日期 -> {} 已跑过", date);
+                return Boolean.FALSE;
+            }
             //获取当前班次日期所有的报工信息
             List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date))).get();
             //遍历所有的远传仪表
@@ -106,6 +111,12 @@ public class EpDwServiceImpl implements EpDwService {
 
     @Override
     public Boolean electricMoney(LocalDate date) {
+        //保持幂等，判断今天是否已经执行过
+        long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>().eq(EpEnergyMoney::getClassDate, date));
+        if (count > 0) {
+            log.info("班次日期 -> {} 已跑过", date);
+            return Boolean.FALSE;
+        }
         //1.查询所有的远传仪表
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         if (CollUtil.isNotEmpty(meterList)) {
