@@ -113,7 +113,13 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
         //该情况下必定有数据
         EpConsumeDetailVO data = this.getDetails(dto);
         //根据节点数据拿到拿到对应的数据并进行加总
+        if(data==null){
+            return result;
+        }
         List<String> headData = data.getHeadData();
+        if(CollUtil.isEmpty(headData)){
+            return result;
+        }
         List<EpConsumeDetailRowVO> records = data.getDataList().getRecords();
         //根据officeId分组算值
         Map<String,BigDecimal> resultMap = new LinkedHashMap<>();
