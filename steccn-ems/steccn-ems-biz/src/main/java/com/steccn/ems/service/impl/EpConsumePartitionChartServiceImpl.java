@@ -99,7 +99,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
         for (int i = 1; i < shardDateTime.size(); i++) {
-            List<EpMeterReadAllDataVO> filterDataList = null;
+            List<EpMeterReadAllDataVO> filterDataList = classDateAllData;
             LocalDateTime dataStart = shardDateTime.get(i - 1);
             LocalDateTime dataEnd = shardDateTime.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
