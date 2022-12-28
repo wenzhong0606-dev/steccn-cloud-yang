@@ -38,6 +38,11 @@ public interface EpManagerConstant {
     String EP_DOWNLOAD_MODEL_NAME_DHFQDBRL = "dhfqdbrl.xlsx";
     String EP_DOWNLOAD_MODEL_NAME_DHFQDBW = "dhfqdbw.xlsx";
 
+    /**
+     * 单耗班组对比，单耗历史对比
+     */
+    String EP_DOWNLOAD_MODEL_NAME_DHBZDB = "dhbzdb.xlsx";
+    String EP_DOWNLOAD_MODEL_NAME_DHLSDB = "dhlsdb.xlsx";
 
     /**
      * 产品单耗标准的产品类型

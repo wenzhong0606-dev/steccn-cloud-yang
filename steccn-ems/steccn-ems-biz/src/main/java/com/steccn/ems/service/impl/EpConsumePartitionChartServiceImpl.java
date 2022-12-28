@@ -585,7 +585,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                             if (BigDecimalUtil.equals(rowVO.getThick(), new BigDecimal("-1"))) {
                                 rowVO.setThickStr("无");
                             } else {
-                                rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                                rowVO.setThickStr(rowVO.getThick() +"mm");
                             }
                         }
                         if (!"null".equals(s[0])) {
@@ -1073,6 +1073,33 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
                 + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
         DownloadUtil.downloadEnergyTemplate(response, modelName, excelName, map, detail, dto.getBase64());
+    }
+
+    @Override
+    @SneakyThrows
+    public void unitClassDownload(EpTableDTO dto, HttpServletResponse response) {
+        dto.setCurrent(1);
+        dto.setSize(999999);
+        Page<ConsumePartitionUnitClassDetailVO> detailPage = consumePartitionUnitClassDetail(dto);
+        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("energyType", energyType.getName());
+        map.put("dateStart", LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd", LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN));
+        if (CollUtil.isNotEmpty(dto.getThick())) {
+            StringBuilder sb = new StringBuilder();
+            dto.getThick().forEach(tmp -> {
+                sb.append(tmp.toString() + "mm ");
+            });
+            map.put("thick", sb.toString());
+        } else {
+            map.put("thick", "无");
+        }
+        map.put("granularity", QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
+        String excelName = "单耗班组对比(" + energyType.getName() + ")_"
+                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_DHBZDB, excelName, map, detailPage.getRecords(), dto.getBase64());
     }
 
     private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, SysDictVO thick) {

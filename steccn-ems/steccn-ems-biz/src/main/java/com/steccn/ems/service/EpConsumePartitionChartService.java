@@ -139,4 +139,11 @@ public interface EpConsumePartitionChartService {
      * @param response
      */
     void unitContrastDownload(EpTableDTO dto, HttpServletResponse response);
+
+    /**
+     * 单耗班组对比-下载
+     * @param dto
+     * @param response
+     */
+    void unitClassDownload(EpTableDTO dto, HttpServletResponse response);
 }

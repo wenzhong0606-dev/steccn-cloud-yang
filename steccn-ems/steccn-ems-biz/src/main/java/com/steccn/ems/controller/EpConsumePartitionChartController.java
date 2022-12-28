@@ -99,6 +99,18 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.consumePartitionUnitClassChart(dto));
     }
 
+    @PostMapping("/unit/class/download")
+    @ApiOperation(value = "单耗班组对比-下载")
+    public void unitClassDownload(@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        try {
+            epConsumePartitionChartService.unitClassDownload(dto, response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response, e);
+        }
+    }
+
+
     @PostMapping("/contrast/download")
     @ApiOperation(value = "能耗分区下载-图表")
     public void downloadHis (@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
