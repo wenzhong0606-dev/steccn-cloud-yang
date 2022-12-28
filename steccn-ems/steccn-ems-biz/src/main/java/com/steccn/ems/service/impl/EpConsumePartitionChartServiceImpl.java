@@ -671,12 +671,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Assert.notEmpty(shardDateTime, "时间分片为空");
 
         for (int i = 1; i < shardDateTime.size(); i++) {
+            List<EpMeterReadAllDataVO> filterDataList = null;
             LocalDateTime dataStart = shardDateTime.get(i - 1);
             LocalDateTime dataEnd = shardDateTime.get(i);
             EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
             if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
                 epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                allDataList = allDataList.stream()
+                filterDataList = allDataList.stream()
                         .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
                                 && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
             }
@@ -692,7 +693,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (rootMap.containsKey(energy)) {
                     //根据分区节点去汇总所有能耗
                     Long partitionId = rootMap.get(energy).getId();
-                    List<EpMeterReadAllDataVO> dataSet = allDataList.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
+                    List<EpMeterReadAllDataVO> dataSet = filterDataList.stream().filter(v -> Objects.nonNull(partitionId) && partitionId.equals(v.getOfficeId())).collect(Collectors.toList());
                     BigDecimal reduce = dataSet.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                     String name = energyMap.get(energy).getName();
                     TupleDTO<String, BigDecimal> stack = new TupleDTO<>(name, reduce);
