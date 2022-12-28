@@ -486,7 +486,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
                             //产量
                             List<EpProduceDetailVO> productNumObjectList = produceDetailList.stream().filter(v -> {
-                                boolean flag1, flag2;
+                                boolean flag1, flag2, flag3;
+                                //校验厚度
                                 if (Objects.nonNull(v.getThickQuantity()) && Objects.nonNull(epMeterReadAllDataVO.getThick())) {
                                     flag1 = v.getThickQuantity().equals(epMeterReadAllDataVO.getThick());
                                 } else if (Objects.isNull(v.getThickQuantity()) && Objects.isNull(epMeterReadAllDataVO.getThick())) {
@@ -494,6 +495,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 } else {
                                     flag1 = Boolean.FALSE;
                                 }
+                                //校验班次日期
                                 if (Objects.nonNull(v.getClassDate()) && Objects.nonNull(classDateEntry.getKey())) {
                                     flag2 = v.getClassDate().equals(classDateEntry.getKey());
                                 } else if (Objects.isNull(v.getClassDate()) && Objects.isNull(classDateEntry.getKey())) {
@@ -501,7 +503,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 } else {
                                     flag2 = Boolean.FALSE;
                                 }
-                                return flag1 && flag2 && meterEntry.getKey().equals(epPartitionMap.getOrDefault(v.getOfficeId(), defaultEpInstrumentAccount).getId());
+                                //校验班次id
+                                if (Objects.nonNull(v.getClassId()) && Objects.nonNull(epMeterReadAllDataVO.getClassId())) {
+                                    flag3 = v.getClassId().equals(epMeterReadAllDataVO.getClassId());
+                                } else if (Objects.isNull(v.getClassId()) && Objects.isNull(epMeterReadAllDataVO.getClassId())) {
+                                    flag3 = Boolean.TRUE;
+                                } else {
+                                    flag3 = Boolean.FALSE;
+                                }
+
+                                return flag1 && flag2 && flag3 && meterEntry.getKey().equals(epPartitionMap.getOrDefault(v.getOfficeId(), defaultEpInstrumentAccount).getId());
                             }).collect(Collectors.toList());
                             if (CollUtil.isNotEmpty(productNumObjectList)) {
                                 BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -44,14 +44,11 @@ public class EpEnergyPricePlanServiceImpl extends ServiceImpl<EpEnergyPricePlanM
     @Transactional(rollbackFor = Exception.class)
     public Boolean addOrEdit(EpEnergyPriceDTO dto) {
         long size = count(new LambdaQueryWrapper<EpEnergyPricePlan>()
-                .lt(EpEnergyPricePlan::getValidStart, dto.getValidEnd())
-                .gt(EpEnergyPricePlan::getValidEnd, dto.getValidStart()));
+                .lt(EpEnergyPricePlan::getValidStart, dto.getValidEnd().plusDays(1))
+                .gt(EpEnergyPricePlan::getValidEnd, dto.getValidStart().minusDays(1))
+                .ne(Objects.nonNull(dto.getId()),EpEnergyPricePlan::getId,dto.getId()));
         //根据有效期查询数据库现有保存的能源价格方案
-        if(Objects.isNull(dto.getId())){
-            Assert.isTrue(size==0,"与其他方案的有效期有重叠，无法保存");
-        }else if (Objects.nonNull(dto.getId())){
-            Assert.isTrue(size<=1,"与其他方案的有效期有重叠”，无法保存");
-        }
+        Assert.isTrue(size==0,"与其他方案的有效期有重叠，无法保存");
         //创建domain实体类对象
         EpEnergyPricePlan epEnergyPricePlan = new EpEnergyPricePlan();
         BeanUtils.copyProperties(dto,epEnergyPricePlan);

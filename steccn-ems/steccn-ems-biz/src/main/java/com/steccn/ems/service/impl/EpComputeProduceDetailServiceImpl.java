@@ -198,7 +198,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         for (Map.Entry<String, List<PmsReportWorkVO>> entry : groupBy.entrySet()) {
             PmsReportWorkVO pmsReportWorkVO = new PmsReportWorkVO();
             BeanUtils.copyProperties(entry.getValue().get(0), pmsReportWorkVO);
-            BigDecimal sum = entry.getValue().stream().map(PmsReportWorkVO::getBadnessQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal sum = entry.getValue().stream().map(PmsReportWorkVO::getProcessQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
             pmsReportWorkVO.setProcessQuantity(sum);
 
             List<BigDecimal> hoursList = new ArrayList<>();

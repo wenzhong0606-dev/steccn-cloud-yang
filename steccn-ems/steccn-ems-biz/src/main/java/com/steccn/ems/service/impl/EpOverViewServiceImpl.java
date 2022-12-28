@@ -114,7 +114,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         List<Integer> officeIdList = new ArrayList<>();
         officeIdList.add(75);
         officeIdList.add(76);
-        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,5));
+        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,5));
         List<Long> partitionIdList = partitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
         List<EpMeterReadAllDataVO> meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, 5, partitionIdList);
         List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream()
@@ -124,7 +124,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         //标准类型：部门标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard").getData();
         //产品类型：基片
-        SysDictVO productType = remoteDictFeignApi.getByCode("substrate", "product_type").getData();
+//        SysDictVO productType = remoteDictFeignApi.getByCode("substrate", "product_type").getData();
 
         EpSubConsumeContrastVO epSubConsumeContrastVO = new EpSubConsumeContrastVO();
         //获取x轴数据
@@ -147,7 +147,10 @@ public class EpOverViewServiceImpl implements EpOverViewService {
 
             for (EpPartition epPartition : partitionList) {
                 if (Objects.equals(i,0)) {
-                    List<EpMeterReadAllDataVO> epMeterReadAllDataVOList = map.get(epPartition.getId());
+                    List<EpMeterReadAllDataVO> epMeterReadAllDataVOList = new ArrayList<>();
+                    if (Objects.nonNull(map.get(epPartition.getId()))) {
+                        epMeterReadAllDataVOList = map.get(epPartition.getId());
+                    }
                     //获取单耗值
                     dataList.add(getUnitValue(epMeterReadAllDataVOList));
                 } else {
@@ -156,11 +159,15 @@ public class EpOverViewServiceImpl implements EpOverViewService {
                             .eq(EpProductUnitConsumeStandard::getEnergyType, 5)
                             .gt(EpProductUnitConsumeStandard::getValidStart, startDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
                             .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
-                            .eq(EpProductUnitConsumeStandard::getProductType, productType.getId())
+                            .eq(EpProductUnitConsumeStandard::getProductType, 0)
                             .like(EpProductUnitConsumeStandard::getApplyOffice,epPartition.getId());
                     //部门单耗标准
                     EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
-                    dataList.add(productUnitConsumeStandard.getUnitValue());
+                    if (Objects.nonNull(productUnitConsumeStandard)) {
+                        dataList.add(productUnitConsumeStandard.getUnitValue());
+                    } else {
+                        dataList.add(null);
+                    }
                 }
             }
         }
@@ -199,12 +206,12 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         //标准类型：企业标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
         //产品类型：深加工
-        SysDictVO productType = remoteDictFeignApi.getByCode("deep_processing", "product_type").getData();
+//        SysDictVO productType = remoteDictFeignApi.getByCode("deep_processing", "product_type").getData();
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getEnergyType, 1)
                 .gt(EpProductUnitConsumeStandard::getValidStart, selectDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
                 .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
-                .eq(EpProductUnitConsumeStandard::getProductType, productType.getId())
+                .eq(EpProductUnitConsumeStandard::getProductType, 1)
                 .eq(EpProductUnitConsumeStandard::getProductThick, thick);
         EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
 
@@ -271,7 +278,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
                                        BigDecimal thick,
                                        EpOverViewVO epOverViewVO) {
         EpEnergyType epEnergyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getName, energyType));
-        EpPartition partition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeName, partitionName));
+        EpPartition partition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeName, partitionName).eq(EpPartition::getType,energyType));
         //标准类型：企业标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
         //产品类型：基片
@@ -291,7 +298,11 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         Set<LocalDate> localDateSet = new HashSet<>();
         localDateSet.add(startLocalDate);
         localDateSet.add(selectDate);
-        List<EpMeterReadAllDataVO> meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
+
+        List<EpMeterReadAllDataVO> meterReadAllDataVOList = new ArrayList<>();
+        if (Objects.nonNull(partition)) {
+             meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
+        }
         if (Objects.nonNull(thick)) {
             meterReadAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> thick.equals(epMeterReadAllDataVO.getThick())).collect(Collectors.toList());
         }
