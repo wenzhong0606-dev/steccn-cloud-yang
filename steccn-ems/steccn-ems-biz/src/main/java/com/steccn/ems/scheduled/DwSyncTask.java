@@ -47,7 +47,7 @@ public class DwSyncTask {
         }
         log.info("抄表归档-读数开始");
         try {
-            epDwService.meterRead(LocalDate.now());
+            epDwService.meterRead(LocalDate.now().minusDays(1));
         } catch (Exception e) {
             log.error("抄表归档-读数异常", e);
         } finally {
@@ -68,7 +68,7 @@ public class DwSyncTask {
         }
         log.info("数仓归档-读数开始");
         try {
-            epDwService.electricMoney(LocalDate.now());
+            epDwService.electricMoney(LocalDate.now().minusDays(1));
         } catch (Exception e) {
             log.error("数仓归档-读数异常", e);
         } finally {
