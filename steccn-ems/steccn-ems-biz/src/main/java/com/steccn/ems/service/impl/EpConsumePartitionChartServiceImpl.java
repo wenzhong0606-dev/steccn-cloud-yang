@@ -502,6 +502,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
 
+        long idx = 1;
+        Map<Long,String> officeMap = Maps.newHashMap();
+
+
         //遍历所有的分区节点
         for (Map.Entry<Long, String> partitionEntry : partitionIdNameMap.entrySet()) {
             //班组分类
@@ -515,14 +519,17 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 epChartGraphxAxisDTO.setXAxis(Strings.EMPTY);
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> list = Lists.newArrayList();
-                TupleDTO tupleDTO = new TupleDTO(partitionEntry.getKey(), Lists.newArrayList(new TupleDTO("单耗平均值", divide)));
+                TupleDTO tupleDTO = new TupleDTO(idx, Lists.newArrayList(new TupleDTO("单耗平均值", divide)));
+                officeMap.put(idx,partitionEntry.getValue()+classGroupEntry.getValue());
                 list.add(tupleDTO);
                 epChartGraphxAxisDTO.setData(list);
                 dataList.add(epChartGraphxAxisDTO);
+                idx++;
             }
         }
+
         epChartGraphDTO.setDataList(dataList);
-        epChartGraphDTO.setOfficeMap(partitionIdNameMap);
+        epChartGraphDTO.setOfficeMap(officeMap);
 
         //部门行业的单耗标准
         List<StandardVO<BigDecimal>> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
