@@ -502,6 +502,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpChartGraphDTO<Long, String, BigDecimal> epChartGraphDTO = new EpChartGraphDTO<>();
         List<EpChartGraphxAxisDTO<Long, String, BigDecimal>> dataList = Lists.newArrayList();
 
+        long idx = 1;
+        Map<Long,String> officeMap = Maps.newHashMap();
+
+
         //遍历所有的分区节点
         for (Map.Entry<Long, String> partitionEntry : partitionIdNameMap.entrySet()) {
             //班组分类
@@ -515,14 +519,17 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 epChartGraphxAxisDTO.setXAxis(Strings.EMPTY);
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> list = Lists.newArrayList();
-                TupleDTO tupleDTO = new TupleDTO(partitionEntry.getKey(), Lists.newArrayList(new TupleDTO("单耗平均值", divide)));
+                TupleDTO tupleDTO = new TupleDTO(idx, Lists.newArrayList(new TupleDTO("单耗平均值", divide)));
+                officeMap.put(idx,partitionEntry.getValue()+classGroupEntry.getValue());
                 list.add(tupleDTO);
                 epChartGraphxAxisDTO.setData(list);
                 dataList.add(epChartGraphxAxisDTO);
+                idx++;
             }
         }
+
         epChartGraphDTO.setDataList(dataList);
-        epChartGraphDTO.setOfficeMap(partitionIdNameMap);
+        epChartGraphDTO.setOfficeMap(officeMap);
 
         //部门行业的单耗标准
         List<StandardVO<BigDecimal>> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
@@ -949,7 +956,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
                     classDateFilterData = classDateAllData.stream()
                             .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
-                                    && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
+                                    && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd)).collect(Collectors.toList());
                 }
                 List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto,classDateFilterData,consumeStandardList);
                 epChartGraphxAxisDTO.setData(data);
@@ -1195,13 +1202,15 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
     }
 
     private List<EpProductUnitConsumeStandard> getDepartmentStandardList(EpTableDTO dto,SysDictVO sysDictVO) {
+        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType,dto.getEnergyType()).in(EpPartition::getId,dto.getPartitionIdList()));
+        List<Integer> partitionIdList = partitionList.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>();
         queryWrapper.and(query -> {
-            for (int i = 0; i < dto.getPartitionIdList().size(); i++) {
-                if (i == dto.getPartitionIdList().size() - 1) {
-                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i));
+            for (int i = 0; i < partitionIdList.size(); i++) {
+                if (i == partitionIdList.size() - 1) {
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice, partitionIdList.get(i));
                 } else {
-                    query.like(EpProductUnitConsumeStandard::getApplyOffice, dto.getPartitionIdList().get(i)).or();
+                    query.like(EpProductUnitConsumeStandard::getApplyOffice, partitionIdList.get(i)).or();
                 }
             }
         });
@@ -1217,6 +1226,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
     private List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> getTupleDTOList(EpTableDTO dto, List<EpMeterReadAllDataVO> classDateAllData, List<EpProductUnitConsumeStandard> consumeStandardList) {
         List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = Lists.newArrayList();
+        List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType,dto.getEnergyType()).in(EpPartition::getId,dto.getPartitionIdList()));
+
         //遍历所有的分区节点
         for (Long partitionId : dto.getPartitionIdList()) {
             //获取分区数据集合
@@ -1240,9 +1251,12 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 poleList.add(stack);
                 //获取部门标准
                 BigDecimal standard = null;
-                Optional<EpProductUnitConsumeStandard> optional = consumeStandardList.stream().filter(consumestandard -> consumestandard.getApplyOffice().contains(partitionId.intValue())).findAny();
-                if (optional.isPresent()) {
-                    standard = optional.get().getUnitValue();
+                Optional<EpPartition> partitionOptional = partitionList.stream().filter(partition -> partition.getId().equals(partitionId)).findAny();
+                if (partitionOptional.isPresent()) {
+                    Optional<EpProductUnitConsumeStandard> optional = consumeStandardList.stream().filter(consumestandard -> consumestandard.getApplyOffice().contains(partitionOptional.get().getOfficeId())).findAny();
+                    if (optional.isPresent()) {
+                        standard = optional.get().getUnitValue();
+                    }
                 }
                 TupleDTO<String, BigDecimal> standardTupleDTO = new TupleDTO<>("部门标准", standard);
                 poleList.add(standardTupleDTO);
