@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
@@ -28,6 +29,7 @@ import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -144,16 +146,19 @@ public class EpDwServiceImpl implements EpDwService {
                     //定义插入表
                     List<EpEnergyMoney> insertList = Lists.newArrayList();
                     for (EpDwEnergyPricePlanDTO meterPrice : meterPriceList) {
-                        Optional<DwEpMeterCollectVO> startDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()) && v.getRecordTime().equals(LocalDateTime.of(date, meterPrice.getStart()))).findFirst();
                         Optional<DwEpMeterCollectVO> endDataOp;
-                        LocalDateTime endLdt = null;
+                        LocalDateTime endLdt;
                         if (meterPrice.getEnd().equals(LocalTime.of(0, 0, 0))) {
                             endLdt = LocalDateTime.of(date.plusDays(1), meterPrice.getEnd());
                         } else {
                             endLdt = LocalDateTime.of(date, meterPrice.getEnd());
                         }
                         LocalDateTime finalEndLdt = endLdt;
-                        endDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()) && v.getRecordTime().equals(finalEndLdt)).findFirst();
+                        LocalDateTime start = LocalDateTime.of(date, meterPrice.getStart());
+                        Optional<DwEpMeterCollectVO> startDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()))
+                                .filter(v -> !v.getRecordTime().isAfter(start)).max(Comparator.comparing(DwEpMeterCollectVO::getRecordTime));
+                        endDataOp = meterReadList.stream().filter(v -> v.getCode().equals(meterPrice.getDistantMapCode()))
+                                .filter(v -> !v.getRecordTime().isAfter(finalEndLdt)).max(Comparator.comparing(DwEpMeterCollectVO::getRecordTime));
                         if (startDataOp.isPresent() && endDataOp.isPresent()) {
                             EpEnergyMoney model = new EpEnergyMoney();
                             BeanUtils.copyProperties(meterPrice, model);
@@ -172,7 +177,6 @@ public class EpDwServiceImpl implements EpDwService {
         }
         return Boolean.TRUE;
     }
-
 
     /**
      * @param dwList
