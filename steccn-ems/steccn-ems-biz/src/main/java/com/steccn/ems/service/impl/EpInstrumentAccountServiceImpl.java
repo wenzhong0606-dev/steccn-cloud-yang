@@ -273,29 +273,29 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         });
 
         //排序+逻辑分页
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-        //排序
-        List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())){
-            if (dto.getAscFlag()==Boolean.TRUE) {
-                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
-            }else {
-               collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())) {
+            if (dto.getAscFlag() == Boolean.TRUE) {
+                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+            } else {
+                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
             }
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())) {
-            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+            instrumentAccountVOS = listToSortBySubName(instrumentAccountVOS, dto.getSortField(), dto.getAscFlag());
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(dto.getSortField())) {
-            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+            instrumentAccountVOS = listToSortBySubName(instrumentAccountVOS, dto.getSortField(), dto.getAscFlag());
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(dto.getSortField())) {
-            collect = listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
+            instrumentAccountVOS = listToSortBySubName(instrumentAccountVOS, dto.getSortField(), dto.getAscFlag());
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS.equals(dto.getSortField())) {
             if (dto.getAscFlag() == Boolean.TRUE) {
-                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
+                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus).reversed()).collect(Collectors.toList());
             } else {
-                collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus)).collect(Collectors.toList());
+                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getStatus)).collect(Collectors.toList());
             }
 
         }
+        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
+        //排序
+        List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
 
         page.setCurrent(dto.getCurrent());
         page.setTotal(instrumentAccountVOS.size());
@@ -527,8 +527,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                     names.add(list.get(i).getDistantMapCode()+i);
                     map.put(list.get(i).getDistantMapCode()+i, list.get(i));
                 }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-                    names.add(list.get(i).getMeterName()+i);
-                    map.put(list.get(i).getMeterName()+i,list.get(i));
+                    names.add(list.get(i).getMeterName());
+                    map.put(list.get(i).getMeterName(),list.get(i));
                 }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
                     names.add(list.get(i).getSiteName()+i);
                     map.put(list.get(i).getSiteName()+i,list.get(i));
@@ -548,7 +548,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }else {
                 Collections.sort(names, new Comparator<String>() {
                     Collator collator = Collator.getInstance(Locale.CHINA);
-
                     @Override
                     public int compare(String o1, String o2) {
                         CollationKey key1 = collator.getCollationKey(o1);

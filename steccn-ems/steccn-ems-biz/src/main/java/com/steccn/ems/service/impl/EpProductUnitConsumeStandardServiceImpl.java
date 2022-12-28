@@ -133,31 +133,31 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         });
 
         //排序+逻辑分页
+        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
+            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
+            if (dto.getAscFlag()==Boolean.TRUE){
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart)).collect(Collectors.toList());
+            }else {
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed()).collect(Collectors.toList());
+            }
+        }else {
+            standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime)).collect(Collectors.toList());
+        }
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
 
-        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-            collect= listToSortBySubName(collect, dto.getSortField(), dto.getAscFlag());
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
-           if (dto.getAscFlag()==Boolean.TRUE){
-               collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart)).collect(Collectors.toList());
-           }else {
-               collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed()).collect(Collectors.toList());
-           }
-        }else {
-            collect = collect.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime)).collect(Collectors.toList());
-        }
         page.setCurrent(dto.getCurrent());
         page.setTotal(standardVOS.size());
         page.setSize(dto.getSize());
