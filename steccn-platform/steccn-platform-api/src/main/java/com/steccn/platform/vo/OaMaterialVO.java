@@ -3,6 +3,7 @@ package com.steccn.platform.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * OA查询物料接口VO
@@ -28,4 +29,9 @@ public class OaMaterialVO implements Serializable {
      * 分类名字
      */
     private String categoryName;
+
+    /**
+     * 修改时间
+     */
+    private LocalDateTime updateTime;
 }

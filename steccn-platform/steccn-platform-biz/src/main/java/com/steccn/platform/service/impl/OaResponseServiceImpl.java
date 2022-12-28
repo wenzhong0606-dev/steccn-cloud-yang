@@ -110,6 +110,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
                 OaMaterialVO resultVO = new OaMaterialVO();
                 resultVO.setMaterialCode(tmp.getCode());
                 resultVO.setMaterialName(tmp.getName());
+                resultVO.setUpdateTime(tmp.getUpdateDate());
                 if(classInfoById.containsKey(tmp.getType())){
                     resultVO.setCategoryName(classInfoById.get(tmp.getType()));
                 }else {

@@ -61,9 +61,9 @@ public class OaDataController {
         return R.success(oaResponseService.addProcessNotify(dto));
     }
 
-    @PostMapping("/eqpSpare/page")
+    @GetMapping("/eqpSpare/page")
     @ApiOperation(value = "查询物料分页数据")
-    public R<Page<OaMaterialVO>> listPage(HttpServletRequest request, @RequestBody OaMaterialDTO dto) {
+    public R<Page<OaMaterialVO>> listPage(HttpServletRequest request,OaMaterialDTO dto) {
         validRequestHeader(request);
         return R.success(oaResponseService.listPage(dto));
     }
