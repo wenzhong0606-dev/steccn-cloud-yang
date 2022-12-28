@@ -2059,7 +2059,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
         }
         if (Objects.nonNull(dto.getDateEnd())) {
-            dto.setDateTimeStart(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
+            dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
         }
         if (Objects.nonNull(dto.getSamplingTime())) {
             dto.setSamplingStartTime(LocalDateTime.of(dto.getSamplingTime(), LocalTime.MIN));
