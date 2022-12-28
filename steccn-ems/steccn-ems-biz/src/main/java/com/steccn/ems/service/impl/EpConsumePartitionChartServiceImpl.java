@@ -892,6 +892,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
+        List<EpMeterReadAllDataVO> classDateFilterData = new ArrayList<>();
 
         List<EpProductUnitConsumeStandard> consumeStandardList = new ArrayList<>();
         List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
@@ -933,8 +934,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     epChartGraphxAxisDTO.setXAxis("晚班");
                 }
                 int finalI = i;
-                classDateAllData = classDateAllData.stream().filter(data -> data.getClassId().equals(finalI)).collect(Collectors.toList());
-                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> tupleDTOList = getTupleDTOList(dto, classDateAllData, consumeStandardList);
+                classDateFilterData = classDateAllData.stream().filter(data -> data.getClassId().equals(finalI)).collect(Collectors.toList());
+                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> tupleDTOList = getTupleDTOList(dto, classDateFilterData, consumeStandardList);
                 epChartGraphxAxisDTO.setData(tupleDTOList);
                 dataList.add(epChartGraphxAxisDTO);
             }
@@ -946,11 +947,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 EpChartGraphxAxisDTO<Long, String, BigDecimal> epChartGraphxAxisDTO = new EpChartGraphxAxisDTO<>();
                 if (!QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
                     epChartGraphxAxisDTO.setXAxis(XAxisUtil.convert(byCode, dataStart));
-                    classDateAllData = classDateAllData.stream()
+                    classDateFilterData = classDateAllData.stream()
                             .filter(v -> !LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataStart)
                                     && LocalDateTime.of(v.getReadDate(), ClassUtil.MORNING_START_TIME).isBefore(dataEnd.plusDays(1))).collect(Collectors.toList());
                 }
-                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto,classDateAllData,consumeStandardList);
+                List<TupleDTO<Long, List<TupleDTO<String, BigDecimal>>>> data = getTupleDTOList(dto,classDateFilterData,consumeStandardList);
                 epChartGraphxAxisDTO.setData(data);
                 dataList.add(epChartGraphxAxisDTO);
             }
