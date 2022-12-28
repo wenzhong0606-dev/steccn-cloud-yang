@@ -967,6 +967,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(partitionIdNameMap);
         epChartGraphDTO.setDataList(dataList);
         epChartGraphDTO.setStandardList(standardVOList);
+        epChartGraphDTO.setEnergyType(dto.getEnergyType());
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         if (QtManagerConstant.QtGranularityEnum.NONE.getCode().equals(byCode.getCode())) {
             convert.getXData().setData(Lists.newArrayList());
