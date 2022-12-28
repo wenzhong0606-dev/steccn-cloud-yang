@@ -44,7 +44,11 @@ public class ReadCorrectScheduledTask {
 //    @Scheduled(cron = "0/20 * * * * ? ")
     public void execute() {
         RLock lock = redissonClient.getLock(LockConstant.READ_CORRECT_SCHEDULED_TASK);
-        lock.lock();
+        boolean b = lock.tryLock();
+        if(!b){
+            log.info("获取锁失败");
+            return ;
+        }
         log.info("数据开始纠偏");
         try {
             LocalDate now = LocalDate.now();
