@@ -103,6 +103,11 @@ public class WmsTransferSlipInfo implements Serializable {
     private String caseNo;
 
     /**
+     * 目标箱号
+     */
+    private String targetCaseNo;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)
