@@ -214,9 +214,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public Map<Long, String> listByIdCh(List<Long> partitionIdList) {
-        Map<Long, String> resMap = Maps.newHashMap();
+        Map<Long, String> resMap = Maps.newLinkedHashMap();
         if (CollUtil.isNotEmpty(partitionIdList)) {
             List<EpPartition> epPartitions = listByIds(partitionIdList);
+            epPartitions.sort(Comparator.comparing(EpPartition::getSort));
             if (CollUtil.isNotEmpty(epPartitions)) {
                 epPartitions.forEach(ele -> {
                     resMap.put(ele.getId(), ele.getOfficeName());
