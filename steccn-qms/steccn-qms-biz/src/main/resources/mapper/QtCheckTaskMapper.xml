@@ -157,7 +157,7 @@
                 and a.material_id = #{dto.materialId}
             </if>
             <if test="dto.dateTimeStart !=null and dto.dateTimeEnd !=null">
-                and a.finished_time between #{dto.dateTimeStart} and #{dateTimeEnd}
+                and a.finished_time between #{dto.dateTimeStart} and #{dto.dateTimeEnd}
             </if>
             <if test="dto.samplingStartTime != null and dto.samplingEndTime != null">
                 and b.sampling_time between #{dto.samplingStartTime} and #{dto.samplingEndTime}
