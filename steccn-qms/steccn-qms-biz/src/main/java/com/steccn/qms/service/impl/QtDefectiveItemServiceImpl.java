@@ -327,7 +327,7 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         Map<String, TupleDTO<Integer, Integer>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(defectiveCodeSet)) {
             //根据code获取最小的id
-            List<QtDefectiveItem> dataList = list(new QueryWrapper<QtDefectiveItem>().select("code, min(id) as id ,  any_value (category_id) as category_id").lambda()
+            List<QtDefectiveItem> dataList = list(new QueryWrapper<QtDefectiveItem>().select("code, MAX(id) as id ,  any_value (category_id) as category_id").lambda()
                     .in(QtDefectiveItem::getCode, defectiveCodeSet)
                     .eq(QtDefectiveItem::getShowFlag, MpConstant.NO)
                     .groupBy(QtDefectiveItem::getCode));
