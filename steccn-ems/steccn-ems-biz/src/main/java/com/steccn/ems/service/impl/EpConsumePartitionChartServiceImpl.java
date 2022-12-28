@@ -853,7 +853,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
-                    rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                    rowVO.setThickStr(rowVO.getThick() +"mm");
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
@@ -1100,6 +1100,39 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
                 + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
         DownloadUtil.downloadTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_DHBZDB, excelName, map, detailPage.getRecords(), dto.getBase64());
+    }
+
+    @Override
+    @SneakyThrows
+    public void unitHistoryDownload(EpTableDTO dto, HttpServletResponse response) {
+        dto.setCurrent(1);
+        dto.setSize(999999);
+        Page<ConsumeHistoryContrastDetailVO> detailPage = consumePartitionUnitHistoryDetail(dto);
+        EpEnergyType energyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getId, dto.getEnergyType()), false);
+        Map<String, Object> map = MapUtils.newHashMap();
+        map.put("energyType", energyType.getName());
+        map.put("dateStart", LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN));
+        map.put("dateEnd", LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN));
+        map.put("historyDateStart", LocalDateUtil.localDateFormat(dto.getHistoryStart(), DatePattern.NORM_DATE_PATTERN));
+        map.put("historyDateEnd", LocalDateUtil.localDateFormat(dto.getHistoryEnd(), DatePattern.NORM_DATE_PATTERN));
+
+        EpPartition byId = epPartitionService.getById(dto.getPartitionIdList().get(0));
+        map.put("aa", Objects.nonNull(byId) ? byId.getOfficeName() : "单耗");
+        if (CollUtil.isNotEmpty(dto.getThick())) {
+            StringBuilder sb = new StringBuilder();
+            dto.getThick().forEach(tmp -> {
+                sb.append(tmp.toString() + "mm ");
+            });
+            map.put("thick", sb.toString());
+        } else {
+            map.put("thick", "无");
+        }
+        map.put("granularity", QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
+        String excelName = "单耗历史对比(" + energyType.getName() + ")_"
+                + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
+                + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
+        DownloadUtil.downloadTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_DHLSDB, excelName, map, detailPage.getRecords(), dto.getBase64());
+
     }
 
     private List<StandardVO<BigDecimal>> getStandardVOList(EpTableDTO dto, SysDictVO thick) {

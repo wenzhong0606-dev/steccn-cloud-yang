@@ -166,6 +166,20 @@ public class EpConsumePartitionChartController {
         return R.success(epConsumePartitionChartService.consumePartitionUnitHistoryDetail(dto));
     }
 
+    @PostMapping("/unit/history/download")
+    @ApiOperation(value = "单耗历史对比-下载")
+    public void unitHistoryDownload(@Valid @RequestBody EpTableDTO dto, HttpServletResponse response) throws IOException {
+        Assert.isTrue(dto.getPartitionIdList().size() == 1 ,"对比历史只能选择一个组织节点");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，开始日期不能为空");
+        Assert.notNull(dto.getHistoryStart(),"对比历史，结束日期不能为空");
+        try {
+            epConsumePartitionChartService.unitHistoryDownload(dto, response);
+        } catch (Exception e) {
+            // 若有异常则重置response
+            this.exceptionResponse(response, e);
+        }
+    }
+
     @PostMapping("/total/line")
     @ApiOperation(value = "领导驾驶舱-总体能耗趋势(近7日)-折线图")
     public R<EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal>> totalConsumePartitionLine(@Valid @RequestBody EpTotalConsumeDTO dto) {

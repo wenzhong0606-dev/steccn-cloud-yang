@@ -146,4 +146,11 @@ public interface EpConsumePartitionChartService {
      * @param response
      */
     void unitClassDownload(EpTableDTO dto, HttpServletResponse response);
+
+    /**
+     * 单耗历史对比-下载
+     * @param dto
+     * @param response
+     */
+    void unitHistoryDownload(EpTableDTO dto, HttpServletResponse response);
 }
