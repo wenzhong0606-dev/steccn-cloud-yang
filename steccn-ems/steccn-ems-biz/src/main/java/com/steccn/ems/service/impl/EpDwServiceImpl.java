@@ -148,7 +148,7 @@ public class EpDwServiceImpl implements EpDwService {
                 //meterReadList
                 meterReadList = Lists.newArrayList();
                 for (Map.Entry<String, List<DwEpMeterCollectVO>> entry : collect.entrySet()) {
-                    if (entry.getValue().size() == priceList.size()) {
+                    if (entry.getValue().size() > priceList.size()) {
                         meterReadList.addAll(entry.getValue());
                     }
                 }
