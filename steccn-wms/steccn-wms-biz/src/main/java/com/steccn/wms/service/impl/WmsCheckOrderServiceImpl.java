@@ -149,12 +149,12 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setWarehouse(((WmsCheckOrderInfo) vo).getWarehouse().toString());
             //仓库
             if(Objects.nonNull(wmsCheckOrderInfoVO.getWarehouse())){
-                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(wmsCheckOrderInfoVO.getWarehouse()));
+                R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(wmsCheckOrderInfoVO.getWarehouse()));
                 wmsCheckOrderInfoVO.setWarehouseName(warehouseInfo.getData().getOfficeName());
             }
             //货架
             if(Objects.nonNull(wmsCheckOrderInfoVO.getShelf())){
-                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(wmsCheckOrderInfoVO.getShelf()));
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(wmsCheckOrderInfoVO.getShelf()));
                 wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             }
             //物料
@@ -211,7 +211,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 materialIds.add(vo.getMaterialId());
                 R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
                 if(materialInfo.getData().size()>0) wmsStorageReceiptInfo.setMaterialCode(materialInfo.getData().get(vo.getMaterialId()).getCode());
-                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouse(Integer.parseInt(vo.getShelf()));
+                R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(Integer.parseInt(vo.getShelf()));
                 if(Objects.nonNull(shelfInfo.getData()))  wmsStorageReceiptInfo.setShelfCode(shelfInfo.getData().getOfficeCode());
                 wmsStorageReceiptInfo.setQuantity(vo.getResult());
                 //获取库存信息
@@ -453,6 +453,14 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         for (WmsCheckOrderInfo old:orderInfoOldList) {
             wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
             BeanUtils.copyProperties(old,wmsCheckOrderInfoVO);
+            //仓库
+            R<SysOfficeVO>  warehouseInfo = remoteOfficeFeign.shelfWarehouseInfo(old.getWarehouse());
+            wmsCheckOrderInfoVO.setWarehouse(old.getWarehouse().toString());
+            wmsCheckOrderInfoVO.setWarehouseName(warehouseInfo.getData().getOfficeName());
+            //货架
+            R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(old.getShelf());
+            wmsCheckOrderInfoVO.setShelf(old.getShelf().toString());
+            wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
