@@ -64,7 +64,7 @@
 	        a.meter_type meterType,
 	        a.entity_table entityTable,
 	        a.id meterId,
-	        r.read_value readValue,
+	        r.admin_value readValue,
 	        r.id id,
 	        t.`name` meterTypeName,
 	        a.status status
