@@ -79,6 +79,17 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.shelfWarehouse(id));
     }
 
+    /**
+     * 获取货架的id仓库信息 2.0
+     * @param id
+     * @return
+     */
+    @ApiOperation("货架的仓库")
+    @GetMapping("/shelf/shelfWarehouseInfo/{id}")
+    public R<SysOfficeVO> shelfWarehouseInfo(@PathVariable("id") Integer id) {
+        return R.success(sysOfficeService.shelfWarehouseInfo(id));
+    }
+
     @ApiOperation("根据孩子id获取父亲节点数据")
     @GetMapping("/parent/{id}")
     public R<SysOfficeVO> parent(@PathVariable("id") Integer id) {

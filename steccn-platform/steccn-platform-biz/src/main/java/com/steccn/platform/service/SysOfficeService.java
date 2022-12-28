@@ -156,4 +156,13 @@ public interface SysOfficeService extends IService<SysOffice> {
     Map<Integer, SysOfficeVO> parentInfo(Set<Integer> childIdList);
 
     String getByIdSysOfficeInfo( Long id);
+
+
+    /**
+     *
+     * @param id  根据主键获取仓库或者货架信息
+     * @return
+     */
+    SysOfficeVO shelfWarehouseInfo(Integer id);
+
 }

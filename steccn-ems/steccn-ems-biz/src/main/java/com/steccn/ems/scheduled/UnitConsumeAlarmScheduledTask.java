@@ -3,7 +3,9 @@ package com.steccn.ems.scheduled;
 import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.common.vo.EpChartUnitConsumeAlarmVO;
@@ -47,42 +49,50 @@ public class UnitConsumeAlarmScheduledTask {
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Async
-    @Scheduled(cron = "0 15 9 * * ?")
+//    @Scheduled(cron = "0 15 9 * * ?")
+    @Scheduled(cron = "0/40 * * * * ? ")
     public void execute() {
         List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
         List<SysDictVO> thickVOList = remoteDictFeignApi.listByType( "product_thickness_range").getData();
-        List<BigDecimal> thickList = thickVOList.stream().map(thick -> new BigDecimal(thick.getCode())).collect(Collectors.toList());
+        List<BigDecimal> thickList = new ArrayList<>();
+        for (SysDictVO sysDictVO : thickVOList) {
+            thickList.add(RegularUtil.extractValue(sysDictVO.getCode(), null, (x) -> new BigDecimal(x)));
+        }
         thickList.add(BigDecimal.valueOf(-1));
         for (int i = 1; i < 6; i++) {
-            if (i == 1) {
-                for (BigDecimal thick : thickList) {
-                    EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
+            try {
+                if (i == 1) {
+                    for (BigDecimal thick : thickList) {
+                        EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
+                        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
+                        consumeAlarmVOList.addAll(subVO.getAlarmList());
+                        EpTableDTO epTableDeepDTO = getEpTableDTO(i,thick,"深加工制造部");
+                        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
+                        consumeAlarmVOList.addAll(deepVO.getAlarmList());
+                    }
+                }
+                if (i == 2) {
+                    EpTableDTO epTableSubDTO = getEpTableDTO(i,null,"基片制造部");
                     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
                     consumeAlarmVOList.addAll(subVO.getAlarmList());
-                    EpTableDTO epTableDeepDTO = getEpTableDTO(i,thick,"深加工制造部");
+                    EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"深加工制造部");
                     EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
                     consumeAlarmVOList.addAll(deepVO.getAlarmList());
                 }
-            }
-            if (i == 2) {
-                EpTableDTO epTableSubDTO = getEpTableDTO(i,null,"基片制造部");
-                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
-                consumeAlarmVOList.addAll(subVO.getAlarmList());
-                EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"深加工制造部");
-                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
-                consumeAlarmVOList.addAll(deepVO.getAlarmList());
-            }
-            if (i == 3){
-                EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"基片制造部");
-                EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
-                consumeAlarmVOList.addAll(deepVO.getAlarmList());
-            }
-            if (i == 4 || i == 5) {
-                for (BigDecimal thick : thickList) {
-                    EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
-                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
-                    consumeAlarmVOList.addAll(subVO.getAlarmList());
+                if (i == 3){
+                    EpTableDTO epTableDeepDTO = getEpTableDTO(i,null,"基片制造部");
+                    EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> deepVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableDeepDTO);
+                    consumeAlarmVOList.addAll(deepVO.getAlarmList());
                 }
+                if (i == 4 || i == 5) {
+                    for (BigDecimal thick : thickList) {
+                        EpTableDTO epTableSubDTO = getEpTableDTO(i,thick,"基片制造部");
+                        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> subVO = epConsumePartitionChartService.unitConsumePartitionContrastChart(epTableSubDTO);
+                        consumeAlarmVOList.addAll(subVO.getAlarmList());
+                    }
+                }
+            } catch (SteccnChartException e) {
+                continue;
             }
         }
 
@@ -94,6 +104,7 @@ public class UnitConsumeAlarmScheduledTask {
                 BeanUtils.copyProperties(consumeAlarmVO, epUnitConsumeAlarm);
                 epUnitConsumeAlarm.setAlarmDate(consumeAlarmVO.getAlarmDateTime());
                 epUnitConsumeAlarm.setAlarmType(0);
+                epUnitConsumeAlarm.setEnergyType(consumeAlarmVO.getEnergyType());
                 String dateString = LocalDateUtil.localDateFormat(consumeAlarmVO.getAlarmDateTime().toLocalDate(), DatePattern.NORM_DATE_PATTERN);
                 String content = dateString + "日单耗" + consumeAlarmVO.getCurrentValue() + "," + "超过内部标准" + consumeAlarmVO.getStandardValue();
                 epUnitConsumeAlarm.setContent(content);
@@ -101,7 +112,9 @@ public class UnitConsumeAlarmScheduledTask {
             }
         }
 
-        epUnitConsumeAlarmService.saveBatch(epUnitConsumeAlarmList);
+        if (CollectionUtils.isNotEmpty(epUnitConsumeAlarmList)) {
+            epUnitConsumeAlarmService.saveBatch(epUnitConsumeAlarmList);
+        }
     }
 
     private void recursion(List<EpPartition> partitionFilterList, List<EpPartition> epPartitionList, List<Long> partitionIdList) {
@@ -111,7 +124,7 @@ public class UnitConsumeAlarmScheduledTask {
         List<Long> idList = partitionFilterList.stream().map(EpPartition::getId).collect(Collectors.toList());
         partitionIdList.addAll(idList);
 
-        List<EpPartition> partitionList = epPartitionList.stream().filter(epPartition -> idList.contains(epPartition.getId())).collect(Collectors.toList());
+        List<EpPartition> partitionList = epPartitionList.stream().filter(epPartition -> idList.contains(epPartition.getParentId())).collect(Collectors.toList());
         recursion(partitionList, epPartitionList, partitionIdList);
     }
 
@@ -135,6 +148,7 @@ public class UnitConsumeAlarmScheduledTask {
         epTableDTO.setPartitionIdList(partitionIdList);
         epTableDTO.setEnergyType(energyType);
         epTableDTO.setThick(thickList);
+        epTableDTO.setGranularity(1);
         return epTableDTO;
     }
 }

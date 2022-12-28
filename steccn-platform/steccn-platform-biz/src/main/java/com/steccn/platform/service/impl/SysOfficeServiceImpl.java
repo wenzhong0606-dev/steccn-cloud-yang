@@ -246,7 +246,11 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         }
         return null;
     }
-
+    @Override
+    public SysOfficeVO shelfWarehouseInfo(Integer id) {
+        SysOffice shelfWarehouseInfo = getById(id);
+        return BeanUtil.copyProperties(shelfWarehouseInfo, SysOfficeVO.class);
+    }
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);

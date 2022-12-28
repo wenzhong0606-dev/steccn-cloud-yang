@@ -117,6 +117,14 @@ public interface RemoteOfficeFeign {
     R<SysOfficeVO> shelfWarehouse(@PathVariable("id") Integer id);
 
     /**
+     * 获取货架的id仓库信息 2.0
+     * @param id
+     * @return
+     */
+    @ApiOperation("货架的仓库")
+    @GetMapping("/feign/platform/sys/office/shelf/shelfWarehouseInfo/{id}")
+    R<SysOfficeVO> shelfWarehouseInfo(@PathVariable("id") Integer id);
+    /**
      * 根据孩子id获取父亲节点数据
      * @param id 孩子id
      * @return
