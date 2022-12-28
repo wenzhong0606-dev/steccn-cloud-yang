@@ -155,7 +155,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
             standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime)).collect(Collectors.toList());
         }
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-        //排序
+        //逻辑分页
         List<EpProductUnitConsumeStandardVO> collect = standardVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
 
         page.setCurrent(dto.getCurrent());
@@ -211,9 +211,9 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     .eq(EpProductUnitConsumeStandard::getProductType, dto.getProductType())
                     .eq(EpProductUnitConsumeStandard::getProductThick, dto.getProductThick())
                   //  .eq(CollUtil.isNotEmpty(dto.getApplyOffice()), EpProductUnitConsumeStandard::getApplyOffice, dto.getApplyOffice())
-                    //老的开始时间小于等于dto的有效期结束时间,表明时间有重叠
+                    //输入的结束时间小于等于dto的有效期开始时间,表明时间有重叠
                     .lt(EpProductUnitConsumeStandard::getValidStart, dto.getValidEnd().plusDays(1))
-                    //老的结束时间大于等于dto的有效开始时间,表明时间有重叠
+                    //输入的开始时间大于等于dto的有效结束时间,表明时间有重叠
                     .gt(EpProductUnitConsumeStandard::getValidEnd, dto.getValidStart().minusDays(1))
                     //可展示的
                     .eq(EpProductUnitConsumeStandard::getShowFlag, MpConstant.YES));
