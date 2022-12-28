@@ -29,6 +29,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -240,6 +241,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
     }
 
     @Override
+    @Transactional(readOnly=false)
     public Boolean transport(Long id) {
         WmsLogisticsOrder order = getById(id);
         Assert.notNull(order, "物流单不存在");
@@ -262,7 +264,6 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             //2.修改物流单状态信息
             order.setPracticalTime(LocalDateTime.now());
             order.setStatus(WmsManagerConstant.LogisticsStateEnum.TWO.getCode());
-            updateById(order);
             List<WmsLogisticsDetailDTO> list = dto.getList();
             Assert.isTrue(CollUtil.isNotEmpty(list), "物流单详情明细信息不可为空");
             //3.保存明细信息
@@ -343,6 +344,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                     e.printStackTrace();
                 }
             }
+            //修改单据状态
+            updateById(order);
         } finally {
             lock.unlock();
         }
