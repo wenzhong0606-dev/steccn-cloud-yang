@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -365,7 +366,7 @@ public class EpEnergyGenerateSectionPriceChartImpl implements EpEnergyGenerateSe
         for(Map.Entry<Integer,BigDecimal> entry:dataMap.entrySet()){
             EpEnergyChartPieValueVO<BigDecimal> pie = new EpEnergyChartPieValueVO<>();
             pie.setName(EpManagerConstant.ElectricType.getNameByCode(entry.getKey()) + "时段");
-            pie.setValue(entry.getValue().setScale(2));
+            pie.setValue(entry.getValue().setScale(2, RoundingMode.HALF_UP));
             pies.add(pie);
         }
         resultPieVO.setData(pies);

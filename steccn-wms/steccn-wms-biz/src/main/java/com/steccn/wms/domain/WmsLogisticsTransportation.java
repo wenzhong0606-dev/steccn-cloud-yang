@@ -38,6 +38,12 @@ public class WmsLogisticsTransportation implements Serializable {
      */
     private Long classificationId;
 
+
+    /**
+     * 运输方式名称
+     */
+    private String classificationName;
+
     /**
      * 创建人id
      */

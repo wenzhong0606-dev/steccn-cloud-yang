@@ -27,7 +27,7 @@ public class EpUnitConsumeAlarm implements Serializable {
     /**
      * 告警分区节点
      */
-    private Integer officeId;
+    private Long officeId;
 
     /**
      * 告警分区节点名称

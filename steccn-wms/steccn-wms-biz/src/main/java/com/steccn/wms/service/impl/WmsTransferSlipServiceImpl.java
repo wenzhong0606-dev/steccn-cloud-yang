@@ -149,7 +149,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
                     BeanUtil.copyProperties(info, wmsTransferSlipInfo);
                     wmsTransferSlipInfo.setTransferSlipId(model.getId());
-                    infoList.add(wmsTransferSlipInfo);
+
                     WmsInventoryDTO source = new WmsInventoryDTO();
                     BeanUtil.copyProperties(info, source);
                     source.setId(info.getSourceInventoryId());
@@ -164,6 +164,8 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                     target.setShelfId(info.getTargetShelf());
                     target.setWarehouseId(model.getTargetWarehouse());
                     targetList.add(target);
+                    wmsTransferSlipInfo.setTargetCaseNo(target.getCaseNo());
+                    infoList.add(wmsTransferSlipInfo);
                 }
                 wmsTransferSlipInfoService.saveBatch(infoList);
                 //增加库存中原始占用库存数量,减少可用库存
@@ -215,7 +217,6 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         wmsTransferSlipInfo.setTransferSlipId(model.getId());
                         addList.add(info);
                     }
-                    list.add(wmsTransferSlipInfo);
                 }
                 LambdaQueryWrapper<WmsTransferSlipInfo> wrapper = new LambdaQueryWrapper<WmsTransferSlipInfo>()
                         .eq(WmsTransferSlipInfo::getTransferSlipId, dto.getId())
@@ -265,6 +266,12 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         target.setShelfId(info.getTargetShelf());
                         target.setWarehouseId(model.getTargetWarehouse());
                         targetList.add(target);
+                        //明细信息
+                        WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
+                        BeanUtil.copyProperties(info,wmsTransferSlipInfo);
+                        wmsTransferSlipInfo.setTransferSlipId(model.getId());
+                        wmsTransferSlipInfo.setTargetCaseNo(target.getCaseNo());
+                        list.add(wmsTransferSlipInfo);
                     }
                     //增加库存中原始占用库存数量,减少可用库存
                     wmsInventoryService.addLockQuantity(sourceList);
@@ -292,6 +299,10 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                         target.setShelfId(info.getTargetShelf());
                         target.setWarehouseId(model.getTargetWarehouse());
                         targetList.add(target);
+                        //明细信息
+                        WmsTransferSlipInfo wmsTransferSlipInfo = new WmsTransferSlipInfo();
+                        BeanUtil.copyProperties(info,wmsTransferSlipInfo);
+                        list.add(wmsTransferSlipInfo);
                     });
                     wmsInventoryService.editLockQuantity(sourceList);
                     wmsInventoryService.updateInventory(sourceList);
@@ -333,6 +344,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
                 WmsInventoryDTO target = new WmsInventoryDTO();
                 BeanUtil.copyProperties(info, target);
                 target.setShelfId(info.getTargetShelf());
+                target.setCaseNo(info.getTargetCaseNo());
                 target.setWarehouseId(order.getTargetWarehouse());
                 sourceList.add(source);
                 targetList.add(target);

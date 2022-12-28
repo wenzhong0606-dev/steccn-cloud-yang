@@ -22,4 +22,7 @@ public class WmsLogisticsTransportationDTO {
     @ApiModelProperty("分类id")
     private Long classificationId;
 
+    @ApiModelProperty("分类名称")
+    private String classificationName;
+
 }
