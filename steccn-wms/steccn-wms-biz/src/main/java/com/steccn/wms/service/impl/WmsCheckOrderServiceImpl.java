@@ -324,7 +324,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
             WmsCheckOrderInfo wmsCheckOrderInfoTem = new WmsCheckOrderInfo();
             if(Objects.isNull(wmsCheckOrderInfo)){
-                wmsCheckOrderInfoTem.setResult(new BigDecimal(orderInfo.get("result").toString()));
+                wmsCheckOrderInfoTem.setResult(Objects.isNull(orderInfo.get("result"))?new BigDecimal(orderInfo.get("quantity").toString())
+                        :new BigDecimal(orderInfo.get("result").toString()));
                 wmsCheckOrderInfoTem.setDifference(new BigDecimal(orderInfo.get("difference").toString()));
                 wmsCheckOrderInfoTem.setQuantity(new BigDecimal(orderInfo.get("quantity").toString()));
                 wmsCheckOrderInfoTem.setCheckOrderId(checkOrderId);
