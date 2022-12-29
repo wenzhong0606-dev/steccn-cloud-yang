@@ -173,7 +173,12 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //先过滤掉前端传过来不符合要求的数据
         List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(dtoList)){
-            //先根据传过来的数据根据officeId和sort组合成Map
+            //先自己给传过来的数据排序
+            for (int i = 0; i < dtoList.size(); i++) {
+                EpPartitionListDTO epPartitionListDTO = dtoList.get(i);
+                epPartitionListDTO.setSort(i);
+            }
+            //然后根据officeId和sort组合成Map
             Map<Integer,Integer> idSortMap = Maps.newHashMap();
             dtoList.stream().forEach(v->{
                 idSortMap.put(v.getId(),v.getSort());
@@ -199,7 +204,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     dealAddPartitionList.add(epPartitionVO);
                 }else if (officeIds.contains(partitionDTO.getId())){
                     EpPartition epPartition = officeIdPartitionMap.get(partitionDTO.getId());
-                    epPartition.setSort(partitionDTO.getSort());
+                    epPartition.setSort(idSortMap.get(partitionDTO.getId()));
                     dealUpdatePartitionList.add(epPartition);
                 }
             }
@@ -454,7 +459,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<EpPartition> parentList = epPartitions.stream().filter(s -> Objects.nonNull(childPartitionVO.getParentId())&&
                 childPartitionVO.getParentId().equals(s.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(parentList)){
-
             List<EpPartitionParentVO> epPartitionParentVOS = BeanUtil.copyToList(parentList, EpPartitionParentVO.class);
             childPartitionVO.setParentList(epPartitionParentVOS);
             epPartitions.removeAll(parentList);

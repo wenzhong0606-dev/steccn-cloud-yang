@@ -313,11 +313,12 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     }
 
     private LocalDateTime getLastReadTime( List<EpMeterRead> epMeterReads) {
+        epMeterReads= epMeterReads.stream().filter(m->Objects.nonNull(m.getReadTime())).collect(Collectors.toList());
             if (CollUtil.isEmpty(epMeterReads)){
                 return null;
-            }else if (!epMeterReads.stream().filter(m->Objects.isNull(m.getReadTime()))
-                    .findAny().isPresent()){
-                LocalDateTime lastReadTime = LocalDateTime.now();
+            }else
+                //if (!epMeterReads.stream().filter(m->Objects.isNull(m.getReadTime())).findAny().isPresent()){
+            {  LocalDateTime lastReadTime = LocalDateTime.now();
                 for (int i = 0; i < epMeterReads.size(); i++) {
                     lastReadTime =epMeterReads.get(i).getReadTime();
                     if ((i+1)<epMeterReads.size()){
@@ -328,7 +329,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 }
                 return lastReadTime;
             }
-            return null;
     }
 
     @Override
@@ -433,7 +433,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
      * @return
      */
     private List<EpInstrumentAccountPageVO> listToSortBySubName(List<EpInstrumentAccountPageVO> list,String sort,Boolean isOrder) {
-        if (list == null || list.size() == 0) {
+        if (CollUtil.isEmpty(list)) {
             return null;
         }
         Map<String, EpInstrumentAccountPageVO> map = new HashMap<String, EpInstrumentAccountPageVO>();
