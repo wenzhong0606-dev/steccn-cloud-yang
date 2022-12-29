@@ -1140,7 +1140,6 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         } else {
             map.put("thick", "无");
         }
-        map.put("granularity", QtManagerConstant.QtGranularityEnum.getByCode(dto.getGranularity()).getName());
         String excelName = "单耗历史对比(" + energyType.getName() + ")_"
                 + LocalDateUtil.localDateFormat(dto.getStart(), DatePattern.NORM_DATE_PATTERN) + "_"
                 + LocalDateUtil.localDateFormat(dto.getEnd(), DatePattern.NORM_DATE_PATTERN);
