@@ -58,15 +58,71 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         } else {
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
         }
-            //根据传过来的能源类型先获取全量数据
+            //根据传过来的能源类型先获取数据库的全量数据
         List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
                 .eq(EpPartition::getDelFlag,MpConstant.NO));
+
+        List<EpPartitionVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
-            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList,energyType);
-               epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
+//            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList,energyType);
+//               epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
+            //复制结果到新的集合
+            List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
+            //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
+            List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
+            rootVOList= searchRoot(epPartitionVOS);
+            for (EpPartitionVO root : rootVOList) {
+                List<EpPartitionVO> children = getChildren(epPartitionVOS, root,partitionNodes);
+                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
+                    root.setIsLinkTable(MpConstant.YES);
+                }else {
+                    root.setIsLinkTable(MpConstant.NO);
+                }
+                root.setChildren(children);
             }
+            epPartitionNameListVO.setEpPartitionVOList(rootVOList);
+        }
         return epPartitionNameListVO;
+    }
+
+    private List<EpPartitionVO> getChildren(List<EpPartitionVO> childrenList, EpPartitionVO root,List<Long> partitionNodes) {
+        List<EpPartitionVO> result=Lists.newArrayList();
+        for (EpPartitionVO epPartitionVO : childrenList) {
+            if (Objects.nonNull(epPartitionVO.getParentId())&& epPartitionVO.getParentId().equals(root.getId())){
+                epPartitionVO.setParentId(root.getId());
+                epPartitionVO.setParentOfficeId(root.getOfficeId());
+                epPartitionVO.setParentOfficeName(root.getOfficeName());
+                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(epPartitionVO.getId())){
+                    epPartitionVO.setIsLinkTable(MpConstant.YES);
+                }else {
+                    epPartitionVO.setIsLinkTable(MpConstant.NO);
+                }
+                //递归方法找到子节点
+                List<EpPartitionVO> children = getChildren(childrenList, epPartitionVO,partitionNodes);
+                epPartitionVO.setChildren(children);
+                result.add(epPartitionVO);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 根据一堆元素 ，自己去查询根节点
+     * @param dbList 元素集合
+     * @return
+     */
+    private List<EpPartitionVO> searchRoot(List<EpPartitionVO> dbList) {
+        ArrayList<EpPartitionVO> rootList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dbList)){
+            for (EpPartitionVO epPartitionVO : dbList) {
+                long count = dbList.stream().filter(v -> v.getId().equals(epPartitionVO.getParentId())).count();
+                if (count==0){
+                    rootList.add(epPartitionVO);
+                }
+            }
+        }
+        return rootList;
     }
 
     @Override
@@ -127,7 +183,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     //设置机构名称
                     epPartitionVO.setOfficeName(partitionDTO.getOfficeName());
                     //设置排序字段
-                    epPartitionVO.setSort(partitionDTO.getTreeLevel());
+                    epPartitionVO.setSort(partitionDTO.getSort());
                     partitionMap.put(partitionDTO.getId(),mainId);
                     dealAddPartitionList.add(epPartitionVO);
                 }
@@ -319,19 +375,19 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public EpPartitionParentVO getParentList(EpPartitionChildTypeDTO dto) {
-        /***
-         * 组织机构名称集合
-         */
+        //机构名称集合
         List<String> joinPartitions = new ArrayList<>();
-//        joinPartitions.clear();
         //先获取该能源类型下的全量数据
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getType()));
+        //获取当前节点数据
         EpPartition childPartition = getById(dto.getChildId());
-        if (Objects.isNull(childPartition)){
+        if (Objects.isNull(childPartition)||CollUtil.isEmpty(epPartitions)){
             return null;
         }
+        //当前子节点的返回数据
         EpPartitionParentVO childPartitionVO = new EpPartitionParentVO();
         BeanUtils.copyProperties(childPartition,childPartitionVO);
+        //获取所有父节点
         EpPartitionParentVO parentPartitionVO = getParentListByChildId(childPartitionVO, epPartitions);
         //获取拼接名称
         joinPartitions.add(parentPartitionVO.getOfficeName());
@@ -358,12 +414,14 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
        }
     }
     private EpPartitionParentVO getParentListByChildId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
+        //当前能源类型下所有节点的id集合
         List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
-        if (CollUtil.isEmpty(epPartitions)||!partitionIds.contains(childPartitionVO.getId())){
-            //该能源类型下没有树结构或者不包含子id返回空数据
+        if (!partitionIds.contains(childPartitionVO.getId())){
+            //该能源类型下没有任何树结构或者不包含子id返回当前本身数据
             return childPartitionVO;
         }
-        if (0==childPartitionVO.getSort()){
+        if (Objects.isNull(childPartitionVO.getParentId())){
+            //如果父id为空则自己就是最终父级
             return childPartitionVO;
         }else {
             //如果孩子id的排序不为0则表明其至少有一个父类
@@ -374,11 +432,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     private void getAllParentByParentId(EpPartitionParentVO childPartitionVO, List<EpPartition> epPartitions) {
-
+        //过滤出父级
         List<EpPartition> parentList = epPartitions.stream().filter(s -> Objects.nonNull(childPartitionVO.getParentId())&&
                 childPartitionVO.getParentId().equals(s.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(parentList)){
-            parentList.sort(Comparator.comparing(EpPartition::getSort));
+
             List<EpPartitionParentVO> epPartitionParentVOS = BeanUtil.copyToList(parentList, EpPartitionParentVO.class);
             childPartitionVO.setParentList(epPartitionParentVOS);
             epPartitions.removeAll(parentList);
@@ -406,64 +464,64 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param dataList
      * @return
      */
-    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
-        //定义返回数据集合
-        List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
-        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
-        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
-        //获取所有根节点
-        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(rootList)){
-            rootList.sort(Comparator.comparing(EpPartition::getSort));
-            //把根节点从全量数据集合中删除
-            dataList.removeAll(rootList);
-            //遍历根节点
-            for (EpPartition root : rootList) {
-                EpPartitionVO parent = new EpPartitionVO();
-                BeanUtils.copyProperties(root,parent);
-                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
-                    parent.setIsLinkTable(MpConstant.YES);
-                }else {
-                    parent.setIsLinkTable(MpConstant.NO);
-                }
-                epPartitionVOS.add(parent);
-                //查询vo的子级,并将子级放到vo
-                searchSysDictCh(parent, dataList,partitionNodes);
-
-            }
-        }
-        return epPartitionVOS;
-    }
+//    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
+//        //定义返回数据集合
+//        List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
+//        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
+//        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
+//        //获取所有根节点
+//        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
+//        if (CollUtil.isNotEmpty(rootList)){
+//            rootList.sort(Comparator.comparing(EpPartition::getSort));
+//            //把根节点从全量数据集合中删除
+//            dataList.removeAll(rootList);
+//            //遍历根节点
+//            for (EpPartition root : rootList) {
+//                EpPartitionVO parent = new EpPartitionVO();
+//                BeanUtils.copyProperties(root,parent);
+//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
+//                    parent.setIsLinkTable(MpConstant.YES);
+//                }else {
+//                    parent.setIsLinkTable(MpConstant.NO);
+//                }
+//                epPartitionVOS.add(parent);
+//                //查询vo的子级,并将子级放到vo
+//                searchSysDictCh(parent, dataList,partitionNodes);
+//
+//            }
+//        }
+//        return epPartitionVOS;
+//    }
 
     /**
      * 递归查询
      * @param parentVO
      * @param dataList
      */
-    private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
-        //获取当前节点的子级
-        List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
-                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(children)){
-            children.sort(Comparator.comparing(EpPartition::getSort));
-            List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);
-            childrenVoList.forEach(v->{
-                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(v.getId())){
-                    v.setIsLinkTable(MpConstant.YES);
-                }else {
-                    v.setIsLinkTable(MpConstant.NO);
-                }
-            });
-            //父亲结点挂孩子
-            parentVO.setChildren(childrenVoList);
-            //从集合中删除孩子
-            dataList.removeAll(children);
-            //孩子结点继续去挂自己的孩子
-            for (EpPartitionVO item : childrenVoList) {
-                searchSysDictCh(item, dataList,partitionNodes);
-            }
-        }
-    }
+//    private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
+//        //获取当前节点的子级
+//        List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
+//                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
+//        if (CollUtil.isNotEmpty(children)){
+//            children.sort(Comparator.comparing(EpPartition::getSort));
+//            List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);
+//            childrenVoList.forEach(v->{
+//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(v.getId())){
+//                    v.setIsLinkTable(MpConstant.YES);
+//                }else {
+//                    v.setIsLinkTable(MpConstant.NO);
+//                }
+//            });
+//            //父亲结点挂孩子
+//            parentVO.setChildren(childrenVoList);
+//            //从集合中删除孩子
+//            dataList.removeAll(children);
+//            //孩子结点继续去挂自己的孩子
+//            for (EpPartitionVO item : childrenVoList) {
+//                searchSysDictCh(item, dataList,partitionNodes);
+//            }
+//        }
+//    }
 
     /**
      * 获取子树

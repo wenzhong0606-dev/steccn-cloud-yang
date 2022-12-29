@@ -23,7 +23,7 @@ public class EpPartitionListDTO implements Serializable {
     /**
      * 排序字段
      */
-    private Integer treeLevel;
+    private Integer sort;
 
     /**
      * 父级officeId
