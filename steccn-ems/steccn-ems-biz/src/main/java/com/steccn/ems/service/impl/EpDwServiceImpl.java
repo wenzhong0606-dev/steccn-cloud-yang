@@ -70,10 +70,14 @@ public class EpDwServiceImpl implements EpDwService {
             //遍历所有的远传仪表
             for (EpDwMeterPartitionDTO meter : meterList) {
                 //根据仪表挂载的节点获取报工记录
-                List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> v.getProductLineId().equals(meter.getOfficeId())).collect(Collectors.toList());
-                List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> v.getStationId().equals(meter.getOfficeId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> workshopList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getWorkshopId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> departmentList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getDepartmentId())).collect(Collectors.toList());
                 dwConditionDTO(dwList, meter, lineList);
                 dwConditionDTO(dwList, meter, stationList);
+                dwConditionDTO(dwList, meter, workshopList);
+                dwConditionDTO(dwList, meter, departmentList);
             }
             if (CollUtil.isNotEmpty(dwList)) {
                 List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();

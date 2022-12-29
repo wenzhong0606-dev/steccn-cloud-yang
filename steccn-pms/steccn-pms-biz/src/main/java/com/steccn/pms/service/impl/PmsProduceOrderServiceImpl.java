@@ -818,10 +818,19 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSet))).get();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
+
+            Set<Integer> productLineIdSet = resList.stream().map(v -> v.getProductLineId()).collect(Collectors.toSet());
+            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet))).get();
+            Set<Integer> collect = parentMap.values().stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(collect))).get();
+            SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
             resList.forEach(ele -> {
                 BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();
                 ele.setThick(thick);
                 ele.setClassDate(currentDate);
+                //获取车间和制造部
+                ele.setWorkshopId(parentMap.getOrDefault(ele.getProductLineId(),defaultSysOfficeVO).getId());
+                ele.setDepartmentId(grandPaMap.getOrDefault(ele.getWorkshopId(),defaultSysOfficeVO).getId());
                 SysDictVO sysDictVO = classMap.get(ele.getClassesId());
                 if (Objects.nonNull(sysDictVO)) {
                     if (sysDictVO.getName().contains("早")) {

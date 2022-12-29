@@ -25,6 +25,12 @@ public class DwCurrentReportWorkDTO implements Serializable {
     @ApiModelProperty("班次id")
     private Integer classId;
 
+    @ApiModelProperty("部门id")
+    private Integer departmentId;
+
+    @ApiModelProperty("车间id")
+    private Integer workshopId;
+
     @ApiModelProperty("产线")
     private Integer productLineId;
 
