@@ -336,7 +336,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoTem.setCaseNo(orderInfo.get("caseNo").toString());
                 wmsCheckOrderInfoTem.setBatch(orderInfo.get("batch").toString());
                 wmsCheckOrderInfoTem.setUnit(orderInfo.get("unit").toString());
-                wmsCheckOrderInfoTem.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
+                wmsCheckOrderInfoTem.setStatus(Objects.isNull(orderInfo.get("result"))?WmsManagerConstant.CheckOrderInfoStateEnum.ZERO.getCode()
+                        :WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());//原始数据设置未执行
                 wmsCheckOrderInfoTem.setShelf(Integer.parseInt(orderInfo.get("shelf").toString()));
                 wmsCheckOrderInfoTem.setWarehouse(Integer.parseInt(orderInfo.get("warehouse").toString()));
                 wmsCheckOrderInfoTem.setCheckBy( SecurityUtils.getUser().getUserId());
