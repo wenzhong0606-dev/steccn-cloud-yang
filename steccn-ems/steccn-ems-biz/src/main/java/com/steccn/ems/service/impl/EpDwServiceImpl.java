@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,6 +50,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpEnergyMoneyService epEnergyMoneyService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean meterRead(LocalDate date) {
         Assert.notNull(date, "指定日期不可为空");
         List<DwConditionDTO> dwList = Lists.newArrayList();
@@ -110,6 +112,7 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean electricMoney(LocalDate date) {
         //保持幂等，判断今天是否已经执行过
         long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>().eq(EpEnergyMoney::getClassDate, date));
