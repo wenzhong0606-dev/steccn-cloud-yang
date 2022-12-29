@@ -80,6 +80,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+
+        classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
         //根据时间粒度分区
@@ -167,7 +169,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             }
         }
         classDateAllData = filterList;
-
+        classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -920,6 +922,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         allDataSet.addAll(classDateAllData);
         allDataSet.addAll(historyClassDateAllData);
         classDateAllData = Lists.newArrayList(allDataSet);
+        classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
