@@ -87,7 +87,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //如果查询的月份是当月
         if (selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
             if (currentTime.isBefore(localTime)) {
-                endDay = currentLocalDate.plusDays(1);
+                endDay = currentLocalDate.minusDays(1);
             }
             localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
         } else {
