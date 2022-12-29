@@ -304,7 +304,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
              meterReadAllDataVOList = epMeterReadService.classDateAllDataUnit(localDateSet, epEnergyType.getId(), Collections.singletonList(partition.getId()));
         }
         if (Objects.nonNull(thick)) {
-            meterReadAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> thick.equals(epMeterReadAllDataVO.getThick())).collect(Collectors.toList());
+            meterReadAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> BigDecimalUtil.equals(thick,epMeterReadAllDataVO.getThick())).collect(Collectors.toList());
         }
 
         List<BigDecimal> dateConsumeList = new ArrayList<>();
