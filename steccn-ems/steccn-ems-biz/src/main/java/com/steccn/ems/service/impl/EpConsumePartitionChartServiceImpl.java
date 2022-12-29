@@ -556,7 +556,16 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         epChartGraphDTO.setOfficeMap(officeMap);
 
         //查询节点是否包含有基片和深加工
-
+        Map<Long, String> partitionMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
+        Set<String> partitionNameSet = partitionMap.values().stream().collect(Collectors.toSet());
+        Set<Long> typeSet = Sets.newHashSet();
+        for (String name : partitionNameSet) {
+            if(name.indexOf("基片") != -1){
+                typeSet.add(0L);
+            }else if(name.indexOf("深加工") != -1){
+                typeSet.add(1L);
+            }
+        }
 
         //部门行业的单耗标准
         List<StandardVO<BigDecimal>> standardVOList = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
@@ -566,6 +575,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             }
             return BigDecimalUtil.equals(dto.getThick().get(0), v.getThick());
         }).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(typeSet)){
+            standardVOList = standardVOList.stream().filter(v -> typeSet.contains(v.getProductType())).collect(Collectors.toList());
+        }
         epChartGraphDTO.setStandardList(standardVOList);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData(Lists.newArrayList());
