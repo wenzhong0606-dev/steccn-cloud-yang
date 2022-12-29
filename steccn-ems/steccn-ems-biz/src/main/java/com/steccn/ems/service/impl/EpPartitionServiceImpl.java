@@ -216,9 +216,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 List<Integer> addOfficeIds = dealAddPartitionList.stream().map(EpPartitionVO::getOfficeId).collect(Collectors.toList());
                 officeDtoIds.removeAll(addOfficeIds);
                 officeIds.removeAll(officeDtoIds);
-                officeIds.forEach(v->{
-                    deletePartitionList.add(partitionMap.get(v));
-                });
+                if (CollUtil.isNotEmpty(officeIds)){
+                    officeIds.forEach(v->{
+                        deletePartitionList.add(partitionMap.get(v));
+                    });
+                }
             }
         }
         if (CollUtil.isNotEmpty(dealUpdatePartitionList)){
