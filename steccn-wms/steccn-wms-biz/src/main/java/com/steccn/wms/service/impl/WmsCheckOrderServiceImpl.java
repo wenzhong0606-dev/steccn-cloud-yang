@@ -465,21 +465,21 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         orderInfoQueryWrapper.eq("check_order_id",checkOrderId).eq("del_flag",0);
         List<WmsCheckOrderInfo> orderInfoOldList = wmsCheckOrderInfoService.list(orderInfoQueryWrapper);
         for (WmsStockVO vo:wmsStockNewList) {
-            if(!orderInfoOldList.stream().filter(m->m.getWarehouse().equals(vo.getWarehouse())
-                    && m.getShelf().equals(vo.getShelf()) && m.getMaterialId().equals(vo.getMaterialId())
+            Set<String> codeSet = new HashSet<>();
+            codeSet.add(vo.getWarehouse());
+            codeSet.add(vo.getShelf());
+            R<Map<String, SysOfficeVO>> sysOfficeVO = remoteOfficeFeign.listByCodeSet(codeSet);
+            if(sysOfficeVO.getData().size()>0){
+                vo.setWarehouse( sysOfficeVO.getData().get(vo.getWarehouse()).getId().toString());
+                vo.setShelf(sysOfficeVO.getData().get(vo.getShelf()).getId().toString());
+            }
+            if(!orderInfoOldList.stream().filter(m->m.getWarehouse().equals(Integer.parseInt(vo.getWarehouse()))
+                    && m.getShelf().equals(Integer.parseInt(vo.getShelf())) && m.getMaterialId().equals(vo.getMaterialId())
                     && m.getBatch().equals(vo.getBatchNo()) && m.getCaseNo().equals(vo.getCaseNo()))
                     .findAny().isPresent() && Objects.nonNull(vo.getShelf()) && Objects.nonNull(vo.getWarehouse())
                     && Objects.nonNull(vo.getMaterialId())){
                 wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
                 BeanUtils.copyProperties(vo,wmsCheckOrderInfoVO);
-                Set<String> codeSet = new HashSet<>();
-                codeSet.add(vo.getWarehouse());
-                codeSet.add(vo.getShelf());
-                R<Map<String, SysOfficeVO>> sysOfficeVO = remoteOfficeFeign.listByCodeSet(codeSet);
-                wmsCheckOrderInfoVO.setWarehouse(sysOfficeVO.getData().size()>0?Objects.isNull(sysOfficeVO.getData().get(vo.getWarehouse()))
-                        ? null:sysOfficeVO.getData().get(vo.getWarehouse()).getId().toString():null);
-                wmsCheckOrderInfoVO.setShelf(sysOfficeVO.getData().size()>0? Objects.isNull(sysOfficeVO.getData().get(vo.getShelf()))
-                        ? null:sysOfficeVO.getData().get(vo.getShelf()).getId().toString():null);
                 wmsCheckOrderInfoVO.setBatch(vo.getBatchNo());
                 wmsCheckOrderInfoVO.setQuantity(vo.getAvailableQuantity());
                 if(Objects.nonNull(wmsCheckOrderInfoVO.getMaterialId()) && Objects.nonNull(wmsCheckOrderInfoVO.getShelf())
@@ -497,6 +497,14 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             R<SysOfficeVO>  shelfInfo = remoteOfficeFeign.shelfWarehouseInfo(old.getShelf());
             wmsCheckOrderInfoVO.setShelf(old.getShelf().toString());
             wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
+            //物料
+            List<Long> materialIds = new ArrayList<>();
+            materialIds.add(wmsCheckOrderInfoVO.getMaterialId());
+            R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
+            if(materialInfo.getData().size()>0) {
+                wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
+                wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getCode());
+            }
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
