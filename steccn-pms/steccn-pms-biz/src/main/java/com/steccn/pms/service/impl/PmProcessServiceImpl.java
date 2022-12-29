@@ -80,7 +80,7 @@ public class PmProcessServiceImpl extends ServiceImpl<PmProcessMapper, PmProcess
     public Page<PmProcessVO> pageList(PmProcessDTO dto) {
         //1.构建条件
         LambdaQueryWrapper<PmProcess> eq = new LambdaQueryWrapper<PmProcess>()
-                .eq(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmProcess::getCode, dto.getCode())
+                .like(Objects.nonNull(dto.getCode()) && !dto.getCode().equals(""), PmProcess::getCode, dto.getCode())
                 .like(Objects.nonNull(dto.getName()), PmProcess::getName, dto.getName())
                 .eq(Objects.nonNull(dto.getType()), PmProcess::getType, dto.getType())
                 .eq(Objects.nonNull(dto.getId()), PmProcess::getId, dto.getId());
