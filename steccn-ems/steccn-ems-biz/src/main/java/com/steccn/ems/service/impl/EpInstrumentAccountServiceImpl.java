@@ -313,22 +313,26 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     }
 
     private LocalDateTime getLastReadTime( List<EpMeterRead> epMeterReads) {
-        epMeterReads= epMeterReads.stream().filter(m->Objects.nonNull(m.getReadTime())).collect(Collectors.toList());
             if (CollUtil.isEmpty(epMeterReads)){
                 return null;
             }else
                 //if (!epMeterReads.stream().filter(m->Objects.isNull(m.getReadTime())).findAny().isPresent()){
-            {  LocalDateTime lastReadTime = LocalDateTime.now();
-                for (int i = 0; i < epMeterReads.size(); i++) {
-                    lastReadTime =epMeterReads.get(i).getReadTime();
-                    if ((i+1)<epMeterReads.size()){
-                        if (lastReadTime.isBefore(epMeterReads.get(i+1).getReadTime())){
-                            lastReadTime=epMeterReads.get(i+1).getReadTime();
-                        }
-                    }
-                }
-                return lastReadTime;
+            {
+                epMeterReads= epMeterReads.stream().filter(m->Objects.nonNull(m.getReadTime())).collect(Collectors.toList());
+               if (CollUtil.isNotEmpty(epMeterReads)){
+                   LocalDateTime lastReadTime = LocalDateTime.now();
+                   for (int i = 0; i < epMeterReads.size(); i++) {
+                       lastReadTime =epMeterReads.get(i).getReadTime();
+                       if ((i+1)<epMeterReads.size()){
+                           if (lastReadTime.isBefore(epMeterReads.get(i+1).getReadTime())){
+                               lastReadTime=epMeterReads.get(i+1).getReadTime();
+                           }
+                       }
+                   }
+                   return lastReadTime;
+               }
             }
+            return null;
     }
 
     @Override

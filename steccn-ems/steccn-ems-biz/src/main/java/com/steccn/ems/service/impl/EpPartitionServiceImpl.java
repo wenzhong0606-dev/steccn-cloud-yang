@@ -224,7 +224,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         }
         if (CollUtil.isNotEmpty(dealUpdatePartitionList)){
-            saveOrUpdateBatch(dealUpdatePartitionList);
+            updateBatchById(dealUpdatePartitionList);
         }
         if (CollUtil.isNotEmpty(dealAddPartitionList)){
             dealAddPartitionList.stream().filter(s->Objects.nonNull(s)
