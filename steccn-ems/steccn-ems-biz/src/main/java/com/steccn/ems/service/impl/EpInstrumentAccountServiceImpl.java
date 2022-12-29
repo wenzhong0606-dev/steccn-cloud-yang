@@ -22,6 +22,7 @@ import com.steccn.ems.service.EpInstrumentAccountService;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.EpMeterReadService;
 import com.steccn.ems.service.EpPartitionService;
+import com.steccn.ems.util.PinyinUtils;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -472,45 +473,49 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         List<EpInstrumentAccountPageVO> voList = new ArrayList<>();
 
         if (CollUtil.isNotEmpty(haveDataList)){
-            for (int i = 0; i < list.size(); i++) {
-                if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-                    names.add(list.get(i).getDistantMapCode()+i);
-                    map.put(list.get(i).getDistantMapCode()+i, list.get(i));
-                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-                    names.add(list.get(i).getMeterName());
-                    map.put(list.get(i).getMeterName(),list.get(i));
-                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-                    names.add(list.get(i).getSiteName()+i);
-                    map.put(list.get(i).getSiteName()+i,list.get(i));
-                }
-            }
-            if (isOrder){
-                Collections.sort(names, new Comparator<String>() {
-                    Collator collator = Collator.getInstance(Locale.CHINA);
-
-                    @Override
-                    public int compare(String o1, String o2) {
-                        CollationKey key1 = collator.getCollationKey(o1);
-                        CollationKey key2 = collator.getCollationKey(o2);
-                        return key1.compareTo(key2);
-                    }
-                });
-            }else {
-                Collections.sort(names, new Comparator<String>() {
-                    Collator collator = Collator.getInstance(Locale.CHINA);
-                    @Override
-                    public int compare(String o1, String o2) {
-                        CollationKey key1 = collator.getCollationKey(o1);
-                        CollationKey key2 = collator.getCollationKey(o2);
-                        return key2.compareTo(key1);
-                    }
-                });
-            }
-            for (String name : names) {
-                if (map.containsKey(name)) {
-                    voList.add(map.get(name));
-                }
-            }
+//            for (int i = 0; i < list.size(); i++) {
+//                if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
+//                    names.add(list.get(i).getDistantMapCode()+i);
+//                    map.put(list.get(i).getDistantMapCode()+i, list.get(i));
+//                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
+//                    names.add(list.get(i).getMeterName());
+//                    map.put(list.get(i).getMeterName(),list.get(i));
+//                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
+//                    names.add(list.get(i).getSiteName()+i);
+//                    map.put(list.get(i).getSiteName()+i,list.get(i));
+//                }
+//            }
+//            if (isOrder){
+//                Collections.sort(names, new Comparator<String>() {
+//                    Collator collator = Collator.getInstance(Locale.CHINA);
+//
+//                    @Override
+//                    public int compare(String o1, String o2) {
+//                        CollationKey key1 = collator.getCollationKey(o1);
+//                        CollationKey key2 = collator.getCollationKey(o2);
+//                        return key1.compareTo(key2);
+//                    }
+//                });
+//            }else {
+//                Collections.sort(names, new Comparator<String>() {
+//                    Collator collator = Collator.getInstance(Locale.CHINA);
+//                    @Override
+//                    public int compare(String o1, String o2) {
+//                        CollationKey key1 = collator.getCollationKey(o1);
+//                        CollationKey key2 = collator.getCollationKey(o2);
+//                        return key2.compareTo(key1);
+//                    }
+//                });
+//            }
+//            for (String name : names) {
+//                if (map.containsKey(name)) {
+//                    voList.add(map.get(name));
+//                }
+//            }
+            getSort(haveDataList,isOrder,sort);
+            haveDataList.forEach(s->{
+                voList.add(s);
+            });
         }
         //封装该字段为空情况的集合
         if (CollUtil.isNotEmpty(noDataList)){
@@ -521,7 +526,41 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
         return voList;
     }
+
+    public static void getSort(List<EpInstrumentAccountPageVO> list,Boolean isOrder,String sort) {
+        Comparator comparator = Collator.getInstance(Locale.CHINA);
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
+            if (isOrder){
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
+            if (isOrder){
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
+            if (isOrder){
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0,1)).toLowerCase()));
+            }
+        }
+
+    }
 }
+
 
 
 

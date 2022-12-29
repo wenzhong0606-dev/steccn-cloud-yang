@@ -480,66 +480,55 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
     }
 
     public static void getSort(List<EpProductUnitConsumeStandardVO> list,Boolean isOrder,String sort) {
+        Comparator comparator = Collator.getInstance(Locale.CHINA);
         if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
             if (isOrder){
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p2.getName().substring(0,1)).toLowerCase()));
 
             }  else {
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p1.getName().substring(0,1)).toLowerCase()));
             }
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
             if (isOrder){
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getEnergyTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p2.getEnergyTypeName().substring(0,1)).toLowerCase()));
 
             }  else {
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getEnergyTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p1.getEnergyTypeName().substring(0,1)).toLowerCase()));
             }
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
             if (isOrder){
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getStandardTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p2.getStandardTypeName().substring(0,1)).toLowerCase()));
 
             }  else {
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getStandardTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p1.getStandardTypeName().substring(0,1)).toLowerCase()));
             }
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
             if (isOrder){
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getProductTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p2.getProductTypeName().substring(0,1)).toLowerCase()));
 
             }  else {
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getProductTypeName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p1.getProductTypeName().substring(0,1)).toLowerCase()));
             }
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
             if (isOrder){
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getProductThickName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p2.getProductThickName().substring(0,1)).toLowerCase()));
 
             }  else {
-                Comparator comparator = Collator.getInstance(Locale.CHINA);
                 Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getProductThickName().substring(0,1)).toLowerCase(),
                         PinyinUtils.converterToFirstSpell(p1.getProductThickName().substring(0,1)).toLowerCase()));
             }
         }
 
     }
-
-
 }
 
 
