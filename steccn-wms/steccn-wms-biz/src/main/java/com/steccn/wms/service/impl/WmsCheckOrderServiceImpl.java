@@ -161,7 +161,10 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 List<Long> materialIds = new ArrayList<>();
                 materialIds.add(wmsCheckOrderInfoVO.getMaterialId());
                 R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
-                if(materialInfo.getData().size()>0) wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
+                if(materialInfo.getData().size()>0) {
+                    wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
+                    wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getCode());
+                }
             }
             infoVOList.add(wmsCheckOrderInfoVO);
         });
