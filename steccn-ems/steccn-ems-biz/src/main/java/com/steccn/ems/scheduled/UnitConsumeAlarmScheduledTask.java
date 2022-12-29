@@ -49,8 +49,8 @@ public class UnitConsumeAlarmScheduledTask {
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Async
-//    @Scheduled(cron = "0 15 9 * * ?")
-    @Scheduled(cron = "0/40 * * * * ? ")
+    @Scheduled(cron = "0 15 9 * * ?")
+//    @Scheduled(cron = "0/40 * * * * ? ")
     public void execute() {
         List<EpChartUnitConsumeAlarmVO> consumeAlarmVOList = new ArrayList<>();
         List<SysDictVO> thickVOList = remoteDictFeignApi.listByType( "product_thickness_range").getData();
