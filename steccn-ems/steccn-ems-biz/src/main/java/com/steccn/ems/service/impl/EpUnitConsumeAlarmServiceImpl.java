@@ -42,7 +42,13 @@ public class EpUnitConsumeAlarmServiceImpl extends ServiceImpl<EpUnitConsumeAlar
             condition.eq(EpUnitConsumeAlarm::getEnergyType,dto.getEnergyType());
         }
         if (Objects.nonNull(dto.getPartitionId())) {
-            condition.eq(EpUnitConsumeAlarm::getOfficeId,dto.getPartitionId());
+            if (Objects.nonNull(dto.getEnergyType())) {
+                condition.eq(EpUnitConsumeAlarm::getOfficeId,dto.getPartitionId());
+            } else {
+                List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeId, dto.getPartitionId()));
+                Set<Long> partitionIdSet = partitionList.stream().map(EpPartition::getId).collect(Collectors.toSet());
+                condition.in(EpUnitConsumeAlarm::getOfficeId,partitionIdSet);
+            }
         }
         if (Objects.nonNull(dto.getStartDate())) {
             condition.gt(EpUnitConsumeAlarm::getAlarmDate,dto.getStartDate());
