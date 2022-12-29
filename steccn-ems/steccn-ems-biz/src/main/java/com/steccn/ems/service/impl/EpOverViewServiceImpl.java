@@ -253,18 +253,18 @@ public class EpOverViewServiceImpl implements EpOverViewService {
     }
 
     private List<BigDecimal> getAlarmDate(LocalDate selectDate, LocalDate startLocalDate, EpOverViewVO epOverViewVO) {
-        LocalDate startDate = selectDate.minusDays(6);
-        LocalDate endDate = selectDate;
-        LocalDateTime startTime = LocalDateTime.of(startDate, LocalTime.MIN);
-        LocalDateTime endTime = LocalDateTime.of(endDate, LocalTime.MAX);
+//        LocalDate startDate = selectDate.minusDays(6);
+//        LocalDate endDate = selectDate;
+        LocalDateTime startTime = LocalDateTime.of(startLocalDate, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(selectDate, LocalTime.MAX);
         List<LocalDate> dxData = LocalDateUtil.getLocalDateByStartEndDate(startLocalDate, selectDate);
         epOverViewVO.setXData(dxData);
 
-        List<EpUnitConsumeAlarm> unitConsumeAlarms = epUnitConsumeAlarmService.list(new LambdaQueryWrapper<EpUnitConsumeAlarm>().gt(EpUnitConsumeAlarm::getCreateTime, startTime).le(EpUnitConsumeAlarm::getAlarmDate, endTime));
+        List<EpUnitConsumeAlarm> unitConsumeAlarms = epUnitConsumeAlarmService.list(new LambdaQueryWrapper<EpUnitConsumeAlarm>().gt(EpUnitConsumeAlarm::getAlarmDate, startTime).le(EpUnitConsumeAlarm::getAlarmDate, endTime));
         List<BigDecimal> yData = new ArrayList<>();
         for (LocalDate localDate : dxData) {
-            LocalDate plusDays = localDate.plusDays(1);
-            long count = unitConsumeAlarms.stream().filter(epUnitConsumeAlarm -> plusDays.isEqual(epUnitConsumeAlarm.getCreateTime().toLocalDate())).count();
+//            LocalDate plusDays = localDate.plusDays(1);
+            long count = unitConsumeAlarms.stream().filter(epUnitConsumeAlarm -> localDate.isEqual(epUnitConsumeAlarm.getAlarmDate().toLocalDate())).count();
             yData.add(BigDecimal.valueOf(count));
         }
         return yData;
@@ -278,7 +278,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
                                        BigDecimal thick,
                                        EpOverViewVO epOverViewVO) {
         EpEnergyType epEnergyType = epEnergyTypeService.getOne(new LambdaQueryWrapper<EpEnergyType>().eq(EpEnergyType::getName, energyType));
-        EpPartition partition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeName, partitionName).eq(EpPartition::getType,energyType));
+        EpPartition partition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getOfficeName, partitionName).eq(EpPartition::getType,epEnergyType.getId()));
         //标准类型：企业标准
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode("company_standard", "product_unit_consumption_standard").getData();
         //产品类型：基片
