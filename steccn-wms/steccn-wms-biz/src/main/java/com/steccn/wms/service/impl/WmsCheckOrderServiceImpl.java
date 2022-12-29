@@ -326,11 +326,15 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                     .eq(WmsCheckOrderInfo::getCaseNo,orderInfo.get("caseNo")).eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId);
             WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
             WmsCheckOrderInfo wmsCheckOrderInfoTem = new WmsCheckOrderInfo();
+            BigDecimal resultNum = Objects.isNull(orderInfo.get("result"))?new BigDecimal(orderInfo.get("quantity").toString())
+                    :new BigDecimal(orderInfo.get("result").toString());
+            BigDecimal difference = Objects.isNull(orderInfo.get("difference"))?BigDecimal.ZERO:new BigDecimal(orderInfo.get("difference").toString());
+            BigDecimal quantity = new BigDecimal(orderInfo.get("quantity").toString());
+            String note = Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString();
             if(Objects.isNull(wmsCheckOrderInfo)){
-                wmsCheckOrderInfoTem.setResult(Objects.isNull(orderInfo.get("result"))?new BigDecimal(orderInfo.get("quantity").toString())
-                        :new BigDecimal(orderInfo.get("result").toString()));
-                wmsCheckOrderInfoTem.setDifference(Objects.isNull(orderInfo.get("difference"))?BigDecimal.ZERO:new BigDecimal(orderInfo.get("difference").toString()));
-                wmsCheckOrderInfoTem.setQuantity(new BigDecimal(orderInfo.get("quantity").toString()));
+                wmsCheckOrderInfoTem.setResult(resultNum);
+                wmsCheckOrderInfoTem.setDifference(difference);
+                wmsCheckOrderInfoTem.setQuantity(quantity);
                 wmsCheckOrderInfoTem.setCheckOrderId(checkOrderId);
                 wmsCheckOrderInfoTem.setMaterialId(Long.parseLong(orderInfo.get("materialId").toString()));
                 wmsCheckOrderInfoTem.setCaseNo(orderInfo.get("caseNo").toString());
@@ -343,11 +347,14 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoTem.setCheckBy( SecurityUtils.getUser().getUserId());
                 wmsCheckOrderInfoTem.setCheckName( SecurityUtils.getUser().getName());
                 wmsCheckOrderInfoTem.setCheckTime(LocalDateTime.now());
-                wmsCheckOrderInfoTem.setNote(Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString());
+                wmsCheckOrderInfoTem.setNote(note);
                 result = wmsCheckOrderInfoService.save(wmsCheckOrderInfoTem);
             }else{
+                wmsCheckOrderInfo.setResult(resultNum);
+                wmsCheckOrderInfo.setDifference(difference);
+                wmsCheckOrderInfo.setQuantity(quantity);
                 wmsCheckOrderInfo.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
-                wmsCheckOrderInfo.setNote(Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString());
+                wmsCheckOrderInfo.setNote(note);
                 result = wmsCheckOrderInfoService.updateById(wmsCheckOrderInfo);
             }
         }

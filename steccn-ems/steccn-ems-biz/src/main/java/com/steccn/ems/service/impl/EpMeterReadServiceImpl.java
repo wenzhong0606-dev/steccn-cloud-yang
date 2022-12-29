@@ -151,13 +151,18 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         }
         List<MeterReadListVO> meterReadListVOList1 = meterReadListVOList.stream().filter(meterReadMapperVO -> Objects.isNull(meterReadMapperVO.getParentId())).peek(
                 meterReadListVO -> {
+
                     meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
                     //如果是虚拟仪表
                     if (Objects.equals(meterReadListVO.getEntityTable(),2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
-                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream().filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue())).map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
+//                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream().filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue())).map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+//                            meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
+                            List<List<ReadValueListVO>> readValueAllList = new ArrayList<>();
+                            reduceRecursion(meterReadListVO.getMeterReadListVOList(),readValueAllList);
+                            BigDecimal sumReduce = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue()) && !v.get(finalI).getEntityTable().equals(2)).map(v -> v.get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
                 }
@@ -171,6 +176,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         eqMeterReadVO.setLabelList(localDateList);
         eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
         return eqMeterReadVO;
+    }
+
+    private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
+        for (MeterReadListVO meterReadListVO : meterReadListVOList) {
+            reduceRecursion(meterReadListVO.getMeterReadListVOList(),readValueAllList);
+            if (!Objects.equals(meterReadListVO.getEntityTable(),2)) {
+                readValueAllList.add(meterReadListVO.getReadValueList());
+            }
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -758,10 +772,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     if (Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
-                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream()
-                                    .filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue()))
-                                    .map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
+//                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream()
+//                                    .filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue()))
+//                                    .map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+//                            meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
+                            List<List<ReadValueListVO>> readValueAllList = new ArrayList<>();
+                            reduceRecursion(meterReadListVO.getMeterReadListVOList(),readValueAllList);
+                            BigDecimal sumReduce = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue())).map(v -> v.get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
                 }
