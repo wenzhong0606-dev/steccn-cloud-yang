@@ -71,7 +71,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
             //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
             List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
-            rootVOList= searchRoot(epPartitionVOS);
+            rootVOList = searchRoot(epPartitionVOS);
+            rootVOList = rootVOList.stream().sorted(Comparator.comparing(EpPartitionVO::getSort)).collect(Collectors.toList());
             for (EpPartitionVO root : rootVOList) {
                 List<EpPartitionVO> children = getChildren(epPartitionVOS, root,partitionNodes);
                 if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
@@ -88,6 +89,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     private List<EpPartitionVO> getChildren(List<EpPartitionVO> childrenList, EpPartitionVO root,List<Long> partitionNodes) {
         List<EpPartitionVO> result=Lists.newArrayList();
+        childrenList = childrenList.stream().sorted(Comparator.comparing(EpPartitionVO::getSort)).collect(Collectors.toList());
         for (EpPartitionVO epPartitionVO : childrenList) {
             if (Objects.nonNull(epPartitionVO.getParentId())&& epPartitionVO.getParentId().equals(root.getId())){
                 epPartitionVO.setParentId(root.getId());
@@ -147,6 +149,9 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //用来处理新增的List
         List<EpPartitionVO> dealAddPartitionList = Lists.newArrayList();
 
+        //用来更新排序的List
+        List<EpPartition> dealUpdatePartitionList = Lists.newArrayList();
+
         //需要删除的list
         List<Long> deletePartitionList = Lists.newArrayList();
         //根据能源类型查询出该类型的所有分区树的集合
@@ -155,18 +160,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 .eq(EpPartition::getDelFlag,MpConstant.NO));
        //获取数据库中所有officeId
         List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
-       //机构的id以及分区树idMap集合
+       //机构的id以及分区树的id组成的Map集合
         Map<Integer,Long> partitionMap = Maps.newHashMap();
+        Map<Integer,EpPartition> officeIdPartitionMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(epPartitions)){
             epPartitions.forEach(v->{
                 //根据officeId分组
                 partitionMap.put(v.getOfficeId(),v.getId());
+                officeIdPartitionMap.put(v.getOfficeId(),v);
             });
         }
-
-        if (CollUtil.isNotEmpty(dto.getEpPartitionListDTO())){
-            //先过滤掉前端传过来不符合要求的数据
-            List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
+        //先过滤掉前端传过来不符合要求的数据
+        List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(dtoList)){
+            //先根据传过来的数据根据officeId和sort组合成Map
+            Map<Integer,Integer> idSortMap = Maps.newHashMap();
+            dtoList.stream().forEach(v->{
+                idSortMap.put(v.getId(),v.getSort());
+            });
             for (EpPartitionListDTO partitionDTO : dtoList) {
                 //如果数据库中没有包含该机构的id则新增
                 if (!officeIds.contains(partitionDTO.getId())){
@@ -186,6 +197,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     epPartitionVO.setSort(partitionDTO.getSort());
                     partitionMap.put(partitionDTO.getId(),mainId);
                     dealAddPartitionList.add(epPartitionVO);
+                }else if (officeIds.contains(partitionDTO.getId())){
+                    EpPartition epPartition = officeIdPartitionMap.get(partitionDTO.getId());
+                    epPartition.setSort(partitionDTO.getSort());
+                    dealUpdatePartitionList.add(epPartition);
                 }
             }
             //获取dto中office的所有id
@@ -200,6 +215,9 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     deletePartitionList.add(partitionMap.get(v));
                 });
             }
+        }
+        if (CollUtil.isNotEmpty(dealUpdatePartitionList)){
+            saveOrUpdateBatch(dealUpdatePartitionList);
         }
         if (CollUtil.isNotEmpty(dealAddPartitionList)){
             dealAddPartitionList.stream().filter(s->Objects.nonNull(s)

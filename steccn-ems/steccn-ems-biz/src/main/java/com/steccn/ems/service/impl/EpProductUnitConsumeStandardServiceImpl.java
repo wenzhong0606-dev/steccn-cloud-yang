@@ -19,6 +19,7 @@ import com.steccn.ems.dto.EpProductUnitStandardPageDTO;
 import com.steccn.ems.mapper.EpProductUnitConsumeStandardMapper;
 import com.steccn.ems.service.EpEnergyTypeService;
 import com.steccn.ems.service.EpProductUnitConsumeStandardService;
+import com.steccn.ems.util.PinyinUtils;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpProductUnitConsumeStandardVO;
@@ -144,7 +145,11 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(dto.getSortField())){
             standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(dto.getSortField())){
-            standardVOS= listToSortBySubName(standardVOS, dto.getSortField(), dto.getAscFlag());
+            if (dto.getAscFlag()==Boolean.TRUE){
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue)).collect(Collectors.toList());
+            }else {
+                standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getUnitValue).reversed()).collect(Collectors.toList());
+            }
         }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_INDATE.equals(dto.getSortField())){
             if (dto.getAscFlag()==Boolean.TRUE){
                 standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart)).collect(Collectors.toList());
@@ -408,68 +413,61 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     noDataList.add(s);
                 }
             });
-        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
-            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-                if (Objects.nonNull(s.getUnitValue())){
-                    haveDataList.add(s);
-                }else {
-                    noDataList.add(s);
-                }
-            });
         }
 
         //创建返回数据集合
         List<EpProductUnitConsumeStandardVO> voList = new ArrayList<>();
         if (CollUtil.isNotEmpty(haveDataList)){
-            for (int i = 0; i < list.size(); i++) {
-                if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
-                    names.add(list.get(i).getName());
-                    map.put(list.get(i).getName(), list.get(i));
-                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
-                    names.add(list.get(i).getEnergyTypeName()+i);
-                    map.put(list.get(i).getEnergyTypeName()+i,list.get(i));
-                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
-                    names.add(list.get(i).getStandardTypeName()+i);
-                    map.put(list.get(i).getStandardTypeName()+i,list.get(i));
-                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
-                    names.add(list.get(i).getProductTypeName()+i);
-                    map.put(list.get(i).getProductTypeName()+i,list.get(i));
-                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
-                    names.add(list.get(i).getProductThickName()+i);
-                    map.put(list.get(i).getProductThickName()+i,list.get(i));
-                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD.equals(sort)){
-                    names.add(list.get(i).getUnitValue().toString()+i);
-                    map.put(list.get(i).getProductThickName().toString()+i,list.get(i));
-                }
-            }
-            if (isOrder){
-                Collections.sort(names, new Comparator<String>() {
-                    Collator collator = Collator.getInstance(Locale.CHINA);
-
-                    @Override
-                    public int compare(String o1, String o2) {
-                        CollationKey key1 = collator.getCollationKey(o1);
-                        CollationKey key2 = collator.getCollationKey(o2);
-                        return key1.compareTo(key2);
-                    }
-                });
-            }else {
-                Collections.sort(names, new Comparator<String>() {
-                    Collator collator = Collator.getInstance(Locale.CHINA);
-
-                    @Override
-                    public int compare(String o1, String o2) {
-                        CollationKey key1 = collator.getCollationKey(o1);
-                        CollationKey key2 = collator.getCollationKey(o2);
-                        return key2.compareTo(key1);
-                    }
-                });
-            }
-            for (String name : names) {
-                if (map.containsKey(name)) {
-                    voList.add(map.get(name));
-                }
-            }
+//            for (int i = 0; i < list.size(); i++) {
+//                if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+//                    names.add(list.get(i).getName());
+//                    map.put(list.get(i).getName(), list.get(i));
+//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+//                    names.add(list.get(i).getEnergyTypeName()+i);
+//                    map.put(list.get(i).getEnergyTypeName()+i,list.get(i));
+//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+//                    names.add(list.get(i).getStandardTypeName()+i);
+//                    map.put(list.get(i).getStandardTypeName()+i,list.get(i));
+//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+//                    names.add(list.get(i).getProductTypeName()+i);
+//                    map.put(list.get(i).getProductTypeName()+i,list.get(i));
+//                }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+//                    names.add(list.get(i).getProductThickName()+i);
+//                    map.put(list.get(i).getProductThickName()+i,list.get(i));
+//                }
+//            }
+//            if (isOrder){
+//                Collections.sort(names, new Comparator<String>() {
+//                    Collator collator = Collator.getInstance(Locale.CHINA);
+//
+//                    @Override
+//                    public int compare(String o1, String o2) {
+//                        CollationKey key1 = collator.getCollationKey(o1);
+//                        CollationKey key2 = collator.getCollationKey(o2);
+//                        return key1.compareTo(key2);
+//                    }
+//                });
+//            }else {
+//                Collections.sort(names, new Comparator<String>() {
+//                    Collator collator = Collator.getInstance(Locale.CHINA);
+//
+//                    @Override
+//                    public int compare(String o1, String o2) {
+//                        CollationKey key1 = collator.getCollationKey(o1);
+//                        CollationKey key2 = collator.getCollationKey(o2);
+//                        return key2.compareTo(key1);
+//                    }
+//                });
+//            }
+//            for (String name : names) {
+//                if (map.containsKey(name)) {
+//                    voList.add(map.get(name));
+//                }
+//            }
+            getSort(haveDataList,isOrder,sort);
+            haveDataList.forEach(s->{
+                voList.add(s);
+            });
         }
 
       //封装该字段为空情况的集合
@@ -480,6 +478,68 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         }
         return voList;
     }
+
+    public static void getSort(List<EpProductUnitConsumeStandardVO> list,Boolean isOrder,String sort) {
+        if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME.equals(sort)){
+            if (isOrder){
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getName().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE.equals(sort)){
+            if (isOrder){
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getEnergyTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getEnergyTypeName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getEnergyTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getEnergyTypeName().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE.equals(sort)){
+            if (isOrder){
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getStandardTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getStandardTypeName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getStandardTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getStandardTypeName().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE.equals(sort)){
+            if (isOrder){
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getProductTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getProductTypeName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getProductTypeName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getProductTypeName().substring(0,1)).toLowerCase()));
+            }
+        }else if (EpManagerConstant.EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS.equals(sort)){
+            if (isOrder){
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getProductThickName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getProductThickName().substring(0,1)).toLowerCase()));
+
+            }  else {
+                Comparator comparator = Collator.getInstance(Locale.CHINA);
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getProductThickName().substring(0,1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getProductThickName().substring(0,1)).toLowerCase()));
+            }
+        }
+
+    }
+
+
 }
 
 

@@ -189,12 +189,12 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         List<Integer> instrumentIds = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getId).collect(Collectors.toList());
         List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
         //查询最后抄表时间
-        Map<Integer, Map<String, List<EpMeterRead>>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
+        Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
                         .eq(EpMeterRead::getDelFlag, MpConstant.NO)
-                        .in(CollUtil.isNotEmpty(distantCodeList), EpMeterRead::getDistantMapCode, distantCodeList)
+//                        .in(CollUtil.isNotEmpty(distantCodeList), EpMeterRead::getDistantMapCode, distantCodeList)
                         .in(CollUtil.isNotEmpty(instrumentIds), EpMeterRead::getMeterId, instrumentIds))
                 .stream()
-                .collect(Collectors.groupingBy(EpMeterRead::getMeterId, Collectors.groupingBy(EpMeterRead::getDistantMapCode)));
+                .collect(Collectors.groupingBy(EpMeterRead::getMeterId));
 
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
@@ -218,11 +218,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 //先判断仪表的所属类型
                 if (EpManagerConstant.InstrumentType.REMOTE.getCode()==s.getEntityTable()
                         ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==s.getEntityTable()){
-                    Map<String, List<EpMeterRead>> stringListMap = groupByMeter.get(s.getId());
-                    List<EpMeterRead> epMeterReads = new ArrayList<>();
-                    if (CollUtil.isNotEmpty(stringListMap)){
-                        epMeterReads = stringListMap.get(s.getDistantMapCode());
-                    }
+                    List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
                     if (Objects.nonNull( getLastReadTime(epMeterReads))){
                         s.setLastReadingTime( getLastReadTime(epMeterReads));
                     }
@@ -243,11 +239,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                             //保证每个子节点仪表的最后抄表时间都不能有空
                             List<LocalDateTime> timeList = Lists.newArrayList();
                             instrumentChildIds.forEach(i->{
-                                Map<String, List<EpMeterRead>> stringListMap = groupByMeter.get(s.getId());
-                                List<EpMeterRead> epMeterReads = new ArrayList<>();
-                                if (CollUtil.isNotEmpty(stringListMap)){
-                                    epMeterReads = stringListMap.get(s.getDistantMapCode());
-                                }
+                                List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
                                 if (Objects.nonNull(getLastReadTime(epMeterReads))){
                                     timeList.add(getLastReadTime(epMeterReads));
                                 }
