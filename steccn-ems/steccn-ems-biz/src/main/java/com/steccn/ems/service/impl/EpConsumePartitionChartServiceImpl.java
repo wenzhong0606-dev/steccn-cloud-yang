@@ -346,7 +346,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                     thickName = "无";
                 } else {
                     thickData = dataVOList.stream().filter(v -> Objects.nonNull(v.getThick()) && thick.compareTo(v.getThick()) == 0).collect(Collectors.toList());
-                    thickName = String.valueOf(thick.setScale(1));
+                    thickName = thick.setScale(1) +"mm";
                 }
                 BigDecimal reduce = thickData.stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 TupleDTO<String, BigDecimal> stack = new TupleDTO<>(thickName, reduce);
@@ -373,6 +373,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        classDateAllData = classDateAllData.stream().filter(v -> dto.getThick().contains(v.getThick())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         //时间排序
         CollUtil.sort(dateSet, Comparator.comparing(v -> v));
@@ -389,7 +390,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 rowVO.setClassDateStr(LocalDateTimeUtil.formatNormal(classDateEntry.getKey()));
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
-                    rowVO.setThickStr(String.valueOf(rowVO.getThick()));
+                    rowVO.setThickStr(rowVO.getThick() +"mm");
+                    if(BigDecimalUtil.equals(rowVO.getThick(),new BigDecimal("-1"))){
+                        rowVO.setThickStr("无");
+                    }
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));

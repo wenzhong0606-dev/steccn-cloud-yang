@@ -33,7 +33,7 @@ public class GenerateDataController {
     @GetMapping("/generate/em/data")
     @ApiOperation(value = "生成数据")
     public R<Boolean> generateEmData(@RequestParam("date") LocalDate date) {
-        List<String> codeList = Arrays.asList("A-001", "A-0004", "B-001", "C-001");
+        List<String> codeList = Arrays.asList("B-0001", "C-00001", "D-0001", "E-00001","B-00011","C-0001","D-00012","E-0001");
         Map<String, BigDecimal> linkCodeMap = getLinkCodeMap(date, codeList);
         Random random = new Random();
         Map<String, LocalDateTime> dtMap = Maps.newHashMap();
@@ -70,7 +70,7 @@ public class GenerateDataController {
         for (Map.Entry<String, BigDecimal> entry : linkCodeMap.entrySet()) {
             EpMeterCollect one = epMeterCollectService.getOne(new QueryWrapper<EpMeterCollect>().select("max(value) as value").lambda().eq(EpMeterCollect::getCode, entry.getKey()));
             //如果已经生成过数据了 则删除
-            if (one.getRecordTime().isAfter(LocalDateTime.of(date, LocalTime.MIN))) {
+            if (Objects.nonNull(one) && one.getRecordTime().isAfter(LocalDateTime.of(date, LocalTime.MIN))) {
                 linkCodeMap.remove(entry.getKey());
             } else if (Objects.nonNull(one)) {
                 entry.setValue(one.getValue());
