@@ -13,6 +13,6 @@ import java.time.LocalDateTime;
 public class EpUnitConsumeAlarmDTO extends BasePageDTO {
     private LocalDateTime endDate;
     private Integer energyType;
-    private String partitionId;
+    private Long partitionId;
     private LocalDateTime startDate;
 }
