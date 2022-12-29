@@ -40,8 +40,8 @@ public class GenerateDataController {
         for (String code : codeList) {
             dtMap.put(code, LocalDateTime.of(date, LocalTime.MIN));
         }
-        List<EpMeterCollect> resList = Lists.newArrayList();
         for (Map.Entry<String, BigDecimal> entry : linkCodeMap.entrySet()) {
+            List<EpMeterCollect> resList = Lists.newArrayList();
             while (dtMap.get(entry.getKey()).isBefore(LocalDateTime.of(date.plusDays(1), LocalTime.MIN))) {
                 BigDecimal bg = new BigDecimal(String.valueOf(random.nextDouble()));
                 bg = bg.multiply(new BigDecimal("100"));
@@ -56,8 +56,8 @@ public class GenerateDataController {
                 resList.add(collect);
 
             }
+            epMeterCollectService.saveBatch(resList);
         }
-        epMeterCollectService.saveBatch(resList);
         return R.success(Boolean.TRUE);
     }
 
