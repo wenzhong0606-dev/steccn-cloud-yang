@@ -34,7 +34,7 @@ public class GenerateDataController {
     @ApiOperation(value = "生成数据")
     public R<Boolean> generateEmData(@RequestParam("date") LocalDate date) {
         List<String> codeList = Arrays.asList("A-001", "A-0004", "B-001", "C-001");
-        Map<String, BigDecimal> linkCodeMap = getLinkCodeMap(codeList);
+        Map<String, BigDecimal> linkCodeMap = getLinkCodeMap(date, codeList);
         Random random = new Random();
         Map<String, LocalDateTime> dtMap = Maps.newHashMap();
         for (String code : codeList) {
@@ -61,7 +61,7 @@ public class GenerateDataController {
         return R.success(Boolean.TRUE);
     }
 
-    private Map<String, BigDecimal> getLinkCodeMap(List<String> codeList) {
+    private Map<String, BigDecimal> getLinkCodeMap(LocalDate date, List<String> codeList) {
         Map<String, BigDecimal> linkCodeMap = Maps.newHashMap();
         for (String code : codeList) {
             linkCodeMap.put(code, BigDecimal.ZERO);
@@ -69,7 +69,10 @@ public class GenerateDataController {
         //遍历所有的
         for (Map.Entry<String, BigDecimal> entry : linkCodeMap.entrySet()) {
             EpMeterCollect one = epMeterCollectService.getOne(new QueryWrapper<EpMeterCollect>().select("max(value) as value").lambda().eq(EpMeterCollect::getCode, entry.getKey()));
-            if (Objects.nonNull(one)) {
+            //如果已经生成过数据了 则删除
+            if (one.getRecordTime().isAfter(LocalDateTime.of(date, LocalTime.MIN))) {
+                linkCodeMap.remove(entry.getKey());
+            } else if (Objects.nonNull(one)) {
                 entry.setValue(one.getValue());
             }
         }
