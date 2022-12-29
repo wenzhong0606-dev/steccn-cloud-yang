@@ -21,7 +21,6 @@ import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
-import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
 import com.steccn.wms.mapper.*;
 import com.steccn.wms.service.WmsCheckOrderInfoService;
 import com.steccn.wms.service.WmsCheckOrderService;
@@ -288,41 +287,66 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         if(Objects.isNull(wmsCheckOrder)) return R.failure("未查询到盘点信息");
         Object checkArea = wmsCheckOrder.getCheckArea();
         if(Objects.isNull(checkArea)) return R.failure("盘点信息区域为空，请联系管理员");
+        //更新盘点单状态
+        if(wmsCheckOrder.getStatus() == WmsManagerConstant.CheckOrderStateEnum.ZERO.getCode()){
+            wmsCheckOrder.setStatus(WmsManagerConstant.CheckOrderStateEnum.ONE.getCode());
+            updateById(wmsCheckOrder);
+        }
         return R.success(getNowCheckOrderItemStockList( checkArea, wmsCheckOrder.getCheckScope(),
                 checkOrderId,current,size,status));
     }
 
     @Override
-    public Boolean adjNormalOrDifferenceCheckOrderItem(WmsCheckOrderInfoDTO dto) {
+    public R<Boolean> adjNormalOrDifferenceCheckOrderItem( Map<String, Object> paramMap) {
         Boolean result = true;
-        //获取盘点信息
-        WmsCheckOrder wmsCheckOrder = getById(dto.getCheckOrderId());
-        if(Objects.isNull(wmsCheckOrder)) return  false;
-        //获取明细
-        LambdaQueryWrapper<WmsCheckOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(WmsCheckOrderInfo::getWarehouse,dto.getWarehouse()).eq(WmsCheckOrderInfo::getShelf,dto.getShelf())
-                .eq(WmsCheckOrderInfo::getMaterialId,dto.getMaterialId()).eq(WmsCheckOrderInfo::getBatch,dto.getBatch())
-                .eq(WmsCheckOrderInfo::getCaseNo,dto.getCaseNo()).eq(WmsCheckOrderInfo::getCheckOrderId,dto.getCheckOrderId());
-        WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
-        WmsCheckOrderInfo wmsCheckOrderInfoTem = new WmsCheckOrderInfo();
-        if(Objects.isNull(wmsCheckOrderInfo)){
-            BeanUtils.copyProperties(dto,wmsCheckOrderInfoTem);
-            wmsCheckOrderInfoTem.setStatus(1);
-            wmsCheckOrderInfoTem.setShelf(Integer.parseInt(dto.getShelf()));
-            wmsCheckOrderInfoTem.setWarehouse(Integer.parseInt(dto.getWarehouse()));
-            wmsCheckOrderInfoTem.setCheckBy( SecurityUtils.getUser().getUserId());
-            wmsCheckOrderInfoTem.setCheckName( SecurityUtils.getUser().getName());
-            wmsCheckOrderInfoTem.setCheckTime(LocalDateTime.now());
-            result = wmsCheckOrderInfoService.save(wmsCheckOrderInfoTem);
-        }else{
-            wmsCheckOrderInfo.setStatus(1);
-            wmsCheckOrderInfo.setCheckBy( SecurityUtils.getUser().getUserId());
-            wmsCheckOrderInfo.setCheckName( SecurityUtils.getUser().getName());
-            wmsCheckOrderInfo.setCheckTime(LocalDateTime.now());
-            wmsCheckOrderInfo.setNote(dto.getNote());
-            result = wmsCheckOrderInfoService.updateById(wmsCheckOrderInfo);
+        //效验
+        Long checkOrderId = paramMap.containsKey("checkOrderId") ? (paramMap.get("checkOrderId") == null ? null :
+                Long.parseLong(paramMap.get("checkOrderId").toString())) : null;
+        if(Objects.isNull(checkOrderId)) return R.failure("盘点单主键必传");
+        List<Map<String, Object>> wmsCheckOrderInfoList = paramMap.containsKey("wmsCheckOrderInfo") ? (List<Map<String,
+                Object>>) paramMap.get("wmsCheckOrderInfo") : null;
+        Boolean flag = true;
+        for (Map<String, Object> item : wmsCheckOrderInfoList) {
+            if(Objects.isNull(item.get("materialId")) || Objects.isNull(item.get("warehouse"))
+                    || Objects.isNull(item.get("shelf")) ||  Objects.isNull(item.get("batch"))
+                    || Objects.isNull(item.get("caseNo")))  flag = false;
         }
-        return result;
+        if(!flag) return R.failure("参数不全，物料id、货架主键、仓库主键、批次、箱号不可为空");
+        //获取盘点信息
+        WmsCheckOrder wmsCheckOrder = getById(checkOrderId);
+        if(Objects.isNull(wmsCheckOrder)) return  R.success(false) ;
+        for (Map<String, Object> orderInfo : wmsCheckOrderInfoList) {
+            //获取明细
+            LambdaQueryWrapper<WmsCheckOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(WmsCheckOrderInfo::getWarehouse,orderInfo.get("warehouse")).eq(WmsCheckOrderInfo::getShelf,orderInfo.get("shelf"))
+                    .eq(WmsCheckOrderInfo::getMaterialId,orderInfo.get("materialId")).eq(WmsCheckOrderInfo::getBatch,orderInfo.get("batch"))
+                    .eq(WmsCheckOrderInfo::getCaseNo,orderInfo.get("caseNo")).eq(WmsCheckOrderInfo::getCheckOrderId,checkOrderId);
+            WmsCheckOrderInfo wmsCheckOrderInfo = wmsCheckOrderInfoService.getOne(lambdaQueryWrapper,false);
+            WmsCheckOrderInfo wmsCheckOrderInfoTem = new WmsCheckOrderInfo();
+            if(Objects.isNull(wmsCheckOrderInfo)){
+                wmsCheckOrderInfoTem.setResult(new BigDecimal(orderInfo.get("result").toString()));
+                wmsCheckOrderInfoTem.setDifference(new BigDecimal(orderInfo.get("difference").toString()));
+                wmsCheckOrderInfoTem.setQuantity(new BigDecimal(orderInfo.get("quantity").toString()));
+                wmsCheckOrderInfoTem.setCheckOrderId(checkOrderId);
+                wmsCheckOrderInfoTem.setMaterialId(Long.parseLong(orderInfo.get("materialId").toString()));
+                wmsCheckOrderInfoTem.setCaseNo(orderInfo.get("caseNo").toString());
+                wmsCheckOrderInfoTem.setBatch(orderInfo.get("batch").toString());
+                wmsCheckOrderInfoTem.setUnit(orderInfo.get("unit").toString());
+                wmsCheckOrderInfoTem.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
+                wmsCheckOrderInfoTem.setShelf(Integer.parseInt(orderInfo.get("shelf").toString()));
+                wmsCheckOrderInfoTem.setWarehouse(Integer.parseInt(orderInfo.get("warehouse").toString()));
+                wmsCheckOrderInfoTem.setCheckBy( SecurityUtils.getUser().getUserId());
+                wmsCheckOrderInfoTem.setCheckName( SecurityUtils.getUser().getName());
+                wmsCheckOrderInfoTem.setCheckTime(LocalDateTime.now());
+                wmsCheckOrderInfoTem.setNote(Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString());
+                result = wmsCheckOrderInfoService.save(wmsCheckOrderInfoTem);
+            }else{
+                wmsCheckOrderInfo.setStatus(WmsManagerConstant.CheckOrderInfoStateEnum.ONE.getCode());
+                wmsCheckOrderInfo.setNote(Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString());
+                result = wmsCheckOrderInfoService.updateById(wmsCheckOrderInfo);
+            }
+        }
+        return R.success(result);
     }
 
 

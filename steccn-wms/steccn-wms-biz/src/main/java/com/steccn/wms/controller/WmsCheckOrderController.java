@@ -5,7 +5,6 @@ import com.steccn.common.vo.R;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
-import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
 import com.steccn.wms.service.WmsCheckOrderService;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
@@ -132,12 +131,9 @@ public class WmsCheckOrderController {
      */
     @PostMapping("/api/adjNormalOrDifferenceCheckOrderItem")
     @ApiOperation(value = "手机端 调整盘点单操作正常或者差异调整明细")
-    public  R<Boolean> adjNormalOrDifferenceCheckOrderItem(@RequestBody WmsCheckOrderInfoDTO wmsCheckOrderInfoDTO) {
-        if(Objects.isNull(wmsCheckOrderInfoDTO.getShelf()) || Objects.isNull(wmsCheckOrderInfoDTO.getWarehouse())
-                || Objects.isNull(wmsCheckOrderInfoDTO.getMaterialId()) ||  Objects.isNull(wmsCheckOrderInfoDTO.getBatch())
-                || Objects.isNull(wmsCheckOrderInfoDTO.getCaseNo()) ||
-                Objects.isNull(wmsCheckOrderInfoDTO.getCheckOrderId()))  return R.failure("参数不全，物料id、货架主键、仓库主键、批次、箱号不可为空");
-        return  R.success(wmsCheckOrderService.adjNormalOrDifferenceCheckOrderItem(wmsCheckOrderInfoDTO));
+    public  R<Boolean> adjNormalOrDifferenceCheckOrderItem(@RequestBody  Map<String, Object> paramMap) {
+
+        return   wmsCheckOrderService.adjNormalOrDifferenceCheckOrderItem(paramMap);
     }
 
 

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsCheckOrder;
 import com.steccn.wms.dto.WmsCheckOrderDTO;
-import com.steccn.wms.dto.WmsCheckOrderInfoDTO;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
 import com.steccn.wms.vo.WmsCheckOrderVO;
 
@@ -73,5 +72,5 @@ public interface WmsCheckOrderService extends IService<WmsCheckOrder> {
      * @param wmsCheckOrderInfoDTO
      * @return
      */
-    Boolean adjNormalOrDifferenceCheckOrderItem( WmsCheckOrderInfoDTO wmsCheckOrderInfoDTO);
+    R<Boolean> adjNormalOrDifferenceCheckOrderItem(  Map<String, Object> paramMap);
 }

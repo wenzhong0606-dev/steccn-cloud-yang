@@ -67,6 +67,29 @@ public interface WmsManagerConstant {
     }
 
 
+    @Getter
+    @AllArgsConstructor
+    enum CheckOrderStateEnum {
+        ZERO(0, "已创建"),
+        ONE(1, "执行中"),
+        TWO(2, "已完成"),
+        THREE(3, "已关闭"),
+        FOUR(4, "已归档");
+
+        private final Integer code;
+
+        private final String name;
+    }
+    @Getter
+    @AllArgsConstructor
+    enum CheckOrderInfoStateEnum {
+        ZERO(0, "未执行"),
+        ONE(1, "已执行");
+
+        private final Integer code;
+
+        private final String name;
+    }
     /**
      * 状态:0:加  1：减  ）
      */
