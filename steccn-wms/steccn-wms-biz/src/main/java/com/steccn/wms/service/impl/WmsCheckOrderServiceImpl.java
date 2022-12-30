@@ -16,7 +16,6 @@ import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.WmsStockVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
@@ -52,15 +51,11 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     private final WmsCheckOrderInfoService wmsCheckOrderInfoService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
-    private final RemoteMessFeignApi remoteMessFeignApi;
-
     private final WmsInventoryMapper wmsInventoryMapper;
     private final WmsDeliveryReceiptMapper wmsDeliveryReceiptMapper;
     private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
     private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
-
-
 
     /***
      * 获取盘点管理列表
@@ -158,14 +153,10 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             }
             //物料
-            if(Objects.nonNull(wmsCheckOrderInfoVO.getShelf())){
-                List<Long> materialIds = new ArrayList<>();
-                materialIds.add(wmsCheckOrderInfoVO.getMaterialId());
-                R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
-                if(materialInfo.getData().size()>0) {
-                    wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
-                    wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getCode());
-                }
+            if(Objects.nonNull(wmsCheckOrderInfoVO.getMaterialId())){
+                WmsCheckOrderInfoVO wmsCheckOrderInfoVOTem = getWmsCheckOrderInfoVOInfo(wmsCheckOrderInfoVO.getMaterialId());
+                wmsCheckOrderInfoVO.setMaterialName(wmsCheckOrderInfoVOTem.getMaterialName());
+                wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
             }
             infoVOList.add(wmsCheckOrderInfoVO);
         });
@@ -209,6 +200,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             for (WmsCheckOrderInfoVO vo:surplusEntry.getValue()) {
                 WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
                 BeanUtils.copyProperties(vo,wmsStorageReceiptInfo);
+                wmsStorageReceiptInfo.setId(null);
                 wmsStorageReceiptInfo.setStorageReceiptId(wmsStorageReceipt.getId());
                 List<Long> materialIds = new ArrayList<>();
                 materialIds.add(vo.getMaterialId());
@@ -224,9 +216,11 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsStorageReceiptInfo.setUnit(Objects.isNull(wmsInventory)?null:wmsInventory.getUnit());
                 wmsStorageReceiptInfoMapper.insert(wmsStorageReceiptInfo);
                 //更新库存
-                wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().add(vo.getResult()));
-                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(vo.getResult()));
-                wmsInventoryMapper.updateById(wmsInventory);
+                if(Objects.nonNull(wmsInventory)){
+                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().add(vo.getResult()));
+                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().add(vo.getResult()));
+                    wmsInventoryMapper.updateById(wmsInventory);
+                }
             }
         }
         //差额为负数，则盘亏；盘亏生成对应的出库单，类型为盘点出库，关联单据为盘点单号，出库单自动确认
@@ -252,13 +246,15 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
                 wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
                 wmsDeliveryReceiptInfo.setMaterialId(vo.getMaterialId());
-                wmsDeliveryReceiptInfo.setInventoryId(wmsInventory.getId());
+                wmsDeliveryReceiptInfo.setInventoryId(Objects.isNull(wmsInventory)?null:wmsInventory.getId());
                 wmsDeliveryReceiptInfo.setQuantity(availableQuantity);
                 wmsDeliveryReceiptInfoMapper.insert(wmsDeliveryReceiptInfo);
                 //更新库存
-                wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getResult()));
-                wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getResult()));
-                wmsInventoryMapper.updateById(wmsInventory);
+                if(Objects.nonNull(wmsInventory)){
+                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getResult()));
+                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getResult()));
+                    wmsInventoryMapper.updateById(wmsInventory);
+                }
             }
         }
         //更新盘点单信息
@@ -330,7 +326,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             BigDecimal resultNum = Objects.isNull(orderInfo.get("result"))?new BigDecimal(orderInfo.get("quantity").toString())
                     :new BigDecimal(orderInfo.get("result").toString());
             BigDecimal difference = Objects.isNull(orderInfo.get("difference"))?BigDecimal.ZERO:new BigDecimal(orderInfo.get("difference").toString());
-            BigDecimal quantity = new BigDecimal(orderInfo.get("quantity").toString());
+            BigDecimal quantity = new BigDecimal(orderInfo.get("quantity").toString());//代表总数量
             String note = Objects.isNull(orderInfo.get("note"))?null:orderInfo.get("note").toString();
             if(Objects.isNull(wmsCheckOrderInfo)){
                 wmsCheckOrderInfoTem.setResult(resultNum);
@@ -473,13 +469,9 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setShelf(old.getShelf().toString());
             wmsCheckOrderInfoVO.setShelfName(shelfInfo.getData().getOfficeName());
             //物料
-            List<Long> materialIds = new ArrayList<>();
-            materialIds.add(wmsCheckOrderInfoVO.getMaterialId());
-            R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
-            if(materialInfo.getData().size()>0) {
-                wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
-                wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getCode());
-            }
+            WmsCheckOrderInfoVO wmsCheckOrderInfoVOTem = getWmsCheckOrderInfoVOInfo(wmsCheckOrderInfoVO.getMaterialId());
+            wmsCheckOrderInfoVO.setMaterialName(wmsCheckOrderInfoVOTem.getMaterialName());
+            wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
             wmsCheckOrderInfoVO.setTotalQuantity(wmsCheckOrderInfoVO.getQuantity());
             wmsCheckOrderInfoVO.setQuantity(wmsCheckOrderInfoVO.getTotalQuantity().subtract(wmsCheckOrderInfoVO.getDifference()));
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
@@ -489,6 +481,22 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         return LogicalPageUtil.page(orderInfoNowVoList, current, size);
     }
 
+    /****
+     * 根据物料主键获取物料信息（名称|code）
+     * @param materialId
+     * @return
+     */
+    public WmsCheckOrderInfoVO getWmsCheckOrderInfoVOInfo(Long materialId){
+        WmsCheckOrderInfoVO wmsCheckOrderInfoVO = new WmsCheckOrderInfoVO();
+        List<Long> materialIds = new ArrayList<>();
+        materialIds.add(materialId);
+        R<Map<Long, EqpSpareVO>> materialInfo = remoteSpareFeignApi.listById(materialIds);
+        if(materialInfo.getData().size()>0) {
+            wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(materialId).getName());
+            wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(materialId).getCode());
+        }
+        return wmsCheckOrderInfoVO;
+    }
 
     /***
      * 根据盘点单类型获取中文名称
