@@ -157,7 +157,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getValidStart).reversed()).collect(Collectors.toList());
             }
         }else {
-            standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime)).collect(Collectors.toList());
+            standardVOS = standardVOS.stream().sorted(Comparator.comparing(EpProductUnitConsumeStandardVO::getCreateTime).reversed()).collect(Collectors.toList());
         }
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //逻辑分页
