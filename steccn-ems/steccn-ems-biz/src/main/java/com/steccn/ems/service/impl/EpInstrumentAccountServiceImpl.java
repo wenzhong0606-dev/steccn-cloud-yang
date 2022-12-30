@@ -267,10 +267,34 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
         //排序+逻辑分页
         if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME.equals(dto.getSortField())) {
+            List<EpInstrumentAccountPageVO> havaDataCollect = instrumentAccountVOS.stream().filter(v -> Objects.nonNull(v.getLastReadingTime())).collect(Collectors.toList());
+            List<EpInstrumentAccountPageVO> noDataCollect = instrumentAccountVOS.stream().filter(v -> Objects.isNull(v.getLastReadingTime())).collect(Collectors.toList());
             if (dto.getAscFlag() == Boolean.TRUE) {
-                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+                instrumentAccountVOS.clear();
+                if (CollUtil.isNotEmpty(havaDataCollect)){
+                    havaDataCollect = havaDataCollect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
+                    for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : havaDataCollect) {
+                        instrumentAccountVOS.add(epInstrumentAccountPageVO);
+                    }
+                }
+                if (CollUtil.isNotEmpty(noDataCollect)){
+                    for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : noDataCollect) {
+                        instrumentAccountVOS.add(epInstrumentAccountPageVO);
+                    }
+                }
             } else {
-                instrumentAccountVOS = instrumentAccountVOS.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
+                instrumentAccountVOS.clear();
+                if (CollUtil.isNotEmpty(havaDataCollect)){
+                    havaDataCollect = havaDataCollect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
+                    for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : havaDataCollect) {
+                        instrumentAccountVOS.add(epInstrumentAccountPageVO);
+                    }
+                }
+                if (CollUtil.isNotEmpty(noDataCollect)){
+                    for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : noDataCollect) {
+                        instrumentAccountVOS.add(epInstrumentAccountPageVO);
+                    }
+                }
             }
         } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(dto.getSortField())) {
             instrumentAccountVOS = listToSortBySubName(instrumentAccountVOS, dto.getSortField(), dto.getAscFlag());
