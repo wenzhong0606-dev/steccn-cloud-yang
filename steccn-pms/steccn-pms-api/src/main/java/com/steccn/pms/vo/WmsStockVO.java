@@ -29,18 +29,20 @@ public class WmsStockVO implements Serializable {
 
     @ApiModelProperty("单位")
     private String unit;
+    @ApiModelProperty("单位主键")
+    private Long unitId;
 
     @ApiModelProperty("箱号")
     private String caseNo;
     @ApiModelProperty("批次")
     private String batchNo;
 
-    @ApiModelProperty("仓库编码")
+    @ApiModelProperty("仓库主键")
     private String warehouse;
     @ApiModelProperty("仓库名称")
     private String warehouseName;
 
-    @ApiModelProperty("货架编码")
+    @ApiModelProperty("货架主键")
     private String shelf;
     @ApiModelProperty("货架名称")
     private String shelfName;

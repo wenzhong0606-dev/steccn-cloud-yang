@@ -480,6 +480,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsCheckOrderInfoVO.setMaterialName(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getName());
                 wmsCheckOrderInfoVO.setMaterialCode(materialInfo.getData().get(wmsCheckOrderInfoVO.getMaterialId()).getCode());
             }
+            wmsCheckOrderInfoVO.setTotalQuantity(wmsCheckOrderInfoVO.getQuantity());
+            wmsCheckOrderInfoVO.setQuantity(wmsCheckOrderInfoVO.getTotalQuantity().subtract(wmsCheckOrderInfoVO.getDifference()));
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
