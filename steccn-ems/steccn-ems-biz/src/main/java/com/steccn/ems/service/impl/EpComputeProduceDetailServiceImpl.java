@@ -233,7 +233,7 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         BigDecimal avgPullSpeed = BigDecimalUtil.divide(sumPullSpeed, BigDecimal.valueOf(snappingList.size()));
         //当前班次每个物料的拉引量
         BigDecimal productHours = BigDecimalUtil.divide(avgPullSpeed, glassLength).multiply(hours);
-        BigDecimal pullLeadQuantity = BigDecimalUtil.divide(productHours, BigDecimal.valueOf(100));
+        BigDecimal pullLeadQuantity = BigDecimalUtil.divide(productHours, BigDecimal.valueOf(1000000),6);
 //        BigDecimal pullLeadQuantity = avgPullSpeed.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength), BigDecimal.valueOf(1000000)));
         return avgSnapping.add(avgSingleWeight).multiply(pullLeadQuantity);
     }
