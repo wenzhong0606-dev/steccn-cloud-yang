@@ -616,7 +616,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 .filter(v -> BigDecimalUtil.equals(v.getThick(), dto.getThick().get(0)))
                 .collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(thickAllDataList, "筛选厚度和班组后全量数据表为空");
-
+        //获取单耗单位
+        String unitName = unitName(dto.getEnergyType());
         Set<Long> partitionIdSet = thickAllDataList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
         Set<Long> classGroupIdSet = thickAllDataList.stream().map(v -> v.getClassGroupId()).collect(Collectors.toSet());
         Map<Long, EpPartition> partitionEntityMap = epPartitionService.listById(partitionIdSet);
@@ -657,7 +658,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                         }
                         BigDecimal consume = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                         BigDecimal productNum = classGroupEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                        rowVO.setUnitValueStr(BigDecimalUtil.format(BigDecimalUtil.divide(consume, productNum)));
+                        rowVO.setUnitValueStr(BigDecimalUtil.format(BigDecimalUtil.divide(consume, productNum)) + unitName);
                         EpPartition epPartition = partitionEntityMap.getOrDefault(partitionId, defaultEpPartition);
                         rowVO.setPartitionName(epPartition.getOfficeName());
                         rowVO.setSort(Objects.isNull(epPartition.getSort()) ? Integer.MAX_VALUE : epPartition.getSort());
@@ -673,10 +674,23 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //3级排序：按产品厚度升序排列，“无”在最下
         detailComparator(resList);
         //图例过滤
-        if (Objects.nonNull(dto.getFilters())) {
-            resList = resList.stream().filter(v -> dto.getFilters().contains(v.getThickStr())).collect(Collectors.toList());
-        }
+//        if (Objects.nonNull(dto.getFilters())) {
+//            resList = resList.stream().filter(v -> dto.getFilters().contains(v.getThickStr())).collect(Collectors.toList());
+//        }
         return LogicalPageUtil.page(resList, dto.getCurrent(), dto.getSize());
+    }
+
+    /**
+     * 获取单耗的单位
+     * @param energyType 能源类型
+     * @return
+     */
+    private String unitName(Integer energyType){
+        EpEnergyType epEnergyType = epEnergyTypeService.getById(energyType);
+        Assert.notNull(epEnergyType,"能源类型不存在");
+        Long measureUnit = epEnergyType.getMeasureUnit();
+        Map<Long, String> measureUnitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(measureUnit))).get();
+        return measureUnitMap.getOrDefault(measureUnit,Strings.EMPTY);
     }
 
     @Override
