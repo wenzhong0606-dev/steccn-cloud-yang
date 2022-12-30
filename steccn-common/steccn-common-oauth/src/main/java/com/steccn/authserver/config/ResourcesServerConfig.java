@@ -38,7 +38,7 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
             }
         })
         .and().authorizeRequests().antMatchers(list.toArray(new String[list.size()])).permitAll().anyRequest().authenticated();
-
+        http.exceptionHandling().authenticationEntryPoint(new CustomAuthenticationEntryPoint());
     }
 
     @Override
