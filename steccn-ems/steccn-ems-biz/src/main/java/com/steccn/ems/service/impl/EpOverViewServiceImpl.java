@@ -185,9 +185,14 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         officeIdList.add(80);
 
         BigDecimal thick;
+        Long thickId;
         if (type.equals(0)) {
-            thick = BigDecimal.valueOf(2);
+            SysDictVO thickVO = remoteDictFeignApi.getByCode("2.0mm", "product_thickness_range").getData();
+            thickId = thickVO.getId();
+            thick = BigDecimal.valueOf(2.0);
         } else {
+            SysDictVO thickVO = remoteDictFeignApi.getByCode("3.2mm", "product_thickness_range").getData();
+            thickId = thickVO.getId();
             thick = BigDecimal.valueOf(3.2);
         }
 
@@ -209,10 +214,10 @@ public class EpOverViewServiceImpl implements EpOverViewService {
 //        SysDictVO productType = remoteDictFeignApi.getByCode("deep_processing", "product_type").getData();
         LambdaQueryWrapper<EpProductUnitConsumeStandard> queryWrapper = new LambdaQueryWrapper<EpProductUnitConsumeStandard>()
                 .eq(EpProductUnitConsumeStandard::getEnergyType, 1)
-                .gt(EpProductUnitConsumeStandard::getValidStart, selectDate).lt(EpProductUnitConsumeStandard::getValidEnd, selectDate)
+                .le(EpProductUnitConsumeStandard::getValidStart, startDate).ge(EpProductUnitConsumeStandard::getValidEnd, selectDate)
                 .eq(EpProductUnitConsumeStandard::getStandardType, sysDictVO.getId())
                 .eq(EpProductUnitConsumeStandard::getProductType, 1)
-                .eq(EpProductUnitConsumeStandard::getProductThick, thick);
+                .eq(EpProductUnitConsumeStandard::getProductThick, thickId);
         EpProductUnitConsumeStandard productUnitConsumeStandard = consumeStandardService.getOne(queryWrapper);
 
         EpDeepConsumeContrastVO epDeepConsumeContrastVO = new EpDeepConsumeContrastVO();
