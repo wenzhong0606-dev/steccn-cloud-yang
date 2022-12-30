@@ -901,10 +901,10 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         if(CollUtil.isNotEmpty(typeSet)){
             left = left.stream().filter(v -> typeSet.contains(v.getProductType())).collect(Collectors.toList());
         }
-
         epChartGraphDTO.setStandardList(left);
         EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> convert = EpChartGraphUtil.convert(epChartGraphDTO, Boolean.TRUE);
         convert.getXData().setData2(Lists.newArrayList());
+        convert.getSeriesDataVO().stream().forEach(ele -> ele.setStack(null));
         return convert;
     }
 
