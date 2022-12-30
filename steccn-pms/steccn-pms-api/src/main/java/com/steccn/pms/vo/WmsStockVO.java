@@ -21,6 +21,8 @@ public class WmsStockVO implements Serializable {
     private Long materialId;
     @ApiModelProperty("物料名称")
     private String materialName;
+    @ApiModelProperty("物料编码")
+    private String materialCode;
 
     @ApiModelProperty("可用数量")
     private BigDecimal availableQuantity;
