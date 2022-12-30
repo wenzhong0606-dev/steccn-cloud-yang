@@ -990,7 +990,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<StandardVO<BigDecimal>> standardVOList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(dto.getThick())) {
             //产品厚度
-            SysDictVO sysDictVO = remoteDictFeignApi.getByCode(dto.getThick().get(0) + "mm", "product_thickness_range").getData();
+            String thick = dto.getThick().get(0) + "mm";
+            if (BigDecimalUtil.equals(dto.getThick().get(0),BigDecimal.valueOf(2)) || BigDecimalUtil.equals(dto.getThick().get(0),BigDecimal.valueOf(4))) {
+                thick = dto.getThick().get(0) + ".0mm";
+            }
+            SysDictVO sysDictVO = remoteDictFeignApi.getByCode(thick, "product_thickness_range").getData();
 
             //获取部门标准
             consumeStandardList = getDepartmentStandardList(dto, sysDictVO);

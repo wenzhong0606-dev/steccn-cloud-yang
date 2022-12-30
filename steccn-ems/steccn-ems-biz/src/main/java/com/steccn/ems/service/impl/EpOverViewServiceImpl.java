@@ -318,7 +318,7 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         for (LocalDate localDate : dxData) {
             List<EpMeterReadAllDataVO> readAllDataVOList = meterReadAllDataVOList.stream().filter(epMeterReadAllDataVO -> localDate.isEqual(epMeterReadAllDataVO.getReadDate())).collect(Collectors.toList());
             BigDecimal sumConsume = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal sumProductNum = readAllDataVOList.stream().map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal sumProductNum = readAllDataVOList.stream().filter(v -> Objects.nonNull(v.getProductNum())).map(EpMeterReadAllDataVO::getProductNum).reduce(BigDecimal.ZERO, BigDecimal::add);
             dateConsumeList.add(BigDecimalUtil.divide(sumConsume, sumProductNum));
         }
         return dateConsumeList;
