@@ -472,8 +472,16 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             WmsCheckOrderInfoVO wmsCheckOrderInfoVOTem = getWmsCheckOrderInfoVOInfo(wmsCheckOrderInfoVO.getMaterialId());
             wmsCheckOrderInfoVO.setMaterialName(wmsCheckOrderInfoVOTem.getMaterialName());
             wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
-            wmsCheckOrderInfoVO.setTotalQuantity(wmsCheckOrderInfoVO.getQuantity());
-            wmsCheckOrderInfoVO.setQuantity(wmsCheckOrderInfoVO.getTotalQuantity().subtract(wmsCheckOrderInfoVO.getDifference()));
+            LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
+            inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo());
+            List<WmsInventory> wmsInventorys = wmsInventoryMapper.selectList(inventoryLambdaQueryWrapper);
+            if(wmsInventorys.size() >0){
+                wmsCheckOrderInfoVO.setTotalQuantity(wmsInventorys.get(0).getTotalQuantity());
+                wmsCheckOrderInfoVO.setQuantity(wmsInventorys.get(0).getAvailableQuantity());
+            }else{
+                wmsCheckOrderInfoVO.setTotalQuantity(BigDecimal.ZERO);
+                wmsCheckOrderInfoVO.setQuantity(BigDecimal.ZERO);
+            }
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
