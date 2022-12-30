@@ -964,6 +964,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 if (!"null".equals(s[1])) {
                     rowVO.setThick(new BigDecimal(s[1]).setScale(1));
                     rowVO.setThickStr(rowVO.getThick() + "mm");
+                    if(BigDecimalUtil.equals(rowVO.getThick(),new BigDecimal("-1"))){
+                        rowVO.setThickStr("无");
+                    }
                 }
                 if (!"null".equals(s[0])) {
                     rowVO.setClassId(Integer.parseInt(s[0]));
@@ -973,7 +976,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 BigDecimal consume = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 BigDecimal productNum = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
                 BigDecimal divide = BigDecimalUtil.divide(consume, productNum);
-                rowVO.setConsumeStr(BigDecimalUtil.format(divide));
+                rowVO.setConsumeStr(BigDecimalUtil.format(divide) + unitName(dto.getEnergyType()));
                 resList.add(rowVO);
             }
         }
