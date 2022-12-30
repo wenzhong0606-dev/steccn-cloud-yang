@@ -252,8 +252,8 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 wmsDeliveryReceiptInfoMapper.insert(wmsDeliveryReceiptInfo);
                 //更新库存
                 if(Objects.nonNull(wmsInventory)){
-                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getResult()));
-                    wmsInventory.setAvailableQuantity(wmsInventory.getAvailableQuantity().subtract(vo.getResult()));
+                    wmsInventory.setTotalQuantity(wmsInventory.getTotalQuantity().subtract(vo.getDifference().abs()));
+                    wmsInventory.setAvailableQuantity(vo.getResult());
                     wmsInventoryMapper.updateById(wmsInventory);
                 }
             }
