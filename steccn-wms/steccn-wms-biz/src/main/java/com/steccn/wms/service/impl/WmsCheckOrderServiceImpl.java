@@ -61,6 +61,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
 
 
+
     /***
      * 获取盘点管理列表
      * @param dto
@@ -414,40 +415,22 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 materials.add(vo.getId());
             });
         }
-      return  getStockList(checkOrderId,(checkScope == 0 || checkScope == 1)?getShelfNewStockList(shelfs)
-              :getMaterialsNewStockList(materials),current, size,status);
-    }
-
-
-    /***
-     * 根据物料获取最新库存列表
-     * @param materials
-     * @return
-     */
-    public List<WmsStockVO> getMaterialsNewStockList(Set<Long> materials){
-        List<WmsStockVO> wmsStockNewList = new ArrayList<>();
-        //根据物料获取关联库存
-        Map<Long, List<WmsStockVO>>  stockList = remoteMessFeignApi.inventory(materials);
-        for (Long key : stockList.keySet()) {
-            wmsStockNewList.addAll(stockList.get(key));
-        }
-        return wmsStockNewList;
+      return  getStockList(checkOrderId,getByShelfCodeOrMaterialsInventoryList( shelfs,materials),current, size,status);
     }
 
     /***
-     * 根据货架获取最新库存列表
+     * 根据货架编码/物料主键 获取最新库存列表
      * @param shelfs
      * @return
      */
-    public List<WmsStockVO> getShelfNewStockList(Set<String> shelfs){
-        List<WmsStockVO> wmsStockNewList = new ArrayList<>();
-        //根据货架获取关联库存
-        Map<String, List<WmsStockVO>>  stockList = remoteMessFeignApi.shelfInventory(shelfs);
-        for (String key : stockList.keySet()) {
-            wmsStockNewList.addAll(stockList.get(key));
+    public List<WmsStockVO> getByShelfCodeOrMaterialsInventoryList(Set<String> shelfs,Set<Long> materials){
+        List<WmsStockVO>  wmsStockNewList =  wmsInventoryMapper.getByShelfCodeOrMaterialsInventoryList(shelfs,materials);
+        for (WmsStockVO vo:wmsStockNewList) {
+            vo.setUnit(typeName( vo.getUnitId()));
         }
         return wmsStockNewList;
     }
+
     /****
      * 根据盘点单获取转换后满足条件库存列表
      * @param checkOrderId
@@ -465,14 +448,6 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
         orderInfoQueryWrapper.eq("check_order_id",checkOrderId).eq("del_flag",0);
         List<WmsCheckOrderInfo> orderInfoOldList = wmsCheckOrderInfoService.list(orderInfoQueryWrapper);
         for (WmsStockVO vo:wmsStockNewList) {
-            Set<String> codeSet = new HashSet<>();
-            codeSet.add(vo.getWarehouse());
-            codeSet.add(vo.getShelf());
-            R<Map<String, SysOfficeVO>> sysOfficeVO = remoteOfficeFeign.listByCodeSet(codeSet);
-            if(sysOfficeVO.getData().size()>0){
-                vo.setWarehouse( sysOfficeVO.getData().get(vo.getWarehouse()).getId().toString());
-                vo.setShelf(sysOfficeVO.getData().get(vo.getShelf()).getId().toString());
-            }
             if(!orderInfoOldList.stream().filter(m->m.getWarehouse().equals(Integer.parseInt(vo.getWarehouse()))
                     && m.getShelf().equals(Integer.parseInt(vo.getShelf())) && m.getMaterialId().equals(vo.getMaterialId())
                     && m.getBatch().equals(vo.getBatchNo()) && m.getCaseNo().equals(vo.getCaseNo()))

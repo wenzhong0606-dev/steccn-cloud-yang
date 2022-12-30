@@ -1,13 +1,15 @@
 package com.steccn.wms.mapper;
 
-import com.steccn.wms.domain.WmsInventory;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.pms.vo.WmsStockVO;
+import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.dto.WmsInventoryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author W10
@@ -57,6 +59,11 @@ public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
      * @return
      */
     List<WmsInventory> listMaterialInventory(@Param("list")List<MaterialStorageDTO> list);
+
+
+    List<WmsStockVO> getByShelfCodeOrMaterialsInventoryList(@Param("shelfCodes")Set<String> shelfs,
+                                                            @Param("materialsList") Set<Long> materials);
+
 }
 
 

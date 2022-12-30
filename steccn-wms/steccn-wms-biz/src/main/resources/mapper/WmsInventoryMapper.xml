@@ -101,4 +101,27 @@
             )
         </foreach>
     </select>
+
+    <select id="getByShelfCodeOrMaterialsInventoryList" resultType="com.steccn.pms.vo.WmsStockVO">
+        SELECT
+          a.id inventoryId ,a.material_id materialId,a.material_name materialName,a.available_quantity availableQuantity,
+          a.total_quantity totalQuantity,a.unit unitId,a.case_no caseNo,a.batch batchNo,a.warehouse_id warehouse,
+          a.warehouse_name warehouseName,a.shelf_id shelf,a.shelf_name shelfName
+        FROM
+        wms_inventory a
+        WHERE   a.del_flag = 0
+        <if test="shelfCodes!=null and shelfCodes.size() >0 ">
+            <foreach collection="shelfCodes" open=" and a.shelf_code in(" close=")" item="shelfCode" separator=",">
+                #{shelfCode}
+            </foreach>
+        </if>
+        <if test="materialsList!=null and materialsList.size() >0 ">
+            <foreach collection="materialsList" open=" and a.material_id in(" close=")" item="materials" separator=",">
+                #{materials}
+            </foreach>
+        </if>
+
+    </select>
+
+
 </mapper>
