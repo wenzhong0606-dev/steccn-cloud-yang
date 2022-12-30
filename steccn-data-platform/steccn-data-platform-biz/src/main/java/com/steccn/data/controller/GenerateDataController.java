@@ -33,7 +33,7 @@ public class GenerateDataController {
     @GetMapping("/generate/em/data")
     @ApiOperation(value = "生成数据")
     public R<Boolean> generateEmData(@RequestParam("date") LocalDate date) {
-        List<String> codeList = Arrays.asList("B-0011","C-0011","D-00013","E-011");
+        List<String> codeList = Arrays.asList("E-12","E-11");
         Map<String, BigDecimal> linkCodeMap = getLinkCodeMap(date, codeList);
         Random random = new Random();
         Map<String, LocalDateTime> dtMap = Maps.newHashMap();

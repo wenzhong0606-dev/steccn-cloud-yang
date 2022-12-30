@@ -257,9 +257,9 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         if (CollUtil.isNotEmpty(dto.getThick())) {
             StringBuilder sb = new StringBuilder();
             dto.getThick().forEach(tmp -> {
-               String data =  tmp.toString()+ "mm";
+               String data =  tmp.toString()+ "mm ";
                 if(BigDecimalUtil.equals(tmp,new BigDecimal("-1"))){
-                    data = "无";
+                    data = "无 ";
                 }
                 sb.append(data);
             });
