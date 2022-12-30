@@ -255,7 +255,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         R<String> r = new R<>();
         RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
         lock.lock();
-        String code = null;
+        String code = "1";
         try {
             //1.校验状态
             WmsLogisticsOrder order = getById(dto.getId());
