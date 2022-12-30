@@ -23,6 +23,7 @@ import com.steccn.wms.dto.WmsCheckOrderDTO;
 import com.steccn.wms.mapper.*;
 import com.steccn.wms.service.WmsCheckOrderInfoService;
 import com.steccn.wms.service.WmsCheckOrderService;
+import com.steccn.wms.service.WmsInventoryService;
 import com.steccn.wms.util.WmsCodeUtil;
 import com.steccn.wms.vo.WmsCheckAreaVO;
 import com.steccn.wms.vo.WmsCheckOrderInfoVO;
@@ -56,7 +57,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
     private final WmsDeliveryReceiptInfoMapper wmsDeliveryReceiptInfoMapper;
     private final WmsStorageReceiptMapper wmsStorageReceiptMapper;
     private final WmsStorageReceiptInfoMapper wmsStorageReceiptInfoMapper;
-
+    private final WmsInventoryService wmsInventoryService;
     /***
      * 获取盘点管理列表
      * @param dto
@@ -212,7 +213,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
                 //获取库存信息
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
                 inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
-                WmsInventory wmsInventory = wmsInventoryMapper.selectOne(inventoryLambdaQueryWrapper);
+                WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 wmsStorageReceiptInfo.setUnit(Objects.isNull(wmsInventory)?null:wmsInventory.getUnit());
                 wmsStorageReceiptInfoMapper.insert(wmsStorageReceiptInfo);
                 //更新库存
@@ -240,7 +241,7 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             for (WmsCheckOrderInfoVO vo:lossEntry.getValue()) {
                 LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
                 inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,vo.getCaseNo());
-                WmsInventory wmsInventory = wmsInventoryMapper.selectOne(inventoryLambdaQueryWrapper);
+                WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
                 //保存出库明细
                 BigDecimal availableQuantity = vo.getResult();//数量
                 WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
@@ -474,14 +475,10 @@ public class WmsCheckOrderServiceImpl extends ServiceImpl<WmsCheckOrderMapper, W
             wmsCheckOrderInfoVO.setMaterialCode(wmsCheckOrderInfoVOTem.getMaterialCode());
             LambdaQueryWrapper<WmsInventory> inventoryLambdaQueryWrapper = new LambdaQueryWrapper();
             inventoryLambdaQueryWrapper.eq(WmsInventory::getCaseNo,old.getCaseNo());
-            List<WmsInventory> wmsInventorys = wmsInventoryMapper.selectList(inventoryLambdaQueryWrapper);
-            if(wmsInventorys.size() >0){
-                wmsCheckOrderInfoVO.setTotalQuantity(wmsInventorys.get(0).getTotalQuantity());
-                wmsCheckOrderInfoVO.setQuantity(wmsInventorys.get(0).getAvailableQuantity());
-            }else{
-                wmsCheckOrderInfoVO.setTotalQuantity(BigDecimal.ZERO);
-                wmsCheckOrderInfoVO.setQuantity(BigDecimal.ZERO);
-            }
+            //库存
+            WmsInventory wmsInventory = wmsInventoryService.getOne(inventoryLambdaQueryWrapper,false);
+            wmsCheckOrderInfoVO.setTotalQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getTotalQuantity():BigDecimal.ZERO);
+            wmsCheckOrderInfoVO.setQuantity(Objects.nonNull(wmsInventory)?wmsInventory.getAvailableQuantity():BigDecimal.ZERO);
             orderInfoNowVoList.add(wmsCheckOrderInfoVO);
         }
         if(Objects.nonNull(status)) orderInfoNowVoList = orderInfoNowVoList.stream().filter(vo ->
