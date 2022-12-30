@@ -68,8 +68,8 @@
 	        t.product_line productLine
         FROM
 	        qt_check_task t
-	        INNER JOIN qt_check_task_detail d ON t.id = d.task_id
-	        INNER JOIN qt_defective_item i ON d.item_id = i.id
+	        left JOIN qt_check_task_detail d ON t.id = d.task_id
+	        left JOIN qt_check_item i ON d.item_id = i.id
         WHERE
 	        t.task_type = 4
 	        and t.class_time &gt;= #{startTime}

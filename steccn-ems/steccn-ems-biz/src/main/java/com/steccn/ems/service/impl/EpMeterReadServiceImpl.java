@@ -190,6 +190,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(EpMeterReadAddDTO dto) {
+        if (Objects.isNull(dto.getReadValue())) {
+            throw new BusinessException("抄表值不能为空");
+        }
         EpMeterRead epMeterRead = new EpMeterRead();
         BeanUtils.copyProperties(dto, epMeterRead);
         EpMeterOperationRecord epMeterOperationRecord = new EpMeterOperationRecord();

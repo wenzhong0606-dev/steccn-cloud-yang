@@ -95,8 +95,9 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
                     pmsReportWorkVOList = getDayPmsReportWorkVOList(reportWorkVOList, startTime, endTime, nightClassId);
                 }
                 //获取某天某个班次的巡检任务
+                int finalI = i;
                 itemMaterialVOList = detailItemMaterialVOList.stream()
-                        .filter(detailItemMaterial -> detailItemMaterial.getClassTime().isAfter(startTime) && detailItemMaterial.getClassTime().isBefore(endTime) && detailItemMaterial.getClassId().equals(1))
+                        .filter(detailItemMaterial -> detailItemMaterial.getClassTime().toLocalDate().isEqual(localDate) && detailItemMaterial.getClassId().equals(finalI))
                         .collect(Collectors.toList());
 
                 //获取某天某个班次某个物料的基片拉引量和深加工产量
@@ -218,9 +219,9 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
 
     private BigDecimal getPullLeadQuantity(List<QtCheckTaskDetailItemMaterialVO> itemMaterialVOList, BigDecimal hours, BigDecimal glassLength) {
         //获取每个物料的平均单片掰边重量、平均单片重量、拉引速度
-        List<QtCheckTaskDetailItemMaterialVO> snappingList = itemMaterialVOList.stream().filter(item -> item.getItemName().equals("单片掰边重量")).collect(Collectors.toList());
-        List<QtCheckTaskDetailItemMaterialVO> singleWeightList = itemMaterialVOList.stream().filter(item -> item.getItemName().equals("单片重量")).collect(Collectors.toList());
-        List<QtCheckTaskDetailItemMaterialVO> pullSpeedList = itemMaterialVOList.stream().filter(item -> item.getItemName().equals("拉引速度")).collect(Collectors.toList());
+        List<QtCheckTaskDetailItemMaterialVO> snappingList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"单片掰边重量")).collect(Collectors.toList());
+        List<QtCheckTaskDetailItemMaterialVO> singleWeightList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"单片重量")).collect(Collectors.toList());
+        List<QtCheckTaskDetailItemMaterialVO> pullSpeedList = itemMaterialVOList.stream().filter(item -> Objects.equals(item.getItemName(),"拉引时速")).collect(Collectors.toList());
         BigDecimal sumSnapping = snappingList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal sumSingleWeight = singleWeightList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal sumPullSpeed = pullSpeedList.stream().map(item -> new BigDecimal(item.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -231,7 +232,9 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         //拉引速度
         BigDecimal avgPullSpeed = BigDecimalUtil.divide(sumPullSpeed, BigDecimal.valueOf(snappingList.size()));
         //当前班次每个物料的拉引量
+        BigDecimal productHours = BigDecimalUtil.divide(avgPullSpeed, glassLength).multiply(hours);
+        BigDecimal pullLeadQuantity = BigDecimalUtil.divide(productHours, BigDecimal.valueOf(100));
 //        BigDecimal pullLeadQuantity = avgPullSpeed.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength), BigDecimal.valueOf(1000000)));
-        return avgSnapping.add(avgSingleWeight).multiply(BigDecimalUtil.divide(BigDecimalUtil.divide(avgPullSpeed, glassLength).multiply(hours), BigDecimal.valueOf(1000000)));
+        return avgSnapping.add(avgSingleWeight).multiply(pullLeadQuantity);
     }
 }
