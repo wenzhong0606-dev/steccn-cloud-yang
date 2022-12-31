@@ -320,7 +320,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     @Override
     public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
-        Assert.notEmpty(partitionIdList, "组织机构不能为空");
+        SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
         Assert.notNull(energyType, "能源类型不能为空");
         List<EpMeterReadAllDataVO> gpDataList = Lists.newArrayList();
 
