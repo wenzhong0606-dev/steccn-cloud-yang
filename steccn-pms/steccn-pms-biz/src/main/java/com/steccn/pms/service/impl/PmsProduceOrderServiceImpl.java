@@ -433,11 +433,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //3.校验所有组件是否已分配工序
         //3.1 获取组件数据
         List<PmsWorkOrderBomVO> materialList = pmsWorkOrderBomService.getMaterialList(orderId);
-
-        Assert.isFalse(CollUtil.isEmpty(materialList), "该订单不存在组件,请检查");
-        materialList.forEach(material -> {
-            Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
-        });
+//        Assert.isFalse(CollUtil.isEmpty(materialList), "该订单不存在组件,请检查");
+        if (CollUtil.isNotEmpty(materialList)) {
+            materialList.forEach(material -> {
+                Assert.notNull(material.getProcessId(), "组件未分配工序，请检查");
+            });
+        }
         //4.校验订单状态
         Assert.checkBetween(order.getState(), 0, 0, "仅已创建订单可下达");
         //5.修改订单状态为已下达
@@ -829,8 +830,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 ele.setThick(thick);
                 ele.setClassDate(currentDate);
                 //获取车间和制造部
-                ele.setWorkshopId(parentMap.getOrDefault(ele.getProductLineId(),defaultSysOfficeVO).getId());
-                ele.setDepartmentId(grandPaMap.getOrDefault(ele.getWorkshopId(),defaultSysOfficeVO).getId());
+                ele.setWorkshopId(parentMap.getOrDefault(ele.getProductLineId(), defaultSysOfficeVO).getId());
+                ele.setDepartmentId(grandPaMap.getOrDefault(ele.getWorkshopId(), defaultSysOfficeVO).getId());
                 SysDictVO sysDictVO = classMap.get(ele.getClassesId());
                 if (Objects.nonNull(sysDictVO)) {
                     if (sysDictVO.getName().contains("早")) {
