@@ -76,6 +76,7 @@
             #{id}
         </foreach> )
           AND office_type = #{officeType}
+          AND status = 0
     </select>
 
     <select id="listByChildIds" resultType="com.steccn.platform.vo.SysOfficeVO">
@@ -112,5 +113,6 @@
         <foreach collection="childIdList" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
+        AND a.status =0 and b.status =0 and c.status =0
     </select>
 </mapper>
