@@ -1,6 +1,7 @@
 package com.steccn.data.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import com.google.common.collect.Lists;
 import com.steccn.data.domain.EpMeterCollect;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,7 +50,8 @@ public class HbCollectServiceImpl implements HbCollectService {
             if (Objects.nonNull(dto.getData())) {
                 model.setLine(dto.getData().getLine());
                 model.setErrorCode(dto.getData().getErrcode());
-                model.setProductTime(dto.getData().getProduct_time());
+                Date date = new Date(dto.getData().getProduct_time());
+                model.setProductTime(LocalDateTimeUtil.of(date));
             }
             model.setCreateTime(now);
             qtDefectCollectService.save(model);

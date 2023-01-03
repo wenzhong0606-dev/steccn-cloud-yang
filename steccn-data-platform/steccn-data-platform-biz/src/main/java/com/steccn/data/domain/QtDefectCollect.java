@@ -39,7 +39,7 @@ public class QtDefectCollect implements Serializable {
     /**
      * 产品进入时间
      */
-    private String productTime;
+    private LocalDateTime productTime;
 
     /**
      * 线次
