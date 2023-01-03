@@ -49,9 +49,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE;
 
@@ -114,26 +116,30 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             pmsProducePlanDTO.setTotal(total);
 
             List<PmsProducePlanDetailsDTO> producePlanDetailsDTOList = new ArrayList<>();
+
             for (LocalDate localDate : localDateList) {
                 PmsProducePlanDetailsDTO planDetailsDTO = new PmsProducePlanDetailsDTO();
+
                 Optional<PmsProducePlanVO> present = entry.getValue().stream().filter(producePlanVO -> producePlanVO.getPlanDate().equals(localDate)).findAny();
+
                 if (present.isPresent()) {
                     BeanUtils.copyProperties(present.get(), planDetailsDTO);
                 } else {
                     planDetailsDTO.setPlanDate(localDate);
                 }
                 producePlanDetailsDTOList.add(planDetailsDTO);
-
             }
+            LocalDateTime updateTime = entry.getValue().stream().max(Comparator.comparing(PmsProducePlanVO::getUpdateTime)).get().getUpdateTime();
             pmsProducePlanDTO.setProducePlanDetailsDTOList(producePlanDetailsDTOList);
+            pmsProducePlanDTO.setUpdateTime(updateTime);
             pmsProducePlanDTOList.add(pmsProducePlanDTO);
         }
         //添加序号
         for (int i = 0; i < pmsProducePlanDTOList.size(); i++) {
             pmsProducePlanDTOList.get(i).setId(i);
         }
-
-        return pmsProducePlanDTOList;
+        //排序
+        return pmsProducePlanDTOList.stream().sorted(Comparator.comparing(PmsProducePlanDTO::getUpdateTime).reversed()).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)

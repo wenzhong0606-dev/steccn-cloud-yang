@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author chenhuan
@@ -23,4 +24,9 @@ public class PmsProducePlanVO {
     private BigDecimal quantity;
 
     private Long id;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime updateTime;
 }

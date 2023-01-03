@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -27,4 +28,9 @@ public class PmsProducePlanDTO implements Serializable {
      * 序号前端编辑用
      */
     private Integer id;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime updateTime;
 }
