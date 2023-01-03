@@ -58,6 +58,7 @@
                 AND office_type = #{officeType}
             </if>
            AND status = 0
+           order by tree_sort
     </select>
     <select id="listByParentIds" resultType="com.steccn.platform.vo.SysOfficeVO">
         SELECT
