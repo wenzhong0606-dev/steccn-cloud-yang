@@ -57,6 +57,7 @@
             <if test="officeType!=null and officeType!=''">
                 AND office_type = #{officeType}
             </if>
+           AND status = 0
     </select>
     <select id="listByParentIds" resultType="com.steccn.platform.vo.SysOfficeVO">
         SELECT
