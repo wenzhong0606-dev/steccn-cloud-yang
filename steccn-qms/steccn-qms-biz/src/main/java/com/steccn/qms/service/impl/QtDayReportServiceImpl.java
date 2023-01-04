@@ -13,6 +13,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.service.QtDayReportService;
 import com.steccn.qms.service.QtDefectiveReportService;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
@@ -75,7 +76,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
-        qtCheckTaskService.list();
         return null;
     }
 }
