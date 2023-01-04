@@ -1,5 +1,6 @@
 package com.steccn.qms.service;
 
+import com.steccn.qms.vo.QtDayReportFirstVO;
 import com.steccn.qms.vo.QtDayReportOnlineVO;
 
 import java.time.LocalDate;
@@ -17,4 +18,12 @@ public interface QtDayReportService {
      * @return vo
      */
     QtDayReportOnlineVO online(LocalDate date, Integer productLineId);
+
+    /**
+     * 质量日报表-首检
+     * @param date 指定日期
+     * @param productLineId 产线id
+     * @return
+     */
+    QtDayReportFirstVO first(LocalDate date,Integer productLineId);
 }

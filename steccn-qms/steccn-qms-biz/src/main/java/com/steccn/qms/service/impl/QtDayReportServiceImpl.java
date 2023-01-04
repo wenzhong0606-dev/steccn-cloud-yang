@@ -1,17 +1,26 @@
 package com.steccn.qms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.constant.MpConstant;
+import com.steccn.common.util.LocalDateUtil;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtCheckPlan;
+import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.service.QtDayReportService;
 import com.steccn.qms.service.QtDefectiveReportService;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.QtDayReportFirstVO;
 import com.steccn.qms.vo.QtDayReportOnlineVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yequan
@@ -23,6 +32,8 @@ import java.util.List;
 public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtDefectiveReportService qtDefectiveReportService;
+
+    private final QtCheckTaskService qtCheckTaskService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -38,6 +49,19 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //查询检验设备数据
 
 
+        return null;
+    }
+
+    @Override
+    public QtDayReportFirstVO first(LocalDate date, Integer productLineId) {
+        LocalDateTime startTime = date.atTime(8,0,0);
+
+        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                //产线
+                .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
+        qtCheckTaskService.list();
         return null;
     }
 }

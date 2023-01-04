@@ -24,4 +24,9 @@ public class QtDayReportFirstVO implements Serializable {
      * 表头-动态部分
      */
     private List<BaseReportHeaderVO> module;
+
+    /**
+     * 数据部分
+     */
+    private List<QtDayReportFirstDataVO> tableData;
 }
