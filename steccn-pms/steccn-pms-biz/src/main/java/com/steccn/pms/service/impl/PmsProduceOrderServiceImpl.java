@@ -626,7 +626,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可暂停");
+        Assert.isTrue(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可暂停");
         //3.修改状态
         order.setState(PmManagerConstant.OrderStateEnum.THREE.getCode());
         return updateById(order);
@@ -637,7 +637,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可完成");
+        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()) || PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()) || order.getState().equals(PmManagerConstant.OrderStateEnum.FOUR.getCode()), "当前状态不可完成");
         //3.状态完成
         order.setState(PmManagerConstant.OrderStateEnum.FIVE.getCode());
         return updateById(order);
