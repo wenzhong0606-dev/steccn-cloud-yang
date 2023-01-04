@@ -18,6 +18,12 @@ public interface SysOfficeConstant {
     String SHELF_TYPE = "5";
 
     /**
+     * 湖北博华缺陷采样数据
+     */
+    String HBBH_DEFECTIVE_SAMPLE_LINE = "HBBH_DEFECTIVE_SAMPLE_LINE";
+
+
+    /**
      * 根节点
      */
     Integer ROOT_LEVEL = 1;
@@ -30,7 +36,7 @@ public interface SysOfficeConstant {
     /**
      * 产线类型
      */
-    String PRODUCT_LINE="9";
+    String PRODUCT_LINE = "9";
 
     /**
      * 车间类型
