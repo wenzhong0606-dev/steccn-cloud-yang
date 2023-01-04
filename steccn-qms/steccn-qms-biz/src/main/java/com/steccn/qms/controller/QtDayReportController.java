@@ -27,6 +27,9 @@ public class QtDayReportController {
     public R online(@RequestParam("date") LocalDate date,
                     @RequestParam("workshopId") Integer workshopId,
                     @RequestParam("productLineId") Integer productLineId) {
+
+
+
         return R.success();
     }
 }
