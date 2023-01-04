@@ -27,6 +27,42 @@ public interface PmManagerConstant {
     String MEASURE_UNIT_TON ="ton";
     String MEASURE_UNIT_SM ="m²";
 
+    /**
+     * 数字
+     */
+    String NUM_1 = "1";
+    String NUM_2 = "2";
+    String NUM_3 = "3";
+    String NUM_4 = "4";
+    String NUM_5 = "5";
+    String NUM_6 = "6";
+    String NUM_7 = "7";
+    String NUM_8 = "8";
+    String NUM_9 = "9";
+    String NUM_10 = "10";
+    String NUM_11 = "11";
+    String NUM_12 = "12";
+    String NUM_13 = "13";
+    String NUM_14 = "14";
+    String NUM_15 = "15";
+    String NUM_16 = "16";
+    String NUM_17 = "17";
+    String NUM_18 = "18";
+    String NUM_19 = "19";
+    String NUM_20 = "20";
+    String NUM_21 = "21";
+    String NUM_22 = "22";
+    String NUM_23 = "23";
+    String NUM_24 = "24";
+    String NUM_25 = "25";
+    String NUM_26 = "26";
+    String NUM_27 = "27";
+    String NUM_28 = "28";
+    String NUM_29 = "29";
+    String NUM_30 = "30";
+    String NUM_31 = "31";
+
+
 
     /**
      * mrp 类型
@@ -165,6 +201,7 @@ public interface PmManagerConstant {
 
 
 
+
     /**
      * 入库出库凭证状态
      */
@@ -211,5 +248,6 @@ public interface PmManagerConstant {
 
         private final String name;
     }
+
 
 }

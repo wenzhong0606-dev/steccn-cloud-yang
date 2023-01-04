@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.alibaba.excel.metadata.CellExtra;
 import com.steccn.pms.dto.PmsProducePlanExcelDTO;
+import com.steccn.pms.dto.PmsProducePlanNewExcelDTO;
 import com.steccn.pms.vo.ProducePlanMsgVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,23 +16,36 @@ import java.util.List;
  * @date 2022/11/4 10:05
  */
 @Slf4j
-public class ExcelListener extends AnalysisEventListener<PmsProducePlanExcelDTO> {
+public class ExcelListener extends AnalysisEventListener<PmsProducePlanNewExcelDTO> {
 
 
-    List<PmsProducePlanExcelDTO> producePlanExcelDTOList;
+    List<PmsProducePlanNewExcelDTO> producePlanExcelDTOList;
     List<ProducePlanMsgVO> producePlanMsgVOList;
-    public ExcelListener(List<PmsProducePlanExcelDTO> res, List<ProducePlanMsgVO> producePlanMsgVOList) {
+//    public ExcelListener(List<PmsProducePlanNewExcelDTO> res, List<ProducePlanMsgVO> producePlanMsgVOList) {
+//        this.producePlanExcelDTOList=res;
+//        this.producePlanMsgVOList = producePlanMsgVOList;
+//    }
+
+    public ExcelListener(List<PmsProducePlanNewExcelDTO> res, List<ProducePlanMsgVO> producePlanMsgVOList) {
         this.producePlanExcelDTOList=res;
         this.producePlanMsgVOList = producePlanMsgVOList;
     }
 
     @Override
-    public void invoke(PmsProducePlanExcelDTO pmsProducePlanExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(PmsProducePlanNewExcelDTO pmsProducePlanExcelDTO, AnalysisContext analysisContext) {
         //获取行号
         Integer rowIndex = analysisContext.readRowHolder().getRowIndex();
         pmsProducePlanExcelDTO.setRowIndex(rowIndex+1);
         producePlanExcelDTOList.add(pmsProducePlanExcelDTO);
     }
+
+//    @Override
+//    public void invoke(PmsProducePlanExcelDTO pmsProducePlanExcelDTO, AnalysisContext analysisContext) {
+//        //获取行号
+//        Integer rowIndex = analysisContext.readRowHolder().getRowIndex();
+//        pmsProducePlanExcelDTO.setRowIndex(rowIndex+1);
+//        producePlanExcelDTOList.add(pmsProducePlanExcelDTO);
+//    }
 
     /**
      * 解析异常获取异常行列的信息

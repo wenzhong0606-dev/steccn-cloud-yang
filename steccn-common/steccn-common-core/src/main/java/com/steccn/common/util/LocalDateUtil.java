@@ -200,7 +200,7 @@ public class LocalDateUtil {
         for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
             localDateList.add(d);
         }
-        return  localDateList;
+        return localDateList;
     }
 
     /**
@@ -231,7 +231,7 @@ public class LocalDateUtil {
         return firstAndLastDateList;
     }
 
-    public static String getWeekDay(){
+    public static String getWeekDay() {
         LocalDate localDate = LocalDate.now();
         String k = String.valueOf(localDate.getDayOfWeek());
         return k;
@@ -248,5 +248,23 @@ public class LocalDateUtil {
 
         return false;
     }
+
+    /**
+     * 校验年月 2023-01
+     *
+     * @param date
+     * @return
+     */
+    public static Boolean checkYears(String date) {
+        String pattern = "[1-2]\\d{3}-((0[1-9])|(1[0-2]))";
+        Pattern pat = Pattern.compile(pattern);
+        if (StringUtils.isNotBlank(date)) {
+            Matcher mat = pat.matcher(date);
+            return mat.matches();
+        }
+
+        return false;
+    }
+
 
 }
