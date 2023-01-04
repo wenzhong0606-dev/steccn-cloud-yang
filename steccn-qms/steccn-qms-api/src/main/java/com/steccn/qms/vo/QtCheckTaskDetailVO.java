@@ -26,9 +26,6 @@ public class QtCheckTaskDetailVO implements Serializable {
      */
     private QtCheckTaskListVO qtCheckTaskListVo;
 
-    /**
-     * 找出检验方案
-     */
 
     /**
      *

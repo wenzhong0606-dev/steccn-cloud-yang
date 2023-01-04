@@ -363,4 +363,9 @@ public class QtCheckTask implements Serializable {
      */
     @TableField(exist = false)
     private String  originalTaskCode;
+
+    /**
+     * 抽检时间
+     */
+    private LocalDateTime spotTime;
 }

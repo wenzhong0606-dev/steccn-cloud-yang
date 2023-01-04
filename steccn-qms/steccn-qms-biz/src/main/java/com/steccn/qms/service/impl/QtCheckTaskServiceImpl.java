@@ -251,6 +251,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
                 qtCheckTaskListVo.setId(tmp.getId());
                 qtCheckTaskListVo.setStatus(tmp.getStatus());
+                if(tmp.getSpotTime()!=null){
+                    qtCheckTaskListVo.setSpotTime(tmp.getSpotTime());
+                }
                 //返回名字
                 qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(tmp.getMaterialId()).getName());
                 qtCheckTaskListVo.setProductWorkshopName(remoteOfficeFeign.getNameById(tmp.getProductWorkshop().getId()).getMsg());
@@ -1002,6 +1005,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setFinishedName(originalQtCheckTask.getFinishedName());
         qtCheckTask.setStartBy(originalQtCheckTask.getStartBy());
         qtCheckTask.setStartName(originalQtCheckTask.getStartName());
+        qtCheckTask.setSpotTime(originalQtCheckTask.getSpotTime());
         qtCheckTask.setId(null);
         qtCheckTask.setType(1);//任务类型 0原始任务  1复检任务
         qtCheckTask.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_JYRW, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
@@ -1071,7 +1075,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         QtCheckTask::getCode,QtCheckTask::getProductWorkshop,QtCheckTask::getStartBy,QtCheckTask::getStartName,
                         QtCheckTask::getCancelBy,QtCheckTask::getCancelName,QtCheckTask::getFinishedBy,QtCheckTask::getFinishedName,
                         QtCheckTask::getCancelTime,QtCheckTask::getSendOrder,QtCheckTask::getDefectNum,QtCheckTask::getClassesId,QtCheckTask::getStationId,
-                        QtCheckTask::getClassTime)
+                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime)
                 //关联表映射
                 .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
@@ -1119,6 +1123,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .apply(dto.getCustomerId() != null, "JSON_CONTAINS(customer, JSON_OBJECT('id', {0}))", dto.getCustomerId())
                 //创建时间
                 .between(dto.getCreateTimeStart() != null && dto.getCreateTimeEnd() != null, QtCheckTask::getCreateTime, dto.getCreateTimeStart(), dto.getCreateTimeEnd())
+                //抽检时间
+                .between(dto.getSpotTimeStart() != null && dto.getSpotTimeEnd() != null, QtCheckTask::getSpotTime, dto.getSpotTimeStart(), dto.getSpotTimeEnd())
                 //创建人
                 .eq(dto.getCreateBy() != null, QtCheckTask::getCreateBy, dto.getCreateBy())
                 //检验类型
@@ -1190,6 +1196,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getDeliverNum);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_RESULT.equals(dto.getSortField())) {
             condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getResult);
+        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SPOT_TIME.equals(dto.getSortField())) {
+            condition.orderBy(true, dto.getAscFlag(), QtCheckTask::getSpotTime);
         } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_NAME.equals(dto.getSortField())) {
             if (dto.getAscFlag()) {
                 condition.last("ORDER BY CONVERT(t.create_name using gbk) ASC");

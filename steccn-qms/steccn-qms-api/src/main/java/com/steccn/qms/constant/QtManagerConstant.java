@@ -60,6 +60,8 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_CREATE_TIME = "createTime";
 
+    String QT_CHECK_TASK_SORT_FIELD_SPOT_TIME = "spotTime";
+
     String QT_CHECK_TASK_FIELD_CHECK_RESULT = "checkResult";
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";

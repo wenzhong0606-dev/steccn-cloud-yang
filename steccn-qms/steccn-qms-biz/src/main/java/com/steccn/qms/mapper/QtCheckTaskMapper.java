@@ -29,7 +29,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param status 状态
      * @return
      */
-    @Select("<script> SELECT a.id AS id,a.type AS type,a.material_id AS materialId,a.workshop_id AS workshopId ,a.product_line_id AS productLineId ,a.status AS status FROM qt_check_task a LEFT JOIN qt_material_link_check_plan b on a.material_id = b.material_id WHERE b.del_flag = 0 AND b.check_type_code = #{checkTypeCode} AND a.del_flag = 0 AND (a.status = #{status} <if test = 'status == 1'> or a.status = 4 </if>) </script>")
+    @Select("<script> SELECT a.id AS id,a.type AS type,a.material_id AS materialId,a.workshop_id AS workshopId ,a.product_line_id AS productLineId ,a.status AS status,a.spot_time AS spotTime FROM qt_check_task a LEFT JOIN qt_material_link_check_plan b on a.material_id = b.material_id WHERE b.del_flag = 0 AND b.check_type_code = #{checkTypeCode} AND a.del_flag = 0 AND (a.status = #{status} <if test = 'status == 1'> or a.status = 4 </if>) </script>")
     public List<QtCheckTask> selectByTaskType(@Param("checkTypeCode") Integer checkTypeCode, @Param("status") Integer status);
 
     /**

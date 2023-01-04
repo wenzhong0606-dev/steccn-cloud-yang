@@ -145,4 +145,14 @@ public class QtCheckTaskListDTO extends BasePageDTO implements Serializable {
      */
     private String classes;
 
+    /**
+     * 抽检时间开始
+     */
+    private LocalDateTime spotTimeStart;
+
+    /**
+     * 抽检时间结束
+     */
+    private LocalDateTime spotTimeEnd;
+
 }
