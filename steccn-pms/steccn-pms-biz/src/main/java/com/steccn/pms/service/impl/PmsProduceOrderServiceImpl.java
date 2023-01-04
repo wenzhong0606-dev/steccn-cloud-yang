@@ -352,9 +352,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据产线查询订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, productLineId)
+                .eq(PmsProduceOrder::getState,2)
                 .orderByDesc(PmsProduceOrder::getCreateTime)
                 .last(MpConstant.STR_LIMIT_1));
-        Assert.notNull(order, "该产线暂无订单");
+        Assert.notNull(order, "该产线暂无执行中的订单，请选择其他订单");
         return reportWorkOrder(order, stationId);
     }
 
