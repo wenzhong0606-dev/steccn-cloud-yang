@@ -128,9 +128,17 @@ public class QtReTaskDTO implements Serializable {
         private String sendOrder;
 
         /**
+         * 抽检时间
+         */
+        private LocalDateTime spotTime;
+
+        /**
          * 原始任务id
          */
         private Long originalId;
 
-        private String originalTaskCode;//原始任务code
+        /**
+         * 原始任务code
+         */
+        private String originalTaskCode;
 }
