@@ -1,6 +1,8 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.qms.service.QtDayReportService;
+import com.steccn.qms.vo.QtDayReportOnlineVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +24,12 @@ import java.time.LocalDate;
 @ApiModel("质量日报表-控制器")
 public class QtDayReportController {
 
+    private final QtDayReportService qtDayReportService;
+
     @GetMapping("/online")
     @ApiOperation("质量日报表-在线检")
-    public R online(@RequestParam("date") LocalDate date,
-                    @RequestParam("workshopId") Integer workshopId,
-                    @RequestParam("productLineId") Integer productLineId) {
-
-
-
-        return R.success();
+    public R<QtDayReportOnlineVO> online(@RequestParam("date") LocalDate date,
+                                         @RequestParam("productLineId") Integer productLineId) {
+        return R.success(qtDayReportService.online(date,productLineId));
     }
 }
