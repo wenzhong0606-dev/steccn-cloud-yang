@@ -2746,6 +2746,25 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     /**
+     * 删除任务
+     * @param id 主键id
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteTask(Long id) {
+        //先删除任务id
+        this.removeById(id);
+        //任务详情
+        qtCheckTaskDetailService.remove(new LambdaQueryWrapper<QtCheckTaskDetail>().eq(QtCheckTaskDetail::getTaskId,id));
+        //样本
+        qtCheckTaskCopyService.remove(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId,id));
+        //落版
+        qtCheckTaskDestoryInfoService.remove(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId,id));
+        return true;
+    }
+
+    /**
      * 合格率分组
      *
      * @param compare      对比

@@ -2,6 +2,7 @@ package com.steccn.qms.domain;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -74,6 +75,7 @@ public class QtCheckTaskCopy implements Serializable {
      * 是否删除标识：0否 1是
      */
     @TableField(fill = FieldFill.INSERT)
+    @TableLogic
     private Integer delFlag;
 
     @TableField(exist = false)

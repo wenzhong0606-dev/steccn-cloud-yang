@@ -72,6 +72,13 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.updateStatus(status));
     }
 
+    @GetMapping("/delete/{id}")
+    @ApiOperation(value = "删除任务")
+    @SysLog("删除任务")
+    public R<Boolean> deleteTask(@PathVariable Long id) {
+        return R.success(qtCheckTaskService.deleteTask(id));
+    }
+
     @PutMapping("/values")
     @ApiOperation(value = "手机端给任务设置值")
     @SysLog("手机端给任务设置值")
