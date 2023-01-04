@@ -19,6 +19,7 @@ import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.PmsMrpInfo;
 import com.steccn.pms.domain.PmsProducePlan;
 import com.steccn.pms.dto.*;
@@ -27,6 +28,7 @@ import com.steccn.pms.listener.ExcelListener;
 import com.steccn.pms.mapper.PmsProducePlanMapper;
 import com.steccn.pms.service.PmsMrpInfoService;
 import com.steccn.pms.service.PmsProducePlanService;
+import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.PmsProducePlanVO;
 import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.pms.vo.ProducePlanMsgVO;
@@ -35,6 +37,7 @@ import com.steccn.wms.dto.MaterialInventoryDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.catalina.Manager;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
@@ -50,6 +53,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -187,6 +191,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return true;
     }
 
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ProducePlanImportVO excelImportData(PmExcelDTO dto) throws IOException {
@@ -199,14 +204,14 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 throw new BusinessException("文件类型不支持,请使用模板进行导入");
             }
         }
+        //定义读取excel数据的集合
+        List<PmsProducePlanNewExcelDTO> dtoList = Lists.newArrayList();
+        List<ProducePlanMsgVO> planMsgVOList = Lists.newArrayList();
 
-        List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
-        List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
-
-        EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList,planMsgVOList)).sheet().doRead();
+        EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanNewExcelDTO.class, new ExcelListener(dtoList, planMsgVOList)).sheet().doRead();
 
 
-        List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+        List<String> codeList = dtoList.stream().map(PmsProducePlanNewExcelDTO::getMaterialCode).collect(Collectors.toList());
         Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
         //获取已存在的物料信息
         List<ProducePlanVO> producePlanVOList = getUpdateMap(dtoList, codeList);
@@ -225,32 +230,42 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         List<PmsProducePlan> addList = new ArrayList<>();
         List<PmsProducePlan> updateList = new ArrayList<>();
 
-
-        for (PmsProducePlanExcelDTO excelDTO : dtoList) {
-            LocalDate planDate = LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
-            PmsProducePlan pmsProducePlan = new PmsProducePlan();
-            pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
-            pmsProducePlan.setQuantity(excelDTO.getQuantity());
-            pmsProducePlan.setPlanDate(planDate);
-            pmsProducePlan.setStatus(0);
-
-            //如果等于0表示不覆盖
-            if (updateFlag.equals(0)) {
-                addList.add(pmsProducePlan);
-            } else {
-                //判断是否有存在的物料信息
-                Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> planDate.equals(producePlanVO.getPlanDate())
-                        && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
-                if (optional.isPresent()) {
-                    pmsProducePlan.setId(optional.get().getId());
-                    updateList.add(pmsProducePlan);
-                } else {
-                    addList.add(pmsProducePlan);
+        //处理数据
+        for (PmsProducePlanNewExcelDTO excelDTO : dtoList) {
+            //获取当月天数
+            LocalDate date = LocalDate.parse(excelDTO.getMonth() + PmsCodeUtil.SHORT_LINE + PmReportConstant.date_01, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            List<LocalDate> currentMonthDateAll = LocalDateUtil.getCurrentMonthDateAll(date);
+            for (LocalDate localDate : currentMonthDateAll) {
+                PmsProducePlan pmsProducePlan = new PmsProducePlan();
+                //根据物料编码获取物料id
+                pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
+                //获取当日的数量
+                String day = localDate.toString().substring(8, 10);
+                if (PmsCodeUtil.checkZero(day)) {
+                    day = day.substring(1);
+                }
+                pmsProducePlan.setQuantity(getQuantity(excelDTO, day));
+                pmsProducePlan.setPlanDate(localDate);
+                pmsProducePlan.setStatus(0);
+                //如果等于0表示不覆盖
+                if (!Objects.isNull(pmsProducePlan.getQuantity())) {
+                    if (updateFlag.equals(0)) {
+                        addList.add(pmsProducePlan);
+                    } else {
+                        //判断是否有存在的物料信息
+                        Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> localDate.equals(producePlanVO.getPlanDate())
+                                && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
+                        if (optional.isPresent()) {
+                            pmsProducePlan.setId(optional.get().getId());
+                            updateList.add(pmsProducePlan);
+                        } else {
+                            addList.add(pmsProducePlan);
+                        }
+                    }
                 }
             }
-
         }
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollUtil.isNotEmpty(addList)) {
             //新增list去重
             addList = addList.stream().collect(
                     Collectors.collectingAndThen(
@@ -260,14 +275,95 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 throw new BusinessException("生产月计划导入新增失败");
             }
         }
-        if (CollectionUtils.isNotEmpty(updateList)) {
+        if (CollUtil.isNotEmpty(updateList)) {
             if (!updateBatchById(updateList)) {
                 throw new BusinessException("生产月计划导入修改失败");
             }
         }
-
         return planImportVO;
     }
+
+//    @Transactional(rollbackFor = Exception.class)
+//    @Override
+//    public ProducePlanImportVO excelImportData(PmExcelDTO dto) throws IOException {
+//        Integer updateFlag = dto.getUpdateFlag();
+//        //文件类型校验
+//        if (Objects.nonNull(dto.getFile())) {
+//            //获取文件拓展名
+//            String fileExtension = Objects.requireNonNull(dto.getFile().getOriginalFilename()).substring(dto.getFile().getOriginalFilename().lastIndexOf("."));
+//            if (!fileExtension.equals(PmManagerConstant.FILE_EXTENSION_XLSX)) {
+//                throw new BusinessException("文件类型不支持,请使用模板进行导入");
+//            }
+//        }
+//
+//        List<PmsProducePlanExcelDTO> dtoList = new ArrayList<>();
+//        List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
+//
+//        EasyExcel.read(dto.getFile().getInputStream(), PmsProducePlanExcelDTO.class, new ExcelListener(dtoList,planMsgVOList)).sheet().doRead();
+//
+//
+//        List<String> codeList = dtoList.stream().map(PmsProducePlanExcelDTO::getMaterialCode).collect(Collectors.toList());
+//        Map<String, EqpSpareVO> spareCodeMap = remoteSpareFeignApi.listByCode(codeList).getData();
+//        //获取已存在的物料信息
+//        List<ProducePlanVO> producePlanVOList = getUpdateMap(dtoList, codeList);
+//        //校验导入内容
+//        planMsgVOList.addAll(checkPlanExcelDTO(dtoList, updateFlag, spareCodeMap, producePlanVOList));
+//
+//        //如果错误信息不为空组装数据返回
+//        ProducePlanImportVO planImportVO = new ProducePlanImportVO();
+//        if (CollectionUtils.isNotEmpty(planMsgVOList)) {
+//            planImportVO.setImportFlag(false);
+//            planImportVO.setProducePlanMsgVOList(planMsgVOList);
+//            return planImportVO;
+//        }
+//
+//        planImportVO.setImportFlag(true);
+//        List<PmsProducePlan> addList = new ArrayList<>();
+//        List<PmsProducePlan> updateList = new ArrayList<>();
+//
+//
+//        for (PmsProducePlanExcelDTO excelDTO : dtoList) {
+//            LocalDate planDate = LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
+//            PmsProducePlan pmsProducePlan = new PmsProducePlan();
+//            pmsProducePlan.setMaterialId(spareCodeMap.get(excelDTO.getMaterialCode()).getId());
+//            pmsProducePlan.setQuantity(excelDTO.getQuantity());
+//            pmsProducePlan.setPlanDate(planDate);
+//            pmsProducePlan.setStatus(0);
+//
+//            //如果等于0表示不覆盖
+//            if (updateFlag.equals(0)) {
+//                addList.add(pmsProducePlan);
+//            } else {
+//                //判断是否有存在的物料信息
+//                Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> planDate.equals(producePlanVO.getPlanDate())
+//                        && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
+//                if (optional.isPresent()) {
+//                    pmsProducePlan.setId(optional.get().getId());
+//                    updateList.add(pmsProducePlan);
+//                } else {
+//                    addList.add(pmsProducePlan);
+//                }
+//            }
+//
+//        }
+//        if (CollectionUtils.isNotEmpty(addList)) {
+//            //新增list去重
+//            addList = addList.stream().collect(
+//                    Collectors.collectingAndThen(
+//                            Collectors.toCollection(
+//                                    () -> new TreeSet<PmsProducePlan>(Comparator.comparing(p -> p.getPlanDate() + "," + p.getMaterialId()))), ArrayList::new));
+//            if (!saveBatch(addList)) {
+//                throw new BusinessException("生产月计划导入新增失败");
+//            }
+//        }
+//        if (CollectionUtils.isNotEmpty(updateList)) {
+//            if (!updateBatchById(updateList)) {
+//                throw new BusinessException("生产月计划导入修改失败");
+//            }
+//        }
+//
+//        return planImportVO;
+//    }
 
     @SneakyThrows
     @Override
@@ -670,51 +766,40 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
 //        return pmsMrpInfoService.mrpAdd(dto);
 //    }
 
-    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, List<ProducePlanVO> producePlanVOList) {
+    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanNewExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, List<ProducePlanVO> producePlanVOList) {
 
         List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
 
-        for (PmsProducePlanExcelDTO excelDTO : dtoList) {
+        for (PmsProducePlanNewExcelDTO excelDTO : dtoList) {
             ProducePlanMsgVO planMsgVO = new ProducePlanMsgVO();
             List<String> errorMsgList = new ArrayList<>();
-            if (Objects.isNull(excelDTO.getPlanDate())) {
-                errorMsgList.add("计划日期不能为空");
+            if (Objects.isNull(excelDTO.getMonth())) {
+                errorMsgList.add("月份不能为空");
             } else {
-                if (!LocalDateUtil.checkLocalDate(excelDTO.getPlanDate())) {
-                    errorMsgList.add("计划日期格式错误格式应为“1970-01-01”");
+                if (!LocalDateUtil.checkYears(excelDTO.getMonth())) {
+                    errorMsgList.add("计划日期格式错误格式应为“1970-01”");
                 } else {
-                    LocalDate planDate = LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
-                    if (planDate.isBefore(LocalDate.now())) {
-                        errorMsgList.add("日期小于当前日期");
-                    }
-                    Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> planDate.equals(producePlanVO.getPlanDate())
-                            && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
-                    if (optional.isPresent() && updateFlag.equals(0)) {
-                        errorMsgList.add("物料计划数据库已存在");
+                    //校验数据是否存在
+                    if (updateFlag.equals(PmManagerConstant.OrderStateEnum.ZERO.getCode())) {
+                        LocalDate date = LocalDate.parse(excelDTO.getMonth() + PmReportConstant.date_01, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        List<LocalDate> currentMonthDateAll = LocalDateUtil.getCurrentMonthDateAll(date);
+                        for (LocalDate localDate : currentMonthDateAll) {
+                            for (ProducePlanVO producePlanVO : producePlanVOList) {
+                                if (excelDTO.getMaterialCode().equals(producePlanVO.getMaterialCode()) && localDate.equals(producePlanVO.getPlanDate())) {
+                                    errorMsgList.add("物料计划数据已存在");
+                                }
+                            }
+                        }
                     }
                 }
-            }
-            if (Objects.isNull(excelDTO.getQuantity())) {
-                errorMsgList.add("数量不能为空");
             }
             if (Objects.isNull(map.get(excelDTO.getMaterialCode()))) {
                 errorMsgList.add("物料信息不存在");
             }
 
 
-            //过滤出同一个月编码重复的数据
-            //过滤出本行以外的重复数据
-            List<PmsProducePlanExcelDTO> pmsProducePlanExcelDTOList = dtoList
-                    .stream()
-                    .filter(dto -> Objects.equals(dto.getMaterialCode(),excelDTO.getMaterialCode()) && Objects.equals(dto.getPlanDate(),excelDTO.getPlanDate()))
-                    .filter(dto -> !dto.getRowIndex().equals(excelDTO.getRowIndex())).collect(Collectors.toList());
-            String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getRowIndex).collect(Collectors.toList()), ",");
-            if (updateFlag.equals(0) && pmsProducePlanExcelDTOList.size() > 0) {
-                errorMsgList.add("和第" + rows + "行物料编码重复");
-            }
-
             //获取当前行的错误信息
-            planMsgVO.setErrorMsgList(StringUtils.join(errorMsgList,","));
+            planMsgVO.setErrorMsgList(StringUtils.join(errorMsgList, ","));
             //如果错误信息不为空获取行号
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 planMsgVO.setRowIndex(excelDTO.getRowIndex());
@@ -725,19 +810,72 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         return planMsgVOList;
     }
 
-    private List<ProducePlanVO> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList, List<String> codeList) {
-        List<LocalDate> localDateList = new ArrayList<>();
-        for (PmsProducePlanExcelDTO planExcelDTO : dtoList) {
-            LocalDate localDate = null;
-            if (LocalDateUtil.checkLocalDate(planExcelDTO.getPlanDate())) {
-                localDate = LocalDate.parse(planExcelDTO.getPlanDate(), ISO_DATE);
-            } else {
-                continue;
-            }
-            localDateList.add(localDate);
-        }
+//    private List<ProducePlanMsgVO> checkPlanExcelDTO(List<PmsProducePlanExcelDTO> dtoList, Integer updateFlag, Map<String, EqpSpareVO> map, List<ProducePlanVO> producePlanVOList) {
+//
+//        List<ProducePlanMsgVO> planMsgVOList = new ArrayList<>();
+//
+//        for (PmsProducePlanExcelDTO excelDTO : dtoList) {
+//            ProducePlanMsgVO planMsgVO = new ProducePlanMsgVO();
+//            List<String> errorMsgList = new ArrayList<>();
+//            if (Objects.isNull(excelDTO.getPlanDate())) {
+//                errorMsgList.add("计划日期不能为空");
+//            } else {
+//                if (!LocalDateUtil.checkLocalDate(excelDTO.getPlanDate())) {
+//                    errorMsgList.add("计划日期格式错误格式应为“1970-01-01”");
+//                } else {
+//                    LocalDate planDate = LocalDate.parse(excelDTO.getPlanDate(), ISO_DATE);
+//                    if (planDate.isBefore(LocalDate.now())) {
+//                        errorMsgList.add("日期小于当前日期");
+//                    }
+//                    Optional<ProducePlanVO> optional = producePlanVOList.stream().filter(producePlanVO -> planDate.equals(producePlanVO.getPlanDate())
+//                            && Objects.equals(excelDTO.getMaterialCode(), producePlanVO.getMaterialCode())).findAny();
+//                    if (optional.isPresent() && updateFlag.equals(0)) {
+//                        errorMsgList.add("物料计划数据库已存在");
+//                    }
+//                }
+//            }
+//            if (Objects.isNull(excelDTO.getQuantity())) {
+//                errorMsgList.add("数量不能为空");
+//            }
+//            if (Objects.isNull(map.get(excelDTO.getMaterialCode()))) {
+//                errorMsgList.add("物料信息不存在");
+//            }
+//
+//
+//            //过滤出同一个月编码重复的数据
+//            //过滤出本行以外的重复数据
+//            List<PmsProducePlanExcelDTO> pmsProducePlanExcelDTOList = dtoList
+//                    .stream()
+//                    .filter(dto -> Objects.equals(dto.getMaterialCode(), excelDTO.getMaterialCode()) && Objects.equals(dto.getPlanDate(), excelDTO.getPlanDate()))
+//                    .filter(dto -> !dto.getRowIndex().equals(excelDTO.getRowIndex())).collect(Collectors.toList());
+//            String rows = StringUtils.join(pmsProducePlanExcelDTOList.stream().map(PmsProducePlanExcelDTO::getRowIndex).collect(Collectors.toList()), ",");
+//            if (updateFlag.equals(0) && pmsProducePlanExcelDTOList.size() > 0) {
+//                errorMsgList.add("和第" + rows + "行物料编码重复");
+//            }
+//
+//            //获取当前行的错误信息
+//            planMsgVO.setErrorMsgList(StringUtils.join(errorMsgList, ","));
+//            //如果错误信息不为空获取行号
+//            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+//                planMsgVO.setRowIndex(excelDTO.getRowIndex());
+//                planMsgVOList.add(planMsgVO);
+//            }
+//        }
+//
+//        return planMsgVOList;
+//    }
 
-        List<ProducePlanVO> producePlanVOList = new ArrayList<>();
+
+    private List<ProducePlanVO> getUpdateMap(List<PmsProducePlanNewExcelDTO> dtoList, List<String> codeList) {
+        List<LocalDate> localDateList = Lists.newArrayList();
+        //处理时间格式
+        for (PmsProducePlanNewExcelDTO planExcelDTO : dtoList) {
+            //获取当前月的天数
+            LocalDate date = LocalDate.parse(planExcelDTO.getMonth() + PmsCodeUtil.SHORT_LINE + PmReportConstant.date_01, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            List<LocalDate> currentMonthDateAll = LocalDateUtil.getCurrentMonthDateAll(date);
+            localDateList.addAll(currentMonthDateAll);
+        }
+        List<ProducePlanVO> producePlanVOList = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(localDateList)) {
             //根据导入的日期查询数据
             List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
@@ -749,7 +887,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 ProducePlanVO producePlanVO = new ProducePlanVO();
                 EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
                 if (!Objects.isNull(spareVO)) {
-                    BeanUtils.copyProperties(pmsProducePlan,producePlanVO);
+                    BeanUtils.copyProperties(pmsProducePlan, producePlanVO);
                     producePlanVO.setMaterialCode(spareVO.getCode());
                     producePlanVOList.add(producePlanVO);
                 }
@@ -757,6 +895,40 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         }
         return producePlanVOList;
     }
+
+
+//    private List<ProducePlanVO> getUpdateMap(List<PmsProducePlanExcelDTO> dtoList, List<String> codeList) {
+//        List<LocalDate> localDateList = new ArrayList<>();
+//        for (PmsProducePlanExcelDTO planExcelDTO : dtoList) {
+//            LocalDate localDate = null;
+//            if (LocalDateUtil.checkLocalDate(planExcelDTO.getPlanDate())) {
+//                localDate = LocalDate.parse(planExcelDTO.getPlanDate(), ISO_DATE);
+//            } else {
+//                continue;
+//            }
+//            localDateList.add(localDate);
+//        }
+//
+//        List<ProducePlanVO> producePlanVOList = new ArrayList<>();
+//        if (CollectionUtils.isNotEmpty(localDateList)) {
+//            //根据导入的日期查询数据
+//            List<PmsProducePlan> producePlanList = list(new LambdaQueryWrapper<PmsProducePlan>().in(PmsProducePlan::getPlanDate, localDateList));
+//            //根据物料code查询物料信息
+//            Map<Long, EqpSpareVO> spareMap = remoteSpareFeignApi.mapByCode(codeList).getData();
+//
+//            //获取所有日期查询数据的物料code
+//            for (PmsProducePlan pmsProducePlan : producePlanList) {
+//                ProducePlanVO producePlanVO = new ProducePlanVO();
+//                EqpSpareVO spareVO = spareMap.get(pmsProducePlan.getMaterialId());
+//                if (!Objects.isNull(spareVO)) {
+//                    BeanUtils.copyProperties(pmsProducePlan, producePlanVO);
+//                    producePlanVO.setMaterialCode(spareVO.getCode());
+//                    producePlanVOList.add(producePlanVO);
+//                }
+//            }
+//        }
+//        return producePlanVOList;
+//    }
 
 //    @Override
 //    public Boolean order(PmsProducePlanOrderDTO dto) {
@@ -799,7 +971,105 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
         //防止中文乱码
         String fileName = URLEncoder.encode("生产月计划模板", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcel.write(response.getOutputStream(), PmsProducePlanExcelDTO.class).sheet("模板").doWrite(producePlanList);
+        EasyExcel.write(response.getOutputStream(), PmsProducePlanNewExcelDTO.class).sheet("模板").doWrite(producePlanList);
+    }
+
+    private BigDecimal getQuantity(PmsProducePlanNewExcelDTO excelDTO, String day) {
+        BigDecimal quantity = BigDecimal.ZERO;
+        if (day.equals(PmManagerConstant.NUM_1)) {
+            quantity = excelDTO.getOne();
+        }
+        if (day.equals(PmManagerConstant.NUM_2)) {
+            quantity = excelDTO.getTwo();
+        }
+        if (day.equals(PmManagerConstant.NUM_3)) {
+            quantity = excelDTO.getThree();
+        }
+        if (day.equals(PmManagerConstant.NUM_4)) {
+            quantity = excelDTO.getFour();
+        }
+        if (day.equals(PmManagerConstant.NUM_5)) {
+            quantity = excelDTO.getFive();
+        }
+        if (day.equals(PmManagerConstant.NUM_6)) {
+            quantity = excelDTO.getSix();
+        }
+        if (day.equals(PmManagerConstant.NUM_7)) {
+            quantity = excelDTO.getSeven();
+        }
+        if (day.equals(PmManagerConstant.NUM_8)) {
+            quantity = excelDTO.getEight();
+        }
+        if (day.equals(PmManagerConstant.NUM_9)) {
+            quantity = excelDTO.getNine();
+        }
+        if (day.equals(PmManagerConstant.NUM_10)) {
+            quantity = excelDTO.getTen();
+        }
+        if (day.equals(PmManagerConstant.NUM_11)) {
+            quantity = excelDTO.getEleven();
+        }
+        if (day.equals(PmManagerConstant.NUM_12)) {
+            quantity = excelDTO.getTwelve();
+        }
+        if (day.equals(PmManagerConstant.NUM_13)) {
+            quantity = excelDTO.getThirteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_14)) {
+            quantity = excelDTO.getFourteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_15)) {
+            quantity = excelDTO.getFifteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_16)) {
+            quantity = excelDTO.getSixteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_17)) {
+            quantity = excelDTO.getSeventeen();
+        }
+        if (day.equals(PmManagerConstant.NUM_18)) {
+            quantity = excelDTO.getEighteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_19)) {
+            quantity = excelDTO.getNineteen();
+        }
+        if (day.equals(PmManagerConstant.NUM_20)) {
+            quantity = excelDTO.getTwenty();
+        }
+        if (day.equals(PmManagerConstant.NUM_21)) {
+            quantity = excelDTO.getTwentyOne();
+        }
+        if (day.equals(PmManagerConstant.NUM_22)) {
+            quantity = excelDTO.getTwentyTwo();
+        }
+        if (day.equals(PmManagerConstant.NUM_23)) {
+            quantity = excelDTO.getTwentyThree();
+        }
+        if (day.equals(PmManagerConstant.NUM_24)) {
+            quantity = excelDTO.getTwentyFour();
+        }
+        if (day.equals(PmManagerConstant.NUM_25)) {
+            quantity = excelDTO.getTwentyFive();
+        }
+        if (day.equals(PmManagerConstant.NUM_26)) {
+            quantity = excelDTO.getTwentySix();
+        }
+        if (day.equals(PmManagerConstant.NUM_27)) {
+            quantity = excelDTO.getTwentySeven();
+        }
+        if (day.equals(PmManagerConstant.NUM_28)) {
+            quantity = excelDTO.getTwentyEight();
+        }
+        if (day.equals(PmManagerConstant.NUM_29)) {
+            quantity = excelDTO.getTwentyNine();
+        }
+        if (day.equals(PmManagerConstant.NUM_30)) {
+            quantity = excelDTO.getThirty();
+        }
+        if (day.equals(PmManagerConstant.NUM_31)) {
+            quantity = excelDTO.getThirty0ne();
+        }
+        return quantity;
     }
 
 }
