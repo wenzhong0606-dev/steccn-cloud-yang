@@ -303,6 +303,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 //删除物料信息
                 pmsWorkOrderBomService.deleteBom(idSet, dto.getId());
                 pmsWorkOrderBomService.saveBatch(bomList);
+            } else {
+                pmsWorkOrderBomService.remove(new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, dto.getId()));
             }
         }
         return true;
