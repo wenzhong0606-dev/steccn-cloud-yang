@@ -20,6 +20,14 @@ public interface QtDayReportService {
     QtDayReportOnlineVO online(LocalDate date, Integer productLineId);
 
     /**
+     * 质量日报表 - 巡检
+     * @param date  日期
+     * @param productLineId  产线id
+     * @return
+     */
+    QtDayReportOnlineVO polling(LocalDate date, Integer productLineId);
+
+    /**
      * 质量日报表-首检
      * @param date 指定日期
      * @param productLineId 产线id

@@ -68,6 +68,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     }
 
     @Override
+    public QtDayReportOnlineVO polling(LocalDate date, Integer productLineId) {
+        return null;
+    }
+
+    @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId) {
         LocalDateTime startTime = date.atTime(8,0,0);
 

@@ -32,4 +32,12 @@ public class QtDayReportController {
                                          @RequestParam("productLineId") Integer productLineId) {
         return R.success(qtDayReportService.online(date,productLineId));
     }
+
+
+    @GetMapping("/polling")
+    @ApiOperation("质量日报表-巡检")
+    public R<QtDayReportOnlineVO> polling(@RequestParam("date") LocalDate date,
+                                         @RequestParam("productLineId") Integer productLineId) {
+        return R.success(qtDayReportService.polling(date,productLineId));
+    }
 }
