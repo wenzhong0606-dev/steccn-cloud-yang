@@ -1,6 +1,8 @@
 package com.steccn.platform.controller.feign;
 
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.platform.service.SysConfigurationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +23,11 @@ import java.util.Set;
 @RequestMapping("/feign/platform/sys/conf")
 public class SysConfigurationFeignController {
 
-    @ApiOperation(value = "获取产线的映射配置")
-    @PostMapping("/line")
-    R<Map<Integer, String>> sysConfLine(Set<Integer> lineSet) {
-        return R.success();
+    private final SysConfigurationService sysConfigurationService;
+
+    @ApiOperation(value = "获取根据ref内容提供获取映射配置")
+    @PostMapping("/ref")
+    R<Map<String, String>> sysConfRef(TupleDTO<String, Set<Integer>> tupleDTO) {
+        return R.success(sysConfigurationService.sysConfRef(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 }
