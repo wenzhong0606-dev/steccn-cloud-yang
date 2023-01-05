@@ -47,6 +47,16 @@ public class QtDayReportFirstDataVO {
     private Integer copy;
 
     /**
+     * 备注
+     */
+    private String note;
+
+    /**
+     * 班次
+     */
+    private String classOrder;
+
+    /**
      * 数据module对象
      */
     private List<FurtherValueObjVO> module;

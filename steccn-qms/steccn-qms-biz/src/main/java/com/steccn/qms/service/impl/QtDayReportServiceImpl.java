@@ -9,24 +9,19 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwDefectCollectVO;
+import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckPlan;
-import com.steccn.qms.domain.QtCheckTask;
+import com.steccn.qms.domain.*;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
-import com.steccn.qms.domain.QtCheckTaskDetail;
-import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
-import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
-import com.steccn.qms.vo.QtCheckTaskListVO;
-import com.steccn.qms.vo.QtDayReportFirstVO;
-import com.steccn.qms.vo.QtDayReportOnlineVO;
+import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,11 +29,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 /**
  * @author yequan
@@ -58,6 +50,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
+    private final QtItemCategoryService qtItemCategoryService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -116,6 +109,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class,taskCondition);
         List<Long> taskIdList = Lists.newArrayList();
         if(CollUtil.isEmpty(taskList)){
+            log.info("任务为空(质量日报表-首检)");
             return null;
         }
         taskList.forEach(tmp->{
@@ -124,6 +118,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //任务详情表
         List<QtCheckTaskDetail> taskDetailList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId,taskIdList));
         if(CollUtil.isEmpty(taskDetailList)){
+            log.info("任务详情为空(质量日报表-首检)");
             return null;
         }
         //查到分类数据和检验项数据
@@ -131,7 +126,75 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         taskDetailList.forEach(tmp->{
             itemIdList.add(tmp.getItemId());
         });
-
-        return null;
+        //检验项按照创建时间降序排列
+        List<QtCheckItem> itemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                .in(QtCheckItem::getId,itemIdList)
+                .orderByDesc(QtCheckItem::getCreateTime));
+        //相同code只留一个
+        itemList = itemList.stream().collect(Collectors.collectingAndThen(
+                Collectors.toCollection(() -> new TreeSet<>(
+                        Comparator.comparing(QtCheckItem::getCode))), ArrayList::new));
+        if(CollUtil.isEmpty(itemList)){
+            log.info("点检项为空(质量日报表-首检)");
+            return null;
+        }
+        List<Integer> categoryIdList = Lists.newArrayList();
+        itemList.forEach(tmp -> {
+            categoryIdList.add(tmp.getCategoryId());
+        });
+        //根据创建时间排序
+        List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>()
+                .in(QtItemCategory::getId,itemIdList)
+                .orderByAsc(QtItemCategory::getCreateTime));
+        QtDayReportFirstVO result = new QtDayReportFirstVO();
+        //静态表头
+        List<QtSpcHeadTitleVO> common = Lists.newArrayList();
+        QtSpcHeadTitleVO staticHead1 = new QtSpcHeadTitleVO();
+        staticHead1.setLabel(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME);
+        staticHead1.setValue(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME_VALUE);
+        common.add(staticHead1);
+        QtSpcHeadTitleVO staticHead2 = new QtSpcHeadTitleVO();
+        staticHead2.setLabel(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME);
+        staticHead2.setValue(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
+        common.add(staticHead2);
+        QtSpcHeadTitleVO staticHead3 = new QtSpcHeadTitleVO();
+        staticHead3.setLabel(QtManagerConstant.DAY_REPORT_FIELD_RESULT);
+        staticHead3.setValue(QtManagerConstant.DAY_REPORT_FIELD_RESULT_VALUE);
+        common.add(staticHead3);
+        QtSpcHeadTitleVO staticHead4 = new QtSpcHeadTitleVO();
+        staticHead4.setLabel(QtManagerConstant.DAY_REPORT_FIELD_COPY);
+        staticHead4.setValue(QtManagerConstant.DAY_REPORT_FIELD_COPY_VALUE);
+        common.add(staticHead4);
+        QtSpcHeadTitleVO staticHead5 = new QtSpcHeadTitleVO();
+        staticHead5.setLabel(QtManagerConstant.DAY_REPORT_FIELD_NOTE);
+        staticHead5.setValue(QtManagerConstant.DAY_REPORT_FIELD_NOTE_VALUE);
+        common.add(staticHead5);
+        QtSpcHeadTitleVO staticHead6 = new QtSpcHeadTitleVO();
+        staticHead6.setLabel(QtManagerConstant.DAY_REPORT_FIELD_ORDER);
+        staticHead6.setValue(QtManagerConstant.DAY_REPORT_FIELD_ORDER_VALUE);
+        common.add(staticHead6);
+        result.setCommon(common);
+        //动态表头
+        //把itemList根据category分组
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        Map<Integer,List<QtCheckItem>> groupByCategory = itemList.stream().collect(Collectors.groupingBy(v -> v.getCategoryId()));
+        for(int i = 0; i < qtItemCategoryList.size(); i++){
+            BaseReportHeaderVO dynamicHeader = new BaseReportHeaderVO();
+            if(!groupByCategory.containsKey(qtItemCategoryList.get(i).getId())){
+                break;
+            }
+            dynamicHeader.setLabel(qtItemCategoryList.get(i).getName());
+            List<QtCheckItem> itemListTmp = groupByCategory.get(qtItemCategoryList.get(i).getId());
+            //对item值根据创建时间升序排列
+            itemListTmp = itemListTmp.stream().sorted(Comparator.comparing(QtCheckItem::getCreateTime)).collect(Collectors.toList());
+            List<String> value = Lists.newArrayList();
+            itemListTmp.forEach(tmp -> {
+                value.add(tmp.getName());
+            });
+            dynamicHeader.setValue(value);
+            module.add(dynamicHeader);
+        }
+        result.setModule(module);
+        return result;
     }
 }

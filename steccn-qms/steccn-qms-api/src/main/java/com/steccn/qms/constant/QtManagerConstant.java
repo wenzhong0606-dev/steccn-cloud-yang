@@ -174,6 +174,17 @@ public interface QtManagerConstant {
     String SPC_HEADER_FIELD_WORKSHOP_VALUE ="workshop";
     String SPC_HEADER_FILELD_SUPPLIER_VALUE ="supplier";
 
+    /**
+     * 首检质量日报表 常量
+     */
+    String DAY_REPORT_FIELD_RESULT = "检验结果";
+    String DAY_REPORT_FIELD_RESULT_VALUE = "result";
+    String DAY_REPORT_FIELD_COPY = "样本序号";
+    String DAY_REPORT_FIELD_COPY_VALUE = "copy";
+    String DAY_REPORT_FIELD_NOTE = "备注";
+    String DAY_REPORT_FIELD_NOTE_VALUE = "note";
+    String DAY_REPORT_FIELD_ORDER = "班次";
+    String DAY_REPORT_FIELD_ORDER_VALUE = "className";
 
     /**
      * 车间名称
