@@ -76,6 +76,9 @@ public class PmsProduceOrderCraftDTO {
     @Min(value = 0, message = "状态只能是 0否  1是")
     private Integer outStationFlag;
 
+    @ApiModelProperty("工艺路线工序id")
+    private Long craftRouteProcessId;
+
     @ApiModelProperty("工位信息")
     private List<PmsWorkOrderCraftStationDTO> stationList;
 }

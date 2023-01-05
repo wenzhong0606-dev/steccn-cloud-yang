@@ -80,6 +80,12 @@ public class PmsProduceOrderCraft implements Serializable {
      */
     private Long produceOrderId;
 
+
+    /**
+     * 工艺路线工序id
+     */
+    private Long craftRouteProcessId;
+
     /**
      * 创建人id
      */

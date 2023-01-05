@@ -79,5 +79,8 @@ public class PmsWorkOrderBomDTO {
     @Min(value = 0, message = "百分比不能小于0")
     private Float componentScrapingPercent;
 
+    @ApiModelProperty("工艺路线组件id")
+    private Long craftRouteModuleId;
+
 
 }
