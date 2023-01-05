@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.LocalDateUtil;
@@ -60,11 +61,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckTaskDetailReportVO> manDataList = qtDefectiveReportService.defectiveDataFlat(dto);
         log.info("{}", manDataList);
         //查询检验设备数据
-        Map<String, String> refMap = FeignOptional.of(remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId)))).get();
+        Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(refMap)) {
             //获取到所有的映射产线
             Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
-            List<DwDefectCollectVO> collectList = FeignOptional.of(remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(date, LocalTime.of(8, 0, 0)), LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)), lineSet))).get();
+            List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(date, LocalTime.of(8, 0, 0)), LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
             log.info("{}",collectList);
         }
         return null;
