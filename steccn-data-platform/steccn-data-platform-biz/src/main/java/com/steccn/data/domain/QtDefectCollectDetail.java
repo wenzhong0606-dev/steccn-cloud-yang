@@ -35,7 +35,7 @@ public class QtDefectCollectDetail implements Serializable {
     /**
      * 缺陷数量
      */
-    private String defectCount;
+    private Integer defectCount;
 
     /**
      * 主表id

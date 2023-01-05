@@ -1,23 +1,22 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
-import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.MpConstant;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.data.feign.RemoteDataPlatformFeignApi;
-import com.steccn.data.vo.DwDefectCollectVO;
-import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckPlan;
-import com.steccn.qms.domain.QtCheckTask;
-import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
 import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtChartParamDTO;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 /**
  * @author yequan
@@ -68,16 +66,50 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setDateEnd(date);
         dto.setProductLineId(productLineId);
         List<QtCheckTaskDetailReportVO> manDataList = qtDefectiveReportService.defectiveDataFlat(dto);
-        log.info("{}", manDataList);
         //查询检验设备数据
         Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(refMap)) {
             //获取到所有的映射产线
             Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
             List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(date, LocalTime.of(8, 0, 0)), LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-            log.info("{}",collectList);
+            if(CollUtil.isNotEmpty(collectList)){
+
+            }
         }
         return null;
+    }
+
+    /**
+     * 计算机器采集的缺陷
+     *
+     * @param collectList 采集缺陷集合
+     * @param productLineId 产线id
+     * @return list
+     */
+    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList,Integer productLineId) {
+        List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
+        collectList.forEach(ele -> {
+            QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
+            vo.setFinishedTime(ele.getProductTime());
+            LocalDate date = ele.getProductTime().toLocalDate();
+            LocalTime time = ele.getProductTime().toLocalTime();
+            //计算缺陷记录时段
+            if (time.getMinute() == 0 && time.getSecond() == 0) {
+                vo.setDefectStartTime(LocalDateTime.of(date, time));
+                vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+            } else {
+                //time
+                vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
+                vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+            }
+            vo.setProductLineId(productLineId);
+            QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
+            vo.setClassTime(qtTaskClassCalculate.getClassDate());
+            vo.setClassId(qtTaskClassCalculate.getClassType());
+            vo.setDefectNum(ele.getDefectCount());
+            resList.add(vo);
+        });
+        return resList;
     }
 
     @Override
