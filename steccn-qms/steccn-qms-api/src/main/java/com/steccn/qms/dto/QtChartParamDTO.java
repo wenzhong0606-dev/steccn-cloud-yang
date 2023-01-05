@@ -63,6 +63,9 @@ public class QtChartParamDTO extends BasePageDTO implements Serializable {
     @ApiModelProperty("缺陷项类型")
     private String defectType;
 
+    @ApiModelProperty("检验方案类型编码:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7")
+    private Integer checkType;
+
     @ApiModelProperty("粒度:小时、天、周、月、季度、年 见QtSPCGranularityEnum枚举")
     private String granularity;
 

@@ -2,11 +2,9 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
@@ -730,6 +728,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Assert.notNull(productLineId,"产线不能为空");
         Assert.notNull(dateStart,"开始日期不能为空");
         Assert.notNull(dateEnd,"结束日期不能为空");
+        Assert.notNull(dto.getCheckType(), "检验类型不能为空");
         //todo 后面需要考虑只传车间 ，不传入产线
         List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
         //查询检验设备数据
