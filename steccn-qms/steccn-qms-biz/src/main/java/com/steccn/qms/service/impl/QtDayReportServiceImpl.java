@@ -1,6 +1,8 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
+import com.google.common.collect.Lists;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
@@ -16,11 +18,13 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
+import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.service.QtCheckTaskService;
-import com.steccn.qms.service.QtDayReportService;
-import com.steccn.qms.service.QtDefectiveReportService;
+import com.steccn.qms.mapper.QtCheckTaskMapper;
+import com.steccn.qms.service.*;
 import com.steccn.qms.vo.QtCheckTaskDetailReportVO;
+import com.steccn.qms.vo.QtCheckTaskListVO;
 import com.steccn.qms.vo.QtDayReportFirstVO;
 import com.steccn.qms.vo.QtDayReportOnlineVO;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +54,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final QtCheckTaskService qtCheckTaskService;
 
+
+    private final QtCheckTaskMapper qtCheckTaskMapper;
+    private final QtCheckTaskDetailService qtCheckTaskDetailService;
+    private final QtCheckItemService qtCheckItemService;
+
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
         //查询人工数据
@@ -78,13 +87,51 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId) {
-        LocalDateTime startTime = date.atTime(8, 0, 0);
-
-        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+        LocalDateTime startTime = date.atTime(8,0,0,0);
+        LocalDateTime endTime = date.plusDays(1).atTime(7,59,59,99999999);
+        //关联查询
+        MPJLambdaWrapper<QtCheckTask> taskCondition = new MPJLambdaWrapper<QtCheckTask>()
+                .select(QtCheckTask::getId,QtCheckTask::getType,QtCheckTask::getMaterialId,QtCheckTask::getMaterialWorkshop,
+                        QtCheckTask::getProductLine,QtCheckTask::getProductOrder,QtCheckTask::getProductBatch,
+                        QtCheckTask::getCheckPlanId,QtCheckTask::getStatus,QtCheckTask::getCheckNum,QtCheckTask::getGoodNum,
+                        QtCheckTask::getBadNum,QtCheckTask::getResult,QtCheckTask::getNote,QtCheckTask::getCreateBy,QtCheckTask::getCreateName,
+                        QtCheckTask::getCreateTime,QtCheckTask::getUpdateBy,QtCheckTask::getUpdateName,QtCheckTask::getUpdateTime,
+                        QtCheckTask::getDelFlag,QtCheckTask::getStartTime,QtCheckTask::getFinishedTime,QtCheckTask::getArrivalTime,
+                        QtCheckTask::getDeliverTime,QtCheckTask::getSupplier,QtCheckTask::getCustomer,QtCheckTask::getDefectStartTime,
+                        QtCheckTask::getDefectEndTime,QtCheckTask::getDeliverOrder,QtCheckTask::getTaskType,QtCheckTask::getDeliverNum,
+                        QtCheckTask::getCode,QtCheckTask::getProductWorkshop,QtCheckTask::getStartBy,QtCheckTask::getStartName,
+                        QtCheckTask::getCancelBy,QtCheckTask::getCancelName,QtCheckTask::getFinishedBy,QtCheckTask::getFinishedName,
+                        QtCheckTask::getCancelTime,QtCheckTask::getSendOrder,QtCheckTask::getDefectNum,QtCheckTask::getClassesId,QtCheckTask::getStationId,
+                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime)
+                //关联物料表
+                .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
+                //关联
+                .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                .between(QtCheckTask::getFinishedTime,startTime,endTime)
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
+        List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class,taskCondition);
+        List<Long> taskIdList = Lists.newArrayList();
+        if(CollUtil.isEmpty(taskList)){
+            return null;
+        }
+        taskList.forEach(tmp->{
+            taskIdList.add(tmp.getId());
+        });
+        //任务详情表
+        List<QtCheckTaskDetail> taskDetailList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId,taskIdList));
+        if(CollUtil.isEmpty(taskDetailList)){
+            return null;
+        }
+        //查到分类数据和检验项数据
+        List<Integer> itemIdList = Lists.newArrayList();
+        taskDetailList.forEach(tmp->{
+            itemIdList.add(tmp.getItemId());
+        });
+
         return null;
     }
 }

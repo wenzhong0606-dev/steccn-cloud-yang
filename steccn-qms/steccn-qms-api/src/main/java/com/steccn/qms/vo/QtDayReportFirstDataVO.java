@@ -15,6 +15,12 @@ import java.util.List;
  */
 @Data
 public class QtDayReportFirstDataVO {
+
+    /**
+     * 任务id
+     */
+    private Long id;
+
     /**
      * 物料id
      */
