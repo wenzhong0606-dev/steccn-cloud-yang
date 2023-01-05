@@ -111,4 +111,11 @@ public interface QtDefectiveItemService extends IService<QtDefectiveItem> {
      * @return map
      */
     Map<Integer,Set<Integer>> defectSnapshot(Set<Integer> defectIdSet);
+
+    /**
+     * 获取机器采样的缺陷项 对应的缺陷项id
+     * @param defectTypeSet 缺陷名称集合
+     * @return map
+     */
+    Map<String, QtDefectiveItem> collectDefect(Set<String> defectTypeSet);
 }

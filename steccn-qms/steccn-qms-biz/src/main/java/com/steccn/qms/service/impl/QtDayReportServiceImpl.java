@@ -25,6 +25,7 @@ import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckTask;
 import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.domain.QtDefectiveItem;
 import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
@@ -37,6 +38,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +58,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final QtCheckTaskService qtCheckTaskService;
+    private final QtDefectiveItemService qtDefectiveItemService;
 
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
@@ -76,7 +82,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
             List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(date, LocalTime.of(8, 0, 0)), LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
             if(CollUtil.isNotEmpty(collectList)){
-
+                List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = convertDefectCollect(collectList, productLineId);
             }
         }
         return null;
@@ -89,29 +95,37 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param productLineId 产线id
      * @return list
      */
-    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList,Integer productLineId) {
+    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList, Integer productLineId) {
         List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
-        collectList.forEach(ele -> {
-            QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
-            vo.setFinishedTime(ele.getProductTime());
-            LocalDate date = ele.getProductTime().toLocalDate();
-            LocalTime time = ele.getProductTime().toLocalTime();
-            //计算缺陷记录时段
-            if (time.getMinute() == 0 && time.getSecond() == 0) {
-                vo.setDefectStartTime(LocalDateTime.of(date, time));
-                vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
-            } else {
-                //time
-                vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
-                vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
-            }
-            vo.setProductLineId(productLineId);
-            QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
-            vo.setClassTime(qtTaskClassCalculate.getClassDate());
-            vo.setClassId(qtTaskClassCalculate.getClassType());
-            vo.setDefectNum(ele.getDefectCount());
-            resList.add(vo);
-        });
+
+        if (CollUtil.isNotEmpty(collectList) && Objects.nonNull(productLineId)) {
+            Set<String> defectTypeSet = collectList.stream().map(DwDefectCollectVO::getDefectType).collect(Collectors.toSet());
+            Map<String, QtDefectiveItem> resMap = qtDefectiveItemService.collectDefect(defectTypeSet);
+
+            collectList.forEach(ele -> {
+                QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
+                vo.setFinishedTime(ele.getProductTime());
+                LocalDate date = ele.getProductTime().toLocalDate();
+                LocalTime time = ele.getProductTime().toLocalTime();
+                //计算缺陷记录时段
+                if (time.getMinute() == 0 && time.getSecond() == 0) {
+                    vo.setDefectStartTime(LocalDateTime.of(date, time));
+                    vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+                } else {
+                    //time
+                    vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
+                    vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+                }
+                vo.setProductLineId(productLineId);
+                QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
+                vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                vo.setClassId(qtTaskClassCalculate.getClassType());
+                vo.setDefectNum(ele.getDefectCount());
+                //配置缺陷项
+
+                resList.add(vo);
+            });
+        }
         return resList;
     }
 

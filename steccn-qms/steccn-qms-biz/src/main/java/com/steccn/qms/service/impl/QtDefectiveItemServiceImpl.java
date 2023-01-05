@@ -380,6 +380,27 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
         return resMap;
     }
 
+    @Override
+    public Map<String, QtDefectiveItem> collectDefect(Set<String> defectTypeSet) {
+        Map<String, QtDefectiveItem> resMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(defectTypeSet)){
+            List<String> defectTypeList = Lists.newArrayList(defectTypeSet);
+
+            LambdaQueryWrapper<QtDefectiveItem> lqw = new QueryWrapper<QtDefectiveItem>().select("distinct code").lambda().and(q -> {
+                for (int i = 0; i < defectTypeList.size(); i++) {
+                    String defectType = defectTypeList.get(i);
+                    if (i != 0) {
+                        q.or();
+                    }
+                    q.like(QtDefectiveItem::getDefectCode, defectType);
+                }
+            });
+            List<QtDefectiveItem> list = list(lqw);
+            log.info("{}",list);
+        }
+        return null;
+    }
+
     /**
      * 同类别下名称是否重复
      *
