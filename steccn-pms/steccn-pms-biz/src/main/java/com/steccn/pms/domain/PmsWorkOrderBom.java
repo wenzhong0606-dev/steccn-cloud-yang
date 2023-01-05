@@ -78,6 +78,11 @@ public class PmsWorkOrderBom implements Serializable {
     private Long workProduceId;
 
     /**
+     * 工艺路线组件id
+     */
+    private Long craftRouteModuleId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

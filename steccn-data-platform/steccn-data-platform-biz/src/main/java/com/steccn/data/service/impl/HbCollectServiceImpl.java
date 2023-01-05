@@ -66,7 +66,7 @@ public class HbCollectServiceImpl implements HbCollectService {
                         item.setId(IdUtil.getSnowflake().nextId());
                         item.setDefectType(child.getDefect_type());
                         item.setLevel(child.getLevel());
-                        item.setDefectCount(child.getDefect_count());
+                        item.setDefectCount(Integer.parseInt(child.getDefect_count()));
                         item.setCreateTime(now);
                         item.setPushId(mainId);
                         itemList.add(item);

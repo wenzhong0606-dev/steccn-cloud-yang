@@ -24,7 +24,7 @@ public class DwDefectCollectVO implements Serializable {
     private String level;
 
     @ApiModelProperty("缺陷数量")
-    private String defectCount;
+    private Integer defectCount;
 
     @ApiModelProperty("主表id")
     private Long pushId;
