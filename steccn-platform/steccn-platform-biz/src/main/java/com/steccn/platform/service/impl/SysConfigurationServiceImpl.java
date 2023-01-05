@@ -33,7 +33,7 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
                     .in(SysConfiguration::getRefContent, refContentSet));
             if (CollUtil.isNotEmpty(dbList)) {
                 dbList.forEach(ele -> {
-                    resMap.put(ele.getRefContent(), ele.getContent());
+                    resMap.put(ele.getContent(), ele.getRefContent());
                 });
             }
         }

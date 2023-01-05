@@ -1,7 +1,5 @@
 package com.steccn.data.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -16,6 +14,9 @@ import java.time.LocalDateTime;
 @ApiModel("数仓-质量管理-缺陷vo")
 @Data
 public class DwDefectCollectVO implements Serializable {
+
+    @ApiModelProperty("线次")
+    private String line;
 
     @ApiModelProperty("缺陷种类")
     private String defectType;

@@ -736,11 +736,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(refMap)) {
             //获取到所有的映射产线
-            Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
+            Set<String> lineSet = refMap.keySet();
             List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(dateStart, LocalTime.of(8, 0, 0)), LocalDateTime.of(dateEnd.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
             if(CollUtil.isNotEmpty(collectList)){
                 //获取采集的缺陷集合
-                convertDefectCollect = convertDefectCollect(collectList, productLineId);
+                convertDefectCollect = convertDefectCollect(collectList, refMap);
             }
         }
         return convertDefectCollect;
@@ -750,13 +750,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      * 计算机器采集的缺陷
      *
      * @param collectList 采集缺陷集合
-     * @param productLineId 产线id
+     * @param refMap 产线映射
      * @return list
      */
-    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList, Integer productLineId) {
+    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList,  Map<String, String> refMap) {
         List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
 
-        if (CollUtil.isNotEmpty(collectList) && Objects.nonNull(productLineId)) {
+        if (CollUtil.isNotEmpty(collectList) && CollUtil.isNotEmpty(refMap)) {
             Set<String> defectTypeSet = collectList.stream().map(DwDefectCollectVO::getDefectType).collect(Collectors.toSet());
             Map<String, QtDefectiveItem> resMap = qtDefectiveItemService.collectDefect(defectTypeSet);
 
@@ -775,17 +775,22 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
                     vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
                 }
-                vo.setProductLineId(productLineId);
-                QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
-                vo.setClassTime(qtTaskClassCalculate.getClassDate());
-                vo.setClassId(qtTaskClassCalculate.getClassType());
-                vo.setDefectNum(ele.getDefectCount());
-                //配置缺陷项
-                QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
-                if(Objects.nonNull(qtDefectiveItem)){
-                    vo.setDefectId(qtDefectiveItem.getId());
-                    vo.setDefectCategory(qtDefectiveItem.getCategoryId());
-                    resList.add(vo);
+                try {
+                    String line = refMap.get(ele.getLine());
+                    vo.setProductLineId(Integer.parseInt(line));
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
+                    vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                    vo.setClassId(qtTaskClassCalculate.getClassType());
+                    vo.setDefectNum(ele.getDefectCount());
+                    //配置缺陷项
+                    QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
+                    if(Objects.nonNull(qtDefectiveItem)){
+                        vo.setDefectId(qtDefectiveItem.getId());
+                        vo.setDefectCategory(qtDefectiveItem.getCategoryId());
+                        resList.add(vo);
+                    }
+                }catch(Exception e){
+
                 }
             });
         }

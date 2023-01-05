@@ -54,7 +54,8 @@ public class QtDefectCollectServiceImpl extends ServiceImpl<QtDefectCollectMappe
                         BeanUtils.copyProperties(ele, vo);
                         QtDefectCollect qtDefectCollect = collectMap.get(ele.getPushId());
                         if (Objects.nonNull(qtDefectCollect)) {
-                            vo.setProductTime(collectMap.get(ele.getPushId()).getProductTime());
+                            vo.setProductTime(qtDefectCollect.getProductTime());
+                            vo.setLine(qtDefectCollect.getLine());
                             resList.add(vo);
                         }
                     }
