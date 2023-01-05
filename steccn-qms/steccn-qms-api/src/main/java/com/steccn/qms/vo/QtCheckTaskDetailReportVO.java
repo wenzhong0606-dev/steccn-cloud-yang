@@ -21,6 +21,9 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("数据来源 0手动  1人工")
+    private Integer dataSource;
+
     @ApiModelProperty("任务id")
     private Long taskId;
 

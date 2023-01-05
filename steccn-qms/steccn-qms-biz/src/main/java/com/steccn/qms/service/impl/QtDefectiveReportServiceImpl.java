@@ -15,15 +15,21 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwDefectCollectVO;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -73,6 +79,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
     /**
      * 深加工缺陷类别分布
@@ -712,6 +720,76 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Map<Integer, QtItemCategory> defectMap = qtItemCategoryService.listById(categoryIdSet);
         Map<Integer, String> idNameMap = defectCategorySort(defectMap);
         return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
+    }
+
+    @Override
+    public List<QtCheckTaskDetailReportVO> defectCollect(QtChartParamDTO dto) {
+        Integer productLineId = dto.getProductLineId();
+        LocalDate dateStart = dto.getDateStart();
+        LocalDate dateEnd = dto.getDateEnd();
+        Assert.notNull(productLineId,"产线不能为空");
+        Assert.notNull(dateStart,"开始日期不能为空");
+        Assert.notNull(dateEnd,"结束日期不能为空");
+        //todo 后面需要考虑只传车间 ，不传入产线
+        List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
+        //查询检验设备数据
+        Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(refMap)) {
+            //获取到所有的映射产线
+            Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
+            List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(dateStart, LocalTime.of(8, 0, 0)), LocalDateTime.of(dateEnd.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(collectList)){
+                //获取采集的缺陷集合
+                convertDefectCollect = convertDefectCollect(collectList, productLineId);
+            }
+        }
+        return convertDefectCollect;
+    }
+
+    /**
+     * 计算机器采集的缺陷
+     *
+     * @param collectList 采集缺陷集合
+     * @param productLineId 产线id
+     * @return list
+     */
+    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList, Integer productLineId) {
+        List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
+
+        if (CollUtil.isNotEmpty(collectList) && Objects.nonNull(productLineId)) {
+            Set<String> defectTypeSet = collectList.stream().map(DwDefectCollectVO::getDefectType).collect(Collectors.toSet());
+            Map<String, QtDefectiveItem> resMap = qtDefectiveItemService.collectDefect(defectTypeSet);
+
+            collectList.forEach(ele -> {
+                QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
+                vo.setDataSource(1);
+                vo.setFinishedTime(ele.getProductTime());
+                LocalDate date = ele.getProductTime().toLocalDate();
+                LocalTime time = ele.getProductTime().toLocalTime();
+                //计算缺陷记录时段
+                if (time.getMinute() == 0 && time.getSecond() == 0) {
+                    vo.setDefectStartTime(LocalDateTime.of(date, time));
+                    vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+                } else {
+                    //time
+                    vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
+                    vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+                }
+                vo.setProductLineId(productLineId);
+                QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
+                vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                vo.setClassId(qtTaskClassCalculate.getClassType());
+                vo.setDefectNum(ele.getDefectCount());
+                //配置缺陷项
+                QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
+                if(Objects.nonNull(qtDefectiveItem)){
+                    vo.setDefectId(qtDefectiveItem.getId());
+                    vo.setDefectCategory(qtDefectiveItem.getCategoryId());
+                    resList.add(vo);
+                }
+            });
+        }
+        return resList;
     }
 
     /**
