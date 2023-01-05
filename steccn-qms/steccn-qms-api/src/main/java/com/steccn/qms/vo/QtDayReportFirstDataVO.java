@@ -57,6 +57,11 @@ public class QtDayReportFirstDataVO {
     private String classOrder;
 
     /**
+     * 车间
+     */
+    private String productLine;
+
+    /**
      * 数据module对象
      */
     private List<FurtherValueObjVO> module;

@@ -105,6 +105,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtCheckTask::getClassTime,QtCheckTask::getSpotTime)
                 //关联物料表
                 .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
+                //json映射
+                .selectAs(QtCheckTask::getProductLineName, QtCheckTaskListVO::getProductLineName)
                 //关联
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
@@ -157,29 +159,33 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //静态表头
         List<QtSpcHeadTitleVO> common = Lists.newArrayList();
         QtSpcHeadTitleVO staticHead1 = new QtSpcHeadTitleVO();
-        staticHead1.setLabel(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME);
-        staticHead1.setValue(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME_VALUE);
+        staticHead1.setLabel(QtManagerConstant.SPC_HEADER_FIELD_PRODUCT_LINE);
+        staticHead1.setValue(QtManagerConstant.SPC_HEADER_FIELD_PRODUCT_LINE_VALUE);
         common.add(staticHead1);
         QtSpcHeadTitleVO staticHead2 = new QtSpcHeadTitleVO();
-        staticHead2.setLabel(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME);
-        staticHead2.setValue(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
+        staticHead2.setLabel(QtManagerConstant.DAY_REPORT_FIELD_ORDER);
+        staticHead2.setValue(QtManagerConstant.DAY_REPORT_FIELD_ORDER_VALUE);
         common.add(staticHead2);
         QtSpcHeadTitleVO staticHead3 = new QtSpcHeadTitleVO();
-        staticHead3.setLabel(QtManagerConstant.DAY_REPORT_FIELD_RESULT);
-        staticHead3.setValue(QtManagerConstant.DAY_REPORT_FIELD_RESULT_VALUE);
+        staticHead3.setLabel(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME);
+        staticHead3.setValue(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
         common.add(staticHead3);
         QtSpcHeadTitleVO staticHead4 = new QtSpcHeadTitleVO();
-        staticHead4.setLabel(QtManagerConstant.DAY_REPORT_FIELD_COPY);
-        staticHead4.setValue(QtManagerConstant.DAY_REPORT_FIELD_COPY_VALUE);
+        staticHead4.setLabel(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME);
+        staticHead4.setValue(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME_VALUE);
         common.add(staticHead4);
         QtSpcHeadTitleVO staticHead5 = new QtSpcHeadTitleVO();
-        staticHead5.setLabel(QtManagerConstant.DAY_REPORT_FIELD_NOTE);
-        staticHead5.setValue(QtManagerConstant.DAY_REPORT_FIELD_NOTE_VALUE);
+        staticHead5.setLabel(QtManagerConstant.DAY_REPORT_FIELD_RESULT);
+        staticHead5.setValue(QtManagerConstant.DAY_REPORT_FIELD_RESULT_VALUE);
         common.add(staticHead5);
         QtSpcHeadTitleVO staticHead6 = new QtSpcHeadTitleVO();
-        staticHead6.setLabel(QtManagerConstant.DAY_REPORT_FIELD_ORDER);
-        staticHead6.setValue(QtManagerConstant.DAY_REPORT_FIELD_ORDER_VALUE);
+        staticHead6.setLabel(QtManagerConstant.DAY_REPORT_FIELD_NOTE);
+        staticHead6.setValue(QtManagerConstant.DAY_REPORT_FIELD_NOTE_VALUE);
         common.add(staticHead6);
+        QtSpcHeadTitleVO staticHead7 = new QtSpcHeadTitleVO();
+        staticHead7.setLabel(QtManagerConstant.DAY_REPORT_FIELD_COPY);
+        staticHead7.setValue(QtManagerConstant.DAY_REPORT_FIELD_COPY_VALUE);
+        common.add(staticHead7);
         result.setCommon(common);
         //动态表头
         //把itemList根据category分组
@@ -202,6 +208,18 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             module.add(dynamicHeader);
         }
         result.setModule(module);
+        //设置数据
+        List<QtDayReportFirstDataVO> tableData = Lists.newArrayList();
+        //根据taskId分组
+        Map<Long,List<QtCheckTaskDetail>> groupByTaskId = taskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
+        for(Map.Entry<Long,List<QtCheckTaskDetail>> taskEntry:groupByTaskId.entrySet()){
+            List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
+            //一个任务下,根据copy分组
+            Map<Integer,List<QtCheckTaskDetail>> groupByCopy = detailTmp.stream().collect(Collectors.groupingBy(v -> v.getCopy()));
+            for(Map.Entry<Integer,List<QtCheckTaskDetail>> copyEntry:groupByCopy.entrySet()){
+
+            }
+        }
         return result;
     }
 }
