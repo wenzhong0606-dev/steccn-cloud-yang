@@ -2,7 +2,10 @@ package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtCheckPlan;
 import com.steccn.qms.domain.QtCheckTask;
@@ -22,8 +25,10 @@ import com.steccn.qms.vo.QtDayReportOnlineVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,14 +46,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtDefectiveReportService qtDefectiveReportService;
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
-
-
+    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
     private final QtCheckTaskService qtCheckTaskService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
         //查询人工数据
-
         //获取所有扁平化数据
         QtChartParamDTO dto = new QtChartParamDTO();
         dto.setDateStart(date);
@@ -61,9 +64,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         if (CollUtil.isNotEmpty(refMap)) {
             //获取到所有的映射产线
             Set<String> lineSet = refMap.values().stream().collect(Collectors.toSet());
-
+            List<DwDefectCollectVO> collectList = FeignOptional.of(remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(date, LocalTime.of(8, 0, 0)), LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)), lineSet))).get();
+            log.info("{}",collectList);
         }
-
         return null;
     }
 
@@ -74,11 +77,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId) {
-        LocalDateTime startTime = date.atTime(8,0,0);
+        LocalDateTime startTime = date.atTime(8, 0, 0);
 
         LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .eq(QtCheckTask::getTaskType,QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
         return null;

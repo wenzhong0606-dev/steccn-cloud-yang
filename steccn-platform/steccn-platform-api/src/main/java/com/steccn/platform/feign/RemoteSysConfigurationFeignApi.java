@@ -6,6 +6,7 @@ import com.steccn.common.vo.R;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,5 +26,5 @@ public interface RemoteSysConfigurationFeignApi {
      */
     @ApiOperation(value = "获取根据ref内容提供获取映射配置")
     @PostMapping("/feign/platform/sys/conf/ref")
-    R<Map<String, String>> sysConfRef(TupleDTO<String, Set<Integer>> tupleDTO);
+    R<Map<String, String>> sysConfRef(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO);
 }

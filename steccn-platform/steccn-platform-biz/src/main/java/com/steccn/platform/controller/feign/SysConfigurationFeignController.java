@@ -7,6 +7,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +28,7 @@ public class SysConfigurationFeignController {
 
     @ApiOperation(value = "获取根据ref内容提供获取映射配置")
     @PostMapping("/ref")
-    R<Map<String, String>> sysConfRef(TupleDTO<String, Set<Integer>> tupleDTO) {
+    R<Map<String, String>> sysConfRef(@RequestBody TupleDTO<String, Set<Integer>> tupleDTO) {
         return R.success(sysConfigurationService.sysConfRef(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 }

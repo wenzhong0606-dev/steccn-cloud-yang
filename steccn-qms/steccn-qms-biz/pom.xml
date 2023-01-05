@@ -117,6 +117,12 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-pms-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-data-platform-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
