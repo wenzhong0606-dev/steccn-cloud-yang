@@ -303,6 +303,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 //删除物料信息
                 pmsWorkOrderBomService.deleteBom(idSet, dto.getId());
                 pmsWorkOrderBomService.saveBatch(bomList);
+            } else {
+                pmsWorkOrderBomService.remove(new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, dto.getId()));
             }
         }
         return true;
@@ -350,9 +352,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据产线查询订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, productLineId)
+                .eq(PmsProduceOrder::getState,2)
                 .orderByDesc(PmsProduceOrder::getCreateTime)
                 .last(MpConstant.STR_LIMIT_1));
-        Assert.notNull(order, "该产线暂无订单");
+        Assert.notNull(order, "该产线暂无执行中的订单，请选择其他订单");
         return reportWorkOrder(order, stationId);
     }
 
@@ -626,7 +629,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可暂停");
+        Assert.isTrue(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可暂停");
         //3.修改状态
         order.setState(PmManagerConstant.OrderStateEnum.THREE.getCode());
         return updateById(order);
@@ -637,7 +640,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断状态
-        Assert.isFalse(PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()), "当前状态不可完成");
+        Assert.isTrue(order.getState().equals(PmManagerConstant.OrderStateEnum.ONE.getCode()) || PmManagerConstant.OrderStateEnum.TWO.getCode().equals(order.getState()) || order.getState().equals(PmManagerConstant.OrderStateEnum.FOUR.getCode()), "当前状态不可完成");
         //3.状态完成
         order.setState(PmManagerConstant.OrderStateEnum.FIVE.getCode());
         return updateById(order);
