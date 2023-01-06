@@ -223,27 +223,28 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
      * @return
      */
     private void validMaterialConsume(ProcessReportWorkSubmitDTO dto, Long processId) {
-        Assert.notEmpty(dto.getMaterialConsumeList(), "物料消耗为空");
-        //根据生产订单id和工序
-        List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
-                .eq(PmsWorkOrderBom::getWorkProduceId, dto.getProduceOrderId())
-                .eq(PmsWorkOrderBom::getProcessId, processId));
-        if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
-            Set<Long> materialIdSet = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
-            Set<Long> consumeSet = dto.getMaterialConsumeList().stream().map(ProcessReportWorkMaterialListDTO::getModuleId).collect(Collectors.toSet());
-            if (!consumeSet.containsAll(materialIdSet)) {
-                throw new BusinessException("部分物料库存不足，请补库存");
-            }
-            //可用数量必须大于实际数量
-            for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
-                if (materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
-                    throw new BusinessException("物料消耗实际数量不可以大于可用数量");
+        if(CollUtil.isNotEmpty(dto.getMaterialConsumeList())){
+            //根据生产订单id和工序
+            List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
+                    .eq(PmsWorkOrderBom::getWorkProduceId, dto.getProduceOrderId())
+                    .eq(PmsWorkOrderBom::getProcessId, processId));
+            if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
+                Set<Long> materialIdSet = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
+                Set<Long> consumeSet = dto.getMaterialConsumeList().stream().map(ProcessReportWorkMaterialListDTO::getModuleId).collect(Collectors.toSet());
+                if (!consumeSet.containsAll(materialIdSet)) {
+                    throw new BusinessException("部分物料库存不足，请补库存");
+                }
+                //可用数量必须大于实际数量
+                for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
+                    if (materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
+                        throw new BusinessException("物料消耗实际数量不可以大于可用数量");
+                    }
                 }
             }
+            //去除物料消耗list
+            List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
+            dto.setMaterialConsumeList(materialListDTOList);
         }
-        //去除物料消耗list
-        List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
-        dto.setMaterialConsumeList(materialListDTOList);
     }
 
     /**
