@@ -5,10 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
@@ -37,6 +40,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtDefectiveReportService qtDefectiveReportService;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
     private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     private final QtCheckTaskService qtCheckTaskService;
@@ -70,6 +74,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getProductLineId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
         //根据来源分组
         Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
         for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
@@ -85,6 +91,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
                         vo.setDataSource(dataSourceEntry.getKey());
                         vo.setClassId(classEntry.getKey());
+                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(dataSourceEntry.getKey()).getName());
                         String key = defectTimeEntry.getKey();
                         String[] s = key.split("_");
                         vo.setDefectStartTime(LocalDateTime.parse(s[0]));
@@ -94,6 +101,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setMaterialId(qtCheckTaskDetailReportVO.getMaterialId());
                         vo.setMaterialName(materialIdNameMap.get(qtCheckTaskDetailReportVO.getMaterialId()));
                         vo.setNote(qtCheckTaskDetailReportVO.getNote());
+                        vo.setProductLineName(sysOfficeMap.get(dto.getProductLineId()));
                         tableData.add(vo);
                     }
                 }
