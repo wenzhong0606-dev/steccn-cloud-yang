@@ -542,9 +542,19 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtDefectDataSource {
-        MAN(0),
-        COLLECT(1);
+        MAN(0,"人工检验"),
+        COLLECT(1,"检验设备");
         private Integer code;
+        private String name;
+
+        public static QtDefectDataSource code(Integer code) {
+            for (QtDefectDataSource ele : QtDefectDataSource.values()) {
+                if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
     }
 
     /**

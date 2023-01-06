@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -14,7 +13,6 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -23,13 +21,11 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -107,6 +103,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setDataSource(dataSourceEntry.getKey());
                         vo.setClassId(classEntry.getKey());
                         vo.setClassName(QtManagerConstant.QtClassesEnum.code(dataSourceEntry.getKey()).getName());
+                        vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                         vo.setDefectTimeStr(defectTimeEntry.getKey());
                         vo.setType(0);
                         vo.setMaterialId(-1 == materialEntry.getKey() ? null : materialEntry.getKey());
@@ -133,8 +130,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
         }
         resVo.setTableData(tableData);
-        resVo.setModule(resModule);
-        resVo.setCommon(generateCommonHead());
+        QtDayReportTableHeadersVO header = new QtDayReportTableHeadersVO();
+        resVo.setHeaders(header);
+        header.setModule(resModule);
+        header.setCommon(generateCommonHead());
         return resVo;
     }
 
