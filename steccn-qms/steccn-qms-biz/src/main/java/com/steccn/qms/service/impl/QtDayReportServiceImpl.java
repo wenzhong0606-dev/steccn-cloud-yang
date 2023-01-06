@@ -1,7 +1,6 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -15,7 +14,6 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -24,15 +22,14 @@ import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -106,9 +103,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> materialEntry : materialMap.entrySet()) {
                         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
                         vo.setDataSource(dataSourceEntry.getKey());
+                        vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                         vo.setClassId(classEntry.getKey());
-                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(dataSourceEntry.getKey()).getName());
+                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
                         vo.setDefectTimeStr(defectTimeEntry.getKey());
+
+                        String[] split = defectTimeEntry.getKey().split("~");
+                        vo.setDefectStartTime(LocalTime.parse(split[0],df));
+                        vo.setDefectEndTime(LocalTime.parse(split[1],df));
                         vo.setType(0);
                         vo.setMaterialId(-1 == materialEntry.getKey() ? null : materialEntry.getKey());
                         vo.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), "-"));
@@ -133,9 +135,27 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 }
             }
         }
+        //数据需要排序
+        tableData.sort((o1, o2) -> {
+            //先对比班次
+            if (!o1.getClassId().equals(o2.getClassId())) {
+                return o1.getClassId() - o2.getClassId();
+            }
+            //对比数据来源
+            if (!o1.getDataSource().equals(o2.getDataSource())) {
+                return o1.getDataSource() - o2.getDataSource();
+            }
+            //对比缺陷记录时段
+            if (!o1.getDefectStartTime().equals(o2.getDefectStartTime())) {
+                return o1.getDefectStartTime().compareTo(o2.getDefectStartTime());
+            }
+            return 1;
+        });
         resVo.setTableData(tableData);
-        resVo.setModule(resModule);
-        resVo.setCommon(generateCommonHead());
+        QtDayReportTableHeadersVO header = new QtDayReportTableHeadersVO();
+        resVo.setHeaders(header);
+        header.setModule(resModule);
+        header.setCommon(generateCommonHead());
         return resVo;
     }
 
