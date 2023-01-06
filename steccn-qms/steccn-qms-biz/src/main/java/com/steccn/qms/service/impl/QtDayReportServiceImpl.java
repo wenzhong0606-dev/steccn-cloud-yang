@@ -286,7 +286,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //静态表头
         List<QtSpcHeadTitleVO> common = Lists.newArrayList();
         QtSpcHeadTitleVO staticHead1 = new QtSpcHeadTitleVO();
-        staticHead1.setLabel(QtManagerConstant.SPC_HEADER_FIELD_PRODUCT_LINE);
+        staticHead1.setLabel(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getName());
         staticHead1.setValue(QtManagerConstant.SPC_HEADER_FIELD_PRODUCT_LINE_VALUE);
         common.add(staticHead1);
         QtSpcHeadTitleVO staticHead2 = new QtSpcHeadTitleVO();
