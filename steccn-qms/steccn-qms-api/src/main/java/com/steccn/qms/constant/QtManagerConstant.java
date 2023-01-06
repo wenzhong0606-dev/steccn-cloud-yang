@@ -537,6 +537,17 @@ public interface QtManagerConstant {
         }
 
     /**
+     * 数据来源 0人工 1采集
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtDefectDataSource {
+        MAN(0),
+        COLLECT(1);
+        private Integer code;
+    }
+
+    /**
      * 计量单位
      */
     @Getter

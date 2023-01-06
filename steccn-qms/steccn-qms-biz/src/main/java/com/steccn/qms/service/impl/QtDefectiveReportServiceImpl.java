@@ -274,6 +274,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
+                        vo.setDataSource(1);
                         flatDefectiveList.add(vo);
                     }
                 }
@@ -761,7 +762,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
             collectList.forEach(ele -> {
                 QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
-                vo.setDataSource(1);
+                vo.setDataSource(0);
                 vo.setFinishedTime(ele.getProductTime());
                 LocalDate date = ele.getProductTime().toLocalDate();
                 LocalTime time = ele.getProductTime().toLocalTime();

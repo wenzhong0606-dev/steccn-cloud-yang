@@ -30,7 +30,7 @@ public class QtDayReportController {
     @ApiOperation("质量日报表-在线检")
     public R<QtDayReportOnlineVO> online(@RequestParam("date") LocalDate date,
                                          @RequestParam("productLineId") Integer productLineId) {
-        return R.success(qtDayReportService.online(date,productLineId));
+        return R.success(qtDayReportService.online(date, productLineId));
     }
 
 
