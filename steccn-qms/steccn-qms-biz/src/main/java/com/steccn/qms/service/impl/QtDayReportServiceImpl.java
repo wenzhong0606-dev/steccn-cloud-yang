@@ -88,15 +88,16 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
 
-
         //根据来源分组
-        Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
-        for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
-            //根据班次日期分组
-            Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
-            for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
+        Map<Integer,BigDecimal> countMap = Maps.newHashMap();
+        Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+        for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
+            //根据班次分组
+            Map<Integer,BigDecimal> classCountMap = Maps.newHashMap();
+            Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
+            for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
                 //根据缺陷记录时段分组
-                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = classEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime().format(df) + "~" + v.getDefectEndTime().format(df)));
+                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime().format(df) + "~" + v.getDefectEndTime().format(df)));
                 for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
                     //根据物料分组
                     Map<Long, List<QtCheckTaskDetailReportVO>> materialMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getMaterialId()) ? v.getMaterialId() : -1L));
@@ -126,6 +127,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 //获取该缺陷下的所有数据
                                 List<QtCheckTaskDetailReportVO> defectDataList = materialEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
                                 int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                                BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
+                                BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));
                                 value.add(String.valueOf(sum));
                             }
                             strVO.setValue(value);
@@ -134,12 +137,20 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
             }
+            QtDayReportOnlineDataVO vo = insertCount(1,categoryDefectMap, classEntry.getKey(), classCountMap);
+            tableData.add(vo);
         }
+        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap);
+        tableData.add(allVo);
         //数据需要排序
         tableData.sort((o1, o2) -> {
             //先对比班次
             if (!o1.getClassId().equals(o2.getClassId())) {
                 return o1.getClassId() - o2.getClassId();
+            }
+            //对比数据来源为空，则排序到前面
+            if(Objects.isNull(o1.getDataSource())){
+                return 1;
             }
             //对比数据来源
             if (!o1.getDataSource().equals(o2.getDataSource())) {
@@ -157,6 +168,34 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
         return resVo;
+    }
+
+
+    /**
+     * 插入单条合计
+     * @param type
+     * @param categoryDefectMap
+     * @param classId
+     * @param classCountMap
+     * @return
+     */
+    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap) {
+        //插入一条合计
+        QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
+        vo.setType(type);
+        List<FurtherValueStrVO> module = Lists.newArrayList();
+        vo.setModule(module);
+        vo.setClassId(classId);
+        for (Map.Entry<Integer, Set<Integer>> categoryDefectEntry : categoryDefectMap.entrySet()) {
+            FurtherValueStrVO strVO = new FurtherValueStrVO();
+            List<String> value = Lists.newArrayList();
+            for (Integer defectId : categoryDefectEntry.getValue()) {
+                value.add(String.valueOf(classCountMap.get(defectId)));
+            }
+            strVO.setValue(value);
+            module.add(strVO);
+        }
+        return vo;
     }
 
     /**
