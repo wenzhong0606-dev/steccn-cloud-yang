@@ -6,6 +6,7 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -76,7 +77,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //获取人工采集的缺陷集合
         List<QtCheckTaskDetailReportVO> manDataList = qtDefectiveReportService.defectiveDataFlat(dto);
         //获取机器采集的缺陷集合
+        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> collectDataList = qtDefectiveReportService.defectCollect(dto);
+        manDataList.addAll(collectDataList);
+        SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");
+        log.info("{}", manDataList);
         return null;
     }
 

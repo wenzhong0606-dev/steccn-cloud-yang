@@ -1,5 +1,6 @@
 package com.steccn.platform.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -33,4 +34,7 @@ public class SysOfficeTypeKeyDTO implements Serializable {
      * key  输入模糊查询的关键字
      */
    private String key;
+
+    @ApiModelProperty("关键字集合")
+    private List<String> keyList;
 }

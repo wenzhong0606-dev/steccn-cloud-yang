@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice>
         implements SysOfficeService {
 
-    // TODO: 2022/9/6
     @Override
     public List<SysOfficeVO> sysList(String officeType) {
         //根据类型查询所有的数据字典数据
@@ -258,6 +257,35 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         SysOffice shelfWarehouseInfo = getById(id);
         return BeanUtil.copyProperties(shelfWarehouseInfo, SysOfficeVO.class);
     }
+
+    @Override
+    public List<SysOfficeVO> listMultiFilter(SysOfficeTypeKeyDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        LambdaQueryWrapper<SysOffice> lqw = new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey());
+        if (CollUtil.isNotEmpty(dto.getKeyList())) {
+            lqw.and(qr ->{
+                    for (int i = 0; i < dto.getKeyList().size(); i++) {
+                        if (i != 0) {
+                            qr.or();
+                        }
+                        qr.like(SysOffice::getOfficeName, dto.getKeyList().get(i));
+                    }
+            });
+        }
+        List<SysOffice> officeList = list(lqw);
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp, vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);

@@ -165,4 +165,10 @@ public interface SysOfficeService extends IService<SysOffice> {
      */
     SysOfficeVO shelfWarehouseInfo(Integer id);
 
+    /**
+     * 根据机构类型以及多关键字名称返回SysOffice列表信息
+     * @param dto dto
+     * @return list
+     */
+    List<SysOfficeVO> listMultiFilter(SysOfficeTypeKeyDTO dto);
 }

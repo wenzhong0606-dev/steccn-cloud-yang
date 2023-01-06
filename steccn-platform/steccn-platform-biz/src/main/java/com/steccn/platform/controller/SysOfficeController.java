@@ -107,6 +107,12 @@ public class SysOfficeController {
         return R.success(sysOfficeService.getListByTypeAndKey(dto));
     }
 
+    @PostMapping("/list/filter")
+    @ApiOperation("根据机构类型以及多关键字名称返回SysOffice列表信息")
+    public R<List<SysOfficeVO>> listMultiFilter(@RequestBody SysOfficeTypeKeyDTO dto){
+        return R.success(sysOfficeService.listMultiFilter(dto));
+    }
+
     @ApiOperation("获取组织结构信息")
     @GetMapping("/sysOfficeInfo/{id}")
     public R<SysOfficeVO> sysOfficeInfo(@PathVariable("id") Integer id) {
@@ -115,24 +121,4 @@ public class SysOfficeController {
         BeanUtils.copyProperties(sysOffice,sysOfficeVO);
         return R.success(sysOfficeVO);
     }
-
-
-    public static void main(String[] args) {
-        int[] arr = new int[48];
-        //峰谷平电
-        int start = 0 ;
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i] != arr[start]) {
-                //说明电的类型变化了
-                //结算start - i 这一段区间 电的类型是arr[start]
-                BigDecimal startBig = BigDecimalUtil.divide(BigDecimal.valueOf(start),BigDecimal.valueOf(2));
-                BigDecimal endBig = BigDecimalUtil.divide(BigDecimal.valueOf(i),BigDecimal.valueOf(2));
-
-
-
-               start =i;
-            }
-        }
-    }
-
 }
