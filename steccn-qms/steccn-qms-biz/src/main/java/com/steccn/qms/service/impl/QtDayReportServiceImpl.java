@@ -5,31 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.CalculateDateUtil;
-import com.steccn.common.vo.QtTaskClassCalculate;
-import com.steccn.data.feign.RemoteDataPlatformFeignApi;
-import com.steccn.data.vo.DwDefectCollectVO;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.steccn.authserver.util.FeignOptional;
-import com.steccn.common.dto.TupleDTO;
-import com.steccn.platform.constant.SysOfficeConstant;
-import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
-import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtCheckTask;
-import com.steccn.qms.domain.QtCheckTaskDetail;
-import com.steccn.qms.domain.QtDefectiveItem;
-import com.steccn.qms.domain.QtMaterial;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
@@ -41,11 +23,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,6 +36,8 @@ import java.util.stream.Collectors;
 public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtDefectiveReportService qtDefectiveReportService;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     private final QtCheckTaskService qtCheckTaskService;
     private final QtDefectiveItemService qtDefectiveItemService;
@@ -68,10 +47,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
     private final QtItemCategoryService qtItemCategoryService;
-    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
+        QtDayReportOnlineVO resVo = new QtDayReportOnlineVO();
+        List<QtDayReportOnlineDataVO> tableData = Lists.newArrayList();
+
         //查询人工数据
         //获取所有扁平化数据
         QtChartParamDTO dto = new QtChartParamDTO();
@@ -85,8 +66,41 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckTaskDetailReportVO> collectDataList = qtDefectiveReportService.defectCollect(dto);
         manDataList.addAll(collectDataList);
         SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");
-        log.info("{}", manDataList);
-        return null;
+        //查询物料
+        Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
+        Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //根据来源分组
+        Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
+        for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
+            //根据班次日期分组
+            Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
+                //根据缺陷记录时段分组
+                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = classEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "_" + v.getDefectEndTime()));
+                for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
+                    //根据类别分组
+                    Map<Integer, List<QtCheckTaskDetailReportVO>> categoryMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+                    for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> categoryEntry : categoryMap.entrySet()) {
+                        QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
+                        vo.setDataSource(dataSourceEntry.getKey());
+                        vo.setClassId(classEntry.getKey());
+                        String key = defectTimeEntry.getKey();
+                        String[] s = key.split("_");
+                        vo.setDefectStartTime(LocalDateTime.parse(s[0]));
+                        vo.setDefectEndTime(LocalDateTime.parse(s[1]));
+                        vo.setType(0);
+                        QtCheckTaskDetailReportVO qtCheckTaskDetailReportVO = categoryEntry.getValue().get(0);
+                        vo.setMaterialId(qtCheckTaskDetailReportVO.getMaterialId());
+                        vo.setMaterialName(materialIdNameMap.get(qtCheckTaskDetailReportVO.getMaterialId()));
+                        vo.setNote(qtCheckTaskDetailReportVO.getNote());
+                        tableData.add(vo);
+                    }
+                }
+            }
+        }
+        resVo.setTableData(tableData);
+        return resVo;
     }
 
     @Override
@@ -125,7 +139,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
         List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class,taskCondition);
-        //任务idList
         List<Long> taskIdList = Lists.newArrayList();
         if(CollUtil.isEmpty(taskList)){
             log.info("任务为空(质量日报表-首检)");
