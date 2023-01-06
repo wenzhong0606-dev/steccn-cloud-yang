@@ -129,7 +129,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<Long> taskIdList = Lists.newArrayList();
         if(CollUtil.isEmpty(taskList)){
             log.info("任务为空(质量日报表-首检)");
-            return null;
+            SteccnTableAssertUtil.notEmpty(taskList, "数据为空");
         }
         taskList.forEach(tmp->{
             taskIdList.add(tmp.getId());
@@ -138,7 +138,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckTaskDetail> taskDetailList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId,taskIdList));
         if(CollUtil.isEmpty(taskDetailList)){
             log.info("任务详情为空(质量日报表-首检)");
-            return null;
+            SteccnTableAssertUtil.notEmpty(taskDetailList, "数据为空");
         }
         //查到分类数据和检验项数据
         List<Integer> itemIdList = Lists.newArrayList();
@@ -151,7 +151,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .orderByDesc(QtCheckItem::getCreateTime));
         if(CollUtil.isEmpty(itemList)){
             log.info("点检项为空(质量日报表-首检)");
-            return null;
+            SteccnTableAssertUtil.notEmpty(itemList, "数据为空");
         }
         //查询
 
@@ -167,7 +167,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         });
         //根据创建时间排序
         List<QtItemCategory> qtItemCategoryList = qtItemCategoryService.list(new LambdaQueryWrapper<QtItemCategory>()
-                .in(QtItemCategory::getId,itemIdList)
+                .in(QtItemCategory::getId,categoryIdList)
                 .orderByAsc(QtItemCategory::getCreateTime));
         QtDayReportFirstVO result = new QtDayReportFirstVO();
         //静态表头
@@ -247,7 +247,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     column.setResult(task.getResult());
                     column.setCopy(copyTmp.getCopy());
                     column.setNote(task.getNote());
-                    column.setClassOrder(task.getClasses());
+                    column.setClassOrder(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
                     column.setProductLine(task.getProductLineName());
                     //动态data
                     List<FurtherValueObjVO> moduleData = Lists.newArrayList();

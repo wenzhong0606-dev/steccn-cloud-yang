@@ -251,4 +251,9 @@ public class QtCheckTaskListVO implements Serializable {
      */
     private LocalDateTime spotTime;
 
+    /**
+     * 班次id
+     */
+    private Integer classesId;
+
 }
