@@ -2,6 +2,7 @@ package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
 import com.steccn.qms.service.QtDayReportService;
+import com.steccn.qms.vo.QtDayReportFirstVO;
 import com.steccn.qms.vo.QtDayReportOnlineVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -39,5 +40,12 @@ public class QtDayReportController {
     public R<QtDayReportOnlineVO> polling(@RequestParam("date") LocalDate date,
                                          @RequestParam("productLineId") Integer productLineId) {
         return R.success(qtDayReportService.polling(date,productLineId));
+    }
+
+    @GetMapping("/first")
+    @ApiOperation("质量日报表-首检")
+    public R<QtDayReportFirstVO> first(@RequestParam("date") LocalDate date,
+                                       @RequestParam("productLineId") Integer productLineId) {
+        return R.success(qtDayReportService.first(date,productLineId));
     }
 }
