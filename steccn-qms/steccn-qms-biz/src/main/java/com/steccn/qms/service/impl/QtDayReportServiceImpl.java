@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -183,6 +184,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .in(QtItemCategory::getId,categoryIdList)
                 .orderByAsc(QtItemCategory::getCreateTime));
         QtDayReportFirstVO result = new QtDayReportFirstVO();
+        QtDayReportTableHeadersVO headersVO = new QtDayReportTableHeadersVO();
         //静态表头
         List<QtSpcHeadTitleVO> common = Lists.newArrayList();
         QtSpcHeadTitleVO staticHead1 = new QtSpcHeadTitleVO();
@@ -213,7 +215,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         staticHead7.setLabel(QtManagerConstant.DAY_REPORT_FIELD_COPY);
         staticHead7.setValue(QtManagerConstant.DAY_REPORT_FIELD_COPY_VALUE);
         common.add(staticHead7);
-        result.setCommon(common);
+        headersVO.setCommon(common);
         //动态表头
         //把itemList根据category分组
         List<BaseReportHeaderVO> module = Lists.newArrayList();
@@ -234,7 +236,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             dynamicHeader.setValue(value);
             module.add(dynamicHeader);
         }
-        result.setModule(module);
+        headersVO.setModule(module);
+        result.setHeaders(headersVO);
         //设置数据
         List<QtDayReportFirstDataVO> tableData = Lists.newArrayList();
         //根据taskId分组
@@ -244,101 +247,107 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             QtCheckTaskListVO task = taskList.stream().filter(v -> v.getId().equals(taskEntry.getKey())).findFirst().get();
             List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
             //一个任务下,根据copy分组
-            Map<Integer,List<QtCheckTaskDetail>> groupByCopy = detailTmp.stream().collect(Collectors.groupingBy(v -> v.getCopy()));
+            Map<Integer,List<QtCheckTaskDetail>> groupByCopyTmp = detailTmp.stream().collect(Collectors.groupingBy(v -> v.getCopy()));
+            //根据样本序号排序
+            Map<Integer,List<QtCheckTaskDetail>> groupByCopy = new LinkedHashMap<>();
+            groupByCopyTmp.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEachOrdered(x -> groupByCopy.put(x.getKey(), x.getValue()));
             for(Map.Entry<Integer,List<QtCheckTaskDetail>> copyEntry:groupByCopy.entrySet()){
                 List<QtCheckTaskDetail> copyDetailTmp = copyEntry.getValue();
-                //根据序号排列
-                copyDetailTmp = copyDetailTmp.stream().sorted(Comparator.comparing(QtCheckTaskDetail::getCopy)).collect(Collectors.toList());
-                for(QtCheckTaskDetail copyTmp:copyDetailTmp){
-                    //组合数据
-                    QtDayReportFirstDataVO column = new QtDayReportFirstDataVO();
-                    //具体data
-                    column.setId(taskEntry.getKey());
-                    column.setMaterialId(task.getMaterialId());
-                    column.setMaterialName(task.getMaterialName());
-                    column.setFinishedTime(task.getFinishedTime());
-                    column.setResult(task.getResult());
-                    column.setCopy(copyTmp.getCopy());
-                    column.setNote(task.getNote());
-                    column.setClassOrder(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
-                    column.setProductLine(task.getProductLineName());
-                    //动态data
-                    List<FurtherValueObjVO> moduleData = Lists.newArrayList();
-                    //找到动态表头
-                    for(BaseReportHeaderVO headModule:module){
-                        List<ColorValueVO> colorValueList = Lists.newArrayList();
-                        for(String headValue:headModule.getValue()){
-                            String headItemCode = itemList.stream().filter(v -> v.getName().equals(headValue)).findFirst().get().getCode();
-                            QtCheckItem itemTmp = itemFullList.stream().filter(v -> v.getId().equals(copyTmp.getItemId())).findFirst().get();
-                            ColorValueVO colorValue = new ColorValueVO();
-                            //不匹配则为-
-                            if(headItemCode.equals(itemTmp.getCode())){
-                                String checkResult = copyTmp.getCheckResult();
-                                //为空则显示-
-                                if(StrUtil.isBlank(checkResult)){
-                                    colorValue.setValue("-");
-                                    colorValue.setColor(0);
-                                    colorValueList.add(colorValue);
-                                }else if(checkResult.equals(QtManagerConstant.QT_TASK_GOOD)){
-                                    colorValue.setValue(QtManagerConstant.QT_TASK_GOOD);
-                                    colorValue.setColor(0);
-                                    colorValueList.add(colorValue);
-                                }else if(checkResult.equals(QtManagerConstant.QT_TASK_BAD)){
-                                    colorValue.setValue(QtManagerConstant.QT_TASK_BAD);
-                                    colorValue.setColor(1);
-                                    colorValueList.add(colorValue);
-                                }else {
-                                    try {
-                                        //判断数值
-                                        BigDecimal checkResultNum = new BigDecimal(checkResult);
-                                        //查上下偏差
-                                        QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
-                                                .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
-                                                .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
-                                        //定义一个flag,超过上下偏差则为false
-                                        Boolean flag = true;
-                                        BigDecimal upValue = planGroupItem.getUpperValue();
-                                        if(upValue != null){
-                                            //大于上偏差
-                                            if(checkResultNum.compareTo(upValue)==1){
-                                                flag = false;
-                                            }
-                                        }
-                                        BigDecimal downValue = planGroupItem.getLowerValue();
-                                        if(downValue!=null){
-                                            //小于下偏差
-                                            if(checkResultNum.compareTo(downValue)==-1){
-                                                flag = false;
-                                            }
-                                        }
-                                        colorValue.setValue(checkResult);
-                                        if(flag){
-                                            colorValue.setColor(0);
-                                        }else {
-                                            colorValue.setColor(1);
-                                        }
-                                        colorValueList.add(colorValue);
-                                    }catch (Exception e) {
-                                        log.info("结果转换异常" + e);
-                                        colorValue.setValue("-");
-                                        colorValue.setColor(0);
-                                        colorValueList.add(colorValue);
-                                    }
-                                }
-
-                            }else {
-                                colorValue.setValue("-");
+                //组合数据
+                QtDayReportFirstDataVO column = new QtDayReportFirstDataVO();
+                //具体data
+                column.setId(taskEntry.getKey());
+                column.setMaterialId(task.getMaterialId());
+                column.setMaterialName(task.getMaterialName());
+                column.setFinishedTime(task.getFinishedTime());
+                column.setResult(task.getResult());
+                column.setCopy(copyEntry.getKey());
+                column.setNote(task.getNote());
+                column.setClassOrder(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
+                column.setProductLine(task.getProductLineName());
+                //动态data
+                List<FurtherValueObjVO> moduleData = Lists.newArrayList();
+                //找到动态表头
+                for(BaseReportHeaderVO headModule:module){
+                    List<ColorValueVO> colorValueList = Lists.newArrayList();
+                    for(String headValue:headModule.getValue()){
+                        //表头检验项code
+                        String headItemCode = itemList.stream().filter(v -> v.getName().equals(headValue)).findFirst().get().getCode();
+                        //查到全量数据中所有的检验项id
+                        List<Integer> itemIds = itemFullList.stream().filter(v -> v.getCode().equals(headItemCode)).map(QtCheckItem::getId).collect(Collectors.toList());
+                        //根据itemId过滤
+                        QtCheckTaskDetail copyTmp = copyDetailTmp.stream().filter(v->itemIds.contains(v.getItemId())).findFirst().get();
+                        QtCheckItem itemTmp = itemFullList.stream().filter(v -> v.getId().equals(copyTmp.getItemId())).findFirst().get();
+                        ColorValueVO colorValue = new ColorValueVO();
+                        //不匹配则为-
+                        if(headItemCode.equals(itemTmp.getCode())){
+                            String checkResult = copyTmp.getCheckResult();
+                            //为空则显示-
+                            if(StrUtil.isBlank(checkResult)){
+                                colorValue.setValue("");
                                 colorValue.setColor(0);
                                 colorValueList.add(colorValue);
+                            }else if(checkResult.equals(QtManagerConstant.QT_TASK_GOOD)){
+                                colorValue.setValue(QtManagerConstant.QT_TASK_GOOD);
+                                colorValue.setColor(0);
+                                colorValueList.add(colorValue);
+                            }else if(checkResult.equals(QtManagerConstant.QT_TASK_BAD)){
+                                colorValue.setValue(QtManagerConstant.QT_TASK_BAD);
+                                colorValue.setColor(1);
+                                colorValueList.add(colorValue);
+                            }else {
+                                try {
+                                    //判断数值
+                                    BigDecimal checkResultNum = new BigDecimal(checkResult);
+                                    //查上下偏差
+                                    QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                                            .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
+                                            .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
+                                    //定义一个flag,超过上下偏差则为false
+                                    Boolean flag = true;
+                                    BigDecimal upValue = planGroupItem.getUpperValue();
+                                    if(upValue != null){
+                                        //大于上偏差
+                                        if(checkResultNum.compareTo(upValue)==1){
+                                            flag = false;
+                                        }
+                                    }
+                                    BigDecimal downValue = planGroupItem.getLowerValue();
+                                    if(downValue!=null){
+                                        //小于下偏差
+                                        if(checkResultNum.compareTo(downValue)==-1){
+                                            flag = false;
+                                        }
+                                    }
+                                    colorValue.setValue(checkResult);
+                                    if(flag){
+                                        colorValue.setColor(0);
+                                    }else {
+                                        colorValue.setColor(1);
+                                    }
+                                    colorValueList.add(colorValue);
+                                }catch (Exception e) {
+                                    log.info("结果转换异常" + e);
+                                    colorValue.setValue("");
+                                    colorValue.setColor(0);
+                                    colorValueList.add(colorValue);
+                                }
                             }
+
+                        }else {
+                            colorValue.setValue("");
+                            colorValue.setColor(0);
+                            colorValueList.add(colorValue);
                         }
-                        FurtherValueObjVO valueObjVO = new FurtherValueObjVO();
-                        valueObjVO.setValue(colorValueList);
-                        moduleData.add(valueObjVO);
+//                        for(QtCheckTaskDetail copyTmp:copyDetailTmp){
+//                        }
                     }
-                    column.setModule(moduleData);
-                    tableData.add(column);
+                    FurtherValueObjVO valueObjVO = new FurtherValueObjVO();
+                    valueObjVO.setValue(colorValueList);
+                    moduleData.add(valueObjVO);
                 }
+                column.setModule(moduleData);
+                tableData.add(column);
             }
         }
         result.setTableData(tableData);

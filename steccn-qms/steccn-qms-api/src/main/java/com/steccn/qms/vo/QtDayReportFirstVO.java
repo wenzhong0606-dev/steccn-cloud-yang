@@ -16,14 +16,9 @@ import java.util.List;
 @Data
 public class QtDayReportFirstVO implements Serializable {
     /**
-     * 表头-静态部分
+     * 表头部分
      */
-    private List<QtSpcHeadTitleVO> common;
-
-    /**
-     * 表头-动态部分
-     */
-    private List<BaseReportHeaderVO> module;
+    private QtDayReportTableHeadersVO headers;
 
     /**
      * 数据部分
