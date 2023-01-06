@@ -213,11 +213,29 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //根据taskId分组
         Map<Long,List<QtCheckTaskDetail>> groupByTaskId = taskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
         for(Map.Entry<Long,List<QtCheckTaskDetail>> taskEntry:groupByTaskId.entrySet()){
+            //获取task
+            QtCheckTaskListVO task = taskList.stream().filter(v -> v.getId().equals(taskEntry.getKey())).findFirst().get();
             List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
             //一个任务下,根据copy分组
             Map<Integer,List<QtCheckTaskDetail>> groupByCopy = detailTmp.stream().collect(Collectors.groupingBy(v -> v.getCopy()));
             for(Map.Entry<Integer,List<QtCheckTaskDetail>> copyEntry:groupByCopy.entrySet()){
-
+                List<QtCheckTaskDetail> copyDetailTmp = copyEntry.getValue();
+                //根据序号排列
+                copyDetailTmp = copyDetailTmp.stream().sorted(Comparator.comparing(QtCheckTaskDetail::getCopy)).collect(Collectors.toList());
+                for(QtCheckTaskDetail copyTmp:copyDetailTmp){
+                    //组合数据
+                    QtDayReportFirstDataVO column = new QtDayReportFirstDataVO();
+                    //具体data
+                    column.setId(taskEntry.getKey());
+                    column.setMaterialId(task.getMaterialId());
+                    column.setMaterialName(task.getMaterialName());
+                    column.setFinishedTime(task.getFinishedTime());
+                    column.setResult(task.getResult());
+                    column.setCopy(copyTmp.getCopy());
+                    column.setNote(task.getNote());
+                    column.setClassOrder(task.getClasses());
+                    column.setProductLine(task.getProductLineName());
+                }
             }
         }
         return result;
