@@ -275,6 +275,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
                         vo.setDataSource(1);
+                        vo.setMaterialId(qtCheckTask.getMaterialId());
+                        vo.setMaterialName(qtCheckTask.getMaterialName());
+                        vo.setNote(qtCheckTask.getNote());
                         flatDefectiveList.add(vo);
                     }
                 }

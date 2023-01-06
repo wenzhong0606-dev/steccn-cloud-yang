@@ -62,4 +62,13 @@ public class QtCheckTaskDetailReportVO implements Serializable {
 
     @ApiModelProperty("班次时间-基于这个时间来做的过滤数据集合")
     private LocalDateTime classTime;
+
+    @ApiModelProperty("物料")
+    private Long materialId;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
+
+    @ApiModelProperty("备注")
+    private String note;
 }
