@@ -100,21 +100,23 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime().format(df) + "~" + v.getDefectEndTime().format(df)));
                 for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
                     //根据物料分组
-                    Map<Long, List<QtCheckTaskDetailReportVO>> materialMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getMaterialId()) ? v.getMaterialId() : -1L));
-                    for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> materialEntry : materialMap.entrySet()) {
+                    Map<Long, List<QtCheckTaskDetailReportVO>> taskMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getTaskId()) ? v.getTaskId() : -1L));
+                    for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> taskEntry : taskMap.entrySet()) {
                         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
                         vo.setDataSource(dataSourceEntry.getKey());
                         vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                         vo.setClassId(classEntry.getKey());
                         vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
                         vo.setDefectTimeStr(defectTimeEntry.getKey());
-
                         String[] split = defectTimeEntry.getKey().split("~");
                         vo.setDefectStartTime(LocalTime.parse(split[0],df));
                         vo.setDefectEndTime(LocalTime.parse(split[1],df));
                         vo.setType(0);
-                        vo.setMaterialId(-1 == materialEntry.getKey() ? null : materialEntry.getKey());
-                        vo.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), "-"));
+                        vo.setTaskId(-1 == taskEntry.getKey() ? null : taskEntry.getKey());
+                        QtCheckTaskDetailReportVO qtCheckTask = taskEntry.getValue().get(0);
+                        vo.setMaterialId(qtCheckTask.getMaterialId());
+                        vo.setNote(qtCheckTask.getNote());
+                        vo.setMaterialName(materialIdNameMap.getOrDefault(vo.getMaterialId(), "-"));
                         vo.setProductLineName(sysOfficeMap.get(dto.getProductLineId()));
                         tableData.add(vo);
                         List<FurtherValueStrVO> module = Lists.newArrayList();
@@ -125,7 +127,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             List<String> value = Lists.newArrayList();
                             for (Integer defectId : categoryDefectEntry.getValue()) {
                                 //获取该缺陷下的所有数据
-                                List<QtCheckTaskDetailReportVO> defectDataList = materialEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
+                                List<QtCheckTaskDetailReportVO> defectDataList = taskEntry.getValue().stream().filter(v -> v.getDefectId().equals(defectId)).collect(Collectors.toList());
                                 int sum = defectDataList.stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
                                 BigDecimalUtil.accumulate(countMap, defectId, BigDecimal.valueOf(sum));
                                 BigDecimalUtil.accumulate(classCountMap, defectId, BigDecimal.valueOf(sum));

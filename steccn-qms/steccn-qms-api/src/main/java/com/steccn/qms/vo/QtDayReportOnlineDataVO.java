@@ -27,6 +27,9 @@ public class QtDayReportOnlineDataVO implements Serializable {
     @ApiModelProperty("数据来源 0人工 1机器采集")
     private String dataSourceStr;
 
+    @ApiModelProperty("任务id")
+    private Long taskId;
+
     @ApiModelProperty("物料id")
     private Long materialId;
 
