@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
@@ -9,6 +10,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
@@ -35,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -64,6 +67,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
     private final QtItemCategoryService qtItemCategoryService;
+    private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -116,6 +120,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
         List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class,taskCondition);
+        //任务idList
         List<Long> taskIdList = Lists.newArrayList();
         if(CollUtil.isEmpty(taskList)){
             log.info("任务为空(质量日报表-首检)");
@@ -139,14 +144,18 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckItem> itemList = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
                 .in(QtCheckItem::getId,itemIdList)
                 .orderByDesc(QtCheckItem::getCreateTime));
-        //相同code只留一个
-        itemList = itemList.stream().collect(Collectors.collectingAndThen(
-                Collectors.toCollection(() -> new TreeSet<>(
-                        Comparator.comparing(QtCheckItem::getCode))), ArrayList::new));
         if(CollUtil.isEmpty(itemList)){
             log.info("点检项为空(质量日报表-首检)");
             return null;
         }
+        //查询
+
+        //存全量item
+        List<QtCheckItem> itemFullList = itemList;
+        //相同code只留一个
+        itemList = itemList.stream().collect(Collectors.collectingAndThen(
+                Collectors.toCollection(() -> new TreeSet<>(
+                        Comparator.comparing(QtCheckItem::getCode))), ArrayList::new));
         List<Integer> categoryIdList = Lists.newArrayList();
         itemList.forEach(tmp -> {
             categoryIdList.add(tmp.getCategoryId());
@@ -235,9 +244,86 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     column.setNote(task.getNote());
                     column.setClassOrder(task.getClasses());
                     column.setProductLine(task.getProductLineName());
+                    //动态data
+                    List<FurtherValueObjVO> moduleData = Lists.newArrayList();
+                    //找到动态表头
+                    for(BaseReportHeaderVO headModule:module){
+                        List<ColorValueVO> colorValueList = Lists.newArrayList();
+                        for(String headValue:headModule.getValue()){
+                            String headItemCode = itemList.stream().filter(v -> v.getName().equals(headValue)).findFirst().get().getCode();
+                            QtCheckItem itemTmp = itemFullList.stream().filter(v -> v.getId().equals(copyTmp.getItemId())).findFirst().get();
+                            ColorValueVO colorValue = new ColorValueVO();
+                            //不匹配则为-
+                            if(headItemCode.equals(itemTmp.getCode())){
+                                String checkResult = copyTmp.getCheckResult();
+                                //为空则显示-
+                                if(StrUtil.isBlank(checkResult)){
+                                    colorValue.setValue("-");
+                                    colorValue.setColor(0);
+                                    colorValueList.add(colorValue);
+                                }else if(checkResult.equals(QtManagerConstant.QT_TASK_GOOD)){
+                                    colorValue.setValue(QtManagerConstant.QT_TASK_GOOD);
+                                    colorValue.setColor(0);
+                                    colorValueList.add(colorValue);
+                                }else if(checkResult.equals(QtManagerConstant.QT_TASK_BAD)){
+                                    colorValue.setValue(QtManagerConstant.QT_TASK_BAD);
+                                    colorValue.setColor(1);
+                                    colorValueList.add(colorValue);
+                                }else {
+                                    try {
+                                        //判断数值
+                                        BigDecimal checkResultNum = new BigDecimal(checkResult);
+                                        //查上下偏差
+                                        QtCheckPlanGroupItem planGroupItem = qtCheckPlanGroupItemService.getOne(new LambdaQueryWrapper<QtCheckPlanGroupItem>()
+                                                .eq(QtCheckPlanGroupItem::getGroupId, copyTmp.getGroupId())
+                                                .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
+                                        //定义一个flag,超过上下偏差则为false
+                                        Boolean flag = true;
+                                        BigDecimal upValue = planGroupItem.getUpperValue();
+                                        if(upValue != null){
+                                            //大于上偏差
+                                            if(checkResultNum.compareTo(upValue)==1){
+                                                flag = false;
+                                            }
+                                        }
+                                        BigDecimal downValue = planGroupItem.getLowerValue();
+                                        if(downValue!=null){
+                                            //小于下偏差
+                                            if(checkResultNum.compareTo(downValue)==-1){
+                                                flag = false;
+                                            }
+                                        }
+                                        colorValue.setValue(checkResult);
+                                        if(flag){
+                                            colorValue.setColor(0);
+                                        }else {
+                                            colorValue.setColor(1);
+                                        }
+                                        colorValueList.add(colorValue);
+                                    }catch (Exception e) {
+                                        log.info("结果转换异常" + e);
+                                        colorValue.setValue("-");
+                                        colorValue.setColor(0);
+                                        colorValueList.add(colorValue);
+                                    }
+                                }
+
+                            }else {
+                                colorValue.setValue("-");
+                                colorValue.setColor(0);
+                                colorValueList.add(colorValue);
+                            }
+                        }
+                        FurtherValueObjVO valueObjVO = new FurtherValueObjVO();
+                        valueObjVO.setValue(colorValueList);
+                        moduleData.add(valueObjVO);
+                    }
+                    column.setModule(moduleData);
+                    tableData.add(column);
                 }
             }
         }
+        result.setTableData(tableData);
         return result;
     }
 }

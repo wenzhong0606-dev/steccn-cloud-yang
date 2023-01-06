@@ -156,6 +156,11 @@ public interface QtManagerConstant {
     String OFFICE_WORKSHOP_TYPE ="8";
     String OFFICE_PRODUCE_LINE_TYPE ="9";
 
+    /**
+     * 良次
+     */
+    String QT_TASK_GOOD ="良";
+    String QT_TASK_BAD ="次";
 
     /**
      * SPC 任务详情的表头
