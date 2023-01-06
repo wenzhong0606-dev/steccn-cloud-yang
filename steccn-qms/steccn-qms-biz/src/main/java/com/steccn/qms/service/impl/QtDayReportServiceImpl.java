@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -340,7 +341,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 column.setResult(task.getResult());
                 column.setCopy(copyEntry.getKey());
                 column.setNote(task.getNote());
-                column.setClassOrder(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
+                column.setClassName(QtManagerConstant.QtClassesEnum.code(task.getClassesId()).getName());
                 column.setProductLine(task.getProductLineName());
                 //动态data
                 List<FurtherValueObjVO> moduleData = Lists.newArrayList();
@@ -353,8 +354,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         //查到全量数据中所有的检验项id
                         List<Integer> itemIds = itemFullList.stream().filter(v -> v.getCode().equals(headItemCode)).map(QtCheckItem::getId).collect(Collectors.toList());
                         //根据itemId过滤
-                        QtCheckTaskDetail copyTmp = copyDetailTmp.stream().filter(v->itemIds.contains(v.getItemId())).findFirst().get();
-                        QtCheckItem itemTmp = itemFullList.stream().filter(v -> v.getId().equals(copyTmp.getItemId())).findFirst().get();
+                        QtCheckTaskDetail copyTmp = copyDetailTmp.stream().filter(v->itemIds.contains(v.getItemId())).findFirst().orElse(null);
+                        QtCheckItem itemTmp = new QtCheckItem();
+                        if(Objects.isNull(copyTmp)){
+                            itemTmp.setCode("-");
+                        }else {
+                            itemTmp = itemFullList.stream().filter(v -> v.getId().equals(copyTmp.getItemId())).findFirst().get();
+                        }
                         ColorValueVO colorValue = new ColorValueVO();
                         //不匹配则为-
                         if(headItemCode.equals(itemTmp.getCode())){
@@ -382,17 +388,20 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                             .eq(QtCheckPlanGroupItem::getCheckItemId, copyTmp.getItemId()), false);
                                     //定义一个flag,超过上下偏差则为false
                                     Boolean flag = true;
+                                    BigDecimal stdValue = planGroupItem.getStandardValue();
                                     BigDecimal upValue = planGroupItem.getUpperValue();
                                     if(upValue != null){
+                                        BigDecimal maxValue = BigDecimalUtil.add(stdValue,upValue);
                                         //大于上偏差
-                                        if(checkResultNum.compareTo(upValue)==1){
+                                        if(checkResultNum.compareTo(maxValue)==1){
                                             flag = false;
                                         }
                                     }
                                     BigDecimal downValue = planGroupItem.getLowerValue();
                                     if(downValue!=null){
+                                        BigDecimal minValue = BigDecimalUtil.subtract(stdValue,downValue);
                                         //小于下偏差
-                                        if(checkResultNum.compareTo(downValue)==-1){
+                                        if(checkResultNum.compareTo(minValue)==-1){
                                             flag = false;
                                         }
                                     }

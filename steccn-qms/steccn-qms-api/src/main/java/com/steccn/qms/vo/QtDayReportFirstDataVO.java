@@ -54,7 +54,7 @@ public class QtDayReportFirstDataVO {
     /**
      * 班次
      */
-    private String classOrder;
+    private String className;
 
     /**
      * 车间
