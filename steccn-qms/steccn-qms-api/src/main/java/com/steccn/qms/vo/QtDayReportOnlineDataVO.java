@@ -23,6 +23,9 @@ public class QtDayReportOnlineDataVO implements Serializable {
     @ApiModelProperty("数据来源")
     private Integer dataSource;
 
+    @ApiModelProperty("数据来源 0人工 1机器采集")
+    private String dataSourceStr;
+
     @ApiModelProperty("物料id")
     private Long materialId;
 
@@ -43,6 +46,9 @@ public class QtDayReportOnlineDataVO implements Serializable {
 
     @ApiModelProperty("缺陷记录时段-结束")
     private LocalDateTime defectEndTime;
+
+    @ApiModelProperty("缺陷记录时段")
+    private String defectTimeStr;
 
     @ApiModelProperty("备注")
     private String note;
