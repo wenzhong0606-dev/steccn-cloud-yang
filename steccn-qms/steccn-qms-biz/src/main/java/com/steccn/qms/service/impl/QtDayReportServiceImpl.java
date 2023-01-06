@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -101,10 +102,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     for (Map.Entry<Long, List<QtCheckTaskDetailReportVO>> materialEntry : materialMap.entrySet()) {
                         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
                         vo.setDataSource(dataSourceEntry.getKey());
-                        vo.setClassId(classEntry.getKey());
-                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(dataSourceEntry.getKey()).getName());
                         vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
+                        vo.setClassId(classEntry.getKey());
+                        vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
                         vo.setDefectTimeStr(defectTimeEntry.getKey());
+
+                        String[] split = defectTimeEntry.getKey().split("~");
+                        vo.setDefectStartTime(LocalTime.parse(split[0],df));
+                        vo.setDefectEndTime(LocalTime.parse(split[1],df));
                         vo.setType(0);
                         vo.setMaterialId(-1 == materialEntry.getKey() ? null : materialEntry.getKey());
                         vo.setMaterialName(materialIdNameMap.getOrDefault(materialEntry.getKey(), "-"));
@@ -129,6 +134,22 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 }
             }
         }
+        //数据需要排序
+        tableData.sort((o1, o2) -> {
+            //先对比班次
+            if (!o1.getClassId().equals(o2.getClassId())) {
+                return o1.getClassId() - o2.getClassId();
+            }
+            //对比数据来源
+            if (!o1.getDataSource().equals(o2.getDataSource())) {
+                return o1.getDataSource() - o2.getDataSource();
+            }
+            //对比缺陷记录时段
+            if (!o1.getDefectStartTime().equals(o2.getDefectStartTime())) {
+                return o1.getDefectStartTime().compareTo(o2.getDefectStartTime());
+            }
+            return 1;
+        });
         resVo.setTableData(tableData);
         QtDayReportTableHeadersVO header = new QtDayReportTableHeadersVO();
         resVo.setHeaders(header);
