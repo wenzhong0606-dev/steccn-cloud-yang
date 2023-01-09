@@ -13,6 +13,7 @@ import com.steccn.authserver.config.FeignConfig;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpMeterRead;
@@ -71,6 +72,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     private EpEnergyTypeService epEnergyTypeService;
     @Autowired
     private EpMeterReadService epMeterReadService;
+    @Autowired
+    private RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -188,7 +191,12 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
         //先lou出仪表台账里面所有仪表id以及远传映射编码
         List<Integer> instrumentIds = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getId).collect(Collectors.toList());
-        List<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toList());
+        Set<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toSet());
+
+        //查询所有远传仪表编码的最近抄表时间
+        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(remoteDataPlatformFeignApi.lastReadTime(distantCodeList)).get();
+
+
         //查询最后抄表时间
         Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
                         .eq(EpMeterRead::getDelFlag, MpConstant.NO)
@@ -220,9 +228,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 if (EpManagerConstant.InstrumentType.REMOTE.getCode()==s.getEntityTable()
                         ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==s.getEntityTable()){
                     List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
-                    if (Objects.nonNull( getLastReadTime(epMeterReads))){
-                        s.setLastReadingTime( getLastReadTime(epMeterReads));
-                    }
+                    s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
                 } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode()==s.getEntityTable()) {
                     List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
                     if (CollUtil.isNotEmpty(partitionChildrenList)){
@@ -241,8 +247,9 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                             List<LocalDateTime> timeList = Lists.newArrayList();
                             instrumentChildIds.forEach(i->{
                                 List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
-                                if (Objects.nonNull(getLastReadTime(epMeterReads))){
-                                    timeList.add(getLastReadTime(epMeterReads));
+                                LocalDateTime lastReadTime = getLastReadTime(s.getDistantMapCode(), lastReadTimeMap);
+                                if (Objects.nonNull(lastReadTime)){
+                                    timeList.add(lastReadTime);
                                 }
                             });
                             //如果查询到的子表最后抄表时间的个数等于绑定仪表的个数设置虚拟仪表的最后抄表时间
@@ -336,27 +343,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             return partitionName;
     }
 
-    private LocalDateTime getLastReadTime( List<EpMeterRead> epMeterReads) {
-            if (CollUtil.isEmpty(epMeterReads)){
-                return null;
-            }else
-                //if (!epMeterReads.stream().filter(m->Objects.isNull(m.getReadTime())).findAny().isPresent()){
-            {
-                epMeterReads= epMeterReads.stream().filter(m->Objects.nonNull(m.getReadTime())).collect(Collectors.toList());
-               if (CollUtil.isNotEmpty(epMeterReads)){
-                   LocalDateTime lastReadTime = LocalDateTime.now();
-                   for (int i = 0; i < epMeterReads.size(); i++) {
-                       lastReadTime =epMeterReads.get(i).getReadTime();
-                       if ((i+1)<epMeterReads.size()){
-                           if (lastReadTime.isBefore(epMeterReads.get(i+1).getReadTime())){
-                               lastReadTime=epMeterReads.get(i+1).getReadTime();
-                           }
-                       }
-                   }
-                   return lastReadTime;
-               }
-            }
-            return null;
+    private LocalDateTime getLastReadTime(String code, Map<String, LocalDateTime> map) {
+       return map.get(code);
     }
 
     @Override

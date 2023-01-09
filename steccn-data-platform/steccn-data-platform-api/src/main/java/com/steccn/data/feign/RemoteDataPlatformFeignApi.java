@@ -11,7 +11,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -38,4 +41,13 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/platform/station/collect")
     @ApiOperation("生产管理-进出站计数归档")
     R<List<DwStationCollectVO>> stationCollect(@RequestBody DwStationCollectDTO dto);
+
+    /**
+     * 最近抄表时间
+     * @param distantCodeSet 远传仪表编码
+     * @return map
+     */
+    @PostMapping("/feign/data/platform/meter/last/read/time")
+    @ApiOperation("能源绩效-最近抄表时间")
+    R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet);
 }
