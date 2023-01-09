@@ -105,4 +105,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return
      */
     Map<Integer, EpPartition> rootMap(List<Integer> energyType);
+
+    /**
+     * 获取仅统计每日能耗（类型II）的节点
+     * 节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
+     * @return set
+     */
+    Set<Long> otherPartition(Set<Long> allPartitionIdSet);
 }

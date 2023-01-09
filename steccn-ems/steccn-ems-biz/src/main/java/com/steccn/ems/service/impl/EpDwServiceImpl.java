@@ -14,10 +14,7 @@ import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
-import com.steccn.ems.service.EpDwService;
-import com.steccn.ems.service.EpEnergyMoneyService;
-import com.steccn.ems.service.EpEnergyPricePlanService;
-import com.steccn.ems.service.EpMeterReadService;
+import com.steccn.ems.service.*;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +45,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpMeterReadService epMeterReadService;
     private final EpEnergyPricePlanService epEnergyPricePlanService;
     private final EpEnergyMoneyService epEnergyMoneyService;
+    private final EpPartitionService epPartitionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -67,6 +65,12 @@ public class EpDwServiceImpl implements EpDwService {
             }
             //获取当前班次日期所有的报工信息
             List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date))).get();
+            //其余的节点
+            Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
+
+            Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
+
+
             //遍历所有的远传仪表
             for (EpDwMeterPartitionDTO meter : meterList) {
                 //根据仪表挂载的节点获取报工记录

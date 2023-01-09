@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -19,6 +20,9 @@ import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +46,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Autowired
     private EpInstrumentAccountService epInstrumentAccountService;
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
 
     /**
      * 默认能源类型
@@ -389,6 +395,19 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         }
         return resMap;
+    }
+
+    @Override
+    public Set<Long> otherPartition(Set<Long> allPartitionIdSet) {
+        Set<Long> resSet = Sets.newHashSet();
+        if (CollUtil.isNotEmpty(allPartitionIdSet)) {
+            //获取所有的节点
+            List<EpPartition> epPartitions = listByIds(allPartitionIdSet);
+            if (CollUtil.isNotEmpty(epPartitions)) {
+                Set<Integer> officeIdSet = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
+            }
+        }
+        return resSet;
     }
 
     @Override

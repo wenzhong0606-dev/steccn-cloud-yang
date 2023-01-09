@@ -58,6 +58,17 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.listByCh(idList));
     }
 
+    /**
+     * 查询工位列表
+     * @param typeList
+     * @return
+     */
+    @ApiOperation("下拉选项")
+    @GetMapping("/shelf/warehouse")
+    R<List<SysOfficeVO>> warehouseAndShelfNew(@RequestBody List<String> typeList){
+        return R.success(sysOfficeService.warehouseAndShelf(typeList));
+    }
+
     @PostMapping("/code")
     @ApiOperation("根据code查询中文")
     R<Map<String, SysOfficeVO>> listByCodeSet(@RequestBody Set<String> codeSet) {
