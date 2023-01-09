@@ -10,6 +10,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -24,8 +25,8 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,6 +51,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtCheckTaskService qtCheckTaskService;
     private final QtDefectiveItemService qtDefectiveItemService;
+    private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
 
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
@@ -70,6 +72,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setProductLineId(productLineId);
         //获取人工采集的缺陷集合
         List<QtCheckTaskDetailReportVO> manDataList = qtDefectiveReportService.defectiveDataFlat(dto);
+        //落板原因
+        resVo.setFallList(fallList(manDataList));
         //获取机器采集的缺陷集合
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> collectDataList = qtDefectiveReportService.defectCollect(dto);
@@ -82,9 +86,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         //做缺陷类别+缺陷分组
         Map<Integer, Set<Integer>> categoryDefectMap = Maps.newHashMap();
-        manDataList.forEach(ele -> {
-            MapUtil.computeSet(categoryDefectMap, ele.getDefectCategory(), ele.getDefectId());
-        });
+        manDataList.forEach(ele -> MapUtil.computeSet(categoryDefectMap, ele.getDefectCategory(), ele.getDefectId()));
         //构建module
         List<BaseReportHeaderVO> resModule = moduleHead(categoryDefectMap);
 
@@ -170,6 +172,53 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
         return resVo;
+    }
+
+    /**
+     * 获取落板原因
+     * @param manDataList 人工检测数据
+     * @return 落板原因集合
+     */
+    private List<QtCheckTaskDestoryOnlineVO> fallList(List<QtCheckTaskDetailReportVO> manDataList) {
+        List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(manDataList)) {
+            //先根据人工数据查询所有的taskId
+            Map<Long, Integer> taskClassMap = Maps.newHashMap();
+            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
+            //查询所有的落板原因
+            List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
+                    .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
+                    .eq(QtCheckTaskDestoryInfo::getDelFlag, MpConstant.NO));
+            if (CollUtil.isNotEmpty(destroyList)) {
+                Map<Long, List<QtCheckTaskDestoryInfo>> collect = destroyList.stream().collect(Collectors.groupingBy(QtCheckTaskDestoryInfo::getTaskId));
+                for (Map.Entry<Long, List<QtCheckTaskDestoryInfo>> entry : collect.entrySet()) {
+                    Optional<QtCheckTaskDestoryInfo> min = entry.getValue().stream().min(Comparator.comparing(QtCheckTaskDestoryInfo::getDestoryStartTime));
+                    for (QtCheckTaskDestoryInfo destroy : entry.getValue()) {
+                        QtCheckTaskDestoryOnlineVO vo = new QtCheckTaskDestoryOnlineVO();
+                        BeanUtils.copyProperties(destroy, vo);
+                        vo.setFirstTime(min.get().getDestoryStartTime());
+                        vo.setClassId(taskClassMap.get(entry.getKey()));
+                        fallList.add(vo);
+                    }
+                }
+                fallList.sort((o1, o2) -> {
+                    //先对比班次
+                    if (!o1.getClassId().equals(o2.getClassId())) {
+                        return o1.getClassId() - o2.getClassId();
+                    }
+                    //对比落板开始时间
+                    if (!o1.getDestoryStartTime().equals(o2.getDestoryStartTime())) {
+                        return o1.getDestoryStartTime().compareTo(o2.getDestoryStartTime());
+                    }
+                    //对比taskId
+                    if (!o1.getTaskId().equals(o2.getTaskId())) {
+                        return o1.getTaskId().compareTo(o2.getTaskId());
+                    }
+                    return 1;
+                });
+            }
+        }
+        return fallList;
     }
 
 

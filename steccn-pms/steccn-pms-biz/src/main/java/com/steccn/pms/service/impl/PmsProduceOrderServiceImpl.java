@@ -349,6 +349,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsWorkOrderBatchVO.setProduceOrderId(pmsProduceOrder.getId());
             pmsWorkOrderBatchVO.setMaterialId(pmsProduceOrder.getMaterialId());
             pmsWorkOrderBatchVO.setProductLineId(pmsProduceOrder.getProductionLineId());
+            pmsWorkOrderBatchVO.setProduceOrderCode(pmsProduceOrder.getCode());
         });
         return page.setRecords(res);
     }
