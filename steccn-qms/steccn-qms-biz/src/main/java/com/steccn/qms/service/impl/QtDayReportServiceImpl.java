@@ -139,10 +139,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
             }
-            QtDayReportOnlineDataVO vo = insertCount(1,categoryDefectMap, classEntry.getKey(), classCountMap);
+            QtDayReportOnlineDataVO vo = insertCount(1,categoryDefectMap, classEntry.getKey(), classCountMap , sysOfficeMap.get(dto.getProductLineId()));
             tableData.add(vo);
         }
-        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap);
+        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap , sysOfficeMap.get(dto.getProductLineId()));
         tableData.add(allVo);
         //数据需要排序
         tableData.sort((o1, o2) -> {
@@ -179,11 +179,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param categoryDefectMap
      * @param classId
      * @param classCountMap
+     * @param s
      * @return
      */
-    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap) {
+    private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName) {
         //插入一条合计
         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
+        vo.setProductLineName(productLineName);
         vo.setType(type);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         vo.setModule(module);
@@ -207,12 +209,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      */
     private List<QtSpcHeadTitleVO> generateCommonHead() {
         List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
-        commonHeadList.add(new QtSpcHeadTitleVO("产线","productLineName"));
-        commonHeadList.add(new QtSpcHeadTitleVO("来源","dataSourceStr"));
-        commonHeadList.add(new QtSpcHeadTitleVO("班次","className"));
-        commonHeadList.add(new QtSpcHeadTitleVO("物料名称","materialName"));
-        commonHeadList.add(new QtSpcHeadTitleVO("缺陷记录时段","defectTimeStr"));
-        commonHeadList.add(new QtSpcHeadTitleVO("备注","note"));
+        commonHeadList.add(new QtSpcHeadTitleVO("productLineName", "产线"));
+        commonHeadList.add(new QtSpcHeadTitleVO("dataSourceStr", "来源"));
+        commonHeadList.add(new QtSpcHeadTitleVO("className", "班次"));
+        commonHeadList.add(new QtSpcHeadTitleVO("materialName", "物料名称"));
+        commonHeadList.add(new QtSpcHeadTitleVO("defectTimeStr", "缺陷记录时段"));
+        commonHeadList.add(new QtSpcHeadTitleVO("note", "备注"));
         return commonHeadList;
     }
 
