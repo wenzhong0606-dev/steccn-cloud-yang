@@ -318,6 +318,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     @Override
     public Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto) {
+        //查询生产订单id
+        PmsProduceOrder pmsProduceOrder = getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
         //1.定义查询条件
         LambdaQueryWrapper<PmsWorkOrderBatch> eq = new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, dto.getProduceOrderId());
         //2.定义分页对象
@@ -343,6 +346,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             pmsWorkOrderBatchVO.setUnitId(pmsNumDto.getUnitId());
             pmsWorkOrderBatchVO.setQuantity(pmsNumDto.getQuantity());
             pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId()));
+            pmsWorkOrderBatchVO.setProduceOrderId(pmsProduceOrder.getId());
+            pmsWorkOrderBatchVO.setMaterialId(pmsProduceOrder.getMaterialId());
+            pmsWorkOrderBatchVO.setProductLineId(pmsProduceOrder.getProductionLineId());
         });
         return page.setRecords(res);
     }

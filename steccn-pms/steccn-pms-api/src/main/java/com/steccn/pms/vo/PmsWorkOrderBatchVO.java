@@ -45,4 +45,16 @@ public class PmsWorkOrderBatchVO {
     @ApiModelProperty("最小包装数量")
     private Integer minPackQuantity;
 
+    @ApiModelProperty("生产订单id")
+    private Long produceOrderId;
+
+    @ApiModelProperty("生产订单code")
+    private String produceOrderCode;
+
+    @ApiModelProperty("产线id")
+    private Integer productLineId;
+
+    @ApiModelProperty("物料id")
+    private Long materialId;
+
 }

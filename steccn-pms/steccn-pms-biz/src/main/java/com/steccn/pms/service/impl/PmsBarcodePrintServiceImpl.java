@@ -110,11 +110,17 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             //处理单位数据
             Set<Long> orderSet = page.getRecords().stream().map(PmsBarcodePrint::getProduceOrderId).collect(Collectors.toSet());
             Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(orderSet);
+            Map<Long, PmsProduceOrder> map = pmsProduceOrderService.orderList(Lists.newArrayList(orderSet));
+
             voList.forEach(barcodePrintRecordVO -> {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
                 if(Objects.nonNull(baseSelectVO)){
                     barcodePrintRecordVO.setUnitId(baseSelectVO.getId());
                     barcodePrintRecordVO.setUnit(baseSelectVO.getName());
+                }
+                PmsProduceOrder pmsProduceOrder = map.get(barcodePrintRecordVO.getProduceOrderId());
+                if(Objects.nonNull(pmsProduceOrder)){
+                    barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
             });
             resPage.setRecords(voList);
