@@ -179,13 +179,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param categoryDefectMap
      * @param classId
      * @param classCountMap
-     * @param s
+     * @param productLineName
      * @return
      */
     private QtDayReportOnlineDataVO insertCount(Integer type, Map<Integer, Set<Integer>> categoryDefectMap, Integer classId, Map<Integer, BigDecimal> classCountMap, String productLineName) {
         //插入一条合计
         QtDayReportOnlineDataVO vo = new QtDayReportOnlineDataVO();
-        vo.setProductLineName(productLineName);
+        if(type == 1){
+            vo.setProductLineName(productLineName);
+        }
         vo.setType(type);
         List<FurtherValueStrVO> module = Lists.newArrayList();
         vo.setModule(module);
