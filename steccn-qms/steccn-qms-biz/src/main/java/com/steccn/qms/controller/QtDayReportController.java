@@ -45,7 +45,8 @@ public class QtDayReportController {
     @GetMapping("/first")
     @ApiOperation("质量日报表-首检")
     public R<QtDayReportFirstVO> first(@RequestParam("date") LocalDate date,
-                                       @RequestParam("productLineId") Integer productLineId) {
-        return R.success(qtDayReportService.first(date,productLineId));
+                                       @RequestParam("productLineId") Integer productLineId,
+                                       @RequestParam("checkTaskType") Integer checkTaskType) {
+        return R.success(qtDayReportService.first(date,productLineId,checkTaskType));
     }
 }

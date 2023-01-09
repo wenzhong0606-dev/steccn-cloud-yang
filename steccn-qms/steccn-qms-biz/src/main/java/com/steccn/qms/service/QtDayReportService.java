@@ -31,7 +31,8 @@ public interface QtDayReportService {
      * 质量日报表-首检
      * @param date 指定日期
      * @param productLineId 产线id
+     * @param checkTaskType 检验类型
      * @return
      */
-    QtDayReportFirstVO first(LocalDate date,Integer productLineId);
+    QtDayReportFirstVO first(LocalDate date,Integer productLineId,Integer checkTaskType);
 }

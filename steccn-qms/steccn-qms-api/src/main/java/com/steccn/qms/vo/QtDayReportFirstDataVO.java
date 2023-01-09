@@ -37,6 +37,16 @@ public class QtDayReportFirstDataVO {
     private LocalDateTime finishedTime;
 
     /**
+     * 抽检时间
+     */
+    private LocalDateTime spotTime;
+
+    /**
+     * 工位
+     */
+    private String station;
+
+    /**
      * 检验结果
      */
     private String result;
