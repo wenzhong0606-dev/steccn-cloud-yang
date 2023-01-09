@@ -287,6 +287,33 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
+    public Map<String, SysOfficeVO> listByName(Set<String> names) {
+        Map<String, SysOfficeVO> resMap = Maps.newHashMap();
+        List<SysOffice> sysOfficeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeName, names));
+        if (CollUtil.isNotEmpty(sysOfficeList)) {
+            //对此接口进行功能增强,可以获取父节点的名称，id，名字
+            Set<String> parentCodeSet = sysOfficeList.stream().map(SysOffice::getParentCode).collect(Collectors.toSet());
+            Map<String, SysOffice> parentMap = Maps.newHashMap();
+            SysOffice defaultSysOffice = new SysOffice();
+            if (CollUtil.isNotEmpty(parentCodeSet)) {
+                List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeCode, parentCodeSet));
+                if (CollUtil.isNotEmpty(parentList)) {
+                    parentList.forEach(v -> parentMap.put(v.getOfficeCode(), v));
+                }
+            }
+            for (SysOffice sysOffice : sysOfficeList) {
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(sysOffice, sysOfficeVO);
+                SysOffice orDefault = parentMap.getOrDefault(sysOffice.getParentCode(), defaultSysOffice);
+                sysOfficeVO.setParentId(orDefault.getId());
+                sysOfficeVO.setParentName(orDefault.getOfficeName());
+                resMap.put(sysOfficeVO.getOfficeName(), sysOfficeVO);
+            }
+        }
+        return resMap;
+    }
+
+    @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {

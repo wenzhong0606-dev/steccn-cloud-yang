@@ -42,6 +42,16 @@ public interface RemoteDictFeignApi {
     R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> idList);
 
     /**
+     * 根据name查询数据字典的id
+     *
+     * @param nameList 数据字典name集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/dict/names")
+    @ApiOperation("根据name查询数据字典的id")
+    R<Map<String, Long>> listByNameCh(@RequestBody Set<String> nameList);
+
+    /**
      * 根据编码类型查询数据字典的值
      *
      * @param code

@@ -36,6 +36,15 @@ public class SysDictFeignController {
         return R.success(sysDictService.listByIdList(idList));
     }
 
+    @PostMapping("/names")
+    @ApiOperation("根据名称查询字典的值")
+    public R<Map<String, Long>> listByNameCh(@RequestBody Set<String> nameList) {
+        if (CollUtil.isEmpty(nameList)) {
+            return R.success(Maps.newHashMap());
+        }
+        return R.success(sysDictService.listByNameCh(nameList));
+    }
+
     @PostMapping("/ch")
     @ApiOperation("根据主键id查询数据字典的中文")
     public R<Map<Long, String>> listByIdCh(@RequestBody Set<Long> idList) {

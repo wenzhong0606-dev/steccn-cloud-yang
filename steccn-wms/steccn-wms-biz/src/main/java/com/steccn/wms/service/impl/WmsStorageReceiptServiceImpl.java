@@ -3,6 +3,10 @@ package com.steccn.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.IdUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.read.listener.PageReadListener;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,8 +17,14 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.domain.PmProcess;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteCompleteStorageFeignApi;
+import com.steccn.pms.listener.ExcelListener;
+import com.steccn.pms.vo.ProducePlanMsgVO;
 import com.steccn.wms.constant.WmsManagerConstant;
 import com.steccn.wms.domain.*;
 import com.steccn.wms.dto.WmsInventoryDTO;
@@ -31,13 +41,17 @@ import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsStorageReceiptInfoVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import nonapi.io.github.classgraph.json.Id;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -55,6 +70,7 @@ import java.util.Set;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptMapper, WmsStorageReceipt>
         implements WmsStorageReceiptService {
 
@@ -69,6 +85,8 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     private final WmsStorageReceiptInfoService wmsStorageReceiptInfoService;
 
     private final RemoteCompleteStorageFeignApi remoteCompleteStorageFeignApi;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
@@ -133,7 +151,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 for (WmsStorageReceiptInfoDTO info : list) {
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
-                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }
                     WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
@@ -187,7 +205,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 for (WmsStorageReceiptInfoDTO info : infoList) {
                     if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                         //生成箱号
-                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                        info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                         caseNo++;
                     }
                     WmsStorageReceiptInfo wmsStorageReceiptInfo = new WmsStorageReceiptInfo();
@@ -382,7 +400,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             for (WmsStorageReceiptInfoDTO info : list) {
                 if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
                     //生成箱号
-                    info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO,WmsCodeUtil.NUM_BIT_4,caseNo));
+                    info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
                     caseNo++;
                 }
                 WmsInventoryDTO wmsInventoryDTO = new WmsInventoryDTO();
@@ -406,6 +424,124 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         affirm(model.getId());
         //确认
         return model.getCode();
+    }
+
+    @Override
+    public Boolean excelImportData(PmExcelDTO dto) throws IOException {
+        //定义读取excel数据的集合
+        List<WmsStorageReceiptExcelDTO> excelList = Lists.newArrayList();
+        EasyExcel.read(dto.getFile().getInputStream(), WmsStorageReceiptExcelDTO.class, new PageReadListener<WmsStorageReceiptExcelDTO>(
+                dataList -> {
+                    dataList.forEach(data -> {
+                        excelList.add(data);
+                    });
+                }
+        )).sheet().doRead();
+        //处理数据
+        Set<String> officeNames = Sets.newHashSet();
+        Set<String> dictName = Sets.newHashSet();
+        List<String> materialCodes = Lists.newArrayList();
+        excelList.forEach(excelDTO -> {
+            officeNames.add(excelDTO.getWarehouseName());
+            officeNames.add(excelDTO.getShelfName());
+            dictName.add(excelDTO.getUnitName());
+            dictName.add(excelDTO.getType());
+            materialCodes.add(excelDTO.getMaterialCode());
+        });
+        System.out.println("单位："+dictName.size());
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listByName(officeNames)).get();
+        Map<String, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listByCode(materialCodes)).get();
+        Map<String, Long> dictIdMap = FeignOptional.of(remoteDictFeignApi.listByNameCh(dictName)).get();
+        if (CollUtil.isNotEmpty(excelList)) {
+            Map<String, List<WmsStorageReceiptExcelDTO>> map = excelList.stream().collect(Collectors.groupingBy(WmsStorageReceiptExcelDTO::getWarehouseName));
+            List<WmsStorageReceiptDTO> wmsStorageReceiptList = Lists.newArrayList();
+            for (Map.Entry<String, List<WmsStorageReceiptExcelDTO>> list : map.entrySet()) {
+                WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+                receiptDTO.setWarehouseName(list.getKey());
+                List<WmsStorageReceiptInfoDTO> infoDTOList = Lists.newArrayList();
+                if (Objects.nonNull(officeMap.get(list.getKey()))) {
+                    receiptDTO.setWarehouseId(officeMap.get(list.getKey()).getId());
+                }
+                receiptDTO.setStatus(WmsManagerConstant.OrderStateEnum.THREE.getCode());
+                for (WmsStorageReceiptExcelDTO wmsStorageReceiptExcelDTO : list.getValue()) {
+                    WmsStorageReceiptInfoDTO wmsStorageReceiptInfo = new WmsStorageReceiptInfoDTO();
+                    EqpSpareVO eqpSpareVO = spareMap.get(wmsStorageReceiptExcelDTO.getMaterialCode());
+                    SysOfficeVO sysOfficeVO = officeMap.get(wmsStorageReceiptExcelDTO.getShelfName());
+                    wmsStorageReceiptInfo.setMaterialCode(eqpSpareVO.getCode());
+                    wmsStorageReceiptInfo.setMaterialId(eqpSpareVO.getId());
+                    wmsStorageReceiptInfo.setMaterialName(eqpSpareVO.getName());
+                    wmsStorageReceiptInfo.setShelfId(sysOfficeVO.getId());
+                    wmsStorageReceiptInfo.setShelfCode(sysOfficeVO.getOfficeCode());
+                    wmsStorageReceiptInfo.setShelfName(sysOfficeVO.getOfficeName());
+                    wmsStorageReceiptInfo.setQuantity(wmsStorageReceiptExcelDTO.getQuantity());
+                    wmsStorageReceiptInfo.setUnit(dictIdMap.get(wmsStorageReceiptExcelDTO.getUnitName()));
+                    wmsStorageReceiptInfo.setBatch(wmsStorageReceiptExcelDTO.getBatchNo());
+                    if (Objects.isNull(wmsStorageReceiptInfo.getCaseNo())){
+                        wmsStorageReceiptInfo.setBatch("0");
+                    }
+                    wmsStorageReceiptInfo.setCaseNo(wmsStorageReceiptExcelDTO.getCaseNo());
+                    infoDTOList.add(wmsStorageReceiptInfo);
+                }
+                receiptDTO.setType(dictIdMap.get(list.getValue().get(0).getType()));
+                receiptDTO.setList(infoDTOList);
+                wmsStorageReceiptList.add(receiptDTO);
+            }
+            if (CollUtil.isNotEmpty(wmsStorageReceiptList)) {
+                //获取当前最大的code
+                Long aLong = currentMaxCode();
+                Long caseNo = getCaseNo();
+                //获取入库单编码
+                //处理数据生成入库单信息
+                List<WmsInventory> wmsInventoryList = Lists.newArrayList();
+                for (WmsStorageReceiptDTO receiptDTO : wmsStorageReceiptList) {
+                    WmsStorageReceipt receipt = new WmsStorageReceipt();
+                    BeanUtil.copyProperties(receiptDTO, receipt);
+                    receipt.setAffirmName(SecurityUtils.getUser().getName());
+                    receipt.setAffirmTime(LocalDateTime.now());
+                    //生成入库单号
+                    //3.给当前入库单生成编码
+                    receipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_STORAGE_RECEIPT, WmsCodeUtil.NUM_BIT_4, aLong));
+                    aLong++;
+                    save(receipt);
+                    //保存明细信息并生成库存信息
+                    if (CollUtil.isNotEmpty(receiptDTO.getList())) {
+                        List<WmsStorageReceiptInfo> receiptInfoList = BeanUtil.copyToList(receiptDTO.getList(), WmsStorageReceiptInfo.class);
+
+                        for (WmsStorageReceiptInfo info : receiptInfoList) {
+                            info.setStorageReceiptId(receipt.getId());
+                            if (Objects.isNull(info.getCaseNo()) || "".equals(info.getCaseNo())) {
+                                //生成箱号
+                                info.setCaseNo(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
+                                System.out.println("caseNo:"+WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_CASE_NO, WmsCodeUtil.NUM_BIT_4, caseNo));
+                                caseNo++;
+                                System.out.println(caseNo);
+                            }
+                            //生成库存信息
+                            WmsInventory wmsInventory = new WmsInventory();
+                            BeanUtil.copyProperties(info, wmsInventory);
+                            wmsInventory.setUnit(info.getUnit());
+                            wmsInventory.setWarehouseId(Math.toIntExact(receipt.getWarehouseId()));
+                            wmsInventory.setWarehouseName(receiptDTO.getWarehouseName());
+                            wmsInventory.setFreezeQuantity(BigDecimal.ZERO);
+                            wmsInventory.setLockQuantity(BigDecimal.ZERO);
+                            wmsInventory.setStockQuantity(BigDecimal.ZERO);
+                            wmsInventory.setAvailableQuantity(info.getQuantity());
+                            wmsInventory.setTotalQuantity(info.getQuantity());
+                            wmsInventory.setBatch("0");
+                            wmsInventoryList.add(wmsInventory);
+                        }
+                        wmsStorageReceiptInfoService.saveBatch(receiptInfoList);
+
+                    }
+
+                }
+                System.out.println("库存:"+wmsInventoryList.size());
+//                保存库存信息
+                        wmsInventoryService.saveBatch(wmsInventoryList);
+            }
+            log.info(String.valueOf(wmsStorageReceiptList.size()));
+        }
+        return true;
     }
 
 

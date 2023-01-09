@@ -157,14 +157,29 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     public List<SysDictVO> getByNameAndType(String name, String type) {
         List<SysDict> sysDicts = list(new LambdaQueryWrapper<SysDict>()
-                .eq(Objects.nonNull(type),SysDict::getType, type)
-                .like(Objects.nonNull(name),SysDict::getName, name));
-        List<SysDictVO> sysDictVOList =Lists.newArrayList();
-        if (CollUtil.isNotEmpty(sysDicts)){
-             sysDictVOList = BeanUtil.copyToList(sysDicts, SysDictVO.class);
+                .eq(Objects.nonNull(type), SysDict::getType, type)
+                .like(Objects.nonNull(name), SysDict::getName, name));
+        List<SysDictVO> sysDictVOList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(sysDicts)) {
+            sysDictVOList = BeanUtil.copyToList(sysDicts, SysDictVO.class);
 
         }
         return sysDictVOList;
+    }
+
+    @Override
+    public Map<String, Long> listByNameCh(Set<String> nameList) {
+        Map<String, Long> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(nameList)) {
+            List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getName, nameList).select(SysDict::getId, SysDict::getName));
+            if (CollUtil.isNotEmpty(sysDictList)) {
+                List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+                for (SysDictVO sysDictVO : sysDictVOList) {
+                    resMap.put(sysDictVO.getName(), sysDictVO.getId());
+                }
+            }
+        }
+        return resMap;
     }
 
 

@@ -171,4 +171,12 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return list
      */
     List<SysOfficeVO> listMultiFilter(SysOfficeTypeKeyDTO dto);
+
+
+    /**
+     * 根据名称获取机构信息
+     * @param names
+     * @return
+     */
+    Map<String, SysOfficeVO> listByName(Set<String> names);
 }
