@@ -21,6 +21,9 @@ public class QtCheckTaskDestoryOnlineVO implements Serializable {
     @ApiModelProperty("班次id")
     private Integer classId;
 
+    @ApiModelProperty("班次名称")
+    private String className;
+
     @ApiModelProperty("落板原因")
     private String destoryReason;
 
@@ -35,6 +38,9 @@ public class QtCheckTaskDestoryOnlineVO implements Serializable {
 
     @ApiModelProperty("第一个落板开始时间")
     private LocalDateTime firstTime;
+
+    @ApiModelProperty("产线名称")
+    private String productLineName;
 
     private static final long serialVersionUID = 1L;
 }

@@ -71,9 +71,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setDateEnd(date);
         dto.setProductLineId(productLineId);
         //获取人工采集的缺陷集合
-        List<QtCheckTaskDetailReportVO> manDataList = qtDefectiveReportService.defectiveDataFlat(dto);
-        //落板原因
-        resVo.setFallList(fallList(manDataList));
+        List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
+        List<QtCheckTaskDetailReportVO> manDataList = manData;
         //获取机器采集的缺陷集合
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> collectDataList = qtDefectiveReportService.defectCollect(dto);
@@ -93,6 +92,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //根据来源分组
         Map<Integer,BigDecimal> countMap = Maps.newHashMap();
         Map<Integer, List<QtCheckTaskDetailReportVO>> classMap = manDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+
+        String productLineName = sysOfficeMap.get(dto.getProductLineId());
+
         for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> classEntry : classMap.entrySet()) {
             //根据班次分组
             Map<Integer,BigDecimal> classCountMap = Maps.newHashMap();
@@ -119,7 +121,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setMaterialId(qtCheckTask.getMaterialId());
                         vo.setNote(qtCheckTask.getNote());
                         vo.setMaterialName(materialIdNameMap.getOrDefault(vo.getMaterialId(), "-"));
-                        vo.setProductLineName(sysOfficeMap.get(dto.getProductLineId()));
+                        vo.setProductLineName(productLineName);
                         tableData.add(vo);
                         List<FurtherValueStrVO> module = Lists.newArrayList();
                         vo.setModule(module);
@@ -141,10 +143,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
             }
-            QtDayReportOnlineDataVO vo = insertCount(1,categoryDefectMap, classEntry.getKey(), classCountMap , sysOfficeMap.get(dto.getProductLineId()));
+            QtDayReportOnlineDataVO vo = insertCount(1,categoryDefectMap, classEntry.getKey(), classCountMap , productLineName);
             tableData.add(vo);
         }
-        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap , sysOfficeMap.get(dto.getProductLineId()));
+        QtDayReportOnlineDataVO allVo = insertCount(2, categoryDefectMap, 2, countMap , productLineName);
         tableData.add(allVo);
         //数据需要排序
         tableData.sort((o1, o2) -> {
@@ -171,6 +173,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         resVo.setHeaders(header);
         header.setModule(resModule);
         header.setCommon(generateCommonHead());
+        //落板原因
+        resVo.setFallList(fallList(manData, productLineName));
         return resVo;
     }
 
@@ -179,7 +183,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
      * @param manDataList 人工检测数据
      * @return 落板原因集合
      */
-    private List<QtCheckTaskDestoryOnlineVO> fallList(List<QtCheckTaskDetailReportVO> manDataList) {
+    private List<QtCheckTaskDestoryOnlineVO> fallList(List<QtCheckTaskDetailReportVO> manDataList,String productLineName) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
             //先根据人工数据查询所有的taskId
@@ -198,6 +202,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         BeanUtils.copyProperties(destroy, vo);
                         vo.setFirstTime(min.get().getDestoryStartTime());
                         vo.setClassId(taskClassMap.get(entry.getKey()));
+                        QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
+                        if(Objects.nonNull(classEnum)){
+                            vo.setClassName(classEnum.getName());
+                        }
+                        vo.setProductLineName(productLineName);
                         fallList.add(vo);
                     }
                 }
