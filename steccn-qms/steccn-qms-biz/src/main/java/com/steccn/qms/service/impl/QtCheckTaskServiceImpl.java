@@ -1462,6 +1462,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     detail.setCode(ele.getCode());
                                     detail.setDetailAcceptability(BigDecimalUtil.divide(BigDecimal.valueOf(ele.getGoodNum()).multiply(BigDecimalUtil.HUNDRED), BigDecimal.valueOf(ele.getCheckNum())));
                                     detail.setFinishedTime(ele.getFinishedTime());
+                                    detail.setSpotTime(ele.getSpotTime());
                                     detail.setCode(ele.getCode());
                                     detail.setResult(ele.getResult());
                                     detail.setTaskId(ele.getTaskId());

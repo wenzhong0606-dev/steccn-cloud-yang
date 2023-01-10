@@ -95,6 +95,11 @@ public class QtDeepOrSubAcceptabilityDetailVO implements Serializable {
     private String customerName;
 
     /**
+     * 抽检时间
+     */
+    private String spotTime;
+
+    /**
      * 检验任务详情
      */
     private List<QtSubOrDeepFPYTaskDetailsVO> taskDetails;

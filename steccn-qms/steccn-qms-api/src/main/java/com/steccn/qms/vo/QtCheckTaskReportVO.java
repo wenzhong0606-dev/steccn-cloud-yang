@@ -133,6 +133,8 @@ public class QtCheckTaskReportVO implements Serializable {
     @ApiModelProperty("合格率")
     private String passRate;
 
+    @ApiModelProperty("抽检时间")
+    private LocalDateTime spotTime;
     /**
      * 动态子表格内容
      */

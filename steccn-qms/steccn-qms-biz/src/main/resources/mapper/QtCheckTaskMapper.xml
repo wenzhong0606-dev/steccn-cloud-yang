@@ -30,6 +30,7 @@
         <result property="result" column="result" jdbcType="VARCHAR"/>
         <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
         <result property="classTime" column="class_time" jdbcType="TIMESTAMP"/>
+        <result property="spotTime" column="spot_time" jdbcType="TIMESTAMP"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
         <result property="createBy" column="create_by" jdbcType="BIGINT"/>
         <result property="createName" column="create_name" jdbcType="VARCHAR"/>
@@ -89,7 +90,8 @@
             classes_id classes_id,
             class_time,
             CODE CODE,
-            finished_time
+            finished_time,
+            spot_time
         FROM
         qt_check_task
         WHERE
@@ -122,8 +124,16 @@
             </foreach>
         </if>
         AND task_type = #{dto.taskType}
-        AND finished_time &gt;= #{dto.dateTimeStart}
-        AND finished_time &lt;= #{dto.dateTimeEnd}
+        <choose>
+          <when test="dto.taskType == 4">
+              AND spot_time &gt;= #{dto.dateTimeStart}
+              AND spot_time &lt;= #{dto.dateTimeEnd}
+          </when>
+          <otherwise>
+              AND finished_time &gt;= #{dto.dateTimeStart}
+              AND finished_time &lt;= #{dto.dateTimeEnd}
+          </otherwise>
+        </choose>
         AND status = 2
         ORDER BY CODE ASC
     </select>
