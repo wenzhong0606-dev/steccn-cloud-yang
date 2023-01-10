@@ -93,7 +93,6 @@ public class EpDwServiceImpl implements EpDwService {
                     dwConditionDTO(dwList, meter, workshopList);
                     dwConditionDTO(dwList, meter, departmentList);
                 }
-
             }
             if (CollUtil.isNotEmpty(dwList)) {
                 List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();
