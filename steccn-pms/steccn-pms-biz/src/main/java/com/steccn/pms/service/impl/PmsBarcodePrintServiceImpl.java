@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -38,10 +39,13 @@ import com.steccn.pms.vo.BarcodePrintRecordVO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -68,31 +72,44 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private PmsProduceOrderService pmsProduceOrderService;
     @Autowired
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+    @Autowired
+    private RedissonClient redissonClient;
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean print(BarcodePrintDTO dto) {
         Integer printStrip = dto.getPrintStrip();
         List<PmsBarcodePrint> modelList = new ArrayList<>(printStrip);
 
         //生产订单
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(dto.getProduceOrderId());
-        Assert.notNull(pmsProduceOrder,"生产订单不能为空");
+        Assert.notNull(pmsProduceOrder, "生产订单不能为空");
 
-        //获取当前订单最大的
-        long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
-        //遍历打印条数
-        for (int count = 0; count < printStrip; count++) {
-            PmsBarcodePrint printModel = new PmsBarcodePrint();
-            BeanUtils.copyProperties(dto, printModel);
-            printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
-            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
-            printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
-            printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
-            modelList.add(printModel);
+        //加锁
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
+        lock.lock();
+        try {
+            //获取当前订单最大的
+            long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
+            //遍历打印条数
+            for (int count = 0; count < printStrip; count++) {
+                PmsBarcodePrint printModel = new PmsBarcodePrint();
+                BeanUtils.copyProperties(dto, printModel);
+                printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
+                printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+                printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
+                printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
+                modelList.add(printModel);
+            }
+            transactionTemplate.execute(status -> {
+                saveBatch(modelList);
+                return Boolean.TRUE;
+            });
+        } finally {
+            lock.unlock();
         }
-        saveBatch(modelList);
         return Boolean.TRUE;
     }
 

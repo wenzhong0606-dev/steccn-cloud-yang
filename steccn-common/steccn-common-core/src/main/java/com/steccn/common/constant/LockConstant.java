@@ -59,4 +59,9 @@ public interface LockConstant {
      * 仓储物流单
      */
     String TABLE_WMS_LOGISTICS_ORDER = "TABLE_WMS_LOGISTICS_ORDER";
+
+    /**
+     * 生成箱号
+     */
+    String TABLE_PMS_BARCODE_PRINT = "TABLE_PMS_BARCODE_PRINT";
 }

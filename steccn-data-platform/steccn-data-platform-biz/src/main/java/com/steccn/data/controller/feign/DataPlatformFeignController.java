@@ -19,9 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Set;
 
 /**
@@ -42,6 +46,12 @@ public class DataPlatformFeignController {
     @ApiOperation(value = "数仓条件列表")
     public R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList) {
         return R.success(epMeterCollectService.meterRead(dwList));
+    }
+
+    @PostMapping("/meter/last/read/time")
+    @ApiOperation(value = "最近抄表时间")
+    R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet){
+        return R.success(epMeterCollectService.lastReadTime(distantCodeSet));
     }
 
     @PostMapping("/station/collect")

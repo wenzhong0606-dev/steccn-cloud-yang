@@ -36,8 +36,11 @@ public class DwSyncTask {
     private final RedissonClient redissonClient;
     private final EpDwService epDwService;
 
+    /**
+     * 每天8点05分执行
+     */
     @Async
-    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(cron = "0 5 8 * * ?")
     public void meterRead() {
         RLock lock = redissonClient.getLock(LockConstant.DW_METER_READ_SCHEDULED_TASK);
         boolean b = lock.tryLock();
@@ -56,9 +59,11 @@ public class DwSyncTask {
         }
     }
 
-
+    /**
+     * 每天8点20分执行
+     */
     @Async
-    @Scheduled(cron = "0 5 1 * * ?")
+    @Scheduled(cron = "0 20 8 * * ?")
     public void electricMoney() {
         RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
         boolean b = lock.tryLock();

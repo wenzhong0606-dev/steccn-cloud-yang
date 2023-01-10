@@ -107,11 +107,12 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Set<Long> dictIdSet = Sets.newHashSet();
         List<Long> orderIds = Lists.newArrayList();
         Set<Long> logisticsIds = Sets.newHashSet();
+        Set<Integer> officeIdSet = Sets.newHashSet();
         list.forEach(order -> {
             orderIds.add(order.getId());
             logisticsIds.add(order.getId());
             dictIdSet.add(order.getType());
-            dictIdSet.add(order.getLogisticsCompany());
+            officeIdSet.add(order.getLogisticsCompany());
         });
         // 获取物流收发货机构
         Map<Long, List<WmsLogisticsInfoVO>> map = wmsLogisticsInfoService.mapByLogisticsId(orderIds);
@@ -119,8 +120,11 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         //获取运输方式
 
         Map<Long, List<WmsLogisticsTransportationVO>> wayMap = wmsLogisticsTransportationService.mapBySetIds(logisticsIds);
+
         //获取物流类型
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+        Map<Integer, String> officeIdMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+
         list.forEach(order -> {
             List<WmsLogisticsInfoVO> orDefault = map.getOrDefault(order.getId(), infoList);
             for (WmsLogisticsInfoVO wmsLogisticsInfoVO : orDefault) {
@@ -131,7 +135,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 }
             }
             order.setTypeName(dictMap.get(order.getType()));
-            order.setLogisticsCompanyName(dictMap.get(order.getLogisticsCompany()));
+            order.setLogisticsCompanyName(officeIdMap.get(order.getLogisticsCompany()));
             order.setWayList(wayMap.get(order.getId()));
         });
 
@@ -219,8 +223,10 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Long> dictIds = Sets.newHashSet();
         dictIds.add(wmsLogisticsOrderVO.getType());
-        dictIds.add(wmsLogisticsOrderVO.getLogisticsCompany());
-        list.forEach(wmsLogisticsInfo -> officeIds.add(wmsLogisticsInfo.getOfficeId()));
+        officeIds.add(wmsLogisticsOrderVO.getLogisticsCompany());
+        list.forEach(wmsLogisticsInfo -> {
+            officeIds.add(wmsLogisticsInfo.getOfficeId());
+        });
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
         list.forEach(wmsLogisticsInfo -> {
@@ -235,7 +241,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         });
         //获取运输方式数据
         wmsLogisticsOrderVO.setWayList(wmsLogisticsTransportationService.listByLogisticsId(id));
-        wmsLogisticsOrderVO.setLogisticsCompanyName(dictMap.get(wmsLogisticsOrderVO.getLogisticsCompany()));
+        wmsLogisticsOrderVO.setLogisticsCompanyName(officeMap.get(wmsLogisticsOrderVO.getLogisticsCompany()));
         wmsLogisticsOrderVO.setTypeName(dictMap.get(wmsLogisticsOrderVO.getType()));
         return wmsLogisticsOrderVO;
     }
