@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
@@ -26,6 +27,7 @@ import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -200,11 +202,14 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public List<QtCheckTaskDetailReportVO> defectiveDataFlat(QtChartParamDTO dto) {
+        LocalDateTime start =  LocalDateUtil.getMorning(dto.getDateStart());
+        LocalDateTime end =  LocalDateUtil.getNight(dto.getDateEnd().plusDays(1));
+        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         //查询符合条件的检验任务
         QtCheckTaskConditionDTO condition = QtCheckTaskConditionDTO.builder()
-                .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
-                .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)))
-                .endTime(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)))
+                .taskType(dto.getCheckType())
+                .startTime(start)
+                .endTime(end)
                 .productWorkShopId(dto.getProductWorkShopId())
                 .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
@@ -291,6 +296,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 }
             }
         }
+
+        //存放检验设备的数据
+        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
+        flatDefectiveList.addAll(collectList);
+
         //过滤班次信息
         if(Objects.nonNull(dto.getWorkingOrder())){
             flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
@@ -734,17 +744,26 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public List<QtCheckTaskDetailReportVO> defectCollect(QtChartParamDTO dto) {
-        Integer productLineId = dto.getProductLineId();
         LocalDate dateStart = dto.getDateStart();
         LocalDate dateEnd = dto.getDateEnd();
-        Assert.notNull(productLineId,"产线不能为空");
         Assert.notNull(dateStart,"开始日期不能为空");
         Assert.notNull(dateEnd,"结束日期不能为空");
         Assert.notNull(dto.getCheckType(), "检验类型不能为空");
-        //todo 后面需要考虑只传车间 ，不传入产线
+        Set<Integer> productLineSet = Sets.newHashSet();
+        if(Objects.isNull(dto.getProductLineId()) && Objects.nonNull(dto.getProductWorkShopId())){
+            SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
+            sysOfficeParentDTO.setId(dto.getProductWorkShopId());
+            List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(sysOfficeVOList)){
+                sysOfficeVOList.forEach(ele -> productLineSet.add(ele.getId()));
+            }
+        }else if(Objects.nonNull(dto.getProductLineId())){
+            productLineSet.add(dto.getProductLineId());
+        }
         List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
         //查询检验设备数据
-        Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, Sets.newHashSet(productLineId))), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, productLineSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(refMap)) {
             //获取到所有的映射产线
             Set<String> lineSet = refMap.keySet();

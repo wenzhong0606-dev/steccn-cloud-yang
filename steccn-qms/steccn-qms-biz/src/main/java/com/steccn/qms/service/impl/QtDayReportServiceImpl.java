@@ -75,13 +75,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         dto.setDateStart(date);
         dto.setDateEnd(date);
         dto.setProductLineId(productLineId);
-        //获取人工采集的缺陷集合
+        //获取人工采集的缺陷集合+获取机器采集的缺陷集合
+        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         List<QtCheckTaskDetailReportVO> manData = qtDefectiveReportService.defectiveDataFlat(dto);
         List<QtCheckTaskDetailReportVO> manDataList = manData;
-        //获取机器采集的缺陷集合
-        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
-        List<QtCheckTaskDetailReportVO> collectDataList = qtDefectiveReportService.defectCollect(dto);
-        manDataList.addAll(collectDataList);
         SteccnTableAssertUtil.notEmpty(manDataList, "数据为空");
         //查询物料
         Set<Long> materialIdSet = manDataList.stream().map(QtCheckTaskDetailReportVO::getMaterialId).collect(Collectors.toSet());
@@ -192,6 +189,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private List<QtCheckTaskDestoryOnlineVO> fallList(List<QtCheckTaskDetailReportVO> manDataList, String productLineName) {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
+            manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             //先根据人工数据查询所有的taskId
             Map<Long, Integer> taskClassMap = Maps.newHashMap();
             manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));

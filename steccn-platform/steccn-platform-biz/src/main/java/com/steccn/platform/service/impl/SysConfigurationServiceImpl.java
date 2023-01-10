@@ -27,10 +27,10 @@ public class SysConfigurationServiceImpl extends ServiceImpl<SysConfigurationMap
     @Override
     public Map<String, String> sysConfRef(String type, Set<Integer> refContentSet) {
         Map<String, String> resMap = Maps.newHashMap();
-        if (StrUtil.isNotBlank(type) && CollUtil.isNotEmpty(refContentSet)) {
+        if (StrUtil.isNotBlank(type)) {
             List<SysConfiguration> dbList = list(new LambdaQueryWrapper<SysConfiguration>()
                     .eq(SysConfiguration::getType, type)
-                    .in(SysConfiguration::getRefContent, refContentSet));
+                    .in(CollUtil.isNotEmpty(refContentSet), SysConfiguration::getRefContent, refContentSet));
             if (CollUtil.isNotEmpty(dbList)) {
                 dbList.forEach(ele -> {
                     resMap.put(ele.getContent(), ele.getRefContent());
