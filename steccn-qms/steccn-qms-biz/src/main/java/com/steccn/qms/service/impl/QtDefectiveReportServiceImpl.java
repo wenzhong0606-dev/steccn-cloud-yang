@@ -297,9 +297,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         }
 
-        //存放检验设备的数据
-        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
-        flatDefectiveList.addAll(collectList);
+//        //存放检验设备的数据
+//        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
+//        if(CollUtil.isNotEmpty(collectList)){
+//            collectList.forEach(ele -> );
+//            flatDefectiveList.addAll(collectList);
+//        }
+
 
         //过滤班次信息
         if(Objects.nonNull(dto.getWorkingOrder())){
