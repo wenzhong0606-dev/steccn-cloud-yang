@@ -269,6 +269,14 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setClassesDate(qtCheckTask.getClassTime().toLocalDate());
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
+                        //根据缺陷记录时间段的结束时间来计算自然时间段
+                        //自然时段（小时粒度使用）：该行缺陷记录时段的结束时间所在的自然时段，例如10:00所在的自然时段为9:00~10:00，10:04或10:58所在的自然时段为9:00~10:00
+                        LocalDateTime defectEndTime = qtCheckTask.getDefectEndTime();
+                        LocalDate localDate = defectEndTime.toLocalDate();
+                        int hour = defectEndTime.getHour();
+                        LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.of(hour, 0, 0));
+                        vo.setNormalEndTime(endTime);
+                        vo.setNormalStartTime(endTime.minusHours(1L));
                         //根据缺陷记录时段计算完成时间
                         QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectEndTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
@@ -937,19 +945,32 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
             xMap = mapMapTupleDTO.getField2();
         }
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
 
         for (int i = 1; i < cutDate.size(); i++) {
             LocalDateTime start = cutDate.get(i - 1);
             LocalDateTime end = cutDate.get(i);
-            List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
-                //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
-                    return Boolean.TRUE;
-                }
-                return Boolean.FALSE;
-            }).collect(Collectors.toList());
+            List<QtCheckTaskDetailReportVO> conditionDataList ;
+            if(QtManagerConstant.QtGranularityEnum.HOUR.equals(granularityEnum)){
+                //小时时间粒度
+                conditionDataList = flatDataList.stream().filter(v -> {
+                    //数据范围应该是大于等于开始时间  小于结束时间
+                    if (start.isEqual(v.getNormalStartTime()) && end.isEqual(v.getNormalEndTime())) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
+            }else {
+                //其他时间粒度
+                conditionDataList = flatDataList.stream().filter(v -> {
+                    //数据范围应该是大于等于开始时间  小于结束时间
+                    if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
+            }
             StackGraphDTO<String, Integer> stackGraphDTO = new StackGraphDTO<>();
-            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
             stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, start));
             List<TupleDTO<String, Integer>> data = Lists.newArrayList();
             //类别
