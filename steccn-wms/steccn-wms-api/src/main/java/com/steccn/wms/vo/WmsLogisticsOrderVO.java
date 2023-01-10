@@ -33,7 +33,7 @@ public class WmsLogisticsOrderVO {
     private Integer status;
 
     @ApiModelProperty("物流方")
-    private Long logisticsCompany;
+    private Integer logisticsCompany;
 
     @ApiModelProperty("物流方名称")
     private String logisticsCompanyName;

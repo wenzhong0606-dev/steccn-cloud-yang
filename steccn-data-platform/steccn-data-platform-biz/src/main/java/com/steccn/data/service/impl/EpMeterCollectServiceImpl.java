@@ -3,7 +3,9 @@ package com.steccn.data.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
@@ -13,8 +15,11 @@ import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,5 +45,22 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
             }
         }
         return new ArrayList<>(dataCollect);
+    }
+
+    @Override
+    public Map<String, LocalDateTime> lastReadTime(Set<String> distantCodeSet) {
+        Map<String, LocalDateTime> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(distantCodeSet)) {
+            List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
+                    .lambda().in(EpMeterCollect::getCode, distantCodeSet)
+                    .groupBy(EpMeterCollect::getCode));
+            //如果集合不为空
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    resMap.put(ele.getCode(), ele.getRecordTime());
+                });
+            }
+        }
+        return resMap;
     }
 }

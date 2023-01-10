@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -20,4 +23,11 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList);
+
+    /**
+     * 最近抄表时间
+     * @param distantCodeSet 远传仪表编码集合
+     * @return
+     */
+    Map<String, LocalDateTime> lastReadTime(Set<String> distantCodeSet);
 }
