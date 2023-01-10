@@ -227,10 +227,10 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //获取所有的缺陷项id集合
         Set<Integer> defectiveIdSet = Sets.newHashSet();
         //存放检验设备的数据
-        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
-        if(CollUtil.isNotEmpty(collectList)){
-            collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
-        }
+//        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
+//        if(CollUtil.isNotEmpty(collectList)){
+//            collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
+//        }
         detailList.forEach(ele -> {
             if (CollUtil.isNotEmpty(ele.getDefectNum())) {
                 String numString = JSON.toJSONString(ele.getDefectNum());
