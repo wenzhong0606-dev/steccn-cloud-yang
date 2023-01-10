@@ -276,7 +276,6 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setProductWorkshopId(Objects.nonNull(qtCheckTask.getProductWorkshop()) ? qtCheckTask.getProductWorkshop().getId() : null);
                         vo.setProductLineId(Objects.nonNull(qtCheckTask.getProductLine()) ? qtCheckTask.getProductLine().getId() : null);
                         vo.setClassId(qtCheckTask.getClassesId());
-                        vo.setClassesDate(qtCheckTask.getClassTime().toLocalDate());
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
                         //根据缺陷记录时间段的结束时间来计算自然时间段
@@ -292,6 +291,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
+                        vo.setClassesDate(qtTaskClassCalculate.getClassDate().toLocalDate());
                         vo.setDataSource(QtManagerConstant.QtDefectDataSource.MAN.getCode());
                         vo.setMaterialId(qtCheckTask.getMaterialId());
                         vo.setMaterialName(qtCheckTask.getMaterialName());
@@ -738,9 +738,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
         //将时间范围根据粒度分片
-        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType()
                 , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MIN));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
         Set<Integer> categoryIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectCategory).collect(Collectors.toSet());
         Map<Integer, QtItemCategory> defectMap = qtItemCategoryService.listById(categoryIdSet);
@@ -899,9 +899,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
         //将时间范围根据粒度分片
-        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType()
                 , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MIN));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
@@ -934,9 +934,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
         Assert.notNull(granularityEnum, "粒度不存在");
         //将时间范围根据粒度分片
-        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(granularityEnum.getType()
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(granularityEnum.getType()
                 , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MIN));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         Set<Integer> defectIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getDefectId).collect(Collectors.toSet());
