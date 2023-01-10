@@ -65,23 +65,35 @@ public class EpDwServiceImpl implements EpDwService {
             }
             //获取当前班次日期所有的报工信息
             List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date))).get();
-            //其余的节点
+            //获取所有有仪表的节点
             Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
-
+            //其余的节点
             Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
-
 
             //遍历所有的远传仪表
             for (EpDwMeterPartitionDTO meter : meterList) {
-                //根据仪表挂载的节点获取报工记录
-                List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
-                List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
-                List<DwCurrentReportWorkDTO> workshopList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getWorkshopId())).collect(Collectors.toList());
-                List<DwCurrentReportWorkDTO> departmentList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getDepartmentId())).collect(Collectors.toList());
-                dwConditionDTO(dwList, meter, lineList);
-                dwConditionDTO(dwList, meter, stationList);
-                dwConditionDTO(dwList, meter, workshopList);
-                dwConditionDTO(dwList, meter, departmentList);
+                if(otherPartitionNodeSet.contains(meter.getPartitionId())){
+                    //仅统计每日能耗（类型II）的节点
+                    DwConditionDTO dwConditionDTO = new DwConditionDTO();
+                    dwConditionDTO.setCode(meter.getDistantMapCode());
+                    dwConditionDTO.setMeterId(meter.getMeterId());
+                    dwConditionDTO.setReadDate(date);
+                    dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
+                    dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
+                    dwList.add(dwConditionDTO);
+                }else if(CollUtil.isNotEmpty(allReportWorkList)){
+                    //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
+                    //根据仪表挂载的节点获取报工记录
+                    List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
+                    List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
+                    List<DwCurrentReportWorkDTO> workshopList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getWorkshopId())).collect(Collectors.toList());
+                    List<DwCurrentReportWorkDTO> departmentList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getDepartmentId())).collect(Collectors.toList());
+                    dwConditionDTO(dwList, meter, lineList);
+                    dwConditionDTO(dwList, meter, stationList);
+                    dwConditionDTO(dwList, meter, workshopList);
+                    dwConditionDTO(dwList, meter, departmentList);
+                }
+
             }
             if (CollUtil.isNotEmpty(dwList)) {
                 List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();

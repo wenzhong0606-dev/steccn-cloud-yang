@@ -405,6 +405,19 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             List<EpPartition> epPartitions = listByIds(allPartitionIdSet);
             if (CollUtil.isNotEmpty(epPartitions)) {
                 Set<Integer> officeIdSet = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
+                //查询产线和产线孩子节点
+                Set<Integer> productLineAndChildren = FeignOptional.of(remoteOfficeFeign.typeAndChildrenFlat(SysOfficeConstant.PRODUCT_LINE)).get();
+                //获取其余节点
+                officeIdSet.removeAll(productLineAndChildren);
+                if(CollUtil.isNotEmpty(officeIdSet)){
+                    //获取剩下的节点数据
+                    List<EpPartition> other = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getId, allPartitionIdSet)
+                            .in(EpPartition::getOfficeId, officeIdSet).select(EpPartition::getId));
+                    if(CollUtil.isNotEmpty(other)){
+                        Set<Long> otherPartitionIdSet = other.stream().map(EpPartition::getId).collect(Collectors.toSet());
+                        resSet.addAll(otherPartitionIdSet);
+                    }
+                }
             }
         }
         return resSet;

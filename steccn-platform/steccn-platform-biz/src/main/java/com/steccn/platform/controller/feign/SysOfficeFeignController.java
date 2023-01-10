@@ -12,6 +12,7 @@ import com.steccn.platform.vo.SysOfficeParentVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -155,5 +156,10 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.getByIdSysOfficeInfo(id));
     }
 
+    @ApiOperation("查询指定机构类型，及机构类型的孩子节点，返回平铺数据")
+    @GetMapping("/type/children/flat")
+    R<Set<Integer>> typeAndChildrenFlat(@RequestParam("officeType") String officeType){
+        return R.success(sysOfficeService.typeAndChildrenFlat(officeType));
+    }
 
 }

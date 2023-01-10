@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -258,6 +259,34 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         SysOffice shelfWarehouseInfo = getById(id);
         return BeanUtil.copyProperties(shelfWarehouseInfo, SysOfficeVO.class);
     }
+
+    @Override
+    public Set<Integer> typeAndChildrenFlat(String officeType) {
+        Set<Integer> resSet = Sets.newHashSet();
+        List<SysOffice> rootList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeType, officeType).select(SysOffice::getId, SysOffice::getOfficeCode));
+        if (CollUtil.isNotEmpty(rootList)) {
+            childrenCycle(resSet, rootList);
+        }
+        return resSet;
+    }
+
+    /**
+     * 孩子递归
+     *
+     * @param dataSet    数据集合
+     * @param parentList 父节点
+     */
+    private void childrenCycle(Set<Integer> dataSet, List<SysOffice> parentList) {
+        if (CollUtil.isNotEmpty(parentList)) {
+            Set<String> parentCodeSet = parentList.stream().map(SysOffice::getOfficeCode).collect(Collectors.toSet());
+            List<SysOffice> childrenList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getParentCode, parentCodeSet).select(SysOffice::getId, SysOffice::getOfficeCode));
+            if (CollUtil.isNotEmpty(childrenList)) {
+                dataSet.addAll(childrenList.stream().map(SysOffice::getId).collect(Collectors.toSet()));
+                childrenCycle(dataSet, childrenList);
+            }
+        }
+    }
+
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);

@@ -189,4 +189,12 @@ public interface RemoteOfficeFeign {
     @GetMapping("/platform/sys/office/sysOfficeInfo/{id}")
     R<SysOfficeVO> sysOfficeInfo(@PathVariable("id") Integer id);
 
+    /**
+     * 查询指定机构类型，及机构类型的孩子节点，返回平铺数据
+     * @param officeType 组织机构类型
+     * @return
+     */
+    @ApiOperation("查询指定机构类型，及机构类型的孩子节点，返回平铺数据")
+    @GetMapping("/feign/platform/sys/office/type/children/flat")
+    R<Set<Integer>> typeAndChildrenFlat(@RequestParam("officeType") String officeType);
 }

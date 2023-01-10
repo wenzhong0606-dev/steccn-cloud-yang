@@ -165,4 +165,10 @@ public interface SysOfficeService extends IService<SysOffice> {
      */
     SysOfficeVO shelfWarehouseInfo(Integer id);
 
+    /**
+     * 查询指定机构类型，及机构类型的孩子节点，返回平铺数据
+     * @param officeType
+     * @return
+     */
+    Set<Integer> typeAndChildrenFlat(String officeType);
 }
