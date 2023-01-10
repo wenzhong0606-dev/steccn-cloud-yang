@@ -12,6 +12,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -319,8 +320,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId, Integer checkTaskType) {
-        LocalDateTime startTime = date.atTime(8, 0, 0, 0);
-        LocalDateTime endTime = date.plusDays(1).atTime(8, 0, 0, 0);
+        LocalDateTime startTime =  LocalDateUtil.getMorning(date);
+        LocalDateTime endTime = LocalDateUtil.getMorning(date.plusDays(1));
         //关联查询
         MPJLambdaWrapper<QtCheckTask> taskCondition = new MPJLambdaWrapper<QtCheckTask>()
                 .select(QtCheckTask::getId, QtCheckTask::getType, QtCheckTask::getMaterialId, QtCheckTask::getMaterialWorkshop,

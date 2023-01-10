@@ -266,5 +266,39 @@ public class LocalDateUtil {
         return false;
     }
 
+    /**
+     * 晚班时间
+     * @param date
+     * @return
+     */
+    public static LocalDateTime getNight(LocalDate date){
+        return date.atTime(20, 0, 0, 0);
+    }
 
+    /**
+     * 晚班时间
+     * @param date
+     * @return
+     */
+    public static LocalDateTime getNight(LocalDateTime date){
+        return date.withHour(20).withMinute(0).withSecond(0).withNano(0);
+    }
+
+    /**
+     * 早班时间
+     * @param date
+     * @return
+     */
+    public static LocalDateTime getMorning(LocalDate date){
+        return date.atTime(8, 0, 0, 0);
+    }
+
+    /**
+     * 早班时间
+     * @param date
+     * @return
+     */
+    public static LocalDateTime getMorning(LocalDateTime date){
+        return date.withHour(8).withMinute(0).withSecond(0).withNano(0);
+    }
 }
