@@ -333,17 +333,17 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsWorkOrderBatchVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsWorkOrderBatchVO.class);
         //6.处理数据
         Set<String> batchSet = Sets.newHashSet();
+        Set<Long> dictIds = Sets.newHashSet();
         res.forEach(pmsWorkOrderBatchVO -> {
             batchSet.add(pmsWorkOrderBatchVO.getCode());
+            dictIds.add(pmsWorkOrderBatchVO.getUnitId());
         });
         Map<String, PmsCompleteStorageNumDTO> numMap = pmsBarcodePrintService.batchSum(batchSet);
-        Set<Long> dictIds = numMap.values().stream().map(PmsCompleteStorageNumDTO::getUnitId).collect(Collectors.toSet());
         //查询字典数据
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
         PmsCompleteStorageNumDTO defaultPmsCompleteStorageNumDTO = new PmsCompleteStorageNumDTO();
         res.forEach(pmsWorkOrderBatchVO -> {
             PmsCompleteStorageNumDTO pmsNumDto = numMap.getOrDefault(pmsWorkOrderBatchVO.getCode(), defaultPmsCompleteStorageNumDTO);
-            pmsWorkOrderBatchVO.setUnitId(pmsNumDto.getUnitId());
             pmsWorkOrderBatchVO.setQuantity(pmsNumDto.getQuantity());
             pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId()));
             pmsWorkOrderBatchVO.setProduceOrderId(pmsProduceOrder.getId());
