@@ -345,6 +345,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .eq(QtCheckTask::getTaskType, checkTaskType)
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
+
         if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(checkTaskType)) {
             taskCondition.between(QtCheckTask::getFinishedTime, startTime, endTime);
         } else {
@@ -495,7 +496,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtDayReportFirstDataVO> tableData = Lists.newArrayList();
         //根据taskId分组
         Map<Long, List<QtCheckTaskDetail>> groupByTaskId = taskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
-        for (Map.Entry<Long, List<QtCheckTaskDetail>> taskEntry : groupByTaskId.entrySet()) {
+        //先根据班次排序再根据完成时间排序
+        taskList = taskList.stream().sorted(Comparator.comparing(QtCheckTaskListVO::getClassesId)
+                                    .thenComparing(QtCheckTaskListVO::getFinishedTime)).collect(Collectors.toList());
+        //根据taskId重组map
+        Map<Long,List<QtCheckTaskDetail>> groupByTaskIdOrder = new LinkedHashMap<>();
+        taskList.forEach(tmp -> {
+            groupByTaskIdOrder.put(tmp.getId(),groupByTaskId.get(tmp.getId()));
+        });
+        for (Map.Entry<Long, List<QtCheckTaskDetail>> taskEntry : groupByTaskIdOrder.entrySet()) {
             //获取task
             QtCheckTaskListVO task = taskList.stream().filter(v -> v.getId().equals(taskEntry.getKey())).findFirst().get();
             List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
