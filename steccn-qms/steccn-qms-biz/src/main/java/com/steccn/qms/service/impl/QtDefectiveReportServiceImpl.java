@@ -302,7 +302,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         }
         //加入采样数据
-        flatDefectiveList.addAll(collectList);
+//        flatDefectiveList.addAll(collectList);
 
         //过滤班次信息
         if(Objects.nonNull(dto.getWorkingOrder())){
