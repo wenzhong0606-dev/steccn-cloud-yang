@@ -320,7 +320,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId, Integer checkTaskType) {
         LocalDateTime startTime = date.atTime(8, 0, 0, 0);
-        LocalDateTime endTime = date.plusDays(1).atTime(7, 59, 59, 99999999);
+        LocalDateTime endTime = date.plusDays(1).atTime(8, 0, 0, 0);
         //关联查询
         MPJLambdaWrapper<QtCheckTask> taskCondition = new MPJLambdaWrapper<QtCheckTask>()
                 .select(QtCheckTask::getId, QtCheckTask::getType, QtCheckTask::getMaterialId, QtCheckTask::getMaterialWorkshop,
@@ -347,9 +347,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
 
         if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(checkTaskType)) {
-            taskCondition.between(QtCheckTask::getFinishedTime, startTime, endTime);
+            //大于等于开始   小于结束
+            taskCondition.ge(QtCheckTask::getFinishedTime,startTime).lt(QtCheckTask::getFinishedTime,endTime);
         } else {
-            taskCondition.between(QtCheckTask::getSpotTime, startTime, endTime);
+            //大于等于开始   小于结束
+            taskCondition.ge(QtCheckTask::getSpotTime,startTime).lt(QtCheckTask::getSpotTime,endTime);
         }
 
         List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class, taskCondition);
