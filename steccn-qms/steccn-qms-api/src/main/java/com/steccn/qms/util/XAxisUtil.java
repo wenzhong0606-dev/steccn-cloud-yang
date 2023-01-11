@@ -32,18 +32,18 @@ public class XAxisUtil {
      */
     public static String convert(QtManagerConstant.QtGranularityEnum granularityEnum, LocalDateTime ldt) {
         String xAxis;
-        if(QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode())){
-            xAxis = LocalDateTimeUtil.format(ldt, "MM-dd HH:mm");
+        if (QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode())) {
+            xAxis = LocalDateTimeUtil.format(ldt, "MM-dd HH:mm") + "~" + LocalDateTimeUtil.format(ldt.plusHours(1), "MM-dd HH:mm");
         } else if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, DatePattern.NORM_DATE_PATTERN);
+            xAxis = LocalDateTimeUtil.format(ldt, "MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.getCode().equals(granularityEnum.getCode())) {
             LocalDateTime monday = ldt.with(DayOfWeek.MONDAY);
             LocalDateTime sunday = ldt.with(DayOfWeek.SUNDAY);
-            xAxis = LocalDateTimeUtil.format(monday, "MM.dd") + "-" + LocalDateTimeUtil.format(sunday, "MM.dd");
+            xAxis = LocalDateTimeUtil.format(monday, "MM-dd") + "~" + LocalDateTimeUtil.format(sunday, "MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
         } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, "yyyy") + "-" + quater(ldt.getMonth().getValue()) + "季度";
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
         } else {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy");
         }
