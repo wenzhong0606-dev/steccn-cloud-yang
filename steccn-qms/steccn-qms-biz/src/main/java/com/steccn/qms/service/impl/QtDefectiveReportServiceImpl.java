@@ -227,10 +227,15 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         //获取所有的缺陷项id集合
         Set<Integer> defectiveIdSet = Sets.newHashSet();
         //存放检验设备的数据
-//        List<QtCheckTaskDetailReportVO> collectList = defectCollect(dto);
-//        if(CollUtil.isNotEmpty(collectList)){
-//            collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
-//        }
+        List<QtCheckTaskDetailReportVO> collectList = null;
+        try {
+            collectList = defectCollect(dto);
+            if (CollUtil.isNotEmpty(collectList)) {
+                collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
+            }
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
         detailList.forEach(ele -> {
             if (CollUtil.isNotEmpty(ele.getDefectNum())) {
                 String numString = JSON.toJSONString(ele.getDefectNum());
@@ -302,7 +307,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             }
         }
         //加入采样数据
-//        flatDefectiveList.addAll(collectList);
+        if(CollUtil.isNotEmpty(collectList)){
+            flatDefectiveList.addAll(collectList);
+        }
 
         //过滤班次信息
         if(Objects.nonNull(dto.getWorkingOrder())){
@@ -811,6 +818,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                     vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
                     vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
                 }
+                //自然记录时段
+                vo.setNormalStartTime(vo.getDefectStartTime());
+                vo.setNormalEndTime(vo.getDefectEndTime());
                 try {
                     String line = refMap.get(ele.getLine());
                     vo.setProductLineId(Integer.parseInt(line));
