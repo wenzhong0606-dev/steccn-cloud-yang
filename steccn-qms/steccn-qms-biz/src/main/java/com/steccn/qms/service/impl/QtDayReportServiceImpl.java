@@ -121,7 +121,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtCheckTaskDetailReportVO qtCheckTask = taskEntry.getValue().get(0);
                         vo.setMaterialId(qtCheckTask.getMaterialId());
                         vo.setNote(qtCheckTask.getNote());
-                        vo.setMaterialName(materialIdNameMap.getOrDefault(vo.getMaterialId(), "-"));
+                        vo.setMaterialName(materialIdNameMap.get(vo.getMaterialId()));
                         vo.setProductLineName(productLineName);
                         tableData.add(vo);
                         List<FurtherValueStrVO> module = Lists.newArrayList();
@@ -219,8 +219,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         return o1.getClassId() - o2.getClassId();
                     }
                     //对比落板开始时间
-                    if (!o1.getDestoryStartTime().equals(o2.getDestoryStartTime())) {
-                        return o1.getDestoryStartTime().compareTo(o2.getDestoryStartTime());
+                    if (!o1.getFirstTime().equals(o2.getFirstTime())) {
+                        return o1.getFirstTime().compareTo(o2.getFirstTime());
                     }
                     //对比taskId
                     if (!o1.getTaskId().equals(o2.getTaskId())) {
