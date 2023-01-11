@@ -43,7 +43,7 @@ public class XAxisUtil {
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
         } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy") + quater(ldt.getMonth().getValue());
         } else {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy");
         }
@@ -56,14 +56,16 @@ public class XAxisUtil {
      * @param month
      * @return
      */
-    private static int quater(int month) {
-        int quater = 4;
+    private static String quater(int month) {
+        String quater;
         if (month >= 1 && month <= 3) {
-            quater = 1;
+            quater = "第一季度";
         } else if (month >= 4 && month <= 6) {
-            quater = 2;
+            quater = "第二季度";
         } else if (month >= 7 && month <= 9) {
-            quater = 3;
+            quater = "第三季度";
+        } else {
+            quater = "第四季度";
         }
         return quater;
     }
