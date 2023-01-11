@@ -577,11 +577,24 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             consumer.accept(defectId, countVo);
                             //明细
                             List<DeepDefectiveCategoryDetailListVO> detailList = Lists.newArrayList();
-                            defectData.forEach(ele -> {
+                            //采样数据-已经做过班次日期，班次，产线，车间的分组了
+                            List<QtCheckTaskDetailReportVO> collectList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.COLLECT.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            //需要进行类别和缺陷记录时段分组
+                            List<DeepDefectiveCategoryDetailListVO> collectDetailList = categoryDetail(collectList, defectCategoryMap, defectIdNameMap);
+                            detailList.addAll(collectDetailList);
+                            //人工数据
+                            List<QtCheckTaskDetailReportVO> manList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.MAN.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            manList.forEach(ele -> {
                                 DeepDefectiveCategoryDetailListVO listVO = new DeepDefectiveCategoryDetailListVO();
                                 BeanUtils.copyProperties(ele, listVO);
                                 listVO.setDefectName(defectIdNameMap.getOrDefault(ele.getDefectId(), Strings.EMPTY));
-                                listVO.setResultSource("人工检验");
+                                QtManagerConstant.QtDefectDataSource code = QtManagerConstant.QtDefectDataSource.code(ele.getDataSource());
+                                //设置数据来源
+                                if(Objects.nonNull(code)){
+                                   listVO.setResultSource(code.getName());
+                                }else {
+                                   listVO.setResultSource(QtManagerConstant.QtDefectDataSource.MAN.getName());
+                                }
                                 listVO.setDefectCategoryName(defectCategoryMap.getOrDefault(ele.getDefectCategory(), defaultQtItemCategory).getName());
                                 detailList.add(listVO);
                             });
@@ -593,6 +606,43 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             });
         });
         return pageList;
+    }
+
+    /**
+     * 采样数据-类别详细
+     * @param collectList 采样数据
+     * @param defectCategoryMap 缺陷项类别映射
+     * @param defectIdNameMap 缺陷项映射
+     * @return
+     */
+    private List<DeepDefectiveCategoryDetailListVO> categoryDetail(List<QtCheckTaskDetailReportVO> collectList, Map<Integer, QtItemCategory> defectCategoryMap, Map<Integer, String> defectIdNameMap) {
+        List<DeepDefectiveCategoryDetailListVO> resList = Lists.newArrayList();
+        //如果采样数据不为空
+        if (CollUtil.isNotEmpty(collectList)) {
+            Map<String, List<QtCheckTaskDetailReportVO>> collectMap = collectList.stream().collect(Collectors.groupingBy(v -> v.getDefectCategory() + "_" + v.getDefectStartTime()));
+            for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> collectEntry : collectMap.entrySet()) {
+                try {
+                    DeepDefectiveCategoryDetailListVO resVo = new DeepDefectiveCategoryDetailListVO();
+                    QtCheckTaskDetailReportVO origin = collectEntry.getValue().get(0);
+                    BeanUtils.copyProperties(origin, resVo);
+                    resVo.setResultSource(QtManagerConstant.QtDefectDataSource.COLLECT.getName());
+                    int sum = collectEntry.getValue().stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(v -> v.getDefectNum()).sum();
+                    resVo.setDefectNum(sum);
+                    resVo.setDefectName(defectIdNameMap.getOrDefault(origin.getDefectId(), Strings.EMPTY));
+                    QtItemCategory qtItemCategory = defectCategoryMap.get(origin.getDefectCategory());
+                    if (Objects.nonNull(qtItemCategory)) {
+                        resVo.setDefectCategoryName(qtItemCategory.getName());
+                    }
+                    resList.add(resVo);
+                } catch (Exception e) {
+                }
+            }
+        }
+        //就缺陷记录时段排序
+        if(CollUtil.isNotEmpty(resList)){
+            resList.sort(Comparator.comparing(DeepDefectiveCategoryDetailListVO::getDefectStartTime));
+        }
+        return resList;
     }
 
 
@@ -798,11 +848,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
      */
     private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList,  Map<String, String> refMap) {
         List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
-
         if (CollUtil.isNotEmpty(collectList) && CollUtil.isNotEmpty(refMap)) {
             Set<String> defectTypeSet = collectList.stream().map(DwDefectCollectVO::getDefectType).collect(Collectors.toSet());
             Map<String, QtDefectiveItem> resMap = qtDefectiveItemService.collectDefect(defectTypeSet);
-
             collectList.forEach(ele -> {
                 QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
                 vo.setDataSource(QtManagerConstant.QtDefectDataSource.COLLECT.getCode());
