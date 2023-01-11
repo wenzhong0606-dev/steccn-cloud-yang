@@ -82,13 +82,23 @@ public class EpDwServiceImpl implements EpDwService {
                     dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
                     dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
                     dwList.add(dwConditionDTO);
-                } else if (CollUtil.isNotEmpty(allReportWorkList)) {
+                } else if(CollUtil.isNotEmpty(allReportWorkList)){
                     //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
                     //根据仪表挂载的节点获取报工记录
                     List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
                     List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
                     dwConditionDTO(date, dwList, meter, lineList);
                     dwConditionDTO(date, dwList, meter, stationList);
+                    if(CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)){
+                        LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
+                        LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
+                        LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
+                        //查询2条数据 T日8：00 T日20：00 T+1日8：00
+                        DwConditionDTO morningDefault = getDefaultDwConditionDTO(meter, date, 0, morningLdt, nightLdt);
+                        DwConditionDTO nightDefault = getDefaultDwConditionDTO(meter, date, 1, nightLdt, lastLdt);
+                        dwList.add(morningDefault);
+                        dwList.add(nightDefault);
+                    }
                 }
             }
             if (CollUtil.isNotEmpty(dwList)) {
@@ -230,14 +240,6 @@ public class EpDwServiceImpl implements EpDwService {
         LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
         LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
         LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
-        if (CollUtil.isEmpty(reportWorkDTO)) {
-            //查询2条数据 T日8：00 T日20：00 T+1日8：00
-            DwConditionDTO morningDefault = getDefaultDwConditionDTO(meter, date, 0, morningLdt, nightLdt);
-            DwConditionDTO nightDefault = getDefaultDwConditionDTO(meter, date, 1, nightLdt, lastLdt);
-            dwList.add(morningDefault);
-            dwList.add(nightDefault);
-            return;
-        }
         //获取一个仪表节点一天的报工数据
         for (int i = 0; i < reportWorkDTO.size(); i++) {
             DwCurrentReportWorkDTO reportWork = reportWorkDTO.get(i);
