@@ -284,13 +284,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
                         //根据缺陷记录时间段的结束时间来计算自然时间段
-                        //自然时段（小时粒度使用）：该行缺陷记录时段的结束时间所在的自然时段，例如10:00所在的自然时段为9:00~10:00，10:04或10:58所在的自然时段为9:00~10:00
+                        //自然时段（小时粒度使用）：该行缺陷记录时段的结束时间所在的自然时段，例如10:00所在的自然时段为10:00~11:00，10:04或10:58所在的自然时段为10:00~11:00
                         LocalDateTime defectEndTime = qtCheckTask.getDefectEndTime();
                         LocalDate localDate = defectEndTime.toLocalDate();
                         int hour = defectEndTime.getHour();
-                        LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.of(hour, 0, 0));
-                        vo.setNormalEndTime(endTime);
-                        vo.setNormalStartTime(endTime.minusHours(1L));
+                        LocalDateTime startTime = LocalDateTime.of(localDate, LocalTime.of(hour, 0, 0));
+                        vo.setNormalEndTime(startTime.plusHours(1));
+                        vo.setNormalStartTime(startTime);
                         //根据缺陷记录时段计算完成时间
                         QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectEndTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
