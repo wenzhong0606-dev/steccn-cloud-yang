@@ -223,53 +223,47 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
 
             //设置最后抄表时间
-            if (CollUtil.isNotEmpty(groupByMeter)){
-                //先判断仪表的所属类型
-                if (EpManagerConstant.InstrumentType.REMOTE.getCode()==s.getEntityTable()
-                        ||EpManagerConstant.InstrumentType.NON_REMOTE.getCode()==s.getEntityTable()){
-                    List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
-                    s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
-                } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode()==s.getEntityTable()) {
-                    List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
-                    if (CollUtil.isNotEmpty(partitionChildrenList)){
-                        //找到绑定该节点下子节点的仪表的id
-                        List<Integer> instrumentChildIds = Lists.newArrayList();
-                        partitionChildrenList.stream().forEach(p->{
-                            //子节点绑定的仪表
-                            EpInstrumentAccountPageVO epInstrumentAccountPageVO = partitionInstrumentVOList.get(p.getId());
-                            if (Objects.nonNull(epInstrumentAccountPageVO)){
-                                instrumentChildIds.add(epInstrumentAccountPageVO.getId());
+            //先判断仪表的所属类型
+            if (EpManagerConstant.InstrumentType.REMOTE.getCode() == s.getEntityTable()
+                    || EpManagerConstant.InstrumentType.NON_REMOTE.getCode() == s.getEntityTable()) {
+                s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
+            } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode() == s.getEntityTable()) {
+                List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
+                if (CollUtil.isNotEmpty(partitionChildrenList)) {
+                    //找到绑定该节点下子节点的仪表的id
+                    List<Integer> instrumentChildIds = Lists.newArrayList();
+                    partitionChildrenList.stream().forEach(p -> {
+                        //子节点绑定的仪表
+                        EpInstrumentAccountPageVO epInstrumentAccountPageVO = partitionInstrumentVOList.get(p.getId());
+                        if (Objects.nonNull(epInstrumentAccountPageVO)) {
+                            instrumentChildIds.add(epInstrumentAccountPageVO.getId());
+                        }
+                    });
+                    if (CollUtil.isNotEmpty(instrumentChildIds)) {
+                        //如果该节点的子节点绑定了仪表设置最后抄表时间(取每个子节点最后抄表时间最早的)
+                        //保证每个子节点仪表的最后抄表时间都不能有空
+                        List<LocalDateTime> timeList = Lists.newArrayList();
+                        instrumentChildIds.forEach(i -> {
+                            LocalDateTime lastReadTime = getLastReadTime(s.getDistantMapCode(), lastReadTimeMap);
+                            if (Objects.nonNull(lastReadTime)) {
+                                timeList.add(lastReadTime);
                             }
                         });
-                        if (CollUtil.isNotEmpty(instrumentChildIds)){
-                            //如果该节点的子节点绑定了仪表设置最后抄表时间(取每个子节点最后抄表时间最早的)
-                            //保证每个子节点仪表的最后抄表时间都不能有空
-                            List<LocalDateTime> timeList = Lists.newArrayList();
-                            instrumentChildIds.forEach(i->{
-                                List<EpMeterRead> epMeterReads = groupByMeter.get(s.getId());
-                                LocalDateTime lastReadTime = getLastReadTime(s.getDistantMapCode(), lastReadTimeMap);
-                                if (Objects.nonNull(lastReadTime)){
-                                    timeList.add(lastReadTime);
+                        //如果查询到的子表最后抄表时间的个数等于绑定仪表的个数设置虚拟仪表的最后抄表时间
+                        if (instrumentChildIds.size() == timeList.size()) {
+                            //从timeList集合中找到时间最早的
+                            LocalDateTime realLastReadTime = LocalDateTime.now();
+                            for (int i = 0; i < timeList.size(); i++) {
+                                realLastReadTime = timeList.get(i);
+                                if ((i + 1) < timeList.size() && realLastReadTime.isAfter(timeList.get(i + 1))) {
+                                    realLastReadTime = timeList.get(i + 1);
                                 }
-                            });
-                            //如果查询到的子表最后抄表时间的个数等于绑定仪表的个数设置虚拟仪表的最后抄表时间
-                            if (instrumentChildIds.size()==timeList.size()){
-                                //从timeList集合中找到时间最早的
-                                LocalDateTime realLastReadTime = LocalDateTime.now();
-                                for (int i = 0; i < timeList.size(); i++) {
-                                    realLastReadTime=timeList.get(i);
-                                    if ((i+1)<timeList.size() && realLastReadTime.isAfter(timeList.get(i+1))){
-                                        realLastReadTime=timeList.get(i+1);
-                                    }
-                                }
-                                s.setLastReadingTime(realLastReadTime);
                             }
+                            s.setLastReadingTime(realLastReadTime);
                         }
                     }
                 }
-
             }
-
         });
 
         //排序+逻辑分页
