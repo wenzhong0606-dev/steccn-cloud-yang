@@ -364,21 +364,16 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //先找出该能源类型下的所有分区节点
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
                 .eq(EpPartition::getType, type));
-        List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
-        if (CollUtil.isEmpty(epPartitionVOS)){
-            return linkChildren;
-        }
+        if (CollUtil.isNotEmpty(epPartitions)) {
+            List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
 
-        epPartitionVOS.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-            List<EpPartitionVO> epPartitionVOList = Lists.newArrayList();
-            epPartitionVOS.stream().filter(v->Objects.nonNull(v)).forEach(v->{
-                if (v.getParentId()==s.getId()){
-                    epPartitionVOList.add(v);
-                }
+            epPartitionVOS.forEach(s -> {
+                //查询当前节点的孩子节点
+                List<EpPartitionVO> children = epPartitionVOS.stream().filter(v -> s.getId().equals(v.getParentId())).collect(Collectors.toList());
+                //获取该类型下每个节点及其下一级子节点的集合
+                linkChildren.put(s.getId(), children);
             });
-            //获取该类型下每个节点及其下一级子节点的集合
-            linkChildren.put(s.getId(),epPartitionVOList);
-        });
+        }
         return linkChildren;
     }
 
