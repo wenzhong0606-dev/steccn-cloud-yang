@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 质量日报表-首检视图对象
+ * 质量日报表-首检/巡检视图对象
  *
  * @author AndrewLuo
  * @date 2023/01/04
@@ -24,4 +24,20 @@ public class QtDayReportFirstVO implements Serializable {
      * 数据部分
      */
     private List<QtDayReportFirstDataVO> tableData;
+
+    /**
+     * 落班时段
+     */
+    private List<QtCheckTaskDestoryOnlineVO> fallList;
+
+
+    /**
+     * 缺陷表头
+     */
+    private QtDayReportTableHeadersVO flawHeaders;
+
+    /**
+     * 缺陷数据
+     */
+    private List<QtDayReportOnlineDataVO> flawTableData;
 }

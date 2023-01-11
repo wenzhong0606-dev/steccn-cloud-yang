@@ -14,17 +14,15 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
-import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
-import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
+import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +54,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     private final QtCheckTaskService qtCheckTaskService;
     private final QtDefectiveItemService qtDefectiveItemService;
+    private final QtDefectiveItemMapper qtDefectiveItemMapper;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
 
 
@@ -311,14 +310,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         return resModule;
     }
 
-    @Override
-    public QtDayReportOnlineVO polling(LocalDate date, Integer productLineId) {
-        return null;
-    }
 
     @Override
     public QtDayReportFirstVO first(LocalDate date, Integer productLineId, Integer checkTaskType) {
-        LocalDateTime startTime =  LocalDateUtil.getMorning(date);
+        LocalDateTime startTime = LocalDateUtil.getMorning(date);
         LocalDateTime endTime = LocalDateUtil.getMorning(date.plusDays(1));
         //关联查询
         MPJLambdaWrapper<QtCheckTask> taskCondition = new MPJLambdaWrapper<QtCheckTask>()
@@ -347,16 +342,25 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         if (QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode().equals(checkTaskType)) {
             //大于等于开始   小于结束
-            taskCondition.ge(QtCheckTask::getFinishedTime,startTime).lt(QtCheckTask::getFinishedTime,endTime);
+            taskCondition.ge(QtCheckTask::getFinishedTime, startTime).lt(QtCheckTask::getFinishedTime, endTime);
         } else {
             //大于等于开始   小于结束
-            taskCondition.ge(QtCheckTask::getSpotTime,startTime).lt(QtCheckTask::getSpotTime,endTime);
+            taskCondition.ge(QtCheckTask::getSpotTime, startTime).lt(QtCheckTask::getSpotTime, endTime);
         }
 
         List<QtCheckTaskListVO> taskList = qtCheckTaskMapper.selectJoinList(QtCheckTaskListVO.class, taskCondition);
-        Set<Integer> stationIds = Sets.newHashSet();
-        taskList.forEach( task->stationIds.add(task.getStationId()));
-        Map<Integer, SysOfficeVO> stationMap = FeignOptional.of(remoteOfficeFeign.listById(stationIds)).get();
+        List<QtCheckTaskDetailReportVO> manData = Lists.newArrayList();
+        Set<Integer> officeIds = Sets.newHashSet();
+        taskList.forEach(task -> {
+            officeIds.add(task.getStationId());
+            QtCheckTaskDetailReportVO qtCheckTaskDetailReportVO = new QtCheckTaskDetailReportVO();
+            qtCheckTaskDetailReportVO.setClassId(task.getClassesId());
+            qtCheckTaskDetailReportVO.setTaskId(task.getId());
+            manData.add(qtCheckTaskDetailReportVO);
+        });
+        officeIds.add(productLineId);
+        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        String productLineName = officeMap.get(productLineId);
         List<Long> taskIdList = Lists.newArrayList();
         if (CollUtil.isEmpty(taskList)) {
             log.info("任务为空(质量日报表-首检)");
@@ -499,11 +503,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Map<Long, List<QtCheckTaskDetail>> groupByTaskId = taskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
         //先根据班次排序再根据完成时间排序
         taskList = taskList.stream().sorted(Comparator.comparing(QtCheckTaskListVO::getClassesId)
-                                    .thenComparing(QtCheckTaskListVO::getFinishedTime)).collect(Collectors.toList());
+                .thenComparing(QtCheckTaskListVO::getFinishedTime)).collect(Collectors.toList());
         //根据taskId重组map
-        Map<Long,List<QtCheckTaskDetail>> groupByTaskIdOrder = new LinkedHashMap<>();
+        Map<Long, List<QtCheckTaskDetail>> groupByTaskIdOrder = new LinkedHashMap<>();
         taskList.forEach(tmp -> {
-            groupByTaskIdOrder.put(tmp.getId(),groupByTaskId.get(tmp.getId()));
+            groupByTaskIdOrder.put(tmp.getId(), groupByTaskId.get(tmp.getId()));
         });
         for (Map.Entry<Long, List<QtCheckTaskDetail>> taskEntry : groupByTaskIdOrder.entrySet()) {
             //获取task
@@ -525,8 +529,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 column.setFinishedTime(task.getFinishedTime());
                 column.setSpotTime(task.getSpotTime());
                 if (Objects.nonNull(task.getStationId())) {
-                    SysOfficeVO station = stationMap.get(task.getStationId());
-                    column.setStation(station.getOfficeName());
+                    column.setStation(officeMap.get(task.getStationId()));
                 }
                 column.setResult(task.getResult());
                 column.setCopy(copyEntry.getKey());
@@ -615,8 +618,6 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             colorValue.setColor(0);
                             colorValueList.add(colorValue);
                         }
-//                        for(QtCheckTaskDetail copyTmp:copyDetailTmp){
-//                        }
                     }
                     FurtherValueObjVO valueObjVO = new FurtherValueObjVO();
                     valueObjVO.setValue(colorValueList);
@@ -627,6 +628,52 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
         }
         result.setTableData(tableData);
+        if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(checkTaskType)) {
+            //落板原因
+            result.setFallList(fallList(manData, productLineName));
+            //缺陷表格
+        }
         return result;
     }
+
+    @Override
+    public QtDayPollingFirstVO pollingDefectItem(LocalDate date, Integer productLineId) {
+        QtDayPollingFirstVO qtDayPollingFirstVO = new QtDayPollingFirstVO();
+        LocalDateTime startTime = LocalDateUtil.getMorning(date);
+        LocalDateTime endTime = LocalDateUtil.getMorning(date.plusDays(1));
+        LambdaQueryWrapper<QtCheckTask> eq = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL)
+                //大于等于开始   小于结束
+                .ge(QtCheckTask::getSpotTime, startTime).lt(QtCheckTask::getSpotTime, endTime)
+                //产线
+                .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
+        List<QtCheckTask> list = qtCheckTaskService.list(eq);
+        List<Long> taskIds = Lists.newArrayList();
+        list.forEach(task -> taskIds.add(task.getId()));
+        List<QtDefectItemInfoVO> defectItemList = qtCheckTaskMapper.getDefectItemList(QtManagerConstant.DAY_REPORT_FIELD_APPARENT_CONDITION, taskIds);
+        Map<String, List<QtDefectItemInfoVO>> map = defectItemList.stream().collect(Collectors.groupingBy(QtDefectItemInfoVO::getCategoryName));
+        QtDayReportTableHeadersVO qtDayReportTableHeadersVO = new QtDayReportTableHeadersVO();
+        List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
+        commonHeadList.add(new QtSpcHeadTitleVO("productLineName", "产线"));
+        commonHeadList.add(new QtSpcHeadTitleVO("className", "班次"));
+        qtDayReportTableHeadersVO.setCommon(commonHeadList);
+        //处理数据
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        List<QtDayReportPollingDataVO> reportPollingList = Lists.newArrayList();
+        qtDayReportTableHeadersVO.setModule(module);
+        for (Map.Entry<String, List<QtDefectItemInfoVO>> entry : map.entrySet()) {
+            BaseReportHeaderVO baseReportHeaderVO = new BaseReportHeaderVO();
+            baseReportHeaderVO.setLabel(entry.getKey());
+            List<String> value = Lists.newArrayList();
+            for (QtDefectItemInfoVO qtDefectItemInfoVO : entry.getValue()) {
+                value.add(qtDefectItemInfoVO.getName());
+            }
+            baseReportHeaderVO.setValue(value);
+        }
+
+        //表头
+        qtDayPollingFirstVO.setFlawHeaders(qtDayReportTableHeadersVO);
+        return null;
+    }
+
 }
