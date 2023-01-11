@@ -74,6 +74,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
     private final RemotePmsFeignApi remotePmsFeignApi;
 
+    private final QtDefectiveReportService qtDefectiveReportService;
     /**
      * 生产基片损耗数据
      *
@@ -527,6 +528,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     }
                                 });
                             }
+                            //仪表数据
+                            QtChartParamDTO chartParam = new QtChartParamDTO();
+
+                            qtDefectiveReportService.defectCollect(chartParam);
                             //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
                             //计算缺陷项Q的损耗重量
