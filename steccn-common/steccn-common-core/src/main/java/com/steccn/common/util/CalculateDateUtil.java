@@ -58,6 +58,10 @@ public class CalculateDateUtil {
      */
     public static Boolean isSameClassType(LocalDateTime startTime,LocalDateTime endTime){
         QtTaskClassCalculate defectStart = calculateClassTime(startTime);
+        //如果是20:00点则表示取不到
+        if(endTime.getHour()==20 && endTime.getMinute()==0 && endTime.getSecond()==0){
+            endTime = endTime.minusSeconds(1);
+        }
         QtTaskClassCalculate defectEnd = calculateClassTime(endTime);
         //判断是否跨班次和跨时间维度
         if(defectStart.getClassType().equals(defectEnd.getClassType()) && defectStart.getClassDate().toLocalDate().equals(defectEnd.getClassDate().toLocalDate())){
