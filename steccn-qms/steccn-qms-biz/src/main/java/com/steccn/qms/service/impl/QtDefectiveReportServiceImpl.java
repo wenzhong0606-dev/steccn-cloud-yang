@@ -620,22 +620,26 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<DeepDefectiveCategoryDetailListVO> resList = Lists.newArrayList();
         //如果采样数据不为空
         if (CollUtil.isNotEmpty(collectList)) {
-            Map<String, List<QtCheckTaskDetailReportVO>> collectMap = collectList.stream().collect(Collectors.groupingBy(v -> v.getDefectCategory() + "_" + v.getDefectStartTime()));
-            for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> collectEntry : collectMap.entrySet()) {
-                try {
-                    DeepDefectiveCategoryDetailListVO resVo = new DeepDefectiveCategoryDetailListVO();
-                    QtCheckTaskDetailReportVO origin = collectEntry.getValue().get(0);
-                    BeanUtils.copyProperties(origin, resVo);
-                    resVo.setResultSource(QtManagerConstant.QtDefectDataSource.COLLECT.getName());
-                    int sum = collectEntry.getValue().stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(v -> v.getDefectNum()).sum();
-                    resVo.setDefectNum(sum);
-                    resVo.setDefectName(defectIdNameMap.getOrDefault(origin.getDefectId(), Strings.EMPTY));
-                    QtItemCategory qtItemCategory = defectCategoryMap.get(origin.getDefectCategory());
-                    if (Objects.nonNull(qtItemCategory)) {
-                        resVo.setDefectCategoryName(qtItemCategory.getName());
+            //根据缺陷开始
+            Map<LocalDateTime, List<QtCheckTaskDetailReportVO>> collectMap = collectList.stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime()));
+            for (Map.Entry<LocalDateTime, List<QtCheckTaskDetailReportVO>> timeEntry : collectMap.entrySet()) {
+                Map<Integer, List<QtCheckTaskDetailReportVO>> childMap = function.apply(timeEntry.getValue());
+                for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> childEntry : childMap.entrySet()) {
+                    try {
+                        DeepDefectiveCategoryDetailListVO resVo = new DeepDefectiveCategoryDetailListVO();
+                        QtCheckTaskDetailReportVO origin = childEntry.getValue().get(0);
+                        BeanUtils.copyProperties(origin, resVo);
+                        resVo.setResultSource(QtManagerConstant.QtDefectDataSource.COLLECT.getName());
+                        int sum = childEntry.getValue().stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(v -> v.getDefectNum()).sum();
+                        resVo.setDefectNum(sum);
+                        resVo.setDefectName(defectIdNameMap.getOrDefault(origin.getDefectId(), Strings.EMPTY));
+                        QtItemCategory qtItemCategory = defectCategoryMap.get(origin.getDefectCategory());
+                        if (Objects.nonNull(qtItemCategory)) {
+                            resVo.setDefectCategoryName(qtItemCategory.getName());
+                        }
+                        resList.add(resVo);
+                    } catch (Exception e) {
                     }
-                    resList.add(resVo);
-                } catch (Exception e) {
                 }
             }
         }
