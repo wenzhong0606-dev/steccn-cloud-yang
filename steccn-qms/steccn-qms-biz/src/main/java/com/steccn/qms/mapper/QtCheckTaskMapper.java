@@ -67,7 +67,7 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @param taskIds
      * @return
      */
-    List<QtDefectItemInfoVO> getDefectItemList(String apparentCondition,@Param("taskIds") List<Long> taskIds);
+    List<QtDefectItemInfoVO> getDefectItemList(@Param("apparentCondition")String apparentCondition,@Param("taskIds") List<Long> taskIds);
 }
 
 

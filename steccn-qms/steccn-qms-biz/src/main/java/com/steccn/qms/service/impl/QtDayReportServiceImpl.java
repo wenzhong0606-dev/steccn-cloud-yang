@@ -641,39 +641,118 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         QtDayPollingFirstVO qtDayPollingFirstVO = new QtDayPollingFirstVO();
         LocalDateTime startTime = LocalDateUtil.getMorning(date);
         LocalDateTime endTime = LocalDateUtil.getMorning(date.plusDays(1));
-        LambdaQueryWrapper<QtCheckTask> eq = new LambdaQueryWrapper<QtCheckTask>().eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL)
+        LambdaQueryWrapper<QtCheckTask> eq = new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                 //大于等于开始   小于结束
-                .ge(QtCheckTask::getSpotTime, startTime).lt(QtCheckTask::getSpotTime, endTime)
+                .ge(QtCheckTask::getSpotTime, startTime)
+                .lt(QtCheckTask::getSpotTime, endTime)
                 //产线
                 .apply(productLineId != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", productLineId);
         List<QtCheckTask> list = qtCheckTaskService.list(eq);
         List<Long> taskIds = Lists.newArrayList();
         list.forEach(task -> taskIds.add(task.getId()));
-        List<QtDefectItemInfoVO> defectItemList = qtCheckTaskMapper.getDefectItemList(QtManagerConstant.DAY_REPORT_FIELD_APPARENT_CONDITION, taskIds);
-        Map<String, List<QtDefectItemInfoVO>> map = defectItemList.stream().collect(Collectors.groupingBy(QtDefectItemInfoVO::getCategoryName));
-        QtDayReportTableHeadersVO qtDayReportTableHeadersVO = new QtDayReportTableHeadersVO();
-        List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
-        commonHeadList.add(new QtSpcHeadTitleVO("productLineName", "产线"));
-        commonHeadList.add(new QtSpcHeadTitleVO("className", "班次"));
-        qtDayReportTableHeadersVO.setCommon(commonHeadList);
-        //处理数据
-        List<BaseReportHeaderVO> module = Lists.newArrayList();
-        List<QtDayReportPollingDataVO> reportPollingList = Lists.newArrayList();
-        qtDayReportTableHeadersVO.setModule(module);
-        for (Map.Entry<String, List<QtDefectItemInfoVO>> entry : map.entrySet()) {
-            BaseReportHeaderVO baseReportHeaderVO = new BaseReportHeaderVO();
-            baseReportHeaderVO.setLabel(entry.getKey());
-            List<String> value = Lists.newArrayList();
-            for (QtDefectItemInfoVO qtDefectItemInfoVO : entry.getValue()) {
-                value.add(qtDefectItemInfoVO.getName());
-            }
-            baseReportHeaderVO.setValue(value);
-        }
+        if (CollUtil.isNotEmpty(taskIds)) {
+            List<QtDefectItemInfoVO> defectItemList = qtCheckTaskMapper.getDefectItemList(QtManagerConstant.DAY_REPORT_FIELD_APPARENT_CONDITION, taskIds);
+            // 根据缺陷项类别分组
+            Map<String, List<QtDefectItemInfoVO>> map = defectItemList.stream().collect(Collectors.groupingBy(QtDefectItemInfoVO::getCategoryName));
+            // 根据班次类别分组
+            Map<Integer, List<QtDefectItemInfoVO>> classMap = defectItemList.stream().collect(Collectors.groupingBy(QtDefectItemInfoVO::getClassesId));
+            QtDayReportTableHeadersVO qtDayReportTableHeadersVO = new QtDayReportTableHeadersVO();
+            List<QtSpcHeadTitleVO> commonHeadList = Lists.newArrayList();
+            commonHeadList.add(new QtSpcHeadTitleVO("productLineName", "产线"));
+            commonHeadList.add(new QtSpcHeadTitleVO("className", "班次"));
+            qtDayReportTableHeadersVO.setCommon(commonHeadList);
+            //处理数据
+            List<BaseReportHeaderVO> module = Lists.newArrayList();
+            List<QtDayReportPollingDataVO> reportPollingList = Lists.newArrayList();
 
-        //表头
-        qtDayPollingFirstVO.setFlawHeaders(qtDayReportTableHeadersVO);
-        return null;
+            Set<Integer> productLineIds = Sets.newHashSet();
+            productLineIds.add(productLineId);
+            Map<Integer, String> productLineMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(productLineIds)).get();
+            //根据缺陷项分类处理表头数据
+            for (Map.Entry<String, List<QtDefectItemInfoVO>> ItemEntry : map.entrySet()) {
+                BaseReportHeaderVO baseReportHeaderVO = new BaseReportHeaderVO();
+                baseReportHeaderVO.setLabel(ItemEntry.getKey());
+                List<String> value = Lists.newArrayList();
+                List<QtDefectItemInfoVO> collect =  ItemEntry.getValue().stream().collect(Collectors.collectingAndThen(Collectors.toCollection(()
+                        -> new TreeSet<>(Comparator.comparing(QtDefectItemInfoVO::getId))), ArrayList::new));
+                for (QtDefectItemInfoVO qtDefectItemInfoVO : collect) {
+                    value.add(qtDefectItemInfoVO.getName());
+                }
+                baseReportHeaderVO.setValue(value);
+                module.add(baseReportHeaderVO);
+            }
+            qtDayReportTableHeadersVO.setModule(module);
+            //根据班次处理表格数据
+            for (Map.Entry<Integer, List<QtDefectItemInfoVO>> classEntry : classMap.entrySet()) {
+                QtDayReportPollingDataVO qtDayReportPollingDataVO = new QtDayReportPollingDataVO();
+                qtDayReportPollingDataVO.setProductLineName(productLineMap.get(productLineId));
+                qtDayReportPollingDataVO.setClassId(classEntry.getKey());
+                List<FurtherValueStrVO> valueList = Lists.newArrayList();
+                if (QtManagerConstant.QtClassesEnum.DAY.getCode().equals(classEntry.getKey())) {
+                    qtDayReportPollingDataVO.setClassName(QtManagerConstant.QtClassesEnum.DAY.getName());
+                } else if (QtManagerConstant.QtClassesEnum.NIGHT.getCode().equals(classEntry.getKey())) {
+                    qtDayReportPollingDataVO.setClassName(QtManagerConstant.QtClassesEnum.NIGHT.getName());
+                }
+                qtDayReportPollingDataVO.setType(0);
+                //根据类型处理数据对应表头数据
+                for (Map.Entry<String, List<QtDefectItemInfoVO>> typeEntry : map.entrySet()) {
+                    FurtherValueStrVO furtherValueStrVO = new FurtherValueStrVO();
+                    List<String> value = Lists.newArrayList();
+                    List<QtDefectItemInfoVO> collect =  typeEntry.getValue().stream().collect(Collectors.collectingAndThen(Collectors.toCollection(()
+                            -> new TreeSet<>(Comparator.comparing(QtDefectItemInfoVO::getId))), ArrayList::new));
+                    for (QtDefectItemInfoVO qtDefectItemInfoVO : collect) {
+                        value.add(String.valueOf(getDefectItemQuantity(qtDefectItemInfoVO.getId(),classEntry.getValue())));
+                    }
+                    furtherValueStrVO.setValue(value);
+                    valueList.add(furtherValueStrVO);
+                }
+                qtDayReportPollingDataVO.setModule(valueList);
+                reportPollingList.add(qtDayReportPollingDataVO);
+            }
+            //处理合计数据
+            QtDayReportPollingDataVO qtDayReportPollingDataVO = new QtDayReportPollingDataVO();
+            qtDayReportPollingDataVO.setType(1);
+            List<FurtherValueStrVO> totalList = Lists.newArrayList();
+            //根据类型处理数据对应表头数据
+            for (Map.Entry<String, List<QtDefectItemInfoVO>> typeEntry : map.entrySet()) {
+                FurtherValueStrVO furtherValueStrVO = new FurtherValueStrVO();
+                List<String> value = Lists.newArrayList();
+                List<QtDefectItemInfoVO> collect =  typeEntry.getValue().stream().collect(Collectors.collectingAndThen(Collectors.toCollection(()
+                        -> new TreeSet<>(Comparator.comparing(QtDefectItemInfoVO::getId))), ArrayList::new));
+                for (QtDefectItemInfoVO qtDefectItemInfoVO : collect) {
+                    value.add(String.valueOf(getDefectItemQuantity(qtDefectItemInfoVO.getId(),defectItemList)));
+                }
+                furtherValueStrVO.setValue(value);
+                totalList.add(furtherValueStrVO);
+            }
+            qtDayReportPollingDataVO.setModule(totalList);
+            reportPollingList.add(qtDayReportPollingDataVO);
+            //表头
+            qtDayPollingFirstVO.setFlawHeaders(qtDayReportTableHeadersVO);
+            //表格数据
+            qtDayPollingFirstVO.setFlawTableData(reportPollingList);
+        }
+        return qtDayPollingFirstVO;
+    }
+
+
+    /**
+     * 获取缺陷项数量
+     *
+     * @param id
+     * @param list
+     * @return
+     */
+    private Integer getDefectItemQuantity(Integer id, List<QtDefectItemInfoVO> list) {
+        Integer quantity = 0;
+        for (QtDefectItemInfoVO qtDefectItemInfoVO : list) {
+            if (id.equals(qtDefectItemInfoVO.getId())) {
+                quantity++;
+            }
+        }
+        return quantity;
     }
 
 }
