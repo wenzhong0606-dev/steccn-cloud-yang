@@ -274,6 +274,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         Map<String, BigDecimal> luoLossWeightMap = MapUtil.newHashMap();
                         //根据物料进行分组
                         Map<Long, List<QtCheckTask>> groupByMaterial = entry3.getValue().stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
+                        //只统计一次(测点数据用)
+                        int point = 1;
                         //遍历物料分组
                         for (Map.Entry<Long, List<QtCheckTask>> materialEntry : groupByMaterial.entrySet()) {
                             BigDecimal totalBaiItem = new BigDecimal(0);
@@ -489,12 +491,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //任务完成
                                     .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                                     //完成时间范围
-//                                    .ge(QtCheckTask::getSpotTime,startTimeDate).lt(QtCheckTask::getSpotTime,endTimeDate)
+                                    .ge(QtCheckTask::getSpotTime,startTimeDate).lt(QtCheckTask::getSpotTime,endTimeDate)
                                     //只要基片车间
                                     .like(QtCheckTask::getProductLineName, "基片")
                                     //班次
 //                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
-                                    //只要在线检
+                                    //只要巡检
                                     .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
                                     //该物料
                                     .eq(QtCheckTask::getMaterialId, materialEntry.getKey())
@@ -528,10 +530,45 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     }
                                 });
                             }
-                            //仪表数据
-                            QtChartParamDTO chartParam = new QtChartParamDTO();
+                            //只统计一次
+                            if(point == 1){
+                                //仪表数据
+                                QtChartParamDTO chartParam = new QtChartParamDTO();
+                                chartParam.setDateStart(startTimeDate.toLocalDate());
+                                chartParam.setDateEnd(startTimeDate.toLocalDate());
+                                chartParam.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+                                //对应产线
+                                chartParam.setProductLineId(entry3.getKey());
+                                List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+                                //加入测点数据
+                                if(CollUtil.isNotEmpty(qtCheckTaskDetailReportVOS)){
+                                    qtCheckTaskDetailReportVOS.forEach(tmp->{
+                                        //是当前班次
+                                        if(tmp.getClassId().equals(entry2.getKey())){
+                                            QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(tmp.getDefectId());
+                                            if(defectiveItem != null){
+                                                if (defectCounts.get(defectiveItem.getName()) == null) {
+                                                    Integer res = 1;
+                                                    if (tmp.getDefectNum() != null) {
+                                                        res = tmp.getDefectNum();
+                                                    }
+                                                    defectCounts.put(defectiveItem.getName(), res);
+                                                } else {
+                                                    Integer res = 1;
+                                                    if (tmp.getDefectNum() != null) {
+                                                        res = tmp.getDefectNum();
+                                                    }
+                                                    Integer i = defectCounts.get(defectiveItem.getName());
+                                                    i = i + res;
+                                                    defectCounts.put(defectiveItem.getName(), i);
+                                                }
 
-                            qtDefectiveReportService.defectCollect(chartParam);
+                                            }
+                                        }
+                                    });
+                                }
+                                point = 2;
+                            }
                             //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
                             //计算缺陷项Q的损耗重量
