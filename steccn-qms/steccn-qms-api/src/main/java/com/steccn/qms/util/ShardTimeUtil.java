@@ -142,18 +142,34 @@ public class ShardTimeUtil {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 1, 1), start.toLocalTime());
                         listDate.add(start);
                         start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),4,1),end.toLocalTime()));
+                        }
                     } else if (currentMonth >= 4 && currentMonth <= 6) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 4, 1), start.toLocalTime());
                         listDate.add(start);
                         start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),7,1),end.toLocalTime()));
+                        }
                     } else if (currentMonth >= 7 && currentMonth <= 9) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 7, 1), start.toLocalTime());
                         listDate.add(start);
                         start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear(),10,1),end.toLocalTime()));
+                        }
                     } else if (currentMonth >= 10 && currentMonth <= 12) {
                         start = LocalDateTime.of(LocalDate.of(start.getYear(), 10, 1), start.toLocalTime());
                         listDate.add(start);
                         start = start.plusMonths(3);
+                        //永远加最后一个元素
+                        if (!end.isAfter(start)) {
+                            listDate.add(LocalDateTime.of(LocalDate.of(end.getYear() + 1, 1, 1), end.toLocalTime()));
+                        }
                     }
                     break;
                 case "M":
