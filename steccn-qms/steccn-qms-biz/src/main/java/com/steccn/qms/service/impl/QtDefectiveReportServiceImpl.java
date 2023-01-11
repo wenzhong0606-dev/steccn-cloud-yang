@@ -580,7 +580,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             //采样数据-已经做过班次日期，班次，产线，车间的分组了
                             List<QtCheckTaskDetailReportVO> collectList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.COLLECT.getCode().equals(v.getDataSource())).collect(Collectors.toList());
                             //需要进行类别和缺陷记录时段分组
-                            List<DeepDefectiveCategoryDetailListVO> collectDetailList = categoryDetail(collectList, defectCategoryMap, defectIdNameMap);
+                            List<DeepDefectiveCategoryDetailListVO> collectDetailList = categoryDetail(function, collectList, defectCategoryMap, defectIdNameMap);
                             detailList.addAll(collectDetailList);
                             //人工数据
                             List<QtCheckTaskDetailReportVO> manList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.MAN.getCode().equals(v.getDataSource())).collect(Collectors.toList());
@@ -610,12 +610,13 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     /**
      * 采样数据-类别详细
+     * @param function 区分缺陷项还是缺陷项类别
      * @param collectList 采样数据
      * @param defectCategoryMap 缺陷项类别映射
      * @param defectIdNameMap 缺陷项映射
      * @return
      */
-    private List<DeepDefectiveCategoryDetailListVO> categoryDetail(List<QtCheckTaskDetailReportVO> collectList, Map<Integer, QtItemCategory> defectCategoryMap, Map<Integer, String> defectIdNameMap) {
+    private List<DeepDefectiveCategoryDetailListVO> categoryDetail(Function<List<QtCheckTaskDetailReportVO>, Map<Integer, List<QtCheckTaskDetailReportVO>>> function, List<QtCheckTaskDetailReportVO> collectList, Map<Integer, QtItemCategory> defectCategoryMap, Map<Integer, String> defectIdNameMap) {
         List<DeepDefectiveCategoryDetailListVO> resList = Lists.newArrayList();
         //如果采样数据不为空
         if (CollUtil.isNotEmpty(collectList)) {
