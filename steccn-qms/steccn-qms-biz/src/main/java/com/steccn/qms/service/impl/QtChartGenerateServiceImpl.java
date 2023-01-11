@@ -236,9 +236,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     baiItems.forEach(tmp -> {
                         baiItemIds.add(tmp.getId());
                     });
-                    //查询单片重量
+                    //查询单片重量 (生产改成样品重量)
                     List<QtCheckItem> danItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "单片重量"));
+                            .eq(QtCheckItem::getName, "样品重量"));
                     List<Integer> danItemIds = new ArrayList<>();
                     danItems.forEach(tmp -> {
                         danItemIds.add(tmp.getId());
