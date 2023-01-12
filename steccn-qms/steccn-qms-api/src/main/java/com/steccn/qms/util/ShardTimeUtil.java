@@ -212,14 +212,4 @@ public class ShardTimeUtil {
         }
         return listDate;
     }
-
-
-    public static void main(String[] args) {
-        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 3, 1), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.of(2023, 1, 5), LocalTime.MIN);
-        List<LocalDateTime> resList = cutDateRangeNew("Q", start, end);
-        resList.forEach(ele -> {
-            log.info("{}", ele);
-        });
-    }
 }
