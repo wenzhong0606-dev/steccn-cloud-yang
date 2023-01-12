@@ -89,6 +89,7 @@ public class EpDwServiceImpl implements EpDwService {
                     List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
                     dwConditionDTO(date, dwList, meter, lineList);
                     dwConditionDTO(date, dwList, meter, stationList);
+                    //如果2个都为空
                     if(CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)){
                         LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
                         LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
@@ -102,6 +103,8 @@ public class EpDwServiceImpl implements EpDwService {
                 }
             }
             if (CollUtil.isNotEmpty(dwList)) {
+                //按照start时间排序
+                dwList.sort(Comparator.comparing(DwConditionDTO::getMeterId).thenComparing(DwConditionDTO::getStart));
                 List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();
                 dwList.forEach(ele -> {
                     DwMeterReadDTO readDTO = new DwMeterReadDTO();
