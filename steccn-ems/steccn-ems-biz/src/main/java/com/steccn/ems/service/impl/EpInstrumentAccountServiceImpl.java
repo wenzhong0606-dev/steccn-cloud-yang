@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.config.FeignConfig;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -178,7 +179,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         });
 
         //去数据字典中查找到所有位置
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //去能源分区表中找到所有的分区节点
         Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
 
@@ -195,7 +196,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Set<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toSet());
 
         //查询所有远传仪表编码的最近抄表时间
-        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(remoteDataPlatformFeignApi.lastReadTime(distantCodeList)).get();
+        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantCodeList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
         //查询所有非远传仪表编码的最近抄表时间
         Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))
                 .map(EpInstrumentAccountPageVO::getId).collect(Collectors.toSet());
@@ -208,22 +209,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 epMeterReadList.forEach(ele -> readTimeMap.put(ele.getMeterId(), ele.getReadTime()));
             }
         }
-        //查询最后抄表时间
-        Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
-                        .eq(EpMeterRead::getDelFlag, MpConstant.NO)
-//                        .in(CollUtil.isNotEmpty(distantCodeList), EpMeterRead::getDistantMapCode, distantCodeList)
-                        .in(CollUtil.isNotEmpty(instrumentIds), EpMeterRead::getMeterId, instrumentIds))
-                .stream()
-                .collect(Collectors.groupingBy(EpMeterRead::getMeterId));
-
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
                 s.setSiteName(dictMap.get(s.getSite()));
             }
-            if (CollUtil.isNotEmpty(epPartitionNameListVO)&&Objects.nonNull(s.getPartitionNode())){
+            if (CollUtil.isNotEmpty(epPartitionNameListVO) && Objects.nonNull(s.getPartitionNode())) {
                 s.setPartitionNodeName(Objects.isNull(epPartitionNameListVO.get(s.getPartitionNode()))
-                        ?null:epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
+                        ? null : epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
             }
             EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
             epPartitionChildTypeDTO.setType(s.getMeterType());
@@ -416,7 +409,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         if (Objects.nonNull(epInstrumentAccountVO.getSite())){
             Set<Long> dictSet = Sets.newHashSet();
             dictSet.add(epInstrumentAccountVO.getSite());
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(dictMap)){
                 epInstrumentAccountVO.setSiteName(dictMap.get(epInstrumentAccountVO.getSite()));
             }

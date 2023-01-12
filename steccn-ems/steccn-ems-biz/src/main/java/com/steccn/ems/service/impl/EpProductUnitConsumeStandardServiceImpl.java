@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.StandardVO;
@@ -110,8 +111,8 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                     energyTypeSet.add(s.getEnergyType());
                 });
         Map<Integer, String> energyTypeMap= epEnergyTypeService.getBySetIds(energyTypeSet);
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
-        Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(remoteOfficeFeign.listById(officeSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> officeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         standardVOS.forEach(s->{
             s.setStandardTypeName(dictMap.get(s.getStandardType()));
             if (Objects.nonNull(s)&&Objects.nonNull(s.getProductThick())){

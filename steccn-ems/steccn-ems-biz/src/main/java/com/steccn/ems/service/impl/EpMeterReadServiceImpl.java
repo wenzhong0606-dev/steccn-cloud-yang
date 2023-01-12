@@ -16,6 +16,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
@@ -477,7 +478,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         reportWorkIdSet.add(ep.getReportWorkId());
                     }
                 });
-                Map<Long, Long> reportMap = FeignOptional.of(remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet)).get();
+                Map<Long, Long> reportMap = FeignOptional.of(() -> remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
                 //存放仪表的班次日期的抄表数据
                 Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();

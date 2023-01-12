@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.ems.constant.EpManagerConstant;
@@ -108,12 +109,12 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
         if (Objects.isNull(epEnergyType)) {
             return null;
         }
-        Assert.isTrue(MpConstant.YES==epEnergyType.getShowFlag(),"该能源类型已删除");
+        Assert.isTrue(MpConstant.YES.equals(epEnergyType.getShowFlag()),"该能源类型已删除");
         EpEnergyTypeVO epEnergyTypeVO = new EpEnergyTypeVO();
         BeanUtils.copyProperties(epEnergyType, epEnergyTypeVO);
         //设置单位名称
         if (Objects.nonNull(epEnergyType.getMeasureUnit())) {
-            Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(epEnergyType.getMeasureUnit()))).get();
+            Map<Long, String> idNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(epEnergyType.getMeasureUnit())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             epEnergyTypeVO.setMeasureUnitName(idNameMap.get(epEnergyType.getMeasureUnit()));
         }
         //关联图表
@@ -157,7 +158,7 @@ public class EpEnergyTypeServiceImpl extends ServiceImpl<EpEnergyTypeMapper, EpE
             measures.add(epEnergyType.getMeasureUnit());
         }
         //获取所有的单位名称和编码的map集合
-        Map<Long, String> idNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(measures))).get();
+        Map<Long, String> idNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(measures)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         epEnergyTypes.forEach(s -> {
             EpEnergyTypeVO epAddEnergyTypeVO = new EpEnergyTypeVO();
             BeanUtils.copyProperties(s, epAddEnergyTypeVO);
