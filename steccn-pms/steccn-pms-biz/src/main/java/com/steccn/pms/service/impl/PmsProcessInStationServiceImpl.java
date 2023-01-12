@@ -65,7 +65,7 @@ public class PmsProcessInStationServiceImpl extends ServiceImpl<PmsProcessInStat
         //查询字典数据
         Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //查询机构数据
-        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
+        Map<Integer, String> stationMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(pmsProcessInStationVO -> {
             pmsProcessInStationVO.setStation(stationMap.get(pmsProcessInStationVO.getStationId()));
             pmsProcessInStationVO.setUnit(dictMap.get(pmsProcessInStationVO.getUnitId()));

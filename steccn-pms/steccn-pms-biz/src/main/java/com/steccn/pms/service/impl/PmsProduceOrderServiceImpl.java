@@ -96,7 +96,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             //4.1.保存基础信息
             //获取货架信息
             if (Objects.nonNull(model.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(model.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 model.setDefaultWarehouseId(sysOfficeVO.getId());
             }
             save(model);
@@ -200,7 +200,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //3.1查询字典数据
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.2查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.3查询工艺信息
         Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
         //4.处理列表单位以及产线数据
@@ -235,7 +235,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             BeanUtil.copyProperties(dto, pmsProduceOrder);
             //获取货架信息
             if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId())).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 pmsProduceOrder.setDefaultShelfId(sysOfficeVO.getId());
             }
             updateById(pmsProduceOrder);
@@ -613,7 +613,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
                     .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
-            String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
+            String productionLineName = FeignOptional.of(()->remoteOfficeFeign.getNameById(order.getProductionLineId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
@@ -832,9 +832,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
             Set<Integer> productLineIdSet = resList.stream().map(v -> v.getProductLineId()).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet))).get();
+            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Integer> collect = parentMap.values().stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(collect))).get();
+            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(collect)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
             resList.forEach(ele -> {
                 BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();

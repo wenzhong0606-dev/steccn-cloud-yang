@@ -124,7 +124,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             resDTO.setShelfName(orDefault.getShelfName());
         }
 //        HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
-//        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+//        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet)).get();
 //        resDTO.setWarehouseName(sysOfficeMap.get(pmsProduceOrder.getDefaultWarehouseId()));
 //        resDTO.setShelfName(sysOfficeMap.get(pmsProduceOrder.getDefaultShelfId()));
         //5.箱状态
@@ -311,7 +311,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             storageSet.add(pbp.getWarehouseId());
             storageSet.add(pbp.getShelfId());
         }
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         List<PmsProduceOrder> pmsProduceOrders = pmsProduceOrderService.listByIds(orderSet);
         Map<Long, PmsProduceOrder> resMap = Maps.newHashMap();

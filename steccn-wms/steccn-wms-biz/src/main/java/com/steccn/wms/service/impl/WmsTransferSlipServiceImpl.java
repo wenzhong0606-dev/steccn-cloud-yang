@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -104,7 +105,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
             idSet.add(wmsTransferSlipVO.getTargetWarehouse());
             typeSet.add(wmsTransferSlipVO.getType());
         });
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
         page.getRecords().forEach(wmsTransferSlipVO -> {
             wmsTransferSlipVO.setTypeName(dictMap.get(wmsTransferSlipVO.getType()));
@@ -409,7 +410,7 @@ public class WmsTransferSlipServiceImpl extends ServiceImpl<WmsTransferSlipMappe
         idSet.add(wmsTransferSlipVO.getSourceWarehouse());
         idSet.add(wmsTransferSlipVO.getTargetWarehouse());
         typeSet.add(wmsTransferSlipVO.getType());
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(idSet)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
         wmsTransferSlipVO.setTypeName(dictMap.get(wmsTransferSlipVO.getType()));
         wmsTransferSlipVO.setSourceWarehouseName(officeMap.get(wmsTransferSlipVO.getSourceWarehouse()));

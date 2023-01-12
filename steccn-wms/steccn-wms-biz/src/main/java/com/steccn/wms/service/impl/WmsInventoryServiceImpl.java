@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -114,7 +115,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             });
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             infoList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
                 SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
@@ -147,7 +148,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 officeIds.add(info.getShelfId());
             });
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             infoList.forEach(info -> {
                 SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
                 SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());

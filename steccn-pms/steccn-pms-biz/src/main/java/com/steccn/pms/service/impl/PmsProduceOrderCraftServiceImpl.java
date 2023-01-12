@@ -69,7 +69,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
                 SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
                 sysOfficeParentDTO.setId(productionLineId);
                 sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
-                List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+                List<SysOfficeVO> officeVOS = FeignOptional.of(()->remoteOfficeFeign.listByParentId(sysOfficeParentDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 List<PmsWorkOrderCraftStationDTO> stationList = craft.getStationList();
                 //处理数据
                 Assert.notNull(officeVOS, "该产线下不存在可执行工位信息，请检查");

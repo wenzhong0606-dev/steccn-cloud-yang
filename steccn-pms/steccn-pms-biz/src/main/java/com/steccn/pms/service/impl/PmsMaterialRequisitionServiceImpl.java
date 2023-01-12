@@ -97,7 +97,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             });
             //3.3 获取字典以及部门数据
             Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             page.getRecords().forEach(materialRequisitionVO -> {
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
                 materialRequisitionVO.setTypeName(dictMap.get(materialRequisitionVO.getTypeId()));
@@ -212,7 +212,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         }
         //3.3 获取字典、物料以及部门数据
         Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIdSet)).get();
         EqpSpareVO eqpSpareVO = new EqpSpareVO();
         if (CollUtil.isNotEmpty(infoList)) {
@@ -261,7 +261,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
 //    @Override
 //    public Page<MaterialRequisitionPlanVO> planPageList(MaterialRequisitionPlanDTO dto) {
 //        //1.根据工位id获取上级的产线数据
-//        Map<Long, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.getParentOfficeMap(dto.getStation())).get();
+//        Map<Long, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.getParentOfficeMap(dto.getStation())).get();
 //        //2.获取产线id
 //        List<Integer> lineIds = Lists.newArrayList();
 //        officeMap.values().stream().collect(Collectors.toList()).forEach(officeVO -> {
@@ -279,7 +279,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         List<MaterialRequisitionPlanVO> res = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dto.getStation())) {
             //1.根据工位id获取上级的产线数据
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.parentInfo(dto.getStation())).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(dto.getStation()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysOfficeVO sysOfficeVO = new SysOfficeVO();
             //2.获取产线id
             List<Integer> lineIds = Lists.newArrayList();
@@ -447,7 +447,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         });
         materialRequisitionDTO.setList(infoList);
         //获取部门
-        SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(list.get(0).getWorkshopId())).get();
+        SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(list.get(0).getWorkshopId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         materialRequisitionDTO.setDepartmentId(sysOfficeVO.getId());
         //获取类型
         SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.PRODUCE_PICK, PmManagerConstant.MATERIAL_REQUISITION),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

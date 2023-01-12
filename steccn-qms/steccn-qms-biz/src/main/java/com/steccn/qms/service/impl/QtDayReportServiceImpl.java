@@ -359,7 +359,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             manData.add(qtCheckTaskDetailReportVO);
         });
         officeIds.add(productLineId);
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String productLineName = officeMap.get(productLineId);
         List<Long> taskIdList = Lists.newArrayList();
         if (CollUtil.isEmpty(taskList)) {
@@ -670,7 +670,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         Set<Integer> productLineIds = Sets.newHashSet();
         productLineIds.add(productLineId);
-        Map<Integer, String> productLineMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(productLineIds)).get();
+        Map<Integer, String> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(productLineIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据缺陷项分类处理表头数据
         for (Map.Entry<String, List<QtDefectItemInfoVO>> ItemEntry : map.entrySet()) {
             BaseReportHeaderVO baseReportHeaderVO = new BaseReportHeaderVO();

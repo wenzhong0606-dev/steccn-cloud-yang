@@ -103,7 +103,7 @@ public class ReportServiceImpl implements ReportService {
 
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         List<SubstrateDayReportListVO> productLineVOList = Lists.newArrayList();
@@ -636,7 +636,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherProduceReportListVO> tableData = Lists.newArrayList();
         //查询产线车间信息
         Set<Integer> productLineSet = dataList.stream().map(FurtherProduceReportDataVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -828,7 +828,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取车间数据
         Set<Integer> productLineSet = dataList.stream().map(FurtherIngredientMapperVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -1561,7 +1561,7 @@ public class ReportServiceImpl implements ReportService {
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workShopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-        return FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+        return FeignOptional.of(()->remoteOfficeFeign.listByParentId(sysOfficeParentDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 
 }

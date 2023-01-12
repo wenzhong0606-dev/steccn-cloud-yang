@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -108,7 +109,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 typeSet.add(receipt.getType());
                 officeSet.add(receipt.getWarehouseId());
             });
-            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
+            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
             records.forEach(receipt -> {
                 receipt.setTypeName(dictMap.get(receipt.getType()));
@@ -360,7 +361,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         list.forEach(wmsStorageReceiptInfo -> {
             dictSet.add(wmsStorageReceiptInfo.getUnit());
         });
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
         List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
         wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
@@ -443,7 +444,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             materialCodes.add(excelDTO.getMaterialCode());
         });
         System.out.println("单位："+dictName.size());
-        Map<String, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listByName(officeNames)).get();
+        Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByName(officeNames),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<String, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listByCode(materialCodes)).get();
         Map<String, Long> dictIdMap = FeignOptional.of(remoteDictFeignApi.listByNameCh(dictName)).get();
         if (CollUtil.isNotEmpty(excelList)) {
