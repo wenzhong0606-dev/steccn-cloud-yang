@@ -1599,9 +1599,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         List<BiStackGraphDTO<String, BigDecimal>> stackGraphDTOList = Lists.newArrayList();
 
         //将时间范围根据粒度分片
-        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(QtManagerConstant.QtGranularityEnum.DAY.getType()
-                , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MAX));
+        List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRangeNew(QtManagerConstant.QtGranularityEnum.DAY.getType()
+                , LocalDateUtil.getMorning(dto.getDateStart())
+                , LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1)));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         //考虑对比

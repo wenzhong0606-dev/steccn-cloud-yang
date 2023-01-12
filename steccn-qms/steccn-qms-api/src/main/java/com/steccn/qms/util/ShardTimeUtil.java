@@ -195,10 +195,8 @@ public class ShardTimeUtil {
                 case "D":
                     listDate.add(start);
                     start = start.plusDays(1);
-                    if (!end.isAfter(start)){
-                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
-                        listDate.add(LocalDateTime.of(endTimeOfDayStr.getYear(),endTimeOfDayStr.getMonth()
-                                ,endTimeOfDayStr.getDayOfMonth(), 23,59,59));
+                    if (!end.toLocalDate().isAfter(start.toLocalDate())) {
+                        listDate.add(LocalDateTime.of(end.toLocalDate(), LocalTime.of(8, 0, 0)));
                     }
                     break;
                 case "H":
