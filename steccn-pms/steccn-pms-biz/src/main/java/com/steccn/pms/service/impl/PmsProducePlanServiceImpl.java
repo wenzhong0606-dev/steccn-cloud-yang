@@ -781,7 +781,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                 } else {
                     //校验数据是否存在
                     if (updateFlag.equals(PmManagerConstant.OrderStateEnum.ZERO.getCode())) {
-                        LocalDate date = LocalDate.parse(excelDTO.getMonth() + PmReportConstant.date_01, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        LocalDate date = LocalDate.parse(excelDTO.getMonth() + PmsCodeUtil.SHORT_LINE  + PmReportConstant.date_01, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                         List<LocalDate> currentMonthDateAll = LocalDateUtil.getCurrentMonthDateAll(date);
                         for (LocalDate localDate : currentMonthDateAll) {
                             for (ProducePlanVO producePlanVO : producePlanVOList) {
