@@ -145,7 +145,10 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
             EpProduceDetailVO epProduceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(entry.getValue().get(0),epProduceDetailVO);
             if (!parentOfficeMap.isEmpty()) {
-                epProduceDetailVO.setOfficeId(parentOfficeMap.get(entry.getValue().get(0).getOfficeId()).getParentId());
+                SysOfficeVO sysOfficeVO = parentOfficeMap.get(entry.getValue().get(0).getOfficeId());
+                if(Objects.nonNull(sysOfficeVO)){
+                    epProduceDetailVO.setOfficeId(sysOfficeVO.getParentId());
+                }
             }
             parentProduceDetailVOList.add(epProduceDetailVO);
         }
@@ -166,7 +169,10 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         for (EpProduceDetailVO epProduceDetailVO : childProduceDetailVOList) {
             EpProduceDetailVO produceDetailVO = new EpProduceDetailVO();
             BeanUtils.copyProperties(epProduceDetailVO, produceDetailVO);
-            produceDetailVO.setOfficeId(parentOfficeMap.get(epProduceDetailVO.getOfficeId()).getParentId());
+            SysOfficeVO sysOfficeVO = parentOfficeMap.get(epProduceDetailVO.getOfficeId());
+            if(Objects.nonNull(sysOfficeVO)){
+                produceDetailVO.setOfficeId(sysOfficeVO.getParentId());
+            }
             parentProduceDetailVOList.add(produceDetailVO);
         }
         //汇总父节点数据

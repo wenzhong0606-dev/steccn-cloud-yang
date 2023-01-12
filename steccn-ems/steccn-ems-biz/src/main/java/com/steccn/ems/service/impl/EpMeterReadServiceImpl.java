@@ -597,8 +597,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     @Override
     public List<EpMeterReadAllDataVO> kcalDataUnit(Set<LocalDate> dateSet, List<Long> partitionIdList) {
         SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
-        EpEnergyTreeDTO childTree1 = energyTree(partitionIdList, 3);
-        EpEnergyTreeDTO childTree2 = energyTree(partitionIdList, 4);
+        //将组织机构分成3和4类型
+        EpEnergyTreeDTO childTree1 = energyTree(Arrays.asList(1608020964126519296L), 3);
+        EpEnergyTreeDTO childTree2 = energyTree(Arrays.asList(1608021931219775488L), 4);
         Set<Long> childTree = Sets.newHashSet();
         List<EpPartitionVO> childrenList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(childTree1.getPartitionIds())) {
@@ -637,10 +638,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             sortedDateList.add(0, minLocalDate);
             //获取所有的产量信息
             List<EpProduceDetailVO> produceNumList = epComputeProduceDetailService.getProduceDetailList(minLocalDate, sortedDateList.get(sortedDateList.size() - 1));
-            Set<Integer> officeIdSet = produceNumList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
 
             //根据组织机构id和能源类型查询分区节点
-            EpInstrumentAccount defaultEpInstrumentAccount = new EpInstrumentAccount();
             //根据条件获取数据
             List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
                     .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
