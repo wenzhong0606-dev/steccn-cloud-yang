@@ -1675,6 +1675,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 vo.setCustomerId(ele.getCustomer().getId());
             }
             vo.setTaskId(ele.getId());
+            if(Objects.nonNull(vo.getSpotTime())){
+                QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getSpotTime());
+                vo.setClassesId(qtTaskClassCalculate.getClassType());
+                vo.setClassTime(qtTaskClassCalculate.getClassDate());
+            }
             resList.add(vo);
         });
         return resList;
