@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -412,7 +413,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             if (CollUtil.isNotEmpty(epPartitions)) {
                 Set<Integer> officeIdSet = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toSet());
                 //查询产线和产线孩子节点
-                Set<Integer> productLineAndChildren = FeignOptional.of(remoteOfficeFeign.typeAndChildrenFlat(SysOfficeConstant.PRODUCT_LINE)).get();
+                Set<Integer> productLineAndChildren = FeignOptional.of(() -> remoteOfficeFeign.typeAndChildrenFlat(SysOfficeConstant.PRODUCT_LINE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //获取其余节点
                 officeIdSet.removeAll(productLineAndChildren);
                 if(CollUtil.isNotEmpty(officeIdSet)){
