@@ -786,7 +786,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
                         for (LocalDate localDate : currentMonthDateAll) {
                             for (ProducePlanVO producePlanVO : producePlanVOList) {
                                 if (excelDTO.getMaterialCode().equals(producePlanVO.getMaterialCode()) && localDate.equals(producePlanVO.getPlanDate())) {
-                                    errorMsgList.add("物料计划数据已存在");
+                                    errorMsgList.add(localDate +"物料计划数据已存在");
                                 }
                             }
                         }
