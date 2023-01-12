@@ -193,10 +193,10 @@ public class ShardTimeUtil {
                     }
                     break;
                 case "D":
-                    listDate.add(start);
+                    listDate.add(LocalDateUtil.getMorning(start));
                     start = start.plusDays(1);
                     if (!end.toLocalDate().isAfter(start.toLocalDate())) {
-                        listDate.add(LocalDateTime.of(end.toLocalDate(), LocalTime.of(8, 0, 0)));
+                        listDate.add(LocalDateUtil.getMorning(end.toLocalDate()));
                     }
                     break;
                 case "H":

@@ -1773,8 +1773,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return list
      */
     private List<QtCheckTaskReportVO> rateDataList(String keyword, QtSubOrDeepAcceptabilityDTO dto) {
-        dto.setDateTimeStart(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)));
-        dto.setDateTimeEnd(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)));
+        dto.setDateTimeStart(LocalDateUtil.getMorning(dto.getDateStart()));
+        dto.setDateTimeEnd(LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1)));
         List<QtCheckTaskReportVO> resList = Lists.newArrayList();
         Set<Integer> produceLineSet = null;
         if(StrUtil.isNotBlank(keyword)){
