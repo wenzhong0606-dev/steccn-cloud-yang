@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -195,8 +196,18 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
         //查询所有远传仪表编码的最近抄表时间
         Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(remoteDataPlatformFeignApi.lastReadTime(distantCodeList)).get();
+        //查询所有非远传仪表编码的最近抄表时间
+        Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))
+                .map(EpInstrumentAccountPageVO::getId).collect(Collectors.toSet());
 
-
+        Map<Integer, LocalDateTime> readTimeMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(meterIdSet)) {
+            List<EpMeterRead> epMeterReadList = epMeterReadService.list(new QueryWrapper<EpMeterRead>().select("meter_id , max(read_time) as readTime").lambda()
+                    .in(EpMeterRead::getMeterId, meterIdSet).groupBy(EpMeterRead::getMeterId));
+            if (CollUtil.isNotEmpty(epMeterReadList)) {
+                epMeterReadList.forEach(ele -> readTimeMap.put(ele.getMeterId(), ele.getReadTime()));
+            }
+        }
         //查询最后抄表时间
         Map<Integer, List<EpMeterRead>> groupByMeter = epMeterReadService.list(new LambdaQueryWrapper<EpMeterRead>()
                         .eq(EpMeterRead::getDelFlag, MpConstant.NO)
@@ -223,46 +234,17 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
 
             //设置最后抄表时间
-            //先判断仪表的所属类型
-            if (EpManagerConstant.InstrumentType.REMOTE.getCode() == s.getEntityTable()
-                    || EpManagerConstant.InstrumentType.NON_REMOTE.getCode() == s.getEntityTable()) {
+            if(EpManagerConstant.InstrumentType.REMOTE.getCode().equals(s.getEntityTable())){
+               //远传仪表-从数仓获取
                 s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
-            } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode() == s.getEntityTable()) {
+            } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(s.getEntityTable())) {
+                //非远传仪表-从抄表管理获取
+                s.setLastReadingTime(readTimeMap.get(s.getId()));
+            } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(s.getEntityTable())) {
+                //虚拟仪表的最后抄表时间：所有下一级子表的最后抄表时间中最早的一个【下一级子表中最后抄表时间为空，则当前虚拟仪表的最后抄表时间也为空】
                 List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
-                if (CollUtil.isNotEmpty(partitionChildrenList)) {
-                    //找到绑定该节点下子节点的仪表的id
-                    List<Integer> instrumentChildIds = Lists.newArrayList();
-                    partitionChildrenList.stream().forEach(p -> {
-                        //子节点绑定的仪表
-                        EpInstrumentAccountPageVO epInstrumentAccountPageVO = partitionInstrumentVOList.get(p.getId());
-                        if (Objects.nonNull(epInstrumentAccountPageVO)) {
-                            instrumentChildIds.add(epInstrumentAccountPageVO.getId());
-                        }
-                    });
-                    if (CollUtil.isNotEmpty(instrumentChildIds)) {
-                        //如果该节点的子节点绑定了仪表设置最后抄表时间(取每个子节点最后抄表时间最早的)
-                        //保证每个子节点仪表的最后抄表时间都不能有空
-                        List<LocalDateTime> timeList = Lists.newArrayList();
-                        instrumentChildIds.forEach(i -> {
-                            LocalDateTime lastReadTime = getLastReadTime(s.getDistantMapCode(), lastReadTimeMap);
-                            if (Objects.nonNull(lastReadTime)) {
-                                timeList.add(lastReadTime);
-                            }
-                        });
-                        //如果查询到的子表最后抄表时间的个数等于绑定仪表的个数设置虚拟仪表的最后抄表时间
-                        if (instrumentChildIds.size() == timeList.size()) {
-                            //从timeList集合中找到时间最早的
-                            LocalDateTime realLastReadTime = LocalDateTime.now();
-                            for (int i = 0; i < timeList.size(); i++) {
-                                realLastReadTime = timeList.get(i);
-                                if ((i + 1) < timeList.size() && realLastReadTime.isAfter(timeList.get(i + 1))) {
-                                    realLastReadTime = timeList.get(i + 1);
-                                }
-                            }
-                            s.setLastReadingTime(realLastReadTime);
-                        }
-                    }
-                }
+                LocalDateTime vmLastTime = findVMLastTime(partitionLinkChildMap, partitionChildrenList, lastReadTimeMap, readTimeMap);
+                s.setLastReadingTime(vmLastTime);
             }
         });
 
@@ -321,6 +303,42 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         page.setRecords(collect);
 
         return page;
+    }
+
+    /**
+     * 获取虚拟仪表的最后抄表时间
+     *
+     * @param
+     * @param children
+     * @param distantMap
+     * @param readTimeMap
+     * @return
+     */
+    private LocalDateTime findVMLastTime(Map<Long, List<EpPartitionVO>> map, List<EpPartitionVO> children, Map<String, LocalDateTime> distantMap, Map<Integer, LocalDateTime> readTimeMap) {
+        LocalDateTime min = null;
+        for (EpPartitionVO child : children) {
+            LocalDateTime date = null;
+            if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(child.getEntityTable())) {
+                //远传仪表-从数仓获取
+                date = getLastReadTime(child.getDistantMapCode(), distantMap);
+            } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(child.getEntityTable())) {
+                //非远传仪表-从抄表管理获取
+                date = readTimeMap.get(child.getId());
+            } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(child.getEntityTable())) {
+                //虚拟仪表的最后抄表时间：所有下一级子表的最后抄表时间中最早的一个【下一级子表中最后抄表时间为空，则当前虚拟仪表的最后抄表时间也为空】
+                List<EpPartitionVO> curChildren = map.get(child.getId());
+                date = findVMLastTime(map, curChildren, distantMap, readTimeMap);
+            }
+            if (Objects.isNull(date)) {
+                //孩子有一个为空，则直接返回
+                min = null;
+                break;
+            } else if (Objects.isNull(min) || min.isAfter(date)) {
+                //孩子不为空，第一个孩子或者是比前面的抄表时间要小
+                min = date;
+            }
+        }
+        return min;
     }
 
     private List<String> getParentNameList(List<EpPartitionParentVO> parentList,List<String> partitionName) {
@@ -423,6 +441,16 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         epInstrumentAccount.setShowFlag(MpConstant.NO);
         updateById(epInstrumentAccount);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Map<Long, EpInstrumentAccount> listById(Set<Long> partitionNodeIdSet) {
+        Map<Long, EpInstrumentAccount> resMap = Maps.newHashMap();
+        List<EpInstrumentAccount> dbList = list(new LambdaQueryWrapper<EpInstrumentAccount>().in(EpInstrumentAccount::getPartitionNode, partitionNodeIdSet));
+        if(CollUtil.isNotEmpty(dbList)){
+            dbList.forEach(ele -> resMap.put(ele.getPartitionNode(),ele));
+        }
+        return resMap;
     }
 
     /**

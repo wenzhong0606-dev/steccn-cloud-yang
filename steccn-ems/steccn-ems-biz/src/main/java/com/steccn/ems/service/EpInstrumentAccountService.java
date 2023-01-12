@@ -13,6 +13,8 @@ import com.steccn.ems.vo.EpInstrumentAccountVO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -61,6 +63,13 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @return
      */
     Boolean delete(Integer id);
+
+    /**
+     * 获取能耗分区节点挂载的仪表
+     * @param partitionNodeIdSet 能耗分区节点id
+     * @return
+     */
+    Map<Long, EpInstrumentAccount> listById(Set<Long> partitionNodeIdSet);
 
     /**
      * 下载资产卡片图片

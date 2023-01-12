@@ -365,8 +365,19 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
                 .eq(EpPartition::getType, type));
         if (CollUtil.isNotEmpty(epPartitions)) {
+            //查询所有的节点
+            Set<Long> partitionNodeIdSet = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toSet());
+            Map<Long,EpInstrumentAccount> instrumentAccountMap =  epInstrumentAccountService.listById(partitionNodeIdSet);
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
-
+            epPartitionVOS.forEach(ele ->{
+                EpInstrumentAccount account = instrumentAccountMap.get(ele.getId());
+                if(Objects.nonNull(account)){
+                    ele.setMeterId(account.getId());
+                    ele.setMeterStatus(account.getStatus());
+                    ele.setEntityTable(account.getEntityTable());
+                    ele.setDistantMapCode(account.getDistantMapCode());
+                }
+            });
             epPartitionVOS.forEach(s -> {
                 //查询当前节点的孩子节点
                 List<EpPartitionVO> children = epPartitionVOS.stream().filter(v -> s.getId().equals(v.getParentId())).collect(Collectors.toList());
