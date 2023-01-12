@@ -271,16 +271,19 @@ public class EpDwServiceImpl implements EpDwService {
         //考虑离20点最近的时间点
         DwCurrentReportWorkDTO night = late(reportWorkDTO, nightLdt, Boolean.FALSE);
         //考虑离第二天8：00最近的时间点
-
         DwCurrentReportWorkDTO last = late(reportWorkDTO, lastLdt, Boolean.FALSE);
         if (Objects.nonNull(morning)) {
             dwList.add(restTimeData(meter, morningLdt, morning.getStart(), morning, QtManagerConstant.QtClassesEnum.DAY.getCode()));
         }
         if (Objects.nonNull(night)) {
-            dwList.add(restTimeData(meter, nightLdt, night.getEnd(), night, QtManagerConstant.QtClassesEnum.NIGHT.getCode()));
+            dwList.add(restTimeData(meter, night.getEnd(), nightLdt, night, QtManagerConstant.QtClassesEnum.DAY.getCode()));
         }
         if (Objects.nonNull(last)) {
-            dwList.add(restTimeData(meter, last.getEnd(), lastLdt, last, QtManagerConstant.QtClassesEnum.DAY.getCode()));
+            if (last.getEnd().isAfter(nightLdt)) {
+                dwList.add(restTimeData(meter, last.getEnd(), lastLdt, last, QtManagerConstant.QtClassesEnum.NIGHT.getCode()));
+            } else {
+                dwList.add(restTimeData(meter, nightLdt, lastLdt, last, QtManagerConstant.QtClassesEnum.NIGHT.getCode()));
+            }
         }
     }
 
@@ -316,7 +319,7 @@ public class EpDwServiceImpl implements EpDwService {
         if (count == 0) {
             Optional<DwCurrentReportWorkDTO> op;
             if (prev) {
-                op = reportWorkDTO.stream().filter(v -> v.getStart().isBefore(time)).max(Comparator.comparing(DwCurrentReportWorkDTO::getEnd));
+                op = reportWorkDTO.stream().filter(v -> v.getStart().isAfter(time)).min(Comparator.comparing(DwCurrentReportWorkDTO::getStart));
             } else {
                 op = reportWorkDTO.stream().filter(v -> v.getEnd().isBefore(time)).max(Comparator.comparing(DwCurrentReportWorkDTO::getEnd));
             }

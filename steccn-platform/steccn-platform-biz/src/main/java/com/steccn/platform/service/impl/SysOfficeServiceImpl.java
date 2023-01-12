@@ -265,6 +265,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         Set<Integer> resSet = Sets.newHashSet();
         List<SysOffice> rootList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getOfficeType, officeType).select(SysOffice::getId, SysOffice::getOfficeCode));
         if (CollUtil.isNotEmpty(rootList)) {
+            resSet.addAll(rootList.stream().map(SysOffice::getId).collect(Collectors.toSet()));
             childrenCycle(resSet, rootList);
         }
         return resSet;
