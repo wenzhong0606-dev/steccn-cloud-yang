@@ -69,14 +69,14 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //拷贝数据，设置创建人时间
         BeanUtil.copyProperties(dto, model);
         //校验该物料是否存在当前版本信息
-        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getIsCurrentVersion())){
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getIsCurrentVersion())) {
             List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>()
                     .eq(PmCraftRoute::getMaterialId, dto.getMaterialId())
                     .eq(PmCraftRoute::getIsCurrentVersion, PmManagerConstant.OrderStateEnum.ONE.getCode()));
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(list)) {
                 update(new LambdaUpdateWrapper<PmCraftRoute>()
-                        .set(PmCraftRoute::getIsCurrentVersion,PmManagerConstant.OrderStateEnum.ZERO.getCode())
-                        .eq(PmCraftRoute::getMaterialId,dto.getMaterialId()));
+                        .set(PmCraftRoute::getIsCurrentVersion, PmManagerConstant.OrderStateEnum.ZERO.getCode())
+                        .eq(PmCraftRoute::getMaterialId, dto.getMaterialId()));
             }
         }
         model.setCreateBy(SecurityUtils.getUser().getUserId());
@@ -284,7 +284,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
             sysOfficeParentDTO.setId(productLineId);
             sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
-            List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+            List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(officeVOS)) {
                 list.forEach(stations -> {
                     officeVOS.forEach(
