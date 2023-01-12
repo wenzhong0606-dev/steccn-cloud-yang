@@ -82,7 +82,7 @@ public class EpDwServiceImpl implements EpDwService {
                     dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
                     dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
                     dwList.add(dwConditionDTO);
-                } else if(CollUtil.isNotEmpty(allReportWorkList)){
+                } else {
                     //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
                     //根据仪表挂载的节点获取报工记录
                     List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
@@ -240,6 +240,9 @@ public class EpDwServiceImpl implements EpDwService {
      * @param reportWorkDTO
      */
     private void dwConditionDTO(LocalDate date, List<DwConditionDTO> dwList, EpDwMeterPartitionDTO meter, List<DwCurrentReportWorkDTO> reportWorkDTO) {
+        if(CollUtil.isEmpty(reportWorkDTO)){
+            return;
+        }
         LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
         LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
         LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
@@ -318,7 +321,12 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private DwCurrentReportWorkDTO late(List<DwCurrentReportWorkDTO> reportWorkDTO, LocalDateTime time, boolean prev) {
         DwCurrentReportWorkDTO res = null;
-        long count = reportWorkDTO.stream().filter(v -> v.getEnd().equals(time)).count();
+        long count;
+        if(prev){
+            count = reportWorkDTO.stream().filter(v -> v.getStart().equals(time) || v.getStart().isBefore(time)).count();
+        }else{
+            count = reportWorkDTO.stream().filter(v -> v.getEnd().equals(time) || v.getEnd().isAfter(time)).count();
+        }
         if (count == 0) {
             Optional<DwCurrentReportWorkDTO> op;
             if (prev) {
