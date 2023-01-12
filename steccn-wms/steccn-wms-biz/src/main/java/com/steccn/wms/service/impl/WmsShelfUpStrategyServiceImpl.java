@@ -96,42 +96,45 @@ public class WmsShelfUpStrategyServiceImpl extends ServiceImpl<WmsShelfUpStrateg
         Map<Long, WmsMaterialShelfUpVO> map = Maps.newHashMap();
         if (CollUtil.isNotEmpty(materialIds)) {
             List<WmsShelfUpStrategy> list = list(new LambdaQueryWrapper<WmsShelfUpStrategy>().in(WmsShelfUpStrategy::getMaterialId, materialIds));
-            Map<Long, List<WmsShelfUpStrategy>> collect = list.stream().collect(Collectors.groupingBy(WmsShelfUpStrategy::getMaterialId));
-            Set<Integer> officeIds = Sets.newHashSet();
-            collect.forEach((materialId, shelfUp) -> {
-                shelfUp.forEach(info -> {
-                    List<BaseSelectVO> storageLocation = JSONArray.parseArray(info.getStorageLocation().toString(), BaseSelectVO.class);
-                    storageLocation.forEach(location -> {
-                        officeIds.add((Integer) location.getId());
+            if (CollUtil.isNotEmpty(list)) {
+                Map<Long, List<WmsShelfUpStrategy>> collect = list.stream().collect(Collectors.groupingBy(WmsShelfUpStrategy::getMaterialId));
+                Set<Integer> officeIds = Sets.newHashSet();
+                collect.forEach((materialId, shelfUp) -> {
+                    shelfUp.forEach(info -> {
+                        List<BaseSelectVO> storageLocation = JSONArray.parseArray(info.getStorageLocation().toString(), BaseSelectVO.class);
+                        storageLocation.forEach(location -> {
+                            officeIds.add((Integer) location.getId());
+                        });
                     });
                 });
-            });
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
-            collect.forEach((materialId, shelfUp) -> {
-                WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
-                wmsMaterialShelfUpVO.setMaterialId(materialId);
-                shelfUp.forEach(info -> {
-                    List<BaseSelectVO> storageLocation = JSONArray.parseArray(info.getStorageLocation().toString(), BaseSelectVO.class);
-                    storageLocation.forEach(location -> {
-                        SysOfficeVO sysOfficeVO = officeMap.get((Integer) location.getId());
-                        if (Objects.nonNull(sysOfficeVO)) {
-                            if (SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())
-                                    && Objects.isNull(wmsMaterialShelfUpVO.getWarehouseId())) {
-                                wmsMaterialShelfUpVO.setWarehouseId((Integer) location.getId());
-                                wmsMaterialShelfUpVO.setWarehouseCode(sysOfficeVO.getOfficeCode());
-                                wmsMaterialShelfUpVO.setWarehouseName(sysOfficeVO.getOfficeName());
+                Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+                for (Map.Entry<Long, List<WmsShelfUpStrategy>> entry : collect.entrySet()) {
+                    WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
+                    wmsMaterialShelfUpVO.setMaterialId(entry.getKey());
+                    for (WmsShelfUpStrategy info : entry.getValue()) {
+                        List<BaseSelectVO> storageLocation = JSONArray.parseArray(info.getStorageLocation().toString(), BaseSelectVO.class);
+                        storageLocation.forEach(location -> {
+                            SysOfficeVO sysOfficeVO = officeMap.get((Integer) location.getId());
+                            if (Objects.nonNull(sysOfficeVO)) {
+                                if (SysOfficeConstant.WAREHOUSE_TYPE.equals(sysOfficeVO.getOfficeType())
+                                        && Objects.isNull(wmsMaterialShelfUpVO.getWarehouseId())) {
+                                    wmsMaterialShelfUpVO.setWarehouseId((Integer) location.getId());
+                                    wmsMaterialShelfUpVO.setWarehouseCode(sysOfficeVO.getOfficeCode());
+                                    wmsMaterialShelfUpVO.setWarehouseName(sysOfficeVO.getOfficeName());
+                                }
+                                if (SysOfficeConstant.SHELF_TYPE.equals(sysOfficeVO.getOfficeType())
+                                        && Objects.isNull(wmsMaterialShelfUpVO.getShelfId())) {
+                                    wmsMaterialShelfUpVO.setShelfId((Integer) location.getId());
+                                    wmsMaterialShelfUpVO.setShelfName(sysOfficeVO.getOfficeName());
+                                    wmsMaterialShelfUpVO.setShelfCode(sysOfficeVO.getOfficeCode());
+                                }
                             }
-                            if (SysOfficeConstant.SHELF_TYPE.equals(sysOfficeVO.getOfficeType())
-                                    && Objects.isNull(wmsMaterialShelfUpVO.getShelfId())) {
-                                wmsMaterialShelfUpVO.setShelfId((Integer) location.getId());
-                                wmsMaterialShelfUpVO.setShelfName(sysOfficeVO.getOfficeName());
-                                wmsMaterialShelfUpVO.setShelfCode(sysOfficeVO.getOfficeCode());
-                            }
-                        }
-                    });
-                });
-                map.put(materialId, wmsMaterialShelfUpVO);
-            });
+                        });
+                    }
+                    map.put(entry.getKey(), wmsMaterialShelfUpVO);
+                }
+            }
+
         }
         return map;
     }
