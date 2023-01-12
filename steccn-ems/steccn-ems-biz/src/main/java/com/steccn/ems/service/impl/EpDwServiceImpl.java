@@ -24,11 +24,16 @@ import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +52,10 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpEnergyPricePlanService epEnergyPricePlanService;
     private final EpEnergyMoneyService epEnergyMoneyService;
     private final EpPartitionService epPartitionService;
+    private final TransactionTemplate transactionTemplate;
+
+    private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(300), Executors.defaultThreadFactory());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -90,7 +99,7 @@ public class EpDwServiceImpl implements EpDwService {
                     dwConditionDTO(date, dwList, meter, lineList);
                     dwConditionDTO(date, dwList, meter, stationList);
                     //如果2个都为空
-                    if(CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)){
+                    if (CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)) {
                         LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
                         LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
                         LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
@@ -141,47 +150,63 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean electricMoney(LocalDate date) {
-        //保持幂等，判断今天是否已经执行过
-        long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>().eq(EpEnergyMoney::getClassDate, date));
-        if (count > 0) {
-            log.info("班次日期 -> {} 已跑过", date);
-            return Boolean.FALSE;
-        }
-        //1.查询所有的远传仪表
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
-        if (CollUtil.isNotEmpty(meterList)) {
+        for (EpDwMeterPartitionDTO meter : meterList) {
+            moneyPool.submit(() -> {
+                Boolean money = money(date, meter);
+                if (!money) {
+                    log.info("班次日期 -> {} ,仪表{} 执行失败", date, meter.getMeterId());
+                }
+            });
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 计算钱
+     *
+     * @param date  日期
+     * @param meter 仪表
+     */
+    private Boolean money(LocalDate date, EpDwMeterPartitionDTO meter) {
+        if (Objects.nonNull(meter) && Objects.nonNull(date)) {
+            //保持幂等，判断这个仪表是否已经执行过
+            long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>()
+                    .eq(EpEnergyMoney::getClassDate, date)
+                    .eq(EpEnergyMoney::getPartitionId, meter.getPartitionId()));
+            if (count > 0) {
+                log.info("班次日期 -> {} ,仪表{} 已跑过", date, meter.getMeterId());
+                return Boolean.TRUE;
+            }
             //2.查询当前班次日期有效的能源计费方案明细
             List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
             if (CollUtil.isNotEmpty(priceList)) {
                 //3.获取节点对应的方案
                 List<EpDwEnergyPricePlanDTO> meterPriceList = Lists.newArrayList();
                 List<DwMeterReadDTO> dwConditionDTOList = Lists.newArrayList();
-                for (EpDwMeterPartitionDTO meter : meterList) {
-                    for (EpDwEnergyPricePlanDTO price : priceList) {
-                        EpDwEnergyPricePlanDTO vo = new EpDwEnergyPricePlanDTO();
-                        BeanUtils.copyProperties(price, vo);
-                        vo.setPartitionId(meter.getPartitionId());
-                        vo.setDistantMapCode(meter.getDistantMapCode());
-                        DwMeterReadDTO condition1 = new DwMeterReadDTO();
-                        //班次日期调整
-                        if (price.getEnd().equals(LocalTime.of(0, 0, 0))) {
-                            condition1.setStart(LocalDateTime.of(date.plusDays(1), price.getEnd()));
-                            condition1.setEnd(LocalDateTime.of(date.plusDays(1), price.getEnd()));
-                        } else {
-                            condition1.setStart(LocalDateTime.of(date, price.getEnd()));
-                            condition1.setEnd(LocalDateTime.of(date, price.getEnd()));
-                        }
-                        condition1.setCode(meter.getDistantMapCode());
-                        dwConditionDTOList.add(condition1);
-                        DwMeterReadDTO condition2 = new DwMeterReadDTO();
-                        condition2.setStart(LocalDateTime.of(date, price.getStart()));
-                        condition2.setEnd(LocalDateTime.of(date, price.getStart()));
-                        condition2.setCode(meter.getDistantMapCode());
-                        dwConditionDTOList.add(condition2);
-                        meterPriceList.add(vo);
+                for (EpDwEnergyPricePlanDTO price : priceList) {
+                    EpDwEnergyPricePlanDTO vo = new EpDwEnergyPricePlanDTO();
+                    BeanUtils.copyProperties(price, vo);
+                    vo.setPartitionId(meter.getPartitionId());
+                    vo.setDistantMapCode(meter.getDistantMapCode());
+                    DwMeterReadDTO condition1 = new DwMeterReadDTO();
+                    //班次日期调整
+                    if (price.getEnd().equals(LocalTime.of(0, 0, 0))) {
+                        condition1.setStart(LocalDateTime.of(date.plusDays(1), price.getEnd()));
+                        condition1.setEnd(LocalDateTime.of(date.plusDays(1), price.getEnd()));
+                    } else {
+                        condition1.setStart(LocalDateTime.of(date, price.getEnd()));
+                        condition1.setEnd(LocalDateTime.of(date, price.getEnd()));
                     }
+                    condition1.setCode(meter.getDistantMapCode());
+                    dwConditionDTOList.add(condition1);
+                    DwMeterReadDTO condition2 = new DwMeterReadDTO();
+                    condition2.setStart(LocalDateTime.of(date, price.getStart()));
+                    condition2.setEnd(LocalDateTime.of(date, price.getStart()));
+                    condition2.setCode(meter.getDistantMapCode());
+                    dwConditionDTOList.add(condition2);
+                    meterPriceList.add(vo);
                 }
                 //4.根据对应方案 去查询读数
                 List<DwEpMeterCollectVO> meterReadList = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwConditionDTOList)).get();
@@ -223,13 +248,18 @@ public class EpDwServiceImpl implements EpDwService {
                         }
                     }
                     if (CollUtil.isNotEmpty(insertList)) {
-                        epEnergyMoneyService.saveBatch(insertList);
+                        transactionTemplate.execute(status -> {
+                            epEnergyMoneyService.saveBatch(insertList);
+                            return Boolean.TRUE;
+                        });
                     }
                 }
             }
+            return Boolean.TRUE;
         }
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
+
 
     /**
      * 根据报工数据组织一天的数据
@@ -240,7 +270,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param reportWorkDTO
      */
     private void dwConditionDTO(LocalDate date, List<DwConditionDTO> dwList, EpDwMeterPartitionDTO meter, List<DwCurrentReportWorkDTO> reportWorkDTO) {
-        if(CollUtil.isEmpty(reportWorkDTO)){
+        if (CollUtil.isEmpty(reportWorkDTO)) {
             return;
         }
         LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
@@ -322,9 +352,9 @@ public class EpDwServiceImpl implements EpDwService {
     private DwCurrentReportWorkDTO late(List<DwCurrentReportWorkDTO> reportWorkDTO, LocalDateTime time, boolean prev) {
         DwCurrentReportWorkDTO res = null;
         long count;
-        if(prev){
+        if (prev) {
             count = reportWorkDTO.stream().filter(v -> v.getStart().equals(time) || v.getStart().isBefore(time)).count();
-        }else{
+        } else {
             count = reportWorkDTO.stream().filter(v -> v.getEnd().equals(time) || v.getEnd().isAfter(time)).count();
         }
         if (count == 0) {
