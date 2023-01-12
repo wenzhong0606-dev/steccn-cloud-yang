@@ -1,10 +1,12 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -42,6 +44,8 @@ public class ProcessReportWorkController {
     @PostMapping("/add")
     @SysLog("提交报工")
     public R<Boolean> submitReportWork(@Valid @RequestBody ProcessReportWorkSubmitDTO dto) {
+        //时间不可以跨班次
+        Assert.isTrue(CalculateDateUtil.isSameClassType(dto.getStartTime(), dto.getEndTime()), "报工时间不可以跨班次");
         if(CollUtil.isNotEmpty(dto.getConsumeDTOList())){
             Set<Integer> set = Sets.newHashSet();
             for (ProcessReportWorkConsumeDTO consumeDTO : dto.getConsumeDTOList()) {
