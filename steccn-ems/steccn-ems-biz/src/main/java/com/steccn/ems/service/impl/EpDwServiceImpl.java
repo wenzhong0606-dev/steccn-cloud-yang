@@ -17,6 +17,7 @@ import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
@@ -58,7 +59,7 @@ public class EpDwServiceImpl implements EpDwService {
         if (CollUtil.isNotEmpty(meterList)) {
             Set<Integer> meterSet = meterList.stream().map(EpDwMeterPartitionDTO::getMeterId).collect(Collectors.toSet());
             long count = epMeterReadService.count(new LambdaQueryWrapper<EpMeterRead>()
-                    .eq(EpMeterRead::getReadDate, date).in(EpMeterRead::getMeterId,meterSet));
+                    .eq(EpMeterRead::getReadDate, date).in(EpMeterRead::getMeterId, meterSet));
             if (count > 0) {
                 log.info("读数归档 班次日期 -> {} 已跑过", date);
                 return Boolean.FALSE;
@@ -72,7 +73,7 @@ public class EpDwServiceImpl implements EpDwService {
 
             //遍历所有的远传仪表
             for (EpDwMeterPartitionDTO meter : meterList) {
-                if(otherPartitionNodeSet.contains(meter.getPartitionId())){
+                if (otherPartitionNodeSet.contains(meter.getPartitionId())) {
                     //仅统计每日能耗（类型II）的节点
                     DwConditionDTO dwConditionDTO = new DwConditionDTO();
                     dwConditionDTO.setCode(meter.getDistantMapCode());
@@ -81,20 +82,29 @@ public class EpDwServiceImpl implements EpDwService {
                     dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
                     dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
                     dwList.add(dwConditionDTO);
-                }else if(CollUtil.isNotEmpty(allReportWorkList)){
+                } else {
                     //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
                     //根据仪表挂载的节点获取报工记录
                     List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
                     List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
-                    List<DwCurrentReportWorkDTO> workshopList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getWorkshopId())).collect(Collectors.toList());
-                    List<DwCurrentReportWorkDTO> departmentList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getDepartmentId())).collect(Collectors.toList());
-                    dwConditionDTO(dwList, meter, lineList);
-                    dwConditionDTO(dwList, meter, stationList);
-                    dwConditionDTO(dwList, meter, workshopList);
-                    dwConditionDTO(dwList, meter, departmentList);
+                    dwConditionDTO(date, dwList, meter, lineList);
+                    dwConditionDTO(date, dwList, meter, stationList);
+                    //如果2个都为空
+                    if(CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)){
+                        LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
+                        LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
+                        LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
+                        //查询2条数据 T日8：00 T日20：00 T+1日8：00
+                        DwConditionDTO morningDefault = getDefaultDwConditionDTO(meter, date, 0, morningLdt, nightLdt);
+                        DwConditionDTO nightDefault = getDefaultDwConditionDTO(meter, date, 1, nightLdt, lastLdt);
+                        dwList.add(morningDefault);
+                        dwList.add(nightDefault);
+                    }
                 }
             }
             if (CollUtil.isNotEmpty(dwList)) {
+                //按照start时间排序
+                dwList.sort(Comparator.comparing(DwConditionDTO::getMeterId).thenComparing(DwConditionDTO::getStart));
                 List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();
                 dwList.forEach(ele -> {
                     DwMeterReadDTO readDTO = new DwMeterReadDTO();
@@ -222,23 +232,154 @@ public class EpDwServiceImpl implements EpDwService {
     }
 
     /**
+     * 根据报工数据组织一天的数据
+     *
+     * @param date
      * @param dwList
      * @param meter
      * @param reportWorkDTO
      */
-    private void dwConditionDTO(List<DwConditionDTO> dwList, EpDwMeterPartitionDTO meter, List<DwCurrentReportWorkDTO> reportWorkDTO) {
-        for (DwCurrentReportWorkDTO data : reportWorkDTO) {
-            DwConditionDTO dwConditionDTO = new DwConditionDTO();
-            dwConditionDTO.setMeterId(meter.getMeterId());
-            dwConditionDTO.setReadDate(data.getClassDate());
-            dwConditionDTO.setClassId(data.getClassId());
-            dwConditionDTO.setThick(data.getThick());
-            dwConditionDTO.setReportWorkId(data.getReportWorkId());
-            dwConditionDTO.setCode(meter.getDistantMapCode());
-            dwConditionDTO.setStart(data.getStart());
-            dwConditionDTO.setEnd(data.getEnd());
-            dwList.add(dwConditionDTO);
+    private void dwConditionDTO(LocalDate date, List<DwConditionDTO> dwList, EpDwMeterPartitionDTO meter, List<DwCurrentReportWorkDTO> reportWorkDTO) {
+        if(CollUtil.isEmpty(reportWorkDTO)){
+            return;
+        }
+        LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
+        LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
+        LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
+        //获取一个仪表节点一天的报工数据
+        for (int i = 0; i < reportWorkDTO.size(); i++) {
+            DwCurrentReportWorkDTO reportWork = reportWorkDTO.get(i);
+            DwConditionDTO dwConditionDTO1 = getDwConditionDTO(meter, reportWork);
+            dwList.add(dwConditionDTO1);
+        }
+        //按照时间排序
+        reportWorkDTO.sort(Comparator.comparing(DwCurrentReportWorkDTO::getStart));
+        //考虑数据重叠，去重
+        List<DwCurrentReportWorkDTO> filterList = Lists.newArrayList();
+        for (DwCurrentReportWorkDTO reportWork : reportWorkDTO) {
+            long count = reportWorkDTO.stream().filter(v -> v != reportWork)
+                    .filter(v -> (v.getStart().isBefore(reportWork.getStart()) && v.getEnd().isAfter(reportWork.getEnd()))).count();
+            if (count == 0) {
+                filterList.add(reportWork);
+            }
+        }
+        //插入值缝隙时间
+        for (int i = 1; i < filterList.size(); i++) {
+            DwCurrentReportWorkDTO prev = reportWorkDTO.get(i - 1);
+            DwCurrentReportWorkDTO cur = reportWorkDTO.get(i);
+            if (cur.getStart().isAfter(prev.getEnd())) {
+                DwConditionDTO dwConditionDTO = restTimeData(meter, prev.getEnd(), cur.getStart(), cur, cur.getClassId());
+                dwList.add(dwConditionDTO);
+            }
+        }
+        //考虑离8点最近的时间点
+        DwCurrentReportWorkDTO morning = late(reportWorkDTO, morningLdt, Boolean.TRUE);
+        //考虑离20点最近的时间点
+        DwCurrentReportWorkDTO night = late(reportWorkDTO, nightLdt, Boolean.FALSE);
+        //考虑离第二天8：00最近的时间点
+        DwCurrentReportWorkDTO last = late(reportWorkDTO, lastLdt, Boolean.FALSE);
+        if (Objects.nonNull(morning)) {
+            dwList.add(restTimeData(meter, morningLdt, morning.getStart(), morning, QtManagerConstant.QtClassesEnum.DAY.getCode()));
+        }
+        if (Objects.nonNull(night)) {
+            dwList.add(restTimeData(meter, night.getEnd(), nightLdt, night, QtManagerConstant.QtClassesEnum.DAY.getCode()));
+        }
+        if (Objects.nonNull(last)) {
+            if (last.getEnd().isAfter(nightLdt)) {
+                dwList.add(restTimeData(meter, last.getEnd(), lastLdt, last, QtManagerConstant.QtClassesEnum.NIGHT.getCode()));
+            } else {
+                dwList.add(restTimeData(meter, nightLdt, lastLdt, last, QtManagerConstant.QtClassesEnum.NIGHT.getCode()));
+            }
         }
     }
 
+    /**
+     * 空闲时间的能耗数据
+     *
+     * @param meter      仪表信息
+     * @param start      开始时间
+     * @param end        结束时间
+     * @param reportWork 最早报工数据
+     * @return 最早报工数据
+     */
+    private DwConditionDTO restTimeData(EpDwMeterPartitionDTO meter, LocalDateTime start, LocalDateTime end, DwCurrentReportWorkDTO reportWork, Integer classId) {
+        DwConditionDTO dwConditionDTO = getDwConditionDTO(meter, reportWork);
+        dwConditionDTO.setStart(start);
+        dwConditionDTO.setEnd(end);
+        dwConditionDTO.setReportWorkId(null);
+        dwConditionDTO.setThick(null);
+        dwConditionDTO.setClassId(classId);
+        return dwConditionDTO;
+    }
+
+    /**
+     * 找离某个时间最近的数据，如果相等或者没有则返回空
+     *
+     * @param reportWorkDTO 报工集合
+     * @param time          时间点
+     * @return
+     */
+    private DwCurrentReportWorkDTO late(List<DwCurrentReportWorkDTO> reportWorkDTO, LocalDateTime time, boolean prev) {
+        DwCurrentReportWorkDTO res = null;
+        long count;
+        if(prev){
+            count = reportWorkDTO.stream().filter(v -> v.getStart().equals(time) || v.getStart().isBefore(time)).count();
+        }else{
+            count = reportWorkDTO.stream().filter(v -> v.getEnd().equals(time) || v.getEnd().isAfter(time)).count();
+        }
+        if (count == 0) {
+            Optional<DwCurrentReportWorkDTO> op;
+            if (prev) {
+                op = reportWorkDTO.stream().filter(v -> v.getStart().isAfter(time)).min(Comparator.comparing(DwCurrentReportWorkDTO::getStart));
+            } else {
+                op = reportWorkDTO.stream().filter(v -> v.getEnd().isBefore(time)).max(Comparator.comparing(DwCurrentReportWorkDTO::getEnd));
+            }
+            if (op.isPresent()) {
+                res = op.get();
+            }
+        }
+        return res;
+    }
+
+
+    /**
+     * 构造元素
+     *
+     * @param meter 仪表信息
+     * @param data  报工数据
+     * @return
+     */
+    private DwConditionDTO getDwConditionDTO(EpDwMeterPartitionDTO meter, DwCurrentReportWorkDTO data) {
+        DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setMeterId(meter.getMeterId());
+        dwConditionDTO.setReadDate(data.getClassDate());
+        dwConditionDTO.setClassId(data.getClassId());
+        dwConditionDTO.setThick(data.getThick());
+        dwConditionDTO.setReportWorkId(data.getReportWorkId());
+        dwConditionDTO.setCode(meter.getDistantMapCode());
+        dwConditionDTO.setStart(data.getStart());
+        dwConditionDTO.setEnd(data.getEnd());
+        return dwConditionDTO;
+    }
+
+    /**
+     * 获取默认的数据
+     *
+     * @param meter
+     * @param date
+     * @param classId
+     * @param start
+     * @param end
+     * @return
+     */
+    private DwConditionDTO getDefaultDwConditionDTO(EpDwMeterPartitionDTO meter, LocalDate date, Integer classId, LocalDateTime start, LocalDateTime end) {
+        DwConditionDTO dwConditionDTO = new DwConditionDTO();
+        dwConditionDTO.setMeterId(meter.getMeterId());
+        dwConditionDTO.setReadDate(date);
+        dwConditionDTO.setClassId(classId);
+        dwConditionDTO.setCode(meter.getDistantMapCode());
+        dwConditionDTO.setStart(start);
+        dwConditionDTO.setEnd(end);
+        return dwConditionDTO;
+    }
 }

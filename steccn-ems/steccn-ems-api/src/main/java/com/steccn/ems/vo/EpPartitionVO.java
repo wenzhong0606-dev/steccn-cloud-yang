@@ -73,6 +73,9 @@ public class EpPartitionVO implements Serializable {
     @JsonIgnore
     private Integer entityTable;
 
+    @ApiModelProperty("远传仪表编码")
+    private String distantMapCode;
+
     /**
      * 0停用 1启用
      */

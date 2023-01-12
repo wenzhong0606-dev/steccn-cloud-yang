@@ -364,21 +364,27 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //先找出该能源类型下的所有分区节点
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
                 .eq(EpPartition::getType, type));
-        List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
-        if (CollUtil.isEmpty(epPartitionVOS)){
-            return linkChildren;
-        }
-
-        epPartitionVOS.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-            List<EpPartitionVO> epPartitionVOList = Lists.newArrayList();
-            epPartitionVOS.stream().filter(v->Objects.nonNull(v)).forEach(v->{
-                if (v.getParentId()==s.getId()){
-                    epPartitionVOList.add(v);
+        if (CollUtil.isNotEmpty(epPartitions)) {
+            //查询所有的节点
+            Set<Long> partitionNodeIdSet = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toSet());
+            Map<Long,EpInstrumentAccount> instrumentAccountMap =  epInstrumentAccountService.listById(partitionNodeIdSet);
+            List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+            epPartitionVOS.forEach(ele ->{
+                EpInstrumentAccount account = instrumentAccountMap.get(ele.getId());
+                if(Objects.nonNull(account)){
+                    ele.setMeterId(account.getId());
+                    ele.setMeterStatus(account.getStatus());
+                    ele.setEntityTable(account.getEntityTable());
+                    ele.setDistantMapCode(account.getDistantMapCode());
                 }
             });
-            //获取该类型下每个节点及其下一级子节点的集合
-            linkChildren.put(s.getId(),epPartitionVOList);
-        });
+            epPartitionVOS.forEach(s -> {
+                //查询当前节点的孩子节点
+                List<EpPartitionVO> children = epPartitionVOS.stream().filter(v -> s.getId().equals(v.getParentId())).collect(Collectors.toList());
+                //获取该类型下每个节点及其下一级子节点的集合
+                linkChildren.put(s.getId(), children);
+            });
+        }
         return linkChildren;
     }
 
