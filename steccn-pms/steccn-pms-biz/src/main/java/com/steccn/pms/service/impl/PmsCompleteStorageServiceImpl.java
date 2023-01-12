@@ -264,7 +264,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 dictSet.add(storage.getUnitId());
                 dictSet.add(storage.getTypeId());
             }
-            Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            Map<Long, String> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
 
             for (PmsCompleteStorage model : modelList) {
@@ -301,7 +301,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
         dictList.add(pmsCompleteStorage.getUnitId());
         dictList.add(pmsCompleteStorage.getTypeId());
-        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
+        Map<Long, String> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
         PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();

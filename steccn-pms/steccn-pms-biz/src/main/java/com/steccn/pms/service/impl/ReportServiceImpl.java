@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -270,7 +271,7 @@ public class ReportServiceImpl implements ReportService {
         sysDictDTO.setType(measureUnit);
         sysDictDTO.setCodeList(codeSet);
         SysDictVO defaultSysDictVO = new SysDictVO();
-        Map<String, SysDictVO> resMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        Map<String, SysDictVO> resMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         for (String code : codeSet) {
             SysDictVO sysDictVO = resMap.getOrDefault(code,defaultSysDictVO);
             resList.add(sysDictVO.getId());
@@ -373,7 +374,7 @@ public class ReportServiceImpl implements ReportService {
     private List<SysDictVO> getClassList() {
         SysDictDTO sysDictDTO = new SysDictDTO();
         sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
-        Map<String, SysDictVO> classMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        Map<String, SysDictVO> classMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysDictVO> classList = classMap.values().stream().collect(Collectors.toList());
         classList.sort(Comparator.comparing(SysDictVO::getSort));
         return classList;
@@ -1096,7 +1097,7 @@ public class ReportServiceImpl implements ReportService {
             //获取班组信息-甲班 乙班 丙班 组成map
             SysDictDTO sysDictDTO = new SysDictDTO();
             sysDictDTO.setType(PmManagerConstant.SYS_TEAM);
-            Map<String, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+            Map<String, SysDictVO> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //数据字典数据对应
             Map<Long, SysDictVO> dictMap = Maps.newHashMap();
             sysDictMap.forEach((k, v) -> dictMap.put(v.getId(), v));

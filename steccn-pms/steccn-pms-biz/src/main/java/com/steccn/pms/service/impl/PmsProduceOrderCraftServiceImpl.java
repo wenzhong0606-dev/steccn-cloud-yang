@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -118,7 +119,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
         Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(craftSet);
         List<PmsWorkOrderCraftStationVO> defaultStation = Lists.newArrayList();
         //3.2 获取字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(craftVOList)) {
             craftVOList.forEach(pmsProduceOrderCraft -> {
                 List<PmsWorkOrderCraftStationVO> orDefault = stations.getOrDefault(pmsProduceOrderCraft.getId(), defaultStation);
@@ -183,7 +184,7 @@ public class PmsProduceOrderCraftServiceImpl extends ServiceImpl<PmsProduceOrder
                 //获取工位数据
                 Map<Long, List<PmsWorkOrderCraftStationVO>> stations = pmsWorkOrderCraftStationService.stations(craftSet);
                 //获取字典数据
-                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+                Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 List<PmsWorkOrderCraftStationVO> defaultStation = Lists.newArrayList();
                 collect.forEach((key, value) ->
                         value.forEach(

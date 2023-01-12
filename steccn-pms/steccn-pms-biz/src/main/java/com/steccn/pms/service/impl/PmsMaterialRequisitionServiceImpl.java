@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
@@ -95,7 +96,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 ids.add(materialRequisitionVO.getId());
             });
             //3.3 获取字典以及部门数据
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
             page.getRecords().forEach(materialRequisitionVO -> {
                 materialRequisitionVO.setStatusName(dictMap.get(materialRequisitionVO.getStatus()));
@@ -121,8 +122,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         BeanUtil.copyProperties(materialRequisitionDTO, model);
         model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
         //获取创建状态在字典中的id
-        Long status = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
-                PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId();
+        Long status = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
+                PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId();
         model.setStatus(status);
         save(model);
         if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
@@ -145,7 +146,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         Assert.notNull(materialRequisition, "领料单不存在");
         List<Long> idSet = Lists.newArrayList();
         idSet.add(materialRequisition.getStatus());
-        Map<Long, SysDictVO> dictVOMap = FeignOptional.of(remoteDictFeignApi.listById(idSet)).get();
+        Map<Long, SysDictVO> dictVOMap = FeignOptional.of(()->remoteDictFeignApi.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(dictVOMap, "订单状态异常");
         String code = dictVOMap.get(materialRequisition.getStatus()).getCode();
         Assert.isTrue(code.equals(PmManagerConstant.MRBS_CREATED), "领料单不是可编辑状态");
@@ -210,7 +211,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             });
         }
         //3.3 获取字典、物料以及部门数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
         Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIdSet)).get();
         EqpSpareVO eqpSpareVO = new EqpSpareVO();
@@ -248,11 +249,11 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         Assert.notNull(pmsMaterialRequisition, "该领料单不存在");
         //3.根据审批状态修改审批单
         if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)) {
-            pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
-                    PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
+            pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
         } else {
-            pmsMaterialRequisition.setStatus(FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
-                    PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId());
+            pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
         }
         return updateById(pmsMaterialRequisition);
     }
@@ -382,7 +383,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     inventoryDTOList.add(storageDTO);
                 });
                 //获取单位数据以及车间产线数据
-                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
+                Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //获取工位绑定的仓库
                 Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
                 List<SysStationWarehouseVO> warehouseVOList = Lists.newArrayList();
@@ -449,7 +450,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(list.get(0).getWorkshopId())).get();
         materialRequisitionDTO.setDepartmentId(sysOfficeVO.getId());
         //获取类型
-        SysDictVO dictVO = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.PRODUCE_PICK, PmManagerConstant.MATERIAL_REQUISITION)).get();
+        SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.PRODUCE_PICK, PmManagerConstant.MATERIAL_REQUISITION),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         materialRequisitionDTO.setTypeId(dictVO.getId());
         String order = createOrder(materialRequisitionDTO);
         r.setCode(1);
@@ -463,8 +464,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         BeanUtil.copyProperties(materialRequisitionDTO, model);
         model.setCode(PmsCodeUtil.getProduceOrderCode(PmsCodeUtil.PREFIX_PMS_MATERIAL_REQUISITION, PmsCodeUtil.NUM_BIT_4, currentMaxCode()));
         //获取创建状态在字典中的id
-        Long status = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
-                PmManagerConstant.MATERIAL_REQUISITION_STATUS)).get().getId();
+        Long status = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
+                PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId();
         model.setStatus(status);
         save(model);
         if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
