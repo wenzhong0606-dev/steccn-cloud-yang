@@ -296,7 +296,10 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Integer skip = (dto.getCurrent() - 1) * dto.getSize();
         //排序
         List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
-
+        //根据partitionNode排序
+        if(CollUtil.isNotEmpty(collect)){
+            collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getPartitionNode)).collect(Collectors.toList());
+        }
         page.setCurrent(dto.getCurrent());
         page.setTotal(instrumentAccountVOS.size());
         page.setSize(dto.getSize());
