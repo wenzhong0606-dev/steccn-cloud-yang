@@ -654,6 +654,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         list.forEach(task -> taskIds.add(task.getId()));
         SteccnTableAssertUtil.notEmpty(list, "数据为空");
         List<QtDefectItemInfoVO> defectItemList = qtCheckTaskMapper.getDefectItemList(QtManagerConstant.DAY_REPORT_FIELD_APPARENT_CONDITION, taskIds);
+        SteccnTableAssertUtil.notEmpty(defectItemList, "数据为空");
         // 根据缺陷项类别分组
         Map<String, List<QtDefectItemInfoVO>> map = defectItemList.stream().collect(Collectors.groupingBy(QtDefectItemInfoVO::getCategoryName));
         // 根据班次类别分组
