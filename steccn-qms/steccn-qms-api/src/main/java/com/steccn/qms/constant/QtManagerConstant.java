@@ -227,6 +227,11 @@ public interface QtManagerConstant {
     final int afterHour = 20;
     final long hourSpace = 2;
 
+    /**
+     * 小时粒度下  限制开始时间和结束时间的差值为15天
+     */
+    Integer GRANULARITY_HOUR_DAY_DIFF = 15;
+
 
     /**
      * 日环比,周环比标志

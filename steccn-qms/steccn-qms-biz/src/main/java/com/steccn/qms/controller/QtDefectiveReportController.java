@@ -1,9 +1,12 @@
 package com.steccn.qms.controller;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtChartParamDTO;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 /**
@@ -92,18 +96,36 @@ public class QtDefectiveReportController {
     @PostMapping("/deep/category/line")
     @ApiOperation("深加工缺陷类别趋势-折线图")
     public R<QtLineChartBarDTO> deepDefectiveCategoryLine(@Valid @RequestBody QtChartParamDTO dto) {
+        validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.deepDefectiveCategoryLine(dto));
+    }
+
+    /**
+     * 校验小时粒度的时间差值
+     * @param dto
+     */
+    private void validLineHourDiff(QtChartParamDTO dto) {
+        Assert.isTrue(!dto.getDateStart().isAfter(dto.getDateEnd()), "开始日期不可以大于结束日期");
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularityEnum, "粒度不存在");
+        //小时粒度 开始日期和结束日期差值不能超过15天
+        if (QtManagerConstant.QtGranularityEnum.HOUR.equals(granularityEnum)) {
+            long until = dto.getDateStart().until(dto.getDateEnd(), ChronoUnit.DAYS);
+            Assert.isTrue(until <= QtManagerConstant.GRANULARITY_HOUR_DAY_DIFF, "按小时显示趋势，请选择不超过" + QtManagerConstant.GRANULARITY_HOUR_DAY_DIFF + "天的时间范围");
+        }
     }
 
     @PostMapping("/deep/item/line")
     @ApiOperation("深加工缺陷项趋势-折线图")
     public R<QtLineChartBarDTO> deepItemLine(@Valid @RequestBody QtChartParamDTO dto) {
+        validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.deepItemLine(dto));
     }
 
     @PostMapping("/substrate/item/line")
     @ApiOperation("基片缺陷项趋势-折线图")
     public R<QtLineChartBarDTO> substrateItemLine(@Valid @RequestBody QtChartParamDTO dto) {
+        validLineHourDiff(dto);
         return R.success(qtDefectiveReportService.substrateItemLine(dto));
     }
 
