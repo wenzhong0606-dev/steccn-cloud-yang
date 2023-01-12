@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -84,9 +85,9 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 processIds.add(pmsCompleteDeliveryVO.getProcessId());
             });
             //获取单位数据
-            Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+            Map<Long, String> dictData = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取仓库货架信息
-            Map<Integer, String> officeMapData = FeignOptional.of(remoteOfficeFeign.listByIdCh(office)).get();
+            Map<Integer, String> officeMapData = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(office), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取工序信息
             Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
             PmsProduceOrderCraftVO defaultCraftVO = new PmsProduceOrderCraftVO();
@@ -123,9 +124,9 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 officeIds.add(pmsCompleteDeliveryVO.getWarehouseId());
             });
             //查询字典数据
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIds)).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //查询机构数据
-            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             page.getRecords().forEach(pmsCompleteDeliveryVO -> {
                 pmsCompleteDeliveryVO.setUnit(dictMap.get(pmsCompleteDeliveryVO.getUnitId()));
                 pmsCompleteDeliveryVO.setWarehouseName(officeMap.get(pmsCompleteDeliveryVO.getWarehouseId()));
@@ -159,9 +160,9 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                             materialResMap.put(materialVO.getMaterialId(), materialVO);
                             //基于生产订单的bom去查询计划数量
                             PmsWorkOrderBom one = pmsWorkOrderBomService.getOne(new LambdaQueryWrapper<PmsWorkOrderBom>()
-                                            .eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey())
-                                            .eq(Objects.nonNull(craftMap.get(processEntry.getKey())),PmsWorkOrderBom::getProcessId,craftMap.get(processEntry.getKey()).getProcessId())
-                                            .eq(PmsWorkOrderBom::getModuleId,materialVO.getMaterialId()), false);
+                                    .eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey())
+                                    .eq(Objects.nonNull(craftMap.get(processEntry.getKey())), PmsWorkOrderBom::getProcessId, craftMap.get(processEntry.getKey()).getProcessId())
+                                    .eq(PmsWorkOrderBom::getModuleId, materialVO.getMaterialId()), false);
                             if (Objects.nonNull(one) && Objects.nonNull(one.getQuantity())) {
                                 materialVO.setAvaQuantity(one.getQuantity());
                             } else {
