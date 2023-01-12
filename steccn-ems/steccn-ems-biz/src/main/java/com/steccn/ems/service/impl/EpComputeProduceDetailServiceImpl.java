@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -59,11 +60,9 @@ public class EpComputeProduceDetailServiceImpl implements EpComputeProduceDetail
         LocalDateTime startDateTime = LocalDateTime.of(startDate, localTime);
         LocalDateTime endDateTime = LocalDateTime.of(endDate, localTime).plusDays(1);
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate, endDate);
-        R<List<PmsReportWorkVO>> listR = remoteReportWorkFeignApi.listByClassTime(new TupleDTO<>(startDateTime, endDateTime));
+        List<PmsReportWorkVO> reportWorkVOList = FeignOptional.of(() -> remoteReportWorkFeignApi.listByClassTime(new TupleDTO<>(startDateTime, endDateTime)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
-        List<PmsReportWorkVO> reportWorkVOList = FeignOptional.of(listR).get();
-
-        List<QtCheckTaskDetailItemMaterialVO> detailItemMaterialVOList = remoteCheckTaskDetailFeignApi.getByClassTime(new TupleDTO<>(startDateTime, endDateTime)).getData();
+        List<QtCheckTaskDetailItemMaterialVO> detailItemMaterialVOList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getByClassTime(new TupleDTO<>(startDateTime, endDateTime)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
         List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_shift").getData();
         SysDictVO unit = remoteDictFeignApi.getByCode("m²", "measure_unit").getData();
         Set<Long> materialIdSet = reportWorkVOList.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toSet());

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
@@ -65,7 +66,7 @@ public class EpDwServiceImpl implements EpDwService {
                 return Boolean.FALSE;
             }
             //获取当前班次日期所有的报工信息
-            List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date))).get();
+            List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(() -> remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //获取所有有仪表的节点
             Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
             //其余的节点
@@ -112,7 +113,7 @@ public class EpDwServiceImpl implements EpDwService {
                     dwMeterReadDTOList.add(readDTO);
                 });
 
-                List<DwEpMeterCollectVO> sourceData = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwMeterReadDTOList)).get();
+                List<DwEpMeterCollectVO> sourceData = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(dwMeterReadDTOList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
                 List<EpMeterRead> insertList = Lists.newArrayList();
                 if (CollUtil.isNotEmpty(sourceData)) {
                     //准备插入数据库
@@ -184,7 +185,7 @@ public class EpDwServiceImpl implements EpDwService {
                     }
                 }
                 //4.根据对应方案 去查询读数
-                List<DwEpMeterCollectVO> meterReadList = FeignOptional.of(remoteDataPlatformFeignApi.meterRead(dwConditionDTOList)).get();
+                List<DwEpMeterCollectVO> meterReadList = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(dwConditionDTOList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
                 //解析原始数据
                 Map<String, List<DwEpMeterCollectVO>> collect = meterReadList.stream().collect(Collectors.groupingBy(DwEpMeterCollectVO::getCode));
 
