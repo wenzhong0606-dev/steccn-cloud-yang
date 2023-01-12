@@ -1601,7 +1601,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //将时间范围根据粒度分片
         List<LocalDateTime> cutDate = ShardTimeUtil.cutDateRange(QtManagerConstant.QtGranularityEnum.DAY.getType()
                 , LocalDateTime.of(dto.getDateStart(), LocalTime.MIN)
-                , LocalDateTime.of(dto.getDateEnd(), LocalTime.MAX));
+                , LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.MAX));
         Assert.notEmpty(cutDate, "时间范围根据粒度分片为空");
 
         //考虑对比
@@ -1617,7 +1617,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //获取时间范围的集合
             List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                if ((start.isBefore(v.getSpotTime()) || start.isEqual(v.getSpotTime())) && end.isAfter(v.getSpotTime())) {
                     return Boolean.TRUE;
                 }
                 return Boolean.FALSE;
