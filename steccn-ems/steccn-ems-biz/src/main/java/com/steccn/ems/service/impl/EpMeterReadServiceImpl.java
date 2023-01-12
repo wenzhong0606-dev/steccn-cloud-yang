@@ -331,7 +331,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         energyParamDTO.setType(energyType);
         EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
         SteccnTableAssertUtil.notEmpty(childTree.getPartitionIds(), "组织机构中没有实体仪表");
-
         //查询全量数据表
         List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getMeterType, energyType)
@@ -413,13 +412,20 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             }
         }
 
+        Set<Long> partitionIdSet = gpDataList.stream().map(EpMeterReadAllDataVO::getOfficeId).collect(Collectors.toSet());
+        Map<Long, EpPartition> epPartitionMap = epPartitionService.listById(partitionIdSet);
+
         //将全量数据表的厚度为空的都设置成-1
         gpDataList.forEach(ele -> {
             if(Objects.isNull(ele.getThick())){
                 ele.setThick(new BigDecimal("-1"));
             }
+            //设置组织机构id
+            EpPartition epPartition = epPartitionMap.get(ele.getOfficeId());
+            if(Objects.nonNull(epPartition)){
+                ele.setSysOfficeId(epPartition.getOfficeId());
+            }
         });
-
         return gpDataList;
     }
 
@@ -503,35 +509,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                             BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
                             //产量
-                            List<EpProduceDetailVO> productNumObjectList = produceDetailList.stream().filter(v -> {
-                                boolean flag1, flag2, flag3;
-                                //校验厚度
-                                if (Objects.nonNull(v.getThickQuantity()) && Objects.nonNull(epMeterReadAllDataVO.getThick())) {
-                                    flag1 = v.getThickQuantity().equals(epMeterReadAllDataVO.getThick());
-                                } else if (Objects.isNull(v.getThickQuantity()) && Objects.isNull(epMeterReadAllDataVO.getThick())) {
-                                    flag1 = Boolean.TRUE;
-                                } else {
-                                    flag1 = Boolean.FALSE;
-                                }
-                                //校验班次日期
-                                if (Objects.nonNull(v.getClassDate()) && Objects.nonNull(classDateEntry.getKey())) {
-                                    flag2 = v.getClassDate().equals(classDateEntry.getKey());
-                                } else if (Objects.isNull(v.getClassDate()) && Objects.isNull(classDateEntry.getKey())) {
-                                    flag2 = Boolean.TRUE;
-                                } else {
-                                    flag2 = Boolean.FALSE;
-                                }
-                                //校验班次id
-                                if (Objects.nonNull(v.getClassId()) && Objects.nonNull(epMeterReadAllDataVO.getClassId())) {
-                                    flag3 = v.getClassId().equals(epMeterReadAllDataVO.getClassId());
-                                } else if (Objects.isNull(v.getClassId()) && Objects.isNull(epMeterReadAllDataVO.getClassId())) {
-                                    flag3 = Boolean.TRUE;
-                                } else {
-                                    flag3 = Boolean.FALSE;
-                                }
-
-                                return flag1 && flag2 && flag3 && meterEntry.getKey().equals(epPartitionMap.getOrDefault(v.getOfficeId(), defaultEpInstrumentAccount).getId());
-                            }).collect(Collectors.toList());
+                            List<EpProduceDetailVO> productNumObjectList = filterProductNumList(produceDetailList, epPartitionMap, defaultEpInstrumentAccount, classDateEntry, meterEntry, epMeterReadAllDataVO);
                             if (CollUtil.isNotEmpty(productNumObjectList)) {
                                 BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);
                                 ele.setProductNum(yield);
@@ -571,6 +549,205 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         });
 
         return gpDataList;
+    }
+
+    /**
+     * 过滤产量
+     * @param produceDetailList
+     * @param epPartitionMap
+     * @param defaultEpInstrumentAccount
+     * @param classDateEntry
+     * @param meterEntry
+     * @param epMeterReadAllDataVO
+     * @return
+     */
+    private List<EpProduceDetailVO> filterProductNumList(List<EpProduceDetailVO> produceDetailList, Map<Integer, EpInstrumentAccount> epPartitionMap, EpInstrumentAccount defaultEpInstrumentAccount, Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry, Map.Entry<Integer, List<EpMeterReadAllDataVO>> meterEntry, EpMeterReadAllDataVO epMeterReadAllDataVO) {
+        List<EpProduceDetailVO> productNumObjectList = produceDetailList.stream().filter(v -> {
+            boolean flag1, flag2, flag3;
+            //校验厚度
+            if (Objects.nonNull(v.getThickQuantity()) && Objects.nonNull(epMeterReadAllDataVO.getThick())) {
+                flag1 = v.getThickQuantity().equals(epMeterReadAllDataVO.getThick());
+            } else if (Objects.isNull(v.getThickQuantity()) && Objects.isNull(epMeterReadAllDataVO.getThick())) {
+                flag1 = Boolean.TRUE;
+            } else {
+                flag1 = Boolean.FALSE;
+            }
+            //校验班次日期
+            if (Objects.nonNull(v.getClassDate()) && Objects.nonNull(classDateEntry.getKey())) {
+                flag2 = v.getClassDate().equals(classDateEntry.getKey());
+            } else if (Objects.isNull(v.getClassDate()) && Objects.isNull(classDateEntry.getKey())) {
+                flag2 = Boolean.TRUE;
+            } else {
+                flag2 = Boolean.FALSE;
+            }
+            //校验班次id
+            if (Objects.nonNull(v.getClassId()) && Objects.nonNull(epMeterReadAllDataVO.getClassId())) {
+                flag3 = v.getClassId().equals(epMeterReadAllDataVO.getClassId());
+            } else if (Objects.isNull(v.getClassId()) && Objects.isNull(epMeterReadAllDataVO.getClassId())) {
+                flag3 = Boolean.TRUE;
+            } else {
+                flag3 = Boolean.FALSE;
+            }
+
+            return flag1 && flag2 && flag3 && meterEntry.getKey().equals(epPartitionMap.getOrDefault(v.getOfficeId(), defaultEpInstrumentAccount).getId());
+        }).collect(Collectors.toList());
+        return productNumObjectList;
+    }
+
+    @Override
+    public List<EpMeterReadAllDataVO> kcalDataUnit(Set<LocalDate> dateSet, List<Long> partitionIdList) {
+        SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
+        EpEnergyTreeDTO childTree1 = energyTree(partitionIdList, 3);
+        EpEnergyTreeDTO childTree2 = energyTree(partitionIdList, 4);
+        Set<Long> childTree = Sets.newHashSet();
+        List<EpPartitionVO> childrenList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(childTree1.getPartitionIds())) {
+            childTree.addAll(childTree1.getPartitionIds());
+            childrenList.addAll(childTree1.getTree());
+        }
+        if (CollUtil.isNotEmpty(childTree2.getPartitionIds())) {
+            childTree.addAll(childTree2.getPartitionIds());
+            childrenList.addAll(childTree1.getTree());
+        }
+        //查询全量数据表
+        List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .in(EpInstrumentAccount::getMeterType, Arrays.asList(3, 4))
+                .in(CollUtil.isNotEmpty(childTree), EpInstrumentAccount::getPartitionNode, childTree)
+                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode));
+        SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
+        //获取仪表id集合
+        Map<Integer, Long> meterPartitionMap = Maps.newHashMap();
+        instrumentAccountList.forEach(ele -> meterPartitionMap.put(ele.getId(), ele.getPartitionNode()));
+
+        //对班次和产品厚度进行分组累计
+        Map<Integer, Map<LocalDate, List<EpMeterReadAllDataVO>>> calMap = Maps.newHashMap();
+
+        List<EpMeterReadAllDataVO> gpDataList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dateSet)) {
+            //定义数据总集合
+            List<EpMeterReadAllDataVO> kcalDataUnitList = Lists.newArrayList();
+            //获取天然气和燃料油得全量数据表
+            List<EpMeterReadAllDataVO> gasList = classDateAllData(dateSet, 3, partitionIdList);
+            List<EpMeterReadAllDataVO> oilList = classDateAllData(dateSet, 4, partitionIdList);
+            kcalDataUnitList.addAll(gasList);
+            kcalDataUnitList.addAll(oilList);
+            //获取集合最小的日期
+            List<LocalDate> sortedDateList = CollectionUtil.sort(dateSet, Comparator.comparing(x -> x));
+            LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
+            sortedDateList.add(0, minLocalDate);
+            //获取所有的产量信息
+            List<EpProduceDetailVO> produceNumList = epComputeProduceDetailService.getProduceDetailList(minLocalDate, sortedDateList.get(sortedDateList.size() - 1));
+            Set<Integer> officeIdSet = produceNumList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
+
+            //根据组织机构id和能源类型查询分区节点
+            EpInstrumentAccount defaultEpInstrumentAccount = new EpInstrumentAccount();
+            //根据条件获取数据
+            List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
+                    .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
+                    .in(EpMeterRead::getReadDate, sortedDateList)
+                    .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart)));
+            //获取报工集合
+            Set<Long> reportWorkIdSet = Sets.newHashSet();
+            dataList.forEach(ep -> {
+                if (Objects.nonNull(ep.getReportWorkId())) {
+                    reportWorkIdSet.add(ep.getReportWorkId());
+                }
+            });
+            Map<Long, Long> reportMap = FeignOptional.of(() -> remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+
+            //根据班次日期
+            Map<LocalDate, List<EpMeterReadAllDataVO>> classDateMap = kcalDataUnitList.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
+            for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateMap.entrySet()) {
+                //根据仪表分组
+                Map<Integer, List<EpMeterReadAllDataVO>> meterMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getSysOfficeId));
+                for (Map.Entry<Integer, List<EpMeterReadAllDataVO>> officeEntry : meterMap.entrySet()) {
+                    Map<String, List<EpMeterReadAllDataVO>> thickMap = officeEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
+                    for (Map.Entry<String, List<EpMeterReadAllDataVO>> thickEntry : thickMap.entrySet()) {
+                        EpMeterReadAllDataVO epMeterReadAllDataVO = thickEntry.getValue().get(0);
+                        EpMeterReadAllDataVO ele = new EpMeterReadAllDataVO();
+                        BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
+                        //产量
+                        List<EpProduceDetailVO> productNumObjectList = filterProductNumList(produceNumList, classDateEntry.getKey(), officeEntry.getKey(), epMeterReadAllDataVO);
+                        if (CollUtil.isNotEmpty(productNumObjectList)) {
+                            BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            ele.setProductNum(yield);
+                        }
+                        List<Long> reportWorkIdList = Lists.newArrayList();
+                        thickEntry.getValue().forEach(te -> {
+                            if (CollUtil.isNotEmpty(te.getReportWorkIdList())) {
+                                reportWorkIdList.addAll(te.getReportWorkIdList());
+                            }
+                        });
+                        ele.setReportWorkIdList(reportWorkIdList);
+                        Long classGroupId = calClassGroupId(ele, reportMap);
+                        ele.setClassGroupId(classGroupId);
+                        ele.setConsume(reduce);
+                        gpDataList.add(ele);
+                        MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
+                    }
+                }
+                //构造整个虚拟节点
+                List<LocalDate> originalDateList = CollectionUtil.sort(dateSet, Comparator.comparing(x -> x));
+                Set<String> existDataSet = Sets.newHashSet();
+                for (LocalDate classDate : originalDateList) {
+                    for (EpPartitionVO ep : childrenList) {
+                        cycle(calMap, classDate, ep, gpDataList, existDataSet);
+                    }
+                }
+            }
+        }
+        return gpDataList;
+    }
+
+    /**
+     * 过滤产量
+     * @param produceDetailList
+     * @param officeId
+     * @param epMeterReadAllDataVO
+     * @return
+     */
+    private List<EpProduceDetailVO> filterProductNumList(List<EpProduceDetailVO> produceDetailList, LocalDate classDate, Integer officeId, EpMeterReadAllDataVO epMeterReadAllDataVO) {
+        List<EpProduceDetailVO> productNumObjectList = produceDetailList.stream().filter(v -> {
+            boolean flag1, flag2, flag3;
+            //校验厚度
+            if (Objects.nonNull(v.getThickQuantity()) && Objects.nonNull(epMeterReadAllDataVO.getThick())) {
+                flag1 = v.getThickQuantity().equals(epMeterReadAllDataVO.getThick());
+            } else if (Objects.isNull(v.getThickQuantity()) && Objects.isNull(epMeterReadAllDataVO.getThick())) {
+                flag1 = Boolean.TRUE;
+            } else {
+                flag1 = Boolean.FALSE;
+            }
+            //校验班次日期
+            if (Objects.nonNull(v.getClassDate()) && Objects.nonNull(classDate)) {
+                flag2 = v.getClassDate().equals(classDate);
+            } else if (Objects.isNull(v.getClassDate()) && Objects.isNull(classDate)) {
+                flag2 = Boolean.TRUE;
+            } else {
+                flag2 = Boolean.FALSE;
+            }
+            //校验班次id
+            if (Objects.nonNull(v.getClassId()) && Objects.nonNull(epMeterReadAllDataVO.getClassId())) {
+                flag3 = v.getClassId().equals(epMeterReadAllDataVO.getClassId());
+            } else if (Objects.isNull(v.getClassId()) && Objects.isNull(epMeterReadAllDataVO.getClassId())) {
+                flag3 = Boolean.TRUE;
+            } else {
+                flag3 = Boolean.FALSE;
+            }
+
+            return flag1 && flag2 && flag3 && Objects.nonNull(officeId) && officeId.equals(epMeterReadAllDataVO.getSysOfficeId());
+        }).collect(Collectors.toList());
+        return productNumObjectList;
+    }
+
+
+    private EpEnergyTreeDTO energyTree(List<Long> partitionIdList, int i) {
+        //根据选中的组织机构查询出树
+        EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
+        energyParamDTO.setPartitionId(partitionIdList);
+        energyParamDTO.setType(i);
+        EpEnergyTreeDTO childTree = epPartitionService.getChildTree(energyParamDTO);
+        return childTree;
     }
 
     /**

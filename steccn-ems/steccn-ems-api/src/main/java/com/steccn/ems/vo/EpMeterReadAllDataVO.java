@@ -27,6 +27,9 @@ public class EpMeterReadAllDataVO implements Serializable {
     @ApiModelProperty("机构树id")
     private Long officeId;
 
+    @ApiModelProperty("组织机构树id")
+    private Integer sysOfficeId;
+
     @ApiModelProperty("机构名称")
     private String officeName;
 

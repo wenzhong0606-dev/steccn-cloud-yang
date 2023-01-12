@@ -1009,6 +1009,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+
+        //燃料(气+油)的单耗
+//        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+//        log.info("{}",classDateAllData);
+
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         List<EpMeterReadAllDataVO> classDateFilterData = new ArrayList<>();
 

@@ -75,4 +75,11 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      */
     List<EpMeterReadAllDataVO> classDateAllDataUnit(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList);
 
+    /**
+     * 燃料(气+油)的单耗
+     * @param dateSet 日期数据
+     * @param partitionIdList 分区节点id集合
+     * @return list
+     */
+    List<EpMeterReadAllDataVO> kcalDataUnit(Set<LocalDate> dateSet, List<Long> partitionIdList);
 }
