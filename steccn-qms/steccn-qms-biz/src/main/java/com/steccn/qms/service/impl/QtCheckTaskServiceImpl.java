@@ -1431,7 +1431,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             materialIdSet.add(ele.getMaterialId());
         });
         Map<Integer, String> officeIdNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         Map<LocalDate, List<QtCheckTaskReportVO>> classDateMap = rateDataList.stream().collect(Collectors.groupingBy(v -> v.getClassTime().toLocalDate()));
         //定义返回的集合
@@ -2106,7 +2106,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 filterList = resList.stream().filter(predicate(dto.getCompare(), dto.getCompareContent(), resList)).collect(Collectors.toList());
             }
             //获取物料数据
-            Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+            Map<Long, String> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取详情数据
             Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
             List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
@@ -2173,7 +2173,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 filterList = resList.stream().filter(predicate(dto.getCompare(), dto.getCompareContent(), resList)).collect(Collectors.toList());
             }
             //获取物料数据
-            Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+            Map<Long, String> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取详情数据
             Map<Long,List<QtIQCAcceptabilityCopyVO>> taskInfoMap = qtCheckTaskDetailService.listByTaskId(taskIds);
             List<QtIQCAcceptabilityCopyVO> orCopyList =Lists.newArrayList();
@@ -2390,7 +2390,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
         //获取物料id
         Set<Long> materialIdSet = flatDataList.stream().map(QtCheckTaskReportVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         flatDataList = flatDataList.stream().sorted(Comparator.comparing(QtCheckTaskReportVO::getFinishedTime).reversed()).collect(Collectors.toList());
         LinkedHashMap<Long, List<QtCheckTaskReportVO>> linkedMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskReportVO::getMaterialId, LinkedHashMap::new, Collectors.toList()));
@@ -2446,7 +2446,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private List<BaseSelectVO<Long>> materialSelect( List<QtCheckTaskReportVO> allSelectList){
         //获取所有的下拉选项
         Set<Long> materialIdSet = allSelectList.stream().map(QtCheckTaskReportVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+        Map<Long, String> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<BaseSelectVO<Long>> materialSelectList = Lists.newArrayList();
         materialMap.entrySet().forEach(entry -> materialSelectList.add(new BaseSelectVO<>(entry.getKey(), entry.getValue())));
         return materialSelectList;
@@ -2581,7 +2581,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     public void downloadAcceptability(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response) {
         Map<String, Object> map = MapUtils.newHashMap();
-        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(Collections.singleton(dto.getMaterialId()))).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(Collections.singleton(dto.getMaterialId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         map.put("dateStart",LocalDateUtil.localDateFormat(dto.getDateStart(),DatePattern.NORM_DATE_PATTERN));
         map.put("dateEnd",LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN));
@@ -2732,7 +2732,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         officeIdSet.add(dto.getProductLineId());//产线
         officeIdSet.add(dto.getCustomer());//客户
         Map<Integer, String> officeIdNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> materialIdNameMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIdSet)).get();
+        Map<Long, String> materialIdNameMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if(dto.getProductWorkShopId()!=null){
 //            R<String> nameById = remoteOfficeFeign.getNameById(dto.getProductWorkShopId());
 //            if(nameById!=null){

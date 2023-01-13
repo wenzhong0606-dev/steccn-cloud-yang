@@ -87,7 +87,7 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
 
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
 
@@ -588,7 +588,7 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //遍历所有的物料查询完工数量
@@ -766,7 +766,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无深加工日报表");
         Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //定义

@@ -445,7 +445,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         });
         System.out.println("单位："+dictName.size());
         Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByName(officeNames),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<String, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listByCode(materialCodes)).get();
+        Map<String, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listByCode(materialCodes),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<String, Long> dictIdMap = FeignOptional.of(remoteDictFeignApi.listByNameCh(dictName)).get();
         if (CollUtil.isNotEmpty(excelList)) {
             Map<String, List<WmsStorageReceiptExcelDTO>> map = excelList.stream().collect(Collectors.groupingBy(WmsStorageReceiptExcelDTO::getWarehouseName));

@@ -64,7 +64,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         //1.定义查询条件，获取数据
         SparePageDTO sparePageDTO = new SparePageDTO();
         BeanUtil.copyProperties(dto, sparePageDTO);
-        Page<EqpSpareVO> resPage = FeignOptional.of(remoteSpareFeignApi.listPage(sparePageDTO)).get();
+        Page<EqpSpareVO> resPage = FeignOptional.of(()->remoteSpareFeignApi.listPage(sparePageDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.拷贝page信息
@@ -210,7 +210,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 //        });
 //        //获取物料的需求数量
 //        //获取物料信息
-//        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+//        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds)).get();
 //        //获取字典数据
 //        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds)).get();
 //        EqpSpareVO eqpSpareVO = new EqpSpareVO();
@@ -234,7 +234,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 //        });
 //        //3.获取物料的可用库存数量
 //        Map<Long, MesMaterialInventoryDTO> materialInventoryMap = remoteMessFeignApi.materialInventory(materialIds);
-//        Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+//        Map<Long, String> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIds)).get();
 //        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
 //        //4.获取MRP类型数据
 //        SysDictVO inventoryType = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRP_INVENTORY, PmManagerConstant.MRP_TYPE)).get();

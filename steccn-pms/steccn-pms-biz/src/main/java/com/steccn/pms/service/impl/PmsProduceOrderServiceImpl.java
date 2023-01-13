@@ -828,7 +828,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Set<Long> classIdSet = resList.stream().map(v -> v.getClassesId()).collect(Collectors.toSet());
             Map<Long, SysDictVO> classMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(classIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSet))).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
             Set<Integer> productLineIdSet = resList.stream().map(v -> v.getProductLineId()).collect(Collectors.toSet());

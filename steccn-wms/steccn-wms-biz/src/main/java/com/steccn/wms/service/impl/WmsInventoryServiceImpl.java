@@ -74,7 +74,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             dict.add(wmsInventoryVO.getUnit());
             materialIds.add(wmsInventoryVO.getMaterialId());
         });
-        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Long, String> map = FeignOptional.of(remoteDictFeignApi.listByIdCh(dict)).get();
         res.forEach(wmsInventoryVO -> {
             wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));

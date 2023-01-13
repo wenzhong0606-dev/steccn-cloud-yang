@@ -213,7 +213,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //3.3 获取字典、物料以及部门数据
         Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIdSet)).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO eqpSpareVO = new EqpSpareVO();
         if (CollUtil.isNotEmpty(infoList)) {
             infoList.forEach(
@@ -400,7 +400,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 Map<Long, BigDecimal> inventoryMap = FeignOptional.of(remoteWmsInventoryFeignApi.listMaterialInventory(collect)).get();
                 // 获取物料的数据
                 EqpSpareVO eqpSpareVO = new EqpSpareVO();
-                Map<Long, EqpSpareVO> spareMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+                Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 BigDecimal zero = BigDecimal.ZERO;
                 splitBomList.forEach(bom -> {
                     EqpSpareVO spareVO = spareMap.getOrDefault(bom.getMaterialId(), eqpSpareVO);

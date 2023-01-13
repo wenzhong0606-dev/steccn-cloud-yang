@@ -382,7 +382,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
             unitIdList.add(pmsProduceOrder.getUnitId());
             Map<Long, String> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(unitIdList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
+            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(idList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             List<MaterialStorageInfoDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
