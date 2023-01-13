@@ -91,7 +91,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         if (CollUtil.isNotEmpty(pmsMrpInfoList)) {
             Map<Long, List<PmsMrpInfo>> collect = pmsMrpInfoList.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
             //根据物料id 获取库存信息
-            Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds()))).get();
+            Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(Sets.newHashSet(dto.getMaterialIds())),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
             collect.forEach((key, list) -> {
                 list.sort(Comparator.comparing(PmsMrpInfo::getMrpDate));
@@ -141,7 +141,7 @@ public class PmsMrpInfoServiceImpl extends ServiceImpl<PmsMrpInfoMapper, PmsMrpI
         //1.获取库存信息以及安全库存信息
         Set<Long> materialIds = Sets.newHashSet();
         materialIds.add(dto.getId());
-        Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+        Map<Long, MaterialInventoryDTO> materialInventory = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(materialIds),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         MaterialInventoryDTO mesMaterialInventoryDTO = new MaterialInventoryDTO();
         mesMaterialInventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
         MaterialInventoryDTO orDefault = materialInventory.getOrDefault(dto.getId(), mesMaterialInventoryDTO);

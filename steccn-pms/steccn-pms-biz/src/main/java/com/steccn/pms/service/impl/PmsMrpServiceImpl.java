@@ -108,7 +108,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         BigDecimal quantity =  BigDecimal.ZERO;
         mesMaterialInventoryDTO.setAvailableQuantity(quantity);
         //获取库存信息
-        Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+        Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(materialIds),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         pmsMrpVOList.forEach(pmsMrpVO -> {
             MaterialInventoryDTO inventoryDTO = inventoryDTOMap.getOrDefault(pmsMrpVO.getMaterialId(), mesMaterialInventoryDTO);
             PmsMrpInfo orDefault = pmsMrpInfoMap.getOrDefault(pmsMrpVO.getMaterialId(), pmsMrpInfo);
@@ -140,7 +140,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
                 Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
                 //获取订单需求类型id
                 Long mrpRequirementId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
-                Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+                Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(materialIds),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
                 inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
                 Map<Long, List<PmsMrpInfo>> infoMap = list.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));

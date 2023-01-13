@@ -394,7 +394,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 messMaterialStorageList.add(storageDTO);
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
-            List<WmsStockInventoryDTO> messList = FeignOptional.of(remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList)).get();
+            List<WmsStockInventoryDTO> messList = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(messList)) {
                 Set<Integer> storageSet = Sets.newHashSet();
                 for (WmsStockInventoryDTO messDto : messList) {

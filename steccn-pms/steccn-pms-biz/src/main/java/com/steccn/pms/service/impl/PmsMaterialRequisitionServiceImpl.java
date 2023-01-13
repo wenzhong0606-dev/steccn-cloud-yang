@@ -385,7 +385,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //获取单位数据以及车间产线数据
                 Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //获取工位绑定的仓库
-                Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
+                Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(()->remoteStationWarehouseFeignApi.listByStationIds(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 List<SysStationWarehouseVO> warehouseVOList = Lists.newArrayList();
                 // 获取物料绑定的线边仓库存数据
                 inventoryDTOList.forEach(inventoryDTO -> {
@@ -397,7 +397,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     inventoryDTO.setShelfCodes(warehouseCodes);
                 });
                 List<MaterialStorageDTO> collect = inventoryDTOList.stream().filter(inventoryDTO -> inventoryDTO.getShelfCodes().size() > 0).collect(Collectors.toList());
-                Map<Long, BigDecimal> inventoryMap = FeignOptional.of(remoteWmsInventoryFeignApi.listMaterialInventory(collect)).get();
+                Map<Long, BigDecimal> inventoryMap = FeignOptional.of(()->remoteWmsInventoryFeignApi.listMaterialInventory(collect),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 // 获取物料的数据
                 EqpSpareVO eqpSpareVO = new EqpSpareVO();
                 Map<Long, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -432,7 +432,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         Set<Integer> stationIds = Sets.newHashSet();
         list.forEach(info -> stationIds.add(info.getWorkshopId()));
         //获取工位的线边仓
-        Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
+        Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(()->remoteStationWarehouseFeignApi.listByStationIds(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysStationWarehouseVO> warehouseVOList = Lists.newArrayList();
         list.forEach(info -> {
             MaterialRequisitionInfoDTO materialRequisitionInfoDTO = new MaterialRequisitionInfoDTO();
