@@ -199,7 +199,9 @@ public class EpOverViewServiceImpl implements EpOverViewService {
         List<EpPartition> partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getOfficeId, officeIdList).eq(EpPartition::getType,1));
         Set<Long> partitionIdSet = partitionList.stream().map(EpPartition::getId).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(partitionIdSet)) {
-            partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getParentId, partitionIdSet).eq(EpPartition::getType, 1));
+            partitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getParentId, partitionIdSet)
+                    .like(EpPartition::getOfficeName,"产线")
+                    .eq(EpPartition::getType, 1));
         }
         List<Long> partitionIdList = partitionList.stream().map(EpPartition::getId).collect(Collectors.toList());
 
