@@ -596,7 +596,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             List<Long> allIds = new ArrayList<>();
                             allIds.addAll(xunTaskIds);
                             allIds.addAll(onlineTaskIds);
-                            List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfos = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().in(QtCheckTaskDestoryInfo::getTaskId, allIds));
+                            List<QtCheckTaskDestoryInfo> qtCheckTaskDestoryInfos = Lists.newArrayList();
+                            if(CollUtil.isNotEmpty(allIds)){
+                                qtCheckTaskDestoryInfos = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().in(QtCheckTaskDestoryInfo::getTaskId, allIds));
+                            }
                             if (CollUtil.isNotEmpty(qtCheckTaskDestoryInfos)) {
                                 BigDecimal luoDateRange = BigDecimal.ZERO;
                                 Duration dr = Duration.between(LocalDateTime.now().plusHours(3), LocalDateTime.now());
