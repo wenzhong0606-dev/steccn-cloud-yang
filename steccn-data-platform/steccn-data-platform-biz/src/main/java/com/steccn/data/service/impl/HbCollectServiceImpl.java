@@ -40,7 +40,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final PmStationCollectService pmStationCollectService;
 
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+            new LinkedBlockingQueue<>(100), Executors.defaultThreadFactory());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
