@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmCraftRouteModule;
@@ -75,9 +76,9 @@ public class PmCraftRouteProcessServiceImpl extends ServiceImpl<PmCraftRouteProc
                 processIds.add(pmCraftRouteProcess.getProcessId());
             });
             //2.2.获取单位数据并处理
-            Map<Long, String> map = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+            Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //2.3 获取类型数据
-            Map<String, String> types = FeignOptional.of(remoteDictFeignApi.listByCode(codes, PmManagerConstant.PROCESS_TYPE)).get();
+            Map<String, String> types = FeignOptional.of(() -> remoteDictFeignApi.listByCode(codes, PmManagerConstant.PROCESS_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //2.4 获取工位数据
             Map<Long, List<PmProcessStationVO>> longListMap = processStationService.listByProcessId(processIds);
             List<PmProcessStationVO> defaultProcess = Lists.newArrayList();

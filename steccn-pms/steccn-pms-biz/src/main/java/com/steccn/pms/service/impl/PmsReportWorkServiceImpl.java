@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
@@ -118,8 +119,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         Map<Long, BaseSelectVO<Long>> orderUnitMap = produceOrderService.listUnit(orderSet);
 
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(organIdSet)).get();
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(organIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         records.forEach(ele -> {
             BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(ele.getProduceOrderId());
@@ -178,7 +179,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
                 Assert.notNull(pmsProduceOrder, "生产订单不存在");
                 //校验产线和工位是否存在
-                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId()))).get();
+                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
                 //校验工序是否存在
                 PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
@@ -191,7 +192,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 Assert.notNull(pmsWorkOrderBatch, "批次不存在");
                 //校验班次和班组是否存在
                 //校验单位是否存在
-                Boolean unitBoolean = FeignOptional.of(remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId())).get();
+                Boolean unitBoolean = FeignOptional.of(()->remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Assert.isTrue(unitBoolean, "单位不存在");
                 //校验是否物料的条数是否正确
                 //生成报工记录
@@ -286,7 +287,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 wmsDeliveryReceiptInfoDTO.setMaterialId(materialDTO.getModuleId());
                 materialList.add(wmsDeliveryReceiptInfoDTO);
             }
-            SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE)).get();
+            SysDictVO sysDictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             completeDelivery.setCode(maxOutVouchCode());
             completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
             completeDelivery.setDeliveryTime(LocalDateTime.now());
@@ -360,7 +361,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Assert.notNull(pmsProduceOrderCraft, "工序不存在");
 
         //工位是否存在
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listById(Sets.newHashSet(dto.getStationId()))).get();
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(dto.getStationId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.checkBetween(sysOfficeMap.size(), 1, 1, "工位不存在");
 
         //根据生产订单id和工序
@@ -380,8 +381,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 materialUnitMap.put(pmsWorkOrderBom.getModuleId(), pmsWorkOrderBom.getUnitId());
             }
             unitIdList.add(pmsProduceOrder.getUnitId());
-            Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitIdList)).get();
-            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(remoteSpareFeignApi.listById(idList)).get();
+            Map<Long, String> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(unitIdList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(idList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             List<MaterialStorageInfoDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
@@ -393,14 +394,14 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 messMaterialStorageList.add(storageDTO);
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
-            List<WmsStockInventoryDTO> messList = FeignOptional.of(remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList)).get();
+            List<WmsStockInventoryDTO> messList = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(messList)) {
                 Set<Integer> storageSet = Sets.newHashSet();
                 for (WmsStockInventoryDTO messDto : messList) {
                     storageSet.add(messDto.getWarehouseId());
                     storageSet.add(messDto.getShelfId());
                 }
-                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
+                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(()->remoteOfficeFeign.listById(storageSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
                 for (WmsStockInventoryDTO messDto : messList) {
                     ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
@@ -455,9 +456,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             stationIds.add(pmsReportWorkVO.getStationId());
         });
         //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(pmsReportWorkVO -> {
             pmsReportWorkVO.setStation(officeMap.get(pmsReportWorkVO.getStationId()));
             pmsReportWorkVO.setUnit(dictMap.get(pmsReportWorkVO.getUnitId()));

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.domain.PmsProcessOutStation;
@@ -62,9 +63,9 @@ public class PmsProcessOutStationServiceImpl extends ServiceImpl<PmsProcessOutSt
             stationIds.add(pmsProcessOutStationVO.getStationId());
         });
         //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //查询机构数据
-        Map<Integer, String> stationMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(stationIds)).get();
+        Map<Integer, String> stationMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(pmsProcessOutStationVO -> {
             pmsProcessOutStationVO.setStation(stationMap.get(pmsProcessOutStationVO.getStationId()));
             pmsProcessOutStationVO.setUnit(dictMap.get(pmsProcessOutStationVO.getUnitId()));

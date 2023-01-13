@@ -273,7 +273,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         vo.setEnergyTypeName(epAddEnergyTypeVO.getName());
         //如果应用部门不为空,设置应用部门
         if (CollUtil.isNotEmpty(standard.getApplyOffice())){
-            Map<Integer, SysOfficeVO> voMap = FeignOptional.of(remoteOfficeFeign.listById(standard.getApplyOffice())).get();
+            Map<Integer, SysOfficeVO> voMap = FeignOptional.of(() -> remoteOfficeFeign.listById(standard.getApplyOffice()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
            List<SysOfficeVO> sysOfficeVOS = Lists.newArrayList();
             standard.getApplyOffice().forEach(v->{
                 SysOfficeVO sysOfficeVO = voMap.get(v);
@@ -285,7 +285,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
         Collections.addAll(dictSet,standard.getStandardType()
                 ,standard.getProductThick(),standard.getMeasureUnit());
         if (CollUtil.isNotEmpty(dictSet)){
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             vo.setStandardTypeName(dictMap.get(vo.getStandardType()));
             vo.setProductThickName(dictMap.get(vo.getProductThick()));
             vo.setMeasureUnitName(dictMap.get(vo.getMeasureUnit()));
@@ -332,7 +332,7 @@ public class EpProductUnitConsumeStandardServiceImpl extends ServiceImpl<EpProdu
                 });
 
                 //获取数据字典map
-                Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
+                Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 resList.forEach(ele -> {
                     String thickStr = dictIdNameMap.get(ele.getProductThick());
                     //提取字符串中的数值

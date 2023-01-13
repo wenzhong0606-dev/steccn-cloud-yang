@@ -153,12 +153,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
             Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(workshopIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(()->remoteOfficeFeign.listById(workshopIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
             Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(lineIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(()->remoteOfficeFeign.listById(lineIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.DEFECTCATEGORY.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
@@ -518,7 +518,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(categoryIdSet);
         QtItemCategory defaultQtItemCategory = new QtItemCategory();
@@ -673,7 +673,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
         sysOfficeDTO.setOfficeName(keyword);
         sysOfficeDTO.setOfficeType(QtManagerConstant.OFFICE_PRODUCE_LINE_TYPE);
-        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO)).get();
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(()->remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeVOList,"产线集合不能为空");
         return sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
     }
@@ -773,7 +773,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();
@@ -1126,7 +1126,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();

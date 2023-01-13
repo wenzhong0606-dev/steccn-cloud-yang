@@ -193,12 +193,10 @@ public class ShardTimeUtil {
                     }
                     break;
                 case "D":
-                    listDate.add(start);
+                    listDate.add(LocalDateUtil.getMorning(start));
                     start = start.plusDays(1);
-                    if (!end.isAfter(start)){
-                        LocalDateTime endTimeOfDayStr = LocalDateUtil.getEndTimeOfDayStr(end.toLocalDate());
-                        listDate.add(LocalDateTime.of(endTimeOfDayStr.getYear(),endTimeOfDayStr.getMonth()
-                                ,endTimeOfDayStr.getDayOfMonth(), 23,59,59));
+                    if (!end.toLocalDate().isAfter(start.toLocalDate())) {
+                        listDate.add(LocalDateUtil.getMorning(end.toLocalDate()));
                     }
                     break;
                 case "H":
@@ -213,15 +211,5 @@ public class ShardTimeUtil {
             }
         }
         return listDate;
-    }
-
-
-    public static void main(String[] args) {
-        LocalDateTime start = LocalDateTime.of(LocalDate.of(2022, 3, 1), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.of(2023, 1, 5), LocalTime.MIN);
-        List<LocalDateTime> resList = cutDateRangeNew("Q", start, end);
-        resList.forEach(ele -> {
-            log.info("{}", ele);
-        });
     }
 }

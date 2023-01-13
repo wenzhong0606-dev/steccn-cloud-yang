@@ -35,7 +35,7 @@ public class XAxisUtil {
         if (QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "MM-dd HH:mm") + "~" + LocalDateTimeUtil.format(ldt.plusHours(1), "MM-dd HH:mm");
         } else if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, "MM-dd");
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.getCode().equals(granularityEnum.getCode())) {
             LocalDateTime monday = ldt.with(DayOfWeek.MONDAY);
             LocalDateTime sunday = ldt.with(DayOfWeek.SUNDAY);

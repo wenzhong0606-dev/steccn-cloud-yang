@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
@@ -107,7 +108,7 @@ public class WmsShelfUpStrategyServiceImpl extends ServiceImpl<WmsShelfUpStrateg
                         });
                     });
                 });
-                Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(remoteOfficeFeign.listById(officeIds)).get();
+                Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 for (Map.Entry<Long, List<WmsShelfUpStrategy>> entry : collect.entrySet()) {
                     WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
                     wmsMaterialShelfUpVO.setMaterialId(entry.getKey());

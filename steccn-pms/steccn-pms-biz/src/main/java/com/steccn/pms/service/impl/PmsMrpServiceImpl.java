@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -63,7 +64,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         //1.定义查询条件，获取数据
         SparePageDTO sparePageDTO = new SparePageDTO();
         BeanUtil.copyProperties(dto, sparePageDTO);
-        Page<EqpSpareVO> resPage = FeignOptional.of(remoteSpareFeignApi.listPage(sparePageDTO)).get();
+        Page<EqpSpareVO> resPage = FeignOptional.of(()->remoteSpareFeignApi.listPage(sparePageDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.拷贝page信息
@@ -90,7 +91,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         Set<String> typeCodes = Sets.newHashSet();
         typeCodes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
         typeCodes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
-        Map<String, SysDictVO> typeMap = FeignOptional.of(remoteDictFeignApi.listByCodes(typeCodes)).get();
+        Map<String, SysDictVO> typeMap = FeignOptional.of(()->remoteDictFeignApi.listByCodes(typeCodes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<PmsMrpInfo> list = Lists.newArrayList();
         if (CollUtil.isNotEmpty(materialIds)) {
             LambdaQueryWrapper<PmsMrpInfo> pmsMrpInfoLambdaQueryWrapper = new QueryWrapper<PmsMrpInfo>().select("material_id,sum(quantity) as quantity").lambda()
@@ -107,7 +108,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
         BigDecimal quantity =  BigDecimal.ZERO;
         mesMaterialInventoryDTO.setAvailableQuantity(quantity);
         //获取库存信息
-        Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+        Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(materialIds),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         pmsMrpVOList.forEach(pmsMrpVO -> {
             MaterialInventoryDTO inventoryDTO = inventoryDTOMap.getOrDefault(pmsMrpVO.getMaterialId(), mesMaterialInventoryDTO);
             PmsMrpInfo orDefault = pmsMrpInfoMap.getOrDefault(pmsMrpVO.getMaterialId(), pmsMrpInfo);
@@ -134,12 +135,12 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
                 codes.add(PmManagerConstant.MRP_INDEPENDENT_DEMAND);
                 codes.add(PmManagerConstant.MRP_PLANNED_ORDER);
                 codes.add(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT);
-                Map<String, SysDictVO> dictMap = FeignOptional.of(remoteDictFeignApi.listByCodes(codes)).get();
+                Map<String, SysDictVO> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByCodes(codes),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //获取独立需求类型id
                 Long mrpDemandId = dictMap.get(PmManagerConstant.MRP_INDEPENDENT_DEMAND).getId();
                 //获取订单需求类型id
                 Long mrpRequirementId = dictMap.get(PmManagerConstant.MRP_MANUFACTURE_REQUIRMENT).getId();
-                Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.materialInventory(materialIds)).get();
+                Map<Long, MaterialInventoryDTO> inventoryDTOMap = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialInventory(materialIds),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
                 MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
                 inventoryDTO.setAvailableQuantity(BigDecimal.ZERO);
                 Map<Long, List<PmsMrpInfo>> infoMap = list.stream().collect(Collectors.groupingBy(PmsMrpInfo::getMaterialId));
@@ -209,9 +210,9 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 //        });
 //        //获取物料的需求数量
 //        //获取物料信息
-//        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+//        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds)).get();
 //        //获取字典数据
-//        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+//        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds)).get();
 //        EqpSpareVO eqpSpareVO = new EqpSpareVO();
 //        pmsMrpVOS.forEach(pmsMrpVO -> {
 //            EqpSpareVO material = materialMap.getOrDefault(pmsMrpVO.getMaterialId(), eqpSpareVO);
@@ -233,11 +234,11 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 //        });
 //        //3.获取物料的可用库存数量
 //        Map<Long, MesMaterialInventoryDTO> materialInventoryMap = remoteMessFeignApi.materialInventory(materialIds);
-//        Map<Long, String> materialMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(materialIds)).get();
+//        Map<Long, String> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(materialIds)).get();
 //        MesMaterialInventoryDTO mesMaterialInventoryDTO = new MesMaterialInventoryDTO();
 //        //4.获取MRP类型数据
-//        SysDictVO inventoryType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
-//        SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(PmManagerConstant.MRP_SAFETY_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
+//        SysDictVO inventoryType = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRP_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
+//        SysDictVO safetyType = FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRP_SAFETY_INVENTORY, PmManagerConstant.MRP_TYPE)).get();
 //        //5.处理数据
 //        //5.1保存主数据
 //        list.forEach(pmsMrp -> {
@@ -283,7 +284,7 @@ public class PmsMrpServiceImpl extends ServiceImpl<PmsMrpMapper, PmsMrp>
 //     * @return
 //     */
 //    PmsMrpInfo createPlanOrder(String type,BigDecimal quantity, BigDecimal availableQuantity, Long mrpId) {
-//        SysDictVO safetyType = FeignOptional.of(remoteDictFeignApi.getByCode(type, PmManagerConstant.MRP_TYPE)).get();
+//        SysDictVO safetyType = FeignOptional.of(()->remoteDictFeignApi.getByCode(type, PmManagerConstant.MRP_TYPE)).get();
 //        PmsMrpInfo planOrder = new PmsMrpInfo();
 //        planOrder.setMrpTypeId(safetyType.getId());
 //        planOrder.setQuantity(quantity);

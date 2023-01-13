@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.platform.feign.RemoteStationWarehouseFeignApi;
 import com.steccn.platform.vo.SysStationWarehouseVO;
@@ -84,7 +85,7 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
 
     @Override
     public Map<Long, BigDecimal> quantityMap(TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO) {
-        if(Objects.isNull(tupleDTO) || CollUtil.isEmpty(tupleDTO.getField2())){
+        if (Objects.isNull(tupleDTO) || CollUtil.isEmpty(tupleDTO.getField2())) {
             return Maps.newHashMap();
         }
         //处理时间
@@ -104,7 +105,7 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
                 stationIds.add(id);
             });
         });
-        Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(remoteStationWarehouseFeignApi.listByStationIds(stationIds)).get();
+        Map<Integer, List<SysStationWarehouseVO>> warehouseMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //处理物料的工位数据
         Map<Long, List<Integer>> materialShelfMap = Maps.newHashMap();
         Map<Long, Set<Integer>> materialMap = tupleDTO.getField2();
@@ -113,9 +114,9 @@ public class PmsMaterialRequisitionInfoServiceImpl extends ServiceImpl<PmsMateri
             List<Integer> shelfIds = Lists.newArrayList();
             v.forEach(id -> {
                 List<SysStationWarehouseVO> orDefault = warehouseMap.getOrDefault(id, sysStationWarehouseVOList);
-                orDefault.forEach( shelf -> shelfIds.add(shelf.getShelfId()));
+                orDefault.forEach(shelf -> shelfIds.add(shelf.getShelfId()));
             });
-            if(CollUtil.isNotEmpty(shelfIds)){
+            if (CollUtil.isNotEmpty(shelfIds)) {
                 materialShelfMap.put(k, shelfIds);
             }
         });

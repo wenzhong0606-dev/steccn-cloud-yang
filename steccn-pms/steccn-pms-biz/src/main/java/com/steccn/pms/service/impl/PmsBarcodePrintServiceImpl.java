@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
@@ -120,7 +121,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 .eq(PmsBarcodePrint::getProduceOrderId, dto.getProduceOrderId())
                 .eq(PmsBarcodePrint::getBatchNo, dto.getBatchNo())
                 .eq(Objects.nonNull(dto.getCaseState()), PmsBarcodePrint::getCaseState, dto.getCaseState())
-                .orderByDesc(PmsBarcodePrint::getCreateTime,PmsBarcodePrint::getCaseNo));
+                .orderByDesc(PmsBarcodePrint::getCreateTime, PmsBarcodePrint::getCaseNo));
         BeanUtils.copyProperties(page, resPage);
         if (CollUtil.isNotEmpty(page.getRecords())) {
             List<BarcodePrintRecordVO> voList = BeanUtil.copyToList(page.getRecords(), BarcodePrintRecordVO.class);
@@ -131,12 +132,12 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
 
             voList.forEach(barcodePrintRecordVO -> {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(barcodePrintRecordVO.getProduceOrderId());
-                if(Objects.nonNull(baseSelectVO)){
+                if (Objects.nonNull(baseSelectVO)) {
                     barcodePrintRecordVO.setUnitId(baseSelectVO.getId());
                     barcodePrintRecordVO.setUnit(baseSelectVO.getName());
                 }
                 PmsProduceOrder pmsProduceOrder = map.get(barcodePrintRecordVO.getProduceOrderId());
-                if(Objects.nonNull(pmsProduceOrder)){
+                if (Objects.nonNull(pmsProduceOrder)) {
                     barcodePrintRecordVO.setMinPackageQuantity(pmsProduceOrder.getMinPackageQuantity());
                 }
             });
@@ -180,9 +181,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         BarcodePrintRecordVO vo = new BarcodePrintRecordVO();
         BeanUtils.copyProperties(model, vo);
         Long produceOrderId = vo.getProduceOrderId();
-        if(Objects.nonNull(produceOrderId)){
+        if (Objects.nonNull(produceOrderId)) {
             Map<Long, BaseSelectVO<Long>> orderUnitMap = pmsProduceOrderService.listUnit(Sets.newHashSet(produceOrderId));
-            if(CollUtil.isNotEmpty(orderUnitMap)){
+            if (CollUtil.isNotEmpty(orderUnitMap)) {
                 BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(produceOrderId);
                 vo.setUnitId(baseSelectVO.getId());
                 vo.setUnit(baseSelectVO.getName());
@@ -235,7 +236,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     }
 
     @Override
-    public Boolean reviseAlreadyPutInStatue(List<String> caseNoList,Integer code) {
+    public Boolean reviseAlreadyPutInStatue(List<String> caseNoList, Integer code) {
         if (CollUtil.isNotEmpty(caseNoList)) {
             update(new LambdaUpdateWrapper<PmsBarcodePrint>()
                     .set(PmsBarcodePrint::getCaseState, code)
@@ -248,14 +249,14 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     public Map<String, CaseSiteDTO> caseSite(Set<String> caseNoSet) {
         Map<String, CaseSiteDTO> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(caseNoSet)) {
-            Map<String, CaseSiteDTO> caseSiteDTOMap = FeignOptional.of(remoteWmsInventoryFeignApi.caseSite(caseNoSet)).get();
+            Map<String, CaseSiteDTO> caseSiteDTOMap = FeignOptional.of(() -> remoteWmsInventoryFeignApi.caseSite(caseNoSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(caseSiteDTOMap)) {
                 Set<String> siteSet = Sets.newHashSet();
                 for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
                     siteSet.add(entry.getValue().getShelfCode());
                     siteSet.add(entry.getValue().getWarehouseCode());
                 }
-                Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByCodeSet(siteSet)).get();
+                Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(siteSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
                 for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
                     CaseSiteDTO value = entry.getValue();

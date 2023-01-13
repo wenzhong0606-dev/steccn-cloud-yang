@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -86,13 +87,13 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
 
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
@@ -102,7 +103,7 @@ public class ReportServiceImpl implements ReportService {
 
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         List<SubstrateDayReportListVO> productLineVOList = Lists.newArrayList();
@@ -270,7 +271,7 @@ public class ReportServiceImpl implements ReportService {
         sysDictDTO.setType(measureUnit);
         sysDictDTO.setCodeList(codeSet);
         SysDictVO defaultSysDictVO = new SysDictVO();
-        Map<String, SysDictVO> resMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        Map<String, SysDictVO> resMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         for (String code : codeSet) {
             SysDictVO sysDictVO = resMap.getOrDefault(code,defaultSysDictVO);
             resList.add(sysDictVO.getId());
@@ -373,7 +374,7 @@ public class ReportServiceImpl implements ReportService {
     private List<SysDictVO> getClassList() {
         SysDictDTO sysDictDTO = new SysDictDTO();
         sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
-        Map<String, SysDictVO> classMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+        Map<String, SysDictVO> classMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysDictVO> classList = classMap.values().stream().collect(Collectors.toList());
         classList.sort(Comparator.comparing(SysDictVO::getSort));
         return classList;
@@ -587,7 +588,7 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //遍历所有的物料查询完工数量
@@ -623,7 +624,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
@@ -635,7 +636,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherProduceReportListVO> tableData = Lists.newArrayList();
         //查询产线车间信息
         Set<Integer> productLineSet = dataList.stream().map(FurtherProduceReportDataVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -765,7 +766,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无深加工日报表");
         Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet))).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //定义
@@ -827,7 +828,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取车间数据
         Set<Integer> productLineSet = dataList.stream().map(FurtherIngredientMapperVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(remoteOfficeFeign.listById(productLineSet)).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -1096,7 +1097,7 @@ public class ReportServiceImpl implements ReportService {
             //获取班组信息-甲班 乙班 丙班 组成map
             SysDictDTO sysDictDTO = new SysDictDTO();
             sysDictDTO.setType(PmManagerConstant.SYS_TEAM);
-            Map<String, SysDictVO> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByCode(sysDictDTO)).get();
+            Map<String, SysDictVO> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //数据字典数据对应
             Map<Long, SysDictVO> dictMap = Maps.newHashMap();
             sysDictMap.forEach((k, v) -> dictMap.put(v.getId(), v));
@@ -1560,7 +1561,7 @@ public class ReportServiceImpl implements ReportService {
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workShopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-        return FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+        return FeignOptional.of(()->remoteOfficeFeign.listByParentId(sysOfficeParentDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 
 }
