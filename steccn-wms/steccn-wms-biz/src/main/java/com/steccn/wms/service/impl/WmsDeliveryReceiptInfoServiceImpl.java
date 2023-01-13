@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -74,7 +75,7 @@ public class WmsDeliveryReceiptInfoServiceImpl extends ServiceImpl<WmsDeliveryRe
             list = this.baseMapper.infoList(id);
             Set<Long> dictIds = Sets.newHashSet();
             list.forEach(info -> dictIds.add(info.getUnit()));
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
         }
         return list;

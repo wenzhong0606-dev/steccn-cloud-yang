@@ -84,7 +84,7 @@ public class WmsLogisticsDetailServiceImpl extends ServiceImpl<WmsLogisticsDetai
                 dictIds.add(detailVO.getUnitId());
             });
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(detailVO -> {
                 detailVO.setUnpackFlag(0);
                 detailVO.setAogQuantity(detailVO.getShippedQuantity());

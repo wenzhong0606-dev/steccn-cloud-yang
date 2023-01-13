@@ -110,7 +110,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 officeSet.add(receipt.getWarehouseId());
             });
             Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             records.forEach(receipt -> {
                 receipt.setTypeName(dictMap.get(receipt.getType()));
                 receipt.setWarehouseName(officeMap.get(receipt.getWarehouseId()));
@@ -362,7 +362,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
             dictSet.add(wmsStorageReceiptInfo.getUnit());
         });
         Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<WmsStorageReceiptInfoVO> wmsStorageReceiptInfoVOS = BeanUtil.copyToList(list, WmsStorageReceiptInfoVO.class);
         wmsStorageReceiptInfoVOS.forEach(wmsStorageReceiptInfoVO -> {
             wmsStorageReceiptInfoVO.setUnitName(dictMap.get(wmsStorageReceiptInfoVO.getUnit()));
@@ -446,7 +446,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         System.out.println("单位："+dictName.size());
         Map<String, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByName(officeNames),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<String, EqpSpareVO> spareMap = FeignOptional.of(()->remoteSpareFeignApi.listByCode(materialCodes),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<String, Long> dictIdMap = FeignOptional.of(remoteDictFeignApi.listByNameCh(dictName)).get();
+        Map<String, Long> dictIdMap = FeignOptional.of(()->remoteDictFeignApi.listByNameCh(dictName),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (CollUtil.isNotEmpty(excelList)) {
             Map<String, List<WmsStorageReceiptExcelDTO>> map = excelList.stream().collect(Collectors.groupingBy(WmsStorageReceiptExcelDTO::getWarehouseName));
             List<WmsStorageReceiptDTO> wmsStorageReceiptList = Lists.newArrayList();
