@@ -20,6 +20,10 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yequan
@@ -34,6 +38,9 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final QtDefectCollectDetailService qtDefectCollectDetailService;
     private final EpMeterCollectService epMeterCollectService;
     private final PmStationCollectService pmStationCollectService;
+
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -87,7 +94,6 @@ public class HbCollectServiceImpl implements HbCollectService {
     public Boolean epMeter(CollectCommonDTO<EpMeterCollectDTO> dto) {
         List<EpMeterCollectDTO> dataList = dto.getData();
         LocalDateTime now = LocalDateTime.now();
-
         List<EpMeterCollect> batchList = Lists.newArrayList();
         for (EpMeterCollectDTO data : dataList) {
             EpMeterCollect epMeterCollect = new EpMeterCollect();
@@ -96,7 +102,8 @@ public class HbCollectServiceImpl implements HbCollectService {
             epMeterCollect.setRecordTime(data.getTimestamp());
             batchList.add(epMeterCollect);
         }
-        return epMeterCollectService.saveBatch(batchList);
+        poolExecutor.execute(()-> epMeterCollectService.saveBatch(batchList));
+        return Boolean.TRUE;
     }
 
     @Override
@@ -111,6 +118,7 @@ public class HbCollectServiceImpl implements HbCollectService {
             pmStationCollect.setRecordTime(data.getTimestamp());
             batchList.add(pmStationCollect);
         }
-        return pmStationCollectService.saveBatch(batchList);
+        poolExecutor.execute(() -> pmStationCollectService.saveBatch(batchList));
+        return Boolean.TRUE;
     }
 }
