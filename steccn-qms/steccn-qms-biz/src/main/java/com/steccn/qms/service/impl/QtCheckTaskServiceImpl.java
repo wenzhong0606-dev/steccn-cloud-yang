@@ -135,6 +135,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long add(QtAddCheckTaskDTO dto) {
+        //巡检抽检时间必填
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
+            Assert.notNull(dto.getSpotTime(),"巡检任务的抽检时间不能为空");
+        }
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
         QtBaseIdNameDTO qtBaseIdNameDTO = new QtBaseIdNameDTO();
