@@ -93,7 +93,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
@@ -624,7 +624,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(remoteSpareUnitConvertFeignApi.convert(materialSpecSet)).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
