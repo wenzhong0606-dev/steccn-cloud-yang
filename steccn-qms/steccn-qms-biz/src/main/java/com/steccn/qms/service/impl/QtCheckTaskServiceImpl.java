@@ -957,6 +957,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * 保存备注
      * @param id
      */
+    @Transactional(rollbackFor = Exception.class)
     public void saveCheckTaskDestoryInfoRemark(Long id ,String destoryInfoRemark){
         if(org.apache.commons.lang3.StringUtils.isNotBlank(destoryInfoRemark)) {
             QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
