@@ -118,4 +118,11 @@ public class OaController {
     public R<List<OaToDoWorkflowVO>> getOaEmp(){
         return R.success(oaService.getToDoList());
     }
+
+    @ApiOperation("测试")
+    @GetMapping("/test")
+    public R test(@RequestBody OaProcurementProcessDTO dto){
+        oaService.getWorkFlow(dto);
+        return null;
+    }
 }

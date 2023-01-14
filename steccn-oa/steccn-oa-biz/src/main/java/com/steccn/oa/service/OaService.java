@@ -331,6 +331,14 @@ public class OaService {
     }
 
     /**
+     * 获取待办数据
+     */
+    public String getWorkFlow(OaProcurementProcessDTO dto){
+        String result = oaApi.postProcess(this.setHeaders(),dto);
+        return result;
+    }
+
+    /**
      * 设置请求头
      * @return
      */
