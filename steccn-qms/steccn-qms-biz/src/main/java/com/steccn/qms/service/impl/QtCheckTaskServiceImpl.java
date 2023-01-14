@@ -974,6 +974,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finished(QtCheckResultDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
