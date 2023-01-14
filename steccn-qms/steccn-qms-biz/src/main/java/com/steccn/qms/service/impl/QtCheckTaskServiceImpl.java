@@ -277,6 +277,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
@@ -514,6 +515,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
+            if (oldModel.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
+                throw new BusinessException("已完成的任务不能开始");
+            }
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setStartName(SecurityUtils.getUser().getName());
             qtCheckTask.setStartTime(LocalDateTime.now());
