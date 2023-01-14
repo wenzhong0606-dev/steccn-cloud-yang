@@ -1622,7 +1622,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             //获取时间范围的集合
             List<QtCheckTaskReportVO> conditionDataList = flatDataList.stream().filter(v -> {
                 //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getSpotTime()) || start.isEqual(v.getSpotTime())) && end.isAfter(v.getSpotTime())) {
+                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
                     return Boolean.TRUE;
                 }
                 return Boolean.FALSE;
