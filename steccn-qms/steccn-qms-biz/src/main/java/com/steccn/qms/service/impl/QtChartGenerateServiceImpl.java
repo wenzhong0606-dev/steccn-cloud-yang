@@ -316,9 +316,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             if (CollUtil.isNotEmpty(danItemDetails)) {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
                                     if (StrUtil.isNotBlank(tmp.getCheckResult())) {
-                                        BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
-                                        totalDanItem = BigDecimalUtil.add(totalDanItem, decimalTmp);
-                                        totalDanItemCount = BigDecimalUtil.add(totalDanItemCount, new BigDecimal(1));
+                                        //判断是否为数字
+                                        if(StrUtil.isNumeric(tmp.getCheckResult())){
+                                            BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                            totalDanItem = BigDecimalUtil.add(totalDanItem, decimalTmp);
+                                            totalDanItemCount = BigDecimalUtil.add(totalDanItemCount, new BigDecimal(1));
+                                        }
                                     }
                                 }
                             }
