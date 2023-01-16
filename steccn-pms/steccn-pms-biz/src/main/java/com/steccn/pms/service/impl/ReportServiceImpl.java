@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
@@ -10,26 +11,24 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
+import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeVO;
-import com.steccn.platform.vo.SysSpareUnitConversionVO;
+import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
-import com.steccn.pms.domain.PmProcess;
-import com.steccn.pms.domain.PmsProduceOrderCraft;
-import com.steccn.pms.domain.PmsPullForce;
-import com.steccn.pms.domain.PmsReportWork;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
@@ -65,6 +64,7 @@ public class ReportServiceImpl implements ReportService {
     private final PmsPullForceService pmsPullForceService;
     private final PmsReportWorkService pmsReportWorkService;
     private final PmsProduceOrderMapper pmsProduceOrderMapper;
+    private final PmsProduceOrderService pmsProduceOrderService;
     private final PmProcessService pmProcessService;
     private final PmsCompleteStorageInfoService pmsCompleteStorageInfoService;
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
@@ -927,6 +927,112 @@ public class ReportServiceImpl implements ReportService {
             }
         }
         return dataList;
+    }
+
+    /**
+     * 生产订单进度跟踪
+     * @param workshopId
+     * @return
+     */
+    @Override
+    public QtLineChartBarDTO orderProgress(Integer workshopId) {
+        //根据车间id查询产线
+        SysOfficeParentDTO sysOfficeParentDTO =  new SysOfficeParentDTO();
+        sysOfficeParentDTO.setId(workshopId);
+        sysOfficeParentDTO.setOfficeType("9");
+        List<SysOfficeVO> officeData = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SteccnTableAssertUtil.notEmpty(officeData,"车间下的产线为空");
+        //排一下序
+        QtLineChartBarDTO<String,Long> result = new QtLineChartBarDTO();
+        //放入x轴数据
+        List<String> xData = Lists.newArrayList();
+        //产线idList
+        List<Integer> productLineIds = Lists.newArrayList();
+        officeData.forEach(tmp->{
+            xData.add(tmp.getOfficeName());
+            productLineIds.add(tmp.getId());
+        });
+
+        result.setXData(xData);
+        //放入y轴数据
+        List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
+        //计划数量
+        QtSeriesDataDTO<String,BigDecimal> planNum = new QtSeriesDataDTO<>();
+        planNum.setName(PmManagerConstant.PLAN_NUM);
+        //完工数量
+        QtSeriesDataDTO<String,BigDecimal> finishNum = new QtSeriesDataDTO<>();
+        finishNum.setName(PmManagerConstant.FINISH_NUM);
+        //入库数量
+        QtSeriesDataDTO<String,BigDecimal> receiptNum = new QtSeriesDataDTO<>();
+        finishNum.setName(PmManagerConstant.RECEIPT_NUM);
+        //获得执行中的生产订单数据
+        List<PmsProduceOrder> pmsProduceOrderList = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
+                .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
+                .in(PmsProduceOrder::getProductionLineId,productLineIds));
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderList,"产线下执行中的生产订单为空");
+        List<Long> pmsProduceOrderIdList = Lists.newArrayList();
+        pmsProduceOrderList.forEach(tmp->{
+            pmsProduceOrderIdList.add(tmp.getId());
+        });
+        //获得报工数据
+        List<PmsReportWork> pmsReportWorkList = pmsReportWorkService.list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProduceOrderId, pmsProduceOrderIdList));
+        //完工信息
+        List<PmsCompleteStorageInfo> pmsCompleteStorageInfoList = pmsCompleteStorageInfoService.list(new LambdaQueryWrapper<PmsCompleteStorageInfo>().in(PmsCompleteStorageInfo::getProduceOrderId, pmsProduceOrderIdList, pmsProduceOrderIdList));
+        //计划数量data
+        List<BigDecimal> planNumData = Lists.newArrayList();
+        //完工数量data
+        List<BigDecimal> finishNumData = Lists.newArrayList();
+        //入库数量data
+        List<BigDecimal> receiptNumData = Lists.newArrayList();
+        productLineIds.forEach(tmp->{
+            PmsProduceOrder pmsProduceOrder = pmsProduceOrderList.stream().filter(v -> v.getProductionLineId().equals(tmp)).findFirst().get();
+            if(Objects.isNull(pmsProduceOrder)){
+                planNumData.add(BigDecimal.ZERO);
+                finishNumData.add(BigDecimal.ZERO);
+            }else {
+                if(pmsProduceOrder.getQuantity() == null){
+                    planNumData.add(BigDecimal.ZERO);
+                }else {
+                    planNumData.add(pmsProduceOrder.getQuantity());
+                }
+                //完工数量
+                if(CollUtil.isNotEmpty(pmsReportWorkList)){
+                    List<PmsReportWork> pmsReportWorkListTmp = pmsReportWorkList.stream().filter(v -> v.getProduceOrderId().equals(pmsProduceOrder.getId())).collect(Collectors.toList());
+                    BigDecimal pmsData = BigDecimal.ZERO;
+                    if(CollUtil.isNotEmpty(pmsReportWorkListTmp)){
+                        for (PmsReportWork v : pmsReportWorkListTmp) {
+                            pmsData = BigDecimalUtil.add(pmsData,v.getProcessQuantity());
+                        }
+                    }
+                    finishNumData.add(pmsData);
+                }else {
+                    finishNumData.add(BigDecimal.ZERO);
+                }
+                //入库数量
+                if(CollUtil.isNotEmpty(pmsCompleteStorageInfoList)){
+                    List<PmsCompleteStorageInfo> pmsCompleteStorageInfoListTmp = pmsCompleteStorageInfoList.stream().filter(v -> v.getProduceOrderId().equals(pmsProduceOrder.getId())).collect(Collectors.toList());
+                    BigDecimal pmsData = BigDecimal.ZERO;
+                    if(CollUtil.isNotEmpty(pmsCompleteStorageInfoListTmp)){
+                        for (PmsCompleteStorageInfo v : pmsCompleteStorageInfoListTmp) {
+                            pmsData = BigDecimalUtil.add(pmsData,v.getQuantity());
+                        }
+                    }
+                    receiptNumData.add(pmsData);
+
+                }else {
+                    receiptNumData.add(BigDecimal.ZERO);
+                }
+            }
+        });
+        planNum.setData(planNumData);
+        seriesDataVO.add(planNum);
+        finishNum.setData(finishNumData);
+        seriesDataVO.add(finishNum);
+        receiptNum.setData(receiptNumData);
+        seriesDataVO.add(receiptNum);
+        result.setSeriesDataVO(seriesDataVO);
+        //完工数量
+        return result;
     }
 
     /**

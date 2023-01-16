@@ -1,5 +1,7 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
@@ -70,4 +72,11 @@ public interface ReportService {
      * @return list
      */
     List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto);
+
+    /**
+     * 订单进度跟踪图表
+     * @param productLineId
+     * @return
+     */
+    QtLineChartBarDTO orderProgress(Integer workshopId);
 }

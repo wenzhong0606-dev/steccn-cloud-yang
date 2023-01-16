@@ -199,7 +199,20 @@ public interface PmManagerConstant {
      */
     String PROCESS_TYPE = "process_type";
 
+    /**
+     * 计划数量
+     */
+    String PLAN_NUM = "计划数量";
 
+    /**
+     * 完工数量
+     */
+    String FINISH_NUM = "完工数量";
+
+    /**
+     * 入库数量
+     */
+    String RECEIPT_NUM = "入库数量";
 
 
     /**

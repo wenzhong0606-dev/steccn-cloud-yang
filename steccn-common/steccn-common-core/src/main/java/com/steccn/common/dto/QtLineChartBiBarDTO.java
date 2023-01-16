@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 折线图VO
- * @author 王志雄
+ * @author 叶泉
  * @param
  */
 @Data
