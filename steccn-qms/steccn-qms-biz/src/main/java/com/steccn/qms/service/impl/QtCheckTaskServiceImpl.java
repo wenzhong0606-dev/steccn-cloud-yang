@@ -515,6 +515,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
+            log.debug("老任务",oldModel.getStatus());
             if (oldModel.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
                 throw new BusinessException("已完成的任务不能开始");
             }
