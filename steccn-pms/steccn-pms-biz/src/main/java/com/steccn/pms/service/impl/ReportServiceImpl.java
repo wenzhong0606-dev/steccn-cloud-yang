@@ -985,7 +985,7 @@ public class ReportServiceImpl implements ReportService {
         //入库数量data
         List<BigDecimal> receiptNumData = Lists.newArrayList();
         productLineIds.forEach(tmp->{
-            PmsProduceOrder pmsProduceOrder = pmsProduceOrderList.stream().filter(v -> v.getProductionLineId().equals(tmp)).findFirst().get();
+            PmsProduceOrder pmsProduceOrder = pmsProduceOrderList.stream().filter(v -> v.getProductionLineId().equals(tmp)).findFirst().orElse(null);
             if(Objects.isNull(pmsProduceOrder)){
                 planNumData.add(BigDecimal.ZERO);
                 finishNumData.add(BigDecimal.ZERO);
