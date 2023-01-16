@@ -277,6 +277,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
@@ -514,6 +515,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         qtCheckTask.setStatus(dto.getStatus());
         //开始任务
         if (dto.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.CHECKING.getCode())) {
+            log.debug("老任务",oldModel.getStatus());
+            if (oldModel.getStatus().equals(QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())) {
+                throw new BusinessException("已完成的任务不能开始");
+            }
             qtCheckTask.setStartBy(SecurityUtils.getUser().getUserId());
             qtCheckTask.setStartName(SecurityUtils.getUser().getName());
             qtCheckTask.setStartTime(LocalDateTime.now());
@@ -953,6 +958,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * 保存备注
      * @param id
      */
+    @Transactional(rollbackFor = Exception.class)
     public void saveCheckTaskDestoryInfoRemark(Long id ,String destoryInfoRemark){
         if(org.apache.commons.lang3.StringUtils.isNotBlank(destoryInfoRemark)) {
             QtCheckTaskDestoryInfo qtCheckTaskDestoryInfo = new QtCheckTaskDestoryInfo();
@@ -974,6 +980,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finished(QtCheckResultDTO dto) {
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
