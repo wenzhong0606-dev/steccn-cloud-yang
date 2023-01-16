@@ -964,7 +964,7 @@ public class ReportServiceImpl implements ReportService {
         finishNum.setName(PmManagerConstant.FINISH_NUM);
         //入库数量
         QtSeriesDataDTO<String,BigDecimal> receiptNum = new QtSeriesDataDTO<>();
-        finishNum.setName(PmManagerConstant.RECEIPT_NUM);
+        receiptNum.setName(PmManagerConstant.RECEIPT_NUM);
         //获得执行中的生产订单数据
         List<PmsProduceOrder> pmsProduceOrderList = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
@@ -989,6 +989,7 @@ public class ReportServiceImpl implements ReportService {
             if(Objects.isNull(pmsProduceOrder)){
                 planNumData.add(BigDecimal.ZERO);
                 finishNumData.add(BigDecimal.ZERO);
+                receiptNumData.add(BigDecimal.ZERO);
             }else {
                 if(pmsProduceOrder.getQuantity() == null){
                     planNumData.add(BigDecimal.ZERO);

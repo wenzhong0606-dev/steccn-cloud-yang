@@ -128,8 +128,8 @@ public interface OaApi {
      * @param dto
      * @return
      */
-    @PostMapping(value = "/api/workflow/paService/doCreateRequest",headers = {"content-type=application/json"})
-    @Headers(value = {"content-type=application/json"})
+    @PostMapping(value = "/api/workflow/paService/doCreateRequest",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
-    String postProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaProcurementProcessDTO dto);
+    String postProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowDTO dto);
 }

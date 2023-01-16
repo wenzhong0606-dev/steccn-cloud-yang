@@ -14,7 +14,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -119,9 +118,9 @@ public class OaController {
         return R.success(oaService.getToDoList());
     }
 
-    @ApiOperation("测试")
-    @GetMapping("/test")
-    public R test(@RequestBody OaProcurementProcessDTO dto){
+    @ApiOperation("新建流程")
+    @PostMapping("/workflow/doCreateRequest")
+    public R test(@RequestBody OaWorkFlowParamDTO dto){
         oaService.getWorkFlow(dto);
         return null;
     }

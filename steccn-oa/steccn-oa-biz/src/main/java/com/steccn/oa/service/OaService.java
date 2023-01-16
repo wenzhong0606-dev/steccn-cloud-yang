@@ -2,9 +2,9 @@ package com.steccn.oa.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
@@ -13,6 +13,7 @@ import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaToDoWorkflowVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
@@ -21,11 +22,11 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import weaver.rsa.security.RSA;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -331,10 +332,21 @@ public class OaService {
     }
 
     /**
-     * 获取待办数据
+     * 新建流程
      */
-    public String getWorkFlow(OaProcurementProcessDTO dto){
-        String result = oaApi.postProcess(this.setHeaders(),dto);
+    public String getWorkFlow(OaWorkFlowParamDTO dto){
+        OaWorkflowDTO oaWorkflowDTO = new OaWorkflowDTO();
+        BeanUtils.copyProperties(dto,oaWorkflowDTO);
+        if(CollUtil.isNotEmpty(dto.getMainData())){
+            oaWorkflowDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
+        }
+        if(Objects.nonNull(dto.getDetailData())){
+            oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
+        }
+        if(CollUtil.isNotEmpty(dto.getOtherParams())){
+            oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
+        }
+        String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
         return result;
     }
 

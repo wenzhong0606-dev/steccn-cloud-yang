@@ -5,13 +5,13 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 采购流程DTO
+ * 采购流程传参至DTO
  *
  * @author AndrewLuo
  * @date 2023/01/13
  */
 @Data
-public class OaProcurementProcessDTO implements Serializable {
+public class OaWorkflowDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     private String requestName;
     private String mainData;
