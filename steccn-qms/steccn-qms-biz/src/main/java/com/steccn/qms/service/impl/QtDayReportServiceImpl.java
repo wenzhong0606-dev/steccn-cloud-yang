@@ -635,6 +635,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
         }
         result.setTableData(tableData);
+        //如果所有的工位都为空，则表头不需要工位那一列
+        long count = tableData.stream().filter(v -> StrUtil.isNotBlank(v.getStation())).count();
+        if(count == 0){
+            List<QtSpcHeadTitleVO> oldCommon = result.getHeaders().getCommon();
+            List<QtSpcHeadTitleVO> newCommon = oldCommon.stream().filter(v -> !QtManagerConstant.SPC_HEADER_FIELD_STATION.equals(v.getLabel())).collect(Collectors.toList());
+            result.getHeaders().setCommon(newCommon);
+        }
+
         if (QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode().equals(checkTaskType)) {
             //落板原因
             result.setFallList(fallList(manData, productLineName));
