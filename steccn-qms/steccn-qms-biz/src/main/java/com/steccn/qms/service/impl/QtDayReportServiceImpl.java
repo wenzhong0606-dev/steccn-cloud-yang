@@ -505,6 +505,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         Map<Long, List<QtCheckTaskDetail>> groupByTaskId = taskDetailList.stream().collect(Collectors.groupingBy(v -> v.getTaskId()));
         //先根据班次排序再根据完成时间排序
         taskList = taskList.stream().sorted(Comparator.comparing(QtCheckTaskListVO::getClassesId)
+                .thenComparing(QtCheckTaskListVO::getStationId, Comparator.nullsLast(Comparator.comparing(v -> v)))
                 .thenComparing(QtCheckTaskListVO::getFinishedTime)).collect(Collectors.toList());
         //根据taskId重组map
         Map<Long, List<QtCheckTaskDetail>> groupByTaskIdOrder = new LinkedHashMap<>();
