@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
@@ -34,7 +35,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     public List<SysDictVO> sysList(String type) {
         //1.根据类型code查询出所有的数据字典数据
-        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>().eq(SysDict::getType, type));
+        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getType, type)
+                .eq(SysDict::getUseFlag, MpConstant.YES));
         //2.如果数据为空，直接返回空集合
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
