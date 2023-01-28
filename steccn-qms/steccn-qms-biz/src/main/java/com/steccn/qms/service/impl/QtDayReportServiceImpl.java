@@ -515,6 +515,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //获取task
             QtCheckTaskListVO task = taskList.stream().filter(v -> v.getId().equals(taskEntry.getKey())).findFirst().get();
             List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
+            //避免空指针异常
+            if(Objects.isNull(detailTmp)){
+                continue;
+            }
             //一个任务下,根据copy分组
             Map<Integer, List<QtCheckTaskDetail>> groupByCopyTmp = detailTmp.stream().collect(Collectors.groupingBy(v -> v.getCopy()));
             //根据样本序号排序
