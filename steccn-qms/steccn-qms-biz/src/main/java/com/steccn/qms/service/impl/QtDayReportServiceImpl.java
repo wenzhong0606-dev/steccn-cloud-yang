@@ -192,8 +192,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         if (CollUtil.isNotEmpty(manDataList)) {
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             //先根据人工数据查询所有的taskId
-            Map<Long, LocalDateTime> taskClassMap = Maps.newHashMap();
-            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getDefectStartTime()));
+            Map<Long, Integer> taskClassMap = Maps.newHashMap();
+            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
             //查询所有的落板原因
             List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
                     .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
@@ -206,11 +206,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtCheckTaskDestoryOnlineVO vo = new QtCheckTaskDestoryOnlineVO();
                         BeanUtils.copyProperties(destroy, vo);
                         vo.setFirstTime(min.get().getDestoryStartTime());
-                        LocalDateTime defectStart = taskClassMap.get(entry.getKey());
-                        if(Objects.nonNull(defectStart)){
-                            QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(defectStart);
-                            vo.setClassId(qtTaskClassCalculate.getClassType());
-                        }
+                        vo.setClassId(taskClassMap.get(entry.getKey()));
                         QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
                         if (Objects.nonNull(classEnum)) {
                             vo.setClassName(classEnum.getName());
