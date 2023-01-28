@@ -12,8 +12,10 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
@@ -190,8 +192,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         if (CollUtil.isNotEmpty(manDataList)) {
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
             //先根据人工数据查询所有的taskId
-            Map<Long, Integer> taskClassMap = Maps.newHashMap();
-            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
+            Map<Long, LocalDateTime> taskClassMap = Maps.newHashMap();
+            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getDefectStartTime()));
             //查询所有的落板原因
             List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
                     .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
@@ -204,7 +206,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         QtCheckTaskDestoryOnlineVO vo = new QtCheckTaskDestoryOnlineVO();
                         BeanUtils.copyProperties(destroy, vo);
                         vo.setFirstTime(min.get().getDestoryStartTime());
-                        vo.setClassId(taskClassMap.get(entry.getKey()));
+                        LocalDateTime defectStart = taskClassMap.get(entry.getKey());
+                        if(Objects.nonNull(defectStart)){
+                            QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(defectStart);
+                            vo.setClassId(qtTaskClassCalculate.getClassType());
+                        }
                         QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
                         if (Objects.nonNull(classEnum)) {
                             vo.setClassName(classEnum.getName());
@@ -214,8 +220,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
                 fallList.sort((o1, o2) -> {
-                    //先对比班次
-                    if (!o1.getClassId().equals(o2.getClassId())) {
+                    //先对比班次-如果为空，放置到最后
+                    if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId()) && !o1.getClassId().equals(o2.getClassId())) {
                         return o1.getClassId() - o2.getClassId();
                     }
                     //对比落板开始时间
