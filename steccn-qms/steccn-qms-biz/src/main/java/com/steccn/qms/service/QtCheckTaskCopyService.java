@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.vo.QtCheckTaskCopyVO;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author 86178
@@ -20,4 +23,10 @@ public interface QtCheckTaskCopyService extends IService<QtCheckTaskCopy> {
      */
     List<QtCheckTaskCopyVO> getLocalDateList();
 
+    /**
+     * 根据taskId查询最小的取样日期
+     * @param taskIdSet 任务id集合
+     * @return map
+     */
+    Map<Long, LocalDateTime> minSamplingTimeMap(Set<Long> taskIdSet);
 }

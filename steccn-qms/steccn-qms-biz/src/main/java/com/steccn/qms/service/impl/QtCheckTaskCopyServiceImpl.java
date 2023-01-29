@@ -1,24 +1,21 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.qms.constant.QtManagerConstant;
+import com.google.common.collect.Maps;
 import com.steccn.qms.domain.QtCheckTaskCopy;
 import com.steccn.qms.service.QtCheckTaskCopyService;
 import com.steccn.qms.mapper.QtCheckTaskCopyMapper;
 import com.steccn.qms.vo.QtCheckTaskCopyVO;
-import com.steccn.qms.vo.QtCheckTaskListVO;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +24,7 @@ import java.util.stream.Collectors;
 * @createDate 2022-11-10 16:25:47
 */
 @Service
+@Slf4j
 public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMapper, QtCheckTaskCopy>
     implements QtCheckTaskCopyService{
 
@@ -53,6 +51,27 @@ public class QtCheckTaskCopyServiceImpl extends ServiceImpl<QtCheckTaskCopyMappe
             });
         }
         return qtCheckTaskCopyVOS;
+    }
+
+    @Override
+    public Map<Long, LocalDateTime> minSamplingTimeMap(Set<Long> taskIdSet) {
+        Map<Long, LocalDateTime> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(taskIdSet)) {
+            List<QtCheckTaskCopy> dbList = list(new LambdaQueryWrapper<QtCheckTaskCopy>().in(QtCheckTaskCopy::getTaskId, taskIdSet));
+            if (CollUtil.isNotEmpty(dbList)) {
+                for (QtCheckTaskCopy qtCheckTaskCopy : dbList) {
+                    try {
+                        qtCheckTaskCopy.getSamplingTimeArray();
+                        List<LocalDateTime> samplingTimeList = JSONObject.parseArray((String) qtCheckTaskCopy.getSamplingTimeArray(), LocalDateTime.class);
+                        samplingTimeList.sort(Comparator.comparing(v -> v));
+                        resMap.put(qtCheckTaskCopy.getTaskId(),samplingTimeList.get(0));
+                    } catch (Exception e) {
+                        log.error("{}",e.getLocalizedMessage());
+                    }
+                }
+            }
+        }
+        return resMap;
     }
 }
 

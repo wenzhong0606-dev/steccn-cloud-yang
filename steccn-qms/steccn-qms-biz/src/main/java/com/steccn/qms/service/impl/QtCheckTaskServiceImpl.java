@@ -2097,10 +2097,17 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         Set<Long> taskIds = Sets.newHashSet();
         Set<Long> materialIds = Sets.newHashSet();
         List<QtIQCAcceptabilityDetailVO> resList = resPage.getRecords();
+
+        //根据taskId获取最小取样时间
+        Set<Long> taskIdSet = resList.stream().map(QtIQCAcceptabilityDetailVO::getId).collect(Collectors.toSet());
+        Map<Long, LocalDateTime> minSamplingTimeMap = qtCheckTaskCopyService.minSamplingTimeMap(taskIdSet);
+
         resList.forEach(task -> {
                     //处理时间
-//            task.setFinishedTime(LocalDate.from(task.getFinishedTime()));
-//            task.setSamplingTime(LocalDateTime.from(task.get));
+                    LocalDateTime samplingTime = minSamplingTimeMap.get(task.getId());
+                    if (Objects.nonNull(samplingTime)) {
+                        task.setSamplingTime(samplingTime.toLocalDate());
+                    }
                     taskIds.add(task.getId());
                     materialIds.add(task.getMaterialId());
                     //计算合格
@@ -2133,8 +2140,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         List<String> eleList = Lists.newArrayList();
                         ele.getList().forEach(e ->{
                             eleList.add(e.getValue());
+                            e.setSamplingTime(minSamplingTimeMap.get(e.getTaskId()));
                         });
                         ele.setEleList(eleList);
+                        ele.setSamplingTime(minSamplingTimeMap.get(ele.getTaskId()));
                     });
                 }
                 task.setDetail(orDefault);
