@@ -12,8 +12,10 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.vo.BaseReportHeaderVO;
@@ -214,8 +216,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }
                 }
                 fallList.sort((o1, o2) -> {
-                    //先对比班次
-                    if (!o1.getClassId().equals(o2.getClassId())) {
+                    //先对比班次-如果为空，放置到最后
+                    if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId()) && !o1.getClassId().equals(o2.getClassId())) {
                         return o1.getClassId() - o2.getClassId();
                     }
                     //对比落板开始时间

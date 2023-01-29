@@ -1838,8 +1838,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
                 //完成时间范围
-                .between( Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectStartTime, dto.getStartTime(), dto.getEndTime() )
-                .between( Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getStartTime(), dto.getEndTime() )
+                .ge(Objects.nonNull(dto.getStartTime()),QtCheckTask::getDefectStartTime, dto.getStartTime())
+                .lt(Objects.nonNull(dto.getEndTime()), QtCheckTask::getDefectEndTime, dto.getEndTime())
                 //班次
                 .eq(Objects.nonNull(dto.getWorkOrderId()), QtCheckTask::getClassesId, dto.getWorkOrderId())
                 //只要巡检

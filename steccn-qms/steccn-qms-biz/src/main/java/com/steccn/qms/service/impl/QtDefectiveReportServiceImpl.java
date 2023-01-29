@@ -203,7 +203,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     @Override
     public List<QtCheckTaskDetailReportVO> defectiveDataFlat(QtChartParamDTO dto) {
         LocalDateTime start =  LocalDateUtil.getMorning(dto.getDateStart());
-        LocalDateTime end =  LocalDateUtil.getNight(dto.getDateEnd().plusDays(1));
+        LocalDateTime end =  LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1));
         dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         //查询符合条件的检验任务
         QtCheckTaskConditionDTO condition = QtCheckTaskConditionDTO.builder()
@@ -292,7 +292,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setNormalEndTime(startTime.plusHours(1));
                         vo.setNormalStartTime(startTime);
                         //根据缺陷记录时段计算完成时间
-                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectEndTime());
+                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectStartTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
