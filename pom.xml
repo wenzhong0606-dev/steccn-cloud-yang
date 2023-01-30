@@ -40,6 +40,7 @@
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
         <minio.version>7.0.2</minio.version>
+        <spring-cloud-starter-zipkin.version>2.2.6.RELEASE</spring-cloud-starter-zipkin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -227,6 +228,11 @@
                 <version>${spring-boot.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-zipkin</artifactId>
+                <version>${spring-cloud-starter-zipkin.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
