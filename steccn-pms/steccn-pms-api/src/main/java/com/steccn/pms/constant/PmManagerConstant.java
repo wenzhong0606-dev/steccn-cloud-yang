@@ -262,5 +262,33 @@ public interface PmManagerConstant {
         private final String name;
     }
 
+    /**
+     * 对比类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtChartCompareEnum {
+        //班次 产线 车间 缺陷类别
+        ALL(-1, "不对比"),
+        WORK(0, "班次"),
+        PRODUCTLINE(1, "产线"),
+        WORKSHOP(2, "车间"),
+        DEFECTCATEGORY(3, "缺陷类别"),
+        SAMPLINGTIME(4, "取样日期"),
+        MATERIALWORKSHOP(5, "物料使用车间"),
+        SUPPLIER(6, "供应商"),
+        MATERIAL(7, "物料名称");
 
+        private Integer code;
+        private String name;
+
+        public static String getNameByCode(Integer code) {
+            for (QtChartCompareEnum value : QtChartCompareEnum.values()) {
+                if (value.getCode().equals(code)) {
+                    return value.getName();
+                }
+            }
+            return null;
+        }
+    }
 }

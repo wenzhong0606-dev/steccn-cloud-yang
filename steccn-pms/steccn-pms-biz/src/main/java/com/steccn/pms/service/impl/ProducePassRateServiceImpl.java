@@ -1,13 +1,20 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
+import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
@@ -54,15 +61,50 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
 
     @Override
     public List<ProducePassRateVO> getProducePassRateGroup(ProducePassRateDTO dto) {
-
         //获取日期
         List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(dto.getBeginDate(), dto.getEndDate());
 
         //分组获取产量数据
         List<PmsReportWorkGroupVO> pmsReportWorkGroupVOList = getPmsReportWorkGroupVOList(localDateList, dto);
 
+
         QueryWrapper<PmsPullForce> queryWrapper = getQueryWrapper(dto);
         List<PmsPullForce> pmsPullForceList = pmsPullForceService.list(queryWrapper);
+        //过滤数据
+        if(CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare()!=null){
+            //对比的是班次
+            if(dto.getCompare().equals(PmManagerConstant.QtChartCompareEnum.WORK.getCode())){
+                Set<String> className = Sets.newHashSet(dto.getFilters());
+                Map<String, Long> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(className), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                List<Long> classIds = Lists.newArrayList(classMap.values());
+                pmsReportWorkGroupVOList = pmsReportWorkGroupVOList.stream().filter(v -> classIds.contains(v.getClassesId())).collect(Collectors.toList());
+                pmsPullForceList = pmsPullForceList.stream().filter(v -> classIds.contains(v.getClassesId())).collect(Collectors.toList());
+            }
+            //对比的是车间
+            if(dto.getCompare().equals(PmManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+                Set<String> officeNames = Sets.newHashSet(dto.getFilters());
+                Map<String, SysOfficeVO> officeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(officeNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //把所有id收集
+                List<Integer> workshopIds = Lists.newArrayList();
+                for(Map.Entry<String,SysOfficeVO> entry:officeVOMap.entrySet()){
+                    workshopIds.add(entry.getValue().getId());
+                }
+                pmsReportWorkGroupVOList = pmsReportWorkGroupVOList.stream().filter(v -> workshopIds.contains(v.getWorkshopId())).collect(Collectors.toList());
+                pmsPullForceList = pmsPullForceList.stream().filter(v -> workshopIds.contains(v.getWorkshopId())).collect(Collectors.toList());
+            }
+            //对比是产线
+            if(dto.getCompare().equals(PmManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+                Set<String> officeNames = Sets.newHashSet(dto.getFilters());
+                Map<String, SysOfficeVO> officeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listByName(officeNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                //把所有id收集
+                List<Integer> productLineIds = Lists.newArrayList();
+                for(Map.Entry<String,SysOfficeVO> entry:officeVOMap.entrySet()){
+                    productLineIds.add(entry.getValue().getId());
+                }
+                pmsReportWorkGroupVOList = pmsReportWorkGroupVOList.stream().filter(v -> productLineIds.contains(v.getProductLineId())).collect(Collectors.toList());
+                pmsPullForceList = pmsPullForceList.stream().filter(v -> productLineIds.contains(v.getProductLineId())).collect(Collectors.toList());
+            }
+        }
         localDateList.remove(localDateList.size() - 1);
         List<ProducePassRateVO> producePassRateVOList = new ArrayList<>();
         for (LocalDate localDate : localDateList) {

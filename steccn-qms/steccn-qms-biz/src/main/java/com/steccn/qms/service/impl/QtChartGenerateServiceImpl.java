@@ -731,6 +731,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         pmsStartDate = pmsEndDate.minusDays(6);
         pmsDTO.setBeginDate(pmsStartDate);
         pmsDTO.setEndDate(pmsEndDate.plusDays(1));
+        //默认对比班次
+        pmsDTO.setCompare(QtManagerConstant.QtChartCompareEnum.WORK.getCode());
+        List<String> filters = Lists.newArrayList();
+        filters.add("早班");
+        filters.add("晚班");
+        pmsDTO.setFilters(filters);
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         vo.setKey(1);
         vo.setTitle("基片成品率");
@@ -837,10 +843,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //折线图
         QtChartBarDecimalDataVO markLine = new QtChartBarDecimalDataVO();
         List<QtChartBarSeriesVO> series = new ArrayList<>();
-        List<String> markLineDataList = new ArrayList<>();
+        List<BigDecimal> markLineDataList = new ArrayList<>();
         ProducePassRateDTO pmsDTO = new ProducePassRateDTO();
         pmsDTO.setBeginDate(dto.getDateStart());
         pmsDTO.setEndDate(dto.getDateEnd().plusDays(1));
+        pmsDTO.setCompare(dto.getCompare());
+        pmsDTO.setFilters(dto.getFilters());
         R<List<ProducePassRateVO>> rResult = new R<>();
         //调用数据生成全量数据表
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
@@ -908,7 +916,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     if (groupByDateVO.get(0).getDayPassRate() != null) {
                         markLineData = groupByDateVO.get(0).getDayPassRate();
                     }
-                    markLineDataList.add(new DecimalFormat("0.00%").format(markLineData));
+                    markLineDataList.add(markLineData);
                     //对比维度为班次
                     if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())) {
                         dataMap = groupByDateVO.stream().collect(Collectors.groupingBy(ProducePassRateVO::getClassesName, CollectorsUtil.summingBigDecimal(ProducePassRateVO::getPassRate)));
@@ -930,7 +938,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         yield = BigDecimalUtil.add(yield, tmp.getYield());
                                     }
                                 }
-                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount));
+                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount,4));
                             }
                         }
                     }
@@ -951,7 +959,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         yield = BigDecimalUtil.add(yield, tmp.getYield());
                                     }
                                 }
-                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount));
+                                dataMap.put(lineEntry.getKey(), BigDecimalUtil.divide(yield, laAmount,4));
                             }
                         }
                     }
@@ -962,7 +970,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
 
                 } else {
-                    markLineDataList.add(new DecimalFormat("0.00%").format(BigDecimal.ZERO));
+                    markLineDataList.add(BigDecimal.ZERO);
                 }
                 //不对比的情况
                 if (dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.ALL.getCode())) {
@@ -970,7 +978,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (noCompareData.get(tmpDate) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
                         } else {
-                            entry.getValue().getData().add(noCompareData.get(tmpDate).setScale(2, BigDecimal.ROUND_HALF_DOWN));
+                            entry.getValue().getData().add(noCompareData.get(tmpDate).setScale(4, BigDecimal.ROUND_HALF_DOWN));
                         }
                     }
                 } else {
@@ -980,7 +988,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         if (dataMap.get(entry.getKey()) == null) {
                             entry.getValue().getData().add(new BigDecimal(0));
                         } else {
-                            entry.getValue().getData().add(dataMap.get(entry.getKey()).setScale(2, BigDecimal.ROUND_HALF_DOWN));
+                            entry.getValue().getData().add(dataMap.get(entry.getKey()).setScale(4, BigDecimal.ROUND_HALF_DOWN));
                         }
                     }
                 }
