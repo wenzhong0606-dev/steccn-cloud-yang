@@ -104,7 +104,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             Map<Integer, List<QtCheckTaskDetailReportVO>> dataSourceMap = classEntry.getValue().stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDataSource));
             for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> dataSourceEntry : dataSourceMap.entrySet()) {
                 //根据缺陷记录时段分组
-                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime().format(df) + "~" + v.getDefectEndTime().format(df)));
+                Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = dataSourceEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime() + "~" + v.getDefectEndTime()));
                 for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
                     //根据物料分组
                     Map<Long, List<QtCheckTaskDetailReportVO>> taskMap = defectTimeEntry.getValue().stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getTaskId()) ? v.getTaskId() : -1L));
@@ -114,10 +114,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         vo.setDataSourceStr(QtManagerConstant.QtDefectDataSource.code(dataSourceEntry.getKey()).getName());
                         vo.setClassId(classEntry.getKey());
                         vo.setClassName(QtManagerConstant.QtClassesEnum.code(classEntry.getKey()).getName());
-                        vo.setDefectTimeStr(defectTimeEntry.getKey());
                         String[] split = defectTimeEntry.getKey().split("~");
-                        vo.setDefectStartTime(LocalTime.parse(split[0], df));
-                        vo.setDefectEndTime(LocalTime.parse(split[1], df));
+                        vo.setDefectStartTime(LocalDateTime.parse(split[0]));
+                        vo.setDefectEndTime(LocalDateTime.parse(split[1]));
+                        vo.setDefectTimeStr(vo.getDefectStartTime().format(df) + "~" + vo.getDefectEndTime().format(df));
                         vo.setType(0);
                         vo.setTaskId(-1 == taskEntry.getKey() ? null : taskEntry.getKey());
                         QtCheckTaskDetailReportVO qtCheckTask = taskEntry.getValue().get(0);
