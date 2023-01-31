@@ -60,7 +60,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         //3.上传文件并保存文件信息
         try {
             url = minioFileUtils.uploadFile(fileName, file);
-            FileInfo fileInfo= new FileInfo();
+            FileInfo fileInfo = new FileInfo();
             BeanUtils.copyProperties(file, fileInfo);
             fileInfo.setFileName(file.getOriginalFilename());
             fileInfo.setFileUrl(url);
@@ -101,6 +101,46 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             resMap.put(fileInfoVO.getId(), fileInfoVO);
         }
         return resMap;
+    }
+
+    @Override
+    public  R<FileInfo> uploadAppFile(FileInfoDto fileInfoDto) {
+        //1.定义返回数据信息
+        R<FileInfo> r = new R<FileInfo>();
+        //2.获取文件拓展名,文件名称
+        MultipartFile file = fileInfoDto.getFile();
+        String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        String fileName = "app/" + fileInfoDto.getFileName() + fileExtension;
+        //3.上传文件并保存文件信息
+        try {
+            String url = minioFileUtils.uploadFile(fileName, file);
+            FileInfo fileInfo = new FileInfo();
+            BeanUtils.copyProperties(file, fileInfo);
+            fileInfo.setFileName(file.getOriginalFilename());
+            fileInfo.setFileUrl(url);
+            fileInfo.setBucketName(bucketName);
+            fileInfo.setFileExtension(fileExtension);
+            fileInfo.setFileAlias(fileInfoDto.getFileName());
+            fileInfo.setFileSize((double) file.getSize());
+            int insert = fileInfoMapper.insert(fileInfo);
+            //3.1 判断是否保存成功
+            //保存人员信息
+            SteccnUser user = SecurityUtils.getUser();
+            long userId = ObjectUtil.isNull(user) ? 0 : user.getUserId();
+            String name = ObjectUtil.isNull(user) ? Strings.EMPTY : user.getName();
+            fileInfo.setCreateBy(userId);
+            fileInfo.setCreateName(name);
+            if (insert >= 1) {
+                r.setCode(1);
+                r.setMsg("保存文件成功！");
+                r.setData(fileInfo);
+            } else {
+                r.setCode(0);
+                r.setMsg("保存文件失败！");
+            }
+        } catch (Exception e) {
+        }
+        return r;
     }
 
     /**

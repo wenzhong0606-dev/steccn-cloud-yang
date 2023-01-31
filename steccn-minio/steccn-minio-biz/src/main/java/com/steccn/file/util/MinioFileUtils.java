@@ -61,6 +61,24 @@ public class MinioFileUtils {
     }
 
     /**
+     * 上传文件替换原文件
+     */
+    public String alternateFile(String fileName, MultipartFile multipartFile) {
+        try {
+            MinioClient minioClient = getMinioClient();
+            PutObjectOptions options = new PutObjectOptions(multipartFile.getSize(), -1L);
+            minioClient.putObject(properties.getBucketName(), fileName, multipartFile.getInputStream(), options);
+            String url = minioClient.getObjectUrl(properties.getBucketName(), fileName);
+            return url;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("文件上传失败");
+        }
+    }
+
+
+
+    /**
      * 获取文件输入流
      *
      * @param fileName
