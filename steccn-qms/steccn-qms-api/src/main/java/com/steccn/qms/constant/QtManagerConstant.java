@@ -60,16 +60,18 @@ public interface QtManagerConstant {
 
     String QT_CHECK_TASK_SORT_FIELD_CREATE_TIME = "createTime";
 
+    String QT_CHECK_TASK_SORT_FIELD_SPOT_TIME = "spotTime";
+
     String QT_CHECK_TASK_FIELD_CHECK_RESULT = "checkResult";
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECT = "defectId";
 
     String QT_CHECK_TASK_FIELD_CHECK_DEFECTTEM = "defect";
-    String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME ="finishedTime";
+    String QT_CHECK_TASK_SORT_FIELD_FINISHED_TIME = "finishedTime";
 
-    String QT_CHECK_TASK_COPY__SORT_FIELD="samplingTime";
+    String QT_CHECK_TASK_COPY__SORT_FIELD = "samplingTime";
 
-    String QT_CHECK_TASK_SORT_FIELD_CLASS_ID="classId";
+    String QT_CHECK_TASK_SORT_FIELD_CLASS_ID = "classId";
 
     String QT_CHART_EXCEL_MODEL_URL = "http://61.177.139.244/images/";
 
@@ -109,19 +111,19 @@ public interface QtManagerConstant {
 
     String QT_CHART_JPSH_NAME = "基片损耗分布";
 
-    String QT_CHART_SPC_REPORT_NAME="报表卡片名称";
+    String QT_CHART_SPC_REPORT_NAME = "报表卡片名称";
 
     String QT_CHART_DEEP_PROCESS_NAME = "深加工巡检合格率趋势";
 
-    String QT_CHART_SUB_PROCESS_NAME ="基片巡检合格率";
+    String QT_CHART_SUB_PROCESS_NAME = "基片巡检合格率";
 
-    String QT_CHART_ACCESSORY_PROCESS_NAME ="配料抽检合格率";
+    String QT_CHART_ACCESSORY_PROCESS_NAME = "配料抽检合格率";
 
-    String QT_CHART_DEFECTIVE_CATEGORY_NAME ="深加工缺陷类别分布";
+    String QT_CHART_DEFECTIVE_CATEGORY_NAME = "深加工缺陷类别分布";
 
-    String QT_CHART_DEFECTIVE_ITEM_NAME ="深加工缺陷项分布";
+    String QT_CHART_DEFECTIVE_ITEM_NAME = "深加工缺陷项分布";
 
-    String QT_CHART_SUBSTRATE_ITEM_NAME ="基片缺陷项分布";
+    String QT_CHART_SUBSTRATE_ITEM_NAME = "基片缺陷项分布";
 
     String QT_CHART_DEFECTIVE_CATEGORY_LINE_NAME = "深加工缺陷类别趋势";
 
@@ -129,15 +131,15 @@ public interface QtManagerConstant {
 
     String QT_CHART_SUBSTRATE_ITEM_LINE_NAME = "基片缺陷项趋势";
 
-    String QT_CHART_SUB_JPCJ ="基片化验抽检合格率趋势";
+    String QT_CHART_SUB_JPCJ = "基片化验抽检合格率趋势";
 
-    String QT_CHART_ACCEPTABILITY_LLJ ="来料检合格率";
+    String QT_CHART_ACCEPTABILITY_LLJ = "来料检合格率";
 
     String QT_CHART_DEFECT_JPFB = "DEFECTJPFB.xlsx";
 
     String QT_CHART_DEFECT_JPFB_NAME = "基片缺陷分布";
 
-    String QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS= "JPXJHGLQS.xlsx"; //基片巡检合格率
+    String QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS = "JPXJHGLQS.xlsx"; //基片巡检合格率
 
     //质量管控模块样本概况字段常量
     String SAMPLENUM = "sampleNum"; //样本编号
@@ -151,27 +153,48 @@ public interface QtManagerConstant {
     /**
      * 机构类型编码
      */
-    String OFFICE_WORKSHOP_TYPE ="8";
-    String OFFICE_PRODUCE_LINE_TYPE ="9";
+    String OFFICE_WORKSHOP_TYPE = "8";
+    String OFFICE_PRODUCE_LINE_TYPE = "9";
 
+    /**
+     * 良次
+     */
+    String QT_TASK_GOOD = "良";
+    String QT_TASK_BAD = "次";
 
     /**
      * SPC 任务详情的表头
      */
-    String SPC_HEADER_FIELD_ORDER ="检验任务单号";
-    String SPC_HEADER_FIELD_FINISHED_TIME ="检验完成时间";
-    String SPC_HEADER_FIELD_MATERIAL_NAME ="物料名称";
-    String SPC_HEADER_FIELD_PRODUCT_LINE="生产产线";
-    String SPC_HEADER_FIELD_WORKSHOP ="物料使用车间";
-    String SPC_HEADER_FILELD_SUPPLIER="供应商";
-    String SPC_HEADER_FIELD_ORDER_VALUE ="code";
-    String SPC_HEADER_FIELD_FINISHED_TIME_VALUE ="finishedTime";
-    String SPC_HEADER_FIELD_FINISHED_CHECK_RESULT_VALUE ="checkResult";
-    String SPC_HEADER_FIELD_MATERIAL_NAME_VALUE ="materialName";
-    String SPC_HEADER_FIELD_PRODUCT_LINE_VALUE ="productLine";
-    String SPC_HEADER_FIELD_WORKSHOP_VALUE ="workshop";
-    String SPC_HEADER_FILELD_SUPPLIER_VALUE ="supplier";
+    String SPC_HEADER_FIELD_ORDER = "检验任务单号";
+    String SPC_HEADER_FIELD_FINISHED_TIME = "检验完成时间";
+    String SPC_HEADER_FIELD_SPOT_TIME = "抽检时间";
+    String SPC_HEADER_FIELD_STATION = "工位";
+    String SPC_HEADER_FIELD_MATERIAL_NAME = "物料名称";
+    String SPC_HEADER_FIELD_PRODUCT_LINE = "生产产线";
+    String SPC_HEADER_FIELD_WORKSHOP = "物料使用车间";
+    String SPC_HEADER_FILELD_SUPPLIER = "供应商";
+    String SPC_HEADER_FIELD_ORDER_VALUE = "code";
+    String SPC_HEADER_FIELD_FINISHED_TIME_VALUE = "finishedTime";
+    String SPC_HEADER_FIELD_SPOT_TIME_VALUE = "spotTime";
+    String SPC_HEADER_FIELD_FINISHED_CHECK_RESULT_VALUE = "checkResult";
+    String SPC_HEADER_FIELD_MATERIAL_NAME_VALUE = "materialName";
+    String SPC_HEADER_FIELD_PRODUCT_LINE_VALUE = "productLine";
+    String SPC_HEADER_FIELD_WORKSHOP_VALUE = "workshop";
+    String SPC_HEADER_FIELD_STATION_VALUE = "station";
+    String SPC_HEADER_FILELD_SUPPLIER_VALUE = "supplier";
 
+    /**
+     * 首检质量日报表 常量
+     */
+    String DAY_REPORT_FIELD_RESULT = "检验结果";
+    String DAY_REPORT_FIELD_RESULT_VALUE = "result";
+    String DAY_REPORT_FIELD_COPY = "样本序号";
+    String DAY_REPORT_FIELD_COPY_VALUE = "copy";
+    String DAY_REPORT_FIELD_NOTE = "备注";
+    String DAY_REPORT_FIELD_NOTE_VALUE = "note";
+    String DAY_REPORT_FIELD_ORDER = "班次";
+    String DAY_REPORT_FIELD_ORDER_VALUE = "className";
+    String DAY_REPORT_FIELD_APPARENT_CONDITION = "外观状态";
 
     /**
      * 车间名称
@@ -181,7 +204,7 @@ public interface QtManagerConstant {
     String DEEP_OFFICE_NAME_TWO = "深加工二车间";
     String DEEP_OFFICE_NAME_THREE = "深加工三车间";
 
-    String SUB_OFFICE_NAME="基片";
+    String SUB_OFFICE_NAME = "基片";
     String SUB_OFFICE_NAME_ONE = "基片一车间";
     String SUB_OFFICE_NAME_TWO = "基片二车间";
 
@@ -189,7 +212,7 @@ public interface QtManagerConstant {
      * 正则表达式表示为非负浮点数
      */
     String REGULAR_NON_FLOATING_POINT_NUMBER = "([1-9]\\d*.\\d*|0.\\d*[1-9]\\d*)";
-    String REGULAR_NON_NUMBER ="\\d+";
+    String REGULAR_NON_NUMBER = "\\d+";
 
     /**
      * 计算结果为"0"
@@ -204,6 +227,11 @@ public interface QtManagerConstant {
     final int afterHour = 20;
     final long hourSpace = 2;
 
+    /**
+     * 小时粒度下  限制开始时间和结束时间的差值为15天
+     */
+    Integer GRANULARITY_HOUR_DAY_DIFF = 15;
+
 
     /**
      * 日环比,周环比标志
@@ -215,40 +243,41 @@ public interface QtManagerConstant {
      * 限制只取一条
      */
     String STR_LIMIT_1 = " limit 1 ";
+
     /**
      * 周枚举
      */
     @Getter
     @AllArgsConstructor
-    enum WEEKDAY{
+    enum WEEKDAY {
         //周枚举 MON星期一 TUE星期二 WED星期三 THU星期四 FRI星期五 STA星期六 SUN星期日
         MON(1, "星期一"),
-        TUE(2,"星期二"),
-        WED(3,"星期三"),
-        THU(4,"星期四"),
-        FRI(5,"星期五"),
-        STA(6,"星期六"),
-        SUN(7,"星期日");
+        TUE(2, "星期二"),
+        WED(3, "星期三"),
+        THU(4, "星期四"),
+        FRI(5, "星期五"),
+        STA(6, "星期六"),
+        SUN(7, "星期日");
 
         private Integer day;
         private String dayName;
     }
 
-        /**
-         * 车间枚举
-         */
-        @Getter
-        @AllArgsConstructor
-        enum WORKSHOP {
-            JPCJ1("STEC001001", "基片一车间"),
-            JPCJ2("STEC001002", "基片二车间"),
-            SJGCJ1("STEC002", "深加工一车间"),
-            SJGCJ2("STEC003", "深加工二车间"),
-            SJGCJ3("STEC004", "深加工三车间");
+    /**
+     * 车间枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum WORKSHOP {
+        JPCJ1("STEC001001", "基片一车间"),
+        JPCJ2("STEC001002", "基片二车间"),
+        SJGCJ1("STEC002", "深加工一车间"),
+        SJGCJ2("STEC003", "深加工二车间"),
+        SJGCJ3("STEC004", "深加工三车间");
 
-            private String code;
-            private String workShopName;
-        }
+        private String code;
+        private String workShopName;
+    }
 
 
     /**
@@ -316,15 +345,15 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtCheckTaskTypeEnum{
+    enum QtCheckTaskTypeEnum {
         //任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
         INCOMING(1, "来料检"),
-        FIRST(2,"首检"),
-        ONLINE(3,"在线检"),
-        PATROL(4,"巡检"),
-        DELIVER(5,"出货检"),
-        CHEMICAL(6,"化验抽检"),
-        MIXED(7,"配料抽检");
+        FIRST(2, "首检"),
+        ONLINE(3, "在线检"),
+        PATROL(4, "巡检"),
+        DELIVER(5, "出货检"),
+        CHEMICAL(6, "化验抽检"),
+        MIXED(7, "配料抽检");
 
         private Integer code;
         private String name;
@@ -335,13 +364,13 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtCheckTaskStatusEnum{
+    enum QtCheckTaskStatusEnum {
         //任务类型 任务状态 0待检验 1检验中 2已检验 3已取消 4暂存
-        WAITED(0,"待检验"),
-        CHECKING(1,"检验中"),
-        FINISHED(2,"已检验"),
-        CANCELED(3,"已取消"),
-        TEMPORARY(4,"暂存");
+        WAITED(0, "待检验"),
+        CHECKING(1, "检验中"),
+        FINISHED(2, "已检验"),
+        CANCELED(3, "已取消"),
+        TEMPORARY(4, "暂存");
 
         private Integer code;
         private String name;
@@ -352,9 +381,9 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtMaterialStatusEnum{
-        DISABLE(0,"停用"),
-        ENABLE(1,"启用");
+    enum QtMaterialStatusEnum {
+        DISABLE(0, "停用"),
+        ENABLE(1, "启用");
 
         private Integer code;
         private String name;
@@ -365,24 +394,24 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtGranularityEnum{
+    enum QtGranularityEnum {
         //粒度 小时 天 周 月 季度 年
-        HOUR(0,"小时","H"),
-        DAY(1,"天","D"),
-        WEEK(2,"周","W"),
-        MONTH(3,"月","M"),
-        QUARTER(4,"季度","Q"),
-        YEAR(5,"年","Y"),
-        NONE(6,"无粒度","N"),
-        CLASS(7,"班次","C");
+        HOUR(0, "小时", "H"),
+        DAY(1, "天", "D"),
+        WEEK(2, "周", "W"),
+        MONTH(3, "月", "M"),
+        QUARTER(4, "季度", "Q"),
+        YEAR(5, "年", "Y"),
+        NONE(6, "无粒度", "N"),
+        CLASS(7, "班次", "C");
 
         private Integer code;
         private String name;
         private String type;
 
-        public static QtGranularityEnum getByName(String name){
+        public static QtGranularityEnum getByName(String name) {
             for (QtGranularityEnum value : QtGranularityEnum.values()) {
-                if(value.getName().equals(name)){
+                if (value.getName().equals(name)) {
                     return value;
                 }
             }
@@ -391,12 +420,13 @@ public interface QtManagerConstant {
 
         /**
          * 根据code去查询时间粒度
+         *
          * @param code code
          * @return 时间粒度
          */
-        public static QtGranularityEnum getByCode(Integer code){
+        public static QtGranularityEnum getByCode(Integer code) {
             for (QtGranularityEnum value : QtGranularityEnum.values()) {
-                if(value.getCode().equals(code)){
+                if (value.getCode().equals(code)) {
                     return value;
                 }
             }
@@ -409,14 +439,14 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtChatTargetValue{
+    enum QtChatTargetValue {
         //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
-        JPCP(1,"基片成品率"),
-        JPQX(2,"基片缺陷总数"),
-        SJGQX(3,"深加工缺陷总数"),
-        LLJHG(4,"来料检合格率"),
-        JPXJHG(5,"基片巡检合格率"),
-        SJGXJHG(6,"深加工巡检合格率");
+        JPCP(1, "基片成品率"),
+        JPQX(2, "基片缺陷总数"),
+        SJGQX(3, "深加工缺陷总数"),
+        LLJHG(4, "来料检合格率"),
+        JPXJHG(5, "基片巡检合格率"),
+        SJGXJHG(6, "深加工巡检合格率");
 
         private Integer code;
         private String name;
@@ -436,24 +466,24 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtChartCompareEnum{
+    enum QtChartCompareEnum {
         //班次 产线 车间 缺陷类别
-        ALL(-1,"不对比"),
-        WORK(0,"班次"),
-        PRODUCTLINE(1,"产线"),
-        WORKSHOP(2,"车间"),
-        DEFECTCATEGORY(3,"缺陷类别"),
-        SAMPLINGTIME(4,"取样日期"),
-        MATERIALWORKSHOP(5,"物料使用车间"),
-        SUPPLIER(6,"供应商"),
-        MATERIAL(7,"物料名称");
+        ALL(-1, "不对比"),
+        WORK(0, "班次"),
+        PRODUCTLINE(1, "产线"),
+        WORKSHOP(2, "车间"),
+        DEFECTCATEGORY(3, "缺陷类别"),
+        SAMPLINGTIME(4, "取样日期"),
+        MATERIALWORKSHOP(5, "物料使用车间"),
+        SUPPLIER(6, "供应商"),
+        MATERIAL(7, "物料名称");
 
         private Integer code;
         private String name;
 
-        public static String getNameByCode(Integer code){
+        public static String getNameByCode(Integer code) {
             for (QtChartCompareEnum value : QtChartCompareEnum.values()) {
-                if(value.getCode().equals(code)){
+                if (value.getCode().equals(code)) {
                     return value.getName();
                 }
             }
@@ -466,9 +496,9 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtChartType{
-        HISTOGRAM(0,"柱状图"),
-        PIECHART(1,"饼状图");
+    enum QtChartType {
+        HISTOGRAM(0, "柱状图"),
+        PIECHART(1, "饼状图");
 
         private Integer code;
         private String name;
@@ -488,6 +518,7 @@ public interface QtManagerConstant {
 
         /**
          * 根据code筛选白班夜班
+         *
          * @param code
          * @return
          */
@@ -500,31 +531,53 @@ public interface QtManagerConstant {
             return null;
         }
     }
-        /**
-         * 样本概览枚举
-         */
-        @Getter
-        @AllArgsConstructor
-        enum SAMPLEINFOLIST{
-            SAMPLENUM("sampleNum","样本编号"),
-            LICENSEPLATE("licensePlate","车牌号"),
-            ANALYST("analyst","分析人"),
-            ANALYSTNAME("analystName","分析人名"),
-            SAMPLINGTIME("samplingTime","取样时间"),
-            ANALYSTIME("analystTime","分析时间"),
-            INGREDIENTNUM("ingredientNum","配料付数");
 
-            private String code;
-            private String name;
+    /**
+     * 样本概览枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum SAMPLEINFOLIST {
+        SAMPLENUM("sampleNum", "样本编号"),
+        LICENSEPLATE("licensePlate", "车牌号"),
+        ANALYST("analyst", "分析人"),
+        ANALYSTNAME("analystName", "分析人名"),
+        SAMPLINGTIME("samplingTime", "取样时间"),
+        ANALYSTIME("analystTime", "分析时间"),
+        INGREDIENTNUM("ingredientNum", "配料付数");
+
+        private String code;
+        private String name;
+    }
+
+    /**
+     * 数据来源 0人工 1采集
+     */
+    @Getter
+    @AllArgsConstructor
+    enum QtDefectDataSource {
+        MAN(0, "人工检验"),
+        COLLECT(1, "检验设备");
+        private Integer code;
+        private String name;
+
+        public static QtDefectDataSource code(Integer code) {
+            for (QtDefectDataSource ele : QtDefectDataSource.values()) {
+                if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
         }
+    }
 
     /**
      * 计量单位
      */
     @Getter
     @AllArgsConstructor
-    enum QtChartUnit{
-        PERCENT(1566986152769929216L,"百分比","%");
+    enum QtChartUnit {
+        PERCENT(1566986152769929216L, "百分比", "%");
 
         private Long code;
         private String name;
@@ -536,37 +589,38 @@ public interface QtManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum QtChatDownloadEnum{
+    enum QtChatDownloadEnum {
         //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
-        SJGQXLB(0,"深加工缺陷类别分布下载"),
-        SJGQX(1,"深加工缺陷分布下载"),
-        JBQXX(2,"基片缺陷项分布下载"),
-        SJGQXLBQS(3,"深加工缺陷类别趋势下载"),
-        SJGQXQS(4,"深加工缺陷项趋势下载"),
-        JBQXXQS(5,"基片缺陷项趋势下载");
+        SJGQXLB(0, "深加工缺陷类别分布下载"),
+        SJGQX(1, "深加工缺陷分布下载"),
+        JBQXX(2, "基片缺陷项分布下载"),
+        SJGQXLBQS(3, "深加工缺陷类别趋势下载"),
+        SJGQXQS(4, "深加工缺陷项趋势下载"),
+        JBQXXQS(5, "基片缺陷项趋势下载");
 
         private final Integer code;
         private final String name;
 
-        public static QtChatDownloadEnum getByCode(Integer code){
+        public static QtChatDownloadEnum getByCode(Integer code) {
             for (QtChatDownloadEnum value : QtChatDownloadEnum.values()) {
-                if(value.getCode().equals(code)){
+                if (value.getCode().equals(code)) {
                     return value;
                 }
             }
             return null;
         }
     }
+
     /**
      * 检验值
      */
     @Getter
     @AllArgsConstructor
-    enum QtSpcFilterConditions{
-        UPLIMIT(0,"上限"),
-        DOWNLIMIT(1,"下限"),
-        STANDARDVALUE(2,"标准值"),
-        TESTVALUE(3,"检验值");
+    enum QtSpcFilterConditions {
+        UPLIMIT(0, "上限"),
+        DOWNLIMIT(1, "下限"),
+        STANDARDVALUE(2, "标准值"),
+        TESTVALUE(3, "检验值");
 
         private Integer code;
         private String name;

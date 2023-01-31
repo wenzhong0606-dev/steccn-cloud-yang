@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
@@ -122,8 +123,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         Map<Long, List<WmsLogisticsTransportationVO>> wayMap = wmsLogisticsTransportationService.mapBySetIds(logisticsIds);
 
         //获取物流类型
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIdSet)).get();
-        Map<Integer, String> officeIdMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeIdMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         list.forEach(order -> {
             List<WmsLogisticsInfoVO> orDefault = map.getOrDefault(order.getId(), infoList);
@@ -227,8 +228,8 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
         list.forEach(wmsLogisticsInfo -> {
             officeIds.add(wmsLogisticsInfo.getOfficeId());
         });
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         list.forEach(wmsLogisticsInfo -> {
             wmsLogisticsInfo.setOfficeName(officeMap.get(wmsLogisticsInfo.getOfficeId()));
             WmsLogisticsInfoVO wmsLogisticsInfoVO = new WmsLogisticsInfoVO();
@@ -278,7 +279,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
             //4.如果为入库类型，生成入库单
             List<Long> typeIds = Lists.newArrayList();
             typeIds.add(order.getType());
-            SysDictVO dict = FeignOptional.of(remoteDictFeignApi.listById(typeIds)).get().get(order.getType());
+            SysDictVO dict = FeignOptional.of(()->remoteDictFeignApi.listById(typeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().get(order.getType());
             if (WmsManagerConstant.WAREHOUSING_TYPE.equals(dict.getType())) {
                 List<WmsStorageReceiptInfoDTO> storageReceiptInfoList = Lists.newArrayList();
                 Set<Long> materialIds = Sets.newHashSet();
@@ -332,7 +333,7 @@ public class WmsLogisticsOrderServiceImpl extends ServiceImpl<WmsLogisticsOrderM
                 });
                 WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
                 //获取入库类型
-                SysDictVO dictVO = FeignOptional.of(remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_ONE, WmsManagerConstant.WAREHOUSING_TYPE)).get();
+                SysDictVO dictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(WmsManagerConstant.CODE_ONE, WmsManagerConstant.WAREHOUSING_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 wmsStorageReceiptDTO.setType(dictVO.getId());
                 //获取仓库
                 WmsLogisticsInfo wmsLogisticsInfo = wmsLogisticsInfoService.getOne(new LambdaQueryWrapper<WmsLogisticsInfo>()

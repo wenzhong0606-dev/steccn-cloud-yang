@@ -93,6 +93,7 @@ public class QtCheckTaskDestoryInfo implements Serializable {
      * 是否删除标识：0否 1是
      */
     @TableField(value = "del_flag")
+    @TableLogic
     private Integer delFlag;
 
     /**

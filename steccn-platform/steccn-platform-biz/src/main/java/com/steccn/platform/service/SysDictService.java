@@ -86,7 +86,7 @@ public interface SysDictService extends IService<SysDict> {
 
 
     /**
-     * 根究编码批量查询数据字典数据
+     * 根据编码批量查询数据字典数据
      *
      * @param codes
      * @return
@@ -94,4 +94,11 @@ public interface SysDictService extends IService<SysDict> {
     Map<String, SysDictVO> listByCodes(Set<String> codes);
 
     List<SysDictVO> getByNameAndType(String name, String type);
+
+    /**
+     * 根据名称获取字典的id
+     * @param nameList
+     * @return
+     */
+    Map<String, Long> listByNameCh(Set<String> nameList);
 }

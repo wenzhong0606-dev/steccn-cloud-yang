@@ -13,6 +13,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
@@ -95,7 +96,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             //4.1.保存基础信息
             //获取货架信息
             if (Objects.nonNull(model.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(model.getDefaultShelfId())).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(model.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 model.setDefaultWarehouseId(sysOfficeVO.getId());
             }
             save(model);
@@ -197,9 +198,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 }
         );
         //3.1查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.2查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIds)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.3查询工艺信息
         Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
         //4.处理列表单位以及产线数据
@@ -234,7 +235,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             BeanUtil.copyProperties(dto, pmsProduceOrder);
             //获取货架信息
             if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId())).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 pmsProduceOrder.setDefaultShelfId(sysOfficeVO.getId());
             }
             updateById(pmsProduceOrder);
@@ -318,6 +319,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     @Override
     public Page<PmsWorkOrderBatchVO> batchPageList(PmsProduceOrderBatchDTO dto) {
+        //查询生产订单id
+        PmsProduceOrder pmsProduceOrder = getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
         //1.定义查询条件
         LambdaQueryWrapper<PmsWorkOrderBatch> eq = new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, dto.getProduceOrderId());
         //2.定义分页对象
@@ -330,19 +334,23 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsWorkOrderBatchVO> res = BeanUtil.copyToList(resPage.getRecords(), PmsWorkOrderBatchVO.class);
         //6.处理数据
         Set<String> batchSet = Sets.newHashSet();
+        Set<Long> dictIds = Sets.newHashSet();
         res.forEach(pmsWorkOrderBatchVO -> {
             batchSet.add(pmsWorkOrderBatchVO.getCode());
+            dictIds.add(pmsWorkOrderBatchVO.getUnitId());
         });
         Map<String, PmsCompleteStorageNumDTO> numMap = pmsBarcodePrintService.batchSum(batchSet);
-        Set<Long> dictIds = numMap.values().stream().map(PmsCompleteStorageNumDTO::getUnitId).collect(Collectors.toSet());
         //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         PmsCompleteStorageNumDTO defaultPmsCompleteStorageNumDTO = new PmsCompleteStorageNumDTO();
         res.forEach(pmsWorkOrderBatchVO -> {
             PmsCompleteStorageNumDTO pmsNumDto = numMap.getOrDefault(pmsWorkOrderBatchVO.getCode(), defaultPmsCompleteStorageNumDTO);
-            pmsWorkOrderBatchVO.setUnitId(pmsNumDto.getUnitId());
             pmsWorkOrderBatchVO.setQuantity(pmsNumDto.getQuantity());
             pmsWorkOrderBatchVO.setUnit(dictMap.get(pmsWorkOrderBatchVO.getUnitId()));
+            pmsWorkOrderBatchVO.setProduceOrderId(pmsProduceOrder.getId());
+            pmsWorkOrderBatchVO.setMaterialId(pmsProduceOrder.getMaterialId());
+            pmsWorkOrderBatchVO.setProductLineId(pmsProduceOrder.getProductionLineId());
+            pmsWorkOrderBatchVO.setProduceOrderCode(pmsProduceOrder.getCode());
         });
         return page.setRecords(res);
     }
@@ -352,7 +360,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.根据产线查询订单
         PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
                 .eq(PmsProduceOrder::getProductionLineId, productLineId)
-                .eq(PmsProduceOrder::getState,2)
+                .eq(PmsProduceOrder::getState, 2)
                 .orderByDesc(PmsProduceOrder::getCreateTime)
                 .last(MpConstant.STR_LIMIT_1));
         Assert.notNull(order, "该产线暂无执行中的订单，请选择其他订单");
@@ -401,7 +409,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             dictIds.add(pmsCompleteStorageNum.getUnitId());
         });
         //3.3查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //4.处理返回数据
         page.getRecords().forEach(pmsProduceOrderVO -> {
             PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
@@ -467,7 +475,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 dictSet.addAll(orderDictSet);
             }
             //获取数据字典数据
-            Map<Long, String> dictChMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            Map<Long, String> dictChMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             PmsCompleteStorageNumDTO defaultPmsCompleteStorageNumDTO = new PmsCompleteStorageNumDTO();
             for (PmsProduceOrderVO order : records) {
@@ -605,8 +613,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
                     .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
                     .last(MpConstant.STR_LIMIT_1));
-            String productionLineName = FeignOptional.of(remoteOfficeFeign.getNameById(order.getProductionLineId())).get();
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId()))).get();
+            String productionLineName = FeignOptional.of(()->remoteOfficeFeign.getNameById(order.getProductionLineId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
                 pmsProduceOrderVO.setBatchNo(pmsWorkOrderBatch.getCode());
@@ -653,7 +661,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             List<PmsProduceOrder> pmsProduceOrders = listByIds(orderSet);
             if (CollUtil.isNotEmpty(pmsProduceOrders)) {
                 Set<Long> unitSet = pmsProduceOrders.stream().map(PmsProduceOrder::getUnitId).collect(Collectors.toSet());
-                Map<Long, String> unitDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(unitSet)).get();
+                Map<Long, String> unitDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 for (PmsProduceOrder pmsProduceOrder : pmsProduceOrders) {
                     BaseSelectVO<Long> baseVo = new BaseSelectVO<>();
                     baseVo.setId(pmsProduceOrder.getUnitId());
@@ -818,15 +826,15 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<DwCurrentReportWorkDTO> resList = pmsReportWorkMapper.currentDateReportWork(start, end);
         if (CollUtil.isNotEmpty(resList)) {
             Set<Long> classIdSet = resList.stream().map(v -> v.getClassesId()).collect(Collectors.toSet());
-            Map<Long, SysDictVO> classMap = FeignOptional.of(remoteDictFeignApi.listById(Lists.newArrayList(classIdSet))).get();
+            Map<Long, SysDictVO> classMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(classIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(materialSet))).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
             Set<Integer> productLineIdSet = resList.stream().map(v -> v.getProductLineId()).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet))).get();
+            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Integer> collect = parentMap.values().stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(remoteOfficeFeign.parentInfo(new ArrayList<>(collect))).get();
+            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(collect)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
             resList.forEach(ele -> {
                 BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();
@@ -894,7 +902,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         BeanUtils.copyProperties(order, vo);
 
         vo.setUnitId(order.getUnitId());
-        Map<Long, String> unitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId()))).get();
+        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         vo.setUnitName(unitMap.get(order.getUnitId()));
 
         vo.setProduceOrderId(order.getId());

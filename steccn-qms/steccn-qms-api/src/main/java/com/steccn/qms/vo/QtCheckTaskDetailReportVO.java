@@ -21,6 +21,9 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("主键")
     private Long id;
 
+    @ApiModelProperty("数据来源 0手动  1人工")
+    private Integer dataSource;
+
     @ApiModelProperty("任务id")
     private Long taskId;
 
@@ -54,9 +57,24 @@ public class QtCheckTaskDetailReportVO implements Serializable {
     @ApiModelProperty("缺陷记录结束时间")
     private LocalDateTime defectEndTime;
 
+    @ApiModelProperty("自然小时开始时间")
+    private LocalDateTime normalStartTime;
+
+    @ApiModelProperty("自然小时结束时间")
+    private LocalDateTime normalEndTime;
+
     @ApiModelProperty("完成时间")
     private LocalDateTime finishedTime;
 
     @ApiModelProperty("班次时间-基于这个时间来做的过滤数据集合")
     private LocalDateTime classTime;
+
+    @ApiModelProperty("物料")
+    private Long materialId;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
+
+    @ApiModelProperty("备注")
+    private String note;
 }

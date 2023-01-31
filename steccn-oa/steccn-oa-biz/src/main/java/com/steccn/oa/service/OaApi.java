@@ -121,4 +121,15 @@ public interface OaApi {
     @PostMapping(value = "/api/workflow/paService/getToDoWorkflowRequestList",headers = {"content-type=application/x-www-form-urlencoded"})
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     String getWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+
+    /**
+     * 调用oa流程接口
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/doCreateRequest",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String postProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowDTO dto);
 }

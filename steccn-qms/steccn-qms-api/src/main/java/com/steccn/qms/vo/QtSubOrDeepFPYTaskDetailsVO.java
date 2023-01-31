@@ -35,4 +35,9 @@ public class QtSubOrDeepFPYTaskDetailsVO implements Serializable {
      * 检验详情合格率
      */
     private BigDecimal detailAcceptability;
+
+    /**
+     * 抽检时间
+     */
+    private LocalDateTime spotTime;
 }

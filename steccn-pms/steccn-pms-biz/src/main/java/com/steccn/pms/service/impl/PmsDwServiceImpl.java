@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.data.dto.DwStationCollectDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwStationCollectVO;
@@ -41,14 +42,14 @@ public class PmsDwServiceImpl implements PmsDwService {
     @Override
     public Boolean inStation(LocalDate date) {
         //1.先查询所有的进站采集点编码配置
-        List<SysOfficeCollectVO> collectList = FeignOptional.of(remoteSysOfficeCollectFeignApi.listOnlyStation(0)).get();
+        List<SysOfficeCollectVO> collectList = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listOnlyStation(0), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //2.构造数仓
         if (CollUtil.isNotEmpty(collectList)) {
             DwStationCollectDTO dwStationCollectDTO = new DwStationCollectDTO();
             List<String> codeList = collectList.stream().map(SysOfficeCollectVO::getCode).collect(Collectors.toList());
             dwStationCollectDTO.setCodeList(codeList);
             dwStationCollectDTO.setDate(date);
-            List<DwStationCollectVO> dwVOList = FeignOptional.of(remoteDataPlatformFeignApi.stationCollect(dwStationCollectDTO)).get();
+            List<DwStationCollectVO> dwVOList = FeignOptional.of(() -> remoteDataPlatformFeignApi.stationCollect(dwStationCollectDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
             //3.解析数仓返回的报文
             if (CollUtil.isNotEmpty(dwVOList)) {
                 List<PmsProcessInStation> insertList = Lists.newArrayList();

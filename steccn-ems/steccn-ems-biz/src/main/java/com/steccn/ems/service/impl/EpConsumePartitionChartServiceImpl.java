@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.EpChartGraphDTO;
 import com.steccn.common.dto.EpChartGraphxAxisDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -537,7 +538,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
 
         //获取班组集合
         Set<Long> classGroupIdSet = thickAllDataList.stream().map(v -> v.getClassGroupId()).collect(Collectors.toSet());
-        Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(classGroupIdSet)).get();
+        Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(classGroupIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取分区节点的map
         Map<Long, String> partitionIdNameMap = epPartitionService.listByIdCh(dto.getPartitionIdList());
@@ -626,7 +627,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         Set<Long> classGroupIdSet = thickAllDataList.stream().map(v -> v.getClassGroupId()).collect(Collectors.toSet());
         Map<Long, EpPartition> partitionEntityMap = epPartitionService.listById(partitionIdSet);
         EpPartition defaultEpPartition = new EpPartition();
-        Map<Long, String> dictIdNameMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(classGroupIdSet)).get();
+        Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(classGroupIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //定义返回集合
         List<ConsumePartitionUnitClassDetailVO> resList = Lists.newArrayList();
@@ -693,7 +694,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         EpEnergyType epEnergyType = epEnergyTypeService.getById(energyType);
         Assert.notNull(epEnergyType,"能源类型不存在");
         Long measureUnit = epEnergyType.getMeasureUnit();
-        Map<Long, String> measureUnitMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(measureUnit))).get();
+        Map<Long, String> measureUnitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(measureUnit)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         return measureUnitMap.getOrDefault(measureUnit,Strings.EMPTY);
     }
 
@@ -856,7 +857,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<StandardVO<BigDecimal>> leftStandardSource = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getStart(), dto.getEnd());
         List<StandardVO<BigDecimal>> rightStandardSource = epProductUnitConsumeStandardService.validStandardList(dto.getEnergyType(), dto.getHistoryStart(), dto.getHistoryEnd());
 
-        SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard")).get();
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("departmental_standard", "product_unit_consumption_standard"),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(sysDictVO, "部门标准数据字典已被删除");
         List<StandardVO<BigDecimal>> leftStandard = leftStandardSource.stream().filter(v -> v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
         List<StandardVO<BigDecimal>> rightStandard = rightStandardSource.stream().filter(v -> v.getStandardType().equals(sysDictVO.getId())).collect(Collectors.toList());
@@ -1008,6 +1009,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+
+//        //燃料(气+油)的单耗
+//        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+//        log.info("{}",classDateAllData);
+
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
         List<EpMeterReadAllDataVO> classDateFilterData = new ArrayList<>();
 

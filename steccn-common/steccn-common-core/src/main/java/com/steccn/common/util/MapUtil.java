@@ -1,6 +1,7 @@
 package com.steccn.common.util;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -51,6 +52,25 @@ public class MapUtil {
         map.compute(key, (k, v) -> {
             if (Objects.isNull(v)) {
                 v = Lists.newArrayList();
+            }
+            v.add(value);
+            return v;
+        });
+    }
+
+    /**
+     * 单层map 相同key存放到list中
+     *
+     * @param map   map集合
+     * @param key   键
+     * @param value 值
+     * @param <K>   key泛型
+     * @param <V>   value泛型
+     */
+    public static <K, V> void computeSet(Map<K, Set<V>> map, K key, V value) {
+        map.compute(key, (k, v) -> {
+            if (Objects.isNull(v)) {
+                v = Sets.newLinkedHashSet();
             }
             v.add(value);
             return v;

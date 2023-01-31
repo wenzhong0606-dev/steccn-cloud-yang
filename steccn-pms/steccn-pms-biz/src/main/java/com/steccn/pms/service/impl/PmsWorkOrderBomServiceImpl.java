@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
@@ -95,9 +96,9 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             processIds.add(pmsWorkOrderBom.getProcessId());
         });
         //3.1.获取字典数据
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.2 获取物料数据
-        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+        Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.3 获取工序数据
         Map<Long, PmProcessVO> processVOMap = processService.listById(processIds);
         PmProcessVO pmProcessVO = new PmProcessVO();
@@ -148,9 +149,9 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
                     );
                 });
                 //3.1.获取字典数据
-                Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+                Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(ids),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 //3.2 获取物料数据
-                Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+                Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 EqpSpareVO spareVO = new EqpSpareVO();
                 //3.3 获取工序数据
                 Map<Long, PmProcessVO> processVOMap = processService.listById(processIds);
@@ -193,7 +194,7 @@ public class PmsWorkOrderBomServiceImpl extends ServiceImpl<PmsWorkOrderBomMappe
             //获取子物料的集合
             Set<Long> moduleSet = dbList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
             //获取物料数据
-            Map<Long, String> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listByIdCh(moduleSet)).get();
+            Map<Long, String> spareVOMap = FeignOptional.of(()->remoteSpareFeignApi.listByIdCh(moduleSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             Map<Long, List<PmsWorkOrderBom>> dbMap = dbList.stream().collect(Collectors.groupingBy(PmsWorkOrderBom::getProcessId));
             dbMap.forEach((k, v) -> {

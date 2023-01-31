@@ -19,4 +19,8 @@ public class TripleDTO<E1, E2, E3> extends TupleDTO<E1, E2> {
     @ApiModelProperty("属性3")
     private E3 field3;
 
+    public TripleDTO(E1 e1, E2 e2, E3 e3) {
+        super(e1, e2);
+        field3 = e3;
+    }
 }

@@ -1,8 +1,12 @@
 package com.steccn.data.controller.feign;
 
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.DwStationCollectDTO;
 import com.steccn.data.service.PmStationCollectService;
+import com.steccn.data.service.QtDefectCollectService;
+import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
@@ -16,8 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Set;
 
 /**
@@ -32,6 +40,7 @@ public class DataPlatformFeignController {
 
     private final EpMeterCollectService epMeterCollectService;
     private final PmStationCollectService pmStationCollectService;
+    private final QtDefectCollectService qtDefectCollectService;
 
     @PostMapping("/meter/read")
     @ApiOperation(value = "数仓条件列表")
@@ -47,7 +56,14 @@ public class DataPlatformFeignController {
 
     @PostMapping("/station/collect")
     @ApiOperation("生产管理-进出站计数归档")
-    R<List<DwStationCollectVO>> stationCollect(@RequestBody DwStationCollectDTO dto){
+    R<List<DwStationCollectVO>> stationCollect(@RequestBody DwStationCollectDTO dto) {
         return R.success(pmStationCollectService.stationCollect(dto));
     }
+
+    @PostMapping("/defect")
+    @ApiOperation("质量管理-缺陷项")
+    R<List<DwDefectCollectVO>> collectDetail(@RequestBody TripleDTO<LocalDateTime, LocalDateTime, Set<String>> tripleDTO) {
+        return R.success(qtDefectCollectService.collectDetail(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
+    }
+
 }

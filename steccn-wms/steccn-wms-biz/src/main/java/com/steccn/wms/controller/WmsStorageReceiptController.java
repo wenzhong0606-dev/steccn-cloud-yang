@@ -6,6 +6,8 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.PmExcelDTO;
+import com.steccn.pms.vo.ProducePlanImportVO;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
@@ -13,12 +15,15 @@ import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.service.WmsStorageReceiptService;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsStorageReceiptVO;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 /**
  * 入库凭证控制器
@@ -75,6 +80,12 @@ public class WmsStorageReceiptController {
     @GetMapping()
     public R<WmsStorageReceiptVO> get(@ApiParam("入库单id") @RequestParam("id") Long id){
         return R.success(wmsStorageReceiptService.get(id));
+    }
+
+    @ApiModelProperty("Excel导入")
+    @PostMapping("/excelImportData")
+    public R<Boolean> excelImportData(@Validated(InsertGroup.class) PmExcelDTO dto) throws IOException {
+        return R.success(wmsStorageReceiptService.excelImportData(dto));
     }
 
 }

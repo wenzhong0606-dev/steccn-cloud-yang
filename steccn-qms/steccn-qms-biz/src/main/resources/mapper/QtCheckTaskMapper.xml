@@ -30,6 +30,7 @@
         <result property="result" column="result" jdbcType="VARCHAR"/>
         <result property="classesId" column="classes_id" jdbcType="INTEGER"/>
         <result property="classTime" column="class_time" jdbcType="TIMESTAMP"/>
+        <result property="spotTime" column="spot_time" jdbcType="TIMESTAMP"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
         <result property="createBy" column="create_by" jdbcType="BIGINT"/>
         <result property="createName" column="create_name" jdbcType="VARCHAR"/>
@@ -68,28 +69,29 @@
     <!--    </sql>-->
     <select id="rateDataList" resultMap="BaseResultMap">
         SELECT
-            id,
-            type type,
-            material_id material_id,
-            product_line product_line,
-            product_order product_order,
-            material_workshop,
-            product_batch product_batch,
-            STATUS STATUS,
-            check_num check_num,
-            good_num good_num,
-            bad_num bad_num,
-            result result,
-            supplier supplier,
-            customer customer,
-            deliver_order deliver_order,
-            task_type task_type,
-            deliver_num deliver_num,
-            product_workshop product_workshop,
-            classes_id classes_id,
-            class_time,
-            CODE CODE,
-            finished_time
+        id,
+        type type,
+        material_id material_id,
+        product_line product_line,
+        product_order product_order,
+        material_workshop,
+        product_batch product_batch,
+        STATUS STATUS,
+        check_num check_num,
+        good_num good_num,
+        bad_num bad_num,
+        result result,
+        supplier supplier,
+        customer customer,
+        deliver_order deliver_order,
+        task_type task_type,
+        deliver_num deliver_num,
+        product_workshop product_workshop,
+        classes_id classes_id,
+        class_time,
+        CODE CODE,
+        finished_time,
+        spot_time
         FROM
         qt_check_task
         WHERE
@@ -122,8 +124,16 @@
             </foreach>
         </if>
         AND task_type = #{dto.taskType}
-        AND finished_time &gt;= #{dto.dateTimeStart}
-        AND finished_time &lt;= #{dto.dateTimeEnd}
+        <choose>
+            <when test="dto.taskType == 4">
+                AND spot_time &gt;= #{dto.dateTimeStart}
+                AND spot_time &lt;= #{dto.dateTimeEnd}
+            </when>
+            <otherwise>
+                AND finished_time &gt;= #{dto.dateTimeStart}
+                AND finished_time &lt;= #{dto.dateTimeEnd}
+            </otherwise>
+        </choose>
         AND status = 2
         ORDER BY CODE ASC
     </select>
@@ -135,15 +145,12 @@
         a.product_workshop product_workshop,
         a.result result,
         a.finished_time finished_time,
---         b.sampling_time sampling_time,
-        (select min(sampling_time) from qt_check_task_copy b where a.id = b.task_id ),
         a.material_id material_id,
         a.supplier supplier,
         IFNULL(a.good_num,0) as good_num,
         IFNULL(a.check_num,0) as check_num
         FROM
         qt_check_task a
---         LEFT JOIN qt_check_task_copy b ON b.task_id = a.id
         LEFT JOIN qt_material c ON c.id = a.material_id
         <where>
             a. task_type = 1 and a.del_flag = 0
@@ -199,5 +206,23 @@
                 and b.sampling_time between #{dto.samplingStartTime} and #{dto.samplingEndTime}
             </if>
         </where>
+    </select>
+    <select id="getDefectItemList" resultType="com.steccn.qms.vo.QtDefectItemInfoVO">
+        SELECT
+        a.id as taskId,a.classes_id,c.id,c.name,e.id as categoryId,e.name as categoryName
+        FROM
+        qt_check_task a
+        JOIN qt_check_task_detail b ON b.task_id = a.id
+        JOIN qt_defective_item c on c.id = b.defect_id
+        JOIN qt_check_item d on b.item_id = d.id
+        join qt_item_category e on c.category_id = e.id
+        where
+        d.name = #{apparentCondition}
+        <if test="taskIds !=null and taskIds.size > 0">
+            and a.id in
+            <foreach collection="taskIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

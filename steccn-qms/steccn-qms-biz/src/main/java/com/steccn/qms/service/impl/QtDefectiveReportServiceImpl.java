@@ -2,11 +2,9 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
@@ -15,15 +13,22 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.exception.SteccnChartException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwDefectCollectVO;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -73,6 +78,8 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final QtItemCategoryService qtItemCategoryService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
+    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
     /**
      * 深加工缺陷类别分布
@@ -145,12 +152,12 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
             Set<Integer> workshopIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductWorkshopId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(workshopIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(()->remoteOfficeFeign.listById(workshopIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
             Set<Integer> lineIdSet = flatDataList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(remoteOfficeFeign.listById(lineIdSet)).get();
+            Map<Integer, SysOfficeVO> dataMap = FeignOptional.of(()->remoteOfficeFeign.listById(lineIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             idNameMap =  officeContrastSort(dataMap);
         } else if (QtManagerConstant.QtChartCompareEnum.DEFECTCATEGORY.getCode().equals(compare)) {
             targetMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
@@ -194,11 +201,14 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
     @Override
     public List<QtCheckTaskDetailReportVO> defectiveDataFlat(QtChartParamDTO dto) {
+        LocalDateTime start =  LocalDateUtil.getMorning(dto.getDateStart());
+        LocalDateTime end =  LocalDateUtil.getMorning(dto.getDateEnd().plusDays(1));
+        dto.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
         //查询符合条件的检验任务
         QtCheckTaskConditionDTO condition = QtCheckTaskConditionDTO.builder()
-                .taskType(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
-                .startTime(LocalDateTime.of(dto.getDateStart(), LocalTime.of(8, 0, 0)))
-                .endTime(LocalDateTime.of(dto.getDateEnd().plusDays(1), LocalTime.of(8, 0, 0)))
+                .taskType(dto.getCheckType())
+                .startTime(start)
+                .endTime(end)
                 .productWorkShopId(dto.getProductWorkShopId())
                 .productLineId(dto.getProductLineId())
                 .defectType(dto.getDefectType())
@@ -215,6 +225,16 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         List<QtCheckTaskDetail> detailList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, taskIdSet));
         //获取所有的缺陷项id集合
         Set<Integer> defectiveIdSet = Sets.newHashSet();
+        //存放检验设备的数据
+        List<QtCheckTaskDetailReportVO> collectList = null;
+        try {
+            collectList = defectCollect(dto);
+            if (CollUtil.isNotEmpty(collectList)) {
+                collectList.forEach(ele -> defectiveIdSet.add(ele.getDefectId()));
+            }
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
         detailList.forEach(ele -> {
             if (CollUtil.isNotEmpty(ele.getDefectNum())) {
                 String numString = JSON.toJSONString(ele.getDefectNum());
@@ -262,17 +282,34 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                         vo.setClassId(qtCheckTask.getClassesId());
                         vo.setDefectStartTime(qtCheckTask.getDefectStartTime());
                         vo.setDefectEndTime(qtCheckTask.getDefectEndTime());
+                        //根据缺陷记录时间段的结束时间来计算自然时间段
+                        //自然时段（小时粒度使用）：该行缺陷记录时段的结束时间所在的自然时段，例如10:00所在的自然时段为10:00~11:00，10:04或10:58所在的自然时段为10:00~11:00
+                        LocalDateTime defectEndTime = qtCheckTask.getDefectStartTime();
+                        LocalDate localDate = defectEndTime.toLocalDate();
+                        int hour = defectEndTime.getHour();
+                        LocalDateTime startTime = LocalDateTime.of(localDate, LocalTime.of(hour, 0, 0));
+                        vo.setNormalEndTime(startTime.plusHours(1));
+                        vo.setNormalStartTime(startTime);
                         //根据缺陷记录时段计算完成时间
-                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectEndTime());
+                        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getDefectStartTime());
                         vo.setFinishedTime(qtCheckTask.getFinishedTime());
                         vo.setClassTime(qtTaskClassCalculate.getClassDate());
                         vo.setClassId(qtTaskClassCalculate.getClassType());
                         vo.setClassesDate(qtTaskClassCalculate.getClassDate().toLocalDate());
+                        vo.setDataSource(QtManagerConstant.QtDefectDataSource.MAN.getCode());
+                        vo.setMaterialId(qtCheckTask.getMaterialId());
+                        vo.setMaterialName(qtCheckTask.getMaterialName());
+                        vo.setNote(qtCheckTask.getNote());
                         flatDefectiveList.add(vo);
                     }
                 }
             }
         }
+        //加入采样数据
+        if(CollUtil.isNotEmpty(collectList)){
+            flatDefectiveList.addAll(collectList);
+        }
+
         //过滤班次信息
         if(Objects.nonNull(dto.getWorkingOrder())){
             flatDefectiveList = flatDefectiveList.stream().filter(v -> dto.getWorkingOrder().equals(v.getClassId())).collect(Collectors.toList());
@@ -357,7 +394,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveCategoryDetailList(dto);
         //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+        pageList.sort(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
@@ -480,21 +517,101 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         Map<Integer, QtItemCategory> defectCategoryMap = qtItemCategoryService.listById(categoryIdSet);
-        QtItemCategory defaultQtItemCategory = new QtItemCategory();
-
-        List<DeepDefectiveCategoryDetailVO> pageList = detailCategoryAndItem(flatDataList, officeChMap, defectIdNameMap, defectCategoryMap, lineData -> lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory)), (defectId, countVo) -> {
-            QtItemCategory qtItemCategory = defectCategoryMap.getOrDefault(defectId, defaultQtItemCategory);
-            countVo.setName(qtItemCategory.getName());
-            countVo.setCreateTime(qtItemCategory.getCreateTime());
-        });
+        List<DeepDefectiveCategoryDetailVO> pageList = detailCategory(flatDataList, officeChMap, defectIdNameMap, defectCategoryMap);
         pageList = legendFilter(dto, pageList);
-
         return pageList;
     }
 
+
+    /**
+     * 缺陷类别明细
+     *
+     * @param flatDataList      数据
+     * @param officeChMap       机构信息
+     * @param defectIdNameMap   缺陷项id信息
+     * @param defectCategoryMap 缺陷类别信息
+     * @return 缺陷类别明细
+     */
+    private List<DeepDefectiveCategoryDetailVO> detailCategory(List<QtCheckTaskDetailReportVO> flatDataList, Map<Integer, String> officeChMap, Map<Integer, String> defectIdNameMap, Map<Integer, QtItemCategory> defectCategoryMap) {
+        //定义返回的数据集合
+        List<DeepDefectiveCategoryDetailVO> pageList = Lists.newArrayList();
+        //定义默认的缺陷类别对象
+        QtItemCategory defaultQtItemCategory = new QtItemCategory();
+        //根据班次日期分组
+        Map<LocalDate, List<QtCheckTaskDetailReportVO>> classesDateMap = flatDataList.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassesDate));
+        //遍历班次日期map key-班次日期 value-数据集
+        classesDateMap.forEach((classDate, classDateData) -> {
+            //根据班次id分组 key-班次id value-数据集
+            Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
+            classesMap.forEach((classes, classesData) -> {
+                //查询班次id是早班或者晚班
+                QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
+                //根据车间分组 key-车间id value-数据集
+                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getProductWorkshopId()) ? v.getProductWorkshopId() : -1));
+                workshopMap.forEach((ws, wsData) -> {
+                    //根据产线分组 key-产线id value-数据集
+                    Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
+                    lineMap.forEach((line, lineData) -> {
+                        //根据function执行分组，根据类别分组
+                        Map<Integer, List<QtCheckTaskDetailReportVO>> defectMap = lineData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory));
+                        //每个类别为主表一条数据
+                        defectMap.forEach((category, defectData) -> {
+                            DeepDefectiveCategoryDetailVO countVo = new DeepDefectiveCategoryDetailVO();
+                            countVo.setClassesDate(classDate);
+                            countVo.setClassId(classes);
+                            countVo.setClassesName(classesEnum.getName());
+                            countVo.setDefectNum(defectData.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum());
+                            countVo.setProductWorkshopId(ws);
+                            if(ws == -1){
+                                countVo.setProductWorkshopId(null);
+                            }
+                            countVo.setProductWorkshopName(officeChMap.get(ws));
+                            countVo.setProductLineId(line);
+                            countVo.setProductLineName(officeChMap.get(line));
+                            countVo.setId(category);
+                            QtItemCategory qtItemCategory = defectCategoryMap.getOrDefault(category, defaultQtItemCategory);
+                            countVo.setName(qtItemCategory.getName());
+                            countVo.setCreateTime(qtItemCategory.getCreateTime());
+                            //明细
+                            List<DeepDefectiveCategoryDetailListVO> detailList = Lists.newArrayList();
+                            //采样数据-已经做过班次日期，班次，产线，车间的分组了
+                            List<QtCheckTaskDetailReportVO> collectList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.COLLECT.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            //需要进行类别和缺陷记录时段分组
+                            List<DeepDefectiveCategoryDetailListVO> collectDetailList = categoryDetail(x ->  x.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getDefectCategory)), collectList, defectCategoryMap, defectIdNameMap);
+                            detailList.addAll(collectDetailList);
+                            //人工数据
+                            List<QtCheckTaskDetailReportVO> manList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.MAN.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            //人工数据需要对缺陷记录时段进行分组
+                            Map<String, List<QtCheckTaskDetailReportVO>> defectTimeMap = manList.stream().collect(Collectors.groupingBy(x -> x.getDefectStartTime() + "-" + x.getDefectEndTime()));
+                            for (Map.Entry<String, List<QtCheckTaskDetailReportVO>> defectTimeEntry : defectTimeMap.entrySet()) {
+                                QtCheckTaskDetailReportVO ele = defectTimeEntry.getValue().get(0);
+                                DeepDefectiveCategoryDetailListVO listVO = new DeepDefectiveCategoryDetailListVO();
+                                BeanUtils.copyProperties(ele, listVO);
+                                int sum = defectTimeEntry.getValue().stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum();
+                                listVO.setDefectNum(sum);
+                                listVO.setDefectName(defectIdNameMap.getOrDefault(ele.getDefectId(), Strings.EMPTY));
+                                QtManagerConstant.QtDefectDataSource code = QtManagerConstant.QtDefectDataSource.code(ele.getDataSource());
+                                //设置数据来源
+                                if(Objects.nonNull(code)){
+                                    listVO.setResultSource(code.getName());
+                                }else {
+                                    listVO.setResultSource(QtManagerConstant.QtDefectDataSource.MAN.getName());
+                                }
+                                listVO.setDefectCategoryName(defectCategoryMap.getOrDefault(ele.getDefectCategory(), defaultQtItemCategory).getName());
+                                detailList.add(listVO);
+                            }
+                            countVo.setDetailList(detailList);
+                            pageList.add(countVo);
+                        });
+                    });
+                });
+            });
+        });
+        return pageList;
+    }
 
     /**
      * 缺陷类别或者缺陷项的项
@@ -517,7 +634,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             Map<Integer, List<QtCheckTaskDetailReportVO>> classesMap = classDateData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getClassId));
             classesMap.forEach((classes, classesData) -> {
                 QtManagerConstant.QtClassesEnum classesEnum = QtManagerConstant.QtClassesEnum.code(classes);
-                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductWorkshopId));
+                Map<Integer, List<QtCheckTaskDetailReportVO>> workshopMap = classesData.stream().collect(Collectors.groupingBy(v -> Objects.nonNull(v.getProductWorkshopId()) ? v.getProductWorkshopId() : -1));
                 workshopMap.forEach((ws, wsData) -> {
                     Map<Integer, List<QtCheckTaskDetailReportVO>> lineMap = wsData.stream().collect(Collectors.groupingBy(QtCheckTaskDetailReportVO::getProductLineId));
                     lineMap.forEach((line, lineData) -> {
@@ -529,6 +646,9 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             countVo.setClassesName(classesEnum.getName());
                             countVo.setDefectNum(defectData.stream().mapToInt(QtCheckTaskDetailReportVO::getDefectNum).sum());
                             countVo.setProductWorkshopId(ws);
+                            if(ws == -1){
+                               countVo.setProductWorkshopId(null);
+                            }
                             countVo.setProductWorkshopName(officeChMap.get(ws));
                             countVo.setProductLineId(line);
                             countVo.setProductLineName(officeChMap.get(line));
@@ -536,11 +656,24 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                             consumer.accept(defectId, countVo);
                             //明细
                             List<DeepDefectiveCategoryDetailListVO> detailList = Lists.newArrayList();
-                            defectData.forEach(ele -> {
+                            //采样数据-已经做过班次日期，班次，产线，车间的分组了
+                            List<QtCheckTaskDetailReportVO> collectList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.COLLECT.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            //需要进行类别和缺陷记录时段分组
+                            List<DeepDefectiveCategoryDetailListVO> collectDetailList = categoryDetail(function, collectList, defectCategoryMap, defectIdNameMap);
+                            detailList.addAll(collectDetailList);
+                            //人工数据
+                            List<QtCheckTaskDetailReportVO> manList = defectData.stream().filter(v -> QtManagerConstant.QtDefectDataSource.MAN.getCode().equals(v.getDataSource())).collect(Collectors.toList());
+                            manList.forEach(ele -> {
                                 DeepDefectiveCategoryDetailListVO listVO = new DeepDefectiveCategoryDetailListVO();
                                 BeanUtils.copyProperties(ele, listVO);
                                 listVO.setDefectName(defectIdNameMap.getOrDefault(ele.getDefectId(), Strings.EMPTY));
-                                listVO.setResultSource("人工检验");
+                                QtManagerConstant.QtDefectDataSource code = QtManagerConstant.QtDefectDataSource.code(ele.getDataSource());
+                                //设置数据来源
+                                if(Objects.nonNull(code)){
+                                   listVO.setResultSource(code.getName());
+                                }else {
+                                   listVO.setResultSource(QtManagerConstant.QtDefectDataSource.MAN.getName());
+                                }
                                 listVO.setDefectCategoryName(defectCategoryMap.getOrDefault(ele.getDefectCategory(), defaultQtItemCategory).getName());
                                 detailList.add(listVO);
                             });
@@ -552,6 +685,48 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             });
         });
         return pageList;
+    }
+
+    /**
+     * 采样数据-类别详细
+     * @param function 区分缺陷项还是缺陷项类别
+     * @param collectList 采样数据
+     * @param defectCategoryMap 缺陷项类别映射
+     * @param defectIdNameMap 缺陷项映射
+     * @return
+     */
+    private List<DeepDefectiveCategoryDetailListVO> categoryDetail(Function<List<QtCheckTaskDetailReportVO>, Map<Integer, List<QtCheckTaskDetailReportVO>>> function, List<QtCheckTaskDetailReportVO> collectList, Map<Integer, QtItemCategory> defectCategoryMap, Map<Integer, String> defectIdNameMap) {
+        List<DeepDefectiveCategoryDetailListVO> resList = Lists.newArrayList();
+        //如果采样数据不为空
+        if (CollUtil.isNotEmpty(collectList)) {
+            //根据缺陷开始
+            Map<LocalDateTime, List<QtCheckTaskDetailReportVO>> collectMap = collectList.stream().collect(Collectors.groupingBy(v -> v.getDefectStartTime()));
+            for (Map.Entry<LocalDateTime, List<QtCheckTaskDetailReportVO>> timeEntry : collectMap.entrySet()) {
+                Map<Integer, List<QtCheckTaskDetailReportVO>> childMap = function.apply(timeEntry.getValue());
+                for (Map.Entry<Integer, List<QtCheckTaskDetailReportVO>> childEntry : childMap.entrySet()) {
+                    try {
+                        DeepDefectiveCategoryDetailListVO resVo = new DeepDefectiveCategoryDetailListVO();
+                        QtCheckTaskDetailReportVO origin = childEntry.getValue().get(0);
+                        BeanUtils.copyProperties(origin, resVo);
+                        resVo.setResultSource(QtManagerConstant.QtDefectDataSource.COLLECT.getName());
+                        int sum = childEntry.getValue().stream().filter(v -> Objects.nonNull(v.getDefectNum())).mapToInt(v -> v.getDefectNum()).sum();
+                        resVo.setDefectNum(sum);
+                        resVo.setDefectName(defectIdNameMap.getOrDefault(origin.getDefectId(), Strings.EMPTY));
+                        QtItemCategory qtItemCategory = defectCategoryMap.get(origin.getDefectCategory());
+                        if (Objects.nonNull(qtItemCategory)) {
+                            resVo.setDefectCategoryName(qtItemCategory.getName());
+                        }
+                        resList.add(resVo);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }
+        //就缺陷记录时段排序
+        if(CollUtil.isNotEmpty(resList)){
+            resList.sort(Comparator.comparing(DeepDefectiveCategoryDetailListVO::getDefectStartTime));
+        }
+        return resList;
     }
 
 
@@ -577,7 +752,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
         sysOfficeDTO.setOfficeName(keyword);
         sysOfficeDTO.setOfficeType(QtManagerConstant.OFFICE_PRODUCE_LINE_TYPE);
-        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO)).get();
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(()->remoteOfficeFeign.getByTypeAndLine(sysOfficeDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notEmpty(sysOfficeVOList,"产线集合不能为空");
         return sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
     }
@@ -654,7 +829,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         List<DeepDefectiveCategoryDetailVO> pageList = getSubstrateItemDetail(dto);
         //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+        pageList.sort(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
@@ -677,7 +852,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();
@@ -712,6 +887,96 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
         Map<Integer, QtItemCategory> defectMap = qtItemCategoryService.listById(categoryIdSet);
         Map<Integer, String> idNameMap = defectCategorySort(defectMap);
         return commonLine(0,dto, flatDataList, cutDate, idNameMap, dto1 -> Objects.nonNull(dto1.getDefectCategory()));
+    }
+
+    @Override
+    public List<QtCheckTaskDetailReportVO> defectCollect(QtChartParamDTO dto) {
+        LocalDate dateStart = dto.getDateStart();
+        LocalDate dateEnd = dto.getDateEnd();
+        Assert.notNull(dateStart,"开始日期不能为空");
+        Assert.notNull(dateEnd,"结束日期不能为空");
+        Assert.notNull(dto.getCheckType(), "检验类型不能为空");
+        Set<Integer> productLineSet = Sets.newHashSet();
+        if(Objects.isNull(dto.getProductLineId()) && Objects.nonNull(dto.getProductWorkShopId())){
+            SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
+            sysOfficeParentDTO.setOfficeType(SysOfficeConstant.WORKSHOP);
+            sysOfficeParentDTO.setId(dto.getProductWorkShopId());
+            List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(sysOfficeVOList)){
+                sysOfficeVOList.forEach(ele -> productLineSet.add(ele.getId()));
+            }
+        }else if(Objects.nonNull(dto.getProductLineId())){
+            productLineSet.add(dto.getProductLineId());
+        }
+        List<QtCheckTaskDetailReportVO> convertDefectCollect = Lists.newArrayList();
+        //查询检验设备数据
+        Map<String, String> refMap = FeignOptional.of(() -> remoteSysConfigurationFeignApi.sysConfRef(new TupleDTO<>(SysOfficeConstant.HBBH_DEFECTIVE_SAMPLE_LINE, productLineSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(refMap)) {
+            //获取到所有的映射产线
+            Set<String> lineSet = refMap.keySet();
+            List<DwDefectCollectVO> collectList = FeignOptional.of(() -> remoteDataPlatformFeignApi.collectDetail(new TripleDTO<>(LocalDateTime.of(dateStart, LocalTime.of(8, 0, 0)), LocalDateTime.of(dateEnd.plusDays(1), LocalTime.of(8, 0, 0)), lineSet)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(collectList)){
+                //获取采集的缺陷集合
+                convertDefectCollect = convertDefectCollect(collectList, refMap);
+            }
+        }
+        return convertDefectCollect;
+    }
+
+    /**
+     * 计算机器采集的缺陷
+     *
+     * @param collectList 采集缺陷集合
+     * @param refMap 产线映射
+     * @return list
+     */
+    private List<QtCheckTaskDetailReportVO> convertDefectCollect(List<DwDefectCollectVO> collectList,  Map<String, String> refMap) {
+        List<QtCheckTaskDetailReportVO> resList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(collectList) && CollUtil.isNotEmpty(refMap)) {
+            Set<String> defectTypeSet = collectList.stream().map(DwDefectCollectVO::getDefectType).collect(Collectors.toSet());
+            Map<String, QtDefectiveItem> resMap = qtDefectiveItemService.collectDefect(defectTypeSet);
+            collectList.forEach(ele -> {
+                QtCheckTaskDetailReportVO vo = new QtCheckTaskDetailReportVO();
+                vo.setDataSource(QtManagerConstant.QtDefectDataSource.COLLECT.getCode());
+                vo.setFinishedTime(ele.getProductTime());
+                LocalDate date = ele.getProductTime().toLocalDate();
+                LocalTime time = ele.getProductTime().toLocalTime();
+                //计算缺陷记录时段
+                if (time.getMinute() == 0 && time.getSecond() == 0) {
+                    vo.setDefectStartTime(LocalDateTime.of(date, time));
+                    vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+                } else {
+                    //time
+                    vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
+                    vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+                }
+                //自然记录时段
+                vo.setNormalStartTime(vo.getDefectStartTime());
+                vo.setNormalEndTime(vo.getDefectEndTime());
+                try {
+                    String line = refMap.get(ele.getLine());
+                    vo.setProductLineId(Integer.parseInt(line));
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(vo.getDefectEndTime());
+                    vo.setClassTime(qtTaskClassCalculate.getClassDate());
+                    vo.setClassId(qtTaskClassCalculate.getClassType());
+                    vo.setClassesDate(vo.getClassTime().toLocalDate());
+                    vo.setDefectNum(ele.getDefectCount());
+                    //配置缺陷项
+                    QtDefectiveItem qtDefectiveItem = resMap.get(ele.getDefectType());
+                    if(Objects.nonNull(qtDefectiveItem)){
+                        vo.setDefectId(qtDefectiveItem.getId());
+                        vo.setDefectCategory(qtDefectiveItem.getCategoryId());
+                        resList.add(vo);
+                    }
+                }catch(Exception e){
+                    log.error("{}",e.getLocalizedMessage());
+                }
+            });
+            List<Integer> productLineList = resList.stream().map(QtCheckTaskDetailReportVO::getProductLineId).collect(Collectors.toList());
+            Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.parentInfo(productLineList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            resList.forEach(v -> v.setProductWorkshopId(sysOfficeVOMap.get(v.getProductLineId()).getId()));
+        }
+        return resList;
     }
 
     /**
@@ -851,19 +1116,32 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             TupleDTO<Map<Integer, List<QtCheckTaskDetailReportVO>>, Map<Integer, String>> mapMapTupleDTO = commonGroup(dto.getCompare(), flatDataList);
             xMap = mapMapTupleDTO.getField2();
         }
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
 
         for (int i = 1; i < cutDate.size(); i++) {
             LocalDateTime start = cutDate.get(i - 1);
             LocalDateTime end = cutDate.get(i);
-            List<QtCheckTaskDetailReportVO> conditionDataList = flatDataList.stream().filter(v -> {
-                //数据范围应该是大于等于开始时间  小于结束时间
-                if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
-                    return Boolean.TRUE;
-                }
-                return Boolean.FALSE;
-            }).collect(Collectors.toList());
+            List<QtCheckTaskDetailReportVO> conditionDataList ;
+            if(QtManagerConstant.QtGranularityEnum.HOUR.equals(granularityEnum)){
+                //小时时间粒度
+                conditionDataList = flatDataList.stream().filter(v -> {
+                    //数据范围应该是大于等于开始时间  小于结束时间
+                    if (start.isEqual(v.getNormalStartTime()) && end.isEqual(v.getNormalEndTime())) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
+            }else {
+                //其他时间粒度
+                conditionDataList = flatDataList.stream().filter(v -> {
+                    //数据范围应该是大于等于开始时间  小于结束时间
+                    if ((start.isBefore(v.getClassTime()) || start.isEqual(v.getClassTime())) && end.isAfter(v.getClassTime())) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).collect(Collectors.toList());
+            }
             StackGraphDTO<String, Integer> stackGraphDTO = new StackGraphDTO<>();
-            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
             stackGraphDTO.setXAxis(XAxisUtil.convert(granularityEnum, start));
             List<TupleDTO<String, Integer>> data = Lists.newArrayList();
             //类别
@@ -904,7 +1182,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         List<DeepDefectiveCategoryDetailVO> pageList = getDeepDefectiveItemDetailList(dto);
         //排序+逻辑分页
-        pageList.stream().sorted(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
+        pageList.sort(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassesDate))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductWorkshopId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getProductLineId)))
                 .thenComparing(Comparator.nullsLast(Comparator.comparing(DeepDefectiveCategoryDetailVO::getClassId)))
@@ -927,7 +1205,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
             officeIdSet.add(ele.getProductWorkshopId());
             officeIdSet.add(ele.getProductLineId());
         });
-        Map<Integer, String> officeChMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+        Map<Integer, String> officeChMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, QtDefectiveItem> defectIdMap = qtDefectiveItemService.listById(defectIdSet);
         Map<Integer, String> defectIdNameMap = qtDefectiveItemService.listByIdCh(defectIdSet);
         QtDefectiveItem defaultQtDefectiveItem = new QtDefectiveItem();

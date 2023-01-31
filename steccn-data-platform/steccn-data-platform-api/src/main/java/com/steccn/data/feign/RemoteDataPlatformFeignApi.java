@@ -1,7 +1,10 @@
 package com.steccn.data.feign;
 
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.dto.DwStationCollectDTO;
@@ -12,8 +15,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Set;
 
 /**
@@ -26,6 +32,7 @@ public interface RemoteDataPlatformFeignApi {
 
     /**
      * 能源绩效系统-抄表归档
+     *
      * @param dwList 数仓条件列表
      * @return list
      */
@@ -35,6 +42,7 @@ public interface RemoteDataPlatformFeignApi {
 
     /**
      * 生产管理-进出站计数归档
+     *
      * @param dto 查询条件
      * @return list
      */
@@ -50,4 +58,14 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/platform/meter/last/read/time")
     @ApiOperation("能源绩效-最近抄表时间")
     R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet);
+
+    /**
+     * 质量管理-缺陷项
+     *
+     * @param dto dto
+     * @return
+     */
+    @PostMapping("/feign/data/platform/defect")
+    @ApiOperation("质量管理-缺陷项")
+    R<List<DwDefectCollectVO>> collectDetail(@RequestBody TripleDTO<LocalDateTime, LocalDateTime, Set<String>> dto);
 }

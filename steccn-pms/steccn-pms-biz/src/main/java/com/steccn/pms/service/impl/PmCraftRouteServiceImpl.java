@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -68,14 +69,14 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
         //拷贝数据，设置创建人时间
         BeanUtil.copyProperties(dto, model);
         //校验该物料是否存在当前版本信息
-        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getIsCurrentVersion())){
+        if (PmManagerConstant.OrderStateEnum.ONE.getCode().equals(dto.getIsCurrentVersion())) {
             List<PmCraftRoute> list = list(new LambdaQueryWrapper<PmCraftRoute>()
                     .eq(PmCraftRoute::getMaterialId, dto.getMaterialId())
                     .eq(PmCraftRoute::getIsCurrentVersion, PmManagerConstant.OrderStateEnum.ONE.getCode()));
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(list)) {
                 update(new LambdaUpdateWrapper<PmCraftRoute>()
-                        .set(PmCraftRoute::getIsCurrentVersion,PmManagerConstant.OrderStateEnum.ZERO.getCode())
-                        .eq(PmCraftRoute::getMaterialId,dto.getMaterialId()));
+                        .set(PmCraftRoute::getIsCurrentVersion, PmManagerConstant.OrderStateEnum.ZERO.getCode())
+                        .eq(PmCraftRoute::getMaterialId, dto.getMaterialId()));
             }
         }
         model.setCreateBy(SecurityUtils.getUser().getUserId());
@@ -151,9 +152,9 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
                 craftRouteVO.setProcessList(pmCraftRouteProcessService.list(craftRouteVO.getId()));
             });
             //获取字典数据
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取物料数据
-            Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(spareIDs)).get();
+            Map<Long, EqpSpareVO> spareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(spareIDs), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取工序数据
             Map<Long, String> processNameMap = processService.listByIdsCh(processIds);
             //将数据处理返回
@@ -283,7 +284,7 @@ public class PmCraftRouteServiceImpl extends ServiceImpl<PmCraftRouteMapper, PmC
             SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
             sysOfficeParentDTO.setId(productLineId);
             sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_13);
-            List<SysOfficeVO> officeVOS = FeignOptional.of(remoteOfficeFeign.listByParentId(sysOfficeParentDTO)).get();
+            List<SysOfficeVO> officeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(officeVOS)) {
                 list.forEach(stations -> {
                     officeVOS.forEach(

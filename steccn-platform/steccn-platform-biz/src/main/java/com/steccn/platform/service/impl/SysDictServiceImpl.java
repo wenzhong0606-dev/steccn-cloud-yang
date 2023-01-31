@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
@@ -34,7 +35,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     public List<SysDictVO> sysList(String type) {
         //1.根据类型code查询出所有的数据字典数据
-        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>().eq(SysDict::getType, type));
+        List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
+                .eq(SysDict::getType, type)
+                .eq(SysDict::getUseFlag, MpConstant.YES));
         //2.如果数据为空，直接返回空集合
         if (CollUtil.isEmpty(dataList)) {
             return Lists.newArrayList();
@@ -157,14 +160,29 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     @Override
     public List<SysDictVO> getByNameAndType(String name, String type) {
         List<SysDict> sysDicts = list(new LambdaQueryWrapper<SysDict>()
-                .eq(Objects.nonNull(type),SysDict::getType, type)
-                .like(Objects.nonNull(name),SysDict::getName, name));
-        List<SysDictVO> sysDictVOList =Lists.newArrayList();
-        if (CollUtil.isNotEmpty(sysDicts)){
-             sysDictVOList = BeanUtil.copyToList(sysDicts, SysDictVO.class);
+                .eq(Objects.nonNull(type), SysDict::getType, type)
+                .like(Objects.nonNull(name), SysDict::getName, name));
+        List<SysDictVO> sysDictVOList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(sysDicts)) {
+            sysDictVOList = BeanUtil.copyToList(sysDicts, SysDictVO.class);
 
         }
         return sysDictVOList;
+    }
+
+    @Override
+    public Map<String, Long> listByNameCh(Set<String> nameList) {
+        Map<String, Long> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(nameList)) {
+            List<SysDict> sysDictList = list(new LambdaQueryWrapper<SysDict>().in(SysDict::getName, nameList).select(SysDict::getId, SysDict::getName));
+            if (CollUtil.isNotEmpty(sysDictList)) {
+                List<SysDictVO> sysDictVOList = BeanUtil.copyToList(sysDictList, SysDictVO.class);
+                for (SysDictVO sysDictVO : sysDictVOList) {
+                    resMap.put(sysDictVO.getName(), sysDictVO.getId());
+                }
+            }
+        }
+        return resMap;
     }
 
 

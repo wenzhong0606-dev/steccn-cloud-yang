@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
@@ -93,8 +94,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
                 typeSet.add(receipt.getType());
                 officeSet.add(receipt.getWarehouseId());
             });
-            Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
+            Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             records.forEach(receipt -> {
                 receipt.setTypeName(dictMap.get(receipt.getType()));
                 receipt.setWarehouseName(officeMap.get(receipt.getWarehouseId()));
@@ -285,8 +286,8 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         typeSet.add(wmsDeliveryReceiptVO.getType());
         officeSet.add(wmsDeliveryReceiptVO.getWarehouseId());
         infoVOList.forEach(info -> typeSet.add(info.getUnit()));
-        Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeSet)).get();
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(typeSet)).get();
+        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(typeSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         infoVOList.forEach(info -> info.setUnitName(dictMap.get(info.getUnit())));
         wmsDeliveryReceiptVO.setWarehouseName(officeMap.get(wmsDeliveryReceiptVO.getWarehouseId()));
         wmsDeliveryReceiptVO.setTypeName(dictMap.get(wmsDeliveryReceiptVO.getType()));

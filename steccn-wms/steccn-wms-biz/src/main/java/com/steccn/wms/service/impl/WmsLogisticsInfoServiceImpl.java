@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.wms.domain.WmsLogisticsInfo;
 import com.steccn.wms.dto.WmsLogisticsInfoDTO;
@@ -44,7 +45,7 @@ public class WmsLogisticsInfoServiceImpl extends ServiceImpl<WmsLogisticsInfoMap
                 List<WmsLogisticsInfoVO> wmsLogisticsInfo = BeanUtil.copyToList(list, WmsLogisticsInfoVO.class);
                 Set<Integer> officeIdSet = Sets.newHashSet();
                 wmsLogisticsInfo.forEach( info -> officeIdSet.add(info.getOfficeId()));
-                Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(officeIdSet)).get();
+                Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 wmsLogisticsInfo.forEach( info ->{
                     info.setOfficeName(officeMap.get(info.getOfficeId()));
                 });

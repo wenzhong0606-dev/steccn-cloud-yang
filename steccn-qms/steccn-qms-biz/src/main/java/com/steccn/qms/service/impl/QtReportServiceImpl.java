@@ -2,6 +2,8 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
@@ -14,6 +16,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -185,7 +188,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Set<Long> measureUnitSet = new HashSet<>();
         if (Objects.nonNull(qtCheckItem)&&Objects.nonNull(qtCheckItem.getMeasureUnit())){
             measureUnitSet.add(qtCheckItem.getMeasureUnit());
-            Map<Long, String> dictData = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureUnitSet)).get();
+            Map<Long, String> dictData = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(measureUnitSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (Objects.nonNull(dictData)){
                 String measureName = dictData.get(qtCheckItem.getMeasureUnit());
                 qtCheckItemUnitVO.setMeasureUnitName(measureName);
@@ -271,7 +274,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtReportChartVO.setDataTypeId(dataType);
                     List<Long> ids = Lists.newArrayList();
                     ids.add(dataType);
-                    Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
+                    Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(()->remoteDictFeignApi.listById(ids),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
                     if (Objects.nonNull(sysDictVO.getName())) {
                         qtReportChartVO.setDataTypeName(sysDictVO.getName());
@@ -280,7 +283,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     if (Objects.nonNull(qtCheckItem.getMeasureUnit())) {
                         Set<Long> measureIds = Sets.newHashSet();
                         measureIds.add(qtCheckItem.getMeasureUnit());
-                        Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                        Map<Long, String> longStringMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(measureIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                         String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
                         if (Objects.nonNull(measureName)) {
                             qtReportChartVO.setMeasureUnit(measureName);
@@ -476,7 +479,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 qtReportChartVO.setDataTypeId(dataType);
                 List<Long> ids = Lists.newArrayList();
                 ids.add(dataType);
-                Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(remoteDictFeignApi.listById(ids)).get();
+                Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(()->remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
                 if (Objects.nonNull(sysDictVO.getName())) {
                     qtReportChartVO.setDataTypeName(sysDictVO.getName());
@@ -485,7 +488,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 if (Objects.nonNull(qtCheckItem.getMeasureUnit())) {
                     Set<Long> measureIds = Sets.newHashSet();
                     measureIds.add(qtCheckItem.getMeasureUnit());
-                    Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(measureIds)).get();
+                    Map<Long, String> longStringMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(measureIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                     String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
                     if (Objects.nonNull(measureName)) {
                         qtReportChartVO.setMeasureUnit(measureName);
@@ -660,7 +663,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(qtCheckItem)){
             Set<Long> ids = Sets.newHashSet();
             ids.add(qtCheckItem.getMeasureUnit());
-            Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+            Map<Long, String> longStringMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(ids),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //获取单位名称
             measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
         }
@@ -987,7 +990,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         if (Objects.nonNull(qtCheckItem)){
         Set<Long> ids = Sets.newHashSet();
         ids.add(qtCheckItem.getMeasureUnit());
-        Map<Long, String> longStringMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(ids)).get();
+        Map<Long, String> longStringMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(ids),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取单位名称
          measureUnitName = longStringMap.get(qtCheckItem.getMeasureUnit());
         }

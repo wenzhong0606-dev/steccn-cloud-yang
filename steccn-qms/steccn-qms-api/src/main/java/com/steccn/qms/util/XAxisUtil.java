@@ -32,16 +32,18 @@ public class XAxisUtil {
      */
     public static String convert(QtManagerConstant.QtGranularityEnum granularityEnum, LocalDateTime ldt) {
         String xAxis;
-        if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, DatePattern.NORM_DATE_PATTERN);
+        if (QtManagerConstant.QtGranularityEnum.HOUR.getCode().equals(granularityEnum.getCode())) {
+            xAxis = LocalDateTimeUtil.format(ldt, "MM-dd HH:mm") + "~" + LocalDateTimeUtil.format(ldt.plusHours(1), "MM-dd HH:mm");
+        } else if (QtManagerConstant.QtGranularityEnum.DAY.getCode().equals(granularityEnum.getCode())) {
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.WEEK.getCode().equals(granularityEnum.getCode())) {
             LocalDateTime monday = ldt.with(DayOfWeek.MONDAY);
             LocalDateTime sunday = ldt.with(DayOfWeek.SUNDAY);
-            xAxis = LocalDateTimeUtil.format(monday, "MM.dd") + "-" + LocalDateTimeUtil.format(sunday, "MM.dd");
+            xAxis = LocalDateTimeUtil.format(monday, "MM-dd") + "~" + LocalDateTimeUtil.format(sunday, "MM-dd");
         } else if (QtManagerConstant.QtGranularityEnum.MONTH.getCode().equals(granularityEnum.getCode())) {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy-MM");
         } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getCode().equals(granularityEnum.getCode())) {
-            xAxis = LocalDateTimeUtil.format(ldt, "yyyy") + "-" + quater(ldt.getMonth().getValue()) + "季度";
+            xAxis = LocalDateTimeUtil.format(ldt, "yyyy") + quater(ldt.getMonth().getValue());
         } else {
             xAxis = LocalDateTimeUtil.format(ldt, "yyyy");
         }
@@ -54,14 +56,16 @@ public class XAxisUtil {
      * @param month
      * @return
      */
-    private static int quater(int month) {
-        int quater = 4;
+    private static String quater(int month) {
+        String quater;
         if (month >= 1 && month <= 3) {
-            quater = 1;
+            quater = "第一季度";
         } else if (month >= 4 && month <= 6) {
-            quater = 2;
+            quater = "第二季度";
         } else if (month >= 7 && month <= 9) {
-            quater = 3;
+            quater = "第三季度";
+        } else {
+            quater = "第四季度";
         }
         return quater;
     }

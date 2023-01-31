@@ -77,6 +77,17 @@ public interface RemoteOfficeFeign {
 
 
     /**
+     * 根据名称查询机构的信息
+     *
+     * @param names 机构id集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/names")
+    @ApiOperation("根据名称查询机构的信息")
+    R<Map<String, SysOfficeVO>> listByName(@RequestBody Set<String> names);
+
+
+    /**
      * 根据主键id查询机构的中文
      *
      * @param idList 机构id集合

@@ -30,7 +30,7 @@ public class WmsStorageReceiptDTO {
     private String code;
 
     @ApiModelProperty("状态")
-    private String status;
+    private Integer status;
 
     @ApiModelProperty("类型")
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class}, message = "类型id不能为空")

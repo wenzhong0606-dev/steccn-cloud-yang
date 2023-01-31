@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -51,7 +52,7 @@ public class WmsLogisticsDetailServiceImpl extends ServiceImpl<WmsLogisticsDetai
                 list.forEach(info -> {
                     materialIds.add(info.getMaterialId());
                 });
-                Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
+                Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 EqpSpareVO eqpSpareVO = new EqpSpareVO();
                 list.forEach(info -> {
                     EqpSpareVO orDefault = materialMap.getOrDefault(info.getMaterialId(), eqpSpareVO);
@@ -82,8 +83,8 @@ public class WmsLogisticsDetailServiceImpl extends ServiceImpl<WmsLogisticsDetai
                 dictIds.add(detailVO.getVolumeUnit());
                 dictIds.add(detailVO.getUnitId());
             });
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(materialIds)).get();
-            Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictIds)).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(detailVO -> {
                 detailVO.setUnpackFlag(0);
                 detailVO.setAogQuantity(detailVO.getShippedQuantity());

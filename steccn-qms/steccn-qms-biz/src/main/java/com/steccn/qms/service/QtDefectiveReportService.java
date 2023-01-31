@@ -110,4 +110,11 @@ public interface QtDefectiveReportService {
      * @return vo
      */
     QtLineChartBarDTO deepDefectiveCategoryLine(QtChartParamDTO dto);
+
+    /**
+     * 机器采集的缺陷集合
+     * @param dto dto
+     * @return list
+     */
+    List<QtCheckTaskDetailReportVO> defectCollect(QtChartParamDTO dto);
 }

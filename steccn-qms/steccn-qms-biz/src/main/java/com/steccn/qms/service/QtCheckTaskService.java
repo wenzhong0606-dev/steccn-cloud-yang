@@ -88,6 +88,11 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     List<QtCheckTaskTypeCountVO> countTaskByType();
 
+    /**
+     * 任务列表分页
+     * @param dto
+     * @return
+     */
     Page<QtCheckTaskListVO> pageList(QtCheckTaskListDTO dto);
 
     QtProduceOrderLineVO productOrderInfo(String code);
@@ -211,6 +216,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     void downloadAccessoryDeepOrSubstrateProcessing(QtSubOrDeepAcceptabilityDTO dto, HttpServletResponse response);
 
+    /**
+     * 删除任务
+     * @param id 主键id
+     * @return
+     */
+    Boolean deleteTask(Long id);
 
 }
 

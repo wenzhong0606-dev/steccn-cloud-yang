@@ -38,6 +38,9 @@ public class BarcodePrintRecordVO implements Serializable {
     @ApiModelProperty("数量")
     private BigDecimal quantity;
 
+    @ApiModelProperty("最小包装数量")
+    private BigDecimal minPackageQuantity;
+
     @ApiModelProperty("箱子状态")
     private Integer caseState;
 

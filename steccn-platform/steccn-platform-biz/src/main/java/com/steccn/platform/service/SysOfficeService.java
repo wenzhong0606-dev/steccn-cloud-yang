@@ -171,4 +171,18 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Set<Integer> typeAndChildrenFlat(String officeType);
+    /**
+     * 根据机构类型以及多关键字名称返回SysOffice列表信息
+     * @param dto dto
+     * @return list
+     */
+    List<SysOfficeVO> listMultiFilter(SysOfficeTypeKeyDTO dto);
+
+
+    /**
+     * 根据名称获取机构信息
+     * @param names
+     * @return
+     */
+    Map<String, SysOfficeVO> listByName(Set<String> names);
 }

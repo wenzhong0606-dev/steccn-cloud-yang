@@ -62,6 +62,10 @@
             <artifactId>easyexcel</artifactId>
             <version>3.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-pms-api</artifactId>
+        </dependency>
 
     </dependencies>
 

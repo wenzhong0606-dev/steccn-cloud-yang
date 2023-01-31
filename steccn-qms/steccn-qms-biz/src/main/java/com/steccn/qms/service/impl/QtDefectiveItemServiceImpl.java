@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
@@ -374,6 +375,45 @@ public class QtDefectiveItemServiceImpl extends ServiceImpl<QtDefectiveItemMappe
                 Map<String, List<QtDefectiveItem>> codeMap = codeList.stream().collect(Collectors.groupingBy(QtDefectiveItem::getCode));
                 for (Map.Entry<String, List<QtDefectiveItem>> entry : codeMap.entrySet()) {
                     resMap.put(codeIdMap.get(entry.getKey()), entry.getValue().stream().map(QtDefectiveItem::getId).collect(Collectors.toSet()));
+                }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, QtDefectiveItem> collectDefect(Set<String> defectTypeSet) {
+        Map<String, QtDefectiveItem> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(defectTypeSet)) {
+            List<String> defectTypeList = Lists.newArrayList(defectTypeSet);
+
+            LambdaQueryWrapper<QtDefectiveItem> lqw = new QueryWrapper<QtDefectiveItem>().select("distinct code").lambda().and(q -> {
+                for (int i = 0; i < defectTypeList.size(); i++) {
+                    String defectType = defectTypeList.get(i);
+                    if (i != 0) {
+                        q.or();
+                    }
+                    q.like(QtDefectiveItem::getDefectCode, defectType);
+                }
+            });
+            List<QtDefectiveItem> dbList = list(lqw);
+            //将所有的code收集起来
+            if (CollUtil.isNotEmpty(dbList)) {
+                Set<String> codeSet = dbList.stream().map(QtDefectiveItem::getCode).collect(Collectors.toSet());
+                //获取最新的快照缺陷项目
+                Map<String, TupleDTO<Integer, Integer>> firstSnapshotDataMap = firstSnapshotData(codeSet);
+                Set<Integer> defectIdList = Sets.newHashSet();
+                for (Map.Entry<String, TupleDTO<Integer, Integer>> entry : firstSnapshotDataMap.entrySet()) {
+                    defectIdList.add(entry.getValue().getField1());
+                }
+                //获取所有的数据集合
+                List<QtDefectiveItem> originalList = listByIds(defectIdList);
+                for (String defectType : defectTypeSet) {
+                    Optional<QtDefectiveItem> optional = originalList.stream().filter(v -> v.getDefectCode().contains(defectType)).findFirst();
+                    if (optional.isPresent()) {
+                        QtDefectiveItem modelItem = optional.get();
+                        resMap.put(defectType, modelItem);
+                    }
                 }
             }
         }

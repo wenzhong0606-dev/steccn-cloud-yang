@@ -31,6 +31,8 @@ public interface PmReportConstant {
     Integer TYPE_3 = 3;
     Integer TYPE_4 = 4;
 
+    String date_01 = "01";
+
     /**
      * 早班 晚班
      */

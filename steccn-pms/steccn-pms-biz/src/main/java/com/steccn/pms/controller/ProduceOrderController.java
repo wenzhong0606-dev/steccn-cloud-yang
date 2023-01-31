@@ -59,6 +59,7 @@ public class ProduceOrderController {
     @ApiOperation("获取生产订单批次分页列表")
     @PostMapping("/batch/info")
     public R<Page<PmsWorkOrderBatchVO>> batchPageList(@RequestBody PmsProduceOrderBatchDTO dto) {
+        Assert.notNull(dto.getProduceOrderId(), "生产订单不能为空");
         return R.success(pmsProduceOrderService.batchPageList(dto));
     }
 

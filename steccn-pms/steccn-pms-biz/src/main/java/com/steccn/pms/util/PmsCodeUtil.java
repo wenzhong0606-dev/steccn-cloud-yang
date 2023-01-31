@@ -1,9 +1,13 @@
 package com.steccn.pms.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 类说明
@@ -149,6 +153,22 @@ public class PmsCodeUtil {
         }
         String s = LocalDate.now().toString().replaceAll(SHORT_LINE, "");
         return prefix + s + SHORT_LINE + classes + SHORT_LINE + finalValStr;
+    }
+
+
+    /**
+     * 校验首位是否是 0
+     * @param date
+     * @return
+     */
+    public static Boolean checkZero(String date) {
+        String pattern = "[0]\\d*";
+        Pattern pat = Pattern.compile(pattern);
+        if (StringUtils.isNotBlank(date)) {
+            Matcher mat = pat.matcher(date);
+            return mat.matches();
+        }
+        return false;
     }
 
 }

@@ -1,17 +1,17 @@
 package com.steccn.pms.controller;
 
+import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EnergyCountDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.service.ReportService;
 import com.steccn.pms.vo.*;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -62,5 +62,11 @@ public class ReportController {
     @ApiOperation("产量统计")
     public R<OutputCountVO> outputCount(@Valid @RequestBody EnergyCountDTO dto) {
         return R.success(reportService.outputCount(dto));
+    }
+
+    @GetMapping("/orderProgress/chart/{workshopId}")
+    @ApiOperation("订单进度跟踪图表")
+    public R<QtLineChartBarDTO> orderProgress(@PathVariable("workshopId")Integer workshopId){
+        return R.success(reportService.orderProgress(workshopId));
     }
 }

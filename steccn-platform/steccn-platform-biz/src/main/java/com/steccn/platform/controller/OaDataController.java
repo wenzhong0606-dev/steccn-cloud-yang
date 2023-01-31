@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.dto.OaMaterialDTO;
@@ -74,7 +75,7 @@ public class OaDataController {
      * @param request 请求
      */
     private void validRequestHeader(HttpServletRequest request) {
-        Set<String> pwdSet = FeignOptional.of(remoteSysOauthClientDetailFeignApi.clientEncodePassword()).get();
+        Set<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String clientId = request.getHeader(OaDataConstant.STR_CLIENT_ID);
         Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
         Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");

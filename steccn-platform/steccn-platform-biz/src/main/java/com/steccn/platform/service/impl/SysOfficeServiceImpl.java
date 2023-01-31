@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice>
         implements SysOfficeService {
 
-    // TODO: 2022/9/6
     @Override
     public List<SysOfficeVO> sysList(String officeType) {
         //根据类型查询所有的数据字典数据
@@ -286,6 +285,62 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
                 childrenCycle(dataSet, childrenList);
             }
         }
+    }
+
+
+    @Override
+    public List<SysOfficeVO> listMultiFilter(SysOfficeTypeKeyDTO dto) {
+        List<SysOfficeVO> vos = new ArrayList<>();
+        LambdaQueryWrapper<SysOffice> lqw = new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey());
+        if (CollUtil.isNotEmpty(dto.getKeyList())) {
+            lqw.and(qr ->{
+                    for (int i = 0; i < dto.getKeyList().size(); i++) {
+                        if (i != 0) {
+                            qr.or();
+                        }
+                        qr.like(SysOffice::getOfficeName, dto.getKeyList().get(i));
+                    }
+            });
+        }
+        List<SysOffice> officeList = list(lqw);
+        if (CollUtil.isNotEmpty(officeList)) {
+            officeList.forEach(tmp -> {
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtils.copyProperties(tmp, vo);
+                vos.add(vo);
+            });
+        }
+        return vos;
+    }
+
+    @Override
+    public Map<String, SysOfficeVO> listByName(Set<String> names) {
+        Map<String, SysOfficeVO> resMap = Maps.newHashMap();
+        List<SysOffice> sysOfficeList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeName, names));
+        if (CollUtil.isNotEmpty(sysOfficeList)) {
+            //对此接口进行功能增强,可以获取父节点的名称，id，名字
+            Set<String> parentCodeSet = sysOfficeList.stream().map(SysOffice::getParentCode).collect(Collectors.toSet());
+            Map<String, SysOffice> parentMap = Maps.newHashMap();
+            SysOffice defaultSysOffice = new SysOffice();
+            if (CollUtil.isNotEmpty(parentCodeSet)) {
+                List<SysOffice> parentList = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getOfficeCode, parentCodeSet));
+                if (CollUtil.isNotEmpty(parentList)) {
+                    parentList.forEach(v -> parentMap.put(v.getOfficeCode(), v));
+                }
+            }
+            for (SysOffice sysOffice : sysOfficeList) {
+                SysOfficeVO sysOfficeVO = new SysOfficeVO();
+                BeanUtils.copyProperties(sysOffice, sysOfficeVO);
+                SysOffice orDefault = parentMap.getOrDefault(sysOffice.getParentCode(), defaultSysOffice);
+                sysOfficeVO.setParentId(orDefault.getId());
+                sysOfficeVO.setParentName(orDefault.getOfficeName());
+                resMap.put(sysOfficeVO.getOfficeName(), sysOfficeVO);
+            }
+        }
+        return resMap;
     }
 
     @Override

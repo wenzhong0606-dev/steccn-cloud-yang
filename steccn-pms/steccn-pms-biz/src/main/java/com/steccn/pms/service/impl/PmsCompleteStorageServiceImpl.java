@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
@@ -104,13 +105,13 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notNull(pmsProduceOrder, "生产订单不能为空");
 
         HashSet<Long> set = Sets.newHashSet(pmsProduceOrder.getMaterialId());
-        Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = FeignOptional.of(remoteWmsShelfStrategyFeignApi.materialShelfUpInfo(set)).get();
+        Map<Long, WmsMaterialShelfUpVO> materialShelfUpMap = FeignOptional.of(() -> remoteWmsShelfStrategyFeignApi.materialShelfUpInfo(set), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         WmsMaterialShelfUpVO wmsMaterialShelfUpVO = new WmsMaterialShelfUpVO();
         WmsMaterialShelfUpVO orDefault = materialShelfUpMap.getOrDefault(pmsProduceOrder.getMaterialId(), wmsMaterialShelfUpVO);
         CompleteStorageScanDTO resDTO = new CompleteStorageScanDTO();
         BeanUtils.copyProperties(pmsBarcodePrint, resDTO);
         //数据字典
-        Map<Long, String> dictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(Sets.newHashSet(resDTO.getUnitId()))).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(resDTO.getUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         resDTO.setUnitName(dictMap.get(resDTO.getUnitId()));
         resDTO.setProduceOrderNo(pmsProduceOrder.getCode());
         resDTO.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
@@ -123,14 +124,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             resDTO.setShelfName(orDefault.getShelfName());
         }
 //        HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
-//        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+//        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet)).get();
 //        resDTO.setWarehouseName(sysOfficeMap.get(pmsProduceOrder.getDefaultWarehouseId()));
 //        resDTO.setShelfName(sysOfficeMap.get(pmsProduceOrder.getDefaultShelfId()));
         //5.箱状态
         resDTO.setCaseState(pmsBarcodePrint.getCaseState());
         //6.赋值主物料信息
         resDTO.setMaterialId(pmsProduceOrder.getMaterialId());
-        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(remoteSpareFeignApi.listById(Lists.newArrayList(pmsProduceOrder.getMaterialId()))).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(pmsProduceOrder.getMaterialId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO materialVo = materialMap.getOrDefault(pmsProduceOrder.getMaterialId(), new EqpSpareVO());
         resDTO.setMaterialCode(materialVo.getCode());
         resDTO.setMaterialName(materialVo.getName());
@@ -173,10 +174,10 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             storageSet.add(caseInfo.getWarehouseId());
             storageSet.add(caseInfo.getShelfId());
         }
-        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(remoteOfficeFeign.listById(storageSet)).get();
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(storageSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
 
-        Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(remoteSpareFeignApi.listById(eqpList)).get();
+        Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(eqpList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //获取箱信息
@@ -213,7 +214,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         pmsCompleteStorage.setQuantity(sumQuantity);
         pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
 
-        SysDictVO sysDictVO = FeignOptional.of(remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE)).get();
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         pmsCompleteStorage.setTypeId(sysDictVO.getId());
         pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
         save(pmsCompleteStorage);
@@ -224,7 +225,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         wmsStorageReceiptDTO.setList(materialList);
         wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         try {
-            Boolean aBoolean = FeignOptional.of(remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO)).get();
+            Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             //入库必定要成功
             if (!aBoolean) {
                 log.info("入库单 -> 失败");
@@ -263,7 +264,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 dictSet.add(storage.getUnitId());
                 dictSet.add(storage.getTypeId());
             }
-            Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictSet)).get();
+            Map<Long, String> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<CompleteStoragePageVO> voList = new ArrayList<>(modelList.size());
 
             for (PmsCompleteStorage model : modelList) {
@@ -300,7 +301,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
 
         dictList.add(pmsCompleteStorage.getUnitId());
         dictList.add(pmsCompleteStorage.getTypeId());
-        Map<Long, String> sysDictMap = FeignOptional.of(remoteDictFeignApi.listByIdCh(dictList)).get();
+        Map<Long, String> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         Map<String, PmsBarcodePrint> barcodePrintMap = pmsBarcodePrintService.caseMap(caseNoList);
         PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
@@ -310,7 +311,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             storageSet.add(pbp.getWarehouseId());
             storageSet.add(pbp.getShelfId());
         }
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(storageSet)).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         List<PmsProduceOrder> pmsProduceOrders = pmsProduceOrderService.listByIds(orderSet);
         Map<Long, PmsProduceOrder> resMap = Maps.newHashMap();
