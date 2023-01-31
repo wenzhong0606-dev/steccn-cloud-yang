@@ -52,6 +52,10 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-core</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
