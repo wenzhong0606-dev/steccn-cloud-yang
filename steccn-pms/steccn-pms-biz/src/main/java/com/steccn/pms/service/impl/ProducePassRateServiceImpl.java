@@ -1,5 +1,6 @@
 package com.steccn.pms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -241,7 +242,11 @@ public class ProducePassRateServiceImpl implements ProducePassRateService {
                 workshopId = Integer.parseInt(splits[1]);
             }
             Integer productLineId = Integer.parseInt(splits[2]);
-            Long classesId = Long.parseLong(splits[3]);
+            //判断是否班次是否为null
+            Long classesId = null;
+            if(Objects.nonNull(splits[3]) && StrUtil.isNumeric(splits[3])){
+                classesId = Long.parseLong(splits[3]);
+            }
             BigDecimal total = entry.getValue().stream().map(PmsReportWorkGroupVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             PmsReportWorkGroupVO pmsReportWorkGroupVO = new PmsReportWorkGroupVO();
