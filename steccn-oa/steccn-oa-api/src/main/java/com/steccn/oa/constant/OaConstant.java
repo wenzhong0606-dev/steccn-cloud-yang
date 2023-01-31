@@ -49,7 +49,13 @@ public class OaConstant {
     public static final Integer NONE = -1;
     public static final String OA_SESSION_KEY = "sessionkey";
 
-
+    /**
+     * 时 分 秒 天
+     */
+    public static final String SECONDES = "秒";
+    public static final String MINUTES = "分";
+    public static final String HOURS = "时";
+    public static final String DAYS = "天";
 }
 
 /**

@@ -1,6 +1,8 @@
 package com.steccn.oa.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -24,6 +26,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -314,17 +319,46 @@ public class OaService {
         dto.setUserId(SecurityUtils.getUser().getUserId().toString());
         dto.setPageNo(OaConstant.YES);
         //默认8条数据
-        dto.setPageSize(8);
-        String result = oaApi.getWorkflow(this.setHeaders(),dto);
+        dto.setPageSize(5);
+        //待办数据需要修改userId
+        MultiValueMap<String, String> headers = this.setHeaders();
+//        RSA rsa = new RSA();
+//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+//        headers.remove("userid");
+//        headers.set("userid",userId);
+        String result = oaApi.getWorkflow(headers,dto);
         JSONArray arr = JSONArray.parseArray(result);
         List<OaToDoWorkflowVO> vos = arr.toJavaList(OaToDoWorkflowVO.class);
         //判断是否已读，已读则有operateTime
         if(CollUtil.isNotEmpty(vos)){
             vos.forEach(tmp->{
+                //判断是否已读
                 if(StrUtil.isNotBlank(tmp.getOperateTime())){
                     tmp.setIsRead(OaConstant.YES);
                 }else {
                     tmp.setIsRead(OaConstant.NO);
+                }
+                //判断时间差
+                if(StrUtil.isNotBlank(tmp.getReceiveTime())){
+                    LocalDateTime receiveTime = LocalDateTimeUtil.parse(tmp.getReceiveTime(),"yyyy-MM-dd HH:mm:ss");
+                    LocalDateTime now = LocalDateTime.now();
+                    long dayBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.DAYS);
+                    long hourBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.HOURS);
+                    long minBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.MINUTES);
+                    long secBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.SECONDS);
+                    if(secBetween < 60){
+                        tmp.setTimePeriod(String.valueOf(secBetween));
+                        tmp.setTimePeriodUnit(OaConstant.SECONDES);
+                    }else if(minBetween < 60){
+                        tmp.setTimePeriod(String.valueOf(minBetween));
+                        tmp.setTimePeriodUnit(OaConstant.MINUTES);
+                    }else if(hourBetween < 24){
+                        tmp.setTimePeriod(String.valueOf(hourBetween));
+                        tmp.setTimePeriodUnit(OaConstant.HOURS);
+                    }else {
+                        tmp.setTimePeriod(String.valueOf(dayBetween));
+                        tmp.setTimePeriodUnit(OaConstant.DAYS);
+                    }
                 }
             });
         }
