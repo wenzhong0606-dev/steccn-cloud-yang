@@ -3,6 +3,7 @@ package com.steccn.file.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
@@ -110,6 +111,7 @@ public class FileInfoServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         //2.获取文件拓展名,文件名称
         MultipartFile file = fileInfoDto.getFile();
         String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        Assert.isTrue(".apk".equals(fileExtension),"仅支持.apk文件上传");
         String fileName = "app/" + fileInfoDto.getFileName() + fileExtension;
         //3.上传文件并保存文件信息
         try {
