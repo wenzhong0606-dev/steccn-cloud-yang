@@ -2,6 +2,7 @@ package com.steccn.oa.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.vo.R;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 
@@ -114,8 +115,14 @@ public class OaController {
 
     @ApiOperation(value = "获取待办列表")
     @GetMapping("/workflow/todoList")
-    public R<List<OaToDoWorkflowVO>> getOaEmp(){
-        return R.success(oaService.getToDoList());
+    public R<List<OaToDoWorkflowVO>> getOaToDoList(){
+        return R.success(oaService.getToDoList(0));
+    }
+
+    @ApiOperation(value = "获取待阅列表(消息)")
+    @GetMapping("/workflow/toReadList")
+    public R<List<OaToDoWorkflowVO>> getOaToReadList(){
+        return R.success(oaService.getToDoList(1));
     }
 
     @ApiOperation("新建流程")

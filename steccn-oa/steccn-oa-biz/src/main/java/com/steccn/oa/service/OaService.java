@@ -314,7 +314,7 @@ public class OaService {
     /**
      * 获取待办数据
      */
-    public List<OaToDoWorkflowVO> getToDoList(){
+    public List<OaToDoWorkflowVO> getToDoList(Integer flag){
         OaToDoWorkFlowDTO dto = new OaToDoWorkFlowDTO();
         dto.setUserId(SecurityUtils.getUser().getUserId().toString());
         dto.setPageNo(OaConstant.YES);
@@ -326,7 +326,13 @@ public class OaService {
 //        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
 //        headers.remove("userid");
 //        headers.set("userid",userId);
-        String result = oaApi.getWorkflow(headers,dto);
+        String result = "";
+        //0为待办列表,1为待阅列表
+        if(flag.equals(0)){
+            result = oaApi.getToDoWorkflow(headers,dto);
+        }else {
+            result = oaApi.getToReadWorkflow(headers,dto);
+        }
         JSONArray arr = JSONArray.parseArray(result);
         List<OaToDoWorkflowVO> vos = arr.toJavaList(OaToDoWorkflowVO.class);
         //判断是否已读，已读则有operateTime
