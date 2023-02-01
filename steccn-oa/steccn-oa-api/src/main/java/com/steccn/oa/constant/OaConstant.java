@@ -52,12 +52,11 @@ public class OaConstant {
     /**
      * 时 分 秒 天
      */
-    public static final String SECONDES = "秒";
-    public static final String MINUTES = "分";
-    public static final String HOURS = "时";
-    public static final String DAYS = "天";
+    public static final String BEFORE_MINUTES = "分钟之前";
+    public static final String BEFORE_HOURS = "小时之前";
+    public static final String BEFORE_DAYS = "天之前";
+    public static final String ONE = "1";
     public static final int SIXTY = 60;
-    public static final int TWENTY_FOUR = 24;
 }
 
 /**
