@@ -1,7 +1,7 @@
 package com.steccn.websocket.controller;
 
 import com.steccn.common.vo.R;
-import com.steccn.websocket.service.WebSocket;
+import com.steccn.websocket.service.WebSocketServer;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,11 +11,11 @@ import javax.annotation.Resource;
 @RestController
 public class TestController {
     @Resource
-    WebSocket webSocket;
+    WebSocketServer webSocket;
 
     @RequestMapping("/create")
-    public R<String> create(@RequestParam("userId") String userId) {
+    public R<String> create(@RequestParam("userId") Long userId) {
         webSocket.sendOneMessage(userId, "收到一个新的订单");
-        return R.success();
+        return new R<>("前端收到一个信号");
     }
 }
