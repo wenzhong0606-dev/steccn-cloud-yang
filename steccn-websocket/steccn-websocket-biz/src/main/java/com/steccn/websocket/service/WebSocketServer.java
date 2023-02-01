@@ -19,7 +19,7 @@ public class WebSocketServer {
     /**
      * 最长空闲时间-120s
      */
-    private static final long MAX_IDLE_TIMEOUT = 10000L;
+    private static final long MAX_IDLE_TIMEOUT = 120000L;
 
     /**
      * 与某个客户端的连接会话，需要通过它来给客户端发送数据

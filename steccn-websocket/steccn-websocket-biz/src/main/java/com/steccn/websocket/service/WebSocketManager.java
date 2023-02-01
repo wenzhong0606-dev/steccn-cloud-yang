@@ -1,8 +1,6 @@
 package com.steccn.websocket.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import javax.websocket.Session;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 public class WebSocketManager {
+
+    public static final String PING = "PING";
 
     /**
      * 存放在线用户的socket对象【包含用户id和连接】
@@ -61,8 +61,10 @@ public class WebSocketManager {
             webSocketMap.forEach((userId, wsServer) -> {
                 try {
                     sendOneMessage(userId, message);
+                    sb.append(userId);
                 } catch (Exception e) {
                     webSocketMap.remove(userId);
+                    log.info("userId = {} , 心跳断开");
                     log.error(e.getLocalizedMessage());
                 }
             });
@@ -129,5 +131,4 @@ public class WebSocketManager {
             }
         }
     }
-
 }
