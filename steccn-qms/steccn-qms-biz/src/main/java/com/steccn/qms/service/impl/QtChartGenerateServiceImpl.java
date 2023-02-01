@@ -731,12 +731,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         pmsStartDate = pmsEndDate.minusDays(6);
         pmsDTO.setBeginDate(pmsStartDate);
         pmsDTO.setEndDate(pmsEndDate.plusDays(1));
-        //默认对比班次
-        pmsDTO.setCompare(QtManagerConstant.QtChartCompareEnum.WORK.getCode());
-        List<String> filters = Lists.newArrayList();
-        filters.add("早班");
-        filters.add("晚班");
-        pmsDTO.setFilters(filters);
         rResult = remotePassRateFeignApi.producePassRateGroup(pmsDTO);
         vo.setKey(1);
         vo.setTitle("基片成品率");
