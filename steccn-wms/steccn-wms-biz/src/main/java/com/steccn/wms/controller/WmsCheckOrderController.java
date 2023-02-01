@@ -50,7 +50,7 @@ public class WmsCheckOrderController {
     @PostMapping("/addOrUpdateCheckOrder")
     @ApiOperation(value = "新增或者编辑盘点管理")
     public R<String> addOrUpdateCheckOrder(@RequestBody WmsCheckOrder dto) {
-        return R.success(wmsCheckOrderService.addOrUpdateCheckOrder(dto),null);
+        return  R.success(wmsCheckOrderService.addOrUpdateCheckOrder(dto));
     }
 
     /****
@@ -83,7 +83,7 @@ public class WmsCheckOrderController {
     @GetMapping("/varianceAdjustmentCheckOrder")
     @ApiOperation(value = "盘点差异调整")
     public R<String> varianceAdjustmentCheckOrder(Long id) {
-        return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id),null);
+        return R.success(wmsCheckOrderService.varianceAdjustmentCheckOrder(id));
     }
 
     /*****

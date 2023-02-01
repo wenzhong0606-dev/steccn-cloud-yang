@@ -100,37 +100,6 @@ public class R<T> implements Serializable {
         return r;
     }
 
-    /**
-     * 与返回R<String>冲突，考虑使用便利，故而准备废弃
-     * @param msg
-     * @return
-     */
-    @Deprecated
-    public static R success(String msg) {
-        R r = new R();
-        r.code = ResultCode.SUCCESS.getCode();
-        r.msg = msg;
-        r.data = null;
-
-        return r;
-    }
-
-    /**
-     * type未使用 方法多余，考虑废弃
-     * @param msg
-     * @param type
-     * @return
-     */
-    @Deprecated
-    public static R success(String msg,Integer type) {
-        R r = new R();
-        r.code = ResultCode.SUCCESS.getCode();
-        r.msg = null;
-        r.data = msg;
-
-        return r;
-    }
-
     public static <K> R<K> failure(K data) {
         R<K> r = new R<>();
         r.code = ResultCode.FAILURE.getCode();
