@@ -352,13 +352,13 @@ public class OaService {
                     long hourBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.HOURS);
                     long minBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.MINUTES);
                     long secBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.SECONDS);
-                    if(secBetween < 60){
+                    if(secBetween < OaConstant.SIXTY){
                         tmp.setTimePeriod(String.valueOf(secBetween));
                         tmp.setTimePeriodUnit(OaConstant.SECONDES);
-                    }else if(minBetween < 60){
+                    }else if(minBetween < OaConstant.SIXTY){
                         tmp.setTimePeriod(String.valueOf(minBetween));
                         tmp.setTimePeriodUnit(OaConstant.MINUTES);
-                    }else if(hourBetween < 24){
+                    }else if(hourBetween < OaConstant.TWENTY_FOUR){
                         tmp.setTimePeriod(String.valueOf(hourBetween));
                         tmp.setTimePeriodUnit(OaConstant.HOURS);
                     }else {

@@ -56,6 +56,8 @@ public class OaConstant {
     public static final String MINUTES = "分";
     public static final String HOURS = "时";
     public static final String DAYS = "天";
+    public static final int SIXTY = 60;
+    public static final int TWENTY_FOUR = 24;
 }
 
 /**

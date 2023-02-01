@@ -123,6 +123,16 @@ public interface OaApi {
     String getToDoWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
 
     /**
+     * 获取待办数据数量
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getToDoWorkflowRequestCount",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getToDoWorkflowCount(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+
+    /**
      * 获取待阅数据
      * @param headers
      * @param dto
