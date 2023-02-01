@@ -44,6 +44,7 @@
         <spring-cloud-starter-zipkin.version>2.2.6.RELEASE</spring-cloud-starter-zipkin.version>
         <nimbus-jose-jwt.version>9.23</nimbus-jose-jwt.version>
         <knife4j.version>3.0.3</knife4j.version>
+        <pinyin.version>1.1.8</pinyin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -248,6 +249,13 @@
                 <artifactId>spring-cloud-starter-zipkin</artifactId>
                 <version>${spring-cloud-starter-zipkin.version}</version>
             </dependency>
+            <!-- 拼音组件 -->
+            <dependency>
+                <groupId>com.github.stuxuhai</groupId>
+                <artifactId>jpinyin</artifactId>
+                <version>${pinyin.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
