@@ -20,4 +20,11 @@ public interface FileInfoService extends IService<FileInfo> {
     R<FileInfo> uploadFile(FileInfoDto fileInfoDto);
 
     Map<Long, FileInfoVO> listByIdList(List<Long> idList);
+
+    /**
+     * 上传app
+     * @param fileInfoDto
+     * @return
+     */
+    R<FileInfo> uploadAppFile(FileInfoDto fileInfoDto);
 }
