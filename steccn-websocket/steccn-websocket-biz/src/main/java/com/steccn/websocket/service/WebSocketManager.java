@@ -61,7 +61,7 @@ public class WebSocketManager {
             webSocketMap.forEach((userId, wsServer) -> {
                 try {
                     sendOneMessage(userId, message);
-                    sb.append(userId);
+                    sb.append(userId).append(",");
                 } catch (Exception e) {
                     webSocketMap.remove(userId);
                     log.info("userId = {} , 心跳断开");
