@@ -24,6 +24,7 @@
         <module>steccn-wms</module>
         <module>steccn-ems</module>
         <module>steccn-data-platform</module>
+        <module>steccn-websocket</module>
     </modules>
 
     <properties>
