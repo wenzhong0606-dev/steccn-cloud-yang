@@ -7,14 +7,11 @@
         <artifactId>steccn-cloud</artifactId>
         <version>1.0.0</version>
     </parent>
-    <groupId>com.steccn</groupId>
     <artifactId>steccn-common</artifactId>
-    <version>1.0.0</version>
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <description>凯盛节能公共模块</description>
     <modules>
-        <module>steccn-common-bom</module>
         <module>steccn-common-core</module>
         <module>steccn-common-redis</module>
         <module>steccn-common-data</module>

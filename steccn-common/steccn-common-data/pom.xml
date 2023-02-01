@@ -11,7 +11,6 @@
 
     <groupId>com.steccn</groupId>
     <artifactId>steccn-common-data</artifactId>
-    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -44,8 +43,6 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-extension</artifactId>
-            <version>3.4.3.4</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
