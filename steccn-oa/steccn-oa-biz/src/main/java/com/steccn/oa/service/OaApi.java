@@ -125,12 +125,38 @@ public interface OaApi {
     /**
      * 获取待办数据数量
      * @param headers
-     * @param dto
      * @return
      */
     @PostMapping(value = "/api/workflow/paService/getToDoWorkflowRequestCount",headers = {"content-type=application/x-www-form-urlencoded"})
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
-    String getToDoWorkflowCount(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+    String getToDoWorkflowCount(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取所发起的流程数量(我提交的)
+     * @param headers
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getMyWorkflowRequestCount",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getCreatedWorkflowCount(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取已办流程数量(我已处理的)
+     * @param headers
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getHandledWorkflowRequestCount4Ofs",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getHandledWorkflowCount(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 获取已退回的流程数量(已驳回)
+     * @param headers
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getBeRejectWorkflowRequestCount",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getRejectedWorkflowCount(@RequestHeader MultiValueMap<String,String> headers);
 
     /**
      * 获取待阅数据

@@ -13,6 +13,7 @@ import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaCompanyVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaToDoWorkflowVO;
+import com.steccn.oa.vo.OaWorkflowCountVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -313,6 +314,8 @@ public class OaService {
 
     /**
      * 获取待办数据
+     * @param flag 0待办 1待阅
+     * @return
      */
     public List<OaToDoWorkflowVO> getToDoList(Integer flag){
         OaToDoWorkFlowDTO dto = new OaToDoWorkFlowDTO();
@@ -388,6 +391,50 @@ public class OaService {
         }
         String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
         return result;
+    }
+
+    /**
+     * 获取流程状态的数量
+     * @return
+     */
+    public OaWorkflowCountVO getWorkflowCount(){
+        OaWorkflowCountVO vo = new OaWorkflowCountVO();
+        MultiValueMap<String, String> headers = this.setHeaders();
+//        RSA rsa = new RSA();
+//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+//        headers.remove("userid");
+//        headers.set("userid",userId);
+        String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
+        String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
+        String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
+        String rejectedWorkflowCount = oaApi.getRejectedWorkflowCount(headers);
+        //我的待办
+        if(StrUtil.isNumeric(toDoWorkflowCount)){
+            vo.setTodoCount(Integer.parseInt(toDoWorkflowCount));
+        }else {
+            vo.setTodoCount(OaConstant.NO);
+        }
+
+        //我提交的
+        if(StrUtil.isNumeric(createdWorkflowCount)){
+            vo.setSubmitCount(Integer.parseInt(createdWorkflowCount));
+        }else {
+            vo.setSubmitCount(OaConstant.NO);
+        }
+
+        //我已处理的
+        if(StrUtil.isNumeric(handledWorkflowCount)){
+            vo.setFinishCount(Integer.parseInt(handledWorkflowCount));
+        }else {
+            vo.setFinishCount(OaConstant.NO);
+        }
+        //已驳回
+        if(StrUtil.isNumeric(rejectedWorkflowCount)){
+            vo.setRejectCount(Integer.parseInt(rejectedWorkflowCount));
+        }else {
+            vo.setRejectCount(OaConstant.NO);
+        }
+        return vo;
     }
 
     /**

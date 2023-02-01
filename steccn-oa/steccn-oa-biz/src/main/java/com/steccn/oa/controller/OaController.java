@@ -11,6 +11,7 @@ import com.steccn.oa.service.OaService;
 import com.steccn.oa.vo.OaCompanyVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaToDoWorkflowVO;
+import com.steccn.oa.vo.OaWorkflowCountVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -123,6 +124,12 @@ public class OaController {
     @GetMapping("/workflow/toReadList")
     public R<List<OaToDoWorkflowVO>> getOaToReadList(){
         return R.success(oaService.getToDoList(1));
+    }
+
+    @ApiOperation(value = "获取流程状态数量")
+    @GetMapping("/workflow/count")
+    public R<OaWorkflowCountVO> getOaWorkflowCount(){
+        return R.success(oaService.getWorkflowCount());
     }
 
     @ApiOperation("新建流程")
