@@ -8,11 +8,9 @@
         <artifactId>steccn-cloud</artifactId>
         <version>1.0.0</version>
     </parent>
-    <groupId>com.steccn</groupId>
     <artifactId>steccn-auth-server</artifactId>
-    <version>1.0.0</version>
     <name>steccn-auth-server</name>
-    <description>steccn-auth-server</description>
+    <description>认证授权服务</description>
     <properties>
         <java.version>8</java.version>
     </properties>
