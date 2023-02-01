@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>steccn-com.steccn.websocket-api</artifactId>
+    <artifactId>steccn-websocket-api</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
