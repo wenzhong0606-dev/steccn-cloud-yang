@@ -6,6 +6,10 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author yequan
+ * @desc 心跳检测，定时任务执行
+ */
 @Service
 @Slf4j
 public class WsHeartBeatService implements InitializingBean {
@@ -15,6 +19,6 @@ public class WsHeartBeatService implements InitializingBean {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
         executor.scheduleAtFixedRate(() -> {
             WebSocketManager.sendPing(WebSocketManager.PING);
-        }, 10, 40, TimeUnit.SECONDS);
+        }, 10, 30, TimeUnit.SECONDS);
     }
 }

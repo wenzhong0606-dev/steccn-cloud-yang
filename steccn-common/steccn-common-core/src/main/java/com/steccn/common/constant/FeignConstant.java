@@ -52,4 +52,9 @@ public interface FeignConstant {
      * 数据中台服务名称
      */
     String STECCN_DATA_PLATFORM_SERVICE_NAME = "steccn-data-platform";
+
+    /**
+     * websocket服务名称
+     */
+    String STECCN_WEBSOCKET_SERVICE_NAME ="steccn-websocket";
 }

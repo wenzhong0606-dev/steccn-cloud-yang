@@ -1,4 +1,4 @@
-package com.steccn.websocket.controller;
+package com.steccn.websocket.controller.feign;
 
 import com.steccn.common.vo.R;
 import com.steccn.websocket.service.WebSocketManager;
@@ -9,14 +9,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/websocket")
-public class TestController {
+public class WsFeignController {
 
-    @GetMapping("/create")
+    @GetMapping("/push/oa")
     public R<String> create(@RequestParam("userId") Long userId) {
-        WebSocketManager.sendOneMessage(userId, "收到一个新的订单");
+        WebSocketManager.sendOneMessage(userId, "OA");
         return new R<>("前端收到一个信号");
     }
 }

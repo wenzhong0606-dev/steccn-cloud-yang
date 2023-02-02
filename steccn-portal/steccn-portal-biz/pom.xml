@@ -51,7 +51,6 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
-            <version>1.0.0</version>
         </dependency>
         <!--Swagger3增加工具-->
         <dependency>
