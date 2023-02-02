@@ -64,11 +64,11 @@ public class WebSocketManager {
                     sb.append(userId).append(",");
                 } catch (Exception e) {
                     webSocketMap.remove(userId);
-                    log.info("userId = {} , 心跳断开");
+                    log.debug("userId = {} , 心跳断开");
                     log.error(e.getLocalizedMessage());
                 }
             });
-            log.info("客户端心跳检测结果: " + sb + "连接正在运行");
+            log.debug("客户端心跳检测结果: " + sb + "连接正在运行");
         }
     }
 
@@ -79,7 +79,7 @@ public class WebSocketManager {
      * @param message 消息内容
      */
     public static void sendAllMessage(String message) {
-        log.info("【websocket消息】广播消息:" + message);
+        log.debug("【websocket消息】广播消息:" + message);
         for (WebSocketServer webSocket : webSocketMap.values()) {
             try {
                 Session session = webSocket.getSession();
@@ -99,7 +99,7 @@ public class WebSocketManager {
      * @param message 消息内容
      */
     public static void sendOneMessage(Long userId, String message) {
-        log.info("【websocket消息】 单点 用户：{}  消息: {}", userId, message);
+        log.debug("【websocket消息】 单点 用户：{}  消息: {}", userId, message);
         try {
             WebSocketServer webSocketServer = webSocketMap.get(userId);
             Session session = webSocketServer.getSession();
@@ -118,7 +118,7 @@ public class WebSocketManager {
      * @param message    消息内容
      */
     public static void sendMoreMessage(List<Long> userIdList, String message) {
-        log.info("【websocket消息】 组播消息:" + message);
+        log.debug("【websocket消息】 组播消息:" + message);
         for (Long userId : userIdList) {
             try {
                 WebSocketServer webSocketServer = webSocketMap.get(userId);
