@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.steccn.platform.domain.SysOauthClientDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,5 +17,5 @@ public interface SysOauthClientDetailService extends IService<SysOauthClientDeta
      * 获取所有客户端凭证加密后的字符串
      * @return
      */
-    Set<String> clientEncodePassword();
+    List<String> clientEncodePassword();
 }

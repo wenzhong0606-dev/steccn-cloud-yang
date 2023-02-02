@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.digest.MD5;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.common.constant.CacheConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.domain.SysOauthClientDetail;
 import com.steccn.platform.service.SysOauthClientDetailService;
@@ -26,9 +28,10 @@ public class SysOauthClientDetailServiceImpl extends ServiceImpl<SysOauthClientD
         implements SysOauthClientDetailService {
 
     @Override
-    public Set<String> clientEncodePassword() {
+    @Cacheable(value = CacheConstant.SYS_CLIENT_ENCODE_PASSWORD)
+    public List<String> clientEncodePassword() {
         MD5 md5 = SecureUtil.md5();
-        Set<String> resSet = Sets.newHashSet();
+        List<String> resSet = Lists.newArrayList();
         List<SysOauthClientDetail> list = list();
         if (CollUtil.isNotEmpty(list)) {
             for (SysOauthClientDetail sysOauthClientDetail : list) {

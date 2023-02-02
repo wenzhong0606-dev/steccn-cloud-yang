@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,8 +26,7 @@ public class SysOauthClientDetailController {
 
     @ApiOperation(value = "获取所有客户端加密后的字符串")
     @GetMapping("/pwd")
-    @Cacheable(value = CacheConstant.SYS_CLIENT_ENCODE_PASSWORD)
-    public R<Set<String>> clientEncodePassword() {
+    public R<List<String>> clientEncodePassword() {
         return R.success(sysOauthClientDetailService.clientEncodePassword());
     }
 }

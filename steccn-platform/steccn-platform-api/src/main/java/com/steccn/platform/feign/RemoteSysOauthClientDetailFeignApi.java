@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,6 +22,6 @@ public interface RemoteSysOauthClientDetailFeignApi {
      */
     @ApiOperation(value = "获取所有客户端加密后的字符串")
     @GetMapping("/feign/platform/sys/client/pwd")
-    R<Set<String>> clientEncodePassword();
+    R<List<String>> clientEncodePassword();
 
 }
