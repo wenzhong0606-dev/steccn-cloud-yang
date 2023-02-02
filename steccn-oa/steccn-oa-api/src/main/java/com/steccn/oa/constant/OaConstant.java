@@ -49,7 +49,14 @@ public class OaConstant {
     public static final Integer NONE = -1;
     public static final String OA_SESSION_KEY = "sessionkey";
 
-
+    /**
+     * 时 分 秒 天
+     */
+    public static final String BEFORE_MINUTES = "分钟之前";
+    public static final String BEFORE_HOURS = "小时之前";
+    public static final String BEFORE_DAYS = "天之前";
+    public static final String ONE = "1";
+    public static final int SIXTY = 60;
 }
 
 /**

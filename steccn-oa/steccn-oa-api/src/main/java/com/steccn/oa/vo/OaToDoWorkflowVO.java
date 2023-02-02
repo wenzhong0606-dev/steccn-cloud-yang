@@ -35,5 +35,18 @@ public class OaToDoWorkflowVO implements Serializable {
      */
     private Integer isRead;
 
+    /**
+     * 创建人姓名
+     */
+    private String creatorName;
 
+    /**
+     * 时间差
+     */
+    private String timePeriod;
+
+    /**
+     * 时间差单位
+     */
+    private String timePeriodUnit;
 }

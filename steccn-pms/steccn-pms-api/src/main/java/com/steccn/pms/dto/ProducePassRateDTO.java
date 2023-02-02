@@ -19,4 +19,8 @@ public class ProducePassRateDTO {
 
     private List<Integer> productLineIdList;
 
+    private List<String> filters;
+
+    private Integer compare;
+
 }
