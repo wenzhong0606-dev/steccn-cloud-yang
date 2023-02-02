@@ -325,10 +325,10 @@ public class OaService {
         dto.setPageSize(5);
         //待办数据需要修改userId
         MultiValueMap<String, String> headers = this.setHeaders();
-//        RSA rsa = new RSA();
-//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-//        headers.remove("userid");
-//        headers.set("userid",userId);
+        RSA rsa = new RSA();
+        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userId);
         String result = "";
         //0为待办列表,1为待阅列表
         if(flag.equals(0)){
@@ -403,10 +403,10 @@ public class OaService {
     public OaWorkflowCountVO getWorkflowCount(){
         OaWorkflowCountVO vo = new OaWorkflowCountVO();
         MultiValueMap<String, String> headers = this.setHeaders();
-//        RSA rsa = new RSA();
-//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-//        headers.remove("userid");
-//        headers.set("userid",userId);
+        RSA rsa = new RSA();
+        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userId);
         String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
         String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
         String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
