@@ -1,6 +1,8 @@
 package com.steccn.oa.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -11,6 +13,7 @@ import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaCompanyVO;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaToDoWorkflowVO;
+import com.steccn.oa.vo.OaWorkflowCountVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +27,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -308,23 +314,63 @@ public class OaService {
 
     /**
      * 获取待办数据
+     * @param flag 0待办 1待阅
+     * @return
      */
-    public List<OaToDoWorkflowVO> getToDoList(){
+    public List<OaToDoWorkflowVO> getToDoList(Integer flag){
         OaToDoWorkFlowDTO dto = new OaToDoWorkFlowDTO();
         dto.setUserId(SecurityUtils.getUser().getUserId().toString());
         dto.setPageNo(OaConstant.YES);
         //默认8条数据
-        dto.setPageSize(8);
-        String result = oaApi.getWorkflow(this.setHeaders(),dto);
+        dto.setPageSize(5);
+        //待办数据需要修改userId
+        MultiValueMap<String, String> headers = this.setHeaders();
+//        RSA rsa = new RSA();
+//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+//        headers.remove("userid");
+//        headers.set("userid",userId);
+        String result = "";
+        //0为待办列表,1为待阅列表
+        if(flag.equals(0)){
+            result = oaApi.getToDoWorkflow(headers,dto);
+        }else {
+            result = oaApi.getToReadWorkflow(headers,dto);
+        }
         JSONArray arr = JSONArray.parseArray(result);
         List<OaToDoWorkflowVO> vos = arr.toJavaList(OaToDoWorkflowVO.class);
         //判断是否已读，已读则有operateTime
         if(CollUtil.isNotEmpty(vos)){
             vos.forEach(tmp->{
+                //判断是否已读
                 if(StrUtil.isNotBlank(tmp.getOperateTime())){
                     tmp.setIsRead(OaConstant.YES);
                 }else {
                     tmp.setIsRead(OaConstant.NO);
+                }
+                //判断时间差
+                if(StrUtil.isNotBlank(tmp.getReceiveTime())){
+                    LocalDateTime receiveTime = LocalDateTimeUtil.parse(tmp.getReceiveTime(),"yyyy-MM-dd HH:mm:ss");
+                    LocalDateTime now = LocalDateTime.now();
+                    long dayBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.DAYS);
+                    long hourBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.HOURS);
+                    long minBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.MINUTES);
+                    long secBetween = LocalDateTimeUtil.between(receiveTime, now, ChronoUnit.SECONDS);
+                    if(secBetween <= 60){
+                        //不超过一分钟则一分钟
+                        tmp.setTimePeriod(OaConstant.ONE);
+                        tmp.setTimePeriod(OaConstant.BEFORE_MINUTES);
+                    } else if(secBetween >60 && minBetween <= 60){
+                        //超过一分钟小于一小时
+                        tmp.setTimePeriod(String.valueOf(minBetween));
+                        tmp.setTimePeriod(OaConstant.BEFORE_MINUTES);
+                    } else if(minBetween > 60 && hourBetween <= 24){
+                        //超过一小时小于一天
+                        tmp.setTimePeriod(String.valueOf(hourBetween));
+                        tmp.setTimePeriod(OaConstant.BEFORE_HOURS);
+                    } else {
+                        tmp.setTimePeriod("");
+                        tmp.setTimePeriodUnit(receiveTime.getMonthValue()+"-"+ receiveTime.getDayOfMonth());
+                    }
                 }
             });
         }
@@ -348,6 +394,50 @@ public class OaService {
         }
         String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
         return result;
+    }
+
+    /**
+     * 获取流程状态的数量
+     * @return
+     */
+    public OaWorkflowCountVO getWorkflowCount(){
+        OaWorkflowCountVO vo = new OaWorkflowCountVO();
+        MultiValueMap<String, String> headers = this.setHeaders();
+//        RSA rsa = new RSA();
+//        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+//        headers.remove("userid");
+//        headers.set("userid",userId);
+        String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
+        String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
+        String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
+        String rejectedWorkflowCount = oaApi.getRejectedWorkflowCount(headers);
+        //我的待办
+        if(StrUtil.isNumeric(toDoWorkflowCount)){
+            vo.setTodoCount(Integer.parseInt(toDoWorkflowCount));
+        }else {
+            vo.setTodoCount(OaConstant.NO);
+        }
+
+        //我提交的
+        if(StrUtil.isNumeric(createdWorkflowCount)){
+            vo.setSubmitCount(Integer.parseInt(createdWorkflowCount));
+        }else {
+            vo.setSubmitCount(OaConstant.NO);
+        }
+
+        //我已处理的
+        if(StrUtil.isNumeric(handledWorkflowCount)){
+            vo.setFinishCount(Integer.parseInt(handledWorkflowCount));
+        }else {
+            vo.setFinishCount(OaConstant.NO);
+        }
+        //已驳回
+        if(StrUtil.isNumeric(rejectedWorkflowCount)){
+            vo.setRejectCount(Integer.parseInt(rejectedWorkflowCount));
+        }else {
+            vo.setRejectCount(OaConstant.NO);
+        }
+        return vo;
     }
 
     /**

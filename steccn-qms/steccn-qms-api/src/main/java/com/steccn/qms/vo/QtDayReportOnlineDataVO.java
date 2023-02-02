@@ -46,10 +46,10 @@ public class QtDayReportOnlineDataVO implements Serializable {
     private String className;
 
     @ApiModelProperty("缺陷记录时段-开始")
-    private LocalTime defectStartTime;
+    private LocalDateTime defectStartTime;
 
     @ApiModelProperty("缺陷记录时段-结束")
-    private LocalTime defectEndTime;
+    private LocalDateTime defectEndTime;
 
     @ApiModelProperty("缺陷记录时段")
     private String defectTimeStr;

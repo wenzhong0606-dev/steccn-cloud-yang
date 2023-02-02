@@ -61,9 +61,11 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     private Integer productLineId;
 
     @ApiModelProperty("班次id")
+    @NotNull(message = "班次不能为空")
     private Long classesId;
 
     @ApiModelProperty("班组id")
+    @NotNull(message = "班组不能为空")
     private Long classGroupId;
 
     @ApiModelProperty("开始时间")
