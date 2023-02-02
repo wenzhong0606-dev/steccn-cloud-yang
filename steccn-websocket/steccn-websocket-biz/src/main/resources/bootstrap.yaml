@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9050
 spring:
   application:
     name: steccn-websocket
