@@ -41,7 +41,7 @@ public class SysAppVersionController {
     }
 
     @ApiOperation("app最新版本获取")
-    @GetMapping()
+    @GetMapping("/latest")
     public R<SysAppVersionVO> getLatestVersion() {
         return R.success(sysAppVersionService.getLatestVersion());
     }
