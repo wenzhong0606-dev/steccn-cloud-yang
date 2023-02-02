@@ -12,12 +12,12 @@ import javax.annotation.Resource;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/websocket")
+@RequestMapping("/feign/websocket")
 public class WsFeignController {
 
     @GetMapping("/push/oa")
     public R<String> create(@RequestParam("userId") Long userId) {
         WebSocketManager.sendOneMessage(userId, "OA");
-        return new R<>("前端收到一个信号");
+        return new R<>("OA");
     }
 }
