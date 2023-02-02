@@ -613,8 +613,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                     }
                                     colorValueList.add(colorValue);
                                 } catch (Exception e) {
-                                    log.info("结果转换异常" + e);
-                                    colorValue.setValue("");
+                                    colorValue.setValue(checkResult);
                                     colorValue.setColor(0);
                                     colorValueList.add(colorValue);
                                 }
