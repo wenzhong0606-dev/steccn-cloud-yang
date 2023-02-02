@@ -17,5 +17,5 @@ public interface SysOauthClientDetailService extends IService<SysOauthClientDeta
      * 获取所有客户端凭证加密后的字符串
      * @return
      */
-    List<String> clientEncodePassword();
+    Set<String> clientEncodePassword();
 }

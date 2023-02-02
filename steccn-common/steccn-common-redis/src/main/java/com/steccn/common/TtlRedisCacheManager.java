@@ -8,6 +8,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -19,8 +20,8 @@ public class TtlRedisCacheManager extends RedisCacheManager {
 
     Random random = new Random();
     
-    public TtlRedisCacheManager(RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration) {
-        super(cacheWriter, defaultCacheConfiguration);
+    public TtlRedisCacheManager(RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration , Map<String, RedisCacheConfiguration> map) {
+        super(cacheWriter, defaultCacheConfiguration, map);
     }
 
     /**

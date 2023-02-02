@@ -29,9 +29,9 @@ public class SysOauthClientDetailServiceImpl extends ServiceImpl<SysOauthClientD
 
     @Override
     @Cacheable(value = CacheConstant.SYS_CLIENT_ENCODE_PASSWORD)
-    public List<String> clientEncodePassword() {
+    public Set<String> clientEncodePassword() {
         MD5 md5 = SecureUtil.md5();
-        List<String> resSet = Lists.newArrayList();
+        Set<String> resSet = Sets.newHashSet();
         List<SysOauthClientDetail> list = list();
         if (CollUtil.isNotEmpty(list)) {
             for (SysOauthClientDetail sysOauthClientDetail : list) {
