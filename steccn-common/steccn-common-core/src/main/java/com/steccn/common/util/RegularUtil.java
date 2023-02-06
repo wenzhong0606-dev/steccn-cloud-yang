@@ -2,6 +2,7 @@ package com.steccn.common.util;
 
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
+import com.steccn.common.constant.RegularConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -47,5 +48,19 @@ public class RegularUtil {
             }
         }
         return resValue;
+    }
+
+    /**
+     * 判断字符串是否为正数、负数、小数
+     * @param str
+     * @return
+     */
+    public static boolean isNum(String str){
+        Pattern pattern = Pattern.compile(RegularConstant.IS_NUM);
+        Matcher num = pattern.matcher(str);
+        if (!num.matches()) {
+            return false;
+        }
+        return true;
     }
 }
