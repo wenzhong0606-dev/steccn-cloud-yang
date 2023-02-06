@@ -14,6 +14,7 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.util.RegularUtil;
 import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
@@ -145,6 +146,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //再根据班次进行分组
                 Map<Integer, List<QtCheckTask>> groupByWorkOrder = checkTaskDateList.stream().collect(Collectors.groupingBy(QtCheckTask::getClassesId));
                 //遍历班次分组
+                //只统计一次(测点数据用)
+                int point = 1;
                 for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
                     //根据时间排序
                     List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
@@ -195,8 +198,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                     dr = Duration.between(eveningTime, pmsTime);
                                                     dr2 = Duration.between(pmsTime, morningTime);
                                                 }
-                                                materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60)));
-                                                materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60)));
+                                                materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
+                                                materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60),4));
                                             }
                                         } else {
                                             //否则，物料n+1的最早巡检时间即为物料n的生产结束时间，统计班次b的时段内各物料的生产时长，单位为h。例如某白班生产2种物料，其关联的生产订单开始、结束时间均为空，14:34:23开始巡检物料2，之前一直巡检物料1，则14:34:23 - 8:00:00（减法）为物料1的生产时长，20:00:00 - 14:34:23（减法）为物料2的生产时长
@@ -210,8 +213,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 dr = Duration.between(eveningTime, checkTaskWorkOrderList.get(i + 1).getFinishedTime());
                                                 dr2 = Duration.between(checkTaskWorkOrderList.get(i + 1).getFinishedTime(), morningTime);
                                             }
-                                            materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60)));
-                                            materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60)));
+                                            materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
+                                            materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60),4));
                                         }
                                     }
                                 } else {
@@ -223,16 +226,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         morningTime = morningTime.plusDays(1);
                                         dr = Duration.between(eveningTime, checkTaskWorkOrderList.get(i + 1).getFinishedTime());
                                     }
-                                    materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60)));
+                                    materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
                                 }
                             }
 
                         }
                     }
 
-                    //查询单片掰边重量
+                    //查询单片掰边重量(改成了掰边重量)
                     List<QtCheckItem> baiItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "单片掰边重量"));
+                            .eq(QtCheckItem::getName, "掰边重量"));
                     List<Integer> baiItemIds = new ArrayList<>();
                     baiItems.forEach(tmp -> {
                         baiItemIds.add(tmp.getId());
@@ -244,9 +247,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     danItems.forEach(tmp -> {
                         danItemIds.add(tmp.getId());
                     });
-                    //查询拉引时速
+                    //查询拉引时速(改成了拉引速度)
                     List<QtCheckItem> laItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "拉引时速"));
+                            .eq(QtCheckItem::getName, "拉引速度"));
                     List<Integer> laItemIds = new ArrayList<>();
                     laItems.forEach(tmp -> {
                         laItemIds.add(tmp.getId());
@@ -255,6 +258,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     //根据产线进行分组
                     Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
                     //遍历产线
+                    //只统计一次(测点数据用)
+//                    int point = 1;
                     for (Map.Entry<Integer, List<QtCheckTask>> entry3 : groupByProductLine.entrySet()) {
                         //产线名字
                         String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
@@ -275,7 +280,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         //根据物料进行分组
                         Map<Long, List<QtCheckTask>> groupByMaterial = entry3.getValue().stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
                         //只统计一次(测点数据用)
-                        int point = 1;
+//                        int point = 1;
                         //遍历物料分组
                         for (Map.Entry<Long, List<QtCheckTask>> materialEntry : groupByMaterial.entrySet()) {
                             BigDecimal totalBaiItem = new BigDecimal(0);
@@ -317,7 +322,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
                                     if (StrUtil.isNotBlank(tmp.getCheckResult())) {
                                         //判断是否为数字
-                                        if(StrUtil.isNumeric(tmp.getCheckResult())){
+                                        if(RegularUtil.isNum(tmp.getCheckResult())){
                                             BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
                                             totalDanItem = BigDecimalUtil.add(totalDanItem, decimalTmp);
                                             totalDanItemCount = BigDecimalUtil.add(totalDanItemCount, new BigDecimal(1));
@@ -344,17 +349,17 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
                             BigDecimal avgBaiItem = new BigDecimal(0);
                             if (totalBaiItem.intValue() != 0) {
-                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount);
+                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount,4);
                             }
                             //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
                             BigDecimal avgDanItem = new BigDecimal(0);
                             if (totalDanItem.intValue() != 0) {
-                                avgDanItem = BigDecimalUtil.divide(totalDanItem, totalDanItemCount);
+                                avgDanItem = BigDecimalUtil.divide(totalDanItem, totalDanItemCount,4);
                             }
                             //拉引时速：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“拉引速度”（需提前配置好“拉引速度”检验项）取平均值，单位为m/h
                             BigDecimal avgLaItem = new BigDecimal(0);
                             if (totalDanItem.intValue() != 0) {
-                                avgLaItem = BigDecimalUtil.divide(totalLaItem, totalLaItemCount);
+                                avgLaItem = BigDecimalUtil.divide(totalLaItem, totalLaItemCount,4);
                             }
                             //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
                             BigDecimal glassLength = new BigDecimal(0);
@@ -368,7 +373,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //拉引时速/玻璃片长度
                             BigDecimal divideLaGlass = new BigDecimal(0);
                             if (glassLength.compareTo(BigDecimal.ZERO) > 0) {
-                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength);
+                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,4);
                             }
                             //掰边损耗重量
                             //掰边损耗重量 = 平均单片掰边重量 * （拉引时速 / 玻璃片长度) * 12 / 1000000
@@ -376,7 +381,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1000000));
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1000000),4);
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -384,7 +389,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     produceTime = materialProduceTime.get(materialEntry.getKey());
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000));
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -396,7 +401,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量
                             if (flag) {
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1000000));
+                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1000000),4);
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -404,7 +409,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     produceTime = materialProduceTime.get(materialEntry.getKey());
                                 }
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000));
+//                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
+                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(100),4);
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
 
@@ -580,7 +586,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 //乘法
                                 BigDecimal multiplyRes = BigDecimalUtil.multiply(BigDecimal.valueOf(defectEntry.getValue()), avgDanItem);
                                 //缺陷项q导致损耗重量
-                                BigDecimal defectResultData = BigDecimalUtil.divide(multiplyRes, new BigDecimal(1000));
+                                BigDecimal defectResultData = BigDecimalUtil.divide(multiplyRes, new BigDecimal(1000),4);
 
                                 //把缺陷项q的损耗重量放入全量数据中
                                 if (defectLossWeightMap.get(defectEntry.getKey()) == null) {
@@ -612,17 +618,17 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     } else {
                                         dr = Duration.between(info.getDestoryStartTime(), info.getDestoryEndTime());
                                     }
-                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(dr.toMinutes()), new BigDecimal(60));
+                                    luoDateRange = BigDecimalUtil.divide(new BigDecimal(dr.toMinutes()), new BigDecimal(60),4);
 
                                     //任意落板原因r导致损耗重量 = r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
                                     //r导致的落板时长 * 拉引时速
                                     BigDecimal firstStep = BigDecimalUtil.multiply(luoDateRange, avgLaItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度
-                                    BigDecimal secondStep = BigDecimalUtil.divide(firstStep, glassLength);
+                                    BigDecimal secondStep = BigDecimalUtil.divide(firstStep, glassLength,4);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000));
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
@@ -1133,7 +1139,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     stackGraphDTOS.add(graphDTO);
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
-                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount);
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
                     legend.add(new DecimalFormat("0.0%").format(sunRate));
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
@@ -1210,7 +1216,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         tupleDTOList.add(tupleDTOWAN);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
 
@@ -1239,7 +1245,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
 
@@ -1268,7 +1274,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             graphDTO.setData(tupleDTOList);
                         }
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
                     stackGraphDTOS.add(graphDTO);
@@ -1318,7 +1324,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //成品重量 = 拉引量 - 损耗总重量，单位为吨
             BigDecimal chengWeight = BigDecimalUtil.subtract(laAmount, sunAmount);
             //成品率 = 成品重量 / 拉引量 * 100%，小数点后最多2位
-            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount);
+            BigDecimal chengRate = BigDecimalUtil.divide(chengWeight, laAmount,4);
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
             onePie.setValue(chengRate.abs());
@@ -1327,7 +1333,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //遍历损耗原因分组
             for (Map.Entry<String, BigDecimal> reasonEntry : orderByReason.entrySet()) {
                 QtChartPieValueVO<BigDecimal> tmp = new QtChartPieValueVO();
-                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount);
+                BigDecimal value = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
                 //为0则不放入
                 if (value.compareTo(BigDecimal.ZERO) != 0) {
                     tmp.setName(reasonEntry.getKey());
