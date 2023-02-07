@@ -24,6 +24,7 @@
         <module>steccn-wms</module>
         <module>steccn-ems</module>
         <module>steccn-data-platform</module>
+        <module>steccn-websocket</module>
     </modules>
 
     <properties>
@@ -40,6 +41,11 @@
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
         <minio.version>7.0.2</minio.version>
+        <spring-cloud-starter-zipkin.version>2.2.6.RELEASE</spring-cloud-starter-zipkin.version>
+        <nimbus-jose-jwt.version>9.23</nimbus-jose-jwt.version>
+        <knife4j.version>3.0.3</knife4j.version>
+        <pinyin.version>1.1.8</pinyin.version>
+        <mybatis-plus-extension.version>3.4.3.4</mybatis-plus-extension.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -226,7 +232,36 @@
                 <artifactId>spring-boot-admin-starter-client</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
-
+            <!-- jwt-->
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose-jwt.version}</version>
+            </dependency>
+            <!--Swagger3增加工具-->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <!-- zipkin  -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-zipkin</artifactId>
+                <version>${spring-cloud-starter-zipkin.version}</version>
+            </dependency>
+            <!-- 拼音组件 -->
+            <dependency>
+                <groupId>com.github.stuxuhai</groupId>
+                <artifactId>jpinyin</artifactId>
+                <version>${pinyin.version}</version>
+            </dependency>
+            <!-- mybatis-plus-extension -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <version>${mybatis-plus-extension.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

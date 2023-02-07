@@ -415,7 +415,7 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
             result = result+wmsDeliveryReceipt.getCode()+",";
         }
         if(StringUtils.isNotBlank(result)) result = result.substring(0,result.length() -1);
-        return R.success(result,null);
+        return R.success(result);
     }
 
     /**

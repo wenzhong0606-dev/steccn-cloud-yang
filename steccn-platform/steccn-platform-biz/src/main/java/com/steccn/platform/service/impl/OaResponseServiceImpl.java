@@ -10,6 +10,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.vo.R;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
@@ -24,9 +27,13 @@ import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.MesClassificationVO;
 import com.steccn.platform.vo.OaMaterialVO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
@@ -41,12 +48,13 @@ import java.util.Set;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaResponse>
     implements OaResponseService{
 
     private final SysEqpSpareService sysEqpSpareService;
-
     private final RemoteMesFeignApi remoteMesFeignApi;
+    private final RemoteWsFeignApi remoteWsFeignApi;
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -59,16 +67,24 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addMessagePush(OaMessagePushDTO dto) {
         OaResponse model = new OaResponse();
         model.setUniqueValue(dto.getUniqueValue());
         model.setType(OaDataConstant.Oa_Data_Type.MESSAGE.getCode());
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
+        try {
+            R<String> wsRes = remoteWsFeignApi.pushOa(Long.parseLong(dto.getUsername()));
+            log.debug("{}", wsRes.getData());
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
         return save(model);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addProcessNotify(OaProcessNotifyDTO dto) {
         OaResponse model = new OaResponse();
         model.setUniqueValue(dto.getUniqueValue());

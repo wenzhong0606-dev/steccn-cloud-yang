@@ -35,6 +35,13 @@ public class FileInfoController {
       return  fileInfoService.uploadFile(fileInfoDto);
     }
 
+
+    @PostMapping("/uploadApp")
+    @ResponseBody
+    public R<FileInfo> uploadAppFile(FileInfoDto fileInfoDto){
+        return fileInfoService.uploadAppFile(fileInfoDto);
+    }
+
     @RequestMapping("/ids")
     @ApiOperation("根据主键id查询文件信息")
     public R<Map<Long, FileInfoVO>> listById(@RequestBody List<Long> idList) {

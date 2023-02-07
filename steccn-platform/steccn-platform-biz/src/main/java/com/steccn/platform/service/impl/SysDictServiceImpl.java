@@ -4,20 +4,20 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.constant.CacheConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.platform.dto.SysDictDTO;
-import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
+import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.mapper.SysDictMapper;
 import com.steccn.platform.service.SysDictService;
+import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
         implements SysDictService {
 
-
     @Override
+    @Cacheable(value = CacheConstant.SYS_DICT + CacheConstant.EXPIRE_5_MINUTES)
     public List<SysDictVO> sysList(String type) {
         //1.根据类型code查询出所有的数据字典数据
         List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()
@@ -47,6 +47,7 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     }
 
     @Override
+    @Cacheable(value = CacheConstant.SYS_DICT_FILTER + CacheConstant.EXPIRE_5_MINUTES)
     public List<SysDictVO> sysListFilter(String type, String name) {
         //1.根据类型code查询出所有的数据字典数据
         List<SysDict> dataList = list(new LambdaQueryWrapper<SysDict>()

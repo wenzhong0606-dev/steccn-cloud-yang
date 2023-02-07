@@ -87,7 +87,6 @@ public class WmsDeliveryReceiptController {
     @ApiOperation("扫描出库")
     @PostMapping("/api/scanDeliveryReceipt")
     public R<String> scanDeliveryReceipt(@RequestBody Map<String, Object> paramMap){
-
         return  wmsDeliveryReceiptService.scanDeliveryReceipt(paramMap);
     }
 

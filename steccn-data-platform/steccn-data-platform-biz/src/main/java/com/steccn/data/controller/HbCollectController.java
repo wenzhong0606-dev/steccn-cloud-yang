@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -64,7 +65,7 @@ public class HbCollectController {
      * @param request 请求
      */
     private void validRequestHeader(HttpServletRequest request) {
-        Set<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String clientId = request.getHeader(HbThirdPartyConstant.STR_CLIENT_ID);
         Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
         Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");

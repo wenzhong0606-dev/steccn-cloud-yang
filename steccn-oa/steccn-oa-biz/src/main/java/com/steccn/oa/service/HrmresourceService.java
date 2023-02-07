@@ -9,5 +9,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2022-09-01 18:37:02
 */
 public interface HrmresourceService extends IService<Hrmresource> {
-
+    /**
+     * 通过工号查询id
+     * @param workCode
+     * @return
+     */
+    Long getIdByWorkCode(String workCode);
 }

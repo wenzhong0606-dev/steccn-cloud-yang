@@ -60,4 +60,12 @@ public interface OaInfoService {
      */
    @GetMapping("/oa/userInfo")
    R<OaUserInfo> getOaUserInfo(@RequestParam("loginId") String loginId);
+
+    /**
+     * 根据工号查询id
+     * @param workCode
+     * @return
+     */
+    @GetMapping("/oa/user/id/{workCode}")
+    R<Long> getUserIdByWorkCode(@PathVariable("workCode") String workCode);
 }

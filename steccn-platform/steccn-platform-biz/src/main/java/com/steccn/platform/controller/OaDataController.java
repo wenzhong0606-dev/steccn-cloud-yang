@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,7 +76,7 @@ public class OaDataController {
      * @param request 请求
      */
     private void validRequestHeader(HttpServletRequest request) {
-        Set<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<String> pwdSet = FeignOptional.of(() -> remoteSysOauthClientDetailFeignApi.clientEncodePassword(), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String clientId = request.getHeader(OaDataConstant.STR_CLIENT_ID);
         Assert.isTrue(StrUtil.isNotBlank(clientId), "请求头中必须携带client-id");
         Assert.isTrue(pwdSet.contains(clientId), "非法访问，请携带正确的client-id");

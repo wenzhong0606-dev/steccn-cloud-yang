@@ -69,6 +69,12 @@ public class R<T> implements Serializable {
         this.data = null;
     }
 
+    /**
+     * 最常用的方法
+     * @param data
+     * @param <K>
+     * @return
+     */
     public static <K> R<K> success(K data) {
         R<K> r = new R<>();
         r.code = ResultCode.SUCCESS.getCode();
@@ -90,23 +96,6 @@ public class R<T> implements Serializable {
         R r = new R();
         r.code = resultCode.getCode();
         r.msg = resultCode.getMsg();
-
-        return r;
-    }
-    public static R success(String msg) {
-        R r = new R();
-        r.code = ResultCode.SUCCESS.getCode();
-        r.msg = msg;
-        r.data = null;
-
-        return r;
-    }
-
-    public static R success(String msg,Integer type) {
-        R r = new R();
-        r.code = ResultCode.SUCCESS.getCode();
-        r.msg = null;
-        r.data = msg;
 
         return r;
     }
@@ -135,12 +124,13 @@ public class R<T> implements Serializable {
 
         return r;
     }
+
+
     public static R failure(String msg) {
         R r = new R();
         r.code = ResultCode.FAILURE.getCode();
         r.msg = msg;
         r.data = null;
-
         return r;
     }
 }

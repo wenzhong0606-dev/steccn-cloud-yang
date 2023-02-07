@@ -51,13 +51,11 @@
         <dependency>
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-core</artifactId>
-            <version>1.0.0</version>
         </dependency>
         <!--Swagger3增加工具-->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-spring-boot-starter</artifactId>
-            <version>3.0.3</version>
         </dependency>
         <!--如果SpringBoot版本大于2.3则需要引入下面依赖-->
         <dependency>
@@ -128,6 +126,17 @@
             <artifactId>artemis-http-client</artifactId>
             <version>1.1.3</version>
         </dependency>
+
+        <!-- Sleuth with Brave tracer implementation -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

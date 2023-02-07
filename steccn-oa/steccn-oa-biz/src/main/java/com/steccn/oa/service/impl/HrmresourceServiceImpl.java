@@ -1,10 +1,13 @@
 package com.steccn.oa.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.mapper.HrmresourceMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
 * @author yequan
@@ -15,6 +18,16 @@ import org.springframework.stereotype.Service;
 public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmresource>
     implements HrmresourceService{
 
+    @Override
+    public Long getIdByWorkCode(String workCode) {
+        Hrmresource hrmresource = this.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getWorkcode, workCode), false);
+        if(Objects.isNull(hrmresource)){
+            return null;
+        }else {
+            return Long.valueOf(hrmresource.getId());
+        }
+    }
 }
 
 

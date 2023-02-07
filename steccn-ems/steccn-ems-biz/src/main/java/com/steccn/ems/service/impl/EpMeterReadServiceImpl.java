@@ -968,7 +968,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
     private void setPartitionNode(EpMeterReadDetailsVO epMeterReadDetailsVO) {
         List<EpPartition> list = epPartitionService.list();
-        Optional<EpPartition> optional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+        Optional<EpPartition> optional = null;
+        if(CollUtil.isNotEmpty(list)){
+            optional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+        }
         if (optional.isPresent() && Objects.isNull(optional.get().getParentId())) {
             epMeterReadDetailsVO.setPartitionNode(optional.get().getOfficeName());
         } else {

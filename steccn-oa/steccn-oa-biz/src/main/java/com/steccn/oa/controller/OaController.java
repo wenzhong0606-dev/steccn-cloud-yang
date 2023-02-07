@@ -138,4 +138,9 @@ public class OaController {
         oaService.getWorkFlow(dto);
         return null;
     }
+
+    @GetMapping("/user/id/{workCode}")
+    public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode){
+        return R.success(hrmresourceService.getIdByWorkCode(workCode));
+    }
 }
