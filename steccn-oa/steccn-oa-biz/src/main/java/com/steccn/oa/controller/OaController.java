@@ -140,7 +140,7 @@ public class OaController {
     }
 
     @GetMapping("/user/id/{workCode}")
-    public R<Long> getIdByWorkCode(@PathVariable String workCode){
+    public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode){
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
 }
