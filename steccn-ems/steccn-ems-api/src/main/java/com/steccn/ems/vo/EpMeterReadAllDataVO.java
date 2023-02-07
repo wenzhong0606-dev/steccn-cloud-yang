@@ -60,5 +60,8 @@ public class EpMeterReadAllDataVO implements Serializable {
     @ApiModelProperty("班组id")
     private Long classGroupId;
 
+    @ApiModelProperty("能源类型")
+    private Integer energyType;
+
     private static final long serialVersionUID = 1L;
 }

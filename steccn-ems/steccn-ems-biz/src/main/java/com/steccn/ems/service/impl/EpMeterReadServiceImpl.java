@@ -425,6 +425,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             if(Objects.nonNull(epPartition)){
                 ele.setSysOfficeId(epPartition.getOfficeId());
             }
+            ele.setEnergyType(energyType);
         });
         return gpDataList;
     }
@@ -546,6 +547,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             if(Objects.isNull(ele.getThick())){
                 ele.setThick(new BigDecimal("-1"));
             }
+            ele.setEnergyType(energyType);
         });
 
         return gpDataList;
@@ -598,8 +600,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     public List<EpMeterReadAllDataVO> kcalDataUnit(Set<LocalDate> dateSet, List<Long> partitionIdList) {
         SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
         //将组织机构分成3和4类型
-        EpEnergyTreeDTO childTree1 = energyTree(Arrays.asList(1608020964126519296L), 3);
-        EpEnergyTreeDTO childTree2 = energyTree(Arrays.asList(1608021931219775488L), 4);
+        EpEnergyTreeDTO childTree1 = energyTree(partitionIdList, 3);
+        EpEnergyTreeDTO childTree2 = energyTree(partitionIdList, 4);
         Set<Long> childTree = Sets.newHashSet();
         List<EpPartitionVO> childrenList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(childTree1.getPartitionIds())) {
@@ -614,7 +616,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<EpInstrumentAccount> instrumentAccountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .in(EpInstrumentAccount::getMeterType, Arrays.asList(3, 4))
                 .in(CollUtil.isNotEmpty(childTree), EpInstrumentAccount::getPartitionNode, childTree)
-                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode));
+                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode, EpInstrumentAccount::getMeterType));
         SteccnTableAssertUtil.notEmpty(instrumentAccountList, "组织机构暂未关联仪表");
         //获取仪表id集合
         Map<Integer, Long> meterPartitionMap = Maps.newHashMap();
@@ -657,20 +659,27 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             //根据班次日期
             Map<LocalDate, List<EpMeterReadAllDataVO>> classDateMap = kcalDataUnitList.stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getReadDate));
             for (Map.Entry<LocalDate, List<EpMeterReadAllDataVO>> classDateEntry : classDateMap.entrySet()) {
-                //根据仪表分组
+                //根据组织机构分组-会把同一个组织机构对应的数据分到同一组
                 Map<Integer, List<EpMeterReadAllDataVO>> meterMap = classDateEntry.getValue().stream().collect(Collectors.groupingBy(EpMeterReadAllDataVO::getSysOfficeId));
                 for (Map.Entry<Integer, List<EpMeterReadAllDataVO>> officeEntry : meterMap.entrySet()) {
                     Map<String, List<EpMeterReadAllDataVO>> thickMap = officeEntry.getValue().stream().collect(Collectors.groupingBy(v -> v.getClassId() + "_" + v.getThick()));
                     for (Map.Entry<String, List<EpMeterReadAllDataVO>> thickEntry : thickMap.entrySet()) {
                         EpMeterReadAllDataVO epMeterReadAllDataVO = thickEntry.getValue().get(0);
                         EpMeterReadAllDataVO ele = new EpMeterReadAllDataVO();
-                        BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        //天然气
+                        BigDecimal gasBd = thickEntry.getValue().stream().filter(v -> 3 == v.getEnergyType() && Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        //燃料油
+                        BigDecimal oilBd = thickEntry.getValue().stream().filter(v -> 4 == v.getEnergyType() && Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal gasMu = BigDecimalUtil.multiply(gasBd, BigDecimal.valueOf(7788));
+                        BigDecimal oilMu = BigDecimalUtil.multiply(oilBd, BigDecimal.valueOf(9300000));
+
                         BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
                         //产量
                         List<EpProduceDetailVO> productNumObjectList = filterProductNumList(produceNumList, classDateEntry.getKey(), officeEntry.getKey(), epMeterReadAllDataVO);
                         if (CollUtil.isNotEmpty(productNumObjectList)) {
                             BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            ele.setProductNum(yield);
+                            ele.setProductNum(BigDecimalUtil.multiply(yield, BigDecimal.valueOf(1000)));
                         }
                         List<Long> reportWorkIdList = Lists.newArrayList();
                         thickEntry.getValue().forEach(te -> {
@@ -681,7 +690,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         ele.setReportWorkIdList(reportWorkIdList);
                         Long classGroupId = calClassGroupId(ele, reportMap);
                         ele.setClassGroupId(classGroupId);
-                        ele.setConsume(reduce);
+                        ele.setConsume(BigDecimalUtil.add(gasMu, oilMu));
                         gpDataList.add(ele);
                         MapUtil.biCompute(calMap, ele.getMeterId(), ele.getReadDate(), ele);
                     }
