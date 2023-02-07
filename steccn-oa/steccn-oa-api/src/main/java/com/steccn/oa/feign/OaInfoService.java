@@ -67,5 +67,5 @@ public interface OaInfoService {
      * @return
      */
     @GetMapping("/oa/user/id/{workCode}")
-    R<Long> getUserIdByWorkCode(@PathVariable String workCode);
+    R<Long> getUserIdByWorkCode(@PathVariable("workCode") String workCode);
 }
