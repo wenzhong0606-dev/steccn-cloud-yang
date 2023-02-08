@@ -36,12 +36,12 @@ public interface FeignConstant {
     /**
      * 生产系统服务名称
      */
-    String STECCN_PMS_SERVICE_NAME ="steccn-pms";
+    String STECCN_PMS_SERVICE_NAME = "steccn-pms";
 
     /**
      * 质量系统服务名称
      */
-    String STECCN_QMS_SERVICE_NAME ="steccn-qms";
+    String STECCN_QMS_SERVICE_NAME = "steccn-qms";
 
     /**
      * 仓储系统服务名称
@@ -56,5 +56,10 @@ public interface FeignConstant {
     /**
      * websocket服务名称
      */
-    String STECCN_WEBSOCKET_SERVICE_NAME ="steccn-websocket";
+    String STECCN_WEBSOCKET_SERVICE_NAME = "steccn-websocket";
+
+    /**
+     * mes服务名称
+     */
+    String STECCN_MES_SERVICE_NAME = "steccn-mes";
 }

@@ -1,6 +1,9 @@
 package com.steccn.portal.controller;
 
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.portal.feign.RemotePortalMesFeignApi;
 import com.steccn.portal.service.MesMenuService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,7 +26,7 @@ import java.util.Objects;
 public class MesMenuController {
 
     private final MesMenuService mesMenuService;
-
+    private final RemotePortalMesFeignApi remotePortalMesFeignApi;
 
 
     @ApiOperation("获取mes系统用户菜单数据")
@@ -36,6 +39,12 @@ public class MesMenuController {
     @GetMapping("/mesToken")
     public R<String> getMesToken(@RequestParam("userName") String userName) {
         return new R<String>(mesMenuService.getMesToken(userName));
+    }
+
+    @ApiOperation(value = "获取mes的sid")
+    @GetMapping("/get/sid")
+    public R<String> getSid(@RequestParam("userName") String userName) {
+        return R.success(remotePortalMesFeignApi.getSid(userName));
     }
 
 }
