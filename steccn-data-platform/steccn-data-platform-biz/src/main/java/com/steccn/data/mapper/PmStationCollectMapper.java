@@ -2,7 +2,11 @@ package com.steccn.data.mapper;
 
 import com.steccn.data.domain.PmStationCollect;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -13,6 +17,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PmStationCollectMapper extends BaseMapper<PmStationCollect> {
 
+    /**
+     * 报工加工总数预填
+     * @param dto
+     * @return
+     */
+    List<PmStationCollect> rwPreLoad(@Param("dto") PmReportWorkPreloadDTO dto);
 }
 
 

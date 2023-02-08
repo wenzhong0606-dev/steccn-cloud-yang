@@ -27,4 +27,8 @@ public interface RemoteSysOfficeCollectFeignApi {
     @GetMapping("/feign/platform/sys/office/collect/station")
     @ApiOperation("查询工位的进出站的采集点编码配置")
     R<List<SysOfficeCollectVO>> listOnlyStation(@RequestParam("type") Integer type);
+
+    @GetMapping("/feign/platform/sys/office/collect/station/out")
+    @ApiOperation("获取工位的出站采集点")
+    R<SysOfficeCollectVO> outCollect(@RequestParam("stationId") Integer stationId);
 }

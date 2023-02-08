@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.PmStationCollect;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.mapper.PmStationCollectMapper;
 import com.steccn.data.vo.DwStationCollectVO;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author yequan
@@ -66,6 +64,19 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
             }
         }
         return resList;
+    }
+
+    @Override
+    public BigDecimal rwPreLoad(PmReportWorkPreloadDTO dto) {
+        //根据条件获取出站采集点的采集数据
+        List<PmStationCollect> resList = baseMapper.rwPreLoad(dto);
+        if (CollUtil.isNotEmpty(resList) && resList.size() == 2) {
+            resList.sort(Comparator.comparing(PmStationCollect::getRecordTime));
+            PmStationCollect start = resList.get(0);
+            PmStationCollect end = resList.get(1);
+            return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+        }
+        return null;
     }
 
     /**

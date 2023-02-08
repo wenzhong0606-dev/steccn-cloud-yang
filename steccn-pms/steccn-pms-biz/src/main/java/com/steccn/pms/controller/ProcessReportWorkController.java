@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -56,6 +58,14 @@ public class ProcessReportWorkController {
             }
         }
         return R.success(pmsReportWorkService.submitReportWork(dto));
+    }
+
+    @ApiOperation("报工加工数预填")
+    @GetMapping("/preload")
+    public R<BigDecimal> preload(@RequestParam("stationId") Integer stationId,
+                                 @RequestParam("startTime") LocalDateTime startTime,
+                                 @RequestParam("endTime") LocalDateTime endTime) {
+        return R.success(pmsReportWorkService.preload(stationId, startTime, endTime));
     }
 
     @ApiOperation("报工记录")
