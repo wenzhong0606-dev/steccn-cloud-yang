@@ -533,6 +533,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //如果采集点不为空
         if (Objects.nonNull(sysOfficeCollectVO)) {
             PmReportWorkPreloadDTO reportWorkPreloadDTO = new PmReportWorkPreloadDTO();
+            reportWorkPreloadDTO.setCode(sysOfficeCollectVO.getCode());
+            reportWorkPreloadDTO.setStartTime(startTime);
+            reportWorkPreloadDTO.setEndTime(endTime);
             res = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(reportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
         }
         return res;

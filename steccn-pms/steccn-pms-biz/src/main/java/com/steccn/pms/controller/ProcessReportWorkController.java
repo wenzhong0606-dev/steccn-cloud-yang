@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
@@ -16,6 +17,7 @@ import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -61,11 +63,9 @@ public class ProcessReportWorkController {
     }
 
     @ApiOperation("报工加工数预填")
-    @GetMapping("/preload")
-    public R<BigDecimal> preload(@RequestParam("stationId") Integer stationId,
-                                 @RequestParam("startTime") LocalDateTime startTime,
-                                 @RequestParam("endTime") LocalDateTime endTime) {
-        return R.success(pmsReportWorkService.preload(stationId, startTime, endTime));
+    @PostMapping("/preload")
+    public R<BigDecimal> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
+        return R.success(pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime()));
     }
 
     @ApiOperation("报工记录")
