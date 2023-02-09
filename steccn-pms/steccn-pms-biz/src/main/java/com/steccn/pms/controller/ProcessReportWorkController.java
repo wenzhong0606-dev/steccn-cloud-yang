@@ -64,8 +64,9 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工加工数预填")
     @PostMapping("/preload")
-    public R<BigDecimal> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
-        return R.success(pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime()));
+    public R<Integer> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
+        BigDecimal preload = pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime());
+        return R.success(preload.intValue());
     }
 
     @ApiOperation("报工记录")
