@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
@@ -64,9 +65,8 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工加工数预填")
     @PostMapping("/preload")
-    public R<Integer> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
-        BigDecimal preload = pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime());
-        return R.success(preload.intValue());
+    public R<BigDecimal> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
+        return R.success(pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime()));
     }
 
     @ApiOperation("报工记录")
