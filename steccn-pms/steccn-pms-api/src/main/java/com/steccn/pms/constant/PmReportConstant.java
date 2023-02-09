@@ -110,7 +110,8 @@ public interface PmReportConstant {
     @AllArgsConstructor
     enum SubstrateReportConsumeEnum {
         PULL_FORCE(0, "拉引量(T)"),
-        PASS_RATE(1, "合格率(%)"),
+        PASS_RATE(1, "产量合格率(%)"),
+        IN_PASS_RATE(7, "入库合格率(%)"),
         ELECTRIC(2, "耗电量(Kwh)"),
         WATER(3, "耗水量(T)"),
         OIL(4, "耗油量(Kg)"),
