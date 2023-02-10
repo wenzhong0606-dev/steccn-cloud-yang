@@ -30,6 +30,15 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
     Boolean print(BarcodePrintDTO dto);
 
     /**
+     * 保存一个箱子
+     *
+     * @param dto dto
+     * @return 箱子id caseId
+     */
+    Long saveOneCase(BarcodePrintDTO dto);
+
+
+    /**
      * 打印记录
      *
      * @param dto dto

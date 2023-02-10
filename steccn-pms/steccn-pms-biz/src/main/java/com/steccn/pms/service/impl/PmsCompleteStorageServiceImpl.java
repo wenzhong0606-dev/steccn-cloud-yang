@@ -425,11 +425,14 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         Assert.notNull(pmsProduceOrder, "生产订单不存在");
         //校验批次是否存在，且是当前订单的当前批次
         PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getById(dto.getBatch());
-        Assert.isTrue(pmsProduceOrder.getId().equals(pmsWorkOrderBatch.getProduceOrderId()) && MpConstant.YES.equals(pmsWorkOrderBatch.getCurrentBatchFlag()),"批次信息异常");
+        Assert.isTrue(pmsProduceOrder.getId().equals(pmsWorkOrderBatch.getProduceOrderId()) && MpConstant.YES.equals(pmsWorkOrderBatch.getCurrentBatchFlag()), "批次信息异常");
         //根据货架查询仓库
         Map<Integer, SysOfficeVO> warehouseMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(Lists.newArrayList(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysOfficeVO warehouse = warehouseMap.getOrDefault(dto.getShelfId(), new SysOfficeVO());
+        SysOfficeVO warehouse = warehouseMap.get(dto.getShelfId());
         Assert.notNull(warehouse, "仓库不存在");
+        Map<Integer, String> shelfMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        String shelfName = shelfMap.get(dto.getShelfId());
+        Assert.notBlank(shelfName, "货架名称不能为空");
         //生成箱信息
         BarcodePrintDTO barcodePrint = new BarcodePrintDTO();
         BeanUtils.copyProperties(dto, barcodePrint);
@@ -440,10 +443,21 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         barcodePrint.setProduceOrderNo(pmsProduceOrder.getCode());
         barcodePrint.setProductionLine(pmsProduceOrder.getProductionLineId());
         barcodePrint.setWarehouseId(warehouse.getId());
-        Boolean printFlag = pmsBarcodePrintService.print(barcodePrint);
+        Long caseId = pmsBarcodePrintService.saveOneCase(barcodePrint);
+        PmsBarcodePrint pmsBarcodePrint = pmsBarcodePrintService.getById(caseId);
         //生成入库单信息
-        List<CompleteStorageScanDTO> dtoList = Lists.newArrayList();
-        String generate = generate(dtoList);
+        List<CompleteStorageScanDTO> scanDtoList = Lists.newArrayList();
+        CompleteStorageScanDTO scanDTO = new CompleteStorageScanDTO();
+        BeanUtils.copyProperties(barcodePrint, scanDTO);
+        scanDTO.setCaseNo(pmsBarcodePrint.getCaseNo());
+        scanDTO.setCaseState(pmsBarcodePrint.getCaseState());
+        scanDTO.setCreateTime(LocalDateTime.now());
+        scanDTO.setMaterialCode(pmsProduceOrder.getMaterialCode());
+        scanDTO.setMaterialName(pmsProduceOrder.getMaterialName());
+        scanDTO.setWarehouseName(warehouse.getOfficeName());
+        scanDTO.setShelfName(shelfName);
+        scanDtoList.add(scanDTO);
+        String generate = generate(scanDtoList);
         return generate;
     }
 
