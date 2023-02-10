@@ -142,29 +142,29 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
         lock.lock();
         PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
-        Assert.notEmpty(dtoList, "请选择箱子");
-        //校验一箱货只能存在于一个入库单中
-        Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
-        Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
-        //校验生产订单的产线是否相同不同，不可以创建入库单
-        Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
-        List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .in(PmsProduceOrder::getId, orderSet)
-                .groupBy(PmsProduceOrder::getProductionLineId));
-        if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
-            throw new BusinessException("不同产线的订单不可以一起生成入库单");
-        }
-        //校验箱子不能重复出现在不同的入库单
-        List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
-        //创建主表
-        BigDecimal sumQuantity = BigDecimal.ZERO;
-        pmsCompleteStorage.setId(IdUtil.getSnowflake().nextId());
-        pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
-
-        Long produceOrderId = dtoList.get(0).getProduceOrderId();
-        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
-        Assert.notNull(pmsProduceOrder, "生产订单不存在");
         try {
+            Assert.notEmpty(dtoList, "请选择箱子");
+            //校验一箱货只能存在于一个入库单中
+            Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
+            Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
+            //校验生产订单的产线是否相同不同，不可以创建入库单
+            Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
+            List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
+                    .in(PmsProduceOrder::getId, orderSet)
+                    .groupBy(PmsProduceOrder::getProductionLineId));
+            if (!(CollUtil.isNotEmpty(list) && list.size() == 1)) {
+                throw new BusinessException("不同产线的订单不可以一起生成入库单");
+            }
+            //校验箱子不能重复出现在不同的入库单
+            List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
+            //创建主表
+            BigDecimal sumQuantity = BigDecimal.ZERO;
+            pmsCompleteStorage.setId(IdUtil.getSnowflake().nextId());
+            pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
+
+            Long produceOrderId = dtoList.get(0).getProduceOrderId();
+            PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
+            Assert.notNull(pmsProduceOrder, "生产订单不存在");
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
             List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
 
@@ -427,12 +427,9 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getById(dto.getBatch());
         Assert.isTrue(pmsProduceOrder.getId().equals(pmsWorkOrderBatch.getProduceOrderId()) && MpConstant.YES.equals(pmsWorkOrderBatch.getCurrentBatchFlag()), "批次信息异常");
         //根据货架查询仓库
-        Map<Integer, SysOfficeVO> warehouseMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(Lists.newArrayList(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysOfficeVO warehouse = warehouseMap.get(dto.getShelfId());
-        Assert.notNull(warehouse, "仓库不存在");
-        Map<Integer, String> shelfMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        String shelfName = shelfMap.get(dto.getShelfId());
-        Assert.notBlank(shelfName, "货架名称不能为空");
+        Map<Integer, SysOfficeVO> shelfMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(Lists.newArrayList(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO shelf = shelfMap.get(dto.getShelfId());
+        Assert.notNull(shelf, "仓库不存在");
         //生成箱信息
         BarcodePrintDTO barcodePrint = new BarcodePrintDTO();
         BeanUtils.copyProperties(dto, barcodePrint);
@@ -442,7 +439,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         barcodePrint.setPrintStrip(1);
         barcodePrint.setProduceOrderNo(pmsProduceOrder.getCode());
         barcodePrint.setProductionLine(pmsProduceOrder.getProductionLineId());
-        barcodePrint.setWarehouseId(warehouse.getId());
+        barcodePrint.setWarehouseId(shelf.getParentId());
         Long caseId = pmsBarcodePrintService.saveOneCase(barcodePrint);
         PmsBarcodePrint pmsBarcodePrint = pmsBarcodePrintService.getById(caseId);
         //生成入库单信息
@@ -454,8 +451,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         scanDTO.setCreateTime(LocalDateTime.now());
         scanDTO.setMaterialCode(pmsProduceOrder.getMaterialCode());
         scanDTO.setMaterialName(pmsProduceOrder.getMaterialName());
-        scanDTO.setWarehouseName(warehouse.getOfficeName());
-        scanDTO.setShelfName(shelfName);
+        scanDTO.setWarehouseName(shelf.getParentName());
+        scanDTO.setShelfName(shelf.getOfficeName());
         scanDtoList.add(scanDTO);
         String generate = generate(scanDtoList);
         return generate;

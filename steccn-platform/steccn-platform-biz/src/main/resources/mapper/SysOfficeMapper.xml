@@ -85,6 +85,7 @@
 
         SELECT
 	        a.id id,
+            a.office_name as officeName,
 	        b.id parentId,
 	        b.office_name parentName
         FROM
