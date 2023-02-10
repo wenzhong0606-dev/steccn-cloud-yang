@@ -2,11 +2,13 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,4 +86,14 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return map
      */
     Map<Long, Long> reportWorkClassGroup(Set<Long> reportWorkIdSet);
+
+
+    /**
+     * 报工加工数预填
+     * @param stationId 工位id
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return
+     */
+    BigDecimal preload(Integer stationId, LocalDateTime startTime, LocalDateTime endTime);
 }

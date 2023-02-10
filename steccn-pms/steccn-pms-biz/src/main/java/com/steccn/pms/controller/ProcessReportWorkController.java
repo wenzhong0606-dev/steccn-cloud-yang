@@ -1,11 +1,13 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
@@ -16,9 +18,13 @@ import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -56,6 +62,17 @@ public class ProcessReportWorkController {
             }
         }
         return R.success(pmsReportWorkService.submitReportWork(dto));
+    }
+
+    @ApiOperation("报工加工数预填")
+    @PostMapping("/preload")
+    public R<BigDecimal> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
+        //不考虑秒数  只考虑时钟和分钟数
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime startTimeNew = LocalDateTime.of(startTime.toLocalDate(), LocalTime.of(startTime.getHour(), startTime.getMinute(), 0));
+        LocalDateTime endTime = dto.getEndTime();
+        LocalDateTime endTimeNew = LocalDateTime.of(endTime.toLocalDate(), LocalTime.of(endTime.getHour(), endTime.getMinute(), 0));
+        return R.success(pmsReportWorkService.preload(dto.getStationId(), startTimeNew, endTimeNew));
     }
 
     @ApiOperation("报工记录")

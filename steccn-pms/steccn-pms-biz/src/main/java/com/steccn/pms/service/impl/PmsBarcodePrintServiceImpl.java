@@ -64,10 +64,6 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     @Autowired
     private PmsCompleteStorageService pmsCompleteStorageService;
     @Autowired
-    private RemoteDictFeignApi remoteDictFeignApi;
-    @Autowired
-    private RemoteMessFeignApi remoteMessFeignApi;
-    @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private PmsProduceOrderService pmsProduceOrderService;
@@ -89,7 +85,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         Assert.notNull(pmsProduceOrder, "生产订单不能为空");
 
         //加锁
-        RLock lock = redissonClient.getLock(LockConstant.TABLE_WMS_LOGISTICS_ORDER);
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_BARCODE_PRINT);
         lock.lock();
         try {
             //获取当前订单最大的
@@ -100,8 +96,12 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 BeanUtils.copyProperties(dto, printModel);
                 printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
                 printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
-                printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
-                printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
+                if (Objects.isNull(dto.getShelfId())) {
+                    printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
+                }
+                if (Objects.isNull(dto.getWarehouseId())) {
+                    printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
+                }
                 modelList.add(printModel);
             }
             transactionTemplate.execute(status -> {
@@ -112,6 +112,38 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             lock.unlock();
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Long saveOneCase(BarcodePrintDTO dto) {
+        //生产订单
+        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不能为空");
+        PmsBarcodePrint printModel = new PmsBarcodePrint();
+        //加锁
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_BARCODE_PRINT);
+        lock.lock();
+        try {
+            //获取当前订单最大的
+            long currentMaxNo = orderMaxCaseNo(dto.getProduceOrderId());
+            //遍历打印条数
+            BeanUtils.copyProperties(dto, printModel);
+            printModel.setCaseState(PmManagerConstant.CaseStateEnum.FINISH.getCode());
+            printModel.setCaseNo(PmsCodeUtil.getNextCode(dto.getProduceOrderNo() + PmsCodeUtil.SHORT_LINE, PmsCodeUtil.NUM_BIT_4, currentMaxNo++));
+            if (Objects.isNull(dto.getShelfId())) {
+                printModel.setShelfId(pmsProduceOrder.getDefaultShelfId());
+            }
+            if (Objects.isNull(dto.getWarehouseId())) {
+                printModel.setWarehouseId(pmsProduceOrder.getDefaultWarehouseId());
+            }
+            transactionTemplate.execute(status -> {
+                save(printModel);
+                return Boolean.TRUE;
+            });
+        } finally {
+            lock.unlock();
+        }
+        return printModel.getId();
     }
 
     @Override

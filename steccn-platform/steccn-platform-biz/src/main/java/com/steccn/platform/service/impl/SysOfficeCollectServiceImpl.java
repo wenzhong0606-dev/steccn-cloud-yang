@@ -104,6 +104,20 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
         }
         return resList;
     }
+
+    @Override
+    public SysOfficeCollectVO outCollect(Integer stationId) {
+        SysOfficeCollectVO res = null;
+        SysOfficeCollect one = getOne(new LambdaQueryWrapper<SysOfficeCollect>()
+                .eq(SysOfficeCollect::getOfficeId, stationId)
+                .eq(SysOfficeCollect::getOfficeType, 13)
+                .eq(SysOfficeCollect::getType, 1), false);
+        if (Objects.nonNull(one)) {
+            res = new SysOfficeCollectVO();
+            BeanUtils.copyProperties(one, res);
+        }
+        return res;
+    }
 }
 
 

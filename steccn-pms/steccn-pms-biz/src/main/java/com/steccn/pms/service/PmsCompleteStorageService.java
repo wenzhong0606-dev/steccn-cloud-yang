@@ -1,11 +1,13 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.CompleteStoragePageDTO;
 import com.steccn.pms.dto.CompleteStorageScanDTO;
+import com.steccn.pms.dto.ConnectLineStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
@@ -75,5 +77,10 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      */
     R<Boolean> completeStorageReviseStatue(String code,String confirmName);
 
-
+    /**
+     * 连线入库
+     * @param dto 请求参数
+     * @return 入库单编码
+     */
+    String connectLine(ConnectLineStorageDTO dto);
 }

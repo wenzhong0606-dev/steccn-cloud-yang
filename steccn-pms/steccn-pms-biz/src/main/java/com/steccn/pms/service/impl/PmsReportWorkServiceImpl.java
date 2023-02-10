@@ -21,11 +21,15 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.feign.RemoteSysOfficeCollectFeignApi;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeCollectVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
@@ -96,6 +100,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private PmsReportWorkConsumeService pmsReportWorkConsumeService;
     @Autowired
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+    @Autowired
+    private RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
+    @Autowired
+    private RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
 
     @Override
@@ -515,6 +523,22 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return resMap;
+    }
+
+    @Override
+    public BigDecimal preload(Integer stationId, LocalDateTime startTime, LocalDateTime endTime) {
+        BigDecimal res = null;
+        //根据工位id查询
+        SysOfficeCollectVO sysOfficeCollectVO = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.outCollect(stationId), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //如果采集点不为空
+        if (Objects.nonNull(sysOfficeCollectVO)) {
+            PmReportWorkPreloadDTO reportWorkPreloadDTO = new PmReportWorkPreloadDTO();
+            reportWorkPreloadDTO.setCode(sysOfficeCollectVO.getCode());
+            reportWorkPreloadDTO.setStartTime(startTime);
+            reportWorkPreloadDTO.setEndTime(endTime);
+            res = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(reportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        }
+        return res;
     }
 
     /**
