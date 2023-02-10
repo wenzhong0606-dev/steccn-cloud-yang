@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -66,7 +67,12 @@ public class ProcessReportWorkController {
     @ApiOperation("报工加工数预填")
     @PostMapping("/preload")
     public R<BigDecimal> preload(@Valid @RequestBody PmRwPreloadDTO dto) {
-        return R.success(pmsReportWorkService.preload(dto.getStationId(), dto.getStartTime(), dto.getEndTime()));
+        //不考虑秒数  只考虑时钟和分钟数
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime startTimeNew = LocalDateTime.of(startTime.toLocalDate(), LocalTime.of(startTime.getHour(), startTime.getMinute(), 0));
+        LocalDateTime endTime = dto.getEndTime();
+        LocalDateTime endTimeNew = LocalDateTime.of(endTime.toLocalDate(), LocalTime.of(endTime.getHour(), endTime.getMinute(), 0));
+        return R.success(pmsReportWorkService.preload(dto.getStationId(), startTimeNew, endTimeNew));
     }
 
     @ApiOperation("报工记录")
