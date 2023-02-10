@@ -64,4 +64,9 @@ public interface LockConstant {
      * 生成箱号
      */
     String TABLE_PMS_BARCODE_PRINT = "TABLE_PMS_BARCODE_PRINT";
+
+    /**
+     * 生成入库单号
+     */
+    String TABLE_PMS_COMPLETE_STORAGE = "TABLE_PMS_COMPLETE_STORAGE";
 }

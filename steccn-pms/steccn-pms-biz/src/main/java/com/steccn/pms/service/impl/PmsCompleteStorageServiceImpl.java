@@ -13,6 +13,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.vo.R;
@@ -23,17 +24,11 @@ import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
-import com.steccn.pms.domain.PmsBarcodePrint;
-import com.steccn.pms.domain.PmsCompleteStorage;
-import com.steccn.pms.domain.PmsCompleteStorageInfo;
-import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
-import com.steccn.pms.service.PmsBarcodePrintService;
-import com.steccn.pms.service.PmsCompleteStorageInfoService;
-import com.steccn.pms.service.PmsCompleteStorageService;
-import com.steccn.pms.service.PmsProduceOrderService;
+import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
@@ -43,8 +38,11 @@ import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
 import com.steccn.wms.vo.WmsMaterialShelfUpVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,17 +69,19 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Autowired
     private PmsProduceOrderService pmsProduceOrderService;
     @Autowired
+    private PmsWorkOrderBatchService pmsWorkOrderBatchService;
+    @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
-    private RemoteMessFeignApi remoteMessFeignApi;
-    @Autowired
     private RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
     @Autowired
     private RemoteWmsShelfStrategyFeignApi remoteWmsShelfStrategyFeignApi;
+    @Autowired
+    private RedissonClient redissonClient;
 
 
     @Override
@@ -123,10 +123,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             resDTO.setWarehouseName(orDefault.getWarehouseName());
             resDTO.setShelfName(orDefault.getShelfName());
         }
-//        HashSet<Integer> storageSet = Sets.newHashSet(pmsProduceOrder.getDefaultWarehouseId(), pmsProduceOrder.getDefaultShelfId());
-//        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet)).get();
-//        resDTO.setWarehouseName(sysOfficeMap.get(pmsProduceOrder.getDefaultWarehouseId()));
-//        resDTO.setShelfName(sysOfficeMap.get(pmsProduceOrder.getDefaultShelfId()));
         //5.箱状态
         resDTO.setCaseState(pmsBarcodePrint.getCaseState());
         //6.赋值主物料信息
@@ -141,11 +137,15 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String generate(List<CompleteStorageScanDTO> dtoList) {
+        //分布式锁 ，保证最大入库单号
+        //加锁
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
+        lock.lock();
+        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
         Assert.notEmpty(dtoList, "请选择箱子");
         //校验一箱货只能存在于一个入库单中
         Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
         Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
-
         //校验生产订单的产线是否相同不同，不可以创建入库单
         Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
         List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
@@ -158,84 +158,86 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(dtoList.size());
         //创建主表
         BigDecimal sumQuantity = BigDecimal.ZERO;
-        PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
         pmsCompleteStorage.setId(IdUtil.getSnowflake().nextId());
         pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
 
         Long produceOrderId = dtoList.get(0).getProduceOrderId();
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
         Assert.notNull(pmsProduceOrder, "生产订单不存在");
-        pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
-        List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
-
-        Set<Integer> storageSet = Sets.newHashSet();
-        List<Long> eqpList = Lists.newArrayList();
-        for (CompleteStorageScanDTO caseInfo : dtoList) {
-            storageSet.add(caseInfo.getWarehouseId());
-            storageSet.add(caseInfo.getShelfId());
-        }
-        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(storageSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
-
-        Map<Long, EqpSpareVO> eqpSpareVOMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(eqpList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
-
-        //获取箱信息
-        Map<String, PmsBarcodePrint> caseMap = pmsBarcodePrintService.caseMap(caseNoSet);
-        PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
-
-        WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
-
-        for (CompleteStorageScanDTO caseInfo : dtoList) {
-            PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
-            BeanUtils.copyProperties(caseInfo, modelInfo);
-            modelInfo.setCompleteStorageId(pmsCompleteStorage.getId());
-            modelInfo.setPackTime(caseInfo.getCreateTime());
-            sumQuantity = sumQuantity.add(caseInfo.getQuantity());
-
-            PmsBarcodePrint pmsBarcodePrint = caseMap.getOrDefault(modelInfo.getCaseNo(), defaultPmsBarcodePrint);
-            modelInfo.setClassesId(pmsBarcodePrint.getClassesId());
-            modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
-            modelInfoList.add(modelInfo);
-
-            WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
-            BeanUtils.copyProperties(caseInfo, wmsStorageReceiptInfoDTO);
-            wmsStorageReceiptInfoDTO.setQuantity(sumQuantity);
-            wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
-            wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
-            wmsStorageReceiptInfoDTO.setBatch("0");
-            wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
-            wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
-            materialList.add(wmsStorageReceiptInfoDTO);
-        }
-        completeStorageInfoService.saveBatch(modelInfoList);
-        //生成code 规则：SI-20220905-0001
-        pmsCompleteStorage.setCode(maxCompleteCode());
-        pmsCompleteStorage.setQuantity(sumQuantity);
-        pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
-
-        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        pmsCompleteStorage.setTypeId(sysDictVO.getId());
-        pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
-        save(pmsCompleteStorage);
-        //生成入库单
-
-        wmsStorageReceiptDTO.setType(sysDictVO.getId());
-        //仓库id
-        wmsStorageReceiptDTO.setList(materialList);
-        wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
         try {
-            Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-            //入库必定要成功
-            if (!aBoolean) {
-                log.info("入库单 -> 失败");
+            pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
+            List<WmsStorageReceiptInfoDTO> materialList = Lists.newArrayList();
+
+            Set<Integer> storageSet = Sets.newHashSet();
+            for (CompleteStorageScanDTO caseInfo : dtoList) {
+                storageSet.add(caseInfo.getWarehouseId());
+                storageSet.add(caseInfo.getShelfId());
             }
+            Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(storageSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
+
+            //获取箱信息
+            Map<String, PmsBarcodePrint> caseMap = pmsBarcodePrintService.caseMap(caseNoSet);
+            PmsBarcodePrint defaultPmsBarcodePrint = new PmsBarcodePrint();
+
+            WmsStorageReceiptDTO wmsStorageReceiptDTO = new WmsStorageReceiptDTO();
+
+            for (CompleteStorageScanDTO caseInfo : dtoList) {
+                PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
+                BeanUtils.copyProperties(caseInfo, modelInfo);
+                modelInfo.setCompleteStorageId(pmsCompleteStorage.getId());
+                modelInfo.setPackTime(caseInfo.getCreateTime());
+                sumQuantity = sumQuantity.add(caseInfo.getQuantity());
+
+                PmsBarcodePrint pmsBarcodePrint = caseMap.getOrDefault(modelInfo.getCaseNo(), defaultPmsBarcodePrint);
+                modelInfo.setClassesId(pmsBarcodePrint.getClassesId());
+                modelInfo.setClassGroupId(pmsBarcodePrint.getClassGroupId());
+                modelInfoList.add(modelInfo);
+
+                WmsStorageReceiptInfoDTO wmsStorageReceiptInfoDTO = new WmsStorageReceiptInfoDTO();
+                BeanUtils.copyProperties(caseInfo, wmsStorageReceiptInfoDTO);
+                wmsStorageReceiptInfoDTO.setQuantity(sumQuantity);
+                wmsStorageReceiptInfoDTO.setUnit(caseInfo.getUnitId());
+                wmsStorageReceiptInfoDTO.setShelfCode(sysOfficeVOMap.getOrDefault(caseInfo.getShelfId(), defaultSysOfficeVO).getOfficeCode());
+                wmsStorageReceiptInfoDTO.setBatch("0");
+                wmsStorageReceiptDTO.setWarehouseId(caseInfo.getWarehouseId());
+                wmsStorageReceiptDTO.setWarehouseName(sysOfficeVOMap.getOrDefault(caseInfo.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
+                materialList.add(wmsStorageReceiptInfoDTO);
+            }
+            completeStorageInfoService.saveBatch(modelInfoList);
+            //生成code 规则：SI-20220905-0001
+            pmsCompleteStorage.setCode(maxCompleteCode());
+            pmsCompleteStorage.setQuantity(sumQuantity);
+            pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
+
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            pmsCompleteStorage.setTypeId(sysDictVO.getId());
+            pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+            save(pmsCompleteStorage);
+            //生成入库单
+
+            wmsStorageReceiptDTO.setType(sysDictVO.getId());
+            //仓库id
+            wmsStorageReceiptDTO.setList(materialList);
+            wmsStorageReceiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+            try {
+                Boolean aBoolean = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateInStorageVoucher(wmsStorageReceiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+                //入库必定要成功
+                if (!aBoolean) {
+                    log.info("入库单 -> 失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("入库单创建失败");
+            }
+            //箱状态修改成待入库
+            pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet), PmManagerConstant.CaseStateEnum.PREPARE.getCode());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             throw new BusinessException("入库单创建失败");
+        } finally {
+            lock.unlock();
         }
-        //箱状态修改成待入库
-        pmsBarcodePrintService.reviseAlreadyPutInStatue(Lists.newArrayList(caseNoSet), PmManagerConstant.CaseStateEnum.PREPARE.getCode());
         return pmsCompleteStorage.getCode();
     }
 
@@ -413,6 +415,36 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         List<String> caseNoList = completeStorageInfoService.getCaseNo(getOneCompleteStorage.getId());
         pmsBarcodePrintService.reviseAlreadyPutInStatue(caseNoList, PmManagerConstant.CaseStateEnum.ALREADY.getCode());
         return R.success(true);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String connectLine(ConnectLineStorageDTO dto) {
+        //先校验生产订单是否存在
+        PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
+        //校验批次是否存在，且是当前订单的当前批次
+        PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getById(dto.getBatch());
+        Assert.isTrue(pmsProduceOrder.getId().equals(pmsWorkOrderBatch.getProduceOrderId()) && MpConstant.YES.equals(pmsWorkOrderBatch.getCurrentBatchFlag()),"批次信息异常");
+        //根据货架查询仓库
+        Map<Integer, SysOfficeVO> warehouseMap = FeignOptional.of(() -> remoteOfficeFeign.getParentOfficeMap(Lists.newArrayList(dto.getShelfId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysOfficeVO warehouse = warehouseMap.getOrDefault(dto.getShelfId(), new SysOfficeVO());
+        Assert.notNull(warehouse, "仓库不存在");
+        //生成箱信息
+        BarcodePrintDTO barcodePrint = new BarcodePrintDTO();
+        BeanUtils.copyProperties(dto, barcodePrint);
+        barcodePrint.setMaterialId(pmsProduceOrder.getMaterialId());
+        barcodePrint.setBatchNo(pmsWorkOrderBatch.getCode());
+        barcodePrint.setPrintNumber(1);
+        barcodePrint.setPrintStrip(1);
+        barcodePrint.setProduceOrderNo(pmsProduceOrder.getCode());
+        barcodePrint.setProductionLine(pmsProduceOrder.getProductionLineId());
+        barcodePrint.setWarehouseId(warehouse.getId());
+        Boolean printFlag = pmsBarcodePrintService.print(barcodePrint);
+        //生成入库单信息
+        List<CompleteStorageScanDTO> dtoList = Lists.newArrayList();
+        String generate = generate(dtoList);
+        return generate;
     }
 
     /**
