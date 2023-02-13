@@ -3,6 +3,8 @@ package com.steccn.oa.dto;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * 请求oa后台apiToken返回值
  *
@@ -11,7 +13,7 @@ import lombok.Data;
  */
 @Data
 @ApiModel("oaApiToken返回值")
-public class OaApiTokenResult {
+public class OaApiTokenResult implements Serializable {
     /**
      * 状态 true表示正常 false表示错误
      */

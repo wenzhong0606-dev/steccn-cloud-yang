@@ -1,36 +1,30 @@
 package com.steccn.common;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.util.ReflectionUtils;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author yequan
  */
 @Configuration
-public class RedisConfig {
+public class RedisConfig extends CachingConfigurerSupport {
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -44,6 +38,11 @@ public class RedisConfig {
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
+
         jackson2JsonRedisSerializer.setObjectMapper(objectMapper);
         redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
         redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
@@ -58,32 +57,33 @@ public class RedisConfig {
                 //默认设置过期时间为30分钟
                 .entryTtl(Duration.ofMinutes(30))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisTemplate.getValueSerializer()));
-        TtlRedisCacheManager ttlRedisCacheManager = new TtlRedisCacheManager(redisCacheWriter, redisCacheConfiguration, buildInitCaches());
+        TtlRedisCacheManager ttlRedisCacheManager = new TtlRedisCacheManager(redisCacheWriter, redisCacheConfiguration);
         return ttlRedisCacheManager;
     }
 
     /**
      * 构建基础缓存
+     *
      * @return
      */
-    private Map<String, RedisCacheConfiguration> buildInitCaches() {
-        HashMap<String, RedisCacheConfiguration> cacheConfigMap = new HashMap<>();
-        Arrays.stream(applicationContext.getBeanNamesForType(Object.class))
-                .map(applicationContext::getType).filter(Objects::nonNull)
-                .forEach(clazz -> {
-                            ReflectionUtils.doWithMethods(clazz, method -> {
-                                ReflectionUtils.makeAccessible(method);
-                                Cacheable cacheable = AnnotationUtils.findAnnotation(method, Cacheable.class);
-                                if (Objects.nonNull(cacheable)) {
-                                    for (String cache : cacheable.cacheNames()) {
-                                        RedisSerializationContext.SerializationPair<Object> sp = RedisSerializationContext.SerializationPair
-                                                .fromSerializer(new JacksonRedisSerializer<>(method.getGenericReturnType()));
-                                        cacheConfigMap.put(cache, RedisCacheConfiguration.defaultCacheConfig().serializeValuesWith(sp));
-                                    }
-                                }
-                            });
-                        }
-                );
-        return cacheConfigMap;
-    }
+//    private Map<String, RedisCacheConfiguration> buildInitCaches() {
+//        HashMap<String, RedisCacheConfiguration> cacheConfigMap = new HashMap<>();
+//        Arrays.stream(applicationContext.getBeanNamesForType(Object.class))
+//                .map(applicationContext::getType).filter(Objects::nonNull)
+//                .forEach(clazz -> {
+//                            ReflectionUtils.doWithMethods(clazz, method -> {
+//                                ReflectionUtils.makeAccessible(method);
+//                                Cacheable cacheable = AnnotationUtils.findAnnotation(method, Cacheable.class);
+//                                if (Objects.nonNull(cacheable)) {
+//                                    for (String cache : cacheable.cacheNames()) {
+//                                        RedisSerializationContext.SerializationPair<Object> sp = RedisSerializationContext.SerializationPair
+//                                                .fromSerializer(new JacksonRedisSerializer<>(method.getGenericReturnType()));
+//                                        cacheConfigMap.put(cache, RedisCacheConfiguration.defaultCacheConfig().serializeValuesWith(sp));
+//                                    }
+//                                }
+//                            });
+//                        }
+//                );
+//        return cacheConfigMap;
+//    }
 }

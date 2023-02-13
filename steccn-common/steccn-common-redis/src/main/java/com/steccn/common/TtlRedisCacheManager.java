@@ -20,8 +20,8 @@ public class TtlRedisCacheManager extends RedisCacheManager {
 
     Random random = new Random();
     
-    public TtlRedisCacheManager(RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration , Map<String, RedisCacheConfiguration> map) {
-        super(cacheWriter, defaultCacheConfiguration, map);
+    public TtlRedisCacheManager(RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration) {
+        super(cacheWriter, defaultCacheConfiguration);
     }
 
     /**
