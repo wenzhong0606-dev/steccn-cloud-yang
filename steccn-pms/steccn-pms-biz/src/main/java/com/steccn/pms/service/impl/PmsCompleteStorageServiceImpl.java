@@ -31,6 +31,7 @@ import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.wms.dto.WmsStorageAffirmDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
@@ -418,7 +419,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String connectLine(ConnectLineStorageDTO dto) {
         //先校验生产订单是否存在
         PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(dto.getProduceOrderId());
@@ -455,6 +455,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         scanDTO.setShelfName(shelf.getOfficeName());
         scanDtoList.add(scanDTO);
         String generate = generate(scanDtoList);
+        //调用确认入库单接口
+        PmsCompleteStorage pmsCompleteStorage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getCode, generate), false);
+        Assert.notNull(pmsCompleteStorage, "入库单为空");
+        WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+        receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
+        FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return generate;
     }
 
