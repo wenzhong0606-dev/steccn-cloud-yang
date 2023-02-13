@@ -143,4 +143,9 @@ public class OaController {
     public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode){
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
+
+    @GetMapping("/user/test")
+    public R<OaApiTokenResult> getIdByWorkCode(){
+        return R.success(oaService.getApiToken());
+    }
 }

@@ -34,4 +34,10 @@ public class SysOfficeCollectFeignController {
     R<List<SysOfficeCollectVO>> listOnlyStation(@RequestParam("type") Integer type) {
         return R.success(sysOfficeCollectService.listOnlyStation(type));
     }
+
+    @GetMapping("/station/out")
+    @ApiOperation("获取工位的出站采集点")
+    R<SysOfficeCollectVO> outCollect(@RequestParam("stationId") Integer stationId){
+        return R.success(sysOfficeCollectService.outCollect(stationId));
+    }
 }

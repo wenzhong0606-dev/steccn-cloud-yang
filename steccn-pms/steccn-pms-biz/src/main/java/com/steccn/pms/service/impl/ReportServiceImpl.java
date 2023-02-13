@@ -76,6 +76,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
         //type data 0  line 1 workshop 2 total 3
+        //类型 数据0 产线1 车间2 合计3
         List<SubstrateDataListVO> defaultSubstrateDataListVOList = Lists.newArrayList();
         SubstrateDataListVO defaultSubstrateDataListVO = new SubstrateDataListVO();
 
@@ -89,7 +90,6 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
         Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
-
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
@@ -185,11 +185,11 @@ public class ReportServiceImpl implements ReportService {
                             BigDecimalUtil.accumulate(countMap2, 5, bigDecimal4);
                         }
                     }
+                    //1，2代表不同的单位转换
                     BigDecimal m1 = unitConvert(unitList, unitConvertMap, materialId, inCount, 2);
                     BigDecimal m2 = unitConvert(unitList, unitConvertMap, materialId, inCount, 1);
                     BigDecimal m3 = unitConvert(unitList, unitConvertMap, materialId, proCount, 2);
                     BigDecimal m4 = unitConvert(unitList, unitConvertMap, materialId, proCount, 1);
-
                     BigDecimalUtil.accumulate(countMap3, 0, inCount);
                     BigDecimalUtil.accumulate(countMap3, 1, m1);
                     BigDecimalUtil.accumulate(countMap3, 2, m2);
@@ -221,8 +221,9 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setTotal(valueStr(countMap3));
                 rowTotal.setSpecList(Arrays.asList("合计", "合计", "合计"));
                 productLineVOList.add(rowTotal);
-                //插入总量[-1]，拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
+                //插入产量总量[-1]，入库总量[-2]，拉引量，合格率，耗水量，耗电量，耗油量，单耗(kcal/Kg玻璃液)
                 BigDecimalUtil.accumulate(workshopCountMap, -1, countMap3.get(5));
+                BigDecimalUtil.accumulate(workshopCountMap, -2, countMap3.get(2));
                 addProductLineOther(countMap1, countMap2, dto, classList, productLine, productLineVOList, workshopCountMap);
             }
             //添加车间库存
@@ -233,6 +234,7 @@ public class ReportServiceImpl implements ReportService {
             }
             //计算合格率
             BigDecimalUtil.accumulate(allCountMap,-1,workshopCountMap.get(-1));
+            BigDecimalUtil.accumulate(allCountMap,-2,workshopCountMap.get(-2));
         });
         //最后一个总计
         addAllOther(productLineVOList, allCountMap);
@@ -391,10 +393,14 @@ public class ReportServiceImpl implements ReportService {
             Integer idx = consumeEnum.getCode();
             SubstrateDayReportListVO subVo = rowData(new SysOfficeVO(), Arrays.asList(allCountMap.get(idx), allCountMap.get(idx), allCountMap.get(idx)), consumeEnum.getName());
             if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
-                //合格率需要重新算
+                //产量合格率需要重新算
                 BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1),BigDecimalUtil.HUNDRED), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
-            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
+            }else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+                //入库合格率需要重新算
+                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-2),BigDecimalUtil.HUNDRED), allCountMap.get(0));
+                subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
+            }else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
                 //单耗(kcal/Kg玻璃液) 需要重新计算
                 BigDecimal oil = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
                 BigDecimal gas = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
@@ -425,7 +431,11 @@ public class ReportServiceImpl implements ReportService {
                 //合格率需要重新计算
                 BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-1), BigDecimalUtil.HUNDRED), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate, rate, rate), consumeEnum.getName());
-            }else if(PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())){
+            } else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+                //合格率需要重新计算
+                BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-2), BigDecimalUtil.HUNDRED), workshopCountMap.get(0));
+                subVo = rowData(productLine, Arrays.asList(rate, rate, rate), consumeEnum.getName());
+            } else if(PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())){
                 //单耗(kcal/Kg玻璃液)需要重新计算
                 BigDecimal oil = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
                 BigDecimal gas = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
@@ -479,23 +489,27 @@ public class ReportServiceImpl implements ReportService {
         productLineVOList.add(lyl);
         BigDecimalUtil.accumulate(workshopCountMap, 0, morningBigDecimal.add(nightBigDecimal));
 
-        //合格率：根据当日当班产量(t)/拉引量计算，按百分比显示
-//        Map<Long, PmsReportWork> pmsReportWorkMap = pmsReportWorkService.dateProductNum(productLine.getId(), dto.getDate());
-//        PmsReportWork defaultPmsReportWork = new PmsReportWork();
-//        PmsReportWork morningPms = pmsReportWorkMap.getOrDefault(classList.get(0).getId(), defaultPmsReportWork);
-//        PmsReportWork nightPms = pmsReportWorkMap.getOrDefault(classList.get(1).getId(), defaultPmsReportWork);
-
         BigDecimal dayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(5));
         BigDecimal nightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(5));
         BigDecimal morningRate = BigDecimalUtil.divide(dayPq, morningBigDecimal);
         BigDecimal nightRate = BigDecimalUtil.divide(nightPq, nightBigDecimal);
-        //产线的合格率
+        //产量的合格率
         BigDecimal sumNum = BigDecimalUtil.add(countMap1.get(5), countMap2.get(5));
         BigDecimal rateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), sum);
-        SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "合格率(%)");
+        SubstrateDayReportListVO rateVo = rowData(productLine, Arrays.asList(morningRate, nightRate, rateSum), "产量合格率(%)");
         BigDecimalUtil.accumulate(workshopCountMap, 1, morningRate.add(nightRate));
 
+        BigDecimal inDayPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap1.get(2));
+        BigDecimal inNightPq = BigDecimalUtil.multiply(BigDecimalUtil.HUNDRED, countMap2.get(2));
+        BigDecimal inMorningRate = BigDecimalUtil.divide(inDayPq, morningBigDecimal);
+        BigDecimal inNightRate = BigDecimalUtil.divide(inNightPq, nightBigDecimal);
+        //产量的合格率
+        BigDecimal inSumNum = BigDecimalUtil.add(countMap1.get(2), countMap2.get(2));
+        BigDecimal inRateSum = BigDecimalUtil.divide(BigDecimalUtil.multiply(sumNum, BigDecimalUtil.HUNDRED), inSumNum);
+        SubstrateDayReportListVO inRateVo = rowData(productLine, Arrays.asList(inMorningRate, inNightRate, inRateSum), "入库合格率(%)");
+        BigDecimalUtil.accumulate(workshopCountMap, 7, morningRate.add(nightRate));
         productLineVOList.add(rateVo);
+        productLineVOList.add(inRateVo);
         //0耗电量 1耗水量 2耗气量 3耗油量
         List<SubstrateDayReportListVO> energyList = pmsReportWorkConsumeService.substrateEnergy(dto, classList, productLine, workshopCountMap);
 

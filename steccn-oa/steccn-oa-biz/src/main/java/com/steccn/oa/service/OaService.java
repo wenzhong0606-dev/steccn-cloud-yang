@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaCompanyVO;
@@ -20,6 +21,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -102,6 +104,7 @@ public class OaService {
      * 获取请求oa后台apiToken
      * @return OaApiTokenResult
      */
+    @Cacheable(cacheNames = "OaToken#1500",unless = "#result.status == false")
     public OaApiTokenResult getApiToken(){
         MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
         headers.set("appid",OaConstant.OA_API_APPID);

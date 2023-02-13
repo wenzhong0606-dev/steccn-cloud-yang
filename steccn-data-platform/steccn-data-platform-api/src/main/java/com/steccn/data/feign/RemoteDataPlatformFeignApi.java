@@ -4,6 +4,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
@@ -14,6 +15,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,4 +70,14 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/platform/defect")
     @ApiOperation("质量管理-缺陷项")
     R<List<DwDefectCollectVO>> collectDetail(@RequestBody TripleDTO<LocalDateTime, LocalDateTime, Set<String>> dto);
+
+    /**
+     * 生产管理-报工数值预填
+     *
+     * @param dto dto
+     * @return 预填数值
+     */
+    @PostMapping("/feign/data/platform/report/work/preload")
+    @ApiOperation("生产管理-报工数值预填")
+    R<BigDecimal> preload(@RequestBody PmReportWorkPreloadDTO dto);
 }

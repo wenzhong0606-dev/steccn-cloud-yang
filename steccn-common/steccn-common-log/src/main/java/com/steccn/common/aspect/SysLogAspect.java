@@ -7,6 +7,7 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.LogTypeEnum;
 import com.steccn.common.event.SysLogEvent;
@@ -75,8 +76,12 @@ public class SysLogAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects
                 .requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
         SysLogDTO sysLog = new SysLogDTO();
-        sysLog.setCreateName(SecurityUtils.getUser().getName());
-        sysLog.setCreateBy(SecurityUtils.getUser().getUserId());
+        SteccnUser user = SecurityUtils.getUser();
+        //白名单接口 是匿名类
+        if (Objects.nonNull(user)) {
+            sysLog.setCreateName(user.getName());
+            sysLog.setCreateBy(user.getUserId());
+        }
         sysLog.setCreateTime(LocalDateTime.now());
         sysLog.setType(LogTypeEnum.NORMAL.getType());
         sysLog.setRemoteAddr(ServletUtil.getClientIP(request));

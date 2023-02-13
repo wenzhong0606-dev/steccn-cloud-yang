@@ -1,15 +1,15 @@
 package com.steccn.data.controller.feign;
 
 import com.steccn.common.dto.TripleDTO;
-import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.service.QtDefectCollectService;
 import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.vo.DwStationCollectVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,14 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.LocalDateTime;
-
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Set;
 
 /**
@@ -66,4 +62,9 @@ public class DataPlatformFeignController {
         return R.success(qtDefectCollectService.collectDetail(tripleDTO.getField1(), tripleDTO.getField2(), tripleDTO.getField3()));
     }
 
+    @PostMapping("/report/work/preload")
+    @ApiOperation("生产管理-报工数值预填")
+    R<BigDecimal> preload(@RequestBody PmReportWorkPreloadDTO dto) {
+        return R.success(pmStationCollectService.rwPreLoad(dto));
+    }
 }

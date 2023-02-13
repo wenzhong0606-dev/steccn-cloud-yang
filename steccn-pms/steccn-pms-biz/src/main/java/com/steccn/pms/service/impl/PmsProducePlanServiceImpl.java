@@ -423,6 +423,7 @@ public class PmsProducePlanServiceImpl extends ServiceImpl<PmsProducePlanMapper,
             //1.获取需要下达的物料计划数据
             List<PmsProducePlan> list = list(new LambdaQueryWrapper<PmsProducePlan>()
                     .in(PmsProducePlan::getMaterialId, dto.getMaterialIds())
+                    .notIn(PmsProducePlan::getQuantity,BigDecimal.ZERO)
                     .between(PmsProducePlan::getPlanDate, dto.getFirstDay(), dto.getLastDay()));
             Map<Long, List<PmsProducePlan>> collect = list.stream().collect(Collectors.groupingBy(PmsProducePlan::getMaterialId));
             Set<String> codes = Sets.newHashSet();
