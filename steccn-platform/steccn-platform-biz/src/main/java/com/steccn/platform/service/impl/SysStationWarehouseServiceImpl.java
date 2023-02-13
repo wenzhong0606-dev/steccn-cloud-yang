@@ -116,6 +116,7 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
                 Set<Integer> officeId = Sets.newHashSet();
                 dtoList.forEach(sysStationWarehouseVO -> {
                     officeId.add(sysStationWarehouseVO.getShelfId());
+                    officeId.add(sysStationWarehouseVO.getWarehouseId());
                 });
                 resMap = dtoList.stream().collect(Collectors.groupingBy(SysStationWarehouseVO::getStationId));
                 //处理数据，获取编码
@@ -127,6 +128,8 @@ public class SysStationWarehouseServiceImpl extends ServiceImpl<SysStationWareho
                                 SysOfficeVO orDefault = officeVOMap.getOrDefault(sysStationWarehouseVO.getShelfId(), sysOfficeVO);
                                 sysStationWarehouseVO.setShelfCode(orDefault.getOfficeCode());
                                 sysStationWarehouseVO.setShelfName(orDefault.getOfficeName());
+                                SysOfficeVO warehouse = officeVOMap.getOrDefault(sysStationWarehouseVO.getWarehouseId(), sysOfficeVO);
+                                sysStationWarehouseVO.setWarehouseName(warehouse.getOfficeName());
                             }
                     );
                 });
