@@ -1,6 +1,7 @@
 package com.steccn.platform.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysOfficeCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysOfficeCollectAddDTO;
@@ -46,4 +47,11 @@ public interface SysOfficeCollectService extends IService<SysOfficeCollect> {
      * @return
      */
     List<SysOfficeCollectVO> listOnlyStation(Integer type);
+
+    /**
+     * 获取工位的出站采集点
+     * @param stationId 工位id
+     * @return 出站采集点
+     */
+    SysOfficeCollectVO outCollect(Integer stationId);
 }

@@ -1,6 +1,8 @@
 package com.steccn.platform.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
@@ -17,6 +19,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -35,6 +39,13 @@ public class SysStationWarehouseController {
     @ApiOperation("工位配置列表")
     public R<Page<SysStationWarehouseVO>> pageList(@RequestBody SysStationWarehouseDTO dto) {
         return R.success(sysStationWarehouseService.pageList(dto));
+    }
+
+    @GetMapping("/line/side/{stationId}")
+    @ApiOperation("根据工位id获取线边仓")
+    public R<List<SysStationWarehouseVO>> lineSide(@PathVariable("stationId") Integer stationId) {
+        Map<Integer, List<SysStationWarehouseVO>> resMap = sysStationWarehouseService.listByStationIds(Sets.newHashSet(stationId));
+        return R.success(resMap.getOrDefault(stationId, Lists.newArrayList()));
     }
 
     @SysLog("新增工位配置")

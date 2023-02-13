@@ -6,10 +6,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
-import com.steccn.pms.dto.CompleteStoragePageDTO;
-import com.steccn.pms.dto.CompleteStorageScanDTO;
-import com.steccn.pms.dto.MessInStorageVoucherDTO;
-import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
@@ -50,6 +47,13 @@ public class CompleteStorageController {
             throw new BusinessException("请选择箱子");
         }
         return R.success(pmsCompleteStorageService.generate(validList.getList()));
+    }
+
+    @PostMapping("/connect/line")
+    @ApiOperation("连线入库")
+    @SysLog("连线入库")
+    public R<String> connectLine(@Valid @RequestBody ConnectLineStorageDTO dto) {
+        return R.success(pmsCompleteStorageService.connectLine(dto));
     }
 
     @PostMapping("/page")

@@ -1,5 +1,6 @@
 package com.steccn.wms.feign;
 
+import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.FeignConstant;
 
 import com.steccn.common.valid.InsertGroup;
@@ -12,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -94,6 +96,9 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/delivery/add")
     R<Boolean> generateOutStorageVoucher(@Validated(InsertGroup.class) @RequestBody WmsDeliveryReceiptDTO dto);
 
+    @ApiOperation("入库凭证确认")
+    @PutMapping("/wms/storage/receipt/affirm/code")
+    R<Boolean> affirm(@RequestBody WmsStorageReceiptDTO dto);
 
     /**
      * 获取箱子位置

@@ -64,4 +64,10 @@ public class BarcodePrintDTO implements Serializable {
 
     @ApiModelProperty("班组id")
     private Long classGroupId;
+
+    @ApiModelProperty("仓库id")
+    private Integer warehouseId;
+
+    @ApiModelProperty("货架id")
+    private Integer shelfId;
 }

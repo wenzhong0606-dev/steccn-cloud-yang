@@ -1,6 +1,7 @@
 package com.steccn.wms.controller;
 
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.valid.InsertGroup;
@@ -8,6 +9,7 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.pms.vo.ProducePlanImportVO;
+import com.steccn.wms.domain.WmsStorageReceipt;
 import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
@@ -24,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * 入库凭证控制器
@@ -66,6 +69,15 @@ public class WmsStorageReceiptController {
     public R<Boolean> affirm(@RequestBody WmsStorageReceiptDTO dto) {
         Assert.notNull(dto.getId(), "入库凭证id不能为空");
         return R.success(wmsStorageReceiptService.affirm(dto.getId()));
+    }
+
+    @ApiOperation("入库凭证确认")
+    @PutMapping("/affirm/code")
+    @SysLog("入库凭证确认")
+    public R<Boolean> affirmByCode(@RequestBody WmsStorageReceiptDTO dto) {
+        WmsStorageReceipt one = wmsStorageReceiptService.getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, dto.getCode()), false);
+        Assert.notNull(one, "入库单不存在");
+        return R.success(wmsStorageReceiptService.affirm(one.getId()));
     }
 
     @ApiOperation("入库凭证删除")

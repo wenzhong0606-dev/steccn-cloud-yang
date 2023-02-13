@@ -1,10 +1,13 @@
 package com.steccn.data.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.data.domain.PmStationCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.vo.DwStationCollectVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -20,4 +23,11 @@ public interface PmStationCollectService extends IService<PmStationCollect> {
      * @return
      */
     List<DwStationCollectVO> stationCollect(DwStationCollectDTO dto);
+
+    /**
+     * 生产报工-加工总数预填
+     * @param dto dto
+     * @return
+     */
+    BigDecimal rwPreLoad(PmReportWorkPreloadDTO dto);
 }
