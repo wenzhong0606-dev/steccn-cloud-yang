@@ -52,6 +52,13 @@ public class MaterialRequisitionVO implements Serializable {
     @ApiModelProperty("类型名称")
     private String typeName;
 
+
+    @ApiModelProperty("确认人名称")
+    private String affirmName;
+
+    @ApiModelProperty("确认人时间")
+    private LocalDateTime affirmTime;
+
     @ApiModelProperty("创建人名称")
     private String createName;
 
