@@ -17,6 +17,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -67,6 +68,7 @@ public class SysOfficeController {
      */
     @PostMapping("/warehouse")
     @ApiOperation("根据机构类型查询下拉选项树结构")
+    //@PreAuthorize("hasAnyAuthority('admin1')")
     public R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList) {
         return R.success(sysOfficeService.warehouseAndShelf(typeList));
     }

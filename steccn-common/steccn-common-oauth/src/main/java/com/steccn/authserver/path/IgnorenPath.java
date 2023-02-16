@@ -22,6 +22,7 @@ public class IgnorenPath {
         igpath.add("/webjars/**");
         igpath.add("/api-docs-ext");
         igpath.add("/api-docs");
+        igpath.add("/v3/api-docs");
         igpath.add("/swagger-ui.html");
         igpath.add("/swagger-resources/**");
         igpath.add("/actuator/**");
