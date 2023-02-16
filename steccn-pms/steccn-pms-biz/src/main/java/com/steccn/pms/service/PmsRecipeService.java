@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.steccn.pms.domain.PmsRecipe;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.vo.PmsRecipeVO;
 
 /**
 * @author yequan
@@ -9,5 +10,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2023-02-16 10:58:09
 */
 public interface PmsRecipeService extends IService<PmsRecipe> {
-
+    /**
+     * 获取配方单详情
+     * @param id
+     * @return
+     */
+    PmsRecipeVO getPmsRecipeVO(Long id);
 }
