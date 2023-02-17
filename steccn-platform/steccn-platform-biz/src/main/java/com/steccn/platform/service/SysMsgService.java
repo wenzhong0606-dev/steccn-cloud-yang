@@ -1,7 +1,9 @@
 package com.steccn.platform.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysMsg;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysMsgSendDTO;
 
 /**
 * @author yequan
@@ -10,4 +12,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysMsgService extends IService<SysMsg> {
 
+    /**
+     * 发送消息
+     * @param sysMsgDTO 消息实体
+     * @return 是否成功
+     */
+    Boolean sendMsg(SysMsgSendDTO sysMsgDTO);
 }

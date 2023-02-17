@@ -4,19 +4,21 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 用户接收消息表
+ *
  * @TableName sys_msg_user
  */
-@TableName(value ="sys_msg_user")
+@TableName(value = "sys_msg_user")
 @Data
 public class SysMsgUser implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
