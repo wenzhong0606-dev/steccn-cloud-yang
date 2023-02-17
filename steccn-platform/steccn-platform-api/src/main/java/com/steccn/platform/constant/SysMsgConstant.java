@@ -1,8 +1,11 @@
 package com.steccn.platform.constant;
 
+import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.List;
 
 
 /**
@@ -18,7 +21,7 @@ public interface SysMsgConstant {
     @Getter
     @AllArgsConstructor
     enum MsgCategoryEnum {
-        All(-1, "全部"),
+        ALL(-1, "全部"),
         TO_BE_DO(0, "待办待阅"),
         SYS_REMIND(1, "系统提醒");
         private Integer code;
@@ -38,5 +41,22 @@ public interface SysMsgConstant {
         private Integer code;
         private String name;
         private Integer category;
+
+        /**
+         * 根据大类别 查询小分类id集合
+         *
+         * @param category 大类别id
+         * @return
+         */
+        public static List<Integer> codeList(Integer category) {
+            List<Integer> resList = Lists.newArrayList();
+            for (MsgTypeEnum value : MsgTypeEnum.values()) {
+                //如果类别相同，或者类别为全部
+                if (value.getCategory().equals(category) || SysMsgConstant.MsgCategoryEnum.ALL.getCode().equals(category)) {
+                    resList.add(value.getCode());
+                }
+            }
+            return resList;
+        }
     }
 }

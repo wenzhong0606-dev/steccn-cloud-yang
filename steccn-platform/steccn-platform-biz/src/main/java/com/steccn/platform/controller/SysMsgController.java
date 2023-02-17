@@ -40,7 +40,7 @@ public class SysMsgController {
     @GetMapping("/tab")
     @ApiOperation("获取tab集合")
     public R<List<SysMsgTabVO>> tab() {
-        return R.success();
+        return R.success(sysMsgService.tab());
     }
 
     @SysLog("读取消息")

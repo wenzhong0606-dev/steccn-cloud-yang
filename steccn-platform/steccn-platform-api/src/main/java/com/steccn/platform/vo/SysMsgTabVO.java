@@ -17,5 +17,5 @@ public class SysMsgTabVO implements Serializable {
     private String name;
 
     @ApiModelProperty("数量")
-    private Long count;
+    private Integer count;
 }

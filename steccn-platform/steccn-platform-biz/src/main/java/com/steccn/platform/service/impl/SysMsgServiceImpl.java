@@ -1,18 +1,22 @@
 package com.steccn.platform.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
+import com.steccn.platform.vo.SysMsgTabVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -50,6 +54,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             sysMsgUser.setReadFlag(MpConstant.NO);
             msgUserList.add(sysMsgUser);
         });
+        save(msg);
         sysMsgUserService.saveBatch(msgUserList);
         return Boolean.TRUE;
     }
@@ -64,5 +69,38 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                 .in(SysMsgUser::getMsgId, msgIdList)
                 .eq(SysMsgUser::getUserId, SecurityUtils.getUser().getUserId());
         return sysMsgUserService.update(updateWrapper);
+    }
+
+    @Override
+    public List<SysMsgTabVO> tab() {
+        //获取所有的分类
+        SysMsgConstant.MsgCategoryEnum[] categoryEnums = SysMsgConstant.MsgCategoryEnum.values();
+        List<SysMsgTabVO> resList = Lists.newArrayList();
+        //遍历所有大类
+        for (SysMsgConstant.MsgCategoryEnum categoryEnum : categoryEnums) {
+            SysMsgTabVO sysMsgTabVO = new SysMsgTabVO();
+            sysMsgTabVO.setType(categoryEnum.getCode());
+            sysMsgTabVO.setName(categoryEnum.getName());
+            sysMsgTabVO.setCount(tabCount(categoryEnum.getCode()));
+            resList.add(sysMsgTabVO);
+        }
+        return resList;
+    }
+
+    /**
+     * 根据大类型查询tab的条数
+     *
+     * @param category 大类
+     * @return
+     */
+    private Integer tabCount(Integer category) {
+        Integer resCount = 0;
+        //根据大类获取小类型
+        List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(category);
+        if (CollUtil.isNotEmpty(typeList)) {
+            //根据小类型，查询数量
+            resCount = baseMapper.tabCount(typeList, SecurityUtils.getUser().getUserId());
+        }
+        return resCount;
     }
 }

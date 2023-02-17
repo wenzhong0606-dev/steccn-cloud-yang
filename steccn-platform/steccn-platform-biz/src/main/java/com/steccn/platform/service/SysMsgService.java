@@ -4,6 +4,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysMsg;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.vo.SysMsgTabVO;
 
 import java.util.List;
 
@@ -29,4 +30,11 @@ public interface SysMsgService extends IService<SysMsg> {
      * @return 是否成功
      */
     Boolean read(List<Long> msgIdList);
+
+    /**
+     * 获取tab集合
+     *
+     * @return
+     */
+    List<SysMsgTabVO> tab();
 }
