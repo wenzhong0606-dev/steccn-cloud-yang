@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @desc 用户消息中心
@@ -24,5 +25,5 @@ public class SysMsgSendDTO implements Serializable {
     private String content;
 
     @ApiModelProperty("接收用户集合")
-    private List<Long> userList;
+    private Set<Long> userList;
 }

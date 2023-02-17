@@ -5,6 +5,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
 import io.swagger.annotations.Api;
@@ -27,11 +28,13 @@ import java.util.List;
 @RequestMapping("/platform/sys/msg")
 public class SysMsgController {
 
+    private final SysMsgService sysMsgService;
+
     @SysLog("发送消息")
     @PostMapping
     @ApiOperation("发送消息")
     public R<Boolean> sendMsg(@RequestBody SysMsgSendDTO sysMsgDTO) {
-        return null;
+        return R.success(sysMsgService.sendMsg(sysMsgDTO));
     }
 
     @GetMapping("/tab")

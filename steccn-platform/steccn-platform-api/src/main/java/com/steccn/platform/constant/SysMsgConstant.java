@@ -12,7 +12,9 @@ import lombok.Getter;
 @ApiModel("消息中心常量")
 public interface SysMsgConstant {
 
-
+    /**
+     * 消息中心-大类别枚举
+     */
     @Getter
     @AllArgsConstructor
     enum MsgCategoryEnum {
@@ -23,7 +25,9 @@ public interface SysMsgConstant {
         private String name;
     }
 
-
+    /**
+     * 消息中心-类别枚举
+     */
     @Getter
     @AllArgsConstructor
     enum MsgTypeEnum {
