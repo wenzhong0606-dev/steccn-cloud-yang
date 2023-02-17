@@ -40,19 +40,19 @@ public class SysMsgController {
     @GetMapping("/tab")
     @ApiOperation("获取tab集合")
     public R<List<SysMsgTabVO>> tab() {
-        return R.success();
+        return R.success(sysMsgService.tab());
     }
 
     @SysLog("读取消息")
     @PutMapping
     @ApiOperation("读取消息")
     public R<Boolean> read(@RequestBody List<Long> msgIdList) {
-        return R.success();
+        return R.success(sysMsgService.read(msgIdList));
     }
 
     @PostMapping("/page")
     @ApiOperation("消息列表")
     public R<Page<SysMsgPageVO>> page(@RequestBody SysMsgPageDTO dto) {
-        return R.success();
+        return R.success(sysMsgService.msgPage(dto));
     }
 }

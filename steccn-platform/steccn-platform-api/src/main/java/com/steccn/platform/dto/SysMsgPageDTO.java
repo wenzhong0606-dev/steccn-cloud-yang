@@ -14,5 +14,5 @@ import lombok.Data;
 public class SysMsgPageDTO extends BasePageDTO {
 
     @ApiModelProperty("消息类型集合")
-    private Long type;
+    private Integer category;
 }

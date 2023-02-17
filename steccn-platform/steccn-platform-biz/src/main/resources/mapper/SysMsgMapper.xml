@@ -24,4 +24,20 @@
         create_time,update_by,update_name,
         update_time,del_flag
     </sql>
+    <select id="tabCount" resultType="java.lang.Integer">
+        SELECT count(1) FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
+        where m.type in
+        <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
+            #{type}
+        </foreach>
+        and u.user_id = #{userId}
+    </select>
+    <select id="msgPage" resultType="com.steccn.platform.vo.SysMsgPageVO">
+        SELECT * FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
+        where m.type in
+        <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
+            #{type}
+        </foreach>
+        and u.user_id = #{userId}
+    </select>
 </mapper>
