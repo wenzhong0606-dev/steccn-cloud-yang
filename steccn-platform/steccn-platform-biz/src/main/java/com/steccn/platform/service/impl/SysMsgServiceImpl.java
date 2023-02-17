@@ -1,7 +1,11 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
@@ -14,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,8 +53,16 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         sysMsgUserService.saveBatch(msgUserList);
         return Boolean.TRUE;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean read(List<Long> msgIdList) {
+        //将所有的消息都更新成已读，赋值已读时间
+        LambdaUpdateWrapper<SysMsgUser> updateWrapper = new LambdaUpdateWrapper<SysMsgUser>()
+                .set(SysMsgUser::getReadFlag, MpConstant.YES)
+                .set(SysMsgUser::getReadTime, LocalDateTime.now())
+                .in(SysMsgUser::getMsgId, msgIdList)
+                .eq(SysMsgUser::getUserId, SecurityUtils.getUser().getUserId());
+        return sysMsgUserService.update(updateWrapper);
+    }
 }
-
-
-
-

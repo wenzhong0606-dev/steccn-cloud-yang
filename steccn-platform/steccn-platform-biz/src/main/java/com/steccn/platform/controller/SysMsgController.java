@@ -47,7 +47,7 @@ public class SysMsgController {
     @PutMapping
     @ApiOperation("读取消息")
     public R<Boolean> read(@RequestBody List<Long> msgIdList) {
-        return R.success();
+        return R.success(sysMsgService.read(msgIdList));
     }
 
     @PostMapping("/page")
