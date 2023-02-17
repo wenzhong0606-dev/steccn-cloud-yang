@@ -3,6 +3,7 @@ package com.steccn.pms.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.PmsRecipeDTO;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
@@ -34,5 +35,11 @@ public class PmsRecipeController {
     @PostMapping("/page")
     public R<Page<PmsRecipeVerHisVO>> getRecipePage(@RequestBody BasePageDTO dto) {
         return R.success(pmsRecipeService.pageList(dto));
+    }
+
+    @ApiOperation(value = "更新用量")
+    @PostMapping("/amount")
+    public R<Boolean> amount(@RequestBody PmsRecipeDTO dto) {
+        return R.success(pmsRecipeService.publishQuantity(dto));
     }
 }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.pms.domain.PmsRecipe;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.dto.PmsRecipeDTO;
+import com.steccn.pms.dto.PmsRecipeRawDTO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
 
@@ -25,4 +27,11 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     Page<PmsRecipeVerHisVO> pageList(BasePageDTO dto);
+
+    /**
+     * 更新用量
+     * @param dto
+     * @return
+     */
+    Boolean publishQuantity(PmsRecipeDTO dto);
 }

@@ -49,7 +49,7 @@ public class BigDecimalUtil {
      * @param val2 val2
      * @return 和
      */
-    public static BigDecimal add(BigDecimal val1, BigDecimal val2) {
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2,int scale) {
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
@@ -57,8 +57,18 @@ public class BigDecimalUtil {
             val2 = BigDecimal.ZERO;
         }
         BigDecimal res = val1.add(val2);
-        res = res.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP);
+        res = res.setScale(scale, RoundingMode.HALF_UP);
         return res;
+    }
+
+    /**
+     * 将val1 + val2
+     * @param val1
+     * @param val2
+     * @return 和
+     */
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2){
+        return add(val1, val2, DEFAULT_SCALE);
     }
 
     /**
