@@ -95,7 +95,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         //根据分组id去查询分组
         this.save(qtReport);
         //保存告警人员信息
-        if (QtManagerConstant.QtMaterialStatusEnum.ENABLE.equals(dto.getWarnFlag())) {
+        if (QtManagerConstant.QtMaterialStatusEnum.ENABLE.getCode().equals(dto.getWarnFlag())) {
             qtReportWarnUserService.saveWarnUser(dto.getWarnUserIds(), qtReport.getId());
         }
         return qtReport.getId();

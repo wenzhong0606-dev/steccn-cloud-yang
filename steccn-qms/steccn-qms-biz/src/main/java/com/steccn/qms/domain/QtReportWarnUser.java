@@ -16,7 +16,7 @@ public class QtReportWarnUser implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
