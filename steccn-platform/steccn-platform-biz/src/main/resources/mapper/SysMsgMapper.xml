@@ -30,6 +30,14 @@
         <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
             #{type}
         </foreach>
-        and u.user_id = #{userId} ;
+        and u.user_id = #{userId}
+    </select>
+    <select id="msgPage" resultType="com.steccn.platform.vo.SysMsgPageVO">
+        SELECT * FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
+        where m.type in
+        <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
+            #{type}
+        </foreach>
+        and u.user_id = #{userId}
     </select>
 </mapper>

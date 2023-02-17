@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class SysMsgTabVO implements Serializable {
 
     @ApiModelProperty("分类-大类")
-    private Integer type;
+    private Integer category;
 
     @ApiModelProperty("tab名称")
     private String name;

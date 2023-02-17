@@ -53,6 +53,6 @@ public class SysMsgController {
     @PostMapping("/page")
     @ApiOperation("消息列表")
     public R<Page<SysMsgPageVO>> page(@RequestBody SysMsgPageDTO dto) {
-        return R.success();
+        return R.success(sysMsgService.msgPage(dto));
     }
 }

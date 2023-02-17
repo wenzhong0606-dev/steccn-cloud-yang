@@ -2,9 +2,8 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.util.SecurityUtils;
@@ -12,10 +11,12 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
+import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
+import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -79,12 +80,22 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         //遍历所有大类
         for (SysMsgConstant.MsgCategoryEnum categoryEnum : categoryEnums) {
             SysMsgTabVO sysMsgTabVO = new SysMsgTabVO();
-            sysMsgTabVO.setType(categoryEnum.getCode());
+            sysMsgTabVO.setCategory(categoryEnum.getCode());
             sysMsgTabVO.setName(categoryEnum.getName());
             sysMsgTabVO.setCount(tabCount(categoryEnum.getCode()));
             resList.add(sysMsgTabVO);
         }
         return resList;
+    }
+
+    @Override
+    public Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
+        List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(dto.getCategory());
+        if (CollUtil.isNotEmpty(typeList)) {
+            Page<SysMsgPageVO> page = baseMapper.msgPage(new Page<>(dto.getCurrent(), dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
+            return page;
+        }
+        return null;
     }
 
     /**

@@ -1,9 +1,12 @@
 package com.steccn.platform.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysMsg;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
 
 import java.util.List;
@@ -37,4 +40,12 @@ public interface SysMsgService extends IService<SysMsg> {
      * @return
      */
     List<SysMsgTabVO> tab();
+
+    /**
+     * 消息分页
+     *
+     * @param dto dto
+     * @return
+     */
+    Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto);
 }
