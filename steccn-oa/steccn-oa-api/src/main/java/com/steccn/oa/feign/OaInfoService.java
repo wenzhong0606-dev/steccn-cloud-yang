@@ -1,12 +1,18 @@
 package com.steccn.oa.feign;
 
+import cn.hutool.core.collection.CollUtil;
+import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaUserDTO;
 import com.steccn.oa.dto.OaUserInfo;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 类说明
@@ -32,8 +38,8 @@ public interface OaInfoService {
      * @return
      */
 
-   @GetMapping("/oa/menuList")
-   R getMenuList(@RequestParam("userId") String userId);
+    @GetMapping("/oa/menuList")
+    R getMenuList(@RequestParam("userId") String userId);
 
     /**
      * 获取应用token
@@ -41,31 +47,44 @@ public interface OaInfoService {
      * @param loginId
      * @return
      */
-   @GetMapping("/oa/ssoToken")
-   R getSsoToken(@RequestParam("loginId") String loginId);
+    @GetMapping("/oa/ssoToken")
+    R getSsoToken(@RequestParam("loginId") String loginId);
 
 
     /**
      * 根据用户名查询用户
+     *
      * @param username 用户id
      * @return
      */
-   @GetMapping("/oa/username")
-   R<OaUserDTO> loadByUsername(@RequestParam("username") String username);
+    @GetMapping("/oa/username")
+    R<OaUserDTO> loadByUsername(@RequestParam("username") String username);
 
     /**
      * 根据用户名查询用户信息
+     *
      * @param loginId
      * @return
      */
-   @GetMapping("/oa/userInfo")
-   R<OaUserInfo> getOaUserInfo(@RequestParam("loginId") String loginId);
+    @GetMapping("/oa/userInfo")
+    R<OaUserInfo> getOaUserInfo(@RequestParam("loginId") String loginId);
 
     /**
      * 根据工号查询id
+     *
      * @param workCode
      * @return
      */
     @GetMapping("/oa/user/id/{workCode}")
     R<Long> getUserIdByWorkCode(@PathVariable("workCode") String workCode);
+
+
+    /**
+     * 根据主键id查询oa用户的中文名称
+     * @param idList
+     * @return
+     */
+    @PostMapping("/feign/oa/user/ch")
+    @ApiOperation("根据主键id查询oa用户的中文名称")
+    R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList);
 }

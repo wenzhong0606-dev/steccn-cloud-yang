@@ -76,6 +76,12 @@ public class WmsInventoryController {
         return R.success(wmsInventoryService.materialInventory(materialIds));
     }
 
+    @PostMapping("/material/inventory/mes")
+    @ResponseBody
+    public Map<Long, MaterialInventoryDTO> materialInventoryMes(@RequestBody Set<Long> materialIds) {
+        return wmsInventoryService.materialInventory(materialIds);
+    }
+
     @PostMapping("/storageList")
     @ResponseBody
     public R<List<WmsStockInventoryDTO>> materialConsume(@RequestBody List<MaterialStorageInfoDTO> list){
