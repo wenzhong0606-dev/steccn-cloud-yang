@@ -4,9 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.BasePageDTO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsRecipe;
 import com.steccn.pms.domain.PmsRecipeRaw;
@@ -69,6 +72,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         hisVO.setVersion(pmsRecipe.getVersion());
         hisVO.setCreateName(pmsRecipe.getCreateName());
         hisVO.setCreateTime(pmsRecipe.getCreateTime());
+        hisVO.setId(pmsRecipe.getId());
         hisVOList.add(hisVO);
         //如果不是0000,则加入大版本
         if(!PmManagerConstant.RECIPE_STR.equals(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)])){
@@ -87,6 +91,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             hisVO2.setCreateName(bigVersion.getCreateName());
             hisVO2.setVersion(bigVersion.getVersion());
             hisVO2.setCreateTime(bigVersion.getCreateTime());
+            hisVO2.setId(bigVersion.getId());
             hisVOList.add(hisVO2);
         }
         Collections.reverse(hisVOList);
@@ -101,6 +106,20 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         });
         pmsRecipeVO.setRawList(rawVOS);
         return pmsRecipeVO;
+    }
+
+    @Override
+    public Page<PmsRecipeVerHisVO> pageList(BasePageDTO dto) {
+        //根据创建时间分页
+        LambdaQueryWrapper<PmsRecipe> condition = new LambdaQueryWrapper<PmsRecipe>()
+                .orderByDesc(PmsRecipe::getCreateTime);
+        //分页查询
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        IPage resPage = page(page,condition);
+        //拷贝page信息
+        BeanUtil.copyProperties(resPage,page);
+        List<PmsRecipeVerHisVO> resList = BeanUtil.copyToList(resPage.getRecords(),PmsRecipeVerHisVO.class);
+        return page.setRecords(resList);
     }
 }
 

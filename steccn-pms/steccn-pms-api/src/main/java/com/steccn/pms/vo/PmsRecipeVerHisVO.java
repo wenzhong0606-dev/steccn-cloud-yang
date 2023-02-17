@@ -16,6 +16,11 @@ public class PmsRecipeVerHisVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * id
+     */
+    private Long id;
+
+    /**
      * 版本号
      */
     private String version;

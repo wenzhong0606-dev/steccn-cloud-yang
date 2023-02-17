@@ -1,8 +1,11 @@
 package com.steccn.pms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.dto.BasePageDTO;
 import com.steccn.pms.domain.PmsRecipe;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.vo.PmsRecipeVO;
+import com.steccn.pms.vo.PmsRecipeVerHisVO;
 
 /**
 * @author yequan
@@ -16,4 +19,10 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     PmsRecipeVO getPmsRecipeVO(Long id);
+
+    /**
+     * 获取版本分页
+     * @return
+     */
+    Page<PmsRecipeVerHisVO> pageList(BasePageDTO dto);
 }
