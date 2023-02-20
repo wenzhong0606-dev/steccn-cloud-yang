@@ -143,6 +143,10 @@ public class QtReportChartVO implements Serializable {
     private List<String> itemValue;
 
     /**
+     * 告警标识
+     */
+    private Integer warnFlag;
+    /**
      * 告警用户
      */
     private List<QtReportWarnUserVO> warnUserList;
