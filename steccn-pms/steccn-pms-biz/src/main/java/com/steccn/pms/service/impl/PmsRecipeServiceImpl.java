@@ -3,6 +3,7 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -144,6 +145,9 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         String[] newSpit = newVersion.getVersion().split("-");
         StringBuilder newSb = new StringBuilder();
         String[] nowSpit = dto.getVersion().split("-");
+        if(nowSpit.length != Integer.parseInt(PmManagerConstant.NUM_3)){
+            throw new BusinessException("版本号输入格式错误");
+        }
         StringBuilder nowSb = new StringBuilder();
         //检查大版本号
         for(int i = 0; i < nowSpit.length; i++){
@@ -152,8 +156,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 newSb.append(newSpit[i]);
             }
         }
-        if(Integer.parseInt(nowSb.toString()) < Integer.parseInt(newSb.toString())) {
-            throw new RuntimeException("配方用量已被其他人更新，无法发布，请取消后重试");
+        if(Integer.parseInt(nowSb.toString()) <= Integer.parseInt(newSb.toString())) {
+            throw new BusinessException("配方用量已被其他人更新，无法发布，请取消后重试");
         }
         PmsRecipe pmsRecipe = new PmsRecipe();
 
@@ -161,13 +165,16 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("kg", "measure_unit"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         pmsRecipe.setBatchWaterUnit(sysDictVO.getId());
         pmsRecipe.setClinkerUnit(sysDictVO.getId());
+        if(StrUtil.isNotBlank(dto.getNote())){
+            pmsRecipe.setNote(dto.getNote());
+        }
 
         //2、处理版本号
         StringBuilder version = new StringBuilder();
         //当前年份与上一版YYYY不同时：大版本号中YYYY+1，NN置为01，小版本号置为0000，例如2023-04-0008升为2024-01-0000
         int year = LocalDate.now().getYear();
+        version.append(year);
         if(LocalDate.now().getYear() != Integer.parseInt(newSpit[0])){
-            version.append(year);
             version.append("-01");
         }else {
             int bigVersion = Integer.parseInt(newSpit[1]);
