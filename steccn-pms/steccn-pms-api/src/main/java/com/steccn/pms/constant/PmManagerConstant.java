@@ -30,6 +30,7 @@ public interface PmManagerConstant {
     /**
      * 数字
      */
+    String NUM_0 = "0";
     String NUM_1 = "1";
     String NUM_2 = "2";
     String NUM_3 = "3";
@@ -62,7 +63,7 @@ public interface PmManagerConstant {
     String NUM_30 = "30";
     String NUM_31 = "31";
 
-
+    String RECIPE_STR = "0000";
 
     /**
      * mrp 类型

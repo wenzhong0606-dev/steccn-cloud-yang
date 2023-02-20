@@ -68,7 +68,7 @@ public class OaController {
     R loadByUsername(@RequestParam("username") String username) {
         Hrmresource one = hrmresourceService.getOne(new LambdaQueryWrapper<Hrmresource>()
                 .eq(Hrmresource::getLoginid, username)
-                .select(Hrmresource::getId,Hrmresource::getLoginid,Hrmresource::getPassword,Hrmresource::getLastname));
+                .select(Hrmresource::getId, Hrmresource::getLoginid, Hrmresource::getPassword, Hrmresource::getLastname));
         OaUserDTO oaUserDTO = null;
         if (Objects.nonNull(one)) {
             oaUserDTO = new OaUserDTO();
@@ -82,70 +82,76 @@ public class OaController {
 
     @ApiOperation("根据id获取用户信息")
     @GetMapping("/userInfo")
-    R getUserInfo(@RequestParam("loginId") String loginId){
+    R getUserInfo(@RequestParam("loginId") String loginId) {
         OaUserInfo oaUserInfo = oaService.getOaUserInfo(loginId);
-        if(oaUserInfo.getStatus()){
+        if (oaUserInfo.getStatus()) {
             return R.success(oaUserInfo);
-        }else {
+        } else {
             return R.failure("userInfo为空");
         }
     }
 
     @ApiOperation("获取所有人员")
     @GetMapping("/allUser")
-    R getAllUser(){
+    R getAllUser() {
         List<OaUserIdAndName> userIdAndNames = oaService.getAll();
-        if(!userIdAndNames.isEmpty()){
+        if (!userIdAndNames.isEmpty()) {
             return R.success(userIdAndNames);
-        }else {
+        } else {
             return R.failure("userInfo为空");
         }
     }
 
+    @ApiOperation("根据名称模糊获取人员列表")
+    @GetMapping("/user/name/{userName}")
+    public R<List<OaUserIdAndName>> getUserByName(@PathVariable("userName") String userName) {
+        return R.success(hrmresourceService.getUserByName(userName));
+    }
+
     @ApiOperation(value = "OA获取公司数据")
     @GetMapping("/company/{id}")
-    public R<List<OaCompanyVO>> getOaCompany(@PathVariable Integer id ){
+    public R<List<OaCompanyVO>> getOaCompany(@PathVariable Integer id) {
         return R.success(oaService.getCompany(id));
     }
 
     @ApiOperation(value = "根据部门和名字获取Emp数据")
     @PostMapping("/company/emp")
-    public R<List<OaEmpVO>> getOaEmp(@RequestBody OaEmpDTO dto){
+    public R<List<OaEmpVO>> getOaEmp(@RequestBody OaEmpDTO dto) {
         return R.success(oaService.getEmpByCondition(dto));
     }
 
     @ApiOperation(value = "获取待办列表")
     @GetMapping("/workflow/todoList")
-    public R<List<OaToDoWorkflowVO>> getOaToDoList(){
+    public R<List<OaToDoWorkflowVO>> getOaToDoList() {
         return R.success(oaService.getToDoList(0));
     }
 
     @ApiOperation(value = "获取待阅列表(消息)")
     @GetMapping("/workflow/toReadList")
-    public R<List<OaToDoWorkflowVO>> getOaToReadList(){
+    public R<List<OaToDoWorkflowVO>> getOaToReadList() {
         return R.success(oaService.getToDoList(1));
     }
 
     @ApiOperation(value = "获取流程状态数量")
     @GetMapping("/workflow/count")
-    public R<OaWorkflowCountVO> getOaWorkflowCount(){
+    public R<OaWorkflowCountVO> getOaWorkflowCount() {
         return R.success(oaService.getWorkflowCount());
     }
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R test(@RequestBody OaWorkFlowParamDTO dto){
+    public R test(@RequestBody OaWorkFlowParamDTO dto) {
         oaService.getWorkFlow(dto);
         return null;
     }
 
     @GetMapping("/user/id/{workCode}")
-    public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode){
+    public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode) {
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
 
     @GetMapping("/user/test")
-    public R<OaApiTokenResult> getIdByWorkCode(){
+    public R<OaApiTokenResult> getIdByWorkCode() {
         return R.success(oaService.getApiToken());
     }
 }

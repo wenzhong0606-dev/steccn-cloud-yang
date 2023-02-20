@@ -141,6 +141,10 @@ public class QtReport implements Serializable {
      */
     @TableField(value = "report_group_id")
     private Integer reportSortId;
+
+    @TableField(value = "warn_flag")
+    private Integer warnFlag;
+
     /**
      * 创建人id
      */
