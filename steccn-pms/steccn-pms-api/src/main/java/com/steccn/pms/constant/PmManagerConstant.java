@@ -62,6 +62,8 @@ public interface PmManagerConstant {
     String NUM_29 = "29";
     String NUM_30 = "30";
     String NUM_31 = "31";
+    String NUM_100 = "100";
+    String NUM_1000 = "1000";
 
     String RECIPE_STR = "0000";
 

@@ -51,14 +51,6 @@ public class PmsRecipeRawDTO implements Serializable {
      */
     private Long dryBasisUnit;
 
-    /**
-     * 湿基用量
-     */
-//    @NotNull(message = "干基用量不能为空")
-//    @DecimalMin(value="0",message="干基用量应大于等于0")
-//    @DecimalMax(value="999999999999.9999",message="数量大小应小于999999999999.9999")
-//    @Digits(integer = 12,fraction = 4,message = "整数位上限为12位，小数位上限位4位")
-//    private BigDecimal wetBasisQuantity;
 
     /**
      * 湿基单位

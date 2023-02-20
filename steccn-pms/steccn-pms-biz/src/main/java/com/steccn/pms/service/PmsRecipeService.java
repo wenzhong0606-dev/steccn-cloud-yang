@@ -6,6 +6,7 @@ import com.steccn.pms.domain.PmsRecipe;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsRecipeDTO;
 import com.steccn.pms.dto.PmsRecipeRawDTO;
+import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
 
@@ -34,4 +35,11 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     Boolean publishQuantity(PmsRecipeDTO dto);
+
+    /**
+     * 更新含水率
+     * @param dto
+     * @return
+     */
+    Boolean publishRate(PmsWetBasisWaterRateDTO dto);
 }

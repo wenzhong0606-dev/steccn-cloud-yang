@@ -22,6 +22,7 @@ import com.steccn.pms.domain.PmsRecipe;
 import com.steccn.pms.domain.PmsRecipeRaw;
 import com.steccn.pms.dto.PmsRecipeDTO;
 import com.steccn.pms.dto.PmsRecipeRawDTO;
+import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
 import com.steccn.pms.service.PmsRecipeRawService;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.mapper.PmsRecipeMapper;
@@ -29,6 +30,7 @@ import com.steccn.pms.vo.PmsRecipeRawVO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.iterators.ArrayListIterator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe>
     implements PmsRecipeService{
 
@@ -61,7 +64,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     public PmsRecipeVO getPmsRecipeVO(Long id) {
         PmsRecipeVO pmsRecipeVO = new PmsRecipeVO();
         //1、获取最新版本号
-        PmsRecipe newVersion = getOne(new LambdaQueryWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime),false);
+        PmsRecipe newVersion = getOne(new LambdaQueryWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime).last("LIMIT 1"),false);
         PmsRecipe pmsRecipe = null;
         //如果传0则找到最新的版本
         if(id.equals(new Long(0))){
@@ -141,7 +144,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     @Transactional(rollbackFor = Exception.class)
     public Boolean publishQuantity(PmsRecipeDTO dto) {
         //1、发布时检查此新建版本的大版本号（YYYY-NN）是否大于最新版本的大版本号
-        PmsRecipe newVersion = getOne(new LambdaUpdateWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime), false);
+        PmsRecipe newVersion = getOne(new LambdaUpdateWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime).last("LIMIT 1"), false);
         String[] newSpit = newVersion.getVersion().split("-");
         StringBuilder newSb = new StringBuilder();
         String[] nowSpit = dto.getVersion().split("-");
@@ -237,7 +240,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //加水量=干基用量加总/(1-配合料含水率) - 湿基用量加总
         BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
                 BigDecimalUtil.divide(dryBasisQuantityCount,
-                        BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),dto.getBatchWaterRate(),6),4),
+                        BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),BigDecimalUtil.divide(dto.getBatchWaterRate(),BigDecimal.valueOf(Long.parseLong("100")),6),6),4),
                 wetBasisQuantityCount,4);
         pmsRecipe.setBatchWaterQuantity(batchWaterQuantity);
         save(pmsRecipe);
@@ -248,6 +251,114 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
         return true;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean publishRate(PmsWetBasisWaterRateDTO dto) {
+        //1、发布时检查此新建版本的大版本号（YYYY-NN）和最新版本的大版本号是否相同
+        PmsRecipe newVersion = getOne(new LambdaUpdateWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime).last("LIMIT 1"), false);
+        String[] newSpit = newVersion.getVersion().split("-");
+        StringBuilder newSb = new StringBuilder();
+        String[] nowSpit = dto.getVersion().split("-");
+        if(nowSpit.length != Integer.parseInt(PmManagerConstant.NUM_3)){
+            throw new BusinessException("版本号输入格式错误");
+        }
+        StringBuilder nowSb = new StringBuilder();
+        //检查大版本号
+        for(int i = 0; i < nowSpit.length; i++){
+            if(i!=2){
+                nowSb.append(nowSpit[i]);
+                newSb.append(newSpit[i]);
+            }
+        }
+        //若不同，提示“配方用量已被其他人更新，无法发布，请取消后重试"
+        if(Integer.parseInt(nowSb.toString()) != Integer.parseInt(newSb.toString())) {
+            throw new BusinessException("配方用量已被其他人更新，无法发布，请取消后重试");
+        }
+        //若不大于，提示“配方含水率已被其他人更新，无法发布，请取消后重试”
+        nowSb.append(nowSpit[2]);
+        newSb.append(newSpit[2]);
+        if(Integer.parseInt(nowSb.toString()) <= Integer.parseInt(newSb.toString())){
+            throw new BusinessException("配方含水率已被其他人更新，无法发布，请取消后重试");
+        }
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode("kg", "measure_unit"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //2、处理生料信息
+        BigDecimal dryBasisQuantityCount = BigDecimal.ZERO;
+        BigDecimal wetBasisQuantityCount = BigDecimal.ZERO;
+        List<PmsRecipeRaw> pmsRecipeRawModelList = Lists.newArrayList();
+
+        //过滤重复id的物料
+        List<PmsRecipeRawDTO> rawList = dto.getRawList();
+        rawList = rawList.stream().collect(Collectors.collectingAndThen(
+                Collectors.toCollection(() -> new TreeSet<>(
+                        Comparator.comparing(
+                                PmsRecipeRawDTO::getMaterialId
+                        ))), ArrayList::new));
+        for(PmsRecipeRawDTO tmp:rawList){
+            //加总生料
+            dryBasisQuantityCount = BigDecimalUtil.add(dryBasisQuantityCount,tmp.getDryBasisQuantity(),4);
+            PmsRecipeRaw pmsRecipeRawModel = new PmsRecipeRaw();
+            BeanUtil.copyProperties(tmp,pmsRecipeRawModel);
+            //湿基含水率
+            BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(tmp.getWetBasisWaterRate(),BigDecimal.valueOf(Long.parseLong("100"),6));
+            //设置单位
+            pmsRecipeRawModel.setDryBasisUnit(sysDictVO.getId());
+            pmsRecipeRawModel.setWetBasisUnit(sysDictVO.getId());
+            pmsRecipeRawModel.setWetBasisWaterRate(tmp.getWetBasisWaterRate());
+            //湿基用量 湿基用量=干基用量/(1-湿基含水率)
+            BigDecimal wetBasisQuantity = BigDecimalUtil.divide(tmp.getDryBasisQuantity(),
+                    BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),wetBasisWaterRateNum,6),4);
+            pmsRecipeRawModel.setWetBasisQuantity(wetBasisQuantity);
+            pmsRecipeRawModelList.add(pmsRecipeRawModel);
+        }
+        //3、处理其他信息
+        PmsRecipe recipeModel = new PmsRecipe();
+        BeanUtil.copyProperties(newVersion,recipeModel);
+        //处理版本号
+        Integer smallVersion = Integer.parseInt(newSpit[2]);
+        smallVersion++;
+        StringBuilder version = new StringBuilder();
+        version.append(newSpit[0]);
+        version.append("-");
+        version.append(newSpit[1]);
+        version.append("-");
+        if(smallVersion < Integer.parseInt(PmManagerConstant.NUM_10)){
+            version.append("000");
+            version.append(smallVersion);
+        }else if(smallVersion < Integer.parseInt(PmManagerConstant.NUM_100)){
+            version.append("00");
+            version.append(smallVersion);
+        }else if (smallVersion < Integer.parseInt(PmManagerConstant.NUM_1000)){
+            version.append("0");
+            version.append(smallVersion);
+        }else {
+            version.append(smallVersion);
+        }
+        recipeModel.setVersion(version.toString());
+        //加水量=干基用量加总/(1-配合料含水率) - 湿基用量加总
+        BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
+                BigDecimalUtil.divide(dryBasisQuantityCount,
+                        BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),BigDecimalUtil.divide(newVersion.getBatchWaterRate(),BigDecimal.valueOf(Long.parseLong("100")),6) ,6),4),
+                wetBasisQuantityCount,4);
+        recipeModel.setBatchWaterQuantity(batchWaterQuantity);
+        //熟料用量=干基用量加总/(1-熟料占比)
+        BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(),new BigDecimal(100),6);
+        BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount,BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum,6),4);
+        recipeModel.setClinkerQuantity(clinkerQuantityNum);
+        if(StrUtil.isNotBlank(dto.getNote())){
+            recipeModel.setNote(dto.getNote());
+        }
+        recipeModel.setId(null);
+        save(recipeModel);
+        //加入版本id
+        pmsRecipeRawModelList.forEach(tmp -> {
+            tmp.setRecipeId(recipeModel.getId());
+        });
+        pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
+        return true;
+    }
+
 }
 
 
