@@ -58,6 +58,16 @@ public class PmsMaterialRequisition implements Serializable {
     private String note;
 
     /**
+     * 确认人
+     */
+    private String affirmName;
+
+    /**
+     * 确认时间
+     */
+    private LocalDateTime affirmTime;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

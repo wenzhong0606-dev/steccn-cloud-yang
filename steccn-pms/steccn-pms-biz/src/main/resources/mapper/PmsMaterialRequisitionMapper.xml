@@ -30,7 +30,7 @@
         update_name,update_time,del_flag
     </sql>
     <select id="pageList" resultType="com.steccn.pms.vo.MaterialRequisitionVO">
-        select distinct a.id,a.code,a.associated_no,a.department_id,a.status,a.type_id,a.warehouse_id,a.create_name,a.create_time,a.update_name,a.update_time,a.note
+        select distinct a.id,a.code,a.associated_no,a.department_id,a.status,a.type_id,a.warehouse_id,a.affirm_time,a.affirm_name,a.create_name,a.create_time,a.update_name,a.update_time,a.note
         from pms_material_requisition a left join pms_material_requisition_info b on b.material_requisition_id = a.id
         <where>
             a.del_flag = 0
