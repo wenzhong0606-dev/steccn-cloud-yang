@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+
 @Data
 public class QtReportChartVO implements Serializable {
     /**
@@ -140,4 +141,13 @@ public class QtReportChartVO implements Serializable {
      * 检验值
      */
     private List<String> itemValue;
+
+    /**
+     * 告警标识
+     */
+    private Integer warnFlag;
+    /**
+     * 告警用户
+     */
+    private List<QtReportWarnUserVO> warnUserList;
 }

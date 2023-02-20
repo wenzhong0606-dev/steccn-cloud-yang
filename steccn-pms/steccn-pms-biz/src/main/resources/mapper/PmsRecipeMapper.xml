@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.pms.mapper.PmsRecipeMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.pms.domain.PmsRecipe">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="version" column="version" jdbcType="VARCHAR"/>
+            <result property="clinkerRate" column="clinker_rate" jdbcType="DECIMAL"/>
+            <result property="clinkerQuantity" column="clinker_quantity" jdbcType="DECIMAL"/>
+            <result property="clinkerUnit" column="clinker_unit" jdbcType="BIGINT"/>
+            <result property="batchWaterRate" column="batch_water_rate" jdbcType="DECIMAL"/>
+            <result property="batchWaterQuantity" column="batch_water_quantity" jdbcType="DECIMAL"/>
+            <result property="batchWaterUnit" column="batch_water_unit" jdbcType="BIGINT"/>
+            <result property="batchWaterUpper" column="batch_water_upper" jdbcType="DECIMAL"/>
+            <result property="batchWaterLower" column="batch_water_lower" jdbcType="DECIMAL"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,version,clinker_rate,
+        clinker_quantity,clinker_unit,batch_water_rate,
+        batch_water_quantity,batch_water_unit,batch_water_upper,
+        batch_water_lower,note,create_by,
+        create_name,create_time,update_by,
+        update_name,update_time,del_flag
+    </sql>
+</mapper>

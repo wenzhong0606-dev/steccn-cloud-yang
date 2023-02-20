@@ -120,6 +120,17 @@ public class QtReportDTO implements Serializable {
     private List<QtBaseIdNameDTO> supplier;
 
     /**
+     * 告警标识
+     */
+    @NotNull(message = "告警标识不能为空",groups = {InsertGroup.class, UpdateGroup.class})
+    private Integer warnFlag;
+
+    /**
+     * 告警用户
+     */
+    private List<Long> warnUserIds;
+
+    /**
      * 备注
      */
     @Length(groups = {InsertGroup.class, UpdateGroup.class}, max = 100, message = "备注长度不超过100个中文")

@@ -17,7 +17,7 @@ public class WsFeignController {
 
     @GetMapping("/push/oa")
     public R<String> create(@RequestParam("userId") Long userId) {
-        WebSocketManager.sendOneMessage(userId, "OA");
+        WebSocketManager.sendMessageByUser(userId, "OA");
         return new R<>("OA");
     }
 }
