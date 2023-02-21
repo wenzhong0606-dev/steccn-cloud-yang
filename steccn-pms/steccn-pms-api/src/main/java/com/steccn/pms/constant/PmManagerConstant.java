@@ -217,6 +217,11 @@ public interface PmManagerConstant {
      */
     String RECEIPT_NUM = "入库数量";
 
+    /**
+     * 系统版本
+     */
+    String sysVersion = "2023-01-0000";
+
 
     /**
      * 入库出库凭证状态

@@ -91,17 +91,24 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         hisVO.setCreateName(pmsRecipe.getCreateName());
         hisVO.setCreateTime(pmsRecipe.getCreateTime());
         hisVO.setId(pmsRecipe.getId());
+        //如果当前版本是系统版本则不显示左侧...
+        if(hisVO.getVersion().equals(PmManagerConstant.sysVersion)){
+            hisVO.setEllipsis(0);
+        }else if(Integer.parseInt(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)]) >= Integer.parseInt(PmManagerConstant.NUM_2)){
+            //如果当前版本比2大则显示
+            hisVO.setEllipsis(1);
+        }else {
+            hisVO.setEllipsis(0);
+        }
         hisVOList.add(hisVO);
         //如果不是0000,则加入大版本
         if(!PmManagerConstant.RECIPE_STR.equals(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)])){
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < versionSplit.length; i++) {
-                if(i==2){
-                    sb.append(PmManagerConstant.RECIPE_STR);
-                }else{
-                    sb.append(versionSplit[i]);
-                }
-            }
+            sb.append(versionSplit[0]);
+            sb.append("-");
+            sb.append(versionSplit[1]);
+            sb.append("-");
+            sb.append(PmManagerConstant.RECIPE_STR);
             //大版本
             PmsRecipe bigVersion = getOne(new LambdaQueryWrapper<PmsRecipe>().eq(PmsRecipe::getVersion, sb.toString()), false);
             Assert.notNull(bigVersion, "大版本信息不存在");
@@ -110,6 +117,12 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             hisVO2.setVersion(bigVersion.getVersion());
             hisVO2.setCreateTime(bigVersion.getCreateTime());
             hisVO2.setId(bigVersion.getId());
+            //如果当前版本是系统版本则不显示左侧...,否则显示
+            if(hisVO2.getVersion().equals(PmManagerConstant.sysVersion)){
+                hisVO2.setEllipsis(0);
+            }else {
+                hisVO2.setEllipsis(1);
+            }
             hisVOList.add(hisVO2);
         }
         Collections.reverse(hisVOList);
@@ -212,7 +225,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             //干基单位
             pmsRecipeRawModel.setDryBasisUnit(sysDictVO.getId());
             //湿基含水率
-            BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(tmp.getWetBasisWaterRate(),BigDecimal.valueOf(Long.parseLong("100"),6));
+            BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(tmp.getWetBasisWaterRate(),BigDecimal.valueOf(Long.parseLong("100")),6);
             pmsRecipeRawModel.setWetBasisWaterRate(tmp.getWetBasisWaterRate());
             //湿基用量 湿基用量=干基用量/(1-湿基含水率)
             BigDecimal wetBasisQuantity = BigDecimalUtil.divide(tmp.getDryBasisQuantity(),
@@ -301,7 +314,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             PmsRecipeRaw pmsRecipeRawModel = new PmsRecipeRaw();
             BeanUtil.copyProperties(tmp,pmsRecipeRawModel);
             //湿基含水率
-            BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(tmp.getWetBasisWaterRate(),BigDecimal.valueOf(Long.parseLong("100"),6));
+            BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(tmp.getWetBasisWaterRate(),BigDecimal.valueOf(Long.parseLong("100")),6);
             //设置单位
             pmsRecipeRawModel.setDryBasisUnit(sysDictVO.getId());
             pmsRecipeRawModel.setWetBasisUnit(sysDictVO.getId());

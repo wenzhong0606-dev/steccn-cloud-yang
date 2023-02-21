@@ -34,4 +34,10 @@ public class PmsRecipeVerHisVO implements Serializable {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 是否省略
+     * 1省略 0不省略
+     */
+    private Integer ellipsis;
 }
