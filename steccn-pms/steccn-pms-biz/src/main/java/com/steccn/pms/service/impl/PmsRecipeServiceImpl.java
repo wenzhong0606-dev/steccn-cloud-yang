@@ -91,16 +91,24 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         hisVO.setCreateName(pmsRecipe.getCreateName());
         hisVO.setCreateTime(pmsRecipe.getCreateTime());
         hisVO.setId(pmsRecipe.getId());
-        //如果当前版本是系统版本则不显示左侧...
-        if(hisVO.getVersion().equals(PmManagerConstant.sysVersion)){
-            hisVO.setEllipsis(0);
-        }else if(Integer.parseInt(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)]) >= Integer.parseInt(PmManagerConstant.NUM_2)){
-            //如果当前版本比2大则显示
-            hisVO.setEllipsis(1);
-        }else {
-            hisVO.setEllipsis(0);
-        }
+        hisVO.setEllipsis(0);
         hisVOList.add(hisVO);
+        //如果是0000则判断
+        if(PmManagerConstant.RECIPE_STR.equals(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)])){
+            //如果当前版本是系统版本则不显示左侧...
+            if(!hisVO.getVersion().equals(PmManagerConstant.sysVersion)){
+                PmsRecipeVerHisVO tmp = new PmsRecipeVerHisVO();
+                tmp.setEllipsis(1);
+                hisVOList.add(tmp);
+            }
+        }else {
+            //如果当前版本比2大则显示省略号
+            if(Integer.parseInt(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)]) >= Integer.parseInt(PmManagerConstant.NUM_2)){
+                PmsRecipeVerHisVO tmp = new PmsRecipeVerHisVO();
+                tmp.setEllipsis(1);
+                hisVOList.add(tmp);
+            }
+        }
         //如果不是0000,则加入大版本
         if(!PmManagerConstant.RECIPE_STR.equals(versionSplit[Integer.parseInt(PmManagerConstant.NUM_2)])){
             StringBuilder sb = new StringBuilder();
@@ -117,13 +125,15 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             hisVO2.setVersion(bigVersion.getVersion());
             hisVO2.setCreateTime(bigVersion.getCreateTime());
             hisVO2.setId(bigVersion.getId());
-            //如果当前版本是系统版本则不显示左侧...,否则显示
-            if(hisVO2.getVersion().equals(PmManagerConstant.sysVersion)){
-                hisVO2.setEllipsis(0);
-            }else {
-                hisVO2.setEllipsis(1);
-            }
+            hisVO2.setEllipsis(0);
             hisVOList.add(hisVO2);
+            //如果当前版本是系统版本则不显示左侧...,否则显示
+            if(!hisVO2.getVersion().equals(PmManagerConstant.sysVersion)){
+                PmsRecipeVerHisVO tmp = new PmsRecipeVerHisVO();
+                tmp.setEllipsis(1);
+                hisVOList.add(tmp);
+            }
+
         }
         Collections.reverse(hisVOList);
         pmsRecipeVO.setVerHistory(hisVOList);
@@ -262,6 +272,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             tmp.setRecipeId(pmsRecipe.getId());
         });
         pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
+        // TODO: 2023/2/21 发送消息 
         return true;
     }
 
@@ -369,6 +380,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             tmp.setRecipeId(recipeModel.getId());
         });
         pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
+        // TODO: 2023/2/21 发送消息 
         return true;
     }
 
