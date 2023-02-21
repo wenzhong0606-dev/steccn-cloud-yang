@@ -62,6 +62,8 @@ public interface PmManagerConstant {
     String NUM_29 = "29";
     String NUM_30 = "30";
     String NUM_31 = "31";
+    String NUM_100 = "100";
+    String NUM_1000 = "1000";
 
     String RECIPE_STR = "0000";
 
@@ -214,6 +216,11 @@ public interface PmManagerConstant {
      * 入库数量
      */
     String RECEIPT_NUM = "入库数量";
+
+    /**
+     * 系统版本
+     */
+    String sysVersion = "2023-01-0000";
 
 
     /**

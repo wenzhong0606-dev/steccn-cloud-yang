@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.PmsRecipeDTO;
+import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
@@ -41,5 +42,11 @@ public class PmsRecipeController {
     @PostMapping("/amount")
     public R<Boolean> amount(@RequestBody PmsRecipeDTO dto) {
         return R.success(pmsRecipeService.publishQuantity(dto));
+    }
+
+    @ApiOperation(value = "更新配方含水率")
+    @PostMapping("/rate")
+    public R<Boolean> rate(@RequestBody PmsWetBasisWaterRateDTO dto) {
+        return R.success(pmsRecipeService.publishRate(dto));
     }
 }
