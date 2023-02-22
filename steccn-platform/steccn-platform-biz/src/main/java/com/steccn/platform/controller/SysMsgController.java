@@ -1,5 +1,6 @@
 package com.steccn.platform.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
@@ -13,6 +14,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -33,7 +36,7 @@ public class SysMsgController {
     @SysLog("发送消息")
     @PostMapping
     @ApiOperation("发送消息")
-    public R<Boolean> sendMsg(@RequestBody SysMsgSendDTO sysMsgDTO) {
+    public R<Boolean> sendMsg(@Valid @RequestBody SysMsgSendDTO sysMsgDTO) {
         return R.success(sysMsgService.sendMsg(sysMsgDTO));
     }
 
@@ -47,12 +50,13 @@ public class SysMsgController {
     @PutMapping
     @ApiOperation("读取消息")
     public R<Boolean> read(@RequestBody List<Long> msgIdList) {
+        Assert.notEmpty(msgIdList, "消息不能为空");
         return R.success(sysMsgService.read(msgIdList));
     }
 
     @PostMapping("/page")
     @ApiOperation("消息列表")
-    public R<Page<SysMsgPageVO>> page(@RequestBody SysMsgPageDTO dto) {
+    public R<Page<SysMsgPageVO>> page(@Valid @RequestBody SysMsgPageDTO dto) {
         return R.success(sysMsgService.msgPage(dto));
     }
 }
