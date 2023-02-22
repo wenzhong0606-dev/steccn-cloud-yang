@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
 import com.steccn.data.domain.QtDefectCollect;
@@ -57,8 +58,7 @@ public class HbCollectServiceImpl implements HbCollectService {
             if (Objects.nonNull(dto.getData())) {
                 model.setLine(dto.getData().getLine());
                 model.setErrorCode(dto.getData().getErrcode());
-                Date date = new Date(dto.getData().getProduct_time());
-                model.setProductTime(LocalDateTimeUtil.of(date));
+                model.setProductTime(dto.getData().getProduct_time());
             }
             model.setCreateTime(now);
             qtDefectCollectService.save(model);
@@ -82,11 +82,12 @@ public class HbCollectServiceImpl implements HbCollectService {
                 }
             }
             flag = Boolean.TRUE;
+            return flag;
         } catch (Exception e) {
             log.error("请求的dto数据接收 -> {}", dto);
             log.error(e.getLocalizedMessage());
+            throw new BusinessException("请求参数解析错误");
         }
-        return flag;
     }
 
     @Override
@@ -102,7 +103,7 @@ public class HbCollectServiceImpl implements HbCollectService {
             epMeterCollect.setRecordTime(data.getTimestamp());
             batchList.add(epMeterCollect);
         }
-        poolExecutor.execute(()-> epMeterCollectService.saveBatch(batchList));
+        poolExecutor.execute(() -> epMeterCollectService.saveBatch(batchList));
         return Boolean.TRUE;
     }
 
