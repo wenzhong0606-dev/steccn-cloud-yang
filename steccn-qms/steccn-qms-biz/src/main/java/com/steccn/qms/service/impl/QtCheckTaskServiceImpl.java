@@ -16,6 +16,7 @@ import com.alibaba.excel.util.StyleUtil;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -1252,6 +1253,38 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         vo.setProductWorkshopCode(productWorkshopCode.getMsg());
                 }else{
                     vo.setProductWorkshopId(null);
+                }
+                //处理取样日期
+                //来料检有取样日期
+                if(vo.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())){
+                    Set<String> dateSet = Sets.newTreeSet();
+                    //找到样本信息
+                    List<QtCheckTaskCopy> qtCheckTaskCopyList = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, vo.getId()));
+                    if(CollUtil.isNotEmpty(qtCheckTaskCopyList)){
+                        qtCheckTaskCopyList.forEach(tmp->{
+                            if(Objects.nonNull(tmp.getSamplingTime())){
+                                dateSet.add(tmp.getSamplingTime().toLocalDate().toString());
+                            }
+                            if(Objects.nonNull(tmp.getSamplingTimeArray())){
+                                //obj转LocalDateTime
+                                List<LocalDateTime> localDateTimeList = JSONObject.parseArray(tmp.getSamplingTimeArray().toString(), LocalDateTime.class);
+                                localDateTimeList.forEach(timeStr->{
+                                    dateSet.add(timeStr.toLocalDate().toString());
+                                });
+                            }
+                        });
+                    }
+                    //dateSet转string
+                    if(CollUtil.isNotEmpty(dateSet)){
+                        StringBuilder sb = new StringBuilder();
+                        for(String str:dateSet){
+                            sb.append(str);
+                            sb.append(",");
+                        }
+                        //去掉最后一个,
+                        sb.deleteCharAt(sb.length() - 1);
+                        vo.setSamplingTime(sb.toString());
+                    }
                 }
                 log.debug("vo:" + vo);
             }
