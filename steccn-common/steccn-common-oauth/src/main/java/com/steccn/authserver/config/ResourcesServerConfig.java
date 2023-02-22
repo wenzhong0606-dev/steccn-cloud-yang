@@ -39,10 +39,6 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        http.exceptionHandling()
-//                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                .accessDeniedHandler(accessDeniedHandler());
-
         String[] allIgnoredPath = ignorenPath.getAllIgnoredPath();
         List<String> list = Lists.newArrayList(allIgnoredPath);
         http.apply(new SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity>() {
@@ -53,6 +49,9 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
         })
         .and().authorizeRequests().antMatchers(list.toArray(new String[list.size()])).permitAll().anyRequest().authenticated();
 
+        http.exceptionHandling()
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler());
     }
 
     @Override

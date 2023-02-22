@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -110,6 +111,16 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                 .eq(SysMsgUser::getUserId, userId)
                 .eq(SysMsgUser::getReadFlag, MpConstant.NO));
         return count.intValue();
+    }
+
+    @Override
+    public Boolean markReadAll(Long userId) {
+        LambdaUpdateWrapper<SysMsgUser> updateWrapper = new LambdaUpdateWrapper<SysMsgUser>()
+                .set(SysMsgUser::getReadFlag, MpConstant.YES)
+                .set(SysMsgUser::getReadTime, LocalDateTime.now())
+                .eq(SysMsgUser::getUserId, userId)
+                .eq(SysMsgUser::getReadFlag, MpConstant.NO);
+        return sysMsgUserService.update(updateWrapper);
     }
 
     /**
