@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import java.util.List;
 
 
@@ -41,6 +42,22 @@ public interface SysMsgConstant {
         private String title;
         private Integer category;
         private String template;
+
+        /**
+         * 根据大类别 查询小分类id集合
+         *
+         * @param code 小类别id
+         * @return
+         */
+        public static Integer category(Integer code) {
+            for (MsgTypeEnum value : MsgTypeEnum.values()) {
+                //如果类别相同，或者类别为全部
+                if (value.getCode().equals(code)) {
+                    return value.getCategory();
+                }
+            }
+            return null;
+        }
 
         /**
          * 根据大类别 查询小分类id集合

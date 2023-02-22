@@ -91,11 +91,16 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     @Override
     public Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
         List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(dto.getCategory());
+        Page<SysMsgPageVO> pageReq = new Page<>(dto.getCurrent(), dto.getSize());
         if (CollUtil.isNotEmpty(typeList)) {
-            Page<SysMsgPageVO> page = baseMapper.msgPage(new Page<>(dto.getCurrent(), dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
+            Page<SysMsgPageVO> page = baseMapper.msgPage(pageReq, typeList, SecurityUtils.getUser().getUserId());
+            page.getRecords().forEach(ele -> {
+                //消息类别
+                ele.setCategory(SysMsgConstant.MsgTypeEnum.category(ele.getType()));
+            });
             return page;
         }
-        return null;
+        return pageReq;
     }
 
     /**

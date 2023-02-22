@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @ApiModel("消息中心分页vo")
 public class SysMsgPageVO implements Serializable {
 
+    @ApiModelProperty("消息类别")
+    private Integer category;
+
     @ApiModelProperty("消息类型")
     private Integer type;
 
