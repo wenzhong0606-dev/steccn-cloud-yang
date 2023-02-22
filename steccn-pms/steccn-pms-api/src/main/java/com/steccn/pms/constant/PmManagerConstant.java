@@ -222,6 +222,15 @@ public interface PmManagerConstant {
      */
     String sysVersion = "2023-01-0000";
 
+    /**
+     * 配方超级管理员权限
+     */
+    String RECIPE_ROLE_SYSTEM = "recipeSystem";
+
+    /**
+     * 配方管理员权限
+     */
+    String RECIPE_ROLE_ADMIN = "recipeAdmin";
 
     /**
      * 入库出库凭证状态

@@ -133,4 +133,15 @@ public interface RemoteMessFeignApi {
     @ResponseBody
     MessScopeVO getScope(@RequestParam("userName") String userName);
 
+    /**
+     * 根据用户名角色权限
+     *
+     * @param userName 用户名
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getRole")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MessScopeVO getRole(@RequestParam("userName") String userName);
+
 }

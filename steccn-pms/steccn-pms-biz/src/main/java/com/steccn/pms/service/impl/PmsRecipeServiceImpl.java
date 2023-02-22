@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -12,6 +13,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.util.BigDecimalUtil;
@@ -23,9 +26,11 @@ import com.steccn.pms.domain.PmsRecipeRaw;
 import com.steccn.pms.dto.PmsRecipeDTO;
 import com.steccn.pms.dto.PmsRecipeRawDTO;
 import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
+import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.PmsRecipeRawService;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.mapper.PmsRecipeMapper;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.pms.vo.PmsRecipeRawVO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
@@ -54,6 +59,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     private final PmsRecipeRawService pmsRecipeRawService;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final RemoteMessFeignApi remoteMessFeignApi;
 
     /**
      * 获取配方单详情
@@ -146,6 +153,25 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             rawVOS.add(rawTmp);
         });
         pmsRecipeVO.setRawList(rawVOS);
+        //4、处理按钮权限数据
+        SteccnUser user = SecurityUtils.getUser();
+        MessScopeVO role = remoteMessFeignApi.getRole(user.getUsername());
+        if(CollUtil.isNotEmpty(role.getStringList())){
+            if(role.getStringList().contains(PmManagerConstant.RECIPE_ROLE_ADMIN)){
+                pmsRecipeVO.setButtonRateAuth(1);
+            }else {
+                pmsRecipeVO.setButtonRateAuth(0);
+            }
+
+            if(role.getStringList().contains(PmManagerConstant.RECIPE_ROLE_SYSTEM)){
+                pmsRecipeVO.setButtonAmountAuth(1);
+            }else {
+                pmsRecipeVO.setButtonAmountAuth(0);
+            }
+        }else {
+            pmsRecipeVO.setButtonAmountAuth(0);
+            pmsRecipeVO.setButtonRateAuth(0);
+        }
         return pmsRecipeVO;
     }
 
