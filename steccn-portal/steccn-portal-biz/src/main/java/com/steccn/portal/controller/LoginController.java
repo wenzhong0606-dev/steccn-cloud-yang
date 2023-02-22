@@ -1,6 +1,7 @@
 package com.steccn.portal.controller;
 
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.util.AESUtils;
 import com.steccn.common.vo.R;
 import com.steccn.oa.feign.OaInfoService;
@@ -9,6 +10,7 @@ import com.steccn.portal.vo.SteccnTokenVO;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,10 +49,13 @@ public class LoginController {
 
     /**
      * 退出登录
+     *
      * @return r
      */
     @GetMapping("/logout")
     public R<Boolean> loginOut() {
+        //清除缓存上下文
+        SecurityContextHolder.clearContext();
         return R.success(Boolean.TRUE);
     }
 }
