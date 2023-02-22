@@ -48,7 +48,7 @@ public class SteccnExceptionControllerAdvice {
      * @return
      */
     @ExceptionHandler(value = BusinessException.class)
-    public R handleRuntimeException(BusinessException businessException) {
+    public R handleBusinessException(BusinessException businessException) {
         log.error("错误：", businessException);
         return R.failure(businessException.getLocalizedMessage());
     }
@@ -60,7 +60,7 @@ public class SteccnExceptionControllerAdvice {
      * @return
      */
     @ExceptionHandler(value = SteccnChartException.class)
-    public R handleRuntimeException(SteccnChartException chartException) {
+    public R handleSteccnChartException(SteccnChartException chartException) {
         log.error("错误：", chartException);
         R success = R.success();
         success.setMsg(chartException.getLocalizedMessage());

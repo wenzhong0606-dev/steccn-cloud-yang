@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 
 import javax.servlet.ServletException;
@@ -16,7 +17,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * @author hjljy
+ * @author yequan
  * Oauth2异常信息返回处理
  */
 @Slf4j

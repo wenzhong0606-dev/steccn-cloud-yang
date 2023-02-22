@@ -56,4 +56,11 @@ public interface SysMsgService extends IService<SysMsg> {
      * @return 未读消息数量
      */
     Integer unreadCount(Long userId);
+
+    /**
+     * 全部标记为已读
+     * @param userId 用户id
+     * @return
+     */
+    Boolean markReadAll(Long userId);
 }

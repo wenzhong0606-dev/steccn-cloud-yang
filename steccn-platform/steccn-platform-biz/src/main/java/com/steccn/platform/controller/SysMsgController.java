@@ -15,6 +15,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -50,7 +51,7 @@ public class SysMsgController {
 
     @GetMapping("/unread/count")
     @ApiOperation("未读消息数")
-    @PreAuthorize("hasAuthority('inspection:audititemClassify:view')")
+    @PreAuthorize("hasAuthority('inspection:audititemClassify:view:1')")
     public R<Integer> unreadCount() {
         return R.success(sysMsgService.unreadCount(SecurityUtils.getUser().getUserId()));
     }
@@ -61,6 +62,13 @@ public class SysMsgController {
     public R<Boolean> read(@RequestBody List<Long> msgIdList) {
         Assert.notEmpty(msgIdList, "消息不能为空");
         return R.success(sysMsgService.read(msgIdList));
+    }
+
+    @SysLog("标记全部已读")
+    @PutMapping("/mark/read/all")
+    @ApiOperation("标记全部已读")
+    public R<Boolean> markReadAll() {
+        return R.success(sysMsgService.markReadAll(SecurityUtils.getUser().getUserId()));
     }
 
     @PostMapping("/page")
