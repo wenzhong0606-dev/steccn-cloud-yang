@@ -48,4 +48,12 @@ public interface SysMsgService extends IService<SysMsg> {
      * @return
      */
     Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto);
+
+    /**
+     * 用户未读消息数量
+     *
+     * @param userId 用户userId
+     * @return 未读消息数量
+     */
+    Integer unreadCount(Long userId);
 }

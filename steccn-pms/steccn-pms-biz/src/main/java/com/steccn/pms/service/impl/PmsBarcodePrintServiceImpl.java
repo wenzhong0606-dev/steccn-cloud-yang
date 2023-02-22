@@ -283,19 +283,19 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
         if (CollUtil.isNotEmpty(caseNoSet)) {
             Map<String, CaseSiteDTO> caseSiteDTOMap = FeignOptional.of(() -> remoteWmsInventoryFeignApi.caseSite(caseNoSet), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(caseSiteDTOMap)) {
-                Set<String> siteSet = Sets.newHashSet();
+                Set<Integer> siteSet = Sets.newHashSet();
                 for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
-                    siteSet.add(entry.getValue().getShelfCode());
-                    siteSet.add(entry.getValue().getWarehouseCode());
+                    siteSet.add(entry.getValue().getShelfId());
+                    siteSet.add(entry.getValue().getWarehouseId());
                 }
-                Map<String, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(siteSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(siteSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
                 for (Map.Entry<String, CaseSiteDTO> entry : caseSiteDTOMap.entrySet()) {
                     CaseSiteDTO value = entry.getValue();
-                    SysOfficeVO warehouse = sysOfficeMap.getOrDefault(value.getWarehouseCode(), defaultSysOfficeVO);
+                    SysOfficeVO warehouse = sysOfficeMap.getOrDefault(value.getWarehouseId(), defaultSysOfficeVO);
                     value.setWarehouseId(warehouse.getId());
                     value.setWarehouseName(warehouse.getOfficeName());
-                    SysOfficeVO shelf = sysOfficeMap.getOrDefault(value.getShelfCode(), defaultSysOfficeVO);
+                    SysOfficeVO shelf = sysOfficeMap.getOrDefault(value.getShelfId(), defaultSysOfficeVO);
                     value.setShelfId(shelf.getId());
                     value.setShelfName(shelf.getOfficeName());
                 }
