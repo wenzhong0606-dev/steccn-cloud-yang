@@ -92,7 +92,7 @@ public interface RemoteMessFeignApi {
     /**
      * 根据货架获取库存列表
      *
-     * @param materialIds
+     * @param shelfs
      * @return
      */
     @PostMapping(value = "/web/eqp/eqpSpareInventory/shelfInventory")
@@ -103,7 +103,7 @@ public interface RemoteMessFeignApi {
     /**
      * 根据物料获取库存列表
      *
-     * @param materialIds
+     * @param materials
      * @return
      */
     @PostMapping(value = "/web/eqp/eqpSpareInventory/material/inventory")
@@ -114,7 +114,7 @@ public interface RemoteMessFeignApi {
     /**
      * 根据物料获取库存列表
      *
-     * @param materialIds
+     * @param
      * @return
      */
     @GetMapping(value = "/web/mesClassification/tree")
