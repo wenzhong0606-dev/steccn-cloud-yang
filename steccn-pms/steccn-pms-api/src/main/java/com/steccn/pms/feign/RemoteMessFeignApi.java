@@ -3,13 +3,11 @@ package com.steccn.pms.feign;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.pms.vo.WmsStockVO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -130,9 +128,9 @@ public interface RemoteMessFeignApi {
      * @param userName 用户名
      * @return
      */
-    @GetMapping(value = "/auth/getScope")
+    @GetMapping(value = "/web/auth/getScope")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    List<String> getScope(@RequestBody String userName);
+    MessScopeVO getScope(@RequestParam("userName") String userName);
 
 }

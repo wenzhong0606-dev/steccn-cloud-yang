@@ -14,6 +14,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -49,6 +50,7 @@ public class SysMsgController {
 
     @GetMapping("/unread/count")
     @ApiOperation("未读消息数")
+    @PreAuthorize("hasAuthority('inspection:audititemClassify:view')")
     public R<Integer> unreadCount() {
         return R.success(sysMsgService.unreadCount(SecurityUtils.getUser().getUserId()));
     }
