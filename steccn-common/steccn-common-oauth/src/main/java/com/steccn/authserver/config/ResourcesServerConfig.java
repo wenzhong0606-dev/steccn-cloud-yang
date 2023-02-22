@@ -39,6 +39,10 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
+        http.exceptionHandling()
+//                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler());
+
         String[] allIgnoredPath = ignorenPath.getAllIgnoredPath();
         List<String> list = Lists.newArrayList(allIgnoredPath);
         http.apply(new SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity>() {
@@ -48,9 +52,7 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
             }
         })
         .and().authorizeRequests().antMatchers(list.toArray(new String[list.size()])).permitAll().anyRequest().authenticated();
-        http.exceptionHandling()
-                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                .accessDeniedHandler(accessDeniedHandler());
+
     }
 
     @Override
@@ -60,16 +62,7 @@ public class ResourcesServerConfig extends ResourceServerConfigurerAdapter {
     }
 
     @Bean
-    public AccessDeniedHandler accessDeniedHandler(){
-        return (((request, response, accessDeniedException) -> {
-            response.setContentType("application/json;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            Map<String, String> map = Maps.newLinkedHashMap();
-            map.put("code", "0");
-            map.put("msg", "暂无权限xxx");
-            map.put("data", null);
-            response.getWriter().write(JSONObject.toJSONString(map));
-        }));
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new AuthenticationForbiddenEntryPoint();
     }
-
 }
