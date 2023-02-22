@@ -51,7 +51,7 @@ public class SysMsgController {
 
     @GetMapping("/unread/count")
     @ApiOperation("未读消息数")
-    @PreAuthorize("hasAuthority('inspection:audititemClassify:view:1')")
+//    @PreAuthorize("hasAuthority('inspection:audititemClassify:view:1')")
     public R<Integer> unreadCount() {
         return R.success(sysMsgService.unreadCount(SecurityUtils.getUser().getUserId()));
     }

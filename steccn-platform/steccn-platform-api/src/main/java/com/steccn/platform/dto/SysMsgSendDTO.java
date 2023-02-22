@@ -1,5 +1,8 @@
 package com.steccn.platform.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -30,6 +33,10 @@ public class SysMsgSendDTO implements Serializable {
     @ApiModelProperty("消息内容")
     @NotBlank(message = "消息内容不能为空")
     private String content;
+
+    @ApiModelProperty("备注内容")
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private SysMsgAdditionDTO addition;
 
     @ApiModelProperty("接收用户集合")
     @Size(min = 1, message = "消接收用户不能为空")
