@@ -256,4 +256,9 @@ public class QtCheckTaskListVO implements Serializable {
      */
     private Integer classesId;
 
+    /**
+     * 取样时间
+     */
+    private String samplingTime;
+
 }

@@ -283,7 +283,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
     @Override
     @Transactional(readOnly = false)
     public Boolean affirm(Long id) {
-        //1.查询出库单
+        //1.查询入库单
         WmsStorageReceipt receipt = getById(id);
         //2.判断单状态
         Assert.isTrue(WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getStatus())
@@ -292,7 +292,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
         if (WmsManagerConstant.OrderStateEnum.ZERO.getCode().equals(receipt.getSourceType())) {
             //变更pms生产订单状态
             PmsCompleteStorageDTO pmsCompleteStorageDTO = new PmsCompleteStorageDTO();
-            pmsCompleteStorageDTO.setCode(receipt.getSourceCode());
+            pmsCompleteStorageDTO.setCode(receipt.getCode());
             pmsCompleteStorageDTO.setConfirmName(SecurityUtils.getUser().getName());
             remoteCompleteStorageFeignApi.completeStorageReviseStatue(pmsCompleteStorageDTO);
         }
