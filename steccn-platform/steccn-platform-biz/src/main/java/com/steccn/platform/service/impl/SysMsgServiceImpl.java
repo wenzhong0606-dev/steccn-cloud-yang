@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -101,6 +102,14 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             return page;
         }
         return pageReq;
+    }
+
+    @Override
+    public Integer unreadCount(Long userId) {
+        Long count = sysMsgUserService.count(new LambdaQueryWrapper<SysMsgUser>()
+                .eq(SysMsgUser::getUserId, userId)
+                .eq(SysMsgUser::getReadFlag, MpConstant.NO));
+        return count.intValue();
     }
 
     /**

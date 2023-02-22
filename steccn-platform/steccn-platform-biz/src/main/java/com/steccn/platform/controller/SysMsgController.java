@@ -2,6 +2,7 @@ package com.steccn.platform.controller;
 
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysMsgPageDTO;
@@ -44,6 +45,12 @@ public class SysMsgController {
     @ApiOperation("获取tab集合")
     public R<List<SysMsgTabVO>> tab() {
         return R.success(sysMsgService.tab());
+    }
+
+    @GetMapping("/unread/count")
+    @ApiOperation("未读消息数")
+    public R<Integer> unreadCount() {
+        return R.success(sysMsgService.unreadCount(SecurityUtils.getUser().getUserId()));
     }
 
     @SysLog("读取消息")
