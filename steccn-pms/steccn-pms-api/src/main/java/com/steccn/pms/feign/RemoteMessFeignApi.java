@@ -124,4 +124,15 @@ public interface RemoteMessFeignApi {
     @ResponseBody
     Object tree();
 
+    /**
+     * 根据用户名获取权限
+     *
+     * @param userName 用户名
+     * @return
+     */
+    @GetMapping(value = "/auth/getScope")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    List<String> getScope(@RequestBody String userName);
+
 }
