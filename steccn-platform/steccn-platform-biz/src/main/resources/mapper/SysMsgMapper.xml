@@ -32,7 +32,7 @@
         and u.user_id = #{userId}
     </select>
     <select id="msgPage" resultMap="pageMap">
-        SELECT m.id , m.title, m.content, m.addition, m.create_name, m.create_time , u.read_flag
+        SELECT m.id , m.title, m.content, m.addition, m.create_name, m.create_time , u.read_flag , m.type
         FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
         where m.type in
         <foreach collection="typeList" item="type" open="(" close=")" separator=",">
