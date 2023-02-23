@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.constant.SysMsgConstant;
@@ -19,6 +20,8 @@ import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
+import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         implements SysMsgService {
 
     private final SysMsgUserService sysMsgUserService;
+    private final RemoteWsFeignApi remoteWsFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -59,6 +63,20 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         });
         save(msg);
         sysMsgUserService.saveBatch(msgUserList);
+        MsgPushDTO msgPushDTO = new MsgPushDTO();
+        msgPushDTO.setType(1);
+        msgPushDTO.setMsgId(msg.getId());
+        Integer category = SysMsgConstant.MsgTypeEnum.category(msg.getType());
+        msgPushDTO.setMsgCategory(category);
+        msgPushDTO.setMsgType(msg.getType());
+        msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
+        msgPushDTO.setTitle(msg.getTitle());
+        msgPushDTO.setAddition(sysMsgDTO.getAddition());
+        try {
+            remoteWsFeignApi.pushMsg(msgPushDTO);
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
         return Boolean.TRUE;
     }
 
