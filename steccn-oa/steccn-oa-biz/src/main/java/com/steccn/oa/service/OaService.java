@@ -50,6 +50,8 @@ public class OaService {
 
     private final OaApi oaApi;
 
+    private final OaTokenService oaTokenService;
+
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -100,25 +102,6 @@ public class OaService {
         return oaSsoTokenResult;
     }
 
-    /**
-     * 获取请求oa后台apiToken
-     * @return OaApiTokenResult
-     */
-    @Cacheable(cacheNames = "OaToken#1500",unless = "#result.status == false")
-    public OaApiTokenResult getApiToken(){
-        MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-        headers.set("appid",OaConstant.OA_API_APPID);
-        headers.set("secret",OaConstant.OA_API_SECRET);
-        String result = oaApi.getApiToken(headers);
-        JSONObject jsonObject = JSONObject.parseObject(result);
-        OaApiTokenResult oaApiTokenResult = new OaApiTokenResult();
-        if(jsonObject.getBoolean(OaConstant.OA_JSON_STATUS)){
-            oaApiTokenResult.setToken(jsonObject.getString(OaConstant.OA_JSON_TOKEN));
-        }
-        oaApiTokenResult.setStatus(jsonObject.getBoolean(OaConstant.OA_JSON_STATUS));
-        oaApiTokenResult.setMsg(jsonObject.getString(OaConstant.OA_JSON_MSG));
-        return oaApiTokenResult;
-    }
 
     /**
      * 获取oa菜单请求
@@ -128,7 +111,7 @@ public class OaService {
     public JSONArray getMenuList(String userId){
         List<OaMenuResult> oaMenuResults = new ArrayList<>();
         //先获取apiToken
-        OaApiTokenResult oaApiTokenResult = this.getApiToken();;
+        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
         if(!oaApiTokenResult.isStatus()){
             OaMenuResult oaMenuResult = new OaMenuResult();
             oaMenuResult.setStatus(false);
@@ -201,7 +184,7 @@ public class OaService {
     public OaUserInfo getOaUserInfo(String loginId){
         OaUserInfo oaUserInfo = new OaUserInfo();
         //放入Token
-        OaApiTokenResult oaApiTokenResult = this.getApiToken();;
+        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
         if(!oaApiTokenResult.isStatus()){
             oaUserInfo.setStatus(false);
             log.error(oaApiTokenResult.getMsg());
@@ -233,7 +216,7 @@ public class OaService {
     public List<OaUserIdAndName> getAll(){
         List<OaUserIdAndName> oaUserIdAndName = new ArrayList<>();
         //放入Token
-        OaApiTokenResult oaApiTokenResult = this.getApiToken();;
+        OaApiTokenResult oaApiTokenResult = oaTokenService.getApiToken();
         if(!oaApiTokenResult.isStatus()){
             log.error(oaApiTokenResult.getMsg());
             return oaUserIdAndName;
@@ -452,7 +435,7 @@ public class OaService {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         //把Token放入header中
         headers.set("appid",OaConstant.OA_API_APPID);
-        headers.set("token",this.getApiToken().getToken());
+        headers.set("token",oaTokenService.getApiToken().getToken());
         headers.set("userid",OaConstant.OA_SYSTEM_USERID);
         return headers;
     }

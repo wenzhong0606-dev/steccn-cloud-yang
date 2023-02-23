@@ -150,8 +150,4 @@ public class OaController {
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
 
-    @GetMapping("/user/test")
-    public R<OaApiTokenResult> getIdByWorkCode() {
-        return R.success(oaService.getApiToken());
-    }
 }
