@@ -4,22 +4,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.platform.mapper.SysMsgMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.platform.domain.SysMsg">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="type" column="type" jdbcType="INTEGER"/>
-            <result property="title" column="title" jdbcType="VARCHAR"/>
-            <result property="content" column="content" jdbcType="VARCHAR"/>
-            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
-            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
-            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    <resultMap id="pageMap" type="com.steccn.platform.vo.SysMsgPageVO">
+        <id property="msgId" column="id" jdbcType="BIGINT"/>
+        <result property="type" column="type" jdbcType="INTEGER"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="addition" column="addition"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="readFlag" column="read_flag" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,type,title,
+        id
+        ,type,title,
         content,create_by,create_name,
         create_time,update_by,update_name,
         update_time,del_flag
@@ -27,17 +26,19 @@
     <select id="tabCount" resultType="java.lang.Integer">
         SELECT count(1) FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
         where m.type in
-        <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
+        <foreach collection="typeList" item="type" open="(" close=")" separator=",">
             #{type}
         </foreach>
         and u.user_id = #{userId}
     </select>
-    <select id="msgPage" resultType="com.steccn.platform.vo.SysMsgPageVO">
-        SELECT * FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
+    <select id="msgPage" resultMap="pageMap">
+        SELECT m.id , m.title, m.content, m.addition, m.create_name, m.create_time , u.read_flag
+        FROM sys_msg m join sys_msg_user u on m.id = u.msg_id
         where m.type in
-        <foreach collection="typeList" item="type"  open="(" close=")" separator=",">
+        <foreach collection="typeList" item="type" open="(" close=")" separator=",">
             #{type}
         </foreach>
         and u.user_id = #{userId}
+        order by m.create_time desc
     </select>
 </mapper>

@@ -1,5 +1,7 @@
 package com.steccn.platform.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -29,6 +31,10 @@ public class SysMsgPageVO implements Serializable {
 
     @ApiModelProperty("消息内容")
     private String content;
+
+    @ApiModelProperty("备注内容")
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private SysMsgAdditionDTO addition;
 
     @ApiModelProperty("已读未读")
     private Integer readFlag;
