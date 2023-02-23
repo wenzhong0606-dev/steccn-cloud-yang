@@ -64,7 +64,6 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         save(msg);
         sysMsgUserService.saveBatch(msgUserList);
         MsgPushDTO msgPushDTO = new MsgPushDTO();
-        msgPushDTO.setType(1);
         msgPushDTO.setMsgId(msg.getId());
         Integer category = SysMsgConstant.MsgTypeEnum.category(msg.getType());
         msgPushDTO.setMsgCategory(category);
