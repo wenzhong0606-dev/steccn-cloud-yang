@@ -144,4 +144,15 @@ public interface RemoteMessFeignApi {
     @ResponseBody
     MessScopeVO getRole(@RequestParam("userName") String userName);
 
+    /**
+     * 根据权限获取用户名
+     *
+     * @param permission 用户名
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getUserNameByPermission")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MessScopeVO getUserNameByPermission(@RequestParam("permission") String permission);
+
 }

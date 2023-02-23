@@ -32,7 +32,7 @@ public class MsgPushDTO implements Serializable {
     @ApiModelProperty("标题")
     private String title;
 
-    @ApiModelProperty("消息")
+    @ApiModelProperty("消息附加信息")
     private SysMsgAdditionDTO addition;
 
     @ApiModelProperty("用户id集合")

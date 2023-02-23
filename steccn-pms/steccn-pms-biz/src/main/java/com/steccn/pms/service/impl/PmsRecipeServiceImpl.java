@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
@@ -18,6 +19,8 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
@@ -34,6 +37,9 @@ import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.pms.vo.PmsRecipeRawVO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
+import com.steccn.websocket.constant.WebsocketConstant;
+import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.iterators.ArrayListIterator;
@@ -62,6 +68,9 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
 
     private final RemoteMessFeignApi remoteMessFeignApi;
 
+    private final RemoteWsFeignApi remoteWsFeignApi;
+
+    private final OaInfoService oaInfoService;
     /**
      * 获取配方单详情
      * @param id
@@ -298,10 +307,10 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             tmp.setRecipeId(pmsRecipe.getId());
         });
         pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
-        // TODO: 2023/2/21 发送消息
-        String username = SecurityUtils.getUser().getUsername();
-
-
+        //6、发送消息
+        //刷新消息,发给所有读权限的人
+        sendRefreshMsg();
+        //发给当班人员
 
         return true;
     }
@@ -410,8 +419,33 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             tmp.setRecipeId(recipeModel.getId());
         });
         pmsRecipeRawService.saveBatch(pmsRecipeRawModelList);
-        // TODO: 2023/2/21 发送消息 
+        //4、刷新消息
+        sendRefreshMsg();
+        //5、web端、移动端发送消息给岗位为“化验室主任”的人员、岗位为“配料工”的当前班次人员（调用OA接口获取）
+
         return true;
+    }
+
+    /**
+     * 发送刷新消息
+     */
+    protected void sendRefreshMsg(){
+        MessScopeVO messScopeVO = remoteMessFeignApi.getUserNameByPermission(PmManagerConstant.RECIPE_PERMISSION_VIEW);
+        if(CollUtil.isNotEmpty(messScopeVO.getStringList())){
+            MsgPushDTO msg = new MsgPushDTO();
+            msg.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            msg.setMsgCategory(SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+            msg.setMsgType(SysMsgConstant.MsgTypeEnum.RECIPE_REFRESH.getCode());
+            List<Integer> ids = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(messScopeVO.getStringList()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Set<Long> longIds = Sets.newHashSet();
+            if(CollUtil.isNotEmpty(ids)){
+                ids.forEach(tmp -> {
+                    longIds.add(tmp.longValue());
+                });
+            }
+            msg.setUserIdList(longIds);
+            FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
     }
 
 }

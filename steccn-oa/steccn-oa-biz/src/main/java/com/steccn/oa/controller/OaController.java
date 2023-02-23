@@ -150,4 +150,9 @@ public class OaController {
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
 
+    @ApiOperation("根据用户名查询id")
+    @PostMapping("/user/name/id")
+    public R<List<Integer>> getIdByWorkCode(@RequestBody List<String> userNames) {
+        return R.success(hrmresourceService.getIdByUserName(userNames));
+    }
 }

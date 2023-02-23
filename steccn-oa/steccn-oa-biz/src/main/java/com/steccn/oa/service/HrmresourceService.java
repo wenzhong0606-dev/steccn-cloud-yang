@@ -34,4 +34,11 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     Map<Long, String> listByIdCh(List<Long> idList);
+
+    /**
+     * 根据用户名列表查询id
+     * @param userNames
+     * @return
+     */
+    List<Integer> getIdByUserName(List<String> userNames);
 }

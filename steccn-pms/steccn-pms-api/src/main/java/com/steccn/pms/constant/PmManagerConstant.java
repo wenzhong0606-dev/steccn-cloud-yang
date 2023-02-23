@@ -233,6 +233,11 @@ public interface PmManagerConstant {
     String RECIPE_ROLE_ADMIN = "recipeAdmin";
 
     /**
+     * 配方管理查看
+     */
+    String RECIPE_PERMISSION_VIEW = "pms:recipe:view";
+
+    /**
      * 入库出库凭证状态
      */
     @Getter
