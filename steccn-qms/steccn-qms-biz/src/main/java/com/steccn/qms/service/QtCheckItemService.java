@@ -13,6 +13,7 @@ import com.steccn.qms.vo.QtRangeArrayVO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -84,5 +85,19 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      */
     Map<Integer, Integer> checkItemSnapshot(List<Integer> checkIdList);
 
+    /**
+     * 检验项快照集合
+     * @param checkItemIdList
+     * @return
+     */
+    Map<Integer, Set<Integer>> checkItemSnapshotSet(List<Integer> checkItemIdList);
+
     R<List<SysOfficeVO>> selectStationList(List<String> typeList);
+
+    /**
+     * 获取检验项
+     * @param ids
+     * @return
+     */
+    Map<Integer,QtCheckItem> mapCheckItem(List<Integer> ids);
 }

@@ -182,6 +182,9 @@ public interface QtManagerConstant {
     String SPC_HEADER_FIELD_WORKSHOP_VALUE = "workshop";
     String SPC_HEADER_FIELD_STATION_VALUE = "station";
     String SPC_HEADER_FILELD_SUPPLIER_VALUE = "supplier";
+    String SPC_REPORT_NAME = "SPC名称:";
+    String SPC_REPORT_MATERIAL_NAME = "物料名称:";
+    String SPC_REPORT_CHECK_ITEM_NAME = "检验项名称:";
 
     /**
      * 首检质量日报表 常量

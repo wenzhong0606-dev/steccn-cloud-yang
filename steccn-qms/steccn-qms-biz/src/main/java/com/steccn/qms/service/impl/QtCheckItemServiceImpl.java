@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -225,7 +227,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     @Override
     public QtCheckItemListVO info(Integer id) {
         QtCheckItemListVO resVo = null;
-        QtCheckItem byId = getOne(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getId,id).orderByAsc(QtCheckItem::getCreateTime),false);
+        QtCheckItem byId = getOne(new LambdaQueryWrapper<QtCheckItem>().eq(QtCheckItem::getId, id).orderByAsc(QtCheckItem::getCreateTime), false);
         if (Objects.nonNull(byId)) {
             resVo = new QtCheckItemListVO();
             BeanUtils.copyProperties(byId, resVo);
@@ -267,29 +269,29 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         //1、dto中的measureUnit  oldModel中的measureUnit 任意一个不为null
         Boolean flag;
         //measureUnit
-        if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()!=null){
-            if(dto.getMeasureUnit().equals(oldModel.getMeasureUnit())){
+        if (dto.getMeasureUnit() != null && oldModel.getMeasureUnit() != null) {
+            if (dto.getMeasureUnit().equals(oldModel.getMeasureUnit())) {
                 flag = false;
             }
-        }else {
+        } else {
             //两个都为null则表示没有改变
-            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()==null){
+            if (dto.getMeasureUnit() == null && oldModel.getMeasureUnit() == null) {
                 flag = false;
             }
             //一个为null另一个不为null
-            if(dto.getMeasureUnit()==null && oldModel.getMeasureUnit()!=null){
+            if (dto.getMeasureUnit() == null && oldModel.getMeasureUnit() != null) {
                 flag = true;
             }
             //一个为null另一个不为null
-            if(dto.getMeasureUnit()!=null && oldModel.getMeasureUnit()==null){
+            if (dto.getMeasureUnit() != null && oldModel.getMeasureUnit() == null) {
                 flag = true;
             }
 
         }
         //数据类型
-        if(dto.getDataType().equals(oldModel.getDataType())){
+        if (dto.getDataType().equals(oldModel.getDataType())) {
             flag = false;
-        }else {
+        } else {
             flag = true;
         }
         if (qtCheckPlanGroupItemService.count(itemConditionRangeArray) != 0) {
@@ -371,7 +373,7 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
             throw new BusinessException("已有检验方案调用了该检验项，不允许删除");
         }
         //4.判断检验项是否已停用，如果停用，不允许删除
-        if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())){
+        if (QtManagerConstant.QtMaterialStatusEnum.DISABLE.getCode().equals(oldItem.getStatus())) {
             throw new BusinessException("该检验项已停用，不允许删除");
         }
         QtCheckItem item = new QtCheckItem();
@@ -422,12 +424,55 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
     }
 
     @Override
-    public  R<List<SysOfficeVO>>  selectStationList(List<String> typeList) {
+    public Map<Integer, Set<Integer>> checkItemSnapshotSet(List<Integer> checkItemIdList) {
+        //如果检验项id集合为空，则直接返回空的map
+        if (CollUtil.isEmpty(checkItemIdList)) {
+            return Maps.newHashMap();
+        }
+        //定义返回map
+        Map<Integer, Set<Integer>> resMap = Maps.newHashMap();
+        //根据检验项主键查询所有的集合数据
+        List<QtCheckItem> qtCheckItems = listByIds(checkItemIdList);
+        Set<String> codes = Sets.newHashSet();
+        qtCheckItems.forEach(qtCheckItem -> codes.add(qtCheckItem.getCode()));
+        if (CollUtil.isNotEmpty(codes)) {
+            //根据code查询所有检验项（包括原始的数据）
+            List<QtCheckItem> list = list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getCode, codes));
+            if (CollUtil.isNotEmpty(list)) {
+                Map<String, List<QtCheckItem>> collect = list.stream().collect(Collectors.groupingBy(QtCheckItem::getCode));
+                qtCheckItems.forEach(qtCheckItem -> {
+                    List<QtCheckItem> items = collect.get(qtCheckItem.getCode());
+                    Set<Integer> itemIds = Sets.newHashSet();
+                    items.forEach(item -> itemIds.add(item.getId()));
+                    resMap.put(qtCheckItem.getId(), itemIds);
+                });
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public R<List<SysOfficeVO>> selectStationList(List<String> typeList) {
 
         R<List<SysOfficeVO>> stationList = remoteOfficeFeign.warehouseAndShelf(typeList);
 
 
         return stationList;
+    }
+
+    @Override
+    public Map<Integer, QtCheckItem> mapCheckItem(List<Integer> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Maps.newHashMap();
+        }
+        List<QtCheckItem> list = list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getId, ids));
+        Map<Integer, QtCheckItem> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(item -> {
+                resMap.put(item.getId(), item);
+            });
+        }
+        return resMap;
     }
 
     /**

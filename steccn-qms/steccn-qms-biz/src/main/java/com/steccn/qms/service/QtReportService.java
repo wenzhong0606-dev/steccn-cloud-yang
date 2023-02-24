@@ -9,6 +9,7 @@ import com.steccn.qms.vo.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -110,4 +111,14 @@ public interface QtReportService extends IService<QtReport> {
      * @param dto
      */
     void downloadSPC(HttpServletResponse response, QtReportExcelDTO dto) ;
+
+
+    /**
+     * spc告警
+     * @param startTime 开始时间
+     * @param endTime  结束时间
+     * @param granularity 粒度:小时、天、周、月、季度、年
+     * @return
+     */
+    Boolean warnSPC(LocalDateTime startTime, LocalDateTime endTime, String granularity);
 }

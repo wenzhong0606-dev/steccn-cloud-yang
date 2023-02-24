@@ -6,6 +6,7 @@ import com.steccn.qms.dto.QtBaseIdNameDTO;
 import com.steccn.qms.vo.QtReportWarnUserVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author yequan
@@ -34,4 +35,12 @@ public interface QtReportWarnUserService extends IService<QtReportWarnUser> {
      * @return
      */
     List<QtReportWarnUserVO> getWarnUser(Integer id);
+
+
+    /**
+     * 获取告警人员信息
+     * @param ids
+     * @return Map<Integer,List<QtReportWarnUserVO>>
+     */
+    Map<Integer,List<QtReportWarnUserVO>> mapWarnUser(List<Integer> ids);
 }

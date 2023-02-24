@@ -11,6 +11,7 @@ import java.util.List;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  * 报表
@@ -18,6 +19,7 @@ import lombok.Data;
  */
 @TableName(value ="qt_report",autoResultMap = true)
 @Data
+@Accessors(chain = true)
 public class QtReport implements Serializable {
     /**
      * 主键id
@@ -100,32 +102,32 @@ public class QtReport implements Serializable {
     /**
      * 生产车间
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "workshop",typeHandler = JacksonTypeHandler.class)
     private List<QtBaseIdNameDTO> workshop;
 
     /**
      * 产线产生
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "product_line",typeHandler = JacksonTypeHandler.class)
     private List<QtBaseIdNameDTO> productLine;
 
     /**
      * 客户
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "customer",typeHandler = JacksonTypeHandler.class)
     private List<QtBaseIdNameDTO> customer;
 
     /**
      * 物料使用车间
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<QtBaseIdNameDTO> materialUseWorkshop;
+    @TableField(value = "material_Use_Workshop",typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO.QtBaseIdNameContent materialUseWorkshop;
 
     /**
      * 供应商
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<QtBaseIdNameDTO> supplier;
+    @TableField(value = "supplier",typeHandler = JacksonTypeHandler.class)
+    private QtBaseIdNameDTO.QtBaseIdNameContent supplier;
 
     /**
      * 备注
