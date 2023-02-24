@@ -995,7 +995,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return Boolean.TRUE;
     }
 
-
     /**
      * 根据id删除spc卡片
      *
