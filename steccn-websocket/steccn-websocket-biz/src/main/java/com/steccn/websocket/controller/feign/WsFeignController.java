@@ -26,6 +26,7 @@ public class WsFeignController {
     @PostMapping("/push/msg")
     public R<MsgPushDTO> pushMsg(@RequestBody MsgPushDTO msgPushDTO) {
         msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        msgPushDTO.setUserIdList(null);
         String msg = JSONUtil.toJsonStr(msgPushDTO);
         msgPushDTO.getUserIdList().forEach(ele -> {
             WebSocketManager.sendMessageByUser(ele, msg);
