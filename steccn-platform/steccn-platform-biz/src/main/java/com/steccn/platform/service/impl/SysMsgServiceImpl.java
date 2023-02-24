@@ -64,12 +64,12 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         save(msg);
         sysMsgUserService.saveBatch(msgUserList);
         MsgPushDTO msgPushDTO = new MsgPushDTO();
+        BeanUtils.copyProperties(msg, msgPushDTO);
         msgPushDTO.setMsgId(msg.getId());
         Integer category = SysMsgConstant.MsgTypeEnum.category(msg.getType());
         msgPushDTO.setMsgCategory(category);
         msgPushDTO.setMsgType(msg.getType());
         msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
-        msgPushDTO.setTitle(msg.getTitle());
         msgPushDTO.setAddition(sysMsgDTO.getAddition());
         try {
             remoteWsFeignApi.pushMsg(msgPushDTO);
