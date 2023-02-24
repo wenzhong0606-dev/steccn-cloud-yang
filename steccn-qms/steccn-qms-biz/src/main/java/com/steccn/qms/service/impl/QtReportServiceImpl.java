@@ -970,7 +970,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 //定义消息模板
                 SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
                 sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTitle());
-                sysMsgSendDTO.setType(SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+                sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SPC_WARN.getCode());
                 String materialName = materialMap.get(entry.getValue().getMaterialId());
                 sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTemplate(),entry.getValue().getName(),materialName,itemMap.get(entry.getValue().getCheckItemId()).getName()));
                 Set<Long> userIds = Sets.newHashSet();
