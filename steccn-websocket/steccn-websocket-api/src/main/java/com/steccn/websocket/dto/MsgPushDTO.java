@@ -4,9 +4,8 @@ import com.steccn.platform.vo.SysMsgAdditionDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
 import java.io.Serializable;
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
@@ -32,8 +31,20 @@ public class MsgPushDTO implements Serializable {
     @ApiModelProperty("标题")
     private String title;
 
+    @ApiModelProperty("内容")
+    private String content;
+
+    @ApiModelProperty("已读未读标识")
+    private Integer readFlag;
+
     @ApiModelProperty("消息附加信息")
     private SysMsgAdditionDTO addition;
+
+    @ApiModelProperty("消息创建人")
+    private String createName;
+
+    @ApiModelProperty("消息创建时间")
+    private LocalDateTime createTime;
 
     @ApiModelProperty("用户id集合")
     private Set<Long> userIdList;

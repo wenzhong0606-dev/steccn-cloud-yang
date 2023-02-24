@@ -16,7 +16,8 @@ public interface WebsocketConstant {
     @AllArgsConstructor
     enum WsPushTypeEnum {
         OA(0, "OA"),
-        MSG_SYS_REMIND(1, "系统消息提醒");
+        MSG_SYS_REMIND(1, "系统消息提醒"),
+        RECIPE_REFRESH(2, "配方版本刷新通知");
 
         private Integer type;
         private String name;

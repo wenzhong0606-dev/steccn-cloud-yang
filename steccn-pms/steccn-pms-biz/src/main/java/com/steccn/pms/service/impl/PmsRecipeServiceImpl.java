@@ -439,7 +439,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         MessScopeVO messScopeVO = remoteMessFeignApi.getUserNameByPermission(PmManagerConstant.RECIPE_PERMISSION_VIEW);
         if(CollUtil.isNotEmpty(messScopeVO.getStringList())){
             MsgPushDTO msg = new MsgPushDTO();
-            msg.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            msg.setType(WebsocketConstant.WsPushTypeEnum.RECIPE_REFRESH.getType());
             msg.setMsgCategory(SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
             msg.setMsgType(SysMsgConstant.MsgTypeEnum.RECIPE_REFRESH.getCode());
             List<Integer> ids = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(messScopeVO.getStringList()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
