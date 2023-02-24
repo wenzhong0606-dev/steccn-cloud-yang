@@ -237,6 +237,8 @@ public interface PmManagerConstant {
      */
     String RECIPE_PERMISSION_VIEW = "pms:recipe:view";
 
+    String LABORATORY_DIRECTOR = "化验室副主任";
+
     /**
      * 入库出库凭证状态
      */

@@ -19,9 +19,13 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.oa.dto.OaHrmDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsRecipe;
@@ -71,6 +75,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     private final RemoteWsFeignApi remoteWsFeignApi;
 
     private final OaInfoService oaInfoService;
+
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
     /**
      * 获取配方单详情
      * @param id
@@ -422,7 +428,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //4、刷新消息
         sendRefreshMsg();
         //5、web端、移动端发送消息给岗位为“化验室主任”的人员、岗位为“配料工”的当前班次人员（调用OA接口获取）
-
+        sendMessage(true,recipeModel.getVersion());
         return true;
     }
 
@@ -442,9 +448,38 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 ids.forEach(tmp -> {
                     longIds.add(tmp.longValue());
                 });
+                msg.setUserIdList(longIds);
+                FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             }
-            msg.setUserIdList(longIds);
-            FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+    }
+
+    /**
+     * 发送配方管理消息 true表示发给副主任 false表示不发
+     * @param sendLab
+     */
+    protected void sendMessage(Boolean sendLab,String version){
+        Set<Long> longIds = Sets.newHashSet();
+        //发送给车间副主任
+        OaHrmDTO hrm = new OaHrmDTO();
+        hrm.setJobtitle(PmManagerConstant.LABORATORY_DIRECTOR);
+        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(oaEmpVOS)){
+            oaEmpVOS.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
+        }
+        // TODO: 2023/2/24 发送给配料工
+        if(CollUtil.isNotEmpty(longIds)){
+            SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+            sysMsgDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTitle());
+            sysMsgDTO.setUserList(longIds);
+            String content = SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTemplate();
+            content.replaceFirst("%s",SecurityUtils.getUser().getName());
+            content.replaceFirst("%s",version);
+            sysMsgDTO.setContent(content);
+            FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         }
     }
 

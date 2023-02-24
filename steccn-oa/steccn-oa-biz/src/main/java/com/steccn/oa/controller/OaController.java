@@ -155,4 +155,10 @@ public class OaController {
     public R<List<Integer>> getIdByWorkCode(@RequestBody List<String> userNames) {
         return R.success(hrmresourceService.getIdByUserName(userNames));
     }
+
+    @ApiOperation("根据岗位查询人")
+    @PostMapping("/user/jobTitle")
+    public R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto){
+        return R.success(oaService.getHrmSearchResult(dto));
+    }
 }

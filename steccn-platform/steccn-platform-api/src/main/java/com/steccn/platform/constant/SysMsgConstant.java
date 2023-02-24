@@ -37,7 +37,7 @@ public interface SysMsgConstant {
         PURCHASE_APPLY(1, "采购申请审批", MsgCategoryEnum.TO_BE_DO.code, ""),
         RECIPE_VERSION(2, "配方版本更新", MsgCategoryEnum.SYS_REMIND.code, "%s更新了配方，最新版本为%s"),
         SPC_WARN(3, "SPC超标告警", MsgCategoryEnum.SYS_REMIND.code, "SPC名称: %s \n物料名称: %s\n检验项: %s"),
-        RECIPE_REFRESH(4, "配方版本更新", MsgCategoryEnum.SYS_REMIND.code, "");
+        RECIPE_REFRESH(4, "配方版本刷新通知", MsgCategoryEnum.SYS_REMIND.code, "");
 
         private Integer code;
         private String title;

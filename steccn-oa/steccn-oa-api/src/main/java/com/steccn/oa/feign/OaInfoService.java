@@ -4,9 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaHrmDTO;
 import com.steccn.oa.dto.OaLoginParam;
 import com.steccn.oa.dto.OaUserDTO;
 import com.steccn.oa.dto.OaUserInfo;
+import com.steccn.oa.vo.OaEmpVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -97,4 +99,14 @@ public interface OaInfoService {
     @PostMapping("/oa/user/name/id")
     @ApiOperation("根据用户名查询id")
     R<List<Integer>> getIdByWorkCode(@RequestBody List<String> userNames);
+
+    /**
+     *
+     *
+     * @param dto 用户名列表
+     * @return
+     */
+    @PostMapping("/oa/user/jobTitle")
+    @ApiOperation("根据用户名查询id")
+    R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto);
 }

@@ -427,6 +427,22 @@ public class OaService {
     }
 
     /**
+     * 获取人员的sessionKey
+     * @return
+     */
+    public List<OaEmpVO> getHrmSearchResult(OaHrmDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        String sessionKeyResult = oaApi.getHrmSearchResult(headers,dto);
+        String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        dataKey.setDataKey(sessionKey);
+        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
+    }
+
+    /**
      * 设置请求头
      * @return
      */
