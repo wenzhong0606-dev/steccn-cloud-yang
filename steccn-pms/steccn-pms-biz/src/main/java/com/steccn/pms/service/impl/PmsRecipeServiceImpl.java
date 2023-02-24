@@ -317,7 +317,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //刷新消息,发给所有读权限的人
         sendRefreshMsg();
         //发给当班人员
-
+        sendMessage(false,pmsRecipe.getVersion());
         return true;
     }
 
@@ -460,14 +460,16 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
      */
     protected void sendMessage(Boolean sendLab,String version){
         Set<Long> longIds = Sets.newHashSet();
-        //发送给车间副主任
-        OaHrmDTO hrm = new OaHrmDTO();
-        hrm.setJobtitle(PmManagerConstant.LABORATORY_DIRECTOR);
-        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        if(CollUtil.isNotEmpty(oaEmpVOS)){
-            oaEmpVOS.forEach(tmp -> {
-                longIds.add(tmp.getId().longValue());
-            });
+        if(sendLab){
+            //发送给车间副主任
+            OaHrmDTO hrm = new OaHrmDTO();
+            hrm.setJobtitle(PmManagerConstant.LABORATORY_DIRECTOR);
+            List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if(CollUtil.isNotEmpty(oaEmpVOS)){
+                oaEmpVOS.forEach(tmp -> {
+                    longIds.add(tmp.getId().longValue());
+                });
+            }
         }
         // TODO: 2023/2/24 发送给配料工
         if(CollUtil.isNotEmpty(longIds)){
@@ -476,9 +478,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTitle());
             sysMsgDTO.setUserList(longIds);
             String content = SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTemplate();
-            content.replaceFirst("%s",SecurityUtils.getUser().getName());
-            content.replaceFirst("%s",version);
-            sysMsgDTO.setContent(content);
+            sysMsgDTO.setContent(String.format(content,SecurityUtils.getUser().getName(),version));
             FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         }
     }
