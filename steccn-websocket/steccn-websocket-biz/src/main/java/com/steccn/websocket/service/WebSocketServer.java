@@ -14,7 +14,7 @@ import javax.websocket.server.ServerEndpoint;
 
 @Component
 @Slf4j
-@ServerEndpoint("/websocket/{endPoint}/{userId}")
+@ServerEndpoint("/websocket/{userId}/{randomId}")
 public class WebSocketServer {
 
     /**
@@ -33,21 +33,21 @@ public class WebSocketServer {
     private Long userId;
 
     /**
-     * 端标识
+     * 随机数标识
      */
-    private Integer endPoint;
+    private Long randomId;
 
     /**
      * 链接成功调用的方法
      */
     @OnOpen
-    public void onOpen(Session session, @PathParam("endPoint") Integer endPoint, @PathParam("userId") Long userId) {
+    public void onOpen(Session session, @PathParam("userId") Long userId, @PathParam("randomId") Long randomId) {
         try {
             this.session = session;
             session.setMaxIdleTimeout(MAX_IDLE_TIMEOUT);
             this.userId = userId;
-            this.endPoint = endPoint;
-            WebSocketManager.addWsServer(userId, endPoint, this);
+            this.randomId = randomId;
+            WebSocketManager.addWsServer(userId, this);
             log.info("【websocket消息】有新的连接，总数为:" + WebSocketManager.activeWsSize());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
@@ -60,7 +60,7 @@ public class WebSocketServer {
     @OnClose
     public void onClose() {
         try {
-            WebSocketManager.removeWsServer(this.userId, this.endPoint);
+            WebSocketManager.removeWsServer(this.userId, this);
             log.info("【websocket消息】连接断开，总数为:" + WebSocketManager.activeWsSize());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
@@ -93,5 +93,14 @@ public class WebSocketServer {
      */
     public Session getSession() {
         return session;
+    }
+
+    /**
+     * 获取用户id
+     *
+     * @return 用户id
+     */
+    public Long getUserId() {
+        return userId;
     }
 }
