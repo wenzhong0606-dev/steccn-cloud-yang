@@ -150,8 +150,15 @@ public class OaController {
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
     }
 
-    @GetMapping("/user/test")
-    public R<OaApiTokenResult> getIdByWorkCode() {
-        return R.success(oaService.getApiToken());
+    @ApiOperation("根据用户名查询id")
+    @PostMapping("/user/name/id")
+    public R<List<Integer>> getIdByWorkCode(@RequestBody List<String> userNames) {
+        return R.success(hrmresourceService.getIdByUserName(userNames));
+    }
+
+    @ApiOperation("根据岗位查询人")
+    @PostMapping("/user/jobTitle")
+    public R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto){
+        return R.success(oaService.getHrmSearchResult(dto));
     }
 }

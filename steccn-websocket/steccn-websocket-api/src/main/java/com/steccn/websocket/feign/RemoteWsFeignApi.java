@@ -2,8 +2,11 @@ package com.steccn.websocket.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.websocket.dto.MsgPushDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -21,4 +24,12 @@ public interface RemoteWsFeignApi {
      */
     @GetMapping("/feign/websocket/push/oa")
     R<String> pushOa(@RequestParam("userId") Long userId);
+
+    /**
+     * 推送消息
+     * @param msgPushDTO
+     * @return
+     */
+    @PostMapping("/feign/websocket/push/msg")
+    R<MsgPushDTO> pushMsg(@RequestBody MsgPushDTO msgPushDTO);
 }

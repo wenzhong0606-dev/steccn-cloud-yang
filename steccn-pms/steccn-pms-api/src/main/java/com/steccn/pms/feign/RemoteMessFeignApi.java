@@ -3,13 +3,11 @@ package com.steccn.pms.feign;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.pms.vo.WmsStockVO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -94,7 +92,7 @@ public interface RemoteMessFeignApi {
     /**
      * 根据货架获取库存列表
      *
-     * @param materialIds
+     * @param shelfs
      * @return
      */
     @PostMapping(value = "/web/eqp/eqpSpareInventory/shelfInventory")
@@ -105,7 +103,7 @@ public interface RemoteMessFeignApi {
     /**
      * 根据物料获取库存列表
      *
-     * @param materialIds
+     * @param materials
      * @return
      */
     @PostMapping(value = "/web/eqp/eqpSpareInventory/material/inventory")
@@ -116,12 +114,45 @@ public interface RemoteMessFeignApi {
     /**
      * 根据物料获取库存列表
      *
-     * @param materialIds
+     * @param
      * @return
      */
     @GetMapping(value = "/web/mesClassification/tree")
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     Object tree();
+
+    /**
+     * 根据用户名获取权限
+     *
+     * @param userName 用户名
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getScope")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MessScopeVO getScope(@RequestParam("userName") String userName);
+
+    /**
+     * 根据用户名角色权限
+     *
+     * @param userName 用户名
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getRole")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MessScopeVO getRole(@RequestParam("userName") String userName);
+
+    /**
+     * 根据权限获取用户名
+     *
+     * @param permission 用户名
+     * @return
+     */
+    @GetMapping(value = "/web/auth/getUserNameByPermission")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    MessScopeVO getUserNameByPermission(@RequestParam("permission") String permission);
 
 }

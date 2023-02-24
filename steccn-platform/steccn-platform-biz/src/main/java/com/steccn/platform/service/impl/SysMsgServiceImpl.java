@@ -2,10 +2,12 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.constant.SysMsgConstant;
@@ -18,6 +20,8 @@ import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
+import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yequan
@@ -38,6 +43,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         implements SysMsgService {
 
     private final SysMsgUserService sysMsgUserService;
+    private final RemoteWsFeignApi remoteWsFeignApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -57,6 +63,19 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         });
         save(msg);
         sysMsgUserService.saveBatch(msgUserList);
+        MsgPushDTO msgPushDTO = new MsgPushDTO();
+        msgPushDTO.setMsgId(msg.getId());
+        Integer category = SysMsgConstant.MsgTypeEnum.category(msg.getType());
+        msgPushDTO.setMsgCategory(category);
+        msgPushDTO.setMsgType(msg.getType());
+        msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
+        msgPushDTO.setTitle(msg.getTitle());
+        msgPushDTO.setAddition(sysMsgDTO.getAddition());
+        try {
+            remoteWsFeignApi.pushMsg(msgPushDTO);
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
         return Boolean.TRUE;
     }
 
@@ -91,11 +110,34 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     @Override
     public Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
         List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(dto.getCategory());
+        Page<SysMsgPageVO> pageReq = new Page<>(dto.getCurrent(), dto.getSize());
         if (CollUtil.isNotEmpty(typeList)) {
-            Page<SysMsgPageVO> page = baseMapper.msgPage(new Page<>(dto.getCurrent(), dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
+            Page<SysMsgPageVO> page = baseMapper.msgPage(pageReq, typeList, SecurityUtils.getUser().getUserId());
+            page.getRecords().forEach(ele -> {
+                //消息类别
+                ele.setCategory(SysMsgConstant.MsgTypeEnum.category(ele.getType()));
+            });
             return page;
         }
-        return null;
+        return pageReq;
+    }
+
+    @Override
+    public Integer unreadCount(Long userId) {
+        Long count = sysMsgUserService.count(new LambdaQueryWrapper<SysMsgUser>()
+                .eq(SysMsgUser::getUserId, userId)
+                .eq(SysMsgUser::getReadFlag, MpConstant.NO));
+        return count.intValue();
+    }
+
+    @Override
+    public Boolean markReadAll(Long userId) {
+        LambdaUpdateWrapper<SysMsgUser> updateWrapper = new LambdaUpdateWrapper<SysMsgUser>()
+                .set(SysMsgUser::getReadFlag, MpConstant.YES)
+                .set(SysMsgUser::getReadTime, LocalDateTime.now())
+                .eq(SysMsgUser::getUserId, userId)
+                .eq(SysMsgUser::getReadFlag, MpConstant.NO);
+        return sysMsgUserService.update(updateWrapper);
     }
 
     /**

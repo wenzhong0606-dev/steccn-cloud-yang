@@ -178,4 +178,15 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String postProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowDTO dto);
+
+    /**
+     * 调用oa获取人员列表
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/search/getHrmSearchResult",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getHrmSearchResult(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaHrmDTO dto);
 }

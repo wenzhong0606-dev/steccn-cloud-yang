@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -33,6 +37,12 @@ public class SysMsg implements Serializable {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 附加信息
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private SysMsgAdditionDTO addition;
 
     /**
      * 创建人id

@@ -94,4 +94,16 @@ public class PmsRecipeVO implements Serializable {
      * 备注
      */
     private String note;
+
+    /**
+     * 更新用量按钮权限
+     * 0表示无 1表示有
+     */
+    private Integer buttonAmountAuth;
+
+    /**
+     * 更新用量按钮权限
+     * 0表示无 1表示有
+     */
+    private Integer buttonRateAuth;
 }

@@ -96,6 +96,16 @@
         </dependency>
         <dependency>
             <groupId>com.steccn</groupId>
+            <artifactId>steccn-websocket-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-oa-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
             <artifactId>steccn-minio-api</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>

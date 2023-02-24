@@ -69,4 +69,15 @@ public interface LockConstant {
      * 生成入库单号
      */
     String TABLE_PMS_COMPLETE_STORAGE = "TABLE_PMS_COMPLETE_STORAGE";
+
+
+    /**
+     * SPC告警锁
+     */
+    String SPC_WARN_HOUR = "SPC_WARN_HOUR";
+    String SPC_WARN_DAY = "SPC_WARN_DAY";
+    String SPC_WARN_WEEK = "SPC_WARN_WEEK";
+    String SPC_WARN_MONTH = "SPC_WARN_MONTH";
+    String SPC_WARN_SEASON = "SPC_WARN_SEASON";
+    String SPC_WARN_YEAR = "SPC_WARN_YEAR";
 }

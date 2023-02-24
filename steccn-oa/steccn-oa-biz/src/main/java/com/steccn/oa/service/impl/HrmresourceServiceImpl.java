@@ -68,6 +68,18 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         }
         return map;
     }
+
+    @Override
+    public List<Integer> getIdByUserName(List<String> userNames) {
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().in(Hrmresource::getLoginid,userNames));
+        List<Integer> ids = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(list)){
+            list.forEach(tmp->{
+                ids.add(tmp.getId());
+            });
+        }
+        return ids;
+    }
 }
 
 

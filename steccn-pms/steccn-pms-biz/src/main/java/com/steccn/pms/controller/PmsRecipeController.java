@@ -11,6 +11,7 @@ import com.steccn.pms.vo.PmsRecipeVerHisVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -28,23 +29,27 @@ public class PmsRecipeController {
 
     @ApiOperation(value = "根据版本id获取版本详情")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('pms:recipe:view')")
     public R<PmsRecipeVO> getById(@PathVariable("id") Long id) {
         return R.success(pmsRecipeService.getPmsRecipeVO(id));
     }
 
     @ApiOperation(value = "获取版本分页信息")
     @PostMapping("/page")
+    @PreAuthorize("hasAuthority('pms:recipe:view')")
     public R<Page<PmsRecipeVerHisVO>> getRecipePage(@RequestBody BasePageDTO dto) {
         return R.success(pmsRecipeService.pageList(dto));
     }
 
     @ApiOperation(value = "更新用量")
+    @PreAuthorize("hasAuthority('pms:recipe:amount')")
     @PostMapping("/amount")
     public R<Boolean> amount(@RequestBody PmsRecipeDTO dto) {
         return R.success(pmsRecipeService.publishQuantity(dto));
     }
 
     @ApiOperation(value = "更新配方含水率")
+    @PreAuthorize("hasAuthority('pms:recipe:rate')")
     @PostMapping("/rate")
     public R<Boolean> rate(@RequestBody PmsWetBasisWaterRateDTO dto) {
         return R.success(pmsRecipeService.publishRate(dto));
