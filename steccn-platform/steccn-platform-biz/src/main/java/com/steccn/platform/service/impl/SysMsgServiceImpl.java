@@ -71,6 +71,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         msgPushDTO.setMsgType(msg.getType());
         msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
         msgPushDTO.setAddition(sysMsgDTO.getAddition());
+        msgPushDTO.setReadFlag(MpConstant.NO);
         try {
             remoteWsFeignApi.pushMsg(msgPushDTO);
         } catch (Exception e) {
