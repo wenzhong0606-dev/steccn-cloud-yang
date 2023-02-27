@@ -165,6 +165,10 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         pmsRecipeRawList.forEach(tmp -> {
             PmsRecipeRawVO rawTmp = new PmsRecipeRawVO();
             BeanUtil.copyProperties(tmp,rawTmp);
+            //便于前端判断
+            if(Objects.isNull(rawTmp.getWetBasisWaterRate())){
+                rawTmp.setWetBasisWaterRate(new BigDecimal(0));
+            }
             rawVOS.add(rawTmp);
         });
         pmsRecipeVO.setRawList(rawVOS);
