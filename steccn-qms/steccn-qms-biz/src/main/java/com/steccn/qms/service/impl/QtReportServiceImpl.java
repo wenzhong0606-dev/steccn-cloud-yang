@@ -974,7 +974,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 String materialName = materialMap.get(entry.getValue().getMaterialId());
                 sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTemplate(),entry.getValue().getName(),materialName,itemMap.get(entry.getValue().getCheckItemId()).getName()));
                 Set<Long> userIds = Sets.newHashSet();
-                integerListMap.get(entry.getValue().getId()).forEach(user->userIds.add(user.getId()));
+                integerListMap.get(entry.getValue().getId()).forEach(user->userIds.add(user.getUserId()));
                 sysMsgSendDTO.setUserList(userIds);
                 SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
                 sysMsgAdditionDTO.setId(Long.valueOf(entry.getValue().getId()));
