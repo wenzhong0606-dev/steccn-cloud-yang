@@ -1,9 +1,11 @@
 package com.steccn.qms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.oa.feign.OaInfoService;
@@ -14,10 +16,12 @@ import com.steccn.qms.service.QtReportWarnUserService;
 import com.steccn.qms.mapper.QtReportWarnUserMapper;
 import com.steccn.qms.vo.QtReportWarnUserVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -53,10 +57,10 @@ public class QtReportWarnUserServiceImpl extends ServiceImpl<QtReportWarnUserMap
         List<QtReportWarnUserVO> res = Lists.newArrayList();
         List<QtReportWarnUser> list = list(new LambdaQueryWrapper<QtReportWarnUser>().in(QtReportWarnUser::getReportId, id));
         if (CollUtil.isNotEmpty(list)) {
-            List<Long> userIds= Lists.newArrayList();
-            list.forEach( qtReportWarnUser -> userIds.add(qtReportWarnUser.getUserId()));
+            List<Long> userIds = Lists.newArrayList();
+            list.forEach(qtReportWarnUser -> userIds.add(qtReportWarnUser.getUserId()));
             Map<Long, String> map = FeignOptional.of(() -> oaInfoService.listByIdCh(userIds), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-            list.forEach( qtReportWarnUser -> {
+            list.forEach(qtReportWarnUser -> {
                 QtReportWarnUserVO user = new QtReportWarnUserVO();
                 user.setId(qtReportWarnUser.getUserId());
                 user.setName(map.get(qtReportWarnUser.getUserId()));
@@ -64,6 +68,20 @@ public class QtReportWarnUserServiceImpl extends ServiceImpl<QtReportWarnUserMap
             });
         }
         return res;
+    }
+
+    @Override
+    public Map<Integer, List<QtReportWarnUserVO>> mapWarnUser(List<Integer> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Maps.newHashMap();
+        }
+        List<QtReportWarnUser> list = list(new LambdaQueryWrapper<QtReportWarnUser>().in(QtReportWarnUser::getReportId, ids));
+        Map<Integer, List<QtReportWarnUserVO>> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(list)) {
+            List<QtReportWarnUserVO> userList = BeanUtil.copyToList(list, QtReportWarnUserVO.class);
+            resMap = userList.stream().collect(Collectors.groupingBy(QtReportWarnUserVO::getReportId));
+        }
+        return resMap;
     }
 
 }

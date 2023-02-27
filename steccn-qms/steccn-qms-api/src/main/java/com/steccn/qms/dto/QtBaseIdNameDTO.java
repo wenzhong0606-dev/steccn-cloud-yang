@@ -3,6 +3,7 @@ package com.steccn.qms.dto;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -16,4 +17,9 @@ public class QtBaseIdNameDTO implements Serializable{
     private static final long serialVersionUID = 1L;
     private Integer id;
     private String name;
+
+
+    public static class  QtBaseIdNameContent extends ArrayList<QtBaseIdNameDTO>{
+
+    }
 }

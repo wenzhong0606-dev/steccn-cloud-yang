@@ -20,4 +20,14 @@ public class QtReportWarnUserVO {
      * 名称
      */
     private String name;
+
+    /**
+     * userId
+     */
+    private Long userId;
+
+    /**
+     * spc卡片id
+     */
+    private Integer reportId;
 }

@@ -1,13 +1,21 @@
 package com.steccn.qms.scheduled;
 
 import com.steccn.common.constant.LockConstant;
+import com.steccn.qms.service.QtReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.time.*;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.TemporalField;
+import java.util.Arrays;
 
 /**
  * @author yequan
@@ -17,6 +25,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 public class SpcWarnTask {
+
+    private final QtReportService qtReportService;
 
     private final RedissonClient redissonClient;
 
@@ -37,7 +47,8 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "H");
+            qtReportService.warnSPC(hs[0], hs[1], "小时");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -63,7 +74,8 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "D");
+            qtReportService.warnSPC(hs[0], hs[1], "天");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -90,7 +102,8 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "W");
+            qtReportService.warnSPC(hs[0], hs[1], "周");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -117,7 +130,8 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "M");
+            qtReportService.warnSPC(hs[0], hs[1], "月");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -145,7 +159,8 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "Q");
+            qtReportService.warnSPC(hs[0], hs[1], "季度");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -172,12 +187,61 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            // TODO: 2023/2/23  spc预警任务
+            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "Y");
+            qtReportService.warnSPC(hs[0], hs[1], "年");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
             log.info("spc预警任务结束");
             lock.unlock();
         }
+    }
+
+
+    /**
+     * 获取前一个时间段
+     *
+     * @param currentTime 当前时间
+     * @param granularity 粒度
+     * @return
+     */
+    private static LocalDateTime[] preTimeSlot(LocalDateTime currentTime, String granularity) {
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+        switch (granularity) {
+            case "H":
+                //小时-考虑跨天问题
+                end = currentTime.withMinute(0).withSecond(0).withNano(0);
+                start = end.minusHours(1);
+                break;
+            case "D":
+                //天
+                end = LocalDateTime.of(currentTime.toLocalDate(), LocalTime.MIN);
+                start = end.minusDays(1);
+                break;
+            case "W":
+                //周
+                //找最近的一个周一为结束时间
+                end = LocalDateTime.of(currentTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate(), LocalTime.MIN);
+                start = end.minusDays(7);
+                break;
+            case "M":
+                //月
+                end = LocalDateTime.of(currentTime.withDayOfMonth(1).toLocalDate(), LocalTime.MIN);
+                start = end.minusMonths(1);
+                break;
+            case "Q":
+                //季度-获取当前季度的第一个月,还是当前年份
+                Month month = currentTime.getMonth().firstMonthOfQuarter();
+                end = LocalDateTime.of(currentTime.withMonth(month.getValue()).withDayOfMonth(1).toLocalDate(), LocalTime.MIN);
+                start = end.minusMonths(3);
+                break;
+            case "Y":
+                //年
+                end = LocalDateTime.of(LocalDate.of(currentTime.getYear(), 1, 1), LocalTime.MIN);
+                start = end.minusYears(1);
+                break;
+        }
+        return new LocalDateTime[]{start, end};
     }
 }

@@ -8,10 +8,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.dto.QtDefectiveItemPageDTO;
-import com.steccn.qms.dto.QtReportDTO;
-import com.steccn.qms.dto.QtReportExcelDTO;
-import com.steccn.qms.dto.QtSpcReportDetailPageDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtReportService;
 import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiModelProperty;
@@ -130,4 +127,12 @@ public class QtReportController {
         map.put("message", "下载文件失败" + e.getMessage());
         response.getWriter().println(JSON.toJSONString(map));
     }
+
+
+    @PostMapping("/warn")
+    @ApiOperation(value = "Spc控制图明细")
+    public R<Boolean> warnSpc( @RequestBody QtReportWarnDTO dto) {
+        return R.success(qtReportService.warnSPC(dto.getStartTime(),dto.getEndTime(), dto.getGranularity()));
+    }
+
 }

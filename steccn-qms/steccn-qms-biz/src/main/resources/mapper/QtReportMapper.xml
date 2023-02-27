@@ -17,7 +17,7 @@
 <!--            <result property="checkItemId" column="check_item_id" jdbcType="INTEGER"/>-->
 <!--            <result property="standardValue" column="standard_value" jdbcType="DECIMAL"/>-->
 <!--            <result property="upLimit" column="up_limit" jdbcType="DECIMAL"/>-->
-<!--            <result property="dowmLimit" column="dowm_limit" jdbcType="DECIMAL"/>-->
+<!--            <result property="downLimit" column="dowm_limit" jdbcType="DECIMAL"/>-->
 <!--            <result property="workshop" column="workshop" jdbcType="OTHER"/>-->
 <!--            <result property="productLine" column="productLine" jdbcType="OTHER"/>-->
 <!--            <result property="customer" column="customer" jdbcType="OTHER"/>-->

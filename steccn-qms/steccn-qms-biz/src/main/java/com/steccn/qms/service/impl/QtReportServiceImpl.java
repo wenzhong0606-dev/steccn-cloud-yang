@@ -20,9 +20,11 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
@@ -31,6 +33,7 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
 import com.steccn.qms.util.*;
 import com.steccn.qms.vo.*;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +73,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final RemoteDictFeignApi remoteDictFeignApi;
     private final QtMaterialService qtMaterialService;
     private final QtReportWarnUserService qtReportWarnUserService;
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
      * 新建报表卡片
@@ -863,6 +868,132 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         DownloadUtil.downloadTemplate(response, QtManagerConstant.QT_CHART_SPC_NAME, report.getName(), map, data, dto.getBase64());
     }
 
+
+    /**
+     * spc告警
+     *
+     * @param startTime   开始时间
+     * @param endTime     结束时间
+     * @param granularity 粒度:小时、天、周、月、季度、年
+     * @return
+     */
+    @Override
+    public Boolean warnSPC(LocalDateTime startTime, LocalDateTime endTime, String granularity) {
+        //1.根据时间粒度获取spc卡片数据
+        List<QtReport> list = list(new LambdaQueryWrapper<QtReport>()
+                .le(QtReport::getTimeScopeStart, startTime)
+                .ge(QtReport::getTimeScopeEnd, endTime)
+                .eq(QtReport::getGranularity, granularity)
+                .eq(QtReport::getWarnFlag, QtManagerConstant.QtMaterialStatusEnum.ENABLE.getCode()));
+        Map<Integer, QtReport> resultMap = Maps.newHashMap();
+        //2.根据spc卡片配置的物料以及检验类型检验项,物料使用车间,生产车间,生产产线获取该时间段内已检验的任务数据
+        //获取检验项快照数据
+        List<Integer> ids = Lists.newArrayList();
+        Set<Long> materialIds = Sets.newHashSet();
+        list.forEach(report -> {
+            ids.add(report.getCheckItemId());
+            materialIds.add(report.getMaterialId());
+        });
+        Map<Integer, Set<Integer>> checkItemSnapshotSet = qtCheckItemService.checkItemSnapshotSet(ids);
+        List<Integer> reportIds = Lists.newArrayList();
+        list.forEach(qtReport -> {
+            LambdaQueryWrapper<QtCheckTask> condition = new LambdaQueryWrapper<QtCheckTask>()
+                    .eq(QtCheckTask::getMaterialId, qtReport.getMaterialId())
+                    .eq(QtCheckTask::getTaskType, qtReport.getCheckType())
+                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                    .ge(QtCheckTask::getFinishedTime, startTime)
+                    .lt(QtCheckTask::getFinishedTime, endTime);
+            //根据条件获取该检验时间段的检验任务
+            List<QtCheckTask> qtCheckTaskList = qtCheckTaskService.list(condition);
+            //如果该卡片存在生产车间
+            if (CollUtil.isNotEmpty(qtReport.getWorkshop())) {
+                qtCheckTaskList = qtCheckTaskList.stream()
+                        .filter(qtCheckTask ->qtCheckTask.getProductWorkshop() != null &&  qtReport.getWorkshop().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductWorkshop().getId()))
+                        .collect(Collectors.toList());
+                //如果该卡片存在生产产线
+                if (CollUtil.isNotEmpty(qtReport.getProductLine())) {
+                    qtCheckTaskList = qtCheckTaskList.stream()
+                            .filter(qtCheckTask ->qtCheckTask.getProductLine() != null &&  qtReport.getProductLine().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductLine().getId()))
+                            .collect(Collectors.toList());
+                }
+            }
+            //如果该卡片存在供应商
+            if (CollUtil.isNotEmpty(qtReport.getSupplier())) {
+                qtCheckTaskList = qtCheckTaskList.stream()
+                        .filter(qtCheckTask -> qtCheckTask.getSupplier() != null && qtReport.getSupplier().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getSupplier().getId()))
+                        .collect(Collectors.toList());
+            }
+            //如果该卡片存在物料使用车间
+            if (CollUtil.isNotEmpty(qtReport.getMaterialUseWorkshop())) {
+                qtCheckTaskList = qtCheckTaskList.stream()
+                        .filter(qtCheckTask -> qtCheckTask.getMaterialWorkshop() != null && qtReport.getMaterialUseWorkshop().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getMaterialWorkshop().getId()))
+                        .collect(Collectors.toList());
+            }
+            //根据检验任务获取该spc的检验项的值,并计算平均值是否大于上限值或小于下限值
+
+            qtCheckTaskList.forEach(qtCheckTask -> {
+                List<QtCheckTaskDetail> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                        .eq(QtCheckTaskDetail::getTaskId, qtCheckTask.getId())
+                        .in(Objects.nonNull(qtReport.getCheckItemId()), QtCheckTaskDetail::getItemId, checkItemSnapshotSet.get(qtReport.getCheckItemId())));
+                List<String> collect = results.stream().filter(qt -> Objects.nonNull(qt) && Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
+                        .map(QtCheckTaskDetail::getCheckResult)
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(collect)) {
+                    BigDecimal sum = BigDecimal.ZERO;
+                    for (String result : collect) {
+                        if (isNumber(result) || isFloatNumber(result)) {
+                            BigDecimal value = new BigDecimal(result);
+                            sum = sum.add(value);
+                        }
+                    }
+                    //计算该检验项的平均值
+                    BigDecimal mean = BigDecimalUtil.divide(sum, BigDecimal.valueOf(results.size()));
+                    //计算上限值与下限值，并和平均值比较上限和下限（上限 = 标准值 + 上偏差，下限 = 标准值 - 下偏差）
+                    BigDecimal upLimit = BigDecimalUtil.add(qtReport.getStandardValue(), qtReport.getUpLimit());
+                    BigDecimal downLimit = BigDecimalUtil.subtract(qtReport.getStandardValue(), qtReport.getDownLimit());
+                    if (upLimit.compareTo(mean) > 0 || downLimit.compareTo(mean) < 0) {
+                        resultMap.put(qtReport.getId(), qtReport);
+                        reportIds.add(qtReport.getId());
+                    }
+                }
+            });
+        });
+        //根据spc配置的告警人员进行信息告警
+        if (CollUtil.isNotEmpty(resultMap)) {
+            //获取告警人员
+            Map<Integer, List<QtReportWarnUserVO>> integerListMap = qtReportWarnUserService.mapWarnUser(reportIds);
+            //获取物料名称
+            Map<Long, String> materialMap = FeignOptional.of(() ->remoteSpareFeignApi.listByIdCh(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取检验项名称
+            Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(ids);
+            for (Map.Entry<Integer, QtReport> entry : resultMap.entrySet()) {
+                //定义消息模板
+                SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+                sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTitle());
+                sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SPC_WARN.getCode());
+                String materialName = materialMap.get(entry.getValue().getMaterialId());
+                sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTemplate(),entry.getValue().getName(),materialName,itemMap.get(entry.getValue().getCheckItemId()).getName()));
+                Set<Long> userIds = Sets.newHashSet();
+                integerListMap.get(entry.getValue().getId()).forEach(user->userIds.add(user.getUserId()));
+                sysMsgSendDTO.setUserList(userIds);
+                SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+                sysMsgAdditionDTO.setId(Long.valueOf(entry.getValue().getId()));
+                sysMsgAdditionDTO.setTab(Long.valueOf(entry.getValue().getReportGroupId()));
+                sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+                //发送消息
+                try {
+                    Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if (!aBoolean){
+                        log.info(entry.getValue().getName()+"：消息发送失败");
+                    }
+                } catch (Exception e) {
+                    log.error(e.getLocalizedMessage());
+                    throw new BusinessException("消息发送失败");
+                }
+            }
+        }
+        return Boolean.TRUE;
+    }
 
     /**
      * 根据id删除spc卡片
