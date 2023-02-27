@@ -3,6 +3,7 @@ package com.steccn.platform.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.domain.SysMsg;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.dto.SlidePageDTO;
 import com.steccn.platform.vo.SysMsgPageVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -34,7 +35,7 @@ public interface SysMsgMapper extends BaseMapper<SysMsg> {
      * @param typeList 类型
      * @return page
      */
-    Page<SysMsgPageVO> msgPage(Page page, @Param("typeList") List<Integer> typeList, @Param("userId") Long userId);
+    List<SysMsgPageVO> msgPage(@Param("page") SlidePageDTO page, @Param("typeList") List<Integer> typeList, @Param("userId") Long userId);
 }
 
 

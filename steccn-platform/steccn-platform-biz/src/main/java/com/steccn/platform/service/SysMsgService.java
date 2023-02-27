@@ -47,7 +47,7 @@ public interface SysMsgService extends IService<SysMsg> {
      * @param dto dto
      * @return
      */
-    Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto);
+    List<SysMsgPageVO> msgPage(SysMsgPageDTO dto);
 
     /**
      * 用户未读消息数量

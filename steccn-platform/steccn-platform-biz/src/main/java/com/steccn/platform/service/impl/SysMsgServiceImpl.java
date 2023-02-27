@@ -13,6 +13,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
+import com.steccn.platform.dto.SlidePageDTO;
 import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.service.SysMsgService;
@@ -109,18 +110,17 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     }
 
     @Override
-    public Page<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
+    public List<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
         List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(dto.getCategory());
-        Page<SysMsgPageVO> pageReq = new Page<>(dto.getCurrent(), dto.getSize());
         if (CollUtil.isNotEmpty(typeList)) {
-            Page<SysMsgPageVO> page = baseMapper.msgPage(pageReq, typeList, SecurityUtils.getUser().getUserId());
-            page.getRecords().forEach(ele -> {
+            List<SysMsgPageVO> list = baseMapper.msgPage(new SlidePageDTO(dto.getIdx(),dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
+            list.forEach(ele -> {
                 //消息类别
                 ele.setCategory(SysMsgConstant.MsgTypeEnum.category(ele.getType()));
             });
-            return page;
+            return list;
         }
-        return pageReq;
+        return Lists.newArrayList();
     }
 
     @Override

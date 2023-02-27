@@ -14,8 +14,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -72,7 +70,8 @@ public class SysMsgController {
 
     @PostMapping("/page")
     @ApiOperation("消息列表")
-    public R<Page<SysMsgPageVO>> page(@Valid @RequestBody SysMsgPageDTO dto) {
+    public R<List<SysMsgPageVO>> page(@Valid @RequestBody SysMsgPageDTO dto) {
+        Assert.notNull(dto.getSize(), "页条数不可为空");
         return R.success(sysMsgService.msgPage(dto));
     }
 }

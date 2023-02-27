@@ -39,6 +39,10 @@
             #{type}
         </foreach>
         and u.user_id = #{userId}
-        order by m.create_time desc
+        <if test="page.idx != null and page.idx  != ''">
+            and m.id &lt; #{page.idx}
+        </if>
+        order by m.id desc
+        limit #{page.size}
     </select>
 </mapper>
