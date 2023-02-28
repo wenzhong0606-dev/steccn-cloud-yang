@@ -453,7 +453,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                     longIds.add(tmp.longValue());
                 });
                 msg.setUserIdList(longIds);
-                FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
             }
         }
     }

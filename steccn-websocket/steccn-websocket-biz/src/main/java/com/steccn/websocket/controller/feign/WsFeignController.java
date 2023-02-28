@@ -1,5 +1,6 @@
 package com.steccn.websocket.controller.feign;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,9 @@ public class WsFeignController {
     @SneakyThrows
     @PostMapping("/push/msg")
     public R<MsgPushDTO> pushMsg(@RequestBody MsgPushDTO msgPushDTO) {
-        msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        if(ObjectUtil.isNull(msgPushDTO.getType())){
+            msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        }
         Set<Long> userIdList = msgPushDTO.getUserIdList();
         msgPushDTO.setUserIdList(null);
         String msg = objectMapper.writeValueAsString(msgPushDTO);
