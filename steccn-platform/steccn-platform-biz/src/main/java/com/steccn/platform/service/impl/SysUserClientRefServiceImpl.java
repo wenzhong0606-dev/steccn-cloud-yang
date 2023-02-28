@@ -34,6 +34,13 @@ public class SysUserClientRefServiceImpl extends ServiceImpl<SysUserClientRefMap
         //新增或更新新的记录
         return saveOrUpdate(oldModel);
     }
+
+    @Override
+    public String lastClientId(Long userId) {
+        SysUserClientRef one = getOne(new LambdaQueryWrapper<SysUserClientRef>()
+                .eq(SysUserClientRef::getUserId, userId), false);
+        return one.getClientNo();
+    }
 }
 
 
