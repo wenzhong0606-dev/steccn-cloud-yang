@@ -98,17 +98,6 @@
             <artifactId>httpclient</artifactId>
             <version>4.3.5</version>
         </dependency>
-
-        <!--mybatis-plus-->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-        </dependency>
-        <!--导入mysql驱动-->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
         <!--添加actuator依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
