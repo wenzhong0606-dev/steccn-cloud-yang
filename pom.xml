@@ -16,7 +16,6 @@
         <module>steccn-qms</module>
         <module>steccn-pms</module>
         <module>steccn-portal</module>
-        <module>steccn-user-center</module>
         <module>steccn-oa</module>
         <module>steccn-platform</module>
         <module>steccn-minio</module>
@@ -90,18 +89,6 @@
             <dependency>
                 <groupId>com.steccn</groupId>
                 <artifactId>steccn-common-data</artifactId>
-                <version>${steccn-cloud.version}</version>
-            </dependency>
-            <!--steccn-user-center-api-->
-            <dependency>
-                <groupId>com.steccn</groupId>
-                <artifactId>steccn-user-center-api</artifactId>
-                <version>${steccn-cloud.version}</version>
-            </dependency>
-            <!--steccn-user-center-biz-->
-            <dependency>
-                <groupId>com.steccn</groupId>
-                <artifactId>steccn-user-center-biz</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
             <!--steccn-pms-api-->
