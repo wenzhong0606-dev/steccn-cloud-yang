@@ -458,6 +458,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 ids.forEach(tmp -> {
                     longIds.add(tmp.longValue());
                 });
+                //不给自己发消息
+                longIds.remove(SecurityUtils.getUser().getUserId());
                 msg.setUserIdList(longIds);
                 FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
             }
