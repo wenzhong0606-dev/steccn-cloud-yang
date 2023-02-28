@@ -423,6 +423,12 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             recipeModel.setNote(dto.getNote());
         }
         recipeModel.setId(null);
+        recipeModel.setCreateName(null);
+        recipeModel.setCreateBy(null);
+        recipeModel.setCreateTime(null);
+        recipeModel.setUpdateBy(null);
+        recipeModel.setUpdateName(null);
+        recipeModel.setUpdateTime(null);
         save(recipeModel);
         //加入版本id
         pmsRecipeRawModelList.forEach(tmp -> {
