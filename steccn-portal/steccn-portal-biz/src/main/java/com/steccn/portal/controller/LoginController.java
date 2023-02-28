@@ -45,7 +45,7 @@ public class LoginController {
         } catch (Exception e) {
             throw new BusinessException("密码解密失败");
         }
-        return loginService.login(username, decryptPassword);
+        return loginService.login(username, decryptPassword,clientNo);
     }
 
     /**

@@ -2,6 +2,8 @@ package com.steccn.portal.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.authserver.util.FeignOptional;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaLoginParam;
@@ -9,6 +11,8 @@ import com.steccn.oa.dto.OaLoginResult;
 import com.steccn.oa.dto.OaSsoTokenResult;
 import com.steccn.oa.dto.OaUserInfo;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.platform.dto.SysUserClientRefDTO;
+import com.steccn.platform.feign.RemoteSysUserClientFeignApi;
 import com.steccn.portal.constant.TokenConstant;
 import com.steccn.portal.vo.SteccnTokenVO;
 import lombok.RequiredArgsConstructor;
@@ -30,15 +34,18 @@ public class LoginService {
     private final RemoteTokenApi remoteTokenApi;
     private final OaInfoService oaInfoService;
     private final MesMenuService mesMenuService;
+    private final RemoteSysUserClientFeignApi remoteSysUserClientFeignApi;
 
     /**
      * 登录模块
      *
-     * @param username
-     * @param password
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @param clientNo 移动端唯一标识
      * @return
      */
-    public R<SteccnTokenVO> login(String username, String password) {
+    public R<SteccnTokenVO> login(String username, String password,String clientNo) {
         //1.定义变量
         //自己系统的token返回
         Object token = null;
@@ -75,6 +82,7 @@ public class LoginService {
             steccnTokenVO.setDepartment(oaUserInfo.getDepartmentName());
             steccnTokenVO.setHeadImage(oaUserInfo.getHeadPortrait());
             steccnTokenVO.setRealName(oaUserInfo.getName());
+
             //3.用户oa登录
             OaLoginParam oaLoginParam = new OaLoginParam();
             oaLoginParam.setLoginid(username);
@@ -88,6 +96,15 @@ public class LoginService {
             if (Objects.isNull(oaLoginResult) || !oaLoginResult.getLoginStatus()) {
                 log.error("r -> {}",r);
                 throw new BusinessException("OA用户登录失败");
+            }
+            //将用户和clientNo绑定起来,用于push消息
+            if(Objects.nonNull(clientNo)){
+                SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
+                sysUserClientRefDTO.setClientNo(clientNo);
+                sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
+                sysUserClientRefDTO.setUsername(steccnTokenVO.getUsername());
+                Boolean aBoolean = FeignOptional.of(() -> remoteSysUserClientFeignApi.bind(sysUserClientRefDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                log.info("移动端绑定结果 -> {}", aBoolean);
             }
             //5.获取ssotoken
             R ssoToken = oaInfoService.getSsoToken(String.valueOf(username));
