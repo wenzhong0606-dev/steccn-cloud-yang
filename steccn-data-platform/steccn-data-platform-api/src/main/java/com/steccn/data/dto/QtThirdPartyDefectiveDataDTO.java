@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class QtThirdPartyDefectiveDataDTO implements Serializable {
     private String errcode;
 
     @ApiModelProperty("发送时间")
-    private String product_time;
+    private LocalDateTime product_time;
 
     @ApiModelProperty("线次")
     private String line;
