@@ -49,4 +49,9 @@ public class OaToDoWorkflowVO implements Serializable {
      * 时间差单位
      */
     private String timePeriodUnit;
+
+    /**
+     * 请求id
+     */
+    private String requestId;
 }

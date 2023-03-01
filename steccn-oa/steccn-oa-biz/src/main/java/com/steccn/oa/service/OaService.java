@@ -344,15 +344,13 @@ public class OaService {
                     if(secBetween <= 60){
                         //不超过一分钟则一分钟
                         tmp.setTimePeriod(OaConstant.ONE);
-                        tmp.setTimePeriod(OaConstant.BEFORE_MINUTES);
+                        tmp.setTimePeriod(OaConstant.ONE + OaConstant.BEFORE_MINUTES);
                     } else if(secBetween >60 && minBetween <= 60){
                         //超过一分钟小于一小时
-                        tmp.setTimePeriod(String.valueOf(minBetween));
-                        tmp.setTimePeriod(OaConstant.BEFORE_MINUTES);
+                        tmp.setTimePeriod(minBetween + OaConstant.BEFORE_MINUTES);
                     } else if(minBetween > 60 && hourBetween <= 24){
                         //超过一小时小于一天
-                        tmp.setTimePeriod(String.valueOf(hourBetween));
-                        tmp.setTimePeriod(OaConstant.BEFORE_HOURS);
+                        tmp.setTimePeriod(hourBetween + OaConstant.BEFORE_HOURS);
                     } else {
                         tmp.setTimePeriod("");
                         tmp.setTimePeriodUnit(receiveTime.getMonthValue()+"-"+ receiveTime.getDayOfMonth());
