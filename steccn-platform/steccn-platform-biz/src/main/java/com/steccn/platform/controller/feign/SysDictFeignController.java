@@ -57,8 +57,8 @@ public class SysDictFeignController {
 
     @GetMapping("/getByCode")
     @ApiOperation("根据编码类型查询数据字典的值")
-    public R<SysDictVO> getByCode(@ApiParam("字典编码")@RequestParam("code") String code,@ApiParam("类型")@RequestParam("type") String type){
-        return R.success(sysDictService.getByCode(code,type));
+    public R<SysDictVO> getByCode(@ApiParam("字典编码") @RequestParam("code") String code, @ApiParam("类型") @RequestParam("type") String type) {
+        return R.success(sysDictService.getByCode(code, type));
     }
 
 
@@ -70,14 +70,14 @@ public class SysDictFeignController {
 
     @PostMapping("/listByCode")
     @ApiOperation("根据code查询数据字典的值")
-    public R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO){
+    public R<Map<String, SysDictVO>> listByCode(@RequestBody SysDictDTO sysDictDTO) {
         return R.success(sysDictService.listByCode(sysDictDTO));
     }
 
     @GetMapping("/listByCode")
     @ApiOperation("根据编码类型查询数据字典的名称")
-    public R<Map<String,String>> listByCode(@ApiParam("字典编码")@RequestParam("codes") Set<String> codes,@ApiParam("类型")@RequestParam("type") String type){
-        return R.success(sysDictService.listByCode(codes,type));
+    public R<Map<String, String>> listByCode(@ApiParam("字典编码") @RequestParam("codes") Set<String> codes, @ApiParam("类型") @RequestParam("type") String type) {
+        return R.success(sysDictService.listByCode(codes, type));
     }
 
     @PostMapping("/listByCodes")
@@ -90,6 +90,30 @@ public class SysDictFeignController {
     @ApiOperation("根据type查询数据字典的值")
     public R<List<SysDictVO>> listByType(@RequestParam("type") String type) {
         return R.success(sysDictService.sysList(type));
+    }
+
+    @PostMapping("/save")
+    @ApiOperation("新增字典")
+    public R<Boolean> save(@RequestBody SysDictDTO sysDictDTO) {
+        return R.success(sysDictService.saveData(sysDictDTO));
+    }
+
+    @GetMapping("/id")
+    @ApiOperation("获取字典")
+    public R<SysDictVO> getById(@RequestParam("id") Long id) {
+        return R.success(sysDictService.get(id));
+    }
+
+    @PostMapping("/update")
+    @ApiOperation("修改字典")
+    public R<Boolean> update(@RequestBody SysDictDTO sysDictDTO) {
+        return R.success(sysDictService.updateDict(sysDictDTO));
+    }
+
+    @PostMapping("/delete")
+    @ApiOperation("删除字典数据")
+    public R<Boolean> delete(@RequestParam("id") Long id) {
+        return R.success(sysDictService.removeById(id));
     }
 
 }

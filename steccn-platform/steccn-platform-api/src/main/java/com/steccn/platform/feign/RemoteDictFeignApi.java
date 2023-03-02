@@ -116,4 +116,42 @@ public interface RemoteDictFeignApi {
     @GetMapping("/feign/platform/sys/dict/listByType")
     @ApiOperation("根据type查询数据字典的值")
     R<List<SysDictVO>> listByType(@RequestParam("type") String type);
+
+
+    /**
+     * 保存字典数据
+     * @param sysDictDTO
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/dict/save")
+    @ApiOperation("保存字典数据")
+    R<Boolean> save(@RequestBody SysDictDTO sysDictDTO);
+
+
+    /**
+     * 获取字典数据
+     * @param id
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/dict/id")
+    @ApiOperation("获取字典数据")
+    R<SysDictVO> get(@RequestParam("id") Long id);
+
+    /**
+     * 字典修改
+     * @param sysDictDTO
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/dict/update")
+    @ApiOperation("字典修改")
+    R<Boolean> update(SysDictDTO sysDictDTO);
+
+    /**
+     * 删除数据
+     * @param id
+     * @return
+     */
+    @ApiOperation("删除数据")
+    @PostMapping("/feign/platform/sys/dict/delete")
+    R<Boolean> delete(@RequestParam("id") Long id);
 }
