@@ -19,9 +19,14 @@ import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.oa.dto.OaHrmDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
@@ -52,6 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -439,7 +445,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         sendRefreshMsg();
         //5、web端、移动端发送消息给岗位为“化验室主任”的人员、岗位为“配料工”的当前班次人员（调用OA接口获取）
         sendMessage(true,recipeModel.getVersion());
-        return true;
+        throw new BusinessException("test");
     }
 
     /**
@@ -483,7 +489,28 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 });
             }
         }
-        // TODO: 2023/2/24 发送给配料工
+        //发送给配料工
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setJobtitle(PmManagerConstant.BATCHER_ID);
+        List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(oaRosterRecordVOS)){
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到配料工id
+            if(CollUtil.isNotEmpty(workCodes)){
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
         if(CollUtil.isNotEmpty(longIds)){
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
             sysMsgDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
