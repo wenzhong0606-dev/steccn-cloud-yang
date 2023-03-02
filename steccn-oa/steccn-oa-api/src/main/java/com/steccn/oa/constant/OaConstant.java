@@ -21,6 +21,7 @@ public class OaConstant {
     public static final String OA_JSON_MSG_CODE = "msgcode";
     public static final String OA_JSON_MSG = "msg";
     public static final String OA_JSON_DATA = "data";
+    public static final String OA_CAPITAL_DATA = "Data";
     public static final String OA_JSON_DATAS = "datas";
     public static final String OA_JSON_STATUS = "status";
     public static final String OA_JSON_TOKEN = "token";
@@ -44,6 +45,7 @@ public class OaConstant {
     public static final String OA_SYSTEM_USERID = OaConfigHelper.OA_SYSTEM_USERID;
     public static final String OA_WEAVER_SITE = OaConfigHelper.OA_WEAVER_SITE;
     public static final String OA_RIGHT_STRING = OaConfigHelper.OA_RIGHT_STRING;
+    public static final String OA_BASIC_AUTH = OaConfigHelper.OA_BASIC_AUTH;
     public static final Integer YES = 1;
     public static final Integer NO = 0;
     public static final Integer NONE = -1;
@@ -71,6 +73,7 @@ class OaConfigHelper{
     static String OA_SYSTEM_USERID;
     static String OA_WEAVER_SITE;
     static String OA_RIGHT_STRING;
+    static String OA_BASIC_AUTH;
 
     @Autowired
     public void setOaConfig(OaConfig oaConfig){
@@ -81,5 +84,6 @@ class OaConfigHelper{
         OA_SYSTEM_USERID = oaConfig.getOA_SYSTEM_USERID();
         OA_WEAVER_SITE = oaConfig.getOA_WEAVER_SITE();
         OA_RIGHT_STRING = oaConfig.getOA_RIGHT_STRING();
+        OA_BASIC_AUTH = oaConfig.getOA_BASIC_AUTH();
     }
 }

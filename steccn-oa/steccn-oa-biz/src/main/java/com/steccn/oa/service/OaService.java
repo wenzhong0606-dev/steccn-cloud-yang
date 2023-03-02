@@ -3,6 +3,7 @@ package com.steccn.oa.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -11,10 +12,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.dto.*;
-import com.steccn.oa.vo.OaCompanyVO;
-import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaToDoWorkflowVO;
-import com.steccn.oa.vo.OaWorkflowCountVO;
+import com.steccn.oa.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -422,6 +420,21 @@ public class OaService {
             vo.setRejectCount(OaConstant.NO);
         }
         return vo;
+    }
+
+    /**
+     * 排版记录
+     * @param dto
+     * @return
+     */
+    public List<OaRosterRecordVO> getRosterRecord(OaRosterRecordDTO dto){
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set("Authorization",OaConstant.OA_BASIC_AUTH);
+        String rosterRecord = oaApi.getRosterRecord(headers, dto);
+        JSONObject jsonObject = JSONObject.parseObject(rosterRecord);
+        JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_CAPITAL_DATA);
+        List<OaRosterRecordVO> vos = jsonArray.toJavaList(OaRosterRecordVO.class);
+        return vos;
     }
 
     /**
