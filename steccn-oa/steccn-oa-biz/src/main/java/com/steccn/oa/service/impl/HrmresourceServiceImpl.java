@@ -41,6 +41,21 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     }
 
     @Override
+    public OaUserIdAndName getNameByLoginId(String loginId) {
+        Hrmresource hrmresource = this.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getLoginid, loginId), false);
+        OaUserIdAndName oaUserIdAndName = new OaUserIdAndName();
+        if (!Objects.isNull(hrmresource)) {
+            oaUserIdAndName.setName(hrmresource.getLastname());
+            oaUserIdAndName.setId(hrmresource.getId());
+            return oaUserIdAndName;
+        }else {
+            return null;
+        }
+
+    }
+
+    @Override
     public List<OaUserIdAndName> getUserByName(String userName) {
         List<OaUserIdAndName> userList = Lists.newArrayList();
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().like(Hrmresource::getLastname, userName));

@@ -51,7 +51,7 @@ public class OaService {
     private final OaApi oaApi;
 
     private final OaTokenService oaTokenService;
-
+	private final HrmresourceService hrmresourceService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -192,14 +192,25 @@ public class OaService {
         }else{
             MultiValueMap<String, String> headers = this.setHeaders();
             OaUserParam oaUserParam = new OaUserParam();
-            oaUserParam.setQ(loginId);
+            OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
+            if(Objects.isNull(oaUserParam)){
+                oaUserInfo.setStatus(false);
+                log.error("没有获取userInfo");
+                return oaUserInfo;
+            }
+            //根据名称查
+            oaUserParam.setQ(oaUserIdAndName.getName());
             String result = oaApi.getOaUserInfo(headers,oaUserParam);
             //转成对象
             JSONObject jsonObject = JSONObject.parseObject(result);
             if(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS)!=null && !jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).isEmpty()){
-                oaUserInfo.setDepartmentName(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_DEPARTMENTNAME));
-                oaUserInfo.setName(jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_NAME));
-                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+jsonObject.getJSONArray(OaConstant.OA_JSON_DATAS).getJSONObject(0).getString(OaConstant.OA_JSON_ICON));
+                JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+                List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
+                //根据id过滤
+                OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
+                oaUserInfo.setDepartmentName(one.getDepartmentname());
+                oaUserInfo.setName(one.getLastname());
+                oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
                 oaUserInfo.setStatus(true);
             }else {
                 oaUserInfo.setStatus(false);
