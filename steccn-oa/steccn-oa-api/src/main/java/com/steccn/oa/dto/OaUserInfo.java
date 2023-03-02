@@ -14,4 +14,5 @@ public class OaUserInfo {
     private String name;
     private String headPortrait;
     private Boolean status;
+    private String id;
 }

@@ -22,6 +22,13 @@ public interface HrmresourceService extends IService<Hrmresource> {
     Long getIdByWorkCode(String workCode);
 
     /**
+     * 通过登录名查询名字
+     * @param loginId
+     * @return
+     */
+    OaUserIdAndName getNameByLoginId(String loginId);
+
+    /**
      * 根据名称模糊匹配人员信息
      * @param userName
      * @return
