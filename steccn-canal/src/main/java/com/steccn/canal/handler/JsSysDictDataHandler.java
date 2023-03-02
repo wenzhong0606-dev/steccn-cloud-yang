@@ -1,22 +1,22 @@
 package com.steccn.canal.handler;
 
-import com.steccn.canal.domain.UserInfo;
+import com.steccn.canal.domain.JsSysDictData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.javatool.canal.client.annotation.CanalTable;
 import top.javatool.canal.client.handler.EntryHandler;
 
-@CanalTable(value = "user_info")
+@CanalTable(value = "js_sys_dict_data")
 @Component
 @Slf4j
-public class UserInfoHandler implements EntryHandler<UserInfo> {
+public class JsSysDictDataHandler implements EntryHandler<JsSysDictData> {
     /**
      * 新增操作
      *
      * @param user
      */
     @Override
-    public void insert(UserInfo user) {
+    public void insert(JsSysDictData user) {
         //你的逻辑
         log.info("新增 {}", user);
     }
@@ -28,7 +28,7 @@ public class UserInfoHandler implements EntryHandler<UserInfo> {
      * @param after
      */
     @Override
-    public void update(UserInfo before, UserInfo after) {
+    public void update(JsSysDictData before, JsSysDictData after) {
         //你的逻辑
         log.info("更新 {} {}", before, after);
     }
@@ -39,7 +39,7 @@ public class UserInfoHandler implements EntryHandler<UserInfo> {
      * @param user
      */
     @Override
-    public void delete(UserInfo user) {
+    public void delete(JsSysDictData user) {
         //你的逻辑
         log.info("删除 {}", user);
     }
