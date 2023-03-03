@@ -48,4 +48,11 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     List<Integer> getIdByUserName(List<String> userNames);
+
+    /**
+     * 根据岗位code查询oa数据
+     * @param workCodes
+     * @return
+     */
+    List<OaUserIdAndName> getIdByWorkCode(List<String> workCodes);
 }

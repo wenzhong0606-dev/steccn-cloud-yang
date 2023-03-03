@@ -14,8 +14,10 @@ import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
 import com.steccn.platform.dto.SlidePageDTO;
+import com.steccn.platform.dto.SysMobilePushDTO;
 import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.service.SysMobilePushService;
 import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.mapper.SysMsgMapper;
 import com.steccn.platform.service.SysMsgUserService;
@@ -24,6 +26,7 @@ import com.steccn.platform.vo.SysMsgTabVO;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yequan
@@ -40,11 +47,17 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         implements SysMsgService {
 
     private final SysMsgUserService sysMsgUserService;
     private final RemoteWsFeignApi remoteWsFeignApi;
+    private final SysMobilePushService sysMobilePushService;
+
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -75,8 +88,25 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         msgPushDTO.setReadFlag(MpConstant.NO);
         try {
             remoteWsFeignApi.pushMsg(msgPushDTO);
+
         } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
+            log.error("消息推送异常 -> {}",e.getLocalizedMessage());
+        }
+        try {
+            //调用接口
+            sysMsgDTO.getUserList().forEach(ele ->{
+                poolExecutor.execute(() ->{
+                    SysMobilePushDTO sysMobilePushDTO = new SysMobilePushDTO();
+                    sysMobilePushDTO.setCategory(msgPushDTO.getMsgCategory());
+                    sysMobilePushDTO.setType(msgPushDTO.getMsgType());
+                    sysMobilePushDTO.setTitle(msgPushDTO.getTitle());
+                    sysMobilePushDTO.setContent(msgPushDTO.getContent());
+                    sysMobilePushDTO.setUserId(ele);
+                    sysMobilePushService.push(sysMobilePushDTO);
+                });
+            });
+        }catch (Exception e){
+            log.error("消息push异常 -> {}",e.getLocalizedMessage());
         }
         return Boolean.TRUE;
     }

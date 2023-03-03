@@ -8,10 +8,7 @@ import com.steccn.oa.dto.*;
 
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
-import com.steccn.oa.vo.OaCompanyVO;
-import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaToDoWorkflowVO;
-import com.steccn.oa.vo.OaWorkflowCountVO;
+import com.steccn.oa.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -145,6 +142,7 @@ public class OaController {
         return null;
     }
 
+    @ApiOperation("根据工号工号查询id")
     @GetMapping("/user/id/{workCode}")
     public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode) {
         return R.success(hrmresourceService.getIdByWorkCode(workCode));
@@ -160,5 +158,17 @@ public class OaController {
     @PostMapping("/user/jobTitle")
     public R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto){
         return R.success(oaService.getHrmSearchResult(dto));
+    }
+
+    @ApiOperation("查询排班信息")
+    @PostMapping("/roster/record")
+    public R<List<OaRosterRecordVO>> getRosterRecord(@RequestBody OaRosterRecordDTO dto){
+        return R.success(oaService.getRosterRecord(dto));
+    }
+
+    @ApiOperation("根据工号查询信息")
+    @PostMapping("/user/workCode")
+    public R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes){
+        return R.success(hrmresourceService.getIdByWorkCode(workCodes));
     }
 }

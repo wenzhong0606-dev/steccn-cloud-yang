@@ -33,4 +33,7 @@ public class OaConfig {
 
     @Value("${oa.right-string}")
     private String OA_RIGHT_STRING;
+
+    @Value("${oa.basic-auth}")
+    private String OA_BASIC_AUTH;
 }
