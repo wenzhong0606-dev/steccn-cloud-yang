@@ -5,19 +5,21 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 客户物料明细
+ *
  * @TableName sys_customer_material_info
  */
-@TableName(value ="sys_customer_material_info")
+@TableName(value = "sys_customer_material_info")
 @Data
 public class SysCustomerMaterialInfo implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

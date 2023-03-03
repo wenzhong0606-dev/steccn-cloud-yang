@@ -1,29 +1,36 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.hash.Hash;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.steccn.platform.domain.SysCustomerMaterialInfo;
 import com.steccn.platform.dto.SysCustomerMaterialPageDTO;
+import com.steccn.platform.dto.SysCustomerMaterialSaveDTO;
+import com.steccn.platform.dto.SysCustomerMaterialSubDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.mapper.SysCustomerMaterialMapper;
 import com.steccn.platform.service.SysCustomerMaterialInfoService;
 import com.steccn.platform.service.SysCustomerMaterialService;
-import com.steccn.platform.vo.SysCustomerMaterialSubVO;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +45,8 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
 
     private final SysCustomerMaterialInfoService sysCustomerMaterialInfoService;
     private final RemoteDictFeignApi remoteDictFeignApi;
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialPageDTO dto) {
@@ -50,19 +59,80 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
         Assert.notNull(sysCustomerMaterial, "客户物料不存在");
         List<SysCustomerMaterialInfo> detailList = sysCustomerMaterialInfoService.list(new LambdaQueryWrapper<SysCustomerMaterialInfo>()
                 .eq(SysCustomerMaterialInfo::getCmId, id));
-        Assert.notEmpty(detailList, "客户物料明细不存在");
         SysCustomerMaterialVO resVo = BeanUtil.copyProperties(sysCustomerMaterial, SysCustomerMaterialVO.class);
         //获取所有unit的数据字典值
-        Set<Long> dictIdSet = detailList.stream().map(SysCustomerMaterialInfo::getUnit).collect(Collectors.toSet());
-        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<SysCustomerMaterialSubVO> subVOList = Lists.newArrayList();
-        detailList.forEach(ele -> {
-            SysCustomerMaterialSubVO subVO = BeanUtil.copyProperties(ele, SysCustomerMaterialSubVO.class);
-            subVO.setUnitName(dictMap.getOrDefault(subVO.getUnit(), Strings.EMPTY));
-            subVOList.add(subVO);
-        });
-        resVo.setSubVOList(subVOList);
+        if (CollUtil.isNotEmpty(detailList)) {
+            Set<Long> dictIdSet = detailList.stream().map(SysCustomerMaterialInfo::getUnit).collect(Collectors.toSet());
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            List<SysCustomerMaterialSubDTO> subVOList = Lists.newArrayList();
+            detailList.forEach(ele -> {
+                SysCustomerMaterialSubDTO subVO = BeanUtil.copyProperties(ele, SysCustomerMaterialSubDTO.class);
+                subVO.setUnitName(dictMap.getOrDefault(subVO.getUnit(), Strings.EMPTY));
+                subVOList.add(subVO);
+            });
+            resVo.setSubVOList(subVOList);
+        }
         return resVo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean commit(SysCustomerMaterialSaveDTO dto) {
+        if (Objects.nonNull(dto.getId())) {
+            SysCustomerMaterial oldModel = getById(dto.getId());
+            Assert.notNull(oldModel, "客户物料不存在，无法编辑");
+        }
+        //如果id不存在，则为新增
+        SysCustomerMaterial model = new SysCustomerMaterial();
+        BeanUtils.copyProperties(dto, model);
+        //根据物料id获取物料信息
+        Set<Long> materialIdSet = Sets.newHashSet(dto.getMaterialId());
+        Set<Long> detailIdSet = Sets.newHashSet();
+        if (CollUtil.isNotEmpty(dto.getSubVOList())) {
+            dto.getSubVOList().forEach(ele -> {
+                materialIdSet.add(ele.getMaterialId());
+                if (Objects.nonNull(ele.getId())) {
+                    detailIdSet.add(ele.getId());
+                }
+            });
+        }
+        //获取物料信息
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        EqpSpareVO material = materialMap.get(model.getMaterialId());
+        Assert.notNull(material, "物料不存在");
+        model.setMaterialCode(material.getCode());
+        model.setMaterialName(material.getName());
+        //根据客户id获取客户信息
+        Map<Integer, String> customerMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(model.getCustomerId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        model.setCustomerName(customerMap.get(model.getCustomerId()));
+        //如果id存在，则为编辑
+        saveOrUpdate(model);
+        //明细逻辑-可能为空
+        if (CollUtil.isNotEmpty(dto.getSubVOList())) {
+            //1.编辑逻辑下，删除主数据关联的detailIdSet集合之外的所有明细【极端情况下，明细全部被删除】
+            if (Objects.nonNull(model.getId())) {
+                sysCustomerMaterialInfoService.remove(new LambdaQueryWrapper<SysCustomerMaterialInfo>()
+                        .eq(SysCustomerMaterialInfo::getCmId, model.getId())
+                        .notIn(CollUtil.isNotEmpty(detailIdSet), SysCustomerMaterialInfo::getId, detailIdSet));
+            }
+            List<SysCustomerMaterialInfo> subList = Lists.newArrayList();
+            dto.getSubVOList().forEach(ele -> {
+                EqpSpareVO subMaterial = materialMap.get(ele.getMaterialId());
+                SysCustomerMaterialInfo subModel = new SysCustomerMaterialInfo();
+                BeanUtils.copyProperties(ele, subModel);
+                subModel.setMaterialCode(subMaterial.getCode());
+                subModel.setMaterialName(subMaterial.getName());
+                subModel.setMaterialSpec(subMaterial.getSpecifications());
+                subModel.setCmId(model.getId());
+                //有id的 属于编辑情况
+                //无id的 属于新增情况
+                subList.add(subModel);
+            });
+            if (CollUtil.isNotEmpty(subList)) {
+                sysCustomerMaterialInfoService.saveOrUpdateBatch(subList);
+            }
+        }
+        return Boolean.TRUE;
     }
 }
 

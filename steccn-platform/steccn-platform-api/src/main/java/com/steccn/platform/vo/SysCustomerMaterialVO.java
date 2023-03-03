@@ -1,5 +1,6 @@
 package com.steccn.platform.vo;
 
+import com.steccn.platform.dto.SysCustomerMaterialSubDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -55,5 +56,5 @@ public class SysCustomerMaterialVO implements Serializable {
     private LocalDateTime createTime;
 
     @ApiModelProperty("明细数据")
-    private List<SysCustomerMaterialSubVO> subVOList;
+    private List<SysCustomerMaterialSubDTO> subVOList;
 }

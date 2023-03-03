@@ -17,7 +17,7 @@ public class SysCustomerMaterial implements Serializable {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

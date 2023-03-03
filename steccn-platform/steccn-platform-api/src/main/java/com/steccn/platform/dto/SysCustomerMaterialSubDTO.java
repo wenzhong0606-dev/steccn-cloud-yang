@@ -1,4 +1,4 @@
-package com.steccn.platform.vo;
+package com.steccn.platform.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 
 /**
  * @author yequan
- * @desc 客户物料分页subvo
+ * @desc 客户物料明细dto
  * @date 2023/3/3
  */
-@ApiModel("客户物料分页subvo")
+@ApiModel("客户物料明细dto")
 @Data
-public class SysCustomerMaterialSubVO implements Serializable {
+public class SysCustomerMaterialSubDTO implements Serializable {
 
     @ApiModelProperty("主键id")
     private Long id;

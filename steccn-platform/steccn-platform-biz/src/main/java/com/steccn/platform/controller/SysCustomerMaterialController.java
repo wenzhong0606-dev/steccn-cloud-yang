@@ -33,8 +33,8 @@ public class SysCustomerMaterialController {
 
     @PostMapping
     @ApiOperation("提交客户物料列表")
-    public R<Boolean> save(@Valid @RequestBody SysCustomerMaterialSaveDTO dto) {
-        return R.success();
+    public R<Boolean> commit(@Valid @RequestBody SysCustomerMaterialSaveDTO dto) {
+        return R.success(sysCustomerMaterialService.commit(dto));
     }
 
     @GetMapping("/{id}")

@@ -1,6 +1,5 @@
 package com.steccn.platform.dto;
 
-import com.steccn.platform.vo.SysCustomerMaterialSubVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -37,5 +36,5 @@ public class SysCustomerMaterialSaveDTO implements Serializable {
     private String note;
 
     @ApiModelProperty("明细数据")
-    private List<SysCustomerMaterialSubVO> subVOList;
+    private List<SysCustomerMaterialSubDTO> subVOList;
 }
