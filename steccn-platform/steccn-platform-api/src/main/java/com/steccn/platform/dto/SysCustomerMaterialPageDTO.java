@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  */
 @ApiModel("客户物料分页请求dto")
 @Data
-public class SysCustomerMaterialDTO extends BasePageDTO implements Serializable {
+public class SysCustomerMaterialPageDTO extends BasePageDTO implements Serializable {
 
     @ApiModelProperty("包材编码")
     private String subMaterialCode;

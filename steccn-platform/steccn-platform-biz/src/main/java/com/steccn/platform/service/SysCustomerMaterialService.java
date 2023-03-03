@@ -1,10 +1,9 @@
 package com.steccn.platform.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.platform.dto.SysCustomerMaterialDTO;
+import com.steccn.platform.dto.SysCustomerMaterialPageDTO;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
 
 /**
@@ -19,7 +18,7 @@ public interface SysCustomerMaterialService extends IService<SysCustomerMaterial
      * @param dto dto
      * @return 分页数据
      */
-    Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialDTO dto);
+    Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialPageDTO dto);
 
     /**
      * 根据客户物料主键查询客户物料明细数据

@@ -9,7 +9,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.steccn.platform.domain.SysCustomerMaterialInfo;
-import com.steccn.platform.dto.SysCustomerMaterialDTO;
+import com.steccn.platform.dto.SysCustomerMaterialPageDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.mapper.SysCustomerMaterialMapper;
 import com.steccn.platform.service.SysCustomerMaterialInfoService;
@@ -18,7 +18,6 @@ import com.steccn.platform.vo.SysCustomerMaterialSubVO;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -41,7 +40,7 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
-    public Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialDTO dto) {
+    public Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialPageDTO dto) {
         return this.baseMapper.pageList(new Page<>(dto.getCurrent(), dto.getSize()), dto);
     }
 
