@@ -50,7 +50,7 @@ public class JsSysSpareUnitConversionHandler implements EntryHandler<JsSysSpareU
      * @param before
      * @param after
      */
-    public void update(JsSysSpareUnitConversion before, JsSysEqpSpare after) {
+    public void update(JsSysSpareUnitConversion before, JsSysSpareUnitConversion after) {
         SysSpareUnitConversionDTO sysSpareUnitConversionDTO = new SysSpareUnitConversionDTO();
         BeanUtil.copyProperties(after,sysSpareUnitConversionDTO);
         Boolean aBoolean = FeignOptional.of(() -> remoteSpareFeignApi.updateConversion(sysSpareUnitConversionDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

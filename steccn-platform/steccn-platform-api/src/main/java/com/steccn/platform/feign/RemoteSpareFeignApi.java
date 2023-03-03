@@ -98,7 +98,8 @@ public interface RemoteSpareFeignApi {
      * @return
      */
 
-
+    @ApiOperation("根据备件查询id")
+    @GetMapping("/feign/platform/eqpSpare/getById")
     R<EqpSpareVO> getById(@RequestParam("id") Long id);
 
 

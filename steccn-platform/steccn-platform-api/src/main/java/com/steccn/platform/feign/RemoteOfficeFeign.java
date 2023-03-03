@@ -208,4 +208,33 @@ public interface RemoteOfficeFeign {
     @ApiOperation("查询指定机构类型，及机构类型的孩子节点，返回平铺数据")
     @GetMapping("/feign/platform/sys/office/type/children/flat")
     R<Set<Integer>> typeAndChildrenFlat(@RequestParam("officeType") String officeType);
+
+
+    /**
+     * 保存机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/save")
+    @ApiOperation("保存机构信息")
+    R<Boolean> save(@RequestBody SysOfficeDTO sysOfficeDTO);
+
+    /**
+     * 根据机构编码修改机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/update")
+    @ApiOperation("修改机构信息")
+    R<Boolean> update(@RequestBody SysOfficeDTO sysOfficeDTO);
+
+
+    /**
+     * 根据机构编码删除机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    @DeleteMapping("/feign/platform/sys/office/delete")
+    @ApiOperation("删除机构信息")
+    R<Boolean> delete(@RequestBody SysOfficeDTO sysOfficeDTO);
 }
