@@ -2,7 +2,9 @@ package com.steccn.platform.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysEqpSpare;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.vo.EqpSpareVO;
@@ -89,6 +91,7 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
     /**
      * 根据条件筛选
+     *
      * @param spareDTO
      * @return
      */
@@ -96,9 +99,32 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
 
     /***
      * 根据分类获取物料信息
-     * @param type
+     * @param types
      * @return
      */
     List<EqpSpareVO> getByTypeIdSpareList(Set<String> types);
 
+
+    /**
+     * 根据id获取物料信息
+     *
+     * @param id
+     * @return
+     */
+    EqpSpareVO get(Long id);
+
+
+    /**
+     * 保存备件信息
+     * @param eqpSpareDto
+     * @return
+     */
+    Boolean saveSpare(EqpSpareDto eqpSpareDto);
+
+    /**
+     * 修改备件信息
+     * @param eqpSpareDto
+     * @return
+     */
+    Boolean updateSpare(EqpSpareDto eqpSpareDto);
 }

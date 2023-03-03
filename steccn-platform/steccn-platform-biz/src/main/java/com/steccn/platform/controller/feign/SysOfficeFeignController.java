@@ -172,4 +172,23 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.typeAndChildrenFlat(officeType));
     }
 
+
+    @PostMapping("/save")
+    @ApiOperation("保存机构信息")
+    public R<Boolean> save(@RequestBody SysOfficeDTO sysOfficeDTO){
+        return R.success(sysOfficeService.saveOffice(sysOfficeDTO));
+    }
+
+    @PostMapping("/update")
+    @ApiOperation("修改机构信息")
+    public R<Boolean> update(@RequestBody SysOfficeDTO sysOfficeDTO){
+        return R.success(sysOfficeService.updateOffice(sysOfficeDTO));
+    }
+
+    @DeleteMapping("/delete")
+    @ApiOperation("删除机构信息")
+    public R<Boolean> delete(@RequestBody SysOfficeDTO sysOfficeDTO){
+        return R.success(sysOfficeService.delete(sysOfficeDTO));
+    }
+
 }

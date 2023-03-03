@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.platform.mapper.SysCustomerMaterialMapper">
+
+    <resultMap id="pageListMap" type="com.steccn.platform.vo.SysCustomerMaterialVO">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="materialId" column="material_id" jdbcType="BIGINT"/>
+        <result property="materialCode" column="material_code" jdbcType="VARCHAR"/>
+        <result property="materialName" column="material_name" jdbcType="VARCHAR"/>
+        <result property="minPackQuantity" column="min_pack_quantity" jdbcType="DECIMAL"/>
+        <result property="customerId" column="customer_id" jdbcType="INTEGER"/>
+        <result property="customerName" column="customer_name" jdbcType="VARCHAR"/>
+        <result property="printModel" column="print_model" jdbcType="BIGINT"/>
+        <result property="note" column="note" jdbcType="VARCHAR"/>
+        <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,material_id,material_code,
+        material_name,min_pack_quantity,customer_id,
+        customer_name,print_model,note,
+        create_by,create_name,create_time,
+        update_by,update_name,update_time,
+        del_flag
+    </sql>
+    <select id="pageList" resultMap="pageListMap">
+        SELECT DISTINCT
+        cm.*
+        FROM
+        `sys_customer_material` cm
+        JOIN sys_customer_material_info mi ON cm.id = mi.cm_id
+        WHERE
+        cm.del_flag = 0 AND mi.del_flag = 0
+        <if test="dto.subMaterialCode != null and dto.subMaterialCode != ''">
+            AND mi.material_code LIKE CONCAT('%',#{dto.subMaterialCode},'%')
+        </if>
+        <if test="dto.subMaterialName != null and dto.subMaterialName != ''">
+            AND mi.material_name LIKE CONCAT('%',#{dto.subMaterialName},'%')
+        </if>
+        <if test="dto.materialCode != null and dto.materialCode != ''">
+            AND cm.material_code LIKE CONCAT('%',#{dto.materialCode},'%')
+        </if>
+        <if test="dto.materialName != null and dto.materialName != ''">
+            AND cm.material_name LIKE CONCAT('%',#{dto.materialName},'%')
+        </if>
+        <if test="dto.createName != null and dto.createName != ''">
+            AND cm.create_name LIKE CONCAT('%',#{dto.createName},'%')
+        </if>
+        <if test="dto.customerId != null and dto.customerId != ''">
+            AND cm.customer_id = #{dto.customerId}
+        </if>
+        <if test="dto.start !=null and dto.start!='' ">
+            AND cm.create_time &gt;= #{dto.start}
+        </if>
+        <if test="dto.end !=null and dto.end!='' ">
+            AND cm.create_time &lt;= #{dto.end}
+        </if>
+    </select>
+</mapper>
