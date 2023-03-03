@@ -34,6 +34,12 @@ public class SysCustomerMaterialVO implements Serializable {
     @ApiModelProperty("最小包装数量")
     private BigDecimal minPackQuantity;
 
+    @ApiModelProperty("最小包装数量-单位")
+    private Long unit;
+
+    @ApiModelProperty("最小包装数量-单位")
+    private String unitName;
+
     @ApiModelProperty("客户主键")
     private Integer customerId;
 

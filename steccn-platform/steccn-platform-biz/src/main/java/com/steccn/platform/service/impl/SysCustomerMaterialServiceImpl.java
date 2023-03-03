@@ -50,7 +50,15 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
 
     @Override
     public Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialPageDTO dto) {
-        return this.baseMapper.pageList(new Page<>(dto.getCurrent(), dto.getSize()), dto);
+        Page<SysCustomerMaterialVO> page = this.baseMapper.pageList(new Page<>(dto.getCurrent(), dto.getSize()), dto);
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            Set<Long> unitIdSet = page.getRecords().stream().map(SysCustomerMaterialVO::getUnit).collect(Collectors.toSet());
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            page.getRecords().forEach(ele -> {
+                ele.setUnitName(dictMap.getOrDefault(ele.getUnit(), Strings.EMPTY));
+            });
+        }
+        return page;
     }
 
     @Override
@@ -63,6 +71,7 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
         //获取所有unit的数据字典值
         if (CollUtil.isNotEmpty(detailList)) {
             Set<Long> dictIdSet = detailList.stream().map(SysCustomerMaterialInfo::getUnit).collect(Collectors.toSet());
+            dictIdSet.add(sysCustomerMaterial.getUnit());
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             List<SysCustomerMaterialSubDTO> subVOList = Lists.newArrayList();
             detailList.forEach(ele -> {
@@ -70,6 +79,7 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
                 subVO.setUnitName(dictMap.getOrDefault(subVO.getUnit(), Strings.EMPTY));
                 subVOList.add(subVO);
             });
+            resVo.setUnitName(dictMap.getOrDefault(resVo.getUnit(), Strings.EMPTY));
             resVo.setSubVOList(subVOList);
         }
         return resVo;
@@ -105,6 +115,7 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
         //根据客户id获取客户信息
         Map<Integer, String> customerMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(model.getCustomerId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         model.setCustomerName(customerMap.get(model.getCustomerId()));
+        Assert.notNull(model.getCustomerName(), "客户不存在");
         //如果id存在，则为编辑
         saveOrUpdate(model);
         //明细逻辑-可能为空

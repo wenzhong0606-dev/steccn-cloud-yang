@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 客户物料表
+ *
  * @TableName sys_customer_material
  */
-@TableName(value ="sys_customer_material")
+@TableName(value = "sys_customer_material")
 @Data
 public class SysCustomerMaterial implements Serializable {
     /**
@@ -41,6 +43,11 @@ public class SysCustomerMaterial implements Serializable {
     private BigDecimal minPackQuantity;
 
     /**
+     * 最小包装数量-单位
+     */
+    private Long unit;
+
+    /**
      * 客户id
      */
     private Integer customerId;
@@ -56,7 +63,7 @@ public class SysCustomerMaterial implements Serializable {
     private Long printModel;
 
     /**
-     * 
+     *
      */
     private String note;
 
