@@ -132,9 +132,15 @@ public class SysDictFeignController {
         return R.success(sysDictTypeService.saveType(sysDictTypeDTO));
     }
 
+    @PostMapping("/type/update")
+    @ApiOperation("修改字典类型数据")
+    public R<Boolean> updateType(@RequestBody SysDictTypeDTO sysDictTypeDTO) {
+        return R.success(sysDictTypeService.updateType(sysDictTypeDTO));
+    }
+
     @DeleteMapping("/type/delete")
     @ApiOperation("删除字典类型数据")
-    public R<Boolean> delete(@RequestParam("id") Integer id) {
+    public R<Boolean> deleteType(@RequestParam("id") Long id) {
         return R.success(sysDictTypeService.removeById(id));
     }
 

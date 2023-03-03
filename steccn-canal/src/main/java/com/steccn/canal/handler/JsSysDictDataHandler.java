@@ -33,7 +33,7 @@ public class JsSysDictDataHandler implements EntryHandler<JsSysDictData> {
     public void insert(JsSysDictData user) {
         //查询数据是否已存在
         SysDictVO dictVO = FeignOptional.of(() -> remoteDictFeignApi.get(Long.valueOf(user.getDictCode())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (Objects.isNull(dictVO)) {
+        if (Objects.isNull(dictVO.getId())) {
             SysDictDTO sysDictDTO = new SysDictDTO();
             sysDictDTO.setId(Long.valueOf(user.getDictCode()));
             sysDictDTO.setType(user.getDictType());

@@ -36,11 +36,11 @@ public class JsSysDictTypeHandler implements EntryHandler<JsSysDictType> {
     public void insert(JsSysDictType user) {
         //查询数据是否已存在
         SysDictTypeDTO dict = FeignOptional.of(() -> remoteDictFeignApi.typeById(Long.valueOf(user.getId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (Objects.isNull(dict)){
+        if (Objects.isNull(dict.getId())){
             //不存在则插入
             SysDictTypeDTO sysDictTypeDTO = new SysDictTypeDTO();
             sysDictTypeDTO.setType(user.getDictType());
-            sysDictTypeDTO.setId(Integer.valueOf(user.getId()));
+            sysDictTypeDTO.setId(Long.valueOf(user.getId()));
             sysDictTypeDTO.setName(user.getDictName());
             Boolean aBoolean = FeignOptional.of(() -> remoteDictFeignApi.saveType(sysDictTypeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             log.info("新增 {}" + aBoolean, user);
@@ -54,12 +54,13 @@ public class JsSysDictTypeHandler implements EntryHandler<JsSysDictType> {
      * @param after
      */
     public void update(JsSysDictType before, JsSysDictType after) {
-        log.info("更新 {} {}" , before, after);
+
         SysDictTypeDTO sysDictTypeDTO = new SysDictTypeDTO();
         sysDictTypeDTO.setType(after.getDictType());
-        sysDictTypeDTO.setId(Integer.valueOf(after.getId()));
+        sysDictTypeDTO.setId(Long.valueOf(after.getId()));
         sysDictTypeDTO.setName(after.getDictName());
         Boolean aBoolean = FeignOptional.of(() -> remoteDictFeignApi.updateType(sysDictTypeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        log.info("更新 {} {}" + aBoolean , before, after );
     }
 
 
@@ -69,7 +70,7 @@ public class JsSysDictTypeHandler implements EntryHandler<JsSysDictType> {
      * @param user
      */
     public void delete(JsSysDictType user) {
-        Boolean aBoolean = FeignOptional.of(() -> remoteDictFeignApi.deleteType(Integer.valueOf(user.getId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Boolean aBoolean = FeignOptional.of(() -> remoteDictFeignApi.deleteType(Long.valueOf(user.getId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         log.info("删除 {}" + aBoolean, user);
     }
 

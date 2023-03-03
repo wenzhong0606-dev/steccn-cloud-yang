@@ -12,7 +12,7 @@ public class SysDictTypeDTO {
     /**
      * 主键id
      */
-    private Integer id;
+    private Long id;
 
     /**
      * 类型code

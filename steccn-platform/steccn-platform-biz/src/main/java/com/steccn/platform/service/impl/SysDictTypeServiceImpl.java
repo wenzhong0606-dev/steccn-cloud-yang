@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysDict;
 import com.steccn.platform.domain.SysDictType;
 import com.steccn.platform.dto.SysDictTypeDTO;
@@ -30,6 +31,13 @@ public class SysDictTypeServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDi
         SysDictType sysDictType = new SysDictType();
         BeanUtil.copyProperties(sysDictTypeDTO, sysDictType);
         return save(sysDictType);
+    }
+
+    @Override
+    public Boolean updateType(SysDictTypeDTO sysDictTypeDTO) {
+        SysDictType sysDictType = new SysDictType();
+        BeanUtil.copyProperties(sysDictTypeDTO, sysDictType);
+        return updateById(sysDictType);
     }
 }
 

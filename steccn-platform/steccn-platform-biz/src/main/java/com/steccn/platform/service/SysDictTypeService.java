@@ -26,4 +26,12 @@ public interface SysDictTypeService extends IService<SysDictType> {
      * @return
      */
     Boolean saveType(SysDictTypeDTO sysDictTypeDTO);
+
+
+    /**
+     * 修改字典类型数据
+     * @param sysDictTypeDTO
+     * @return
+     */
+    Boolean updateType(SysDictTypeDTO sysDictTypeDTO);
 }
