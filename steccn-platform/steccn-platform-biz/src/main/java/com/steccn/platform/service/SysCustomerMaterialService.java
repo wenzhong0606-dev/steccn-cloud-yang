@@ -1,7 +1,11 @@
 package com.steccn.platform.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.platform.dto.SysCustomerMaterialDTO;
+import com.steccn.platform.vo.SysCustomerMaterialPageVO;
 
 /**
 * @author yequan
@@ -10,4 +14,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface SysCustomerMaterialService extends IService<SysCustomerMaterial> {
 
+    /**
+     * 分页列表
+     * @param dto dto
+     * @return 分页数据
+     */
+    Page<SysCustomerMaterialPageVO> pageList(SysCustomerMaterialDTO dto);
 }

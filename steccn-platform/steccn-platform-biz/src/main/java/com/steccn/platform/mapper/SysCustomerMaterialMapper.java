@@ -1,8 +1,12 @@
 package com.steccn.platform.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.platform.dto.SysCustomerMaterialDTO;
+import com.steccn.platform.vo.SysCustomerMaterialPageVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author yequan
@@ -13,6 +17,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SysCustomerMaterialMapper extends BaseMapper<SysCustomerMaterial> {
 
+    Page<SysCustomerMaterialPageVO> pageList(@Param("page") Page<SysCustomerMaterialPageVO> page ,@Param("dto") SysCustomerMaterialDTO dto);
 }
 
 
