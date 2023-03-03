@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysDictDTO;
+import com.steccn.platform.dto.SysDictTypeDTO;
 import com.steccn.platform.service.SysDictService;
+import com.steccn.platform.service.SysDictTypeService;
 import com.steccn.platform.vo.SysDictVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +28,8 @@ import java.util.Set;
 public class SysDictFeignController {
 
     private final SysDictService sysDictService;
+
+    private final SysDictTypeService sysDictTypeService;
 
     @PostMapping("/ids")
     @ApiOperation("根据主键id查询数据字典的值")
@@ -110,10 +114,29 @@ public class SysDictFeignController {
         return R.success(sysDictService.updateDict(sysDictDTO));
     }
 
-    @PostMapping("/delete")
+    @DeleteMapping("/delete")
     @ApiOperation("删除字典数据")
     public R<Boolean> delete(@RequestParam("id") Long id) {
         return R.success(sysDictService.removeById(id));
     }
+
+    @GetMapping("/type/id")
+    @ApiOperation("获取字典类型数据")
+    public R<SysDictTypeDTO> typeById(@RequestParam("id") Long id) {
+        return R.success(sysDictTypeService.get(id));
+    }
+
+    @PostMapping("/type/save")
+    @ApiOperation("保存字典类型数据")
+    public R<Boolean> saveType(@RequestBody SysDictTypeDTO sysDictTypeDTO) {
+        return R.success(sysDictTypeService.saveType(sysDictTypeDTO));
+    }
+
+    @DeleteMapping("/type/delete")
+    @ApiOperation("删除字典类型数据")
+    public R<Boolean> delete(@RequestParam("id") Integer id) {
+        return R.success(sysDictTypeService.removeById(id));
+    }
+
 
 }

@@ -13,17 +13,17 @@ import java.util.Map;
 public class DefaultEntryHandler implements EntryHandler<Map<String, String>> {
     @Override
     public void insert(Map<String, String> map) {
-        log.info("insert message  {}", map);
+//        log.info("insert message  {}", map);
     }
 
     @Override
     public void update(Map<String, String> before, Map<String, String> after) {
-        log.info("update before {} ", before);
-        log.info("update after {}", after);
+//        log.info("update before {} ", before);
+//        log.info("update after {}", after);
     }
 
     @Override
     public void delete(Map<String, String> map) {
-        log.info("delete  {}", map);
+//        log.info("delete  {}", map);
     }
 }
