@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.platform.domain.SysEqpSpare;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
@@ -30,8 +31,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEqpSpare>
-        implements SysEqpSpareService {
+public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEqpSpare> implements SysEqpSpareService {
 
     private final SysEqpSpareMapper sysEqpSpareMapper;
     private final SysDictService sysDictService;
@@ -52,7 +52,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
                 dictIds.add(vo.getWideUnitId());
             });
             Map<Long, String> map = sysDictService.listByIdCh(dictIds);
-            eqpSpareVOList.forEach(vo->{
+            eqpSpareVOList.forEach(vo -> {
                 vo.setHighUnitName(map.get(vo.getHighUnitId()));
                 vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
                 vo.setThickUnitName(map.get(vo.getThickUnitId()));
@@ -61,9 +61,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
                 vo.setProcurementTypeName(map.get(vo.getProcurementTypeId()));
                 vo.setVolumeUnitName(map.get(vo.getVolumeUnitId()));
             });
-            collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(
-                    Collectors.toCollection(() -> new TreeSet<>(
-                            Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
+            collect = eqpSpareVOList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(EqpSpareVO::getId))), ArrayList::new));
         }
         return collect;
     }
@@ -71,8 +69,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     @Override
     public List<EqpSpareVO> listSpares(String name, String code) {
         //定义筛选条件
-        LambdaQueryWrapper<SysEqpSpare> like = new LambdaQueryWrapper<SysEqpSpare>().eq(Objects.nonNull(code) && !code.equals(""), SysEqpSpare::getCode, code)
-                .like(Objects.nonNull(name), SysEqpSpare::getName, name);
+        LambdaQueryWrapper<SysEqpSpare> like = new LambdaQueryWrapper<SysEqpSpare>().eq(Objects.nonNull(code) && !code.equals(""), SysEqpSpare::getCode, code).like(Objects.nonNull(name), SysEqpSpare::getName, name);
         List<SysEqpSpare> list = list(like);
         List<EqpSpareVO> eqpSpareVOS = BeanUtil.copyToList(list, EqpSpareVO.class);
         Set<Long> dictIds = Sets.newHashSet();
@@ -86,7 +83,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             dictIds.add(vo.getWideUnitId());
         });
         Map<Long, String> map = sysDictService.listByIdCh(dictIds);
-        eqpSpareVOS.forEach(vo->{
+        eqpSpareVOS.forEach(vo -> {
             vo.setHighUnitName(map.get(vo.getHighUnitId()));
             vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
             vo.setThickUnitName(map.get(vo.getThickUnitId()));
@@ -176,9 +173,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     @Override
     public Page<EqpSpareVO> listPage(SparePageDTO sparePageDTO) {
         //1.自定义查询条件
-        LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>()
-                .like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName())
-                .like(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode());
+        LambdaQueryWrapper<SysEqpSpare> eq = new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(sparePageDTO.getName()), SysEqpSpare::getName, sparePageDTO.getName()).like(StrUtil.isNotBlank(sparePageDTO.getCode()), SysEqpSpare::getCode, sparePageDTO.getCode());
         //2.定义分页对象
         Page page = new Page<>(sparePageDTO.getCurrent(), sparePageDTO.getSize());
         //3.查询分页数据
@@ -217,8 +212,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     public List<EqpSpareVO> listCondition(SpareDTO spareDTO) {
         List<EqpSpareVO> list = Lists.newArrayList();
         if (Objects.nonNull(spareDTO)) {
-            List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(spareDTO.getName()), SysEqpSpare::getName, spareDTO.getName())
-                    .like(StrUtil.isNotBlank(spareDTO.getCode()), SysEqpSpare::getCode, spareDTO.getCode()));
+            List<SysEqpSpare> sysEqpSpares = list(new LambdaQueryWrapper<SysEqpSpare>().like(StrUtil.isNotBlank(spareDTO.getName()), SysEqpSpare::getName, spareDTO.getName()).like(StrUtil.isNotBlank(spareDTO.getCode()), SysEqpSpare::getCode, spareDTO.getCode()));
             list = BeanUtil.copyToList(sysEqpSpares, EqpSpareVO.class);
         }
         return list;
@@ -235,6 +229,28 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             }
         }
         return lists;
+    }
+
+    @Override
+    public EqpSpareVO get(Long id) {
+        SysEqpSpare spare = getById(id);
+        EqpSpareVO eqpSpareVO = new EqpSpareVO();
+        BeanUtil.copyProperties(spare, eqpSpareVO);
+        return eqpSpareVO;
+    }
+
+    @Override
+    public Boolean saveSpare(EqpSpareDto eqpSpareDto) {
+        SysEqpSpare sysEqpSpare = new SysEqpSpare();
+        BeanUtil.copyProperties(eqpSpareDto,sysEqpSpare);
+        return save(sysEqpSpare);
+    }
+
+    @Override
+    public Boolean updateSpare(EqpSpareDto eqpSpareDto) {
+        SysEqpSpare sysEqpSpare = new SysEqpSpare();
+        BeanUtil.copyProperties(eqpSpareDto,sysEqpSpare);
+        return updateById(sysEqpSpare);
     }
 }
 

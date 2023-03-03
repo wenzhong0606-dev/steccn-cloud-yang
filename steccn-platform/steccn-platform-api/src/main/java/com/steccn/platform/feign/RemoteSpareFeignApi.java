@@ -3,8 +3,11 @@ package com.steccn.platform.feign;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.dto.SysSpareUnitConversionDTO;
 import com.steccn.platform.vo.EqpSpareVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -68,6 +71,7 @@ public interface RemoteSpareFeignApi {
 
     /**
      * 备件分页列表
+     *
      * @param sparePageDTO
      * @return
      */
@@ -76,9 +80,87 @@ public interface RemoteSpareFeignApi {
     R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO);
 
 
+    /**
+     * 根据分类获取物料信息
+     *
+     * @param types
+     * @return
+     */
     @PostMapping("/platform/eqpSpare/getByTypeIdSpareList")
     @ApiOperation("根据分类获取物料信息")
     R<List<EqpSpareVO>> getByTypeIdSpareList(@RequestBody Set<String> types);
 
 
+    /**
+     * 根据id查询备件
+     *
+     * @param id
+     * @return
+     */
+
+
+    R<EqpSpareVO> getById(@RequestParam("id") Long id);
+
+
+    /**
+     * 保存备件信息
+     *
+     * @param eqpSpareDto
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/save")
+    @ApiOperation("保存备件信息")
+    R<Boolean> save(@RequestBody EqpSpareDto eqpSpareDto);
+
+
+    /**
+     * 修改备件信息
+     *
+     * @param eqpSpareDto
+     * @return
+     */
+    @PostMapping("/feign/platform/eqpSpare/update")
+    @ApiOperation("修改备件信息")
+    R<Boolean> update(@RequestBody EqpSpareDto eqpSpareDto);
+
+
+    /**
+     * 删除备件信息
+     *
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/feign/platform/eqpSpare/delete")
+    @ApiOperation("删除备件信息")
+    R<Boolean> delete(@RequestParam("id") Long id);
+
+
+    /**
+     * 获取单位转换数据
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/feign/platform/eqpSpare/getConversion")
+    @ApiOperation(("根据id查询备件"))
+    R<SysSpareUnitConversionVO> getConversion(@RequestParam("id") Long id);
+
+    /**
+     * 删除单位转换数据
+     *
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/feign/platform/eqpSpare/deleteConversion")
+    @ApiOperation("删除单位转换数据")
+    R<Boolean> deleteConversion(@RequestParam("id") Long id);
+
+
+    @PostMapping("/feign/platform/eqpSpare/saveConversion")
+    @ApiOperation("保存单位转换数据")
+    R<Boolean> saveConversion(@RequestBody SysSpareUnitConversionDTO unitConversionDTO);
+
+    @PostMapping("/feign/platform/eqpSpare/updateConversion")
+    @ApiOperation("修改单位转换数据")
+    R<Boolean> updateConversion(@RequestBody SysSpareUnitConversionDTO unitConversionDTO);
 }
