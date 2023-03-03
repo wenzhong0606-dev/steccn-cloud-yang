@@ -61,6 +61,11 @@ public class SysCustomerMaterialInfo implements Serializable {
     private Integer recycleFlag;
 
     /**
+     * 主表id
+     */
+    private Long cmId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

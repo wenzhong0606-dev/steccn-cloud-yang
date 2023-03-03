@@ -5,7 +5,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.domain.SysCustomerMaterial;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysCustomerMaterialDTO;
-import com.steccn.platform.vo.SysCustomerMaterialPageVO;
+import com.steccn.platform.vo.SysCustomerMaterialVO;
 
 /**
 * @author yequan
@@ -19,5 +19,12 @@ public interface SysCustomerMaterialService extends IService<SysCustomerMaterial
      * @param dto dto
      * @return 分页数据
      */
-    Page<SysCustomerMaterialPageVO> pageList(SysCustomerMaterialDTO dto);
+    Page<SysCustomerMaterialVO> pageList(SysCustomerMaterialDTO dto);
+
+    /**
+     * 根据客户物料主键查询客户物料明细数据
+     * @param id 客户物料主键
+     * @return
+     */
+    SysCustomerMaterialVO info(Long id);
 }

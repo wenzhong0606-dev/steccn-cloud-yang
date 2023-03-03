@@ -2,6 +2,7 @@ package com.steccn.platform.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -12,7 +13,8 @@ import java.math.BigDecimal;
  * @date 2023/3/3
  */
 @ApiModel("客户物料分页subvo")
-public class SysCustomerMaterialPageSubVO implements Serializable {
+@Data
+public class SysCustomerMaterialSubVO implements Serializable {
 
     @ApiModelProperty("主键id")
     private Long id;

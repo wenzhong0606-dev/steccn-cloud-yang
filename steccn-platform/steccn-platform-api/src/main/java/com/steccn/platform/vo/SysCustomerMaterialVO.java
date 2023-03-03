@@ -16,7 +16,7 @@ import java.util.List;
  */
 @ApiModel("客户物料分页vo")
 @Data
-public class SysCustomerMaterialPageVO implements Serializable {
+public class SysCustomerMaterialVO implements Serializable {
 
     @ApiModelProperty("主键")
     private Long id;
@@ -53,4 +53,7 @@ public class SysCustomerMaterialPageVO implements Serializable {
 
     @ApiModelProperty("创建人名称")
     private LocalDateTime createTime;
+
+    @ApiModelProperty("明细数据")
+    private List<SysCustomerMaterialSubVO> subVOList;
 }
