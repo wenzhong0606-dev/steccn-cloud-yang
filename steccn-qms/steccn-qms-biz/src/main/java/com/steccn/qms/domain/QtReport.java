@@ -103,19 +103,19 @@ public class QtReport implements Serializable {
      * 生产车间
      */
     @TableField(value = "workshop",typeHandler = JacksonTypeHandler.class)
-    private List<QtBaseIdNameDTO> workshop;
+    private QtBaseIdNameDTO.QtBaseIdNameContent workshop;
 
     /**
      * 产线产生
      */
     @TableField(value = "product_line",typeHandler = JacksonTypeHandler.class)
-    private List<QtBaseIdNameDTO> productLine;
+    private QtBaseIdNameDTO.QtBaseIdNameContent productLine;
 
     /**
      * 客户
      */
     @TableField(value = "customer",typeHandler = JacksonTypeHandler.class)
-    private List<QtBaseIdNameDTO> customer;
+    private QtBaseIdNameDTO.QtBaseIdNameContent customer;
 
     /**
      * 物料使用车间

@@ -908,17 +908,26 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //如果该卡片存在生产车间
             if (CollUtil.isNotEmpty(qtReport.getWorkshop())) {
                 qtCheckTaskList = qtCheckTaskList.stream()
-                        .filter(qtCheckTask ->qtCheckTask.getProductWorkshop() != null &&  qtReport.getWorkshop().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductWorkshop().getId()))
+                        .filter(qtCheckTask ->qtCheckTask.getProductWorkshop() != null &&  qtReport.getWorkshop()
+                                .stream()
+                                .map(QtBaseIdNameDTO::getId)
+                                .collect(Collectors.toSet())
+                                .contains(qtCheckTask.getProductWorkshop().getId()))
                         .collect(Collectors.toList());
+
                 //如果该卡片存在生产产线
                 if (CollUtil.isNotEmpty(qtReport.getProductLine())) {
                     qtCheckTaskList = qtCheckTaskList.stream()
-                            .filter(qtCheckTask ->qtCheckTask.getProductLine() != null &&  qtReport.getProductLine().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductLine().getId()))
+                            .filter(qtCheckTask ->qtCheckTask.getProductLine() != null &&  qtReport.getProductLine()
+                                    .stream()
+                                    .map(QtBaseIdNameDTO::getId)
+                                    .collect(Collectors.toSet())
+                                    .contains(qtCheckTask.getProductLine().getId()))
                             .collect(Collectors.toList());
                 }
             }
             //如果该卡片存在供应商
-            if (CollUtil.isNotEmpty(qtReport.getSupplier())) {
+            if (Objects.nonNull(qtReport.getSupplier())) {
                 qtCheckTaskList = qtCheckTaskList.stream()
                         .filter(qtCheckTask -> qtCheckTask.getSupplier() != null && qtReport.getSupplier().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getSupplier().getId()))
                         .collect(Collectors.toList());
