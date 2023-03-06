@@ -976,20 +976,22 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     private void setPartitionNode(EpMeterReadDetailsVO epMeterReadDetailsVO) {
-        List<EpPartition> list = epPartitionService.list();
-        Optional<EpPartition> optional = null;
-        if(CollUtil.isNotEmpty(list)){
-            optional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
-        }
-        if (optional.isPresent() && Objects.isNull(optional.get().getParentId())) {
-            epMeterReadDetailsVO.setPartitionNode(optional.get().getOfficeName());
-        } else {
-            StringBuilder sb = new StringBuilder();
-            Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
-            if (partitionOptional.isPresent()) {
-                sb.insert(0, partitionOptional.get().getOfficeName());
-                partitionRecursion(list, partitionOptional.get(), sb);
-                epMeterReadDetailsVO.setPartitionNode(sb.toString());
+        if (Objects.nonNull(epMeterReadDetailsVO)) {
+            List<EpPartition> list = epPartitionService.list();
+            Optional<EpPartition> optional = null;
+            if (CollUtil.isNotEmpty(list) && Objects.nonNull(epMeterReadDetailsVO)) {
+                optional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+            }
+            if (optional.isPresent() && Objects.isNull(optional.get().getParentId())) {
+                epMeterReadDetailsVO.setPartitionNode(optional.get().getOfficeName());
+            } else {
+                StringBuilder sb = new StringBuilder();
+                Optional<EpPartition> partitionOptional = list.stream().filter(epPartition -> epPartition.getId().equals(epMeterReadDetailsVO.getPartitionId())).findAny();
+                if (partitionOptional.isPresent()) {
+                    sb.insert(0, partitionOptional.get().getOfficeName());
+                    partitionRecursion(list, partitionOptional.get(), sb);
+                    epMeterReadDetailsVO.setPartitionNode(sb.toString());
+                }
             }
         }
     }

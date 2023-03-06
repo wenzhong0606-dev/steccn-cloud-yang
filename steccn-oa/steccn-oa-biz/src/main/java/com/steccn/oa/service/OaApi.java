@@ -189,4 +189,13 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String getHrmSearchResult(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaHrmDTO dto);
+
+    /**
+     * 排版记录列表
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/customization/Shiftschedule/detail",headers = {"content-type=application/json"})
+    @Headers(value = {"content-type=application/json"})
+    String getRosterRecord(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaRosterRecordDTO dto);
 }

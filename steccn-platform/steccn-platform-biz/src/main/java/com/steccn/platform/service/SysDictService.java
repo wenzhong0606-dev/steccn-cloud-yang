@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.domain.SysDict;
@@ -101,4 +102,26 @@ public interface SysDictService extends IService<SysDict> {
      * @return
      */
     Map<String, Long> listByNameCh(Set<String> nameList);
+
+    /**
+     * 保存字典数据
+     * @param sysDictDTO
+     * @return
+     */
+    Boolean saveData(SysDictDTO sysDictDTO);
+
+
+    /**
+     * 获取字典数据
+     * @param id
+     * @return
+     */
+    SysDictVO get(Long id);
+
+    /**
+     * 修改字典
+     * @param sysDictDTO
+     * @return
+     */
+    Boolean updateDict(SysDictDTO sysDictDTO);
 }

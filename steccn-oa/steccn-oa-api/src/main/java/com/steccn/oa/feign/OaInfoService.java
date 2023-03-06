@@ -4,11 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
-import com.steccn.oa.dto.OaHrmDTO;
-import com.steccn.oa.dto.OaLoginParam;
-import com.steccn.oa.dto.OaUserDTO;
-import com.steccn.oa.dto.OaUserInfo;
+import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -109,4 +107,22 @@ public interface OaInfoService {
     @PostMapping("/oa/user/jobTitle")
     @ApiOperation("根据用户名查询id")
     R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto);
+
+    /**
+     * 查询排班信息
+     * @param dto
+     * @return
+     */
+    @ApiOperation("查询排班信息")
+    @PostMapping("/oa/roster/record")
+    R<List<OaRosterRecordVO>> getRosterRecord(@RequestBody OaRosterRecordDTO dto);
+
+    /**
+     * 根据工号查询信息
+     * @param workCodes
+     * @return
+     */
+    @ApiOperation("查询排班信息")
+    @PostMapping("/oa/user/workCode")
+    R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes);
 }

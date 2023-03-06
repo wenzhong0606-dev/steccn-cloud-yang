@@ -18,7 +18,7 @@ public class SysDictType implements Serializable {
      * 主键id
      */
     @TableId
-    private Integer id;
+    private Long id;
 
     /**
      * 类型code

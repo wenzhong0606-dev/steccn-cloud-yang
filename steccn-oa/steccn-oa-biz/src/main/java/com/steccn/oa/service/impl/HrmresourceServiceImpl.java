@@ -95,6 +95,24 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         }
         return ids;
     }
+
+    @Override
+    public List<OaUserIdAndName> getIdByWorkCode(List<String> workCodes) {
+        List<OaUserIdAndName> results = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(workCodes)){
+            List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().in(Hrmresource::getWorkcode,workCodes));
+            if(CollUtil.isNotEmpty(list)){
+                list.forEach(tmp -> {
+                    OaUserIdAndName result = new OaUserIdAndName();
+                    result.setName(tmp.getLastname());
+                    result.setId(tmp.getId());
+                    result.setWorkcode(tmp.getWorkcode());
+                    results.add(result);
+                });
+            }
+        }
+        return results;
+    }
 }
 
 

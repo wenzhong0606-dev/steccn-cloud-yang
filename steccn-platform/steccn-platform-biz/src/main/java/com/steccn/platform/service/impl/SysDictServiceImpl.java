@@ -2,6 +2,7 @@ package com.steccn.platform.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -184,6 +186,30 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
             }
         }
         return resMap;
+    }
+
+    @Override
+    public Boolean saveData(SysDictDTO sysDictDTO) {
+        SysDict sysDict = new SysDict();
+        BeanUtils.copyProperties(sysDictDTO, sysDict);
+        return save(sysDict);
+    }
+
+    @Override
+    public SysDictVO get(Long id) {
+        SysDict dict = getById(id);
+        SysDictVO dictVO = new SysDictVO();
+        if (Objects.nonNull(dict)) {
+            BeanUtils.copyProperties(dict, dictVO);
+        }
+        return dictVO;
+    }
+
+    @Override
+    public Boolean updateDict(SysDictDTO sysDictDTO) {
+        SysDict sysDict = new SysDict();
+        BeanUtils.copyProperties(sysDictDTO,sysDict);
+        return updateById(sysDict);
     }
 
 
