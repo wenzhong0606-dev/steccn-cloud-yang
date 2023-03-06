@@ -30,7 +30,7 @@ public class JsSysEqpSpareHandler implements EntryHandler<JsSysEqpSpare> {
     public void insert(JsSysEqpSpare spare) {
         //查询数据是否存在,不存在则插入，存在则跳过
         EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getById(Long.valueOf(spare.getId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (Objects.isNull(eqpSpareVO)){
+        if (Objects.isNull(eqpSpareVO.getId())){
             EqpSpareDto eqpSpareDto = new EqpSpareDto();
             BeanUtil.copyProperties(spare,eqpSpareDto);
             Boolean aBoolean = FeignOptional.of(() -> remoteSpareFeignApi.save(eqpSpareDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
