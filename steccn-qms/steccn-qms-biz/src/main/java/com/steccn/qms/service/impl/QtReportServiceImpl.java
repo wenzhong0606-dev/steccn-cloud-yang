@@ -927,7 +927,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             }
             //如果该卡片存在供应商
-            if (Objects.nonNull(qtReport.getSupplier())) {
+            if (CollUtil.isNotEmpty(qtReport.getSupplier())) {
                 qtCheckTaskList = qtCheckTaskList.stream()
                         .filter(qtCheckTask -> qtCheckTask.getSupplier() != null && qtReport.getSupplier().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getSupplier().getId()))
                         .collect(Collectors.toList());
@@ -958,9 +958,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     //计算该检验项的平均值
                     BigDecimal mean = BigDecimalUtil.divide(sum, BigDecimal.valueOf(results.size()));
                     //计算上限值与下限值，并和平均值比较上限和下限（上限 = 标准值 + 上偏差，下限 = 标准值 - 下偏差）
-                    BigDecimal upLimit = BigDecimalUtil.add(qtReport.getStandardValue(), qtReport.getUpLimit());
-                    BigDecimal downLimit = BigDecimalUtil.subtract(qtReport.getStandardValue(), qtReport.getDownLimit());
-                    if (upLimit.compareTo(mean) > 0 || downLimit.compareTo(mean) < 0) {
+//                    BigDecimal upLimit = BigDecimalUtil.add(qtReport.getStandardValue(), qtReport.getUpLimit());
+//                    BigDecimal downLimit = BigDecimalUtil.subtract(qtReport.getStandardValue(), qtReport.getDownLimit());
+                    if (qtReport.getUpLimit().compareTo(mean) > 0 || qtReport.getDownLimit().compareTo(mean) < 0) {
                         resultMap.put(qtReport.getId(), qtReport);
                         reportIds.add(qtReport.getId());
                     }
