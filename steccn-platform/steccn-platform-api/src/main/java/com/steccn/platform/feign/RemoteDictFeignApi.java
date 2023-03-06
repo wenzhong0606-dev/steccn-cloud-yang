@@ -194,5 +194,5 @@ public interface RemoteDictFeignApi {
      */
     @ApiOperation("删除数据")
     @DeleteMapping("/feign/platform/sys/dict/type/delete")
-    R<Boolean> deleteType(@RequestParam("id") Integer id);
+    R<Boolean> deleteType(@RequestParam("id") Long id);
 }

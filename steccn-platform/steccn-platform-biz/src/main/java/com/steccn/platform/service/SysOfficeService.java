@@ -1,5 +1,6 @@
 package com.steccn.platform.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -185,4 +186,27 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Map<String, SysOfficeVO> listByName(Set<String> names);
+
+    /**
+     * 保存机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    Boolean saveOffice(SysOfficeDTO sysOfficeDTO);
+
+
+    /**
+     * 删除机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    Boolean delete(SysOfficeDTO sysOfficeDTO);
+
+
+    /**
+     * 修改机构信息
+     * @param sysOfficeDTO
+     * @return
+     */
+    Boolean updateOffice(SysOfficeDTO sysOfficeDTO);
 }

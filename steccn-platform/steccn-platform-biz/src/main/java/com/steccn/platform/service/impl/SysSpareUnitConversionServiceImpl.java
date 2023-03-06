@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.platform.domain.SysSpareUnitConversion;
+import com.steccn.platform.dto.SysSpareUnitConversionDTO;
 import com.steccn.platform.service.SysSpareUnitConversionService;
 import com.steccn.platform.mapper.SysSpareUnitConversionMapper;
 import com.steccn.platform.vo.SysSpareUnitConversionVO;
@@ -42,6 +43,28 @@ public class SysSpareUnitConversionServiceImpl extends ServiceImpl<SysSpareUnitC
             }
         }
         return resMap;
+    }
+
+    @Override
+    public SysSpareUnitConversionVO getConversion(Long id) {
+        SysSpareUnitConversion conversion = getById(id);
+        SysSpareUnitConversionVO sysSpareUnitConversionVO = new SysSpareUnitConversionVO();
+        BeanUtil.copyProperties(conversion,sysSpareUnitConversionVO);
+        return sysSpareUnitConversionVO;
+    }
+
+    @Override
+    public Boolean saveConversion(SysSpareUnitConversionDTO unitConversionDTO) {
+        SysSpareUnitConversion conversion = new SysSpareUnitConversion();
+        BeanUtil.copyProperties(unitConversionDTO,conversion);
+        return save(conversion);
+    }
+
+    @Override
+    public Boolean updateConversion(SysSpareUnitConversionDTO unitConversionDTO) {
+        SysSpareUnitConversion conversion = new SysSpareUnitConversion();
+        BeanUtil.copyProperties(unitConversionDTO,conversion);
+        return updateById(conversion);
     }
 }
 

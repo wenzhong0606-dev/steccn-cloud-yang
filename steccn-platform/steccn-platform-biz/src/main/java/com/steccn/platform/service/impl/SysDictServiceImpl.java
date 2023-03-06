@@ -199,7 +199,9 @@ public class SysDictServiceImpl extends ServiceImpl<SysDictMapper, SysDict>
     public SysDictVO get(Long id) {
         SysDict dict = getById(id);
         SysDictVO dictVO = new SysDictVO();
-        BeanUtils.copyProperties(dict,dictVO);
+        if (Objects.nonNull(dict)) {
+            BeanUtils.copyProperties(dict, dictVO);
+        }
         return dictVO;
     }
 

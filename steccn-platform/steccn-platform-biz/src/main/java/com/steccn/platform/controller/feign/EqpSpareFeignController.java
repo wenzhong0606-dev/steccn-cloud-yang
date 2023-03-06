@@ -4,11 +4,16 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.platform.domain.SysSpareUnitConversion;
+import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.dto.SysSpareUnitConversionDTO;
 import com.steccn.platform.service.SysEqpSpareService;
+import com.steccn.platform.service.SysSpareUnitConversionService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysSpareUnitConversionVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +37,8 @@ import java.util.Set;
 public class EqpSpareFeignController {
 
     private final SysEqpSpareService eqpSpareService;
+
+    private final SysSpareUnitConversionService conversionService;
 
     @ApiOperation("获取备件列表")
     @GetMapping("/searchSpares")
@@ -85,5 +92,56 @@ public class EqpSpareFeignController {
     @ApiOperation("获取备件分页列表")
     public R<Page<EqpSpareVO>> listPage(@RequestBody SparePageDTO sparePageDTO) {
         return R.success(eqpSpareService.listPage(sparePageDTO));
+    }
+
+
+    @GetMapping("/getById")
+    @ApiOperation("根据备件id获取")
+    public R<EqpSpareVO> getById(@RequestParam("id") Long id) {
+        return R.success(eqpSpareService.get(id));
+    }
+
+    @PostMapping("/save")
+    @ApiOperation("保存备件信息")
+    public R<Boolean> save(@RequestBody EqpSpareDto eqpSpareDto) {
+        return R.success(eqpSpareService.saveSpare(eqpSpareDto));
+    }
+
+    @PostMapping("/update")
+    @ApiOperation("修改备件信息")
+    public R<Boolean> update(@RequestBody EqpSpareDto eqpSpareDto) {
+        return R.success(eqpSpareService.updateSpare(eqpSpareDto));
+    }
+
+    @DeleteMapping("/delete")
+    @ApiOperation("修改备件信息")
+    public R<Boolean> delete(@RequestParam("id") Long id) {
+        return R.success(eqpSpareService.removeById(id));
+    }
+
+
+    @GetMapping("/getConversion")
+    @ApiOperation("获取备件单位转换数据")
+    public R<SysSpareUnitConversionVO> getConversion(@RequestParam("id") Long id) {
+        return R.success(conversionService.getConversion(id));
+    }
+
+
+    @PostMapping("/saveConversion")
+    @ApiOperation("保存单位转换数据")
+    public R<Boolean> saveConversion(@RequestBody SysSpareUnitConversionDTO unitConversionDTO) {
+        return R.success(conversionService.saveConversion(unitConversionDTO));
+    }
+
+    @PostMapping("/updateConversion")
+    @ApiOperation("修改单位转换数据")
+    public R<Boolean> updateConversion(@RequestBody SysSpareUnitConversionDTO unitConversionDTO) {
+        return R.success(conversionService.updateConversion(unitConversionDTO));
+    }
+
+    @DeleteMapping("/deleteConversion")
+    @ApiOperation("删除单位转换数据")
+    public R<Boolean> deleteConversion(@RequestParam("id") Long id) {
+        return R.success(conversionService.removeById(id));
     }
 }
