@@ -445,7 +445,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         sendRefreshMsg();
         //5、web端、移动端发送消息给岗位为“化验室主任”的人员、岗位为“配料工”的当前班次人员（调用OA接口获取）
         sendMessage(true,recipeModel.getVersion());
-        throw new BusinessException("test");
+        return true;
     }
 
     /**
@@ -496,6 +496,15 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
         rosterDto.setJobtitle(PmManagerConstant.BATCHER_ID);
         List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //过滤当前班次
+        String classStr = "";
+        if(qtTaskClassCalculate.getClassType().equals(0)){
+            classStr = "早班";
+        } else {
+            classStr = "晚班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v->v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(oaRosterRecordVOS)){
             List<String> workCodes = Lists.newArrayList();
             oaRosterRecordVOS.forEach(tmp -> {
