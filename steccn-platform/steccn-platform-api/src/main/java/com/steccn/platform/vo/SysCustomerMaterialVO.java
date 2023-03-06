@@ -61,6 +61,12 @@ public class SysCustomerMaterialVO implements Serializable {
     @ApiModelProperty("创建人名称")
     private LocalDateTime createTime;
 
+    @ApiModelProperty("最后修改人名称")
+    private String updateName;
+
+    @ApiModelProperty("最后修改时间")
+    private LocalDateTime updateTime;
+
     @ApiModelProperty("明细数据")
     private List<SysCustomerMaterialSubDTO> subVOList;
 }
