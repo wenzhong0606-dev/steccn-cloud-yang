@@ -145,6 +145,14 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(Long id) {
+        removeById(id);
+        sysCustomerMaterialInfoService.remove(new LambdaQueryWrapper<SysCustomerMaterialInfo>().eq(SysCustomerMaterialInfo::getCmId, id));
+        return Boolean.TRUE;
+    }
 }
 
 

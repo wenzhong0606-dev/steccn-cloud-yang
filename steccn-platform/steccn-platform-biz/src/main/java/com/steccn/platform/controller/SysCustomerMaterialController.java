@@ -42,4 +42,10 @@ public class SysCustomerMaterialController {
     public R<SysCustomerMaterialVO> info(@PathVariable("id") Long id) {
         return R.success(sysCustomerMaterialService.info(id));
     }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation("删除客户物料")
+    public R<Boolean> delete(@PathVariable("id") Long id) {
+        return R.success(sysCustomerMaterialService.delete(id));
+    }
 }
