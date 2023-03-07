@@ -39,7 +39,11 @@ public class SysUserClientRefServiceImpl extends ServiceImpl<SysUserClientRefMap
     public String lastClientId(Long userId) {
         SysUserClientRef one = getOne(new LambdaQueryWrapper<SysUserClientRef>()
                 .eq(SysUserClientRef::getUserId, userId), false);
-        return one.getClientNo();
+        if (Objects.nonNull(one)) {
+            return one.getClientNo();
+        } else {
+            return null;
+        }
     }
 }
 

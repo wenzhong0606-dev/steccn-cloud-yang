@@ -28,6 +28,11 @@ public class PmsProduceOrder implements Serializable {
     private String code;
 
     /**
+     * 客户id
+     */
+    private Integer customerId;
+
+    /**
      * 订单类型id（字典：生产订单类型）
      */
     private Long typeId;

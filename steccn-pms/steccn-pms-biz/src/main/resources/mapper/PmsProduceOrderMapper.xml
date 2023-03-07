@@ -46,6 +46,7 @@
         select id,
         type_id,
         code,
+        customer_id,
         material_id,
         material_name,
         material_code,

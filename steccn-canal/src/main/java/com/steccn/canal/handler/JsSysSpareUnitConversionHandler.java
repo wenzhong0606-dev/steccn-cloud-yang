@@ -35,7 +35,7 @@ public class JsSysSpareUnitConversionHandler implements EntryHandler<JsSysSpareU
         //查询数据是否已经存在
         SysSpareUnitConversionVO sysSpareUnitConversionVO = FeignOptional.of(() -> remoteSpareFeignApi.getConversion(conversion.getId()),
                 FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (Objects.isNull(sysSpareUnitConversionVO)){
+        if (Objects.isNull(sysSpareUnitConversionVO.getId())){
             SysSpareUnitConversionDTO sysSpareUnitConversionDTO = new SysSpareUnitConversionDTO();
             BeanUtil.copyProperties(conversion,sysSpareUnitConversionDTO);
             Boolean aBoolean = FeignOptional.of(() -> remoteSpareFeignApi.saveConversion(sysSpareUnitConversionDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

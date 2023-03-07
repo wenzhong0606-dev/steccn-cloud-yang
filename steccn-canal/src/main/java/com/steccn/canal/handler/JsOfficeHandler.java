@@ -40,7 +40,7 @@ public class JsOfficeHandler implements EntryHandler<JsOffice> {
         //根据机构编码查询机构数据是否存在
         Set<String> codes = Sets.newHashSet(jsOffice.getOfficeCode());
         Map<String, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByCodeSet(codes), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (CollUtil.isNotEmpty(officeMap)) {
+        if (CollUtil.isEmpty(officeMap)) {
             SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
             BeanUtil.copyProperties(jsOffice, sysOfficeDTO);
             //保存机构信息
@@ -61,7 +61,7 @@ public class JsOfficeHandler implements EntryHandler<JsOffice> {
         BeanUtil.copyProperties(after, sysOfficeDTO);
         //保存机构信息
         Boolean aBoolean = FeignOptional.of(() -> remoteOfficeFeign.update(sysOfficeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        log.info("新增 {}" + aBoolean, after);
+        log.info("更新 {}" + aBoolean, after);
     }
 
 
@@ -75,6 +75,6 @@ public class JsOfficeHandler implements EntryHandler<JsOffice> {
         SysOfficeDTO sysOfficeDTO = new SysOfficeDTO();
         BeanUtil.copyProperties(jsOffice, sysOfficeDTO);
         Boolean aBoolean = FeignOptional.of(() -> remoteOfficeFeign.delete(sysOfficeDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        log.info("新增 {}" + aBoolean, sysOfficeDTO);
+        log.info("删除 {}" + aBoolean, sysOfficeDTO);
     }
 }

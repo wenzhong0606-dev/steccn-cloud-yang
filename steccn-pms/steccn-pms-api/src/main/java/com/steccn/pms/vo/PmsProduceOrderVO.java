@@ -30,6 +30,12 @@ public class PmsProduceOrderVO {
     @ApiModelProperty("编码")
     private String code;
 
+    @ApiModelProperty("客户主键")
+    private Integer customerId;
+
+    @ApiModelProperty("客户名称")
+    private String customerName;
+
     @ApiModelProperty("物料id")
     private Long materialId;
 

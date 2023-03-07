@@ -1,20 +1,16 @@
 package com.steccn.canal.handler;
 
 import com.steccn.authserver.util.FeignOptional;
-import com.steccn.canal.domain.JsSysDictData;
 import com.steccn.canal.domain.JsSysDictType;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysDictTypeDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.vo.SysDictVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.javatool.canal.client.annotation.CanalTable;
 import top.javatool.canal.client.handler.EntryHandler;
 
-import java.lang.ref.PhantomReference;
 import java.util.Objects;
 
 @CanalTable(value = "js_sys_dict_type")

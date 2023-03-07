@@ -38,4 +38,20 @@ public interface SysCustomerMaterialService extends IService<SysCustomerMaterial
      * @return 是否
      */
     Boolean commit(SysCustomerMaterialSaveDTO dto);
+
+    /**
+     * 删除客户物料
+     *
+     * @param id 主键id
+     * @return
+     */
+    Boolean delete(Long id);
+
+    /**
+     * 客户物料主体信息
+     * @param customerId 客户id
+     * @param materialId 物料id
+     * @return 客户物料主体信息
+     */
+    SysCustomerMaterialVO customerMaterial(Integer customerId, Long materialId);
 }
