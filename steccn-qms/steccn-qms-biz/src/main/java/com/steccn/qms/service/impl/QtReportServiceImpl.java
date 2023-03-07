@@ -908,12 +908,21 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //如果该卡片存在生产车间
             if (CollUtil.isNotEmpty(qtReport.getWorkshop())) {
                 qtCheckTaskList = qtCheckTaskList.stream()
-                        .filter(qtCheckTask ->qtCheckTask.getProductWorkshop() != null &&  qtReport.getWorkshop().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductWorkshop().getId()))
+                        .filter(qtCheckTask ->qtCheckTask.getProductWorkshop() != null &&  qtReport.getWorkshop()
+                                .stream()
+                                .map(QtBaseIdNameDTO::getId)
+                                .collect(Collectors.toSet())
+                                .contains(qtCheckTask.getProductWorkshop().getId()))
                         .collect(Collectors.toList());
+
                 //如果该卡片存在生产产线
                 if (CollUtil.isNotEmpty(qtReport.getProductLine())) {
                     qtCheckTaskList = qtCheckTaskList.stream()
-                            .filter(qtCheckTask ->qtCheckTask.getProductLine() != null &&  qtReport.getProductLine().stream().map(QtBaseIdNameDTO::getId).collect(Collectors.toSet()).contains(qtCheckTask.getProductLine().getId()))
+                            .filter(qtCheckTask ->qtCheckTask.getProductLine() != null &&  qtReport.getProductLine()
+                                    .stream()
+                                    .map(QtBaseIdNameDTO::getId)
+                                    .collect(Collectors.toSet())
+                                    .contains(qtCheckTask.getProductLine().getId()))
                             .collect(Collectors.toList());
                 }
             }
@@ -949,9 +958,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     //计算该检验项的平均值
                     BigDecimal mean = BigDecimalUtil.divide(sum, BigDecimal.valueOf(results.size()));
                     //计算上限值与下限值，并和平均值比较上限和下限（上限 = 标准值 + 上偏差，下限 = 标准值 - 下偏差）
-                    BigDecimal upLimit = BigDecimalUtil.add(qtReport.getStandardValue(), qtReport.getUpLimit());
-                    BigDecimal downLimit = BigDecimalUtil.subtract(qtReport.getStandardValue(), qtReport.getDownLimit());
-                    if (upLimit.compareTo(mean) > 0 || downLimit.compareTo(mean) < 0) {
+//                    BigDecimal upLimit = BigDecimalUtil.add(qtReport.getStandardValue(), qtReport.getUpLimit());
+//                    BigDecimal downLimit = BigDecimalUtil.subtract(qtReport.getStandardValue(), qtReport.getDownLimit());
+                    if (qtReport.getUpLimit().compareTo(mean) > 0 || qtReport.getDownLimit().compareTo(mean) < 0) {
                         resultMap.put(qtReport.getId(), qtReport);
                         reportIds.add(qtReport.getId());
                     }

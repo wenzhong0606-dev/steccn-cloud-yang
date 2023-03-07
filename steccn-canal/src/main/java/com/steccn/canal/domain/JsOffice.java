@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.persistence.Column;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 public class JsOffice implements Serializable {
@@ -127,7 +128,7 @@ public class JsOffice implements Serializable {
      * 创建时间
      */
     @Column(name = "create_date")
-    private LocalDateTime createDate;
+    private Date createDate;
 
     /**
      * 更新者
@@ -139,7 +140,7 @@ public class JsOffice implements Serializable {
      * 更新时间
      */
     @Column(name = "update_date")
-    private LocalDateTime updateDate;
+    private Date updateDate;
 
     /**
      * 备注信息

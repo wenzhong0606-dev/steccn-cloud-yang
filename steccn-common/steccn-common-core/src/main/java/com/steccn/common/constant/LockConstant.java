@@ -84,4 +84,12 @@ public interface LockConstant {
     String SPC_WARN_MONTH = "SPC_WARN_MONTH";
     String SPC_WARN_SEASON = "SPC_WARN_SEASON";
     String SPC_WARN_YEAR = "SPC_WARN_YEAR";
+
+    /**
+     * 客户物料提交操作
+     */
+    String CUSTOMER_MATERIAL = "CUSTOMER_MATERIAL";
+
+
 }
+
