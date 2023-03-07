@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.pms.domain.PmsReportWorkHour;
@@ -10,6 +11,9 @@ import com.steccn.pms.mapper.PmsReportWorkHourMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -28,6 +32,7 @@ public class PmsReportWorkHourServiceImpl extends ServiceImpl<PmsReportWorkHourM
             for (ProcessReportWorkHourDTO hourDTO : hourDTOList) {
                 PmsReportWorkHour hourModel = new PmsReportWorkHour();
                 BeanUtils.copyProperties(hourDTO, hourModel);
+                hourModel.setManHour(BigDecimal.valueOf(LocalDateTimeUtil.between(hourDTO.getStartTime(), hourDTO.getEndTime(), ChronoUnit.MINUTES)));
                 hourModel.setReportWorkId(pmsReportWorkId);
                 hourModelList.add(hourModel);
             }
@@ -35,6 +40,7 @@ public class PmsReportWorkHourServiceImpl extends ServiceImpl<PmsReportWorkHourM
         }
     }
 }
+
 
 
 
