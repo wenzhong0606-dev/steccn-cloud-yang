@@ -5,18 +5,22 @@ import lombok.Data;
 import javax.persistence.Column;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 
 
 @Data
 public class JsSysEqpSpare implements Serializable {
 
-    @Column(name = "id")
+    @Column(name = "ID")
     private String id;
 
-    @Column(name = "code")
+    @Column(name = "NAME")
+    private String name;
+
+    @Column(name = "CODE")
     private String code;
 
-    @Column(name = "specifications")
+        @Column(name = "SPECIFICATIONS")
     private String specifications;
 
     @Column(name = "length_unit_id")
@@ -58,7 +62,7 @@ public class JsSysEqpSpare implements Serializable {
     @Column(name = "thick_unit_id")
     private Long thickUnitId;
 
-    @Column(name = "unit")
+    @Column(name = "UNIT")
     private String unit;
 
     @Column(name = "unit_id")
@@ -67,14 +71,44 @@ public class JsSysEqpSpare implements Serializable {
     @Column(name = "quantity")
     private BigDecimal quantity;
 
-    @Column(name = "state")
+    @Column(name = "STATE")
     private String state;
 
-    @Column(name = "batch_type")
+    @Column(name = "BATCH_TYPE")
     private String batchType;
 
-    @Column(name = "remarks")
+    @Column(name = "REMARKS")
     private String remarks;
+
+
+
+    /**
+     * 创建者
+     */
+    @Column(name = "CREATE_BY")
+    private String createBy;
+
+    /**
+     * 创建时间
+     */
+    @Column(name = "CREATE_DATE")
+    private Date createDate;
+
+    /**
+     * 更新者
+     */
+    @Column(name = "UPDATE_BY")
+    private String updateBy;
+
+    /**
+     * 更新时间
+     */
+    @Column(name = "UPDATE_DATE")
+    private Date updateDate;
+
+
+    @Column(name = "STATUS")
+    private String status;
 
 
 

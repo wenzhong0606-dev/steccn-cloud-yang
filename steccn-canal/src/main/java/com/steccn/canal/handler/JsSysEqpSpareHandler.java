@@ -1,6 +1,7 @@
 package com.steccn.canal.handler;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.canal.domain.JsSysEqpSpare;
 import com.steccn.common.constant.FeignConstant;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 import top.javatool.canal.client.annotation.CanalTable;
 import top.javatool.canal.client.handler.EntryHandler;
 
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Objects;
 
 @CanalTable(value = "mes_eqp_spare")
@@ -28,14 +31,18 @@ public class JsSysEqpSpareHandler implements EntryHandler<JsSysEqpSpare> {
      * @param spare
      */
     public void insert(JsSysEqpSpare spare) {
-        //查询数据是否存在,不存在则插入，存在则跳过
+//        查询数据是否存在,不存在则插入，存在则跳过
         EqpSpareVO eqpSpareVO = FeignOptional.of(() -> remoteSpareFeignApi.getById(Long.valueOf(spare.getId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         if (Objects.isNull(eqpSpareVO.getId())){
             EqpSpareDto eqpSpareDto = new EqpSpareDto();
             BeanUtil.copyProperties(spare,eqpSpareDto);
+            eqpSpareDto.setCreateDate(LocalDateTimeUtil.of(spare.getCreateDate()));
+            eqpSpareDto.setUpdateDate(LocalDateTimeUtil.of(spare.getUpdateDate()));
+            System.out.println(eqpSpareDto.getCreateDate());
             Boolean aBoolean = FeignOptional.of(() -> remoteSpareFeignApi.save(eqpSpareDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             log.info("新增 {}" + aBoolean, spare);
         }
+
     }
 
     /**
@@ -49,6 +56,7 @@ public class JsSysEqpSpareHandler implements EntryHandler<JsSysEqpSpare> {
         BeanUtil.copyProperties(after,eqpSpareDto);
         Boolean aBoolean = FeignOptional.of(() -> remoteSpareFeignApi.update(eqpSpareDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         log.info("更新 {} {}" + aBoolean, before, after);
+
     }
 
     /**
