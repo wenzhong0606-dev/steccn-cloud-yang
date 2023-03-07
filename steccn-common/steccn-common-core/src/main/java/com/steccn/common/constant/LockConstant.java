@@ -70,6 +70,10 @@ public interface LockConstant {
      */
     String TABLE_PMS_COMPLETE_STORAGE = "TABLE_PMS_COMPLETE_STORAGE";
 
+    /**
+     * 更新用量,更新含水率
+     */
+    String TABLE_PMS_RECIPE = "TABLE_PMS_RECIPE";
 
     /**
      * SPC告警锁
