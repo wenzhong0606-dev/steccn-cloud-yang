@@ -173,6 +173,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     dictIds.add(pmsProduceOrderVO.getTypeId());
                     dictIds.add(pmsProduceOrderVO.getUnitId());
                     officeIds.add(pmsProduceOrderVO.getProductionLineId());
+                    officeIds.add(pmsProduceOrderVO.getCustomerId());
                     orderSet.add(pmsProduceOrderVO.getId());
                 }
         );
@@ -218,6 +219,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
                     //4.4 处理完工数据
                     pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+                    //客户名称
+                    pmsProduceOrderVO.setCustomerName(officeMap.get(pmsProduceOrderVO.getCustomerId()));
                 }
         );
         return page;
