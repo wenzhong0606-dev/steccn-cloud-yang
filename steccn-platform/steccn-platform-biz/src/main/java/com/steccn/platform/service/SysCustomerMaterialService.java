@@ -46,4 +46,12 @@ public interface SysCustomerMaterialService extends IService<SysCustomerMaterial
      * @return
      */
     Boolean delete(Long id);
+
+    /**
+     * 客户物料主体信息
+     * @param customerId 客户id
+     * @param materialId 物料id
+     * @return 客户物料主体信息
+     */
+    SysCustomerMaterialVO customerMaterial(Integer customerId, Long materialId);
 }

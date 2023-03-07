@@ -43,6 +43,13 @@ public class SysCustomerMaterialController {
         return R.success(sysCustomerMaterialService.info(id));
     }
 
+    @GetMapping("/main")
+    @ApiOperation("客户物料")
+    public R<SysCustomerMaterialVO> customerMaterial(@RequestParam("customerId") Integer customerId,
+                                                     @RequestParam("materialId") Long materialId) {
+        return R.success(sysCustomerMaterialService.customerMaterial(customerId, materialId));
+    }
+
     @DeleteMapping("/{id}")
     @ApiOperation("删除客户物料")
     public R<Boolean> delete(@PathVariable("id") Long id) {
