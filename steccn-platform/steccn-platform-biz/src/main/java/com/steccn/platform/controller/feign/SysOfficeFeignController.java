@@ -71,12 +71,13 @@ public class SysOfficeFeignController {
 
     /**
      * 查询工位列表
+     *
      * @param typeList
      * @return
      */
     @ApiOperation("下拉选项")
     @GetMapping("/shelf/warehouse")
-    R<List<SysOfficeVO>> warehouseAndShelfNew(@RequestBody List<String> typeList){
+    R<List<SysOfficeVO>> warehouseAndShelfNew(@RequestBody List<String> typeList) {
         return R.success(sysOfficeService.warehouseAndShelf(typeList));
     }
 
@@ -103,6 +104,7 @@ public class SysOfficeFeignController {
 
     /**
      * 获取货架的id仓库信息 2.0
+     *
      * @param id
      * @return
      */
@@ -145,6 +147,9 @@ public class SysOfficeFeignController {
     @PostMapping("/list/parentInfo")
     @ApiOperation("根据子节点id 获取父级信息")
     public R<Map<Integer, SysOfficeVO>> parentInfo(@RequestBody Set<Integer> childIdList) {
+        if (CollUtil.isEmpty(childIdList)) {
+            return R.success(Maps.newHashMap());
+        }
         return R.success(sysOfficeService.parentInfo(childIdList));
     }
 
@@ -168,26 +173,26 @@ public class SysOfficeFeignController {
 
     @ApiOperation("查询指定机构类型，及机构类型的孩子节点，返回平铺数据")
     @GetMapping("/type/children/flat")
-    R<Set<Integer>> typeAndChildrenFlat(@RequestParam("officeType") String officeType){
+    R<Set<Integer>> typeAndChildrenFlat(@RequestParam("officeType") String officeType) {
         return R.success(sysOfficeService.typeAndChildrenFlat(officeType));
     }
 
 
     @PostMapping("/save")
     @ApiOperation("保存机构信息")
-    public R<Boolean> save(@RequestBody SysOfficeDTO sysOfficeDTO){
+    public R<Boolean> save(@RequestBody SysOfficeDTO sysOfficeDTO) {
         return R.success(sysOfficeService.saveOffice(sysOfficeDTO));
     }
 
     @PostMapping("/update")
     @ApiOperation("修改机构信息")
-    public R<Boolean> update(@RequestBody SysOfficeDTO sysOfficeDTO){
+    public R<Boolean> update(@RequestBody SysOfficeDTO sysOfficeDTO) {
         return R.success(sysOfficeService.updateOffice(sysOfficeDTO));
     }
 
     @DeleteMapping("/delete")
     @ApiOperation("删除机构信息")
-    public R<Boolean> delete(@RequestBody SysOfficeDTO sysOfficeDTO){
+    public R<Boolean> delete(@RequestBody SysOfficeDTO sysOfficeDTO) {
         return R.success(sysOfficeService.delete(sysOfficeDTO));
     }
 
