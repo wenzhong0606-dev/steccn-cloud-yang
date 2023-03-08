@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.Data;
 
 /**
  * 生产工单-物料清单信息
+ *
  * @author yequan
  * @TableName pms_work_order_bom
  */
-@TableName(value ="pms_work_order_bom")
+@TableName(value = "pms_work_order_bom")
 @Data
 public class PmsWorkOrderBom implements Serializable {
     /**
@@ -62,7 +64,7 @@ public class PmsWorkOrderBom implements Serializable {
     private Integer jointProductFlag;
 
     /**
-     *工序报废百分比
+     * 工序报废百分比
      */
     private Float processScrapingPercent;
 
@@ -81,6 +83,11 @@ public class PmsWorkOrderBom implements Serializable {
      * 工艺路线组件id
      */
     private Long craftRouteModuleId;
+
+    /**
+     * 是否回收
+     */
+    private Integer recycleFlag;
 
     /**
      * 创建人id
