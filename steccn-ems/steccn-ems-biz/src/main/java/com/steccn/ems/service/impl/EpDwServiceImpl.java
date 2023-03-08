@@ -58,58 +58,67 @@ public class EpDwServiceImpl implements EpDwService {
     private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(300), Executors.defaultThreadFactory());
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean meterRead(LocalDate date) {
-        Assert.notNull(date, "指定日期不可为空");
-        List<DwConditionDTO> dwList = Lists.newArrayList();
+    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(500), Executors.defaultThreadFactory());
 
+    @Override
+    public Boolean meterRead(LocalDate date) {
         //获取所有的远传仪表+挂载的分区节点
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
-        if (CollUtil.isNotEmpty(meterList)) {
-            Set<Integer> meterSet = meterList.stream().map(EpDwMeterPartitionDTO::getMeterId).collect(Collectors.toSet());
+        //获取所有有仪表的节点
+        Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
+        //其余的节点
+        Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
+        //获取当前班次日期所有的报工信息
+        List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(() -> remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+
+        for (EpDwMeterPartitionDTO meter : meterList) {
+            moneyPool.submit(() -> {
+                Boolean read = read(date, meter, otherPartitionNodeSet, allReportWorkList);
+                if (!read) {
+                    log.info("班次日期 -> {} ,read仪表{} 执行失败", date, meter.getMeterId());
+                }
+            });
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean read(LocalDate date, EpDwMeterPartitionDTO meter, Set<Long> otherPartitionNodeSet, List<DwCurrentReportWorkDTO> allReportWorkList) {
+        List<DwConditionDTO> dwList = Lists.newArrayList();
+        if (Objects.nonNull(meter)) {
             long count = epMeterReadService.count(new LambdaQueryWrapper<EpMeterRead>()
-                    .eq(EpMeterRead::getReadDate, date).in(EpMeterRead::getMeterId, meterSet));
+                    .eq(EpMeterRead::getReadDate, date).in(EpMeterRead::getMeterId, meter.getMeterId()));
             if (count > 0) {
                 log.info("读数归档 班次日期 -> {} 已跑过", date);
                 return Boolean.FALSE;
             }
-            //获取当前班次日期所有的报工信息
-            List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(() -> remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-            //获取所有有仪表的节点
-            Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
-            //其余的节点
-            Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
-
             //遍历所有的远传仪表
-            for (EpDwMeterPartitionDTO meter : meterList) {
-                if (otherPartitionNodeSet.contains(meter.getPartitionId())) {
-                    //仅统计每日能耗（类型II）的节点
-                    DwConditionDTO dwConditionDTO = new DwConditionDTO();
-                    dwConditionDTO.setCode(meter.getDistantMapCode());
-                    dwConditionDTO.setMeterId(meter.getMeterId());
-                    dwConditionDTO.setReadDate(date);
-                    dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
-                    dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
-                    dwList.add(dwConditionDTO);
-                } else {
-                    //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
-                    //根据仪表挂载的节点获取报工记录
-                    List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
-                    List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
-                    dwConditionDTO(date, dwList, meter, lineList);
-                    dwConditionDTO(date, dwList, meter, stationList);
-                    //如果2个都为空
-                    if (CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)) {
-                        LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
-                        LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
-                        LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
-                        //查询2条数据 T日8：00 T日20：00 T+1日8：00
-                        DwConditionDTO morningDefault = getDefaultDwConditionDTO(meter, date, 0, morningLdt, nightLdt);
-                        DwConditionDTO nightDefault = getDefaultDwConditionDTO(meter, date, 1, nightLdt, lastLdt);
-                        dwList.add(morningDefault);
-                        dwList.add(nightDefault);
-                    }
+            if (otherPartitionNodeSet.contains(meter.getPartitionId())) {
+                //仅统计每日能耗（类型II）的节点
+                DwConditionDTO dwConditionDTO = new DwConditionDTO();
+                dwConditionDTO.setCode(meter.getDistantMapCode());
+                dwConditionDTO.setMeterId(meter.getMeterId());
+                dwConditionDTO.setReadDate(date);
+                dwConditionDTO.setStart(LocalDateTime.of(date, LocalTime.of(8, 0, 0)));
+                dwConditionDTO.setEnd(LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0)));
+                dwList.add(dwConditionDTO);
+            } else {
+                //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
+                //根据仪表挂载的节点获取报工记录
+                List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
+                dwConditionDTO(date, dwList, meter, lineList);
+                dwConditionDTO(date, dwList, meter, stationList);
+                //如果2个都为空
+                if (CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)) {
+                    LocalDateTime morningLdt = LocalDateTime.of(date, LocalTime.of(8, 0, 0));
+                    LocalDateTime nightLdt = LocalDateTime.of(date, LocalTime.of(20, 0, 0));
+                    LocalDateTime lastLdt = LocalDateTime.of(date.plusDays(1), LocalTime.of(8, 0, 0));
+                    //查询2条数据 T日8：00 T日20：00 T+1日8：00
+                    DwConditionDTO morningDefault = getDefaultDwConditionDTO(meter, date, 0, morningLdt, nightLdt);
+                    DwConditionDTO nightDefault = getDefaultDwConditionDTO(meter, date, 1, nightLdt, lastLdt);
+                    dwList.add(morningDefault);
+                    dwList.add(nightDefault);
                 }
             }
             if (CollUtil.isNotEmpty(dwList)) {
@@ -150,6 +159,7 @@ public class EpDwServiceImpl implements EpDwService {
         return Boolean.TRUE;
     }
 
+
     @Override
     public Boolean electricMoney(LocalDate date) {
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
@@ -157,12 +167,13 @@ public class EpDwServiceImpl implements EpDwService {
             moneyPool.submit(() -> {
                 Boolean money = money(date, meter);
                 if (!money) {
-                    log.info("班次日期 -> {} ,仪表{} 执行失败", date, meter.getMeterId());
+                    log.info("班次日期 -> {} ,money仪表{} 执行失败", date, meter.getMeterId());
                 }
             });
         }
         return Boolean.TRUE;
     }
+
 
     /**
      * 计算钱
