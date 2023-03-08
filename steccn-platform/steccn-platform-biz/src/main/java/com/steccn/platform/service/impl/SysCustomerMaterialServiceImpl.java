@@ -186,13 +186,28 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
 
     @Override
     public List<PmCraftRouteModuleVO> produceOrderMaterial(Integer customerId, Long materialId) {
+        List<PmCraftRouteModuleVO> resList = Lists.newArrayList();
         SysCustomerMaterial model = getOne(new LambdaQueryWrapper<SysCustomerMaterial>()
                 .eq(SysCustomerMaterial::getCustomerId, customerId)
                 .eq(SysCustomerMaterial::getMaterialId, materialId), false);
         if (Objects.nonNull(model)) {
-
+            List<SysCustomerMaterialInfo> infoList = sysCustomerMaterialInfoService.list(new LambdaQueryWrapper<SysCustomerMaterialInfo>().eq(SysCustomerMaterialInfo::getCmId, model.getId()));
+            if (CollUtil.isNotEmpty(infoList)) {
+                //获取所有数据字典
+                Set<Long> unitSet = infoList.stream().map(SysCustomerMaterialInfo::getUnit).collect(Collectors.toSet());
+                Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                infoList.forEach(ele -> {
+                    PmCraftRouteModuleVO vo = new PmCraftRouteModuleVO();
+                    BeanUtils.copyProperties(ele, vo);
+                    vo.setUnitId(ele.getUnit());
+                    vo.setUnit(unitMap.get(ele.getUnit()));
+                    vo.setIsFixedQuantity(ele.getFixedQuantityFlag());
+                    vo.setQuantity(ele.getQuantity().intValue());
+                    resList.add(vo);
+                });
+            }
         }
-        return null;
+        return resList;
     }
 }
 

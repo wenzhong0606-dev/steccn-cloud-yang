@@ -191,45 +191,47 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<QtCheckTaskDestoryOnlineVO> fallList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(manDataList)) {
             manDataList = manDataList.stream().filter(v -> Objects.nonNull(v.getTaskId())).collect(Collectors.toList());
-            //先根据人工数据查询所有的taskId
-            Map<Long, Integer> taskClassMap = Maps.newHashMap();
-            manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
-            //查询所有的落板原因
-            List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
-                    .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
-                    .eq(QtCheckTaskDestoryInfo::getDelFlag, MpConstant.NO));
-            if (CollUtil.isNotEmpty(destroyList)) {
-                Map<Long, List<QtCheckTaskDestoryInfo>> collect = destroyList.stream().collect(Collectors.groupingBy(QtCheckTaskDestoryInfo::getTaskId));
-                for (Map.Entry<Long, List<QtCheckTaskDestoryInfo>> entry : collect.entrySet()) {
-                    Optional<QtCheckTaskDestoryInfo> min = entry.getValue().stream().min(Comparator.comparing(QtCheckTaskDestoryInfo::getDestoryStartTime));
-                    for (QtCheckTaskDestoryInfo destroy : entry.getValue()) {
-                        QtCheckTaskDestoryOnlineVO vo = new QtCheckTaskDestoryOnlineVO();
-                        BeanUtils.copyProperties(destroy, vo);
-                        vo.setFirstTime(min.get().getDestoryStartTime());
-                        vo.setClassId(taskClassMap.get(entry.getKey()));
-                        QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
-                        if (Objects.nonNull(classEnum)) {
-                            vo.setClassName(classEnum.getName());
+            if (CollUtil.isNotEmpty(manDataList)) {
+                //先根据人工数据查询所有的taskId
+                Map<Long, Integer> taskClassMap = Maps.newHashMap();
+                manDataList.forEach(ele -> taskClassMap.put(ele.getTaskId(), ele.getClassId()));
+                //查询所有的落板原因
+                List<QtCheckTaskDestoryInfo> destroyList = qtCheckTaskDestoryInfoService.list(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>()
+                        .in(QtCheckTaskDestoryInfo::getTaskId, taskClassMap.keySet())
+                        .eq(QtCheckTaskDestoryInfo::getDelFlag, MpConstant.NO));
+                if (CollUtil.isNotEmpty(destroyList)) {
+                    Map<Long, List<QtCheckTaskDestoryInfo>> collect = destroyList.stream().collect(Collectors.groupingBy(QtCheckTaskDestoryInfo::getTaskId));
+                    for (Map.Entry<Long, List<QtCheckTaskDestoryInfo>> entry : collect.entrySet()) {
+                        Optional<QtCheckTaskDestoryInfo> min = entry.getValue().stream().min(Comparator.comparing(QtCheckTaskDestoryInfo::getDestoryStartTime));
+                        for (QtCheckTaskDestoryInfo destroy : entry.getValue()) {
+                            QtCheckTaskDestoryOnlineVO vo = new QtCheckTaskDestoryOnlineVO();
+                            BeanUtils.copyProperties(destroy, vo);
+                            vo.setFirstTime(min.get().getDestoryStartTime());
+                            vo.setClassId(taskClassMap.get(entry.getKey()));
+                            QtManagerConstant.QtClassesEnum classEnum = QtManagerConstant.QtClassesEnum.code(vo.getClassId());
+                            if (Objects.nonNull(classEnum)) {
+                                vo.setClassName(classEnum.getName());
+                            }
+                            vo.setProductLineName(productLineName);
+                            fallList.add(vo);
                         }
-                        vo.setProductLineName(productLineName);
-                        fallList.add(vo);
                     }
+                    fallList.sort((o1, o2) -> {
+                        //先对比班次-如果为空，放置到最后
+                        if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId()) && !o1.getClassId().equals(o2.getClassId())) {
+                            return o1.getClassId() - o2.getClassId();
+                        }
+                        //对比落板开始时间
+                        if (!o1.getFirstTime().equals(o2.getFirstTime())) {
+                            return o1.getFirstTime().compareTo(o2.getFirstTime());
+                        }
+                        //对比taskId
+                        if (!o1.getTaskId().equals(o2.getTaskId())) {
+                            return o1.getTaskId().compareTo(o2.getTaskId());
+                        }
+                        return 1;
+                    });
                 }
-                fallList.sort((o1, o2) -> {
-                    //先对比班次-如果为空，放置到最后
-                    if (Objects.nonNull(o1.getClassId()) && Objects.nonNull(o2.getClassId()) && !o1.getClassId().equals(o2.getClassId())) {
-                        return o1.getClassId() - o2.getClassId();
-                    }
-                    //对比落板开始时间
-                    if (!o1.getFirstTime().equals(o2.getFirstTime())) {
-                        return o1.getFirstTime().compareTo(o2.getFirstTime());
-                    }
-                    //对比taskId
-                    if (!o1.getTaskId().equals(o2.getTaskId())) {
-                        return o1.getTaskId().compareTo(o2.getTaskId());
-                    }
-                    return 1;
-                });
             }
         }
         return fallList;
@@ -361,7 +363,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             manData.add(qtCheckTaskDetailReportVO);
         });
         officeIds.add(productLineId);
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         String productLineName = officeMap.get(productLineId);
         List<Long> taskIdList = Lists.newArrayList();
         if (CollUtil.isEmpty(taskList)) {
@@ -517,7 +519,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             QtCheckTaskListVO task = taskList.stream().filter(v -> v.getId().equals(taskEntry.getKey())).findFirst().get();
             List<QtCheckTaskDetail> detailTmp = taskEntry.getValue();
             //避免空指针异常
-            if(Objects.isNull(detailTmp)){
+            if (Objects.isNull(detailTmp)) {
                 continue;
             }
             //一个任务下,根据copy分组
@@ -636,7 +638,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         result.setTableData(tableData);
         //如果所有的工位都为空，则表头不需要工位那一列
         long count = tableData.stream().filter(v -> StrUtil.isNotBlank(v.getStation())).count();
-        if(count == 0){
+        if (count == 0) {
             List<QtSpcHeadTitleVO> oldCommon = result.getHeaders().getCommon();
             List<QtSpcHeadTitleVO> newCommon = oldCommon.stream().filter(v -> !QtManagerConstant.SPC_HEADER_FIELD_STATION.equals(v.getLabel())).collect(Collectors.toList());
             result.getHeaders().setCommon(newCommon);
@@ -684,7 +686,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
         Set<Integer> productLineIds = Sets.newHashSet();
         productLineIds.add(productLineId);
-        Map<Integer, String> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(productLineIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> productLineMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(productLineIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据缺陷项分类处理表头数据
         for (Map.Entry<String, List<QtDefectItemInfoVO>> ItemEntry : map.entrySet()) {
             BaseReportHeaderVO baseReportHeaderVO = new BaseReportHeaderVO();
