@@ -23,6 +23,7 @@ import com.steccn.platform.service.SysCustomerMaterialInfoService;
 import com.steccn.platform.service.SysCustomerMaterialService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
+import com.steccn.pms.vo.PmCraftRouteModuleVO;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -181,6 +182,17 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
             resVo = BeanUtil.copyProperties(model, SysCustomerMaterialVO.class);
         }
         return resVo;
+    }
+
+    @Override
+    public List<PmCraftRouteModuleVO> produceOrderMaterial(Integer customerId, Long materialId) {
+        SysCustomerMaterial model = getOne(new LambdaQueryWrapper<SysCustomerMaterial>()
+                .eq(SysCustomerMaterial::getCustomerId, customerId)
+                .eq(SysCustomerMaterial::getMaterialId, materialId), false);
+        if (Objects.nonNull(model)) {
+
+        }
+        return null;
     }
 }
 

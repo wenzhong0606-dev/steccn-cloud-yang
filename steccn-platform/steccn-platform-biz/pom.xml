@@ -137,6 +137,10 @@
             <version>3.14.9</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-pms-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -6,12 +6,15 @@ import com.steccn.platform.dto.SysCustomerMaterialPageDTO;
 import com.steccn.platform.dto.SysCustomerMaterialSaveDTO;
 import com.steccn.platform.service.SysCustomerMaterialService;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
+import com.steccn.pms.vo.PmCraftRouteModuleVO;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @author yequan
@@ -54,5 +57,12 @@ public class SysCustomerMaterialController {
     @ApiOperation("删除客户物料")
     public R<Boolean> delete(@PathVariable("id") Long id) {
         return R.success(sysCustomerMaterialService.delete(id));
+    }
+
+    @GetMapping("/produce/order")
+    @ApiModelProperty("生产订单物料清单明细信息")
+    public R<List<PmCraftRouteModuleVO>> produceOrderMaterial(@RequestParam("customerId") Integer customerId,
+                                                              @RequestParam("materialId") Long materialId) {
+        return R.success(sysCustomerMaterialService.produceOrderMaterial(customerId, materialId));
     }
 }

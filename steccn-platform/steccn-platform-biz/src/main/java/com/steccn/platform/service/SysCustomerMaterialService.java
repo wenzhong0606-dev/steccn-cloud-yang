@@ -7,6 +7,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysCustomerMaterialPageDTO;
 import com.steccn.platform.dto.SysCustomerMaterialSaveDTO;
 import com.steccn.platform.vo.SysCustomerMaterialVO;
+import com.steccn.pms.vo.PmCraftRouteModuleVO;
+
+import java.util.List;
 
 /**
  * @author yequan
@@ -49,9 +52,19 @@ public interface SysCustomerMaterialService extends IService<SysCustomerMaterial
 
     /**
      * 客户物料主体信息
+     *
      * @param customerId 客户id
      * @param materialId 物料id
      * @return 客户物料主体信息
      */
     SysCustomerMaterialVO customerMaterial(Integer customerId, Long materialId);
+
+    /**
+     * 生产订单物料清单明细信息
+     *
+     * @param customerId 客户主键
+     * @param materialId 物料主键
+     * @return list
+     */
+    List<PmCraftRouteModuleVO> produceOrderMaterial(Integer customerId, Long materialId);
 }

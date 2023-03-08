@@ -43,7 +43,7 @@ public class SysCustomerMaterialSubDTO implements Serializable {
     @ApiModelProperty("数量单位")
     private String unitName;
 
-    @ApiModelProperty("是否回收")
+    @ApiModelProperty("是否回收 0否 1是")
     private Integer recycleFlag;
 
 }
