@@ -442,9 +442,13 @@ public class OaService {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.set("Authorization",OaConstant.OA_BASIC_AUTH);
         String rosterRecord = oaApi.getRosterRecord(headers, dto);
+        List<OaRosterRecordVO> vos = Lists.newArrayList();
+        if(StrUtil.isBlank(rosterRecord)){
+            return vos;
+        }
         JSONObject jsonObject = JSONObject.parseObject(rosterRecord);
         JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_CAPITAL_DATA);
-        List<OaRosterRecordVO> vos = jsonArray.toJavaList(OaRosterRecordVO.class);
+        vos = jsonArray.toJavaList(OaRosterRecordVO.class);
         return vos;
     }
 
