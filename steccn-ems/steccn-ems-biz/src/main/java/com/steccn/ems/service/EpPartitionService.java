@@ -112,4 +112,13 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return set
      */
     Set<Long> otherPartition(Set<Long> allPartitionIdSet);
+
+    /**
+     * 获取keySet节点的全路径
+     *
+     * @param energyType 能源类型
+     * @param keySet     指定节点
+     * @return map
+     */
+    Map<Long, String> allPartitionNameMap(Integer energyType, Set<Long> keySet);
 }

@@ -28,6 +28,7 @@ import com.steccn.ems.service.EpPartitionService;
 import com.steccn.ems.util.PinyinUtils;
 import com.steccn.ems.vo.*;
 import com.steccn.platform.feign.RemoteDictFeignApi;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.vo.QtSpcReportDetailVO;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.stat.descriptive.summary.Product;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -57,14 +59,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
-* @author yequan
-* @description 针对表【ep_instrument_account(仪表台账)】的数据库操作Service实现
-* @createDate 2022-11-29 19:27:28
-*/
+ * @author yequan
+ * @description 针对表【ep_instrument_account(仪表台账)】的数据库操作Service实现
+ * @createDate 2022-11-29 19:27:28
+ */
 @Service
 @Slf4j
 public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAccountMapper, EpInstrumentAccount>
-    implements EpInstrumentAccountService{
+        implements EpInstrumentAccountService {
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
@@ -84,12 +86,12 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 //所属分区节点
                 .eq(EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
                 //所属能源类型
-                .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
+                .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
                 //可展示的未删除的
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
                 //编辑时去除对自身的判断
-                .ne(Objects.nonNull(dto.getId()),EpInstrumentAccount::getId,dto.getId()));
-        getRepeatJudgment(dto.getId(), count,"该节点下已经有仪表,请勿多次创建");
+                .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
+        getRepeatJudgment(dto.getId(), count, "该节点下已经有仪表,请勿多次创建");
 
         if (StringUtils.isNotBlank(dto.getDistantMapCode())) {
             List<EpInstrumentAccount> list = list(new LambdaQueryWrapper<EpInstrumentAccount>()
@@ -116,23 +118,23 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                     .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
             getRepeatJudgment(dto.getId(), sizeSiteName, "安装位置不能与其他仪表重复");
         }
-        if (StringUtils.isNotBlank(dto.getAssetsCode())){
+        if (StringUtils.isNotBlank(dto.getAssetsCode())) {
             //查询数据库中的资产编码
             long sizeAssetsCode = count(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getAssetsCode, dto.getAssetsCode())
-                    .eq(EpInstrumentAccount::getMeterType,dto.getMeterType())
+                    .eq(EpInstrumentAccount::getMeterType, dto.getMeterType())
                     .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
-                    .ne(Objects.nonNull(dto.getId()),EpInstrumentAccount::getId,dto.getId()));
-            getRepeatJudgment(dto.getId(),sizeAssetsCode,"资产编码不能与其他仪表重复");
+                    .ne(Objects.nonNull(dto.getId()), EpInstrumentAccount::getId, dto.getId()));
+            getRepeatJudgment(dto.getId(), sizeAssetsCode, "资产编码不能与其他仪表重复");
         }
         EpInstrumentAccount epInstrumentAccount = new EpInstrumentAccount();
-        BeanUtils.copyProperties(dto,epInstrumentAccount);
-        if (Objects.isNull(dto.getId())){
+        BeanUtils.copyProperties(dto, epInstrumentAccount);
+        if (Objects.isNull(dto.getId())) {
             save(epInstrumentAccount);
-        }else {
+        } else {
             EpInstrumentAccount instrumentAccount = getById(dto.getId());
-            Assert.notNull(instrumentAccount,"编辑的仪表台账不存在");
-            if (MpConstant.NO==epInstrumentAccount.getShowFlag()){
+            Assert.notNull(instrumentAccount, "编辑的仪表台账不存在");
+            if (MpConstant.NO == epInstrumentAccount.getShowFlag()) {
                 throw new BusinessException("该仪表台账已删除无法编辑");
             }
             updateById(epInstrumentAccount);
@@ -142,16 +144,16 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
     @Override
     public Page<EpInstrumentAccountPageVO> getEpInstrumentAccountVOPage(EpInstrumentAccountPageDTO dto) {
-     //自定义查询条件
+        //自定义查询条件
         LambdaQueryWrapper<EpInstrumentAccount> condition = new LambdaQueryWrapper<EpInstrumentAccount>()
                 //所属分区节点id数组
-                .in(CollUtil.isNotEmpty(dto.getPartitionNode()),EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
+                .in(CollUtil.isNotEmpty(dto.getPartitionNode()), EpInstrumentAccount::getPartitionNode, dto.getPartitionNode())
                 //模糊匹配仪表名称
-                .like(Objects.nonNull(dto.getMeterName()),EpInstrumentAccount::getMeterName, dto.getMeterName())
+                .like(Objects.nonNull(dto.getMeterName()), EpInstrumentAccount::getMeterName, dto.getMeterName())
                 //能源类型
-                .eq(EpInstrumentAccount::getMeterType,dto.getEnergyId())
+                .eq(EpInstrumentAccount::getMeterType, dto.getEnergyId())
                 //查询所有可展示的
-                .eq(EpInstrumentAccount::getShowFlag,MpConstant.YES);
+                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES);
 
         //3.根据条件查询数据库数据
         List<EpInstrumentAccount> instrumentAccounts = list(condition);
@@ -160,9 +162,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //5.处理返回数据
         //自定义分页对象
         Page<EpInstrumentAccountPageVO> page = new Page<>();
-        //先筛选掉不合条件的数据
-        instrumentAccountVOS = instrumentAccountVOS.stream().filter(s -> Objects.nonNull(s)
-                && Objects.nonNull(s.getPartitionNode())&&Objects.nonNull(s.getMeterType())).collect(Collectors.toList());
         if (CollUtil.isEmpty(instrumentAccountVOS)) {
             //如果为空返回空对象
             return page;
@@ -181,22 +180,24 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //去数据字典中查找到所有位置
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //去能源分区表中找到所有的分区节点
-        Map<Long, EpPartitionVO> epPartitionNameListVO = epPartitionService.getEpPartitionNameListVO(partitionIds);
+        Map<Long, EpPartitionVO> epPartitionNameListVOMap = epPartitionService.getEpPartitionNameListVO(partitionIds);
 
         //获取该类型下所有下一级子节点
         Map<Long, List<EpPartitionVO>> partitionLinkChildMap = epPartitionService.allNextChildren(dto.getEnergyId());
         //找到该类型下根据节点分组的全量数据
-        Map<Long,EpInstrumentAccountPageVO> partitionInstrumentVOList = Maps.newHashMap();
-        instrumentAccountVOS.forEach(s->{
-            partitionInstrumentVOList.put(s.getPartitionNode(),s);
+        Map<Long, EpInstrumentAccountPageVO> partitionInstrumentVOList = Maps.newHashMap();
+        instrumentAccountVOS.forEach(s -> {
+            partitionInstrumentVOList.put(s.getPartitionNode(), s);
         });
 
         //先lou出仪表台账里面所有仪表id以及远传映射编码
-        List<Integer> instrumentIds = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getId).collect(Collectors.toList());
         Set<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toSet());
 
         //查询所有远传仪表编码的最近抄表时间
+        long l = System.currentTimeMillis();
+        log.info("start {}",l);
         Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantCodeList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        log.info("end {}", System.currentTimeMillis() - l);
         //查询所有非远传仪表编码的最近抄表时间
         Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))
                 .map(EpInstrumentAccountPageVO::getId).collect(Collectors.toSet());
@@ -209,26 +210,20 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
                 epMeterReadList.forEach(ele -> readTimeMap.put(ele.getMeterId(), ele.getReadTime()));
             }
         }
+        //查询allPartitionNodeName
+        Map<Long,String> allPartitionNameMap = epPartitionService.allPartitionNameMap(dto.getEnergyId(),partitionInstrumentVOList.keySet());
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
-            if (CollUtil.isNotEmpty(dictMap)&&Objects.nonNull(s.getSite())) {
+            if (CollUtil.isNotEmpty(dictMap) && Objects.nonNull(s.getSite())) {
                 s.setSiteName(dictMap.get(s.getSite()));
             }
-            if (CollUtil.isNotEmpty(epPartitionNameListVO) && Objects.nonNull(s.getPartitionNode())) {
-                s.setPartitionNodeName(Objects.isNull(epPartitionNameListVO.get(s.getPartitionNode()))
-                        ? null : epPartitionNameListVO.get(s.getPartitionNode()).getOfficeName());
-            }
-            EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
-            epPartitionChildTypeDTO.setType(s.getMeterType());
-            epPartitionChildTypeDTO.setChildId(s.getPartitionNode());
-            EpPartitionParentVO partitionParent = epPartitionService.getParentList(epPartitionChildTypeDTO);
-            if (Objects.nonNull(partitionParent)) {
-                s.setAllPartitionNodeName(partitionParent.getJoinOfficeNames());
-            }
+            EpPartitionVO epPartitionVO = epPartitionNameListVOMap.get(s.getPartitionNode());
+            s.setPartitionNodeName(Objects.isNull(epPartitionVO) ? null : epPartitionVO.getOfficeName());
+            s.setAllPartitionNodeName(allPartitionNameMap.get(s.getPartitionNode()));
 
             //设置最后抄表时间
-            if(EpManagerConstant.InstrumentType.REMOTE.getCode().equals(s.getEntityTable())){
-               //远传仪表-从数仓获取
+            if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(s.getEntityTable())) {
+                //远传仪表-从数仓获取
                 s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
             } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(s.getEntityTable())) {
                 //非远传仪表-从抄表管理获取
@@ -247,26 +242,26 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             List<EpInstrumentAccountPageVO> noDataCollect = instrumentAccountVOS.stream().filter(v -> Objects.isNull(v.getLastReadingTime())).collect(Collectors.toList());
             if (dto.getAscFlag() == Boolean.TRUE) {
                 instrumentAccountVOS.clear();
-                if (CollUtil.isNotEmpty(havaDataCollect)){
+                if (CollUtil.isNotEmpty(havaDataCollect)) {
                     havaDataCollect = havaDataCollect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime)).collect(Collectors.toList());
                     for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : havaDataCollect) {
                         instrumentAccountVOS.add(epInstrumentAccountPageVO);
                     }
                 }
-                if (CollUtil.isNotEmpty(noDataCollect)){
+                if (CollUtil.isNotEmpty(noDataCollect)) {
                     for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : noDataCollect) {
                         instrumentAccountVOS.add(epInstrumentAccountPageVO);
                     }
                 }
             } else {
                 instrumentAccountVOS.clear();
-                if (CollUtil.isNotEmpty(havaDataCollect)){
+                if (CollUtil.isNotEmpty(havaDataCollect)) {
                     havaDataCollect = havaDataCollect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getLastReadingTime).reversed()).collect(Collectors.toList());
                     for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : havaDataCollect) {
                         instrumentAccountVOS.add(epInstrumentAccountPageVO);
                     }
                 }
-                if (CollUtil.isNotEmpty(noDataCollect)){
+                if (CollUtil.isNotEmpty(noDataCollect)) {
                     for (EpInstrumentAccountPageVO epInstrumentAccountPageVO : noDataCollect) {
                         instrumentAccountVOS.add(epInstrumentAccountPageVO);
                     }
@@ -286,18 +281,11 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
 
         }
-        Integer skip = (dto.getCurrent() - 1) * dto.getSize();
-        //排序
-        List<EpInstrumentAccountPageVO> collect = instrumentAccountVOS.stream().skip(skip).limit(dto.getSize()).collect(Collectors.toList());
+        page = LogicalPageUtil.page(instrumentAccountVOS, dto.getCurrent(), dto.getSize());
         //根据partitionNode排序
-        if(CollUtil.isNotEmpty(collect)){
-            collect = collect.stream().sorted(Comparator.comparing(EpInstrumentAccountPageVO::getPartitionNode)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            page.getRecords().sort(Comparator.comparing(EpInstrumentAccountPageVO::getPartitionNode));
         }
-        page.setCurrent(dto.getCurrent());
-        page.setTotal(instrumentAccountVOS.size());
-        page.setSize(dto.getSize());
-        page.setRecords(collect);
-
         return page;
     }
 
@@ -337,33 +325,33 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return min;
     }
 
-    private List<String> getParentNameList(List<EpPartitionParentVO> parentList,List<String> partitionName) {
-            if (CollUtil.isNotEmpty(parentList)){
-                for (EpPartitionParentVO epPartitionParentVO : parentList) {
-                    partitionName.add(epPartitionParentVO.getOfficeName());
-                    if (CollUtil.isNotEmpty(epPartitionParentVO.getParentList())){
-                        for (EpPartitionParentVO partitionParentVO : epPartitionParentVO.getParentList()) {
-                            getParentNameList(partitionParentVO.getParentList(),partitionName);
-                        }
+    private List<String> getParentNameList(List<EpPartitionParentVO> parentList, List<String> partitionName) {
+        if (CollUtil.isNotEmpty(parentList)) {
+            for (EpPartitionParentVO epPartitionParentVO : parentList) {
+                partitionName.add(epPartitionParentVO.getOfficeName());
+                if (CollUtil.isNotEmpty(epPartitionParentVO.getParentList())) {
+                    for (EpPartitionParentVO partitionParentVO : epPartitionParentVO.getParentList()) {
+                        getParentNameList(partitionParentVO.getParentList(), partitionName);
                     }
                 }
             }
-            return partitionName;
+        }
+        return partitionName;
     }
 
     private LocalDateTime getLastReadTime(String code, Map<String, LocalDateTime> map) {
-       return map.get(code);
+        return map.get(code);
     }
 
     @Override
     public List<Long> getPartitionNodes(Integer energyType) {
         List<Long> partitionNodesVO = Lists.newArrayList();
         List<Long> partitionNodes = list(new LambdaQueryWrapper<EpInstrumentAccount>()
-                .eq(EpInstrumentAccount::getMeterType,energyType)
+                .eq(EpInstrumentAccount::getMeterType, energyType)
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES))
                 .stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(partitionNodes)){
-            partitionNodes.forEach(v->{
+        if (CollUtil.isNotEmpty(partitionNodes)) {
+            partitionNodes.forEach(v -> {
                 partitionNodesVO.add(v);
             });
         }
@@ -374,8 +362,8 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     @Transactional(rollbackFor = Exception.class)
     public Boolean reviseStatus(EpInstrumentAccountStatusDTO dto) {
         EpInstrumentAccount epInstrumentAccount = getById(dto.getId());
-        Assert.notNull(epInstrumentAccount,"该仪表台账不存在");
-        Assert.isTrue(MpConstant.YES==epInstrumentAccount.getShowFlag(),"该仪表台账已删除");
+        Assert.notNull(epInstrumentAccount, "该仪表台账不存在");
+        Assert.isTrue(MpConstant.YES == epInstrumentAccount.getShowFlag(), "该仪表台账已删除");
         epInstrumentAccount.setStatus(dto.getStatus());
         updateById(epInstrumentAccount);
         return Boolean.TRUE;
@@ -383,15 +371,15 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
     @Override
     public EpInstrumentAccountVO getEpInstrumentAccountVO(Integer id) {
-       Assert.notNull(id,"查询id不能为空");
+        Assert.notNull(id, "查询id不能为空");
         EpInstrumentAccount epInstrumentAccount = getById(id);
-        if (Objects.isNull(epInstrumentAccount)){
+        if (Objects.isNull(epInstrumentAccount)) {
             return null;
         }
-        Assert.isTrue(MpConstant.YES==epInstrumentAccount.getShowFlag(),"该仪表台账已删除");
+        Assert.isTrue(MpConstant.YES == epInstrumentAccount.getShowFlag(), "该仪表台账已删除");
         //设置返回实体类对象
         EpInstrumentAccountVO epInstrumentAccountVO = new EpInstrumentAccountVO();
-        BeanUtils.copyProperties(epInstrumentAccount,epInstrumentAccountVO);
+        BeanUtils.copyProperties(epInstrumentAccount, epInstrumentAccountVO);
         Set<Long> partitionIds = Sets.newHashSet();
         partitionIds.add(epInstrumentAccount.getPartitionNode());
         Map<Long, EpPartitionVO> epPartitionVOMap = epPartitionService.getEpPartitionNameListVO(partitionIds);
@@ -403,26 +391,26 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
         }
         EpEnergyTypeVO energyTypeVO = epEnergyTypeService.getEpAddEnergyTypeVO(epInstrumentAccountVO.getMeterType());
-        if (Objects.nonNull(energyTypeVO)){
+        if (Objects.nonNull(energyTypeVO)) {
             //设置仪表名称
             epInstrumentAccountVO.setMeterTypeName(energyTypeVO.getMeasureMeterName());
             //设置计量单位
             epInstrumentAccountVO.setMeasureUnitName(energyTypeVO.getMeasureUnitName());
         }
-        if (Objects.nonNull(epInstrumentAccountVO.getSite())){
+        if (Objects.nonNull(epInstrumentAccountVO.getSite())) {
             Set<Long> dictSet = Sets.newHashSet();
             dictSet.add(epInstrumentAccountVO.getSite());
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if (CollUtil.isNotEmpty(dictMap)){
+            if (CollUtil.isNotEmpty(dictMap)) {
                 epInstrumentAccountVO.setSiteName(dictMap.get(epInstrumentAccountVO.getSite()));
             }
         }
-        if (Objects.nonNull(epInstrumentAccountVO.getPartitionNode())&&Objects.nonNull(epInstrumentAccountVO.getMeterType())){
+        if (Objects.nonNull(epInstrumentAccountVO.getPartitionNode()) && Objects.nonNull(epInstrumentAccountVO.getMeterType())) {
             EpPartitionChildTypeDTO epPartitionChildTypeDTO = new EpPartitionChildTypeDTO();
             epPartitionChildTypeDTO.setChildId(epInstrumentAccountVO.getPartitionNode());
             epPartitionChildTypeDTO.setType(epInstrumentAccountVO.getMeterType());
             EpPartitionParentVO parentVO = epPartitionService.getParentList(epPartitionChildTypeDTO);
-            if (Objects.nonNull(parentVO)&&Objects.nonNull(parentVO.getJoinOfficeNames())){
+            if (Objects.nonNull(parentVO) && Objects.nonNull(parentVO.getJoinOfficeNames())) {
                 epInstrumentAccountVO.setAllPartitionNodeName(parentVO.getJoinOfficeNames());
             }
         }
@@ -433,7 +421,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Integer id) {
         EpInstrumentAccount epInstrumentAccount = getById(id);
-        Assert.notNull(epInstrumentAccount,"该仪表台账不存在或已删除");
+        Assert.notNull(epInstrumentAccount, "该仪表台账不存在或已删除");
         epInstrumentAccount.setShowFlag(MpConstant.NO);
         updateById(epInstrumentAccount);
         return Boolean.TRUE;
@@ -443,14 +431,15 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     public Map<Long, EpInstrumentAccount> listById(Set<Long> partitionNodeIdSet) {
         Map<Long, EpInstrumentAccount> resMap = Maps.newHashMap();
         List<EpInstrumentAccount> dbList = list(new LambdaQueryWrapper<EpInstrumentAccount>().in(EpInstrumentAccount::getPartitionNode, partitionNodeIdSet));
-        if(CollUtil.isNotEmpty(dbList)){
-            dbList.forEach(ele -> resMap.put(ele.getPartitionNode(),ele));
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> resMap.put(ele.getPartitionNode(), ele));
         }
         return resMap;
     }
 
     /**
      * 根据条件判断是否抛出异常
+     *
      * @param id
      * @param size
      * @param mistake
@@ -461,44 +450,45 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
     /**
      * 根据某字段首字母排序
+     *
      * @param list
      * @param sort
      * @param isOrder
      * @return
      */
-    private List<EpInstrumentAccountPageVO> listToSortBySubName(List<EpInstrumentAccountPageVO> list,String sort,Boolean isOrder) {
+    private List<EpInstrumentAccountPageVO> listToSortBySubName(List<EpInstrumentAccountPageVO> list, String sort, Boolean isOrder) {
         if (CollUtil.isEmpty(list)) {
             return null;
         }
         Map<String, EpInstrumentAccountPageVO> map = new HashMap<String, EpInstrumentAccountPageVO>();
         List<String> names = new ArrayList<>();
         //储存该字段不为空的集合
-        List<EpInstrumentAccountPageVO>  haveDataList = new ArrayList<>();
+        List<EpInstrumentAccountPageVO> haveDataList = new ArrayList<>();
         //储存该字段为空的集合
-        List<EpInstrumentAccountPageVO>  noDataList = new ArrayList<>();
-        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-                if (Objects.nonNull(s.getDistantMapCode())&&StringUtils.isNotBlank(s.getDistantMapCode())){
+        List<EpInstrumentAccountPageVO> noDataList = new ArrayList<>();
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)) {
+            list.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                if (Objects.nonNull(s.getDistantMapCode()) && StringUtils.isNotBlank(s.getDistantMapCode())) {
                     haveDataList.add(s);
-                }else {
+                } else {
                     noDataList.add(s);
                 }
             });
 
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-                if (Objects.nonNull(s.getMeterName())&&StringUtils.isNotBlank(s.getMeterName())){
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)) {
+            list.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                if (Objects.nonNull(s.getMeterName()) && StringUtils.isNotBlank(s.getMeterName())) {
                     haveDataList.add(s);
-                }else {
+                } else {
                     noDataList.add(s);
                 }
             });
 
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-            list.stream().filter(s->Objects.nonNull(s)).forEach(s->{
-                if (Objects.nonNull(s.getSiteName())&&StringUtils.isNotBlank(s.getSiteName())){
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)) {
+            list.stream().filter(s -> Objects.nonNull(s)).forEach(s -> {
+                if (Objects.nonNull(s.getSiteName()) && StringUtils.isNotBlank(s.getSiteName())) {
                     haveDataList.add(s);
-                }else {
+                } else {
                     noDataList.add(s);
                 }
             });
@@ -506,7 +496,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //创建返回数据集合
         List<EpInstrumentAccountPageVO> voList = new ArrayList<>();
 
-        if (CollUtil.isNotEmpty(haveDataList)){
+        if (CollUtil.isNotEmpty(haveDataList)) {
 //            for (int i = 0; i < list.size(); i++) {
 //                if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
 //                    names.add(list.get(i).getDistantMapCode()+i);
@@ -546,14 +536,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 //                    voList.add(map.get(name));
 //                }
 //            }
-            getSort(haveDataList,isOrder,sort);
-            haveDataList.forEach(s->{
+            getSort(haveDataList, isOrder, sort);
+            haveDataList.forEach(s -> {
                 voList.add(s);
             });
         }
         //封装该字段为空情况的集合
-        if (CollUtil.isNotEmpty(noDataList)){
-            noDataList.forEach(s->{
+        if (CollUtil.isNotEmpty(noDataList)) {
+            noDataList.forEach(s -> {
                 voList.add(s);
             });
         }
@@ -561,34 +551,34 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return voList;
     }
 
-    public static void getSort(List<EpInstrumentAccountPageVO> list,Boolean isOrder,String sort) {
+    public static void getSort(List<EpInstrumentAccountPageVO> list, Boolean isOrder, String sort) {
         Comparator comparator = Collator.getInstance(Locale.CHINA);
-        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-            if (isOrder){
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0,1)).toLowerCase()));
+        if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)) {
+            if (isOrder) {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0, 1)).toLowerCase()));
 
-            }  else {
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0,1)).toLowerCase()));
+            } else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getDistantMapCode().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getDistantMapCode().substring(0, 1)).toLowerCase()));
             }
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-            if (isOrder){
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0,1)).toLowerCase()));
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)) {
+            if (isOrder) {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0, 1)).toLowerCase()));
 
-            }  else {
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0,1)).toLowerCase()));
+            } else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getMeterName().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getMeterName().substring(0, 1)).toLowerCase()));
             }
-        }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-            if (isOrder){
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0,1)).toLowerCase()));
+        } else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)) {
+            if (isOrder) {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0, 1)).toLowerCase()));
 
-            }  else {
-                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0,1)).toLowerCase(),
-                        PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0,1)).toLowerCase()));
+            } else {
+                Collections.sort(list, (p1, p2) -> comparator.compare(PinyinUtils.converterToFirstSpell(p2.getSiteName().substring(0, 1)).toLowerCase(),
+                        PinyinUtils.converterToFirstSpell(p1.getSiteName().substring(0, 1)).toLowerCase()));
             }
         }
 
