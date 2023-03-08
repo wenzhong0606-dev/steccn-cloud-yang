@@ -59,5 +59,6 @@
         <if test="dto.end !=null and dto.end!='' ">
             AND cm.create_time &lt;= #{dto.end}
         </if>
+        ORDER BY update_time desc
     </select>
 </mapper>
