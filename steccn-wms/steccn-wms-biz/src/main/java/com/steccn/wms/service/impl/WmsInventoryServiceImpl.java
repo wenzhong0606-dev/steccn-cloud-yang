@@ -42,8 +42,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, WmsInventory>
-        implements WmsInventoryService {
+public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, WmsInventory> implements WmsInventoryService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
@@ -56,15 +55,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Page<WmsInventoryVO> pageList(WmsInventoryPageDTO dto) {
         Page<WmsInventoryVO> page = new Page<>();
-        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>()
-                .eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId())
-                .eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId())
-                .like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode())
-                .like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName())
-                .like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo())
-                .like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName())
-                .like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch())
-                .orderByDesc(WmsInventory::getUpdateTime);
+        LambdaQueryWrapper<WmsInventory> like = new LambdaQueryWrapper<WmsInventory>().eq(Objects.nonNull(dto.getInventoryId()), WmsInventory::getId, dto.getInventoryId()).eq(Objects.nonNull(dto.getWarehouseId()), WmsInventory::getWarehouseId, dto.getWarehouseId()).like(Objects.nonNull(dto.getMaterialCode()), WmsInventory::getMaterialCode, dto.getMaterialCode()).like(Objects.nonNull(dto.getMaterialName()), WmsInventory::getMaterialName, dto.getMaterialName()).like(Objects.nonNull(dto.getCaseNo()), WmsInventory::getCaseNo, dto.getCaseNo()).like(Objects.nonNull(dto.getShelfName()), WmsInventory::getShelfName, dto.getShelfName()).like(Objects.nonNull(dto.getBatch()), WmsInventory::getBatch, dto.getBatch()).orderByDesc(WmsInventory::getUpdateTime);
         Page<WmsInventory> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), like);
         BeanUtil.copyProperties(resPage, page);
         List<WmsInventoryVO> res = BeanUtil.copyToList(resPage.getRecords(), WmsInventoryVO.class);
@@ -74,8 +65,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             dict.add(wmsInventoryVO.getUnit());
             materialIds.add(wmsInventoryVO.getMaterialId());
         });
-        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(materialIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> map = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dict),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> map = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dict), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(wmsInventoryVO -> {
             wmsInventoryVO.setUnitName(map.get(wmsInventoryVO.getUnit()));
             wmsInventoryVO.setEqpSpareVO(materialMap.get(wmsInventoryVO.getMaterialId()));
@@ -88,9 +79,23 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     public Boolean updateLockQuantity(List<WmsInventoryDTO> infoList, Integer state) {
         Assert.isTrue(CollUtil.isNotEmpty(infoList), "数据异常");
         //自定义sql 修改锁定库存信息
-        Boolean aBoolean = null;
+        Boolean aBoolean = Boolean.TRUE;
         if (WmsManagerConstant.InventoryEnum.ZERO.getCode().equals(state)) {
-            aBoolean = this.baseMapper.augmentLockQuantity(infoList);
+            //增加锁定库存，减少可用库存
+            List<Long> ids = Lists.newArrayList();
+            infoList.forEach(info -> ids.add(info.getId()));
+            Map<Long, List<WmsInventory>> collect = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, ids)).stream().collect(Collectors.groupingBy(WmsInventory::getId));
+            if (CollUtil.isNotEmpty(collect)) {
+                List<WmsInventory> inventoryList = Lists.newArrayList();
+                infoList.forEach(info -> {
+                    WmsInventory inventory = collect.get(info.getId()).get(0);
+                    inventory.setLockQuantity(inventory.getLockQuantity().add(info.getQuantity()));
+                    inventory.setAvailableQuantity(inventory.getLockQuantity().subtract(info.getQuantity()));
+                    inventoryList.add(inventory);
+                });
+                updateBatchById(inventoryList);
+            }
+//            aBoolean = this.baseMapper.augmentLockQuantity(infoList);
         } else if (WmsManagerConstant.InventoryEnum.ONE.getCode().equals(state)) {
             aBoolean = this.baseMapper.subtractLockQuantity(infoList);
         } else if (WmsManagerConstant.InventoryEnum.TWO.getCode().equals(state)) {
@@ -115,7 +120,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             });
             Map<String, WmsInventory> inventoryByCaseNo = getInventoryByCaseNo(list);
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             infoList.forEach(info -> {
                 WmsInventory orDefault = inventoryByCaseNo.get(info.getCaseNo());
                 SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
@@ -148,7 +153,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                 officeIds.add(info.getShelfId());
             });
             List<WmsInventory> addWmsInventory = Lists.newArrayList();
-            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(()->remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             infoList.forEach(info -> {
                 SysOfficeVO shelfVO = officeMap.get(info.getShelfId());
                 SysOfficeVO warehouseVO = officeMap.get(info.getWarehouseId());
@@ -330,13 +335,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNos));
             //处理数据
             if (CollUtil.isNotEmpty(list)) {
-                list.forEach(
-                        inventory -> {
-                            CaseSiteDTO caseSiteDTO = new CaseSiteDTO();
-                            BeanUtil.copyProperties(inventory, caseSiteDTO);
-                            map.put(caseSiteDTO.getCaseNo(), caseSiteDTO);
-                        }
-                );
+                list.forEach(inventory -> {
+                    CaseSiteDTO caseSiteDTO = new CaseSiteDTO();
+                    BeanUtil.copyProperties(inventory, caseSiteDTO);
+                    map.put(caseSiteDTO.getCaseNo(), caseSiteDTO);
+                });
             }
         }
         return map;
@@ -370,11 +373,10 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
             if (CollUtil.isNotEmpty(list)) {
                 list.forEach(inventory -> {
-                            MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
-                            BeanUtil.copyProperties(inventory, inventoryDTO);
-                            map.put(inventory.getMaterialId(), inventoryDTO);
-                        }
-                );
+                    MaterialInventoryDTO inventoryDTO = new MaterialInventoryDTO();
+                    BeanUtil.copyProperties(inventory, inventoryDTO);
+                    map.put(inventory.getMaterialId(), inventoryDTO);
+                });
             }
         }
         return map;
@@ -408,9 +410,7 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
                         BigDecimal sum = BigDecimal.ZERO;
                         wmsInventoryList.sort(Comparator.comparing(WmsStockInventoryDTO::getCreateDate));
                         //过滤库存小于等于O的数据
-                        List<WmsStockInventoryDTO> collect = wmsInventoryList.stream()
-                                .filter(wmsInventory -> wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0)
-                                .collect(Collectors.toList());
+                        List<WmsStockInventoryDTO> collect = wmsInventoryList.stream().filter(wmsInventory -> wmsInventory.getAvailableQuantity().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
                         if (CollUtil.isNotEmpty(collect)) {
                             for (WmsStockInventoryDTO wmsInventory : collect) {
                                 sum = wmsInventory.getAvailableQuantity().add(sum);
@@ -456,14 +456,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     @Override
     public Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO) {
         if (Objects.nonNull(wmsCheckCaseNoDTO)) {
-            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>()
-                    .eq(WmsInventory::getCaseNo, wmsCheckCaseNoDTO.getCaseNo()));
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().eq(WmsInventory::getCaseNo, wmsCheckCaseNoDTO.getCaseNo()));
             if (CollUtil.isNotEmpty(list)) {
                 Boolean aBoolean = Boolean.FALSE;
                 for (WmsInventory wmsInventory : list) {
-                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId()) &&
-                            wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch()) &&
-                            wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())) {
+                    if (wmsInventory.getShelfId().equals(wmsCheckCaseNoDTO.getShelfId()) && wmsInventory.getBatch().equals(wmsCheckCaseNoDTO.getBatch()) && wmsInventory.getMaterialId().equals(wmsCheckCaseNoDTO.getMaterialId())) {
                         aBoolean = Boolean.TRUE;
                     }
                 }
@@ -479,9 +476,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         if (CollUtil.isNotEmpty(caseNo)) {
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getCaseNo, caseNo));
             list.forEach(wmsInventory -> {
-                        map.put(wmsInventory.getCaseNo(), wmsInventory);
-                    }
-            );
+                map.put(wmsInventory.getCaseNo(), wmsInventory);
+            });
         }
         return map;
     }
@@ -491,9 +487,8 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         if (CollUtil.isNotEmpty(ids)) {
             List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getId, ids));
             list.forEach(wmsInventory -> {
-                        map.put(wmsInventory.getId(), wmsInventory);
-                    }
-            );
+                map.put(wmsInventory.getId(), wmsInventory);
+            });
         }
         return map;
     }
