@@ -550,6 +550,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getCode());
             sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTitle());
             //不给自己发消息
+
             longIds.remove(SecurityUtils.getUser().getUserId());
             sysMsgDTO.setUserList(longIds);
             String content = SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTemplate();
