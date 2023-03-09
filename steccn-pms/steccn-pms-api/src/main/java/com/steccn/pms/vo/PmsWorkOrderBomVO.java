@@ -67,4 +67,10 @@ public class PmsWorkOrderBomVO {
     @ApiModelProperty("是否回收")
     private Integer recycleFlag;
 
+    @ApiModelProperty("来源")
+    private Integer source;
+
+    @ApiModelProperty("来源主键")
+    private Long sourceId;
+
 }
