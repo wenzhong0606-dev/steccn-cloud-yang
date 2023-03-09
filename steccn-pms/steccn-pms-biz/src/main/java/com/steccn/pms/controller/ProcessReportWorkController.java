@@ -86,6 +86,13 @@ public class ProcessReportWorkController {
     public R<List<ProcessReportWorkMaterialListDTO>> materialConsume(@Valid @RequestBody ProcessReportWorkMaterialConsumeDTO dto) {
         return R.success(pmsReportWorkService.materialConsume(dto));
     }
+
+
+    @ApiOperation("物料消耗-根据工位获取线边仓数据")
+    @GetMapping("/material/line/warehouse")
+    public R<List<ProcessReportWorkMaterialListDTO>> materialLineWarehouse(@RequestParam Integer id) {
+        return R.success(pmsReportWorkService.materialLineWarehouse(id));
+    }
     @ApiOperation("工艺信息-报工分页列表")
     @PostMapping("/craft/page")
     public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){

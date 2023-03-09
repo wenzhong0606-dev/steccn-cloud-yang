@@ -1,6 +1,7 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.MessMaterialConsumeDTO;
 import com.steccn.pms.dto.MessMaterialStorageDTO;
@@ -168,4 +169,20 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Boolean checkCaseNo(WmsCheckCaseNoDTO wmsCheckCaseNoDTO);
+
+
+    /**
+     * 根据货架获取物料
+     * @param set
+     * @return
+     */
+    Map<Integer,List<WmsStockInventoryDTO>> materialByShelf(Set<Integer> set);
+
+
+    /**
+     * 根据仓库获取物料
+     * @param set
+     * @return
+     */
+    Map<Integer,List<WmsStockInventoryDTO>> materialByWarehouse(Set<Integer> set);
 }

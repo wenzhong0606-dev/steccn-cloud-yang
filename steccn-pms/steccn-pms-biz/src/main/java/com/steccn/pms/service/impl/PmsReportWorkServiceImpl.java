@@ -23,14 +23,8 @@ import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSysOfficeCollectFeignApi;
-import com.steccn.platform.vo.EqpSpareVO;
-import com.steccn.platform.vo.SysDictVO;
-import com.steccn.platform.vo.SysOfficeCollectVO;
-import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.feign.*;
+import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
@@ -67,8 +61,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, PmsReportWork>
-        implements PmsReportWorkService {
+public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, PmsReportWork> implements PmsReportWorkService {
 
     @Autowired
     private RemoteDictFeignApi remoteDictFeignApi;
@@ -87,8 +80,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Autowired
     private RemoteSpareFeignApi remoteSpareFeignApi;
     @Autowired
-    private RemoteMessFeignApi remoteMessFeignApi;
-    @Autowired
     private PmsCompleteDeliveryService completeDeliveryService;
     @Autowired
     private PmsCompleteDeliveryInfoService completeDeliveryInfoService;
@@ -104,6 +95,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     @Autowired
     private RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+
+    @Autowired
+    private RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
 
 
     @Override
@@ -127,8 +121,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         Map<Long, BaseSelectVO<Long>> orderUnitMap = produceOrderService.listUnit(orderSet);
 
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(organIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(organIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         records.forEach(ele -> {
             BaseSelectVO<Long> baseSelectVO = orderUnitMap.get(ele.getProduceOrderId());
@@ -187,7 +181,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
                 Assert.notNull(pmsProduceOrder, "生产订单不存在");
                 //校验产线和工位是否存在
-                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
                 //校验工序是否存在
                 PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
@@ -200,7 +194,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 Assert.notNull(pmsWorkOrderBatch, "批次不存在");
                 //校验班次和班组是否存在
                 //校验单位是否存在
-                Boolean unitBoolean = FeignOptional.of(()->remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Boolean unitBoolean = FeignOptional.of(() -> remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Assert.isTrue(unitBoolean, "单位不存在");
                 //校验是否物料的条数是否正确
                 //生成报工记录
@@ -232,24 +226,21 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
      * @return
      */
     private void validMaterialConsume(ProcessReportWorkSubmitDTO dto, Long processId) {
-        if(CollUtil.isNotEmpty(dto.getMaterialConsumeList())){
+        if (CollUtil.isNotEmpty(dto.getMaterialConsumeList())) {
             //根据生产订单id和工序
-            List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
-                    .eq(PmsWorkOrderBom::getWorkProduceId, dto.getProduceOrderId())
-                    .eq(PmsWorkOrderBom::getProcessId, processId));
-            if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
-                Set<Long> materialIdSet = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
-                Set<Long> consumeSet = dto.getMaterialConsumeList().stream().map(ProcessReportWorkMaterialListDTO::getModuleId).collect(Collectors.toSet());
-                if (!consumeSet.containsAll(materialIdSet)) {
-                    throw new BusinessException("部分物料库存不足，请补库存");
-                }
+//            List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, dto.getProduceOrderId()).eq(PmsWorkOrderBom::getProcessId, processId));
+//            if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
+//                Set<Long> materialIdSet = pmsWorkOrderBomList.stream().map(PmsWorkOrderBom::getModuleId).collect(Collectors.toSet());
+//                Set<Long> consumeSet = dto.getMaterialConsumeList().stream().map(ProcessReportWorkMaterialListDTO::getModuleId).collect(Collectors.toSet());
+//                if (!consumeSet.containsAll(materialIdSet)) {
+//                    throw new BusinessException("部分物料库存不足，请补库存");
+//                }
                 //可用数量必须大于实际数量
                 for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
                     if (materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
                         throw new BusinessException("物料消耗实际数量不可以大于可用数量");
                     }
                 }
-            }
             //去除物料消耗list
             List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
             dto.setMaterialConsumeList(materialListDTOList);
@@ -295,7 +286,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 wmsDeliveryReceiptInfoDTO.setMaterialId(materialDTO.getModuleId());
                 materialList.add(wmsDeliveryReceiptInfoDTO);
             }
-            SysDictVO sysDictVO = FeignOptional.of(()->remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             completeDelivery.setCode(maxOutVouchCode());
             completeDelivery.setOutStorageVoucher(completeDelivery.getCode());
             completeDelivery.setDeliveryTime(LocalDateTime.now());
@@ -335,10 +326,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
      */
     private String maxOutVouchCode() {
         String prefix = PmsCodeUtil.PREFIX_SO + LocalDate.now().toString().replaceAll(PmsCodeUtil.SHORT_LINE, Strings.EMPTY) + PmsCodeUtil.SHORT_LINE;
-        PmsCompleteDelivery one = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>()
-                .likeRight(PmsCompleteDelivery::getCode, prefix)
-                .orderByDesc(PmsCompleteDelivery::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsCompleteDelivery one = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().likeRight(PmsCompleteDelivery::getCode, prefix).orderByDesc(PmsCompleteDelivery::getCode).last(MpConstant.STR_LIMIT_1));
         long currentMax = PmsCodeUtil.DEFAULT_PADDING;
         if (Objects.nonNull(one)) {
             String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);
@@ -369,13 +357,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         Assert.notNull(pmsProduceOrderCraft, "工序不存在");
 
         //工位是否存在
-        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listById(Sets.newHashSet(dto.getStationId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.checkBetween(sysOfficeMap.size(), 1, 1, "工位不存在");
 
         //根据生产订单id和工序
-        List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>()
-                .eq(PmsWorkOrderBom::getWorkProduceId, pmsProduceOrder.getId())
-                .eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getProcessId()));
+        List<PmsWorkOrderBom> pmsWorkOrderBomList = workOrderBomService.list(new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, pmsProduceOrder.getId()).eq(PmsWorkOrderBom::getProcessId, pmsProduceOrderCraft.getProcessId()));
         //定义返回集合
         List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(pmsWorkOrderBomList)) {
@@ -389,8 +375,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 materialUnitMap.put(pmsWorkOrderBom.getModuleId(), pmsWorkOrderBom.getUnitId());
             }
             unitIdList.add(pmsProduceOrder.getUnitId());
-            Map<Long, String> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(unitIdList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(()->remoteSpareFeignApi.listById(idList),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, String> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitIdList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> eqpSpareMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(idList), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
             List<MaterialStorageInfoDTO> messMaterialStorageList = Lists.newArrayList();
             Map<Long, Long> unitMaterialMap = Maps.newHashMap();
@@ -402,14 +388,14 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 messMaterialStorageList.add(storageDTO);
                 unitMaterialMap.put(ele.getModuleId(), ele.getUnitId());
             });
-            List<WmsStockInventoryDTO> messList = FeignOptional.of(()->remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList),FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            List<WmsStockInventoryDTO> messList = FeignOptional.of(() -> remoteWmsInventoryFeignApi.materialConsume(messMaterialStorageList), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
             if (CollUtil.isNotEmpty(messList)) {
                 Set<Integer> storageSet = Sets.newHashSet();
                 for (WmsStockInventoryDTO messDto : messList) {
                     storageSet.add(messDto.getWarehouseId());
                     storageSet.add(messDto.getShelfId());
                 }
-                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(()->remoteOfficeFeign.listById(storageSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Integer, SysOfficeVO> sysOfficeCodeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(storageSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
                 for (WmsStockInventoryDTO messDto : messList) {
                     ProcessReportWorkMaterialListDTO resDTO = new ProcessReportWorkMaterialListDTO();
@@ -441,13 +427,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     @Override
     public Page<PmsReportWorkVO> reportWorkPageList(PmsReportWorkPageDTO dto) {
         //1.定义查询条件
-        LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>()
-                .eq(Objects.nonNull(dto.getProcessId()), PmsReportWork::getProcessId, dto.getProcessId())
-                .eq(Objects.nonNull(dto.getProduceId()), PmsReportWork::getProcessId, dto.getProduceId())
-                .eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getBatchNo, dto.getBatchNo())
-                .eq(Objects.nonNull(dto.getStationId()), PmsReportWork::getStationId, dto.getStationId())
-                .ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime())
-                .le(Objects.nonNull(dto.getEndTime()), PmsReportWork::getCreateTime, dto.getStartTime());
+        LambdaQueryWrapper<PmsReportWork> eq = new LambdaQueryWrapper<PmsReportWork>().eq(Objects.nonNull(dto.getProcessId()), PmsReportWork::getProcessId, dto.getProcessId()).eq(Objects.nonNull(dto.getProduceId()), PmsReportWork::getProcessId, dto.getProduceId()).eq(Objects.nonNull(dto.getBatchNo()), PmsReportWork::getBatchNo, dto.getBatchNo()).eq(Objects.nonNull(dto.getStationId()), PmsReportWork::getStationId, dto.getStationId()).ge(Objects.nonNull(dto.getStartTime()), PmsReportWork::getCreateTime, dto.getStartTime()).le(Objects.nonNull(dto.getEndTime()), PmsReportWork::getCreateTime, dto.getStartTime());
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -464,9 +444,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             stationIds.add(pmsReportWorkVO.getStationId());
         });
         //查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(()->remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(stationIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         res.forEach(pmsReportWorkVO -> {
             pmsReportWorkVO.setStation(officeMap.get(pmsReportWorkVO.getStationId()));
             pmsReportWorkVO.setUnit(dictMap.get(pmsReportWorkVO.getUnitId()));
@@ -541,6 +521,41 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return res;
     }
 
+    @Override
+    public List<ProcessReportWorkMaterialListDTO> materialLineWarehouse(Integer id) {
+        //获取工位线边仓数据
+        Assert.isTrue(Objects.nonNull(id), "工位数据不能为空");
+        Set<Integer> set = Sets.newHashSet(id);
+        Map<Integer, List<SysStationWarehouseVO>> integerListMap = FeignOptional.of(() -> remoteStationWarehouseFeignApi.listByStationIds(set), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //根据仓库获取物料数据
+        Set<Integer> idSet = Sets.newHashSet();
+        integerListMap.forEach((key, value) -> {
+            value.forEach(v -> idSet.add(v.getWarehouseId()));
+        });
+        List<ProcessReportWorkMaterialListDTO> list = Lists.newArrayList();
+        Map<Integer, List<WmsStockInventoryDTO>> map = FeignOptional.of(() -> remoteWmsInventoryFeignApi.materialByWarehouse(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(map)) {
+            Set<Long> ids = Sets.newHashSet();
+            map.forEach((key, value) -> {
+                value.forEach(dto -> {
+                    ProcessReportWorkMaterialListDTO material = new ProcessReportWorkMaterialListDTO();
+                    BeanUtil.copyProperties(dto, material);
+                    material.setModuleId(dto.getMaterialId());
+                    material.setModuleName(dto.getMaterialName());
+                    material.setModuleCode(dto.getMaterialCode());
+                    material.setUnitId(dto.getUnit());
+                    ids.add(dto.getUnit());
+                    list.add(material);
+                });
+            });
+            //获取单位名称
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            list.forEach(d -> d.setUnitName(dictMap.get(d.getUnitId())));
+        }
+
+        return list;
+    }
+
     /**
      * 获取报工编码
      *
@@ -550,10 +565,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
      */
     private String reportWorkCode(String orderNo, Integer processSort) {
         String prefix = orderNo + processSort;
-        PmsReportWork one = getOne(new LambdaQueryWrapper<PmsReportWork>()
-                .like(PmsReportWork::getCode, prefix)
-                .orderByDesc(PmsReportWork::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsReportWork one = getOne(new LambdaQueryWrapper<PmsReportWork>().like(PmsReportWork::getCode, prefix).orderByDesc(PmsReportWork::getCode).last(MpConstant.STR_LIMIT_1));
         long currentMax = PmsCodeUtil.DEFAULT_PADDING;
         if (Objects.nonNull(one)) {
             String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);

@@ -96,4 +96,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     BigDecimal preload(Integer stationId, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 获取物料消耗-线边仓数据
+     * @param id
+     * @return
+     */
+    List<ProcessReportWorkMaterialListDTO> materialLineWarehouse(Integer id);
 }

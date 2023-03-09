@@ -470,6 +470,40 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
         return true;
     }
 
+    @Override
+    public Map<Integer, List<WmsStockInventoryDTO>> materialByShelf(Set<Integer> set) {
+        Map<Integer, List<WmsStockInventoryDTO>> res = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(set)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getShelfId, set));
+            if (CollUtil.isNotEmpty(list)) {
+                List<WmsStockInventoryDTO> wmsStockInventoryDTOS = BeanUtil.copyToList(list, WmsStockInventoryDTO.class);
+                res = wmsStockInventoryDTOS.stream().collect(Collectors.groupingBy(WmsStockInventoryDTO::getShelfId));
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public Map<Integer, List<WmsStockInventoryDTO>> materialByWarehouse(Set<Integer> set) {
+
+        Map<Integer, List<WmsStockInventoryDTO>> res = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(set)) {
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getWarehouseId, set).gt(WmsInventory::getAvailableQuantity,BigDecimal.ZERO));
+            if (CollUtil.isNotEmpty(list)) {
+                List<WmsStockInventoryDTO> wmsStockInventoryDTOS = Lists.newArrayList();
+                list.forEach(wmsInventory -> {
+                    WmsStockInventoryDTO wmsStockInventoryDTO = new WmsStockInventoryDTO();
+                    BeanUtil.copyProperties(wmsInventory,wmsStockInventoryDTO);
+                    wmsStockInventoryDTO.setBatchNo(wmsInventory.getBatch());
+                    wmsStockInventoryDTO.setInventoryId(wmsInventory.getId());
+                    wmsStockInventoryDTOS.add(wmsStockInventoryDTO);
+                });
+                res = wmsStockInventoryDTOS.stream().collect(Collectors.groupingBy(WmsStockInventoryDTO::getWarehouseId));
+            }
+        }
+        return res;
+    }
+
 
     private Map<String, WmsInventory> getInventoryByCaseNo(List<String> caseNo) {
         Map<String, WmsInventory> map = Maps.newHashMap();
