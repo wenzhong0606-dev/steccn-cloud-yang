@@ -37,7 +37,7 @@ public class SpcWarnTask {
      * 02:05:00
      */
     @Async
-    @Scheduled(cron = "0 5 * * * ? *")
+    @Scheduled(cron = "0 5 * * * ?")
     public void hour() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_HOUR);
         boolean b = lock.tryLock();
@@ -64,7 +64,7 @@ public class SpcWarnTask {
      * 2023-02-26 00:10:00
      */
     @Async
-    @Scheduled(cron = "0 10 0 * * ? *")
+    @Scheduled(cron = "0 10 0 * * ?")
     public void day() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_DAY);
         boolean b = lock.tryLock();
@@ -92,7 +92,7 @@ public class SpcWarnTask {
      * 2023-03-20 00:15:00
      */
     @Async
-    @Scheduled(cron = "0 15 0 ? * 2 *")
+    @Scheduled(cron = "0 15 0 ? * 2")
     public void week() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_WEEK);
         boolean b = lock.tryLock();
@@ -120,7 +120,7 @@ public class SpcWarnTask {
      * 2023-06-01 00:20:00
      */
     @Async
-    @Scheduled(cron = "0 20 0 1 1/1 ? *")
+    @Scheduled(cron = "0 20 0 1 1/1 ?")
     public void month() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_MONTH);
         boolean b = lock.tryLock();
@@ -149,7 +149,7 @@ public class SpcWarnTask {
      * 2024-04-01 00:25:00
      */
     @Async
-    @Scheduled(cron = "0 25 0 1 1,4,7,10 ? *")
+    @Scheduled(cron = "0 25 0 1 1,4,7,10 ?")
     public void season() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_SEASON);
         boolean b = lock.tryLock();
@@ -177,7 +177,7 @@ public class SpcWarnTask {
      * 2027-01-01 00:30:00
      */
     @Async
-    @Scheduled(cron = "0 30 0 1 1 ? *")
+    @Scheduled(cron = "0 30 0 1 1 ?")
     public void year() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_YEAR);
         boolean b = lock.tryLock();

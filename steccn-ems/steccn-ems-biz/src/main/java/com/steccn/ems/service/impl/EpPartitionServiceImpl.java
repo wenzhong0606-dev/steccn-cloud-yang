@@ -27,6 +27,7 @@ import com.steccn.platform.vo.SysOfficeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -431,6 +432,48 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
+    public Map<Long, String> allPartitionNameMap(Integer energyType, Set<Long> partitionIdSet) {
+        Map<Long, String> resMap = Maps.newHashMap();
+        Map<Long, EpPartition> epPartitionMap = Maps.newHashMap();
+        List<EpPartition> epPartitionList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType));
+        if (CollUtil.isNotEmpty(epPartitionList)) {
+            epPartitionList.forEach(ele -> {
+                epPartitionMap.put(ele.getId(), ele);
+            });
+        }
+        partitionIdSet.forEach(ele -> {
+            EpPartition cur = epPartitionMap.get(ele);
+            if(Objects.nonNull(cur)){
+                cur.setCreateName(Strings.EMPTY);
+                EpPartition parent = parent(epPartitionMap, cur);
+                //获取到当前节点
+                resMap.put(ele, parent.getCreateName());
+            }
+        });
+        return resMap;
+    }
+
+    /**
+     * 获取节点的全路径
+     * @param epPartitionMap
+     * @param cur
+     * @return
+     */
+    private EpPartition parent(Map<Long, EpPartition> epPartitionMap, EpPartition cur) {
+        if (Strings.isBlank(cur.getCreateName())) {
+            cur.setCreateName(cur.getOfficeName());
+        } else {
+            cur.setCreateName(cur.getOfficeName() + "/" + cur.getCreateName());
+        }
+        if (Objects.nonNull(cur) && Objects.nonNull(cur.getParentId())) {
+            EpPartition parent = epPartitionMap.get(cur.getParentId());
+            parent.setCreateName(cur.getCreateName());
+            return parent(epPartitionMap, parent);
+        }
+        return cur;
+    }
+
+    @Override
     public List<EpPartitionVO> getAllChildrenById(Long partitionId) {
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionId));
         List<EpPartitionVO> epPartitionVOList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
@@ -465,6 +508,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         parentPartitionVO.setJoinOfficeNames(officeNames);
         return parentPartitionVO;
     }
+
+
     public void getJoinPartitionName(EpPartitionParentVO menu ,List<EpPartitionParentVO> menus,List<String> joinPartitions){
        if (CollUtil.isNotEmpty(menus)){
            for (EpPartitionParentVO mu : menus) {

@@ -1,5 +1,6 @@
 package com.steccn.data.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.data.vo.DwEpMeterCollectVO;
@@ -30,4 +31,17 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     Map<String, LocalDateTime> lastReadTime(Set<String> distantCodeSet);
+
+    /**
+     * 加入最近抄表时间
+     * @param batchList 最近抄表时间
+     */
+    void addLastRecordTime(List<EpMeterCollect> batchList);
+
+    /**
+     * 刷新最近抄表时间
+     * @param curTime 大于这个时间
+     * @return
+     */
+    Boolean refreshLastReadTime(LocalDateTime curTime);
 }

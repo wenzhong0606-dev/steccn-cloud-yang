@@ -10,16 +10,16 @@ import com.steccn.data.dto.CollectCommonDTO;
 import com.steccn.data.dto.EpMeterCollectDTO;
 import com.steccn.data.dto.PmStationCollectDTO;
 import com.steccn.data.dto.QtThirdPartyDefectiveDTO;
+import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.HbCollectService;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +35,7 @@ public class HbCollectController {
 
     private final HbCollectService hbCollectService;
     private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+    private final EpMeterCollectService epMeterCollectService;
 
     @PostMapping("/ep/meter")
     @ApiOperation(value = "能源绩效-远传仪表")
@@ -57,6 +58,12 @@ public class HbCollectController {
     public R<Boolean> saveDefective(HttpServletRequest request, @RequestBody QtThirdPartyDefectiveDTO dto) {
         validRequestHeader(request);
         return R.success(hbCollectService.saveDefective(dto));
+    }
+
+    @GetMapping("/meter/last/read/time/refresh")
+    @ApiOperation(value = "刷新最近抄表时间")
+    R<Boolean> refreshLastReadTime(@RequestParam("curTime") LocalDateTime curTime) {
+        return R.success(epMeterCollectService.refreshLastReadTime(curTime));
     }
 
     /**
