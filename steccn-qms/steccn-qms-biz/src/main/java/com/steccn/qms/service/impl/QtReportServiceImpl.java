@@ -33,6 +33,7 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
 import com.steccn.qms.util.*;
 import com.steccn.qms.vo.*;
+import com.steccn.websocket.constant.WebsocketConstant;
 import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -989,6 +990,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 sysMsgAdditionDTO.setId(Long.valueOf(entry.getValue().getId()));
                 sysMsgAdditionDTO.setTab(Long.valueOf(entry.getValue().getReportGroupId()));
                 sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+                sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
                 //发送消息
                 try {
                     Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();

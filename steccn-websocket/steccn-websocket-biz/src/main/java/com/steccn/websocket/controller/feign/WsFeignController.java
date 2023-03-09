@@ -36,9 +36,6 @@ public class WsFeignController {
     @SneakyThrows
     @PostMapping("/push/msg")
     public R<MsgPushDTO> pushMsg(@RequestBody MsgPushDTO msgPushDTO) {
-        if(ObjectUtil.isNull(msgPushDTO.getType())){
-            msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-        }
         Set<Long> userIdList = msgPushDTO.getUserIdList();
         msgPushDTO.setUserIdList(null);
         String msg = objectMapper.writeValueAsString(msgPushDTO);

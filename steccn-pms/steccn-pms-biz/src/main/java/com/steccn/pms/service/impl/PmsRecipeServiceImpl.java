@@ -477,7 +477,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         MessScopeVO messScopeVO = remoteMessFeignApi.getUserNameByPermission(PmManagerConstant.RECIPE_PERMISSION_VIEW);
         if (CollUtil.isNotEmpty(messScopeVO.getStringList())) {
             MsgPushDTO msg = new MsgPushDTO();
-            msg.setType(WebsocketConstant.WsPushTypeEnum.RECIPE_REFRESH.getType());
+            msg.setType(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getCode());
             msg.setMsgCategory(SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
             msg.setMsgType(SysMsgConstant.MsgTypeEnum.RECIPE_REFRESH.getCode());
             List<Integer> ids = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(messScopeVO.getStringList()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -488,8 +488,10 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 });
                 //不给自己发消息
                 longIds.remove(SecurityUtils.getUser().getUserId());
-                msg.setUserIdList(longIds);
-                FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(longIds)) {
+                    msg.setUserIdList(longIds);
+                    FeignOptional.of(() -> remoteWsFeignApi.pushMsg(msg), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+                }
             }
         }
     }
@@ -549,6 +551,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTitle());
             //不给自己发消息
             longIds.remove(SecurityUtils.getUser().getUserId());
+            sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.RECIPE_REFRESH.getType());
             sysMsgDTO.setUserList(longIds);
             String content = SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTemplate();
             sysMsgDTO.setContent(String.format(content, SecurityUtils.getUser().getName(), version));
