@@ -451,6 +451,9 @@ public class OaService {
             return vos;
         }
         JSONArray jsonArray = jsonObject.getJSONArray(OaConstant.OA_CAPITAL_DATA);
+        if(Objects.isNull(jsonArray)){
+            return vos;
+        }
         vos = jsonArray.toJavaList(OaRosterRecordVO.class);
         return vos;
     }
