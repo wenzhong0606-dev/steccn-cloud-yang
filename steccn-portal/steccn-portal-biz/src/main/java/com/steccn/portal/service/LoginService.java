@@ -1,6 +1,7 @@
 package com.steccn.portal.service;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
@@ -98,7 +99,7 @@ public class LoginService {
                 throw new BusinessException("OA用户登录失败");
             }
             //将用户和clientNo绑定起来,用于push消息
-            if(Objects.nonNull(clientNo)){
+            if(StrUtil.isNotBlank(clientNo)){
                 SysUserClientRefDTO sysUserClientRefDTO = new SysUserClientRefDTO();
                 sysUserClientRefDTO.setClientNo(clientNo);
                 sysUserClientRefDTO.setUserId(steccnTokenVO.getOaUserId().longValue());
