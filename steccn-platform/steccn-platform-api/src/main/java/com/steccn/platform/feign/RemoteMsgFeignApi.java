@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(contextId = "remoteMsgFeignApi", value = FeignConstant.STECCN_PLATFORM_SERVICE_NAME)
 public interface RemoteMsgFeignApi {
 
-    @PostMapping("/platform/sys/msg")
+    @PostMapping("/feign/platform/sys/msg")
     @ApiOperation("发送消息")
     R<Boolean> sendMsg(@RequestBody SysMsgSendDTO sysMsgDTO);
 }

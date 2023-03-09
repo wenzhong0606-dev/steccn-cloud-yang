@@ -88,7 +88,6 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         msgPushDTO.setReadFlag(MpConstant.NO);
         try {
             remoteWsFeignApi.pushMsg(msgPushDTO);
-
         } catch (Exception e) {
             log.error("消息推送异常 -> {}",e.getLocalizedMessage());
         }
