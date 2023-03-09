@@ -545,7 +545,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         }
         if (CollUtil.isNotEmpty(longIds)) {
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
-            sysMsgDTO.setType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getCode());
             sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTitle());
             sysMsgDTO.setUserList(longIds);
             String content = SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getTemplate();
