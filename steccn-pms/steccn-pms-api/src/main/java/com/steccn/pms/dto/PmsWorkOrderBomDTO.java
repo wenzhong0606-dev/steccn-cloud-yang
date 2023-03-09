@@ -86,5 +86,10 @@ public class PmsWorkOrderBomDTO {
     @ApiModelProperty("工艺路线组件id")
     private Long craftRouteModuleId;
 
+    @ApiModelProperty("来源 0手动添加 1工艺路线 2客户物料")
+    private Integer source;
+
+    @ApiModelProperty("来源主键")
+    private Long sourceId;
 
 }

@@ -12,10 +12,7 @@ import feign.Headers;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 
 import java.math.BigDecimal;
@@ -109,5 +106,16 @@ public interface RemoteWmsInventoryFeignApi {
     @PostMapping(value = "/feign/wms/inventory/stockByCaseNo")
     @ResponseBody
     R<Map<String, CaseSiteDTO>> caseSite(@RequestBody Set<String> caseNoSet);
+
+
+    @ApiOperation("根据货架获取物料信息")
+    @PostMapping("/feign/wms/inventory/material/shelf")
+    R<Map<Integer,List<WmsStockInventoryDTO>>> materialByShelf(@RequestParam("set") Set<Integer> set);
+
+
+    @ApiOperation("根据仓库获取物料信息")
+    @PostMapping("/feign/wms/inventory/material/warehouse")
+    R<Map<Integer,List<WmsStockInventoryDTO>>> materialByWarehouse(@RequestParam("set") Set<Integer> set);
+
 
 }

@@ -30,6 +30,7 @@
             #{type}
         </foreach>
         and u.user_id = #{userId}
+        and u.read_flag = 0
     </select>
     <select id="msgPage" resultMap="pageMap">
         SELECT m.id , m.title, m.content, m.addition, m.create_name, m.create_time , u.read_flag , m.type

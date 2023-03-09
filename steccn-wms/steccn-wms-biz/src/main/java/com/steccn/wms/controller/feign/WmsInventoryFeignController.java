@@ -77,4 +77,15 @@ public class WmsInventoryFeignController {
         return R.success(wmsDeliveryReceiptService.generateDelivery(dto));
     }
 
+    @ApiOperation("根据货架获取物料信息")
+    @PostMapping("/material/shelf")
+    public R<Map<Integer,List<WmsStockInventoryDTO>>> materialByShelf(@RequestParam("set") Set<Integer> set){
+        return R.success(wmsInventoryService.materialByShelf(set));
+    }
+
+    @ApiOperation("根据仓库获取物料信息")
+    @PostMapping("/material/warehouse")
+    public R<Map<Integer,List<WmsStockInventoryDTO>>> materialByWarehouse(@RequestParam("set") Set<Integer> set){
+        return R.success(wmsInventoryService.materialByWarehouse(set));
+    }
 }

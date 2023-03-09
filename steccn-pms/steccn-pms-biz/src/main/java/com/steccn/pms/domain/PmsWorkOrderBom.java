@@ -90,6 +90,16 @@ public class PmsWorkOrderBom implements Serializable {
     private Integer recycleFlag;
 
     /**
+     * 来源
+     */
+    private Integer source;
+
+    /**
+     * 来源主键
+     */
+    private Long sourceId;
+
+    /**
      * 创建人id
      */
     @TableField(fill = FieldFill.INSERT)

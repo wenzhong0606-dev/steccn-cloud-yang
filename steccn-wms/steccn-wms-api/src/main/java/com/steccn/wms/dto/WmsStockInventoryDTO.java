@@ -57,8 +57,14 @@ public class WmsStockInventoryDTO {
     @ApiModelProperty("仓库id")
     private Integer warehouseId;
 
+    @ApiModelProperty("仓库名称")
+    private String warehouseName;
+
     @ApiModelProperty("货架id")
     private Integer  shelfId;
+
+    @ApiModelProperty("货架名称")
+    private String shelfName;
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createDate;
