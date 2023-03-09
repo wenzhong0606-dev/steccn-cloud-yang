@@ -68,6 +68,8 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
             log.debug("节点id为空");
             return result;
         }
+        //取三层节点
+        epPartitionList = getThree(epPartitionList);
         List<Long> partitionIdList = Lists.newArrayList();
         epPartitionList.forEach(tmp -> {
             partitionIdList.add(tmp.getId());
@@ -139,6 +141,8 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
 //        List<EpPartitionVO> epPartitionVOList = epEnergyTypeVOList.getEpPartitionVOList();
         //一把拉出所有的树状数据
         List<EpPartition> epPartitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getEnergyTypeId()));
+        //获取三层节点
+        epPartitionList = getThree(epPartitionList);
         //根据parentId排序一下
         epPartitionList = epPartitionList.stream().sorted(Comparator.comparing(EpPartition::getOfficeName, Comparator.nullsFirst(String::compareTo))).collect(Collectors.toList());
         List<EpPartition> epPartitionList1 = epPartitionList;
@@ -260,6 +264,33 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
                 + LocalDateUtil.localDateFormat(dto.getDateStart(), DatePattern.NORM_DATE_PATTERN) + "_"
                 + LocalDateUtil.localDateFormat(dto.getDateEnd(),DatePattern.NORM_DATE_PATTERN);
         DownloadUtil.downloadEnergyTemplate(response, EpManagerConstant.EP_DOWNLOAD_MODEL_NAME_NYLX,excelName,map,detail,dto.getBase64());
+    }
+
+    /**
+     * 获取三层节点
+     * @param epPartitionList
+     * @return
+     */
+    protected List<EpPartition> getThree(List<EpPartition> epPartitionList){
+        List<EpPartition> result = Lists.newArrayList();
+        //获取根
+        EpPartition one = epPartitionList.stream().filter(v -> Objects.isNull(v.getParentId())).findFirst().get();
+        result.add(one);
+        epPartitionList = epPartitionList.stream().filter(v -> !Objects.isNull(v.getParentId())).collect(Collectors.toList());
+        //获取二层节点
+        List<EpPartition> two = epPartitionList.stream().filter(v -> v.getParentId().equals(one.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(two)){
+            result.addAll(two);
+            //三层节点
+            List<EpPartition> finalEpPartitionList = epPartitionList;
+            two.forEach(tmp -> {
+                List<EpPartition> three = finalEpPartitionList.stream().filter(v -> v.getParentId().equals(tmp.getId())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(three)){
+                    result.addAll(three);
+                }
+            });
+        }
+        return result;
     }
 
 }
