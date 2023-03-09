@@ -37,7 +37,7 @@ public class SpcWarnTask {
      * 02:05:00
      */
     @Async
-    @Scheduled(cron = "0 5 * * * ? *")
+    @Scheduled(cron = "0 8 * * * ? *")
     public void hour() {
         RLock lock = redissonClient.getLock(LockConstant.SPC_WARN_HOUR);
         boolean b = lock.tryLock();

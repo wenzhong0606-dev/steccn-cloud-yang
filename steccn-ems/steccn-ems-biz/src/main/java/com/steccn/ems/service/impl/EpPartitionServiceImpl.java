@@ -443,10 +443,12 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }
         partitionIdSet.forEach(ele -> {
             EpPartition cur = epPartitionMap.get(ele);
-            cur.setCreateName(Strings.EMPTY);
-            EpPartition parent = parent(epPartitionMap, cur);
-            //获取到当前节点
-            resMap.put(ele, parent.getCreateName());
+            if(Objects.nonNull(cur)){
+                cur.setCreateName(Strings.EMPTY);
+                EpPartition parent = parent(epPartitionMap, cur);
+                //获取到当前节点
+                resMap.put(ele, parent.getCreateName());
+            }
         });
         return resMap;
     }

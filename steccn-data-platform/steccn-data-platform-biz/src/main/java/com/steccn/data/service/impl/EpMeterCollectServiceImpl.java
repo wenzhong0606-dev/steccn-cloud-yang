@@ -16,11 +16,14 @@ import com.steccn.data.mapper.EpMeterCollectMapper;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yequan
@@ -30,6 +33,8 @@ import java.util.Set;
 @Service
 public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper, EpMeterCollect>
         implements EpMeterCollectService {
+
+    private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
 
     @Override
     public List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList) {
@@ -51,16 +56,34 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     public Map<String, LocalDateTime> lastReadTime(Set<String> distantCodeSet) {
         Map<String, LocalDateTime> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(distantCodeSet)) {
-            List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
-                    .lambda().in(EpMeterCollect::getCode, distantCodeSet)
-                    .groupBy(EpMeterCollect::getCode));
-            //如果集合不为空
-            if (CollUtil.isNotEmpty(dbList)) {
-                dbList.forEach(ele -> {
-                    resMap.put(ele.getCode(), ele.getRecordTime());
-                });
-            }
+            distantCodeSet.forEach(ele -> {
+                LocalDateTime lastRecordTime = lastRecordTimeMap.get(ele);
+                resMap.put(ele, lastRecordTime);
+            });
         }
         return resMap;
+    }
+
+    @Override
+    public void addLastRecordTime(List<EpMeterCollect> batchList) {
+        if (CollUtil.isNotEmpty(batchList)) {
+            batchList.forEach(ele -> {
+                lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
+            });
+        }
+    }
+
+    @Override
+    public Boolean refreshLastReadTime() {
+        List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
+                .lambda().ge(EpMeterCollect::getRecordTime, LocalDateTime.of(LocalDate.now(), LocalTime.MIN))
+                .groupBy(EpMeterCollect::getCode));
+        //如果集合不为空
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
+            });
+        }
+        return Boolean.TRUE;
     }
 }

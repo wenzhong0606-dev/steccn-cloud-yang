@@ -103,7 +103,13 @@ public class HbCollectServiceImpl implements HbCollectService {
             epMeterCollect.setRecordTime(data.getTimestamp());
             batchList.add(epMeterCollect);
         }
-        poolExecutor.execute(() -> epMeterCollectService.saveBatch(batchList));
+        poolExecutor.execute(() -> {
+            boolean b = epMeterCollectService.saveBatch(batchList);
+            log.debug("插入结果 -> {}",b);
+            if(b){
+                epMeterCollectService.addLastRecordTime(batchList);
+            }
+        });
         return Boolean.TRUE;
     }
 
