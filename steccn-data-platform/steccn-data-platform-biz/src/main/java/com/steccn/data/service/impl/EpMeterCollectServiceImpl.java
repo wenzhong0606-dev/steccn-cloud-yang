@@ -74,9 +74,9 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     }
 
     @Override
-    public Boolean refreshLastReadTime() {
+    public Boolean refreshLastReadTime(LocalDateTime curTime) {
         List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
-                .lambda().ge(EpMeterCollect::getRecordTime, LocalDateTime.of(LocalDate.now(), LocalTime.MIN))
+                .lambda().ge(EpMeterCollect::getRecordTime, curTime)
                 .groupBy(EpMeterCollect::getCode));
         //如果集合不为空
         if (CollUtil.isNotEmpty(dbList)) {

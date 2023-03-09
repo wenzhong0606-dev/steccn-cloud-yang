@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -61,8 +62,8 @@ public class HbCollectController {
 
     @GetMapping("/meter/last/read/time/refresh")
     @ApiOperation(value = "刷新最近抄表时间")
-    R<Boolean> refreshLastReadTime(){
-        return R.success(epMeterCollectService.refreshLastReadTime());
+    R<Boolean> refreshLastReadTime(@RequestParam("curTime") LocalDateTime curTime) {
+        return R.success(epMeterCollectService.refreshLastReadTime(curTime));
     }
 
     /**

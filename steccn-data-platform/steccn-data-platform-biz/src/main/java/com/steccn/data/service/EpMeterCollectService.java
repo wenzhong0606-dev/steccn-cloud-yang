@@ -40,7 +40,8 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
     /**
      * 刷新最近抄表时间
+     * @param curTime 大于这个时间
      * @return
      */
-    Boolean refreshLastReadTime();
+    Boolean refreshLastReadTime(LocalDateTime curTime);
 }
