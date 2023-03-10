@@ -200,13 +200,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
 
         if (dto.getAdminFlag().equals(1)) {
             epMeterRead.setAdminTime(LocalDateTime.now());
+            epMeterRead.setAdminValue(dto.getReadValue());
             epMeterOperationRecord.setOpNode(1);
         } else {
             epMeterRead.setReadTime(LocalDateTime.now());
             epMeterRead.setReadValue(dto.getReadValue());
             epMeterOperationRecord.setOpNode(0);
         }
-        epMeterRead.setAdminValue(dto.getReadValue());
         save(epMeterRead);
         SteccnUser user = SecurityUtils.getUser();
         epMeterOperationRecord.setReadId(epMeterRead.getId());
