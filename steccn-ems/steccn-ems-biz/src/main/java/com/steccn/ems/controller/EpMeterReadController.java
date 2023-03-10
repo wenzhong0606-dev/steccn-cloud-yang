@@ -1,5 +1,6 @@
 package com.steccn.ems.controller;
 
+import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
@@ -33,6 +34,7 @@ public class EpMeterReadController {
 
     @PostMapping("/add")
     @ApiOperation(value = "抄表管理新增")
+    @SysLog("抄表管理新增")
     public R<Boolean> add(@RequestBody EpMeterReadAddDTO dto) {
         return R.success(epMeterReadService.add(dto));
     }
@@ -45,6 +47,7 @@ public class EpMeterReadController {
 
     @PutMapping("/updateBatch")
     @ApiOperation(value = "抄表管理批量修改")
+    @SysLog("抄表管理批量修改")
     public R<Boolean> updateBatch(@RequestBody List<EpMeterReadUpdateDTO> dtoList) {
         return R.success(epMeterReadService.updateBatch(dtoList));
     }

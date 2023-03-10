@@ -19,7 +19,7 @@ import java.util.Set;
 @ApiModel("消息推送dto")
 public class MsgPushDTO implements Serializable {
 
-    @ApiModelProperty("类型")
+    @ApiModelProperty("推送类型")
     private Integer type;
 
     @ApiModelProperty("消息id")

@@ -86,15 +86,17 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
         msgPushDTO.setAddition(sysMsgDTO.getAddition());
         msgPushDTO.setReadFlag(MpConstant.NO);
+        //得到推送类型
+        msgPushDTO.setType(sysMsgDTO.getPushType());
         try {
             remoteWsFeignApi.pushMsg(msgPushDTO);
         } catch (Exception e) {
-            log.error("消息推送异常 -> {}",e.getLocalizedMessage());
+            log.error("消息推送异常 -> {}", e.getLocalizedMessage());
         }
         try {
             //调用接口
-            sysMsgDTO.getUserList().forEach(ele ->{
-                poolExecutor.execute(() ->{
+            sysMsgDTO.getUserList().forEach(ele -> {
+                poolExecutor.execute(() -> {
                     SysMobilePushDTO sysMobilePushDTO = new SysMobilePushDTO();
                     sysMobilePushDTO.setCategory(msgPushDTO.getMsgCategory());
                     sysMobilePushDTO.setType(msgPushDTO.getMsgType());
@@ -104,8 +106,8 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                     sysMobilePushService.push(sysMobilePushDTO);
                 });
             });
-        }catch (Exception e){
-            log.error("消息push异常 -> {}",e.getLocalizedMessage());
+        } catch (Exception e) {
+            log.error("消息push异常 -> {}", e.getLocalizedMessage());
         }
         return Boolean.TRUE;
     }
@@ -142,7 +144,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     public List<SysMsgPageVO> msgPage(SysMsgPageDTO dto) {
         List<Integer> typeList = SysMsgConstant.MsgTypeEnum.codeList(dto.getCategory());
         if (CollUtil.isNotEmpty(typeList)) {
-            List<SysMsgPageVO> list = baseMapper.msgPage(new SlidePageDTO(dto.getIdx(),dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
+            List<SysMsgPageVO> list = baseMapper.msgPage(new SlidePageDTO(dto.getIdx(), dto.getSize()), typeList, SecurityUtils.getUser().getUserId());
             list.forEach(ele -> {
                 //消息类别
                 ele.setCategory(SysMsgConstant.MsgTypeEnum.category(ele.getType()));

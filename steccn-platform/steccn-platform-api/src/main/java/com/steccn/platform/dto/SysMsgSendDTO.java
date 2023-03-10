@@ -42,4 +42,8 @@ public class SysMsgSendDTO implements Serializable {
     @Size(min = 1, message = "消接收用户不能为空")
     @NotNull(message = "消接收用户不能为空")
     private Set<Long> userList;
+
+    @ApiModelProperty("推送类型")
+    @NotNull(message = "推送类型不能为空")
+    private Integer pushType;
 }

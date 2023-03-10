@@ -195,9 +195,10 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
 
         //查询所有远传仪表编码的最近抄表时间
         long l = System.currentTimeMillis();
-        log.info("start {}",l);
-        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantCodeList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-        log.info("end {}", System.currentTimeMillis() - l);
+
+//        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantCodeList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        Map<String, LocalDateTime> lastReadTimeMap = Maps.newHashMap();
+
         //查询所有非远传仪表编码的最近抄表时间
         Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))
                 .map(EpInstrumentAccountPageVO::getId).collect(Collectors.toSet());

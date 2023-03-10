@@ -135,6 +135,11 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-oa-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-websocket-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
