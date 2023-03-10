@@ -302,6 +302,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 //湿基用量 湿基用量=干基用量/(1-湿基含水率)
                 BigDecimal wetBasisQuantity = BigDecimalUtil.divide(tmp.getDryBasisQuantity(),
                         BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), wetBasisWaterRateNum, 6), 4);
+                //湿基用量加总
+                wetBasisQuantityCount = BigDecimalUtil.add(wetBasisQuantityCount,wetBasisQuantity,4);
                 pmsRecipeRawModel.setWetBasisQuantity(wetBasisQuantity);
                 pmsRecipeRawModel.setWetBasisUnit(sysDictVO.getId());
                 pmsRecipeRawModelList.add(pmsRecipeRawModel);
