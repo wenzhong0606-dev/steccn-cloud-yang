@@ -64,6 +64,9 @@ public class PmsWorkOrderBomVO {
     @ApiModelProperty("组件报废百分比")
     private Float componentScrapingPercent;
 
+    @ApiModelProperty("工艺路线组件id")
+    private Long craftRouteModuleId;
+
     @ApiModelProperty("是否回收")
     private Integer recycleFlag;
 

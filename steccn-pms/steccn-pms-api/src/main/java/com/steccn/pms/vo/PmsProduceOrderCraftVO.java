@@ -63,6 +63,9 @@ public class PmsProduceOrderCraftVO {
     @ApiModelProperty("出站")
     private Integer outStationFlag;
 
+    @ApiModelProperty("工艺路线工序id")
+    private Long craftRouteProcessId;
+
     @ApiModelProperty("工位信息")
     private List<PmsWorkOrderCraftStationVO> stationList;
 }
