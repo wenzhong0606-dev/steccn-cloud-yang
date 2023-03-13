@@ -68,6 +68,7 @@ public class PmsRecipe implements Serializable {
     /**
      * 备注
      */
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String note;
 
     /**
