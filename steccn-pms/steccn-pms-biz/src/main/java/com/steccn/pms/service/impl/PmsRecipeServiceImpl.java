@@ -445,7 +445,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
             recipeModel.setClinkerQuantity(clinkerQuantityNum);
-            if (StrUtil.isNotBlank(dto.getNote())) {
+            if (Objects.nonNull(dto.getNote())) {
                 recipeModel.setNote(dto.getNote());
             }
             recipeModel.setId(null);
