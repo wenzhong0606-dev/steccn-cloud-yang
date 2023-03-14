@@ -1,6 +1,7 @@
 package com.steccn.data.controller;
 
 import cn.hutool.core.util.IdUtil;
+import com.google.common.collect.Lists;
 import com.steccn.common.vo.R;
 import com.steccn.data.domain.TSysUser;
 import com.steccn.data.mapper.TSysUserMapper;
@@ -32,6 +33,7 @@ public class TSysUserController {
             TSysUser tSysUser = new TSysUser();
             tSysUser.setId(IdUtil.getSnowflake().nextId());
             tSysUser.setUsername(i + "");
+            tSysUser.setRecordTime(LocalDateTime.now());
             tSysUserService.save(tSysUser);
         }
         return R.success();
