@@ -33,7 +33,8 @@ public class TSysUserController {
             TSysUser tSysUser = new TSysUser();
             tSysUser.setId(IdUtil.getSnowflake().nextId());
             tSysUser.setUsername(i + "");
-            tSysUser.setRecordTime(LocalDateTime.now());
+            LocalDateTime localDateTime = LocalDateTime.now().plusMonths(1L);
+            tSysUser.setRecordTime(localDateTime);
             tSysUserService.save(tSysUser);
         }
         return R.success();
