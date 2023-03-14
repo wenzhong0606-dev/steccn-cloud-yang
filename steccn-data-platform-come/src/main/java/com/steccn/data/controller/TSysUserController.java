@@ -43,9 +43,9 @@ public class TSysUserController {
             TSysUser tSysUser = new TSysUser();
             tSysUser.setId(IdUtil.getSnowflake().nextId());
             tSysUser.setUsername(i + "");
-            tSysUserMapper.insertOrder(tSysUser.getId(), tSysUser.getUsername(), LocalDateTime.now());
+            tSysUser.setRecordTime(LocalDateTime.now());
+            tSysUserMapper.insert(tSysUser);
         }
         return R.success();
     }
-
 }
