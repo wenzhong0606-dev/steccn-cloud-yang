@@ -3,12 +3,15 @@ package com.steccn.data.controller;
 import cn.hutool.core.util.IdUtil;
 import com.steccn.common.vo.R;
 import com.steccn.data.domain.TSysUser;
+import com.steccn.data.mapper.TSysUserMapper;
 import com.steccn.data.service.TSysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 /**
  * @author yequan
@@ -20,16 +23,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/data/platform")
 public class TSysUserController {
 
-    @Autowired
     private final TSysUserService tSysUserService;
+    private final TSysUserMapper tSysUserMapper;
 
     @GetMapping("/test")
-    public R<Boolean> epMeter() {
-        for (int i = 1; i < 20; i++) {
+    public R<Boolean> test() {
+        for (int i = 1; i < 2; i++) {
             TSysUser tSysUser = new TSysUser();
             tSysUser.setId(IdUtil.getSnowflake().nextId());
             tSysUser.setUsername(i + "");
             tSysUserService.save(tSysUser);
+        }
+        return R.success();
+    }
+
+    @GetMapping("/test1")
+    public R<Boolean> test1() {
+        for (int i = 1; i < 2; i++) {
+            TSysUser tSysUser = new TSysUser();
+            tSysUser.setId(IdUtil.getSnowflake().nextId());
+            tSysUser.setUsername(i + "");
+            tSysUserMapper.insertOrder(tSysUser.getId(), tSysUser.getUsername(), LocalDateTime.now());
         }
         return R.success();
     }

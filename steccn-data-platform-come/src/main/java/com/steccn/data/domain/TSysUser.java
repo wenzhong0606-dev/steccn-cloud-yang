@@ -6,9 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
- * 
  * @TableName t_sys_user
  */
 @TableName(value ="t_sys_user")
@@ -24,6 +24,8 @@ public class TSysUser implements Serializable {
      * 用户名
      */
     private String username;
+
+    private LocalDateTime recordTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
