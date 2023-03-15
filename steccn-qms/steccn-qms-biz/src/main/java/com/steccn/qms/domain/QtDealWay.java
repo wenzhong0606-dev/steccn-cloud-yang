@@ -9,9 +9,9 @@ import lombok.Data;
 
 /**
  * 处理方式表
- * @TableName qms_deal_way
+ * @TableName qt_deal_way
  */
-@TableName(value ="qms_deal_way")
+@TableName(value ="qt_deal_way")
 @Data
 public class QtDealWay implements Serializable {
     /**
@@ -19,6 +19,11 @@ public class QtDealWay implements Serializable {
      */
     @TableId
     private Integer id;
+
+    /**
+     * 类型 0客诉 1不合格品
+     */
+    private Integer type;
 
     /**
      * 处理方式
