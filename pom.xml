@@ -25,6 +25,7 @@
         <module>steccn-data-platform</module>
         <module>steccn-websocket</module>
         <module>steccn-canal</module>
+        <module>steccn-data-platform-come</module>
     </modules>
 
     <properties>

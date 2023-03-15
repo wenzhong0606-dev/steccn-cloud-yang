@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.data.mapper.QtDefectCollectDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.data.domain.QtDefectCollectDetail">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="defectType" column="defect_type" jdbcType="VARCHAR"/>
+            <result property="level" column="level" jdbcType="VARCHAR"/>
+            <result property="defectCount" column="defect_count" jdbcType="VARCHAR"/>
+            <result property="pushId" column="push_id" jdbcType="BIGINT"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,defect_type,level,
+        defect_count,push_id,create_time
+    </sql>
+</mapper>
