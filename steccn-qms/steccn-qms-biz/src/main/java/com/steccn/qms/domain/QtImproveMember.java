@@ -8,9 +8,9 @@ import lombok.Data;
 
 /**
  * 整改成员
- * @TableName qms_improve_member
+ * @TableName qt_improve_member
  */
-@TableName(value ="qms_improve_member")
+@TableName(value ="qt_improve_member")
 @Data
 public class QtImproveMember implements Serializable {
     /**
