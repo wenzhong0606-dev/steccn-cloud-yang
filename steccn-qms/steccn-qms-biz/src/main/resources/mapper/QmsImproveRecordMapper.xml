@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.qms.mapper.QmsImproveRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QmsImproveRecord">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="improveOrder" column="improve_order" jdbcType="VARCHAR"/>
+            <result property="desc" column="desc" jdbcType="VARCHAR"/>
+            <result property="customerComplainId" column="customer_complain_id" jdbcType="BIGINT"/>
+            <result property="customerComplainTitle" column="customer_complain_title" jdbcType="VARCHAR"/>
+            <result property="defectProductId" column="defect_product_id" jdbcType="BIGINT"/>
+            <result property="defectProductTitle" column="defect_product_title" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="startApproverId" column="start_approver_id" jdbcType="INTEGER"/>
+            <result property="startApproverName" column="start_approver_name" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,improve_order,desc,
+        customer_complain_id,customer_complain_title,defect_product_id,
+        defect_product_title,status,start_approver_id,
+        start_approver_name,create_by,create_name,
+        create_time,update_by,update_name,
+        update_time,del_flag
+    </sql>
+</mapper>
