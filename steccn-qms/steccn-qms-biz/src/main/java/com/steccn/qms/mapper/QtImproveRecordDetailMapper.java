@@ -1,7 +1,8 @@
 package com.steccn.qms.mapper;
 
-import com.steccn.qms.domain.QmsImproveRecordDetail;
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.qms.domain.QtImproveRecordDetail;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.qms.domain.QmsImproveRecordDetail
 */
 @Mapper
-public interface QtImproveRecordDetailMapper extends BaseMapper<QmsImproveRecordDetail> {
+public interface QtImproveRecordDetailMapper extends BaseMapper<QtImproveRecordDetail> {
 
 }
 

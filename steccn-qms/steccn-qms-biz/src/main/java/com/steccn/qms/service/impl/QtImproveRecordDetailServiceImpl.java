@@ -1,7 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.qms.domain.QmsImproveRecordDetail;
+import com.steccn.qms.domain.QtImproveRecordDetail;
 import com.steccn.qms.service.QtImproveRecordDetailService;
 import com.steccn.qms.mapper.QtImproveRecordDetailMapper;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 * @createDate 2023-03-15 10:16:54
 */
 @Service
-public class QtImproveRecordDetailServiceImpl extends ServiceImpl<QtImproveRecordDetailMapper, QmsImproveRecordDetail>
+public class QtImproveRecordDetailServiceImpl extends ServiceImpl<QtImproveRecordDetailMapper, QtImproveRecordDetail>
     implements QtImproveRecordDetailService {
 
 }
