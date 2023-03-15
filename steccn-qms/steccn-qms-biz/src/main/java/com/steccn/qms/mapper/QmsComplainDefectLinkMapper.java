@@ -1,6 +1,6 @@
 package com.steccn.qms.mapper;
 
-import com.steccn.qms.domain.QmsComplainDefectLink;
+import com.steccn.qms.domain.QtComplainDefectLink;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.qms.domain.QmsComplainDefectLink
 */
 @Mapper
-public interface QmsComplainDefectLinkMapper extends BaseMapper<QmsComplainDefectLink> {
+public interface QmsComplainDefectLinkMapper extends BaseMapper<QtComplainDefectLink> {
 
 }
 

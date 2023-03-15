@@ -8,11 +8,11 @@ import lombok.Data;
 
 /**
  * 整改记录详情
- * @TableName qms_improve_record_detail
+ * @TableName qt_improve_record_detail
  */
-@TableName(value ="qms_improve_record_detail")
+@TableName(value ="qt_improve_record_detail")
 @Data
-public class QmsImproveRecordDetail implements Serializable {
+public class QtImproveRecordDetail implements Serializable {
     /**
      * 主键
      */

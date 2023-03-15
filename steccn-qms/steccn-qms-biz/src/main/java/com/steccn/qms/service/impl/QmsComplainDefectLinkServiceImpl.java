@@ -1,7 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.steccn.qms.domain.QmsComplainDefectLink;
+import com.steccn.qms.domain.QtComplainDefectLink;
 import com.steccn.qms.service.QmsComplainDefectLinkService;
 import com.steccn.qms.mapper.QmsComplainDefectLinkMapper;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 * @createDate 2023-03-15 10:16:53
 */
 @Service
-public class QmsComplainDefectLinkServiceImpl extends ServiceImpl<QmsComplainDefectLinkMapper, QmsComplainDefectLink>
+public class QmsComplainDefectLinkServiceImpl extends ServiceImpl<QmsComplainDefectLinkMapper, QtComplainDefectLink>
     implements QmsComplainDefectLinkService{
 
 }

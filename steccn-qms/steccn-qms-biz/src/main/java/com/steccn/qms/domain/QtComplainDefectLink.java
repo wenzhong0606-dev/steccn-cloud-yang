@@ -12,7 +12,7 @@ import lombok.Data;
  */
 @TableName(value ="qms_complain_defect_link")
 @Data
-public class QmsComplainDefectLink implements Serializable {
+public class QtComplainDefectLink implements Serializable {
     /**
      * 主键
      */

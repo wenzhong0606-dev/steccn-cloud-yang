@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.qms.mapper.QmsComplainDefectLinkMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QmsComplainDefectLink">
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtComplainDefectLink">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="busiType" column="busi_type" jdbcType="TINYINT"/>
             <result property="busiId" column="busi_id" jdbcType="BIGINT"/>
