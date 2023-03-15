@@ -8,6 +8,7 @@ import java.util.Set;
 
 /**
  * @desc 质量管理的常量接口
+ * @author yequan
  */
 public interface QtManagerConstant {
 
