@@ -39,6 +39,10 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-oa-api</artifactId>
+        </dependency>
     </dependencies>
 
 

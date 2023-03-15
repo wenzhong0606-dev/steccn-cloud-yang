@@ -7,16 +7,16 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.domain.SysMsg;
 import com.steccn.platform.domain.SysMsgUser;
-import com.steccn.platform.dto.SlidePageDTO;
-import com.steccn.platform.dto.SysMobilePushDTO;
-import com.steccn.platform.dto.SysMsgPageDTO;
-import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.service.SysMobilePushService;
 import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.mapper.SysMsgMapper;
@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -54,6 +55,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
     private final SysMsgUserService sysMsgUserService;
     private final RemoteWsFeignApi remoteWsFeignApi;
     private final SysMobilePushService sysMobilePushService;
+    private final OaInfoService oaInfoService;
 
     private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(3, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
@@ -110,6 +112,35 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
             log.error("消息push异常 -> {}", e.getLocalizedMessage());
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean sendMesMsg(SysMsgSendMesDTO sysMsgMesDTO) {
+        //根据code查找id
+        if(CollUtil.isNotEmpty(sysMsgMesDTO.getUserCodeList())){
+            List<String> userNames = Lists.newArrayList();
+            userNames.addAll(sysMsgMesDTO.getUserCodeList());
+            //根据用户名查询id
+            List<Integer> userIds = FeignOptional.of(() -> oaInfoService.getIdByWorkCode(userNames), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            //转成long
+            Set<Long> userIdsLong = Sets.newHashSet();
+            if(CollUtil.isNotEmpty(userIds)){
+                userIds.forEach(tmp -> {
+                    //int转long
+                    userIdsLong.add(Long.parseLong(tmp.toString()));
+                });
+                sysMsgMesDTO.setUserList(userIdsLong);
+            }else {
+                log.error("用户id为空");
+                return false;
+            }
+        }else {
+            log.error("mes传过来的用户名为空");
+            return false;
+        }
+        this.sendMsg(sysMsgMesDTO);
+        return true;
     }
 
     @Override

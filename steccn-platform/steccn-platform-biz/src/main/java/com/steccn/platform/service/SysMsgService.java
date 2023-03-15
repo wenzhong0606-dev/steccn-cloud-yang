@@ -6,6 +6,7 @@ import com.steccn.platform.domain.SysMsg;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.dto.SysMsgSendMesDTO;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
 
@@ -25,6 +26,14 @@ public interface SysMsgService extends IService<SysMsg> {
      * @return 是否成功
      */
     Boolean sendMsg(SysMsgSendDTO sysMsgDTO);
+
+    /**
+     * Mes发送消息
+     *
+     * @param sysMsgMesDTO 消息实体
+     * @return 是否成功
+     */
+    Boolean sendMesMsg(SysMsgSendMesDTO sysMsgMesDTO);
 
     /**
      * 读取消息

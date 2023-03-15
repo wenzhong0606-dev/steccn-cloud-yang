@@ -7,6 +7,7 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysMsgPageDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.dto.SysMsgSendMesDTO;
 import com.steccn.platform.service.SysMsgService;
 import com.steccn.platform.vo.SysMsgPageVO;
 import com.steccn.platform.vo.SysMsgTabVO;
@@ -39,6 +40,13 @@ public class SysMsgController {
     @ApiOperation("发送消息")
     public R<Boolean> sendMsg(@Valid @RequestBody SysMsgSendDTO sysMsgDTO) {
         return R.success(sysMsgService.sendMsg(sysMsgDTO));
+    }
+
+    @SysLog("mes发送消息")
+    @PostMapping("/mes")
+    @ApiOperation("发送消息")
+    public R<Boolean> sendMesMsg(@Valid @RequestBody SysMsgSendMesDTO sysMsgDTO) {
+        return R.success(sysMsgService.sendMesMsg(sysMsgDTO));
     }
 
     @GetMapping("/tab")
