@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.steccn.qms.mapper.QmsImproveRecordMapper">
+<mapper namespace="com.steccn.qms.mapper.QtImproveRecordMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QmsImproveRecord">
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtImproveRecord">
             <id property="id" column="id" jdbcType="INTEGER"/>
             <result property="improveOrder" column="improve_order" jdbcType="VARCHAR"/>
             <result property="desc" column="desc" jdbcType="VARCHAR"/>

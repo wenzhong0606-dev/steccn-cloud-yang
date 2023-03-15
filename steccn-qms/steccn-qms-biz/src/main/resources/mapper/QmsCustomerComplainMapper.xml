@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.steccn.qms.mapper.QmsCustomerComplainMapper">
+<mapper namespace="com.steccn.qms.mapper.QtCustomerComplainMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QmsCustomerComplain">
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCustomerComplain">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="code" column="code" jdbcType="VARCHAR"/>
             <result property="title" column="title" jdbcType="VARCHAR"/>
