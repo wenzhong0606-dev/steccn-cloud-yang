@@ -9,10 +9,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.domain.QtDealWay;
+import com.steccn.qms.domain.QtDefectProduct;
 import com.steccn.qms.dto.QtDealWayDTO;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.service.QtDealWayService;
 import com.steccn.qms.mapper.QtDealWayMapper;
+import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.vo.QtDealWayVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ public class QtDealWayServiceImpl extends ServiceImpl<QtDealWayMapper, QtDealWay
 
     @Autowired
     private QtCustomerComplainService qtCustomerComplainService;
+    @Autowired
+    private QtDefectProductService qtDefectProductService;
 
     @Override
     public List<QtDealWayVO> wayList(Integer type) {
@@ -78,7 +82,9 @@ public class QtDealWayServiceImpl extends ServiceImpl<QtDealWayMapper, QtDealWay
                     .eq(QtCustomerComplain::getDealWay, id));
             Assert.isTrue(count == 0, "存在该处理方式的客诉，不允许删除");
         } else {
-
+            long count = qtDefectProductService.count(new LambdaQueryWrapper<QtDefectProduct>()
+                    .eq(QtDefectProduct::getDealWay, id));
+            Assert.isTrue(count == 0, "存在该处理方式的不合格品处理记录，不允许删除");
         }
         return removeById(id);
     }

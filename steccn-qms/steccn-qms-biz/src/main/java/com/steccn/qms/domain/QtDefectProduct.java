@@ -9,9 +9,9 @@ import lombok.Data;
 
 /**
  * 不合格品处理表
- * @TableName qms_defect_product
+ * @TableName qt_defect_product
  */
-@TableName(value ="qms_defect_product")
+@TableName(value ="qt_defect_product")
 @Data
 public class QtDefectProduct implements Serializable {
     /**
