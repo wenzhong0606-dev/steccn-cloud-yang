@@ -17,7 +17,7 @@ public class QtCustomerComplain implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -33,7 +33,7 @@ public class QtCustomerComplain implements Serializable {
     /**
      * 描述
      */
-    private String desc;
+    private String description;
 
     /**
      * 投诉客户

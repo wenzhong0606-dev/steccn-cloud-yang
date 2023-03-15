@@ -12,13 +12,13 @@ import lombok.Data;
  * 客诉记录明细表
  * @TableName qms_customer_complain_detail
  */
-@TableName(value ="qms_customer_complain_detail")
+@TableName(value ="qt_customer_complain_detail")
 @Data
 public class QtCustomerComplainDetail implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

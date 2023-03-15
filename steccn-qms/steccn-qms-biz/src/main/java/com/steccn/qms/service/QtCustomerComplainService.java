@@ -1,7 +1,9 @@
 package com.steccn.qms.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtCustomerComplainDTO;
 
 /**
 * @author yequan
@@ -10,4 +12,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtCustomerComplainService extends IService<QtCustomerComplain> {
 
+    /**
+     * 新增客诉记录
+     * @param dto
+     * @return
+     */
+    Boolean add(QtCustomerComplainDTO dto);
 }

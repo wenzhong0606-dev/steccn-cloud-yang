@@ -7,8 +7,8 @@ import lombok.Getter;
 import java.util.Set;
 
 /**
- * @desc 质量管理的常量接口
  * @author yequan
+ * @desc 质量管理的常量接口
  */
 public interface QtManagerConstant {
 
@@ -249,19 +249,18 @@ public interface QtManagerConstant {
     String STR_LIMIT_1 = " limit 1 ";
 
     /**
+     * 客诉单号前缀
+     */
+    String PREFIX_CUSTOMER_COMPLAIN = "KS";
+
+    /**
      * 周枚举
      */
     @Getter
     @AllArgsConstructor
     enum WEEKDAY {
         //周枚举 MON星期一 TUE星期二 WED星期三 THU星期四 FRI星期五 STA星期六 SUN星期日
-        MON(1, "星期一"),
-        TUE(2, "星期二"),
-        WED(3, "星期三"),
-        THU(4, "星期四"),
-        FRI(5, "星期五"),
-        STA(6, "星期六"),
-        SUN(7, "星期日");
+        MON(1, "星期一"), TUE(2, "星期二"), WED(3, "星期三"), THU(4, "星期四"), FRI(5, "星期五"), STA(6, "星期六"), SUN(7, "星期日");
 
         private Integer day;
         private String dayName;
@@ -273,11 +272,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum WORKSHOP {
-        JPCJ1("STEC001001", "基片一车间"),
-        JPCJ2("STEC001002", "基片二车间"),
-        SJGCJ1("STEC002", "深加工一车间"),
-        SJGCJ2("STEC003", "深加工二车间"),
-        SJGCJ3("STEC004", "深加工三车间");
+        JPCJ1("STEC001001", "基片一车间"), JPCJ2("STEC001002", "基片二车间"), SJGCJ1("STEC002", "深加工一车间"), SJGCJ2("STEC003", "深加工二车间"), SJGCJ3("STEC004", "深加工三车间");
 
         private String code;
         private String workShopName;
@@ -351,13 +346,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtCheckTaskTypeEnum {
         //任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
-        INCOMING(1, "来料检"),
-        FIRST(2, "首检"),
-        ONLINE(3, "在线检"),
-        PATROL(4, "巡检"),
-        DELIVER(5, "出货检"),
-        CHEMICAL(6, "化验抽检"),
-        MIXED(7, "配料抽检");
+        INCOMING(1, "来料检"), FIRST(2, "首检"), ONLINE(3, "在线检"), PATROL(4, "巡检"), DELIVER(5, "出货检"), CHEMICAL(6, "化验抽检"), MIXED(7, "配料抽检");
 
         private Integer code;
         private String name;
@@ -370,11 +359,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtCheckTaskStatusEnum {
         //任务类型 任务状态 0待检验 1检验中 2已检验 3已取消 4暂存
-        WAITED(0, "待检验"),
-        CHECKING(1, "检验中"),
-        FINISHED(2, "已检验"),
-        CANCELED(3, "已取消"),
-        TEMPORARY(4, "暂存");
+        WAITED(0, "待检验"), CHECKING(1, "检验中"), FINISHED(2, "已检验"), CANCELED(3, "已取消"), TEMPORARY(4, "暂存");
 
         private Integer code;
         private String name;
@@ -386,8 +371,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtMaterialStatusEnum {
-        DISABLE(0, "停用"),
-        ENABLE(1, "启用");
+        DISABLE(0, "停用"), ENABLE(1, "启用");
 
         private Integer code;
         private String name;
@@ -400,14 +384,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtGranularityEnum {
         //粒度 小时 天 周 月 季度 年
-        HOUR(0, "小时", "H"),
-        DAY(1, "天", "D"),
-        WEEK(2, "周", "W"),
-        MONTH(3, "月", "M"),
-        QUARTER(4, "季度", "Q"),
-        YEAR(5, "年", "Y"),
-        NONE(6, "无粒度", "N"),
-        CLASS(7, "班次", "C");
+        HOUR(0, "小时", "H"), DAY(1, "天", "D"), WEEK(2, "周", "W"), MONTH(3, "月", "M"), QUARTER(4, "季度", "Q"), YEAR(5, "年", "Y"), NONE(6, "无粒度", "N"), CLASS(7, "班次", "C");
 
         private Integer code;
         private String name;
@@ -445,12 +422,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChatTargetValue {
         //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
-        JPCP(1, "基片成品率"),
-        JPQX(2, "基片缺陷总数"),
-        SJGQX(3, "深加工缺陷总数"),
-        LLJHG(4, "来料检合格率"),
-        JPXJHG(5, "基片巡检合格率"),
-        SJGXJHG(6, "深加工巡检合格率");
+        JPCP(1, "基片成品率"), JPQX(2, "基片缺陷总数"), SJGQX(3, "深加工缺陷总数"), LLJHG(4, "来料检合格率"), JPXJHG(5, "基片巡检合格率"), SJGXJHG(6, "深加工巡检合格率");
 
         private Integer code;
         private String name;
@@ -472,15 +444,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChartCompareEnum {
         //班次 产线 车间 缺陷类别
-        ALL(-1, "不对比"),
-        WORK(0, "班次"),
-        PRODUCTLINE(1, "产线"),
-        WORKSHOP(2, "车间"),
-        DEFECTCATEGORY(3, "缺陷类别"),
-        SAMPLINGTIME(4, "取样日期"),
-        MATERIALWORKSHOP(5, "物料使用车间"),
-        SUPPLIER(6, "供应商"),
-        MATERIAL(7, "物料名称");
+        ALL(-1, "不对比"), WORK(0, "班次"), PRODUCTLINE(1, "产线"), WORKSHOP(2, "车间"), DEFECTCATEGORY(3, "缺陷类别"), SAMPLINGTIME(4, "取样日期"), MATERIALWORKSHOP(5, "物料使用车间"), SUPPLIER(6, "供应商"), MATERIAL(7, "物料名称");
 
         private Integer code;
         private String name;
@@ -501,8 +465,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtChartType {
-        HISTOGRAM(0, "柱状图"),
-        PIECHART(1, "饼状图");
+        HISTOGRAM(0, "柱状图"), PIECHART(1, "饼状图");
 
         private Integer code;
         private String name;
@@ -515,8 +478,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtClassesEnum {
-        DAY(0, "早班"),
-        NIGHT(1, "晚班");
+        DAY(0, "早班"), NIGHT(1, "晚班");
         private Integer code;
         private String name;
 
@@ -542,13 +504,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum SAMPLEINFOLIST {
-        SAMPLENUM("sampleNum", "样本编号"),
-        LICENSEPLATE("licensePlate", "车牌号"),
-        ANALYST("analyst", "分析人"),
-        ANALYSTNAME("analystName", "分析人名"),
-        SAMPLINGTIME("samplingTime", "取样时间"),
-        ANALYSTIME("analystTime", "分析时间"),
-        INGREDIENTNUM("ingredientNum", "配料付数");
+        SAMPLENUM("sampleNum", "样本编号"), LICENSEPLATE("licensePlate", "车牌号"), ANALYST("analyst", "分析人"), ANALYSTNAME("analystName", "分析人名"), SAMPLINGTIME("samplingTime", "取样时间"), ANALYSTIME("analystTime", "分析时间"), INGREDIENTNUM("ingredientNum", "配料付数");
 
         private String code;
         private String name;
@@ -560,8 +516,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtDefectDataSource {
-        MAN(0, "人工检验"),
-        COLLECT(1, "检验设备");
+        MAN(0, "人工检验"), COLLECT(1, "检验设备");
         private Integer code;
         private String name;
 
@@ -595,12 +550,7 @@ public interface QtManagerConstant {
     @AllArgsConstructor
     enum QtChatDownloadEnum {
         //基片成品率 基片缺陷总数 深加工缺陷总数 来料检合格率 基片巡检合格率 深加工巡检合格率
-        SJGQXLB(0, "深加工缺陷类别分布下载"),
-        SJGQX(1, "深加工缺陷分布下载"),
-        JBQXX(2, "基片缺陷项分布下载"),
-        SJGQXLBQS(3, "深加工缺陷类别趋势下载"),
-        SJGQXQS(4, "深加工缺陷项趋势下载"),
-        JBQXXQS(5, "基片缺陷项趋势下载");
+        SJGQXLB(0, "深加工缺陷类别分布下载"), SJGQX(1, "深加工缺陷分布下载"), JBQXX(2, "基片缺陷项分布下载"), SJGQXLBQS(3, "深加工缺陷类别趋势下载"), SJGQXQS(4, "深加工缺陷项趋势下载"), JBQXXQS(5, "基片缺陷项趋势下载");
 
         private final Integer code;
         private final String name;
@@ -621,14 +571,40 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtSpcFilterConditions {
-        UPLIMIT(0, "上限"),
-        DOWNLIMIT(1, "下限"),
-        STANDARDVALUE(2, "标准值"),
-        TESTVALUE(3, "检验值");
+        UPLIMIT(0, "上限"), DOWNLIMIT(1, "下限"), STANDARDVALUE(2, "标准值"), TESTVALUE(3, "检验值");
 
         private Integer code;
         private String name;
 
+    }
+
+
+    @Getter
+    @AllArgsConstructor
+    enum QtBusinessType {
+        CUSTOMER_COMPLAIN(0, "客诉"), UNACCEPTED_PRODUCT(1, "不合格品"), IMPROVE(2, "整改");
+
+        private Integer code;
+        private String name;
+    }
+
+
+    @Getter
+    @AllArgsConstructor
+    enum userType {
+        APPROVE_MAN(0, "审批人"), CARBON_COPY_MAN(1, "抄送人");
+
+        private Integer code;
+        private String name;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    enum status {
+        PENDING(0, "待处理"), APPROVE(1, "待审批"), CLOSED(2, "已关闭");
+
+        private Integer code;
+        private String name;
     }
 
 }
