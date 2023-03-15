@@ -26,6 +26,7 @@ public class QtComplainTypeDTO implements Serializable {
     private String type;
 
     @ApiModelProperty("备注")
+    @Length(max = 100, message = "备注长度不能超过100个文字")
     private String note;
 
     private static final long serialVersionUID = 1L;
