@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.steccn.qms.mapper.QtImproveRecordDetailMapper">
 
-    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QmsImproveRecordDetail">
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtImproveRecordDetail">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="recordId" column="record_id" jdbcType="INTEGER"/>
             <result property="approverStep" column="approver_step" jdbcType="VARCHAR"/>
