@@ -8,9 +8,9 @@ import lombok.Data;
 
 /**
  * 投诉类型
- * @TableName qms_complain_type
+ * @TableName qt_complain_type
  */
-@TableName(value ="qms_complain_type")
+@TableName(value ="qt_complain_type")
 @Data
 public class QtComplainType implements Serializable {
     /**
