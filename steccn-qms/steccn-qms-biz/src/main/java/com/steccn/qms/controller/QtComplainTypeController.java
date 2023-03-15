@@ -8,7 +8,6 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
 import java.util.List;
 
@@ -35,6 +34,12 @@ public class QtComplainTypeController {
     @ApiOperation(value = "投诉类型-保存")
     public R<Boolean> save(@Valid @RequestBody QtComplainTypeDTO dto) {
         return R.success(qtComplainTypeService.saveType(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation(value = "投诉类型-删除")
+    public R<Boolean> delete(@PathVariable("id") Integer id) {
+        return R.success(qtComplainTypeService.delete(id));
     }
 }
 

@@ -7,11 +7,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.qms.domain.QtComplainType;
+import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.service.QtComplainTypeService;
 import com.steccn.qms.mapper.QtComplainTypeMapper;
 import com.steccn.qms.dto.QtComplainTypeDTO;
+import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.vo.QtComplainTypeVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +28,9 @@ import java.util.Objects;
 @Service
 public class QtComplainTypeServiceImpl extends ServiceImpl<QtComplainTypeMapper, QtComplainType>
         implements QtComplainTypeService {
+
+    @Autowired
+    private QtCustomerComplainService customerComplainService;
 
     @Override
     public List<QtComplainTypeVO> typeList() {
@@ -54,6 +60,13 @@ public class QtComplainTypeServiceImpl extends ServiceImpl<QtComplainTypeMapper,
         QtComplainType model = new QtComplainType();
         BeanUtils.copyProperties(dto, model);
         return saveOrUpdate(model);
+    }
+
+    @Override
+    public Boolean delete(Integer id) {
+        long count = customerComplainService.count(new LambdaQueryWrapper<QtCustomerComplain>().eq(QtCustomerComplain::getComplainType, id));
+        Assert.isTrue(count == 0, "存在该类型的客诉，不允许删除");
+        return removeById(id);
     }
 }
 

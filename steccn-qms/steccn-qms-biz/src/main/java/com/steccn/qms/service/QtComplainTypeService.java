@@ -27,4 +27,11 @@ public interface QtComplainTypeService extends IService<QtComplainType> {
      * @return
      */
     Boolean saveType(QtComplainTypeDTO dto);
+
+    /**
+     * 删除投诉类型
+     * @param id 主键
+     * @return
+     */
+    Boolean delete(Integer id);
 }

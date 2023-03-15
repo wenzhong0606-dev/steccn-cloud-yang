@@ -11,7 +11,7 @@ import lombok.Data;
  * 客诉记录表
  * @TableName qms_customer_complain
  */
-@TableName(value ="qms_customer_complain")
+@TableName(value ="qt_customer_complain")
 @Data
 public class QtCustomerComplain implements Serializable {
     /**
