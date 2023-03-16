@@ -14,14 +14,12 @@ import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.vo.QtMaterialPageVO;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,6 +43,12 @@ public class QtCustomerComplaintController {
     @PostMapping("/list")
     public R<Page<QtCustomerComplainVO>> list(@RequestBody CustomerComplainPageDTO dto){
         return R.success(qtCustomerComplainService.listPage(dto));
+    }
+
+    @ApiModelProperty("获取客诉记录列表详情")
+    @GetMapping("/{id}")
+    public R<QtCustomerComplainVO> getInfo(@PathVariable("id") Long id) {
+        return R.success(qtCustomerComplainService.getInfo(id));
     }
 
 }

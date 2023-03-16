@@ -23,16 +23,20 @@ import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtComplainDefectImproveMan;
+import com.steccn.qms.domain.QtComplainType;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.domain.QtCustomerComplainDetail;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import com.steccn.qms.service.QtComplainDefectImproveManService;
+import com.steccn.qms.service.QtComplainTypeService;
 import com.steccn.qms.service.QtCustomerComplainDetailService;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
+import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.websocket.constant.WebsocketConstant;
+import com.sun.xml.internal.messaging.saaj.packaging.mime.util.BEncoderStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -68,6 +72,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private final OaInfoService oaInfoService;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final QtComplainTypeService qtComplainTypeService;
 
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
@@ -133,19 +139,46 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //5.处理数据
         List<Long> idList = Lists.newArrayList();
         Set<Integer> officeIds = Sets.newHashSet();
+        Set<Integer> typeIds = Sets.newHashSet();
         qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
             idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
             idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
             officeIds.add(qtCustomerComplainVO.getComplainCustomer());
+            typeIds.add(qtCustomerComplainVO.getComplainType());
         });
         Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(typeIds);
         qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
             qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
             qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
             qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
+            qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
         });
         return page.setRecords(qtCustomerComplainVOList);
+    }
+
+    @Override
+    public QtCustomerComplainVO getInfo(Long id) {
+        QtCustomerComplainVO qtCustomerComplainVO = new QtCustomerComplainVO();
+        QtCustomerComplain customerComplain = getById(id);
+        if (Objects.nonNull(customerComplain)){
+            List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>()
+                    .in(QtCustomerComplainDetail::getCustomerComplainId, customerComplain.getId()));
+            BeanUtil.copyProperties(customerComplain,qtCustomerComplainVO);
+            qtCustomerComplainVO.setDetails(BeanUtil.copyToList(list, QtCustomerComplainDetailVO.class));
+            List<Long> idList = Lists.newArrayList();
+            idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
+            idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
+            Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainVO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(customerComplain.getComplainType()));
+            qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
+            qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
+            qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
+            qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
+        }
+        return qtCustomerComplainVO;
     }
 
 

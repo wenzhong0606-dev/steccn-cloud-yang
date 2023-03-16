@@ -7,6 +7,8 @@ import com.steccn.qms.dto.QtComplainTypeDTO;
 import com.steccn.qms.vo.QtComplainTypeVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -34,4 +36,12 @@ public interface QtComplainTypeService extends IService<QtComplainType> {
      * @return
      */
     Boolean delete(Integer id);
+
+
+    /**
+     * 获取投诉类型
+     * @param ids
+     * @return
+     */
+    Map<Integer,String> listByIdCh(Set<Integer> ids);
 }

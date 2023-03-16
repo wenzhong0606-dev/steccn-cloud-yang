@@ -29,4 +29,12 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Page<QtCustomerComplainVO> listPage(CustomerComplainPageDTO dto);
+
+
+    /**
+     * 获取详情内容
+     * @param id
+     * @return
+     */
+    QtCustomerComplainVO getInfo(Long id);
 }
