@@ -14,7 +14,7 @@ import java.util.List;
 * @createDate 2022-12-16 13:23:55
 * @Entity com.steccn.data.domain.EpMeterCollect
 */
-//@Mapper
+@Mapper
 public interface EpMeterCollectMapper extends BaseMapper<EpMeterCollect> {
 
 }

@@ -6,13 +6,14 @@ import com.steccn.data.mapper.QtDefectCollectMapper;
 import com.steccn.data.service.QtDefectCollectDetailService;
 import com.steccn.data.service.QtDefectCollectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * @author yequan
  * @description 针对表【qt_defect_collect】的数据库操作Service实现
  * @createDate 2022-12-16 13:23:55
  */
-//@Service
+@Service
 @RequiredArgsConstructor
 public class QtDefectCollectServiceImpl extends ServiceImpl<QtDefectCollectMapper, QtDefectCollect>
         implements QtDefectCollectService {

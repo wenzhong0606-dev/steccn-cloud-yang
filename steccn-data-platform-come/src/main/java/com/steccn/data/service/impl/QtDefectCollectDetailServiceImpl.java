@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 * @description 针对表【qt_defect_collect_detail】的数据库操作Service实现
 * @createDate 2022-12-16 13:23:55
 */
-//@Service
+@Service
 public class QtDefectCollectDetailServiceImpl extends ServiceImpl<QtDefectCollectDetailMapper, QtDefectCollectDetail>
     implements QtDefectCollectDetailService {
 

@@ -24,7 +24,7 @@ import java.util.Objects;
  * @author yequan
  * @desc 湖北博华采样数据接收接口
  */
-//@Service
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class HbCollectServiceImpl implements HbCollectService {

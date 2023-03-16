@@ -25,8 +25,8 @@ import java.util.List;
  * @desc 湖北博华数据采集
  */
 @Api("湖北博华数据采集")
-//@RestController
-//@RequiredArgsConstructor
+@RestController
+@RequiredArgsConstructor
 @RequestMapping("/data/platform")
 public class HbCollectController {
 
