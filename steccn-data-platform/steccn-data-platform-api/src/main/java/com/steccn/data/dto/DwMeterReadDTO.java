@@ -25,4 +25,7 @@ public class DwMeterReadDTO implements Serializable {
 
     @ApiModelProperty("结束时间")
     private LocalDateTime end;
+
+    @ApiModelProperty("记录时间")
+    private LocalDateTime recordTime;
 }
