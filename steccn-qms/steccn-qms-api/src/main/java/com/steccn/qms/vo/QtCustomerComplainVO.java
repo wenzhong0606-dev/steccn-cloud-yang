@@ -51,7 +51,7 @@ public class QtCustomerComplainVO {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
 
 
     /**
@@ -75,7 +75,7 @@ public class QtCustomerComplainVO {
      * 处理人
      */
 //    @NotNull(message = "处理人不能为空")
-    private Integer dealMan;
+    private Long dealMan;
 
 
     /**
@@ -108,13 +108,13 @@ public class QtCustomerComplainVO {
     /**
      * 抄送人
      */
-    private Integer carbonCopyMan;
+    private Long carbonCopyMan;
 
     /**
      * 审批人
      */
     @NotNull(message = "审批人不能为空")
-    private Integer approveMan;
+    private Long approveMan;
 
 
 }

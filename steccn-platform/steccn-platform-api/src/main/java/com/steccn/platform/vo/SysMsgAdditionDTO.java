@@ -19,4 +19,7 @@ public class SysMsgAdditionDTO implements Serializable {
 
     @ApiModelProperty("附加信息-tab")
     private Long tab;
+
+    @ApiModelProperty("附加信息-编码")
+    private String code;
 }

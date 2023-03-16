@@ -37,4 +37,11 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     QtCustomerComplainVO getInfo(Long id);
+
+    /**
+     * 编辑
+     * @param qtCustomerComplainDTO
+     * @return
+     */
+    Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO);
 }

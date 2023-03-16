@@ -51,4 +51,11 @@ public class QtCustomerComplaintController {
         return R.success(qtCustomerComplainService.getInfo(id));
     }
 
+
+    @ApiOperation("编辑客诉记录")
+    @PutMapping()
+    public R<Boolean> edit(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
+        return  R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
+    }
+
 }

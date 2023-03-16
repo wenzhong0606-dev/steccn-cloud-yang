@@ -45,7 +45,7 @@ public class QtCustomerComplainDTO {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
 
     /**
      * 投诉类型
@@ -57,7 +57,7 @@ public class QtCustomerComplainDTO {
      * 处理人
      */
 //    @NotNull(message = "处理人不能为空")
-    private Integer dealMan;
+    private Long dealMan;
 
     /**
      * 处理方式
@@ -84,13 +84,13 @@ public class QtCustomerComplainDTO {
     /**
      * 抄送人
      */
-    private Integer carbonCopyMan;
+    private Long carbonCopyMan;
 
     /**
      * 审批人
      */
     @NotNull(message = "审批人不能为空")
-    private Integer approveMan;
+    private Long approveMan;
 
 
 }

@@ -28,7 +28,7 @@ public class CustomerComplainPageDTO extends BasePageDTO {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
 
     /**
      * 投诉类型
@@ -38,7 +38,7 @@ public class CustomerComplainPageDTO extends BasePageDTO {
     /**
      * 处理人
      */
-    private Integer dealMan;
+    private Long dealMan;
 
 
     /**

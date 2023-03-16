@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -33,6 +34,7 @@ import com.steccn.qms.service.QtComplainTypeService;
 import com.steccn.qms.service.QtCustomerComplainDetailService;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
+import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -50,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -82,7 +85,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             // 1.基本信息
             QtCustomerComplain qtCustomerComplain = new QtCustomerComplain();
             BeanUtil.copyProperties(dto, qtCustomerComplain);
-            qtCustomerComplain.setCode(QtManagerConstant.PREFIX_CUSTOMER_COMPLAIN + currentMaxCode());
+            qtCustomerComplain.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN,CodeGenerateUtil.NUM_BIT_8,currentMaxCode()));
             qtCustomerComplain.setStatus(QtManagerConstant.status.PENDING.getCode());
             save(qtCustomerComplain);
 //            List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
@@ -110,8 +113,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             });
             qtCustomerComplainDetailService.saveBatch(detailList);
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainCustomer()))).get();
+            Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainType()));
             //发送消息
-//            sendMessage(officeMap.get(qtCustomerComplain.getComplainCustomer()),)
+            sendMessage(officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()), qtCustomerComplain.getTitle(), Sets.newHashSet(qtCustomerComplain.getDealMan()), qtCustomerComplain.getCode());
             // 流程相关
         } finally {
             lock.unlock();
@@ -161,23 +165,42 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     public QtCustomerComplainVO getInfo(Long id) {
         QtCustomerComplainVO qtCustomerComplainVO = new QtCustomerComplainVO();
         QtCustomerComplain customerComplain = getById(id);
-        if (Objects.nonNull(customerComplain)){
-            List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>()
-                    .in(QtCustomerComplainDetail::getCustomerComplainId, customerComplain.getId()));
-            BeanUtil.copyProperties(customerComplain,qtCustomerComplainVO);
+        if (Objects.nonNull(customerComplain)) {
+            List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>().in(QtCustomerComplainDetail::getCustomerComplainId, customerComplain.getId()));
+            BeanUtil.copyProperties(customerComplain, qtCustomerComplainVO);
             qtCustomerComplainVO.setDetails(BeanUtil.copyToList(list, QtCustomerComplainDetailVO.class));
             List<Long> idList = Lists.newArrayList();
-            idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
-            idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
+            idList.add(qtCustomerComplainVO.getComplainReceiver());
+            idList.add(qtCustomerComplainVO.getDealMan());
             Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainVO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(customerComplain.getComplainType()));
             qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
             qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
-            qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
-            qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
+            qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(qtCustomerComplainVO.getComplainReceiver()));
+            qtCustomerComplainVO.setDealManName(oaUserMap.get(qtCustomerComplainVO.getDealMan()));
         }
         return qtCustomerComplainVO;
+    }
+
+    @Override
+    public Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO) {
+        QtCustomerComplain customerComplain = getById(qtCustomerComplainDTO.getId());
+        Assert.isTrue(Objects.nonNull(customerComplain), "客诉单不存在");
+        BeanUtil.copyProperties(qtCustomerComplainDTO, customerComplain);
+        updateById(customerComplain);
+        //编辑明细信息
+        if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
+            qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
+        }
+        List<Long> idList = Lists.newArrayList();
+        idList.add(qtCustomerComplainDTO.getComplainReceiver());
+        idList.add(qtCustomerComplainDTO.getDealMan());
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainType()));
+        //发送消息
+        sendMessage(officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle(), Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), customerComplain.getCode());
+        return Boolean.TRUE;
     }
 
 
@@ -188,10 +211,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
      * @param complainTypeName     投诉类型
      * @param title                标签
      * @param userIds              消息接收人
-     * @param orderId              单号
+     * @param orderCode            单号
      * @return
      */
-    private Boolean sendMessage(String complainCustomerName, String complainTypeName, String title, Set<Long> userIds, Long orderId) {
+    private Boolean sendMessage(String complainCustomerName, String complainTypeName, String title, Set<Long> userIds, String orderCode) {
         //定义消息模板
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
         sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
@@ -199,7 +222,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), complainCustomerName, complainTypeName, title));
         sysMsgSendDTO.setUserList(userIds);
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setId(orderId);
+        sysMsgAdditionDTO.setCode(orderCode);
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
         sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
         //发送消息
@@ -232,10 +255,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(QtManagerConstant.PREFIX_CUSTOMER_COMPLAIN.length());
+                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN.length());
                 //赋值
                 long l = Long.parseLong(substringVal);
-                currentMax = ++l;
+                currentMax = l;
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
             }
