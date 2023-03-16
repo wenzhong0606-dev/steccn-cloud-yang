@@ -249,11 +249,6 @@ public interface QtManagerConstant {
     String STR_LIMIT_1 = " limit 1 ";
 
     /**
-     * 客诉单号前缀
-     */
-    String PREFIX_CUSTOMER_COMPLAIN = "KS";
-
-    /**
      * 周枚举
      */
     @Getter

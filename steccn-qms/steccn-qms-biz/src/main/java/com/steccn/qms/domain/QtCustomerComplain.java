@@ -48,7 +48,7 @@ public class QtCustomerComplain implements Serializable {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
 
     /**
      * 投诉类型
@@ -58,7 +58,7 @@ public class QtCustomerComplain implements Serializable {
     /**
      * 处理人
      */
-    private Integer dealMan;
+    private Long dealMan;
 
     /**
      * 处理方式

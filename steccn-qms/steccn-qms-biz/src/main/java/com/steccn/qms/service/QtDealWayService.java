@@ -5,6 +5,8 @@ import com.steccn.qms.domain.QtDealWay;
 import com.steccn.qms.dto.QtDealWayDTO;
 import com.steccn.qms.vo.QtDealWayVO;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -36,4 +38,12 @@ public interface QtDealWayService extends IService<QtDealWay> {
      * @return
      */
     Boolean delete(Integer id);
+
+
+    /**
+     * 获取处理方式名称
+     * @param ids
+     * @return
+     */
+    Map<Integer,String> listByIdCh(Set<Integer> ids);
 }

@@ -3,22 +3,16 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
-import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
-import com.steccn.qms.dto.QtCheckTaskDestoryInfoDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
-import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import com.steccn.qms.service.QtCustomerComplainService;
-import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
-import com.steccn.qms.vo.QtMaterialPageVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -50,5 +44,27 @@ public class QtCustomerComplaintController {
     public R<QtCustomerComplainVO> getInfo(@PathVariable("id") Long id) {
         return R.success(qtCustomerComplainService.getInfo(id));
     }
+
+
+    @ApiOperation("编辑客诉记录")
+    @PutMapping()
+    public R<Boolean> edit(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
+        return  R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
+    }
+
+
+    @ApiOperation("处理客诉记录")
+    @PutMapping("/dispose")
+    public R<Boolean> dispose(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
+        return  R.success(qtCustomerComplainService.dispose(qtCustomerComplainDTO));
+    }
+
+    @ApiOperation("删除客诉记录")
+    @DeleteMapping("/{id}")
+    public R<Boolean> delete(@PathVariable("id") Long id){
+        return R.success(qtCustomerComplainService.delete(id));
+    }
+
+
 
 }
