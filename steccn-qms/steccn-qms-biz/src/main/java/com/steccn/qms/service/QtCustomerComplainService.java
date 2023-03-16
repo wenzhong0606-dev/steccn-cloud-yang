@@ -44,4 +44,12 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO);
+
+
+    /**
+     * 客诉处理
+     * @param qtCustomerComplainDTO
+     * @return
+     */
+    Boolean dispose(QtCustomerComplainDTO qtCustomerComplainDTO);
 }

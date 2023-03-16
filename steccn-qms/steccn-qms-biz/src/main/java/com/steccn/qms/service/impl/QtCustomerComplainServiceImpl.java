@@ -88,21 +88,6 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtCustomerComplain.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN,CodeGenerateUtil.NUM_BIT_8,currentMaxCode()));
             qtCustomerComplain.setStatus(QtManagerConstant.status.PENDING.getCode());
             save(qtCustomerComplain);
-//            List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
-//            QtComplainDefectImproveMan qtComplainDefectImproveMan = new QtComplainDefectImproveMan();
-//            qtComplainDefectImproveMan.setBusiId(qtCustomerComplain.getId());
-//            qtComplainDefectImproveMan.setUserType(QtManagerConstant.userType.APPROVE_MAN.getCode());
-//            qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
-//            qtComplainDefectImproveMan.setUserId(Long.valueOf(dto.getApproveMan()));
-//            manList.add(qtComplainDefectImproveMan);
-//            if (Objects.nonNull(dto.getCarbonCopyMan())) {
-//                QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
-//                man.setBusiId(qtCustomerComplain.getId());
-//                man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
-//                man.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
-//                manList.add(man);
-//            }
-//            qtComplainDefectImproveManService.saveBatch(manList);
             // 2.明细信息
             List<QtCustomerComplainDetail> detailList = Lists.newArrayList();
             dto.getDetails().forEach(detail -> {
@@ -200,6 +185,37 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainType()));
         //发送消息
         sendMessage(officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle(), Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), customerComplain.getCode());
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean dispose(QtCustomerComplainDTO qtCustomerComplainDTO) {
+        QtCustomerComplain customerComplain = getById(qtCustomerComplainDTO.getId());
+        Assert.isTrue(Objects.nonNull(customerComplain), "客诉单不存在");
+        BeanUtil.copyProperties(qtCustomerComplainDTO, customerComplain);
+        customerComplain.setStatus(QtManagerConstant.status.APPROVE.getCode());
+        updateById(customerComplain);
+        //客诉处理相关内容
+        List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
+        QtComplainDefectImproveMan qtComplainDefectImproveMan = new QtComplainDefectImproveMan();
+        qtComplainDefectImproveMan.setBusiId(customerComplain.getId());
+        qtComplainDefectImproveMan.setUserType(QtManagerConstant.userType.APPROVE_MAN.getCode());
+        qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+        qtComplainDefectImproveMan.setUserId(qtCustomerComplainDTO.getApproveMan());
+        manList.add(qtComplainDefectImproveMan);
+        if (Objects.nonNull(qtCustomerComplainDTO.getCarbonCopyMan())) {
+            QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
+            man.setBusiId(customerComplain.getId());
+            man.setUserId(qtCustomerComplainDTO.getCarbonCopyMan());
+            man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
+            man.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+            manList.add(man);
+        }
+        qtComplainDefectImproveManService.saveBatch(manList);
+        //编辑明细信息
+        if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
+            qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
+        }
         return Boolean.TRUE;
     }
 

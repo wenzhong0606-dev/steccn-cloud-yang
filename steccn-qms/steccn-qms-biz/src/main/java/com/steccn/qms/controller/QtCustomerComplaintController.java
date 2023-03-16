@@ -58,4 +58,11 @@ public class QtCustomerComplaintController {
         return  R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
     }
 
+
+    @ApiOperation("处理客诉记录")
+    @PutMapping("/dispose")
+    public R<Boolean> dispose(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
+        return  R.success(qtCustomerComplainService.dispose(qtCustomerComplainDTO));
+    }
+
 }
