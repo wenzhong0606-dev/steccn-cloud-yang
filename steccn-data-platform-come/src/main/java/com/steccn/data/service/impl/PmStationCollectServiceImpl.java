@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * @description 针对表【pm_station_collect(生产管理-进出站计数器)】的数据库操作Service实现
  * @createDate 2022-12-16 13:23:55
  */
-//@Service
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMapper, PmStationCollect>

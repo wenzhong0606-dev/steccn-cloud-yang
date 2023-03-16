@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @createDate 2022-12-16 13:23:55
 * @Entity com.steccn.data.domain.QtDefectCollectDetail
 */
-//@Mapper
+@Mapper
 public interface QtDefectCollectDetailMapper extends BaseMapper<QtDefectCollectDetail> {
 
 }
