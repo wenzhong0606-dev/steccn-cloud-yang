@@ -21,4 +21,9 @@ public class OaDataKeyDTO implements Serializable {
      * 分页数据
      */
     private Integer current;
+
+    /**
+     * 每页几条
+     */
+    private Integer pageSize;
 }

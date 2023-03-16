@@ -99,6 +99,14 @@ public class OaController {
         }
     }
 
+    @ApiOperation("获取所有在职人员")
+    @PostMapping("/allUser/onJob")
+    R<List<OaEmpVO>> getAllOnJobUser(@RequestBody OaEmpStatusDTO dto) {
+        //在职
+        dto.setStatus("8");
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
     @ApiOperation("根据名称模糊获取人员列表")
     @GetMapping("/user/name/{userName}")
     public R<List<OaUserIdAndName>> getUserByName(@PathVariable("userName") String userName) {
