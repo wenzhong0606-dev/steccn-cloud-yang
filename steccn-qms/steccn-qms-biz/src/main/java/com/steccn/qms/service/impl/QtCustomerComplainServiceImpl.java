@@ -3,6 +3,7 @@ package com.steccn.qms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,16 +24,10 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtComplainDefectImproveMan;
-import com.steccn.qms.domain.QtComplainType;
-import com.steccn.qms.domain.QtCustomerComplain;
-import com.steccn.qms.domain.QtCustomerComplainDetail;
+import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
-import com.steccn.qms.service.QtComplainDefectImproveManService;
-import com.steccn.qms.service.QtComplainTypeService;
-import com.steccn.qms.service.QtCustomerComplainDetailService;
-import com.steccn.qms.service.QtCustomerComplainService;
+import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtCustomerComplainDetailVO;
@@ -43,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -77,6 +73,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     private final QtComplainTypeService qtComplainTypeService;
 
+    @Autowired
+    private  QtDealWayService qtDealWayService;
+
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.QT_CUSTOMER_COMPLAIN);
@@ -85,7 +84,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             // 1.基本信息
             QtCustomerComplain qtCustomerComplain = new QtCustomerComplain();
             BeanUtil.copyProperties(dto, qtCustomerComplain);
-            qtCustomerComplain.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN,CodeGenerateUtil.NUM_BIT_8,currentMaxCode()));
+            qtCustomerComplain.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
             qtCustomerComplain.setStatus(QtManagerConstant.status.PENDING.getCode());
             save(qtCustomerComplain);
             // 2.明细信息
@@ -128,20 +127,26 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         List<Long> idList = Lists.newArrayList();
         Set<Integer> officeIds = Sets.newHashSet();
         Set<Integer> typeIds = Sets.newHashSet();
+        Set<Integer> wayIds = Sets.newHashSet();
         qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
             idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
             idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
             officeIds.add(qtCustomerComplainVO.getComplainCustomer());
             typeIds.add(qtCustomerComplainVO.getComplainType());
+            wayIds.add(qtCustomerComplainVO.getDealWay());
         });
         Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(typeIds);
+        Map<Integer, String> wayMap = qtDealWayService.listByIdCh(wayIds);
         qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
             qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
             qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
             qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
             qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
+            if (Objects.nonNull(qtCustomerComplainVO.getDealWay())){
+                qtCustomerComplainVO.setDealWayName(wayMap.get(qtCustomerComplainVO.getDealWay()));
+            }
         });
         return page.setRecords(qtCustomerComplainVOList);
     }
@@ -157,13 +162,35 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             List<Long> idList = Lists.newArrayList();
             idList.add(qtCustomerComplainVO.getComplainReceiver());
             idList.add(qtCustomerComplainVO.getDealMan());
+            //获取抄送人 审批人信息
+            List<QtComplainDefectImproveMan> manList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, id));
+            if (CollUtil.isNotEmpty(manList)) {
+                manList.forEach(man -> {
+                    idList.add(man.getUserId());
+                    if (QtManagerConstant.userType.APPROVE_MAN.getCode().equals(man.getUserType())) {
+                        qtCustomerComplainVO.setApproveMan(man.getUserId());
+                    } else {
+                        qtCustomerComplainVO.setCarbonCopyMan(man.getUserId());
+                    }
+                });
+            }
             Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainVO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(customerComplain.getComplainType()));
+            if (Objects.nonNull(qtCustomerComplainVO.getDealWay())){
+                Map<Integer, String> integerStringMap = qtDealWayService.listByIdCh(Sets.newHashSet(qtCustomerComplainVO.getDealWay()));
+                qtCustomerComplainVO.setDealWayName(integerStringMap.get(qtCustomerComplainVO.getDealWay()));
+            }
             qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
             qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
             qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(qtCustomerComplainVO.getComplainReceiver()));
             qtCustomerComplainVO.setDealManName(oaUserMap.get(qtCustomerComplainVO.getDealMan()));
+            if (Objects.nonNull(qtCustomerComplainVO.getApproveMan())){
+                qtCustomerComplainVO.setApproveManName(oaUserMap.get(qtCustomerComplainVO.getApproveMan()));
+            }
+            if (Objects.nonNull(qtCustomerComplainVO.getCarbonCopyMan())){
+                qtCustomerComplainVO.setCarbonCopyManName(oaUserMap.get(qtCustomerComplainVO.getCarbonCopyMan()));
+            }
         }
         return qtCustomerComplainVO;
     }
@@ -217,6 +244,17 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        QtCustomerComplain customerComplain = getById(id);
+        Assert.isTrue(Objects.nonNull(customerComplain), "客诉单不存在");
+        //删除明细
+        qtCustomerComplainDetailService.remove(new LambdaQueryWrapper<QtCustomerComplainDetail>().eq(QtCustomerComplainDetail::getCustomerComplainId, id));
+        //删除抄送人 审批人
+        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, id));
+        return removeById(id);
     }
 
 

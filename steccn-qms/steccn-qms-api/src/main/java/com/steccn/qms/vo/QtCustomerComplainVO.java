@@ -90,6 +90,11 @@ public class QtCustomerComplainVO {
     private Integer dealWay;
 
     /**
+     * 处理方式名称
+     */
+    private String dealWayName;
+
+    /**
      * 0-待处理、1-待审批、2-已关闭
      */
     private Integer status;
@@ -110,11 +115,23 @@ public class QtCustomerComplainVO {
      */
     private Long carbonCopyMan;
 
+
+    /**
+     * 抄送人名称
+     */
+    private String carbonCopyManName;
+
     /**
      * 审批人
      */
     @NotNull(message = "审批人不能为空")
     private Long approveMan;
+
+
+    /**
+     * 审批人名称
+     */
+    private String approveManName;
 
 
 }
