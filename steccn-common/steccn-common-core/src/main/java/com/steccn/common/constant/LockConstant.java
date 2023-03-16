@@ -90,6 +90,11 @@ public interface LockConstant {
      */
     String CUSTOMER_MATERIAL = "CUSTOMER_MATERIAL";
 
+    /**
+     * 客诉处理
+     */
+    String QT_CUSTOMER_COMPLAIN = "QT_CUSTOMER_COMPLAIN";
+
 
 }
 

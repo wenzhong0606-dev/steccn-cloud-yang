@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.qms.mapper.QtCustomerComplainMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.qms.domain.QtCustomerComplain">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="desc" column="desc" jdbcType="VARCHAR"/>
+            <result property="complainCustomer" column="complain_customer" jdbcType="INTEGER"/>
+            <result property="complainDate" column="complain_date" jdbcType="DATE"/>
+            <result property="complainReceiver" column="complain_receiver" jdbcType="INTEGER"/>
+            <result property="complainType" column="complain_type" jdbcType="INTEGER"/>
+            <result property="dealMan" column="deal_man" jdbcType="INTEGER"/>
+            <result property="dealWay" column="deal_way" jdbcType="INTEGER"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="note" column="note" jdbcType="VARCHAR"/>
+            <result property="createBy" column="create_by" jdbcType="BIGINT"/>
+            <result property="createName" column="create_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="BIGINT"/>
+            <result property="updateName" column="update_name" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="delFlag" column="del_flag" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,code,title,
+        desc,complain_customer,complain_date,
+        complain_receiver,complain_type,deal_man,
+        deal_way,status,note,
+        create_by,create_name,create_time,
+        update_by,update_name,update_time,
+        del_flag
+    </sql>
+</mapper>
