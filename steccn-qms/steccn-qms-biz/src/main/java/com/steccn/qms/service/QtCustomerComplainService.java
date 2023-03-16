@@ -1,9 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
+import com.steccn.qms.vo.QtCustomerComplainVO;
 
 /**
 * @author yequan
@@ -18,4 +21,12 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Boolean add(QtCustomerComplainDTO dto);
+
+
+    /**
+     * 客诉记录列表
+     * @param dto
+     * @return
+     */
+    Page<QtCustomerComplainVO> listPage(CustomerComplainPageDTO dto);
 }
