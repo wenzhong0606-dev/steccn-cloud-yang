@@ -156,16 +156,15 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
         //用来处理新增的List
         List<EpPartitionVO> dealAddPartitionList = Lists.newArrayList();
-
         //用来更新排序的List
         List<EpPartition> dealUpdatePartitionList = Lists.newArrayList();
-
         //需要删除的list
         List<Long> deletePartitionList = Lists.newArrayList();
+
         //根据能源类型查询出该类型的所有分区树的集合
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
-                .eq(EpPartition::getType, dto.getType())
-                .eq(EpPartition::getDelFlag,MpConstant.NO));
+                .eq(EpPartition::getType, dto.getType()));
+
        //获取数据库中所有officeId
         List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
        //机构的id以及分区树的id组成的Map集合
@@ -180,17 +179,16 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }
         //先过滤掉前端传过来不符合要求的数据
         List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
+        //然后根据officeId和sort组合成Map
+        Map<Integer,Integer> idSortMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(dtoList)){
             //先自己给传过来的数据排序
             for (int i = 0; i < dtoList.size(); i++) {
                 EpPartitionListDTO epPartitionListDTO = dtoList.get(i);
+                //给元素设置排序规则
                 epPartitionListDTO.setSort(i);
+                idSortMap.put(epPartitionListDTO.getId(), i);
             }
-            //然后根据officeId和sort组合成Map
-            Map<Integer,Integer> idSortMap = Maps.newHashMap();
-            dtoList.stream().forEach(v->{
-                idSortMap.put(v.getId(),v.getSort());
-            });
             for (EpPartitionListDTO partitionDTO : dtoList) {
                 //如果数据库中没有包含该机构的id则新增
                 if (!officeIds.contains(partitionDTO.getId())){
@@ -210,9 +208,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                     epPartitionVO.setSort(partitionDTO.getSort());
                     partitionMap.put(partitionDTO.getId(),mainId);
                     dealAddPartitionList.add(epPartitionVO);
-                }else if (officeIds.contains(partitionDTO.getId())){
+                }else {
                     EpPartition epPartition = officeIdPartitionMap.get(partitionDTO.getId());
                     epPartition.setSort(idSortMap.get(partitionDTO.getId()));
+                    epPartition.setOfficeName(partitionDTO.getOfficeName());
+                    epPartition.setOfficeId(partitionDTO.getId());
                     dealUpdatePartitionList.add(epPartition);
                 }
             }
