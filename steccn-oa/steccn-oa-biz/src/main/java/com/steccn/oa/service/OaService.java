@@ -318,8 +318,6 @@ public class OaService {
         //获得sessionKey
         String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
         OaDataKeyDTO dataKey = new OaDataKeyDTO();
-        dataKey.setPageSize(dto.getPageSize());
-        dataKey.setDataKey(sessionKey);
         if(dto.getCurrent()!=null){
             dataKey.setCurrent(dto.getCurrent());
         }
@@ -327,7 +325,8 @@ public class OaService {
             dataKey.setPageSize(dto.getPageSize());
         }
         //不可包含token
-        headers.remove("token");
+//        headers.remove("token");
+        dataKey.setDataKey(sessionKey);
         String result = oaApi.getDataBySessionKey(headers,dataKey);
         JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
         List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
