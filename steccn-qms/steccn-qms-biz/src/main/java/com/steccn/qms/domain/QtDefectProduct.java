@@ -17,7 +17,7 @@ public class QtDefectProduct implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -33,7 +33,7 @@ public class QtDefectProduct implements Serializable {
     /**
      * 问题描述
      */
-    private String desc;
+    private String description;
 
     /**
      * 检验任务主键
@@ -50,10 +50,22 @@ public class QtDefectProduct implements Serializable {
      */
     private Long taskType;
 
+
+    /**
+     * 检验任务类型名称
+     */
+    private String taskTypeName;
+
     /**
      * 检验完成人员
      */
-    private String taskFinishMan;
+    private Long taskFinishMan;
+
+
+    /**
+     * 检验完成人员名称
+     */
+    private String taskFinishManName;
 
     /**
      * 检验完成时间
@@ -69,6 +81,12 @@ public class QtDefectProduct implements Serializable {
      * 物料编码
      */
     private String materialCode;
+
+
+    /**
+     * 物料名称
+     */
+    private String materialName;
 
     /**
      * 生产订单号
@@ -105,6 +123,12 @@ public class QtDefectProduct implements Serializable {
      */
     private Long dealMan;
 
+
+    /**
+     * 处理人名称
+     */
+    private String dealManName;
+
     /**
      * 0-待处理、1-待审批、2-已关闭
      */
@@ -114,6 +138,12 @@ public class QtDefectProduct implements Serializable {
      * 处理方式
      */
     private Integer dealWay;
+
+
+    /**
+     * 处理方式名称
+     */
+    private String dealWayName;
 
     /**
      * 处理数量

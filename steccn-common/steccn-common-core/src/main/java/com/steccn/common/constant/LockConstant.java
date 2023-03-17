@@ -95,6 +95,11 @@ public interface LockConstant {
      */
     String QT_CUSTOMER_COMPLAIN = "QT_CUSTOMER_COMPLAIN";
 
+    /**
+     * 不合格品处理
+     */
+    String QT_DEFECT_PRODUCT = "QT_DEFECT_PRODUCT";
+
 
 }
 

@@ -294,6 +294,48 @@ public interface QtManagerConstant {
      */
     String QT_CUSTOMER_COMPLAIN_DEAL_WAY = "dealWay";
 
+    /**
+     * 不合格品处理排序-检验单号
+     */
+    String QT_DEFECT_PRODUCT_TASK_CODE= "taskCode";
+
+    /**
+     * 不合格品处理排序-检验类型
+     */
+    String QT_DEFECT_PRODUCT_TASK_TYPE= "taskType";
+
+
+    /**
+     * 不合格品处理排序-检验类型
+     */
+    String QT_DEFECT_PRODUCT_MATERIAL_NAME= "materialName";
+
+    /**
+     * 不合格品处理排序-检验完成人员
+     */
+    String QT_DEFECT_PRODUCT_TASK_FINISH_MAN= "taskFinishMan";
+
+    /**
+     * 不合格品处理排序-检验完成人员
+     */
+    String QT_DEFECT_PRODUCT_TASK_FINISH_TIME= "taskFinishTime";
+
+    /**
+     * 不合格品处理排序-处理人
+     */
+    String QT_DEFECT_PRODUCT_DEAL_MAN= "dealMan";
+
+    /**
+     * 不合格品处理排序-状态
+     */
+    String QT_DEFECT_PRODUCT_STATUS= "status";
+
+    /**
+     * 不合格品处理排序-处理方式
+     */
+    String QT_DEFECT_PRODUCT_DEAL_WAY= "dealWay";
+
+
 
     /**
      * 周枚举
