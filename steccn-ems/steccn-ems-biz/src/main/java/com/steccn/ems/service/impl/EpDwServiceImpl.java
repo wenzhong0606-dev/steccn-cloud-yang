@@ -178,40 +178,6 @@ public class EpDwServiceImpl implements EpDwService {
                     taskList.addAll(stationTaskList);
                 }
             }
-//            if (CollUtil.isNotEmpty(dwList)) {
-//                //按照start时间排序
-//                dwList.sort(Comparator.comparing(DwConditionDTO::getMeterId).thenComparing(DwConditionDTO::getStart));
-//                List<DwMeterReadDTO> dwMeterReadDTOList = Lists.newArrayList();
-//                dwList.forEach(ele -> {
-//                    DwMeterReadDTO readDTO = new DwMeterReadDTO();
-//                    BeanUtils.copyProperties(ele, readDTO);
-//                    dwMeterReadDTOList.add(readDTO);
-//                });
-//
-//                List<DwEpMeterCollectVO> sourceData = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(dwMeterReadDTOList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-//                List<EpMeterRead> insertList = Lists.newArrayList();
-//                if (CollUtil.isNotEmpty(sourceData)) {
-//                    //准备插入数据库
-//                    dwList.forEach(ele -> {
-//                        EpMeterRead epMeterRead = new EpMeterRead();
-//                        BeanUtils.copyProperties(ele, epMeterRead);
-//                        epMeterRead.setDistantMapCode(ele.getCode());
-//                        Optional<DwEpMeterCollectVO> max = sourceData.stream().filter(v -> v.getCode().equals(ele.getCode()))
-//                                .filter(v -> !v.getRecordTime().isAfter(ele.getEnd())).max(Comparator.comparing(DwEpMeterCollectVO::getRecordTime));
-//                        if (max.isPresent()) {
-//                            DwEpMeterCollectVO dwEpMeterCollectVO = max.get();
-//                            epMeterRead.setAdminValue(dwEpMeterCollectVO.getValue());
-//                            epMeterRead.setCorrectValue(dwEpMeterCollectVO.getValue());
-//                            epMeterRead.setReadValue(dwEpMeterCollectVO.getValue());
-//                            epMeterRead.setAdminFlag(0);
-//                            insertList.add(epMeterRead);
-//                        }
-//                    });
-//                }
-//                if (CollUtil.isNotEmpty(insertList)) {
-//                    epMeterReadService.saveBatch(insertList);
-//                }
-//            }
         }
         return taskList;
     }
@@ -343,7 +309,6 @@ public class EpDwServiceImpl implements EpDwService {
         if (CollUtil.isEmpty(reportWorkDTO)) {
             return resList;
         }
-
         //获取一个仪表节点一天的报工数据-需要考虑跨班次的问题
         for (int i = 0; i < reportWorkDTO.size(); i++) {
             DwCurrentReportWorkDTO reportWork = reportWorkDTO.get(i);
