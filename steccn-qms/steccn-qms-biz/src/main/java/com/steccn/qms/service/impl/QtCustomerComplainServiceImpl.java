@@ -109,6 +109,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
 
     @Override
     public Page<QtCustomerComplainVO> listPage(CustomerComplainPageDTO dto) {
+
         //处理时间
         if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())) {
             dto.setStartTime(LocalDateTime.of(dto.getStartDate(), LocalTime.MIN));
@@ -116,6 +117,26 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         }
         //1.定义查询条件查询数据
         LambdaQueryWrapper<QtCustomerComplain> between = new LambdaQueryWrapper<QtCustomerComplain>().like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode()).like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle()).eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer()).eq(Objects.nonNull(dto.getComplainReceiver()), QtCustomerComplain::getComplainReceiver, dto.getComplainReceiver()).eq(Objects.nonNull(dto.getComplainType()), QtCustomerComplain::getComplainType, dto.getComplainType()).eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan()).eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime());
+        if (Objects.nonNull(dto.getSortField())){
+            //定义排序条件
+            if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CODE.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getCode);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_title.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getTitle);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CUSTOMER.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getComplainCustomerName);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_TYPE.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getComplainTypeName);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_DATE.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getComplainDate);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_DEAL_MAN.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getDealManName);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_RECEIVER.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getComplainReceiverName);
+            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_DEAL_WAY.equals(dto.getSortField())){
+                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtCustomerComplain::getDealWayName);
+            }
+        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据

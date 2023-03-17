@@ -38,6 +38,11 @@ public class QtCustomerComplainDTO {
     private Integer complainCustomer;
 
     /**
+     * 投诉客户名称
+     */
+    private String complainCustomerName;
+
+    /**
      * 投诉日期
      */
     private LocalDate complainDate;
@@ -48,10 +53,22 @@ public class QtCustomerComplainDTO {
     private Long complainReceiver;
 
     /**
+     * 投诉接收人名称
+     */
+    private String complainReceiverName;
+
+
+    /**
      * 投诉类型
      */
 //    @NotNull(message = "投诉类型不能为空")
     private Integer complainType;
+
+
+    /**
+     * 投诉类型名称
+     */
+    private String complainTypeName;
 
     /**
      * 处理人
@@ -60,11 +77,20 @@ public class QtCustomerComplainDTO {
     private Long dealMan;
 
     /**
+     * 处理人名称
+     */
+    private String dealManName;
+
+    /**
      * 处理方式
      */
 //    @NotNull(message = "处理方式不能为空")
     private Integer dealWay;
 
+    /**
+     * 处理方式名称
+     */
+    private String dealWayName;
     /**
      * 0-待处理、1-待审批、2-已关闭
      */
