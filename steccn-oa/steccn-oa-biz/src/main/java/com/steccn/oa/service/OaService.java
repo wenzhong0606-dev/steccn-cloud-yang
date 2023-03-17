@@ -308,6 +308,32 @@ public class OaService {
     }
 
     /**
+     * 获取oa人员信息
+     * @param dto
+     * @return
+     */
+    public List<OaEmpVO> getEmpInfoByCondition(OaEmpStatusDTO dto){
+        MultiValueMap<String, String> headers = setHeaders();
+        String sessionResult = oaApi.getEmpInfoSessionKey(headers,dto);
+        //获得sessionKey
+        String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        if(dto.getCurrent()!=null){
+            dataKey.setCurrent(dto.getCurrent());
+        }
+        if(dto.getPageSize()!=null){
+            dataKey.setPageSize(dto.getPageSize());
+        }
+        //不可包含token
+//        headers.remove("token");
+        dataKey.setDataKey(sessionKey);
+        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
+    }
+
+    /**
      * 获取待办数据
      * @param flag 0待办 1待阅
      * @return

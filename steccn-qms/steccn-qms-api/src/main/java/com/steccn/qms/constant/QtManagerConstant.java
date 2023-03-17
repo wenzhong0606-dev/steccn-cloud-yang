@@ -249,9 +249,51 @@ public interface QtManagerConstant {
     String STR_LIMIT_1 = " limit 1 ";
 
     /**
-     * 客诉单号前缀
+     * 客诉排序字段-编码
      */
-    String PREFIX_CUSTOMER_COMPLAIN = "KS";
+    String QT_CUSTOMER_COMPLAIN_CODE = "code";
+
+
+    /**
+     * 客诉排序字段-标题
+     */
+    String QT_CUSTOMER_COMPLAIN_title = "title";
+
+    /**
+     * 客诉排序字段-投诉客户
+     */
+    String QT_CUSTOMER_COMPLAIN_CUSTOMER = "complainCustomer";
+
+    /**
+     * 客诉排序字段-投诉日期
+     */
+    String QT_CUSTOMER_COMPLAIN_DATE= "complainDate";
+
+    /**
+     * 客诉排序字段-投诉接收人
+     */
+    String QT_CUSTOMER_COMPLAIN_RECEIVER= "complainReceiver";
+
+    /**
+     * 客诉排序字段-投诉类型
+     */
+    String QT_CUSTOMER_COMPLAIN_TYPE = "complainType";
+
+    /**
+     * 客诉排序字段-处理人
+     */
+    String QT_CUSTOMER_COMPLAIN_DEAL_MAN= "dealMan";
+
+    /**
+     * 客诉排序字段-状态
+     */
+    String QT_CUSTOMER_COMPLAIN_STATUS = "status";
+
+    /**
+     * 客诉排序字段-处理方式
+     */
+    String QT_CUSTOMER_COMPLAIN_DEAL_WAY = "dealWay";
+
 
     /**
      * 周枚举

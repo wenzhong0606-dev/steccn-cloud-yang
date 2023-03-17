@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.domain.QtDealWay;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -87,6 +89,16 @@ public class QtDealWayServiceImpl extends ServiceImpl<QtDealWayMapper, QtDealWay
             Assert.isTrue(count == 0, "存在该处理方式的不合格品处理记录，不允许删除");
         }
         return removeById(id);
+    }
+
+    @Override
+    public Map<Integer, String> listByIdCh(Set<Integer> ids) {
+        Map<Integer, String> map = Maps.newHashMap();
+        List<QtDealWay> list = list(new LambdaQueryWrapper<QtDealWay>().in(QtDealWay::getId, ids));
+        if (CollUtil.isNotEmpty(list)){
+            list.forEach(qtDealWay -> map.put(qtDealWay.getId(),qtDealWay.getWay()));
+        }
+        return map;
     }
 }
 

@@ -103,6 +103,16 @@ public interface OaApi {
     String getCompanyEmpSessionKey(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaEmpDTO dto);
 
     /**
+     * 获取在职人员信息sessionKey
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/search/getHrmSearchResult",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getEmpInfoSessionKey(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaEmpStatusDTO dto);
+
+    /**
      * 通过sessionKey获取数据
      * @param headers
      * @param dto

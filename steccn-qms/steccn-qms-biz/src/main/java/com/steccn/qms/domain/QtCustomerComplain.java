@@ -41,6 +41,11 @@ public class QtCustomerComplain implements Serializable {
     private Integer complainCustomer;
 
     /**
+     * 投诉客户名称
+     */
+    private String complainCustomerName;
+
+    /**
      * 投诉日期
      */
     private LocalDate complainDate;
@@ -48,22 +53,47 @@ public class QtCustomerComplain implements Serializable {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
+
+    /**
+     * 投诉接收人
+     */
+    private String complainReceiverName;
+
 
     /**
      * 投诉类型
      */
     private Integer complainType;
 
+
+    /**
+     * 投诉类型名称
+     */
+    private String complainTypeName;
+
+
     /**
      * 处理人
      */
-    private Integer dealMan;
+    private Long dealMan;
+
+
+    /**
+     * 处理人名称
+     */
+    private String dealManName;
 
     /**
      * 处理方式
      */
     private Integer dealWay;
+
+
+    /**
+     * 处理方式名称
+     */
+    private String dealWayName;
 
     /**
      * 0-待处理、1-待审批、2-已关闭
