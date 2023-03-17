@@ -20,12 +20,6 @@ public class DwMeterReadDTO implements Serializable {
     @ApiModelProperty("远传仪表编码")
     private String code;
 
-    @ApiModelProperty("开始时间")
-    private LocalDateTime start;
-
-    @ApiModelProperty("结束时间")
-    private LocalDateTime end;
-
     @ApiModelProperty("记录时间")
     private LocalDateTime recordTime;
 }

@@ -38,13 +38,13 @@ public class DataPlatformFeignController {
 
     @PostMapping("/meter/read")
     @ApiOperation(value = "数仓条件列表")
-    public R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList) {
-        return R.success(epMeterCollectService.meterRead(dwList));
+    public R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto) {
+        return R.success(epMeterCollectService.meterRead(dto));
     }
 
     @PostMapping("/meter/last/read/time")
     @ApiOperation(value = "最近抄表时间")
-    R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet){
+    R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet) {
         return R.success(epMeterCollectService.lastReadTime(distantCodeSet));
     }
 

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.vo.DwEpMeterCollectVO;
@@ -35,29 +36,18 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
 
     @Override
-    public List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList) {
-//        Set<DwEpMeterCollectVO> dataCollect = Sets.newHashSet();
-//        if (CollUtil.isNotEmpty(dwList)) {
-//            List<List<DwMeterReadDTO>> splitList = SplitListUtil.split(dwList, 5);
-//            for (List<DwMeterReadDTO> split : splitList) {
-//                //批量查询
-//                List<EpMeterCollect> dbList = this.baseMapper.batchSearch(split);
-//                if (CollUtil.isNotEmpty(dbList)) {
-//                    dataCollect.addAll(BeanUtil.copyToList(dbList, DwEpMeterCollectVO.class));
-//                }
-//            }
-//        }
-//        return new ArrayList<>(dataCollect);
-        DwMeterReadDTO dto = dwList.get(0);
-
-        List<EpMeterCollect> oneList = list(new LambdaQueryWrapper<EpMeterCollect>().eq(EpMeterCollect::getCode, dto.getCode())
-                .between(EpMeterCollect::getRecordTime, LocalDateTime.of(dto.getRecordTime().toLocalDate().minusMonths(1), LocalTime.MIN), dto.getRecordTime())
-                .orderByDesc(EpMeterCollect::getRecordTime));
-        List<DwEpMeterCollectVO> res = new ArrayList<>();
-        if (Objects.nonNull(oneList)) {
-            res.addAll(BeanUtil.copyToList(oneList, DwEpMeterCollectVO.class));
+    public DwEpMeterCollectVO meterRead(DwMeterReadDTO dto) {
+        DwEpMeterCollectVO resVo = null;
+        EpMeterCollect one = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, dto.getCode())
+                .between(EpMeterCollect::getRecordTime, LocalDateTime.of(dto.getRecordTime().toLocalDate(), LocalTime.MIN), dto.getRecordTime())
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)) {
+            resVo = new DwEpMeterCollectVO();
+            BeanUtils.copyProperties(one, resVo);
         }
-        return res;
+        return resVo;
     }
 
     @Override

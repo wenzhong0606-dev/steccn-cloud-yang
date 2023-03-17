@@ -20,10 +20,10 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
     /**
      * 数仓条件列表
-     * @param dwList
+     * @param dto
      * @return
      */
-    List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList);
+    DwEpMeterCollectVO meterRead(DwMeterReadDTO dto);
 
     /**
      * 最近抄表时间
