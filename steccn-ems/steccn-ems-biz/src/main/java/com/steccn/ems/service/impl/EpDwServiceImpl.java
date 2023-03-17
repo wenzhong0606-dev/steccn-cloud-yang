@@ -1,13 +1,18 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.dto.DwConditionDTO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
+import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
@@ -17,9 +22,11 @@ import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -70,10 +77,55 @@ public class EpDwServiceImpl implements EpDwService {
             //子任务执行好插入数据，更新标识
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, allReportWorkList);
-            log.info("{}", taskList);
+            for (DwConditionDTO task : taskList) {
+                readPool.submit(() -> {
+                    doMeterRead(task);
+                });
+            }
         }
         return Boolean.TRUE;
     }
+
+    /**
+     * 执行任务
+     *
+     * @param task 任务
+     * @return
+     */
+    private boolean doMeterRead(DwConditionDTO task) {
+        //执行任务，考虑重复执行的问题
+        long count = epMeterReadService.count(new LambdaQueryWrapper<EpMeterRead>()
+                .eq(EpMeterRead::getMeterId, task.getMeterId())
+                .eq(EpMeterRead::getDistantMapCode, task.getCode())
+                .eq(EpMeterRead::getReadDate, task.getReadDate())
+                .eq(Objects.nonNull(task.getClassId()), EpMeterRead::getClassId, task.getClassId())
+                .eq(Objects.nonNull(task.getThick()), EpMeterRead::getThick, task.getThick())
+                .eq(Objects.nonNull(task.getReportWorkId()), EpMeterRead::getReportWorkId, task.getReportWorkId())
+                .eq(EpMeterRead::getStart, task.getStart())
+                .eq(EpMeterRead::getEnd, task.getEnd()));
+        if (count > 0) {
+            log.info("读数归档 班次日期 -> {} 已跑过", task);
+            return Boolean.FALSE;
+        }
+        //构造请求
+        DwMeterReadDTO readDTO = new DwMeterReadDTO();
+        readDTO.setCode(task.getCode());
+        readDTO.setRecordTime(task.getEnd());
+        DwEpMeterCollectVO endVO = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(readDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        if (Objects.nonNull(endVO)) {
+            EpMeterRead epMeterRead = new EpMeterRead();
+            BeanUtils.copyProperties(task, epMeterRead);
+            epMeterRead.setDistantMapCode(task.getCode());
+            epMeterRead.setAdminValue(endVO.getValue());
+            epMeterRead.setCorrectValue(endVO.getValue());
+            epMeterRead.setReadValue(endVO.getValue());
+            epMeterRead.setAdminFlag(0);
+            epMeterReadService.save(epMeterRead);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
 
     /**
      * 计算表读数
@@ -338,7 +390,7 @@ public class EpDwServiceImpl implements EpDwService {
             DwCurrentReportWorkDTO prev = reportWorkDTO.get(i - 1);
             DwCurrentReportWorkDTO cur = reportWorkDTO.get(i);
             //2个时间同属于同一个班次，才可以做缝隙
-            if (cur.getStart().isAfter(prev.getEnd()) && CalculateDateUtil.isSameClassType(cur.getStart(),prev.getEnd())) {
+            if (cur.getStart().isAfter(prev.getEnd()) && CalculateDateUtil.isSameClassType(cur.getStart(), prev.getEnd())) {
                 DwConditionDTO dwConditionDTO = getDefaultDwConditionDTO(meter, prev.getEnd(), cur.getStart(), cur.getClassDate(), cur.getClassId());
                 //添加空闲时间
                 resList.add(dwConditionDTO);
