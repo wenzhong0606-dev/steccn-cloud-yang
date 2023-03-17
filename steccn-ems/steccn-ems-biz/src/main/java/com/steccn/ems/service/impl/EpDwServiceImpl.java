@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
@@ -290,7 +291,8 @@ public class EpDwServiceImpl implements EpDwService {
         if (CollUtil.isEmpty(reportWorkDTO)) {
             return resList;
         }
-        //获取一个仪表节点一天的报工数据
+
+        //获取一个仪表节点一天的报工数据-需要考虑跨班次的问题
         for (int i = 0; i < reportWorkDTO.size(); i++) {
             DwCurrentReportWorkDTO reportWork = reportWorkDTO.get(i);
             //根据报工 构造数据
@@ -335,7 +337,8 @@ public class EpDwServiceImpl implements EpDwService {
         for (int i = 1; i < filterList.size(); i++) {
             DwCurrentReportWorkDTO prev = reportWorkDTO.get(i - 1);
             DwCurrentReportWorkDTO cur = reportWorkDTO.get(i);
-            if (cur.getStart().isAfter(prev.getEnd())) {
+            //2个时间同属于同一个班次，才可以做缝隙
+            if (cur.getStart().isAfter(prev.getEnd()) && CalculateDateUtil.isSameClassType(cur.getStart(),prev.getEnd())) {
                 DwConditionDTO dwConditionDTO = getDefaultDwConditionDTO(meter, prev.getEnd(), cur.getStart(), cur.getClassDate(), cur.getClassId());
                 //添加空闲时间
                 resList.add(dwConditionDTO);
@@ -369,13 +372,13 @@ public class EpDwServiceImpl implements EpDwService {
         } else {
             //存在元素①开始和结束都有元素 ②开始有或者结束有 ③开始结束都没有【班次日期都在报工】
             //开始时间必须大于start 并且结束时间必须小于等于end
-            Optional<DwCurrentReportWorkDTO> first = reportWorkDTO.stream().filter(v -> v.getStart().isAfter(start) && (end.isAfter(v.getEnd()) || end.isEqual(v.getEnd()))).min(Comparator.comparing(DwCurrentReportWorkDTO::getStart));
+            Optional<DwCurrentReportWorkDTO> first = reportWorkDTO.stream().filter(v -> (v.getStart().isAfter(start) || v.getStart().isEqual(start)) && (end.isAfter(v.getEnd()) || end.isEqual(v.getEnd()))).min(Comparator.comparing(DwCurrentReportWorkDTO::getStart));
             //开始时间必须大于等于start 并且结束时间必须小于end
-            Optional<DwCurrentReportWorkDTO> last = reportWorkDTO.stream().filter(v -> (v.getStart().isAfter(start) && v.getStart().isEqual(start)) && v.getEnd().isBefore(end)).max(Comparator.comparing(DwCurrentReportWorkDTO::getEnd));
-            if (first.isPresent()) {
+            Optional<DwCurrentReportWorkDTO> last = reportWorkDTO.stream().filter(v -> (v.getStart().isAfter(start) || v.getStart().isEqual(start)) && (v.getEnd().isBefore(end) || end.isEqual(v.getEnd()))).max(Comparator.comparing(DwCurrentReportWorkDTO::getEnd));
+            if (first.isPresent() && !first.get().getStart().isEqual(start)) {
                 resList.add(getDefaultDwConditionDTO(meter, start, first.get().getStart(), start.toLocalDate(), code));
             }
-            if (last.isPresent()) {
+            if (last.isPresent() && !last.get().getEnd().isEqual(end)) {
                 resList.add(getDefaultDwConditionDTO(meter, last.get().getEnd(), end, start.toLocalDate(), code));
             }
         }
