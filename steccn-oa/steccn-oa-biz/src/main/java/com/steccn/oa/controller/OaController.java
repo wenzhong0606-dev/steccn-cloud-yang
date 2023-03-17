@@ -145,9 +145,8 @@ public class OaController {
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R test(@RequestBody OaWorkFlowParamDTO dto) {
-        oaService.getWorkFlow(dto);
-        return null;
+    public R<OaWorkflowStatusVO> createWorkFlow(@RequestBody OaWorkFlowParamDTO dto) {
+        return R.success(oaService.createWorkFlow(dto));
     }
 
     @ApiOperation("根据工号工号查询id")
