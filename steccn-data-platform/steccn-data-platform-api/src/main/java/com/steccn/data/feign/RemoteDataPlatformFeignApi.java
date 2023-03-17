@@ -30,12 +30,12 @@ public interface RemoteDataPlatformFeignApi {
     /**
      * 能源绩效系统-抄表归档
      *
-     * @param dwList 数仓条件列表
+     * @param dto 数仓条件列表
      * @return list
      */
     @PostMapping("/feign/data/warehouse/meter/read")
     @ApiOperation("能源绩效系统-抄表归档")
-    R<List<DwEpMeterCollectVO>> meterRead(@RequestBody List<DwMeterReadDTO> dwList);
+    R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto);
 
     /**
      * 生产管理-进出站计数归档
