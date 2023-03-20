@@ -1,5 +1,7 @@
 package com.steccn.qms.vo;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -7,6 +9,7 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -132,6 +135,17 @@ public class QtCustomerComplainVO {
      * 审批人名称
      */
     private String approveManName;
+
+
+    /**
+     * 创建人名称
+     */
+    private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
 
 }

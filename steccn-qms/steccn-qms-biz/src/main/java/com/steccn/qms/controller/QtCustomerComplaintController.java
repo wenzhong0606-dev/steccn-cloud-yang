@@ -3,6 +3,7 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
@@ -13,6 +14,7 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -48,6 +50,7 @@ public class QtCustomerComplaintController {
 
     @ApiOperation("编辑客诉记录")
     @PutMapping()
+    @SysLog("编辑客诉记录")
     public R<Boolean> edit(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
         return  R.success(qtCustomerComplainService.edit(qtCustomerComplainDTO));
     }
@@ -55,7 +58,8 @@ public class QtCustomerComplaintController {
 
     @ApiOperation("处理客诉记录")
     @PutMapping("/dispose")
-    public R<Boolean> dispose(@RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
+    @SysLog("处理客诉记录")
+    public R<Boolean> dispose(@Validated(UpdateGroup.class) @RequestBody QtCustomerComplainDTO qtCustomerComplainDTO){
         return  R.success(qtCustomerComplainService.dispose(qtCustomerComplainDTO));
     }
 
