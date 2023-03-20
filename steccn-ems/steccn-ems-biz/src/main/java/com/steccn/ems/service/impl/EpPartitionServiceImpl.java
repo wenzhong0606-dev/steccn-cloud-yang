@@ -90,6 +90,17 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 }
                 root.setChildren(children);
             }
+            //去platform中组织机构树取officeName
+            Set<Integer> officeIdSet = Sets.newHashSet();
+            rootVOList.forEach(ele ->{
+                officeIdSet.add(ele.getOfficeId());
+                officeIdSet.add(ele.getParentOfficeId());
+            });
+            Map<Integer, String> officeIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            rootVOList.forEach(ele -> {
+                ele.setOfficeName(officeIdNameMap.get(ele.getOfficeId()));
+                ele.setParentOfficeName(officeIdNameMap.get(ele.getParentOfficeId()));
+            });
             epPartitionNameListVO.setEpPartitionVOList(rootVOList);
         }
         return epPartitionNameListVO;
