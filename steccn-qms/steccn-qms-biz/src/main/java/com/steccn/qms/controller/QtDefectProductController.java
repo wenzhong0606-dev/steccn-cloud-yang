@@ -3,7 +3,9 @@ package com.steccn.qms.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.dto.QtDefectProductDTO;
 import com.steccn.qms.dto.QtDefectProductPageDTO;
 import com.steccn.qms.service.QtDefectProductService;
@@ -13,6 +15,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -53,4 +56,14 @@ public class QtDefectProductController {
     public R<Boolean> delete(@PathVariable("id") Long id) {
         return R.success(qtDefectProductService.delete(id));
     }
+
+
+    @ApiOperation("处理不合格品处理记录")
+    @PutMapping("/dispose")
+    @SysLog("处理不合格品处理记录")
+    public R<Boolean> dispose(@Validated(UpdateGroup.class)  @RequestBody QtDefectProductDTO dto){
+        return  R.success(qtDefectProductService.dispose(dto));
+    }
+
+
 }

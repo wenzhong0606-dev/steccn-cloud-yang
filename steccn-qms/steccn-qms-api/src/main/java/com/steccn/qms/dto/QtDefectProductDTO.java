@@ -1,7 +1,10 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -143,4 +146,15 @@ public class QtDefectProductDTO {
      * 备注
      */
     private String note;
+
+    /**
+     * 抄送人
+     */
+    private Long carbonCopyMan;
+
+    /**
+     * 审批人
+     */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "审批人不能为空")
+    private Long approveMan;
 }

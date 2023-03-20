@@ -1,5 +1,7 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -115,7 +117,7 @@ public class QtCustomerComplainDTO {
     /**
      * 审批人
      */
-    @NotNull(message = "审批人不能为空")
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "审批人不能为空")
     private Long approveMan;
 
 

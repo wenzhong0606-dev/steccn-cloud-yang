@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
@@ -18,10 +19,12 @@ import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.domain.QtComplainDefectImproveMan;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.domain.QtDefectProduct;
 import com.steccn.qms.dto.QtDefectProductDTO;
 import com.steccn.qms.dto.QtDefectProductPageDTO;
+import com.steccn.qms.service.QtComplainDefectImproveManService;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.mapper.QtDefectProductMapper;
@@ -55,6 +58,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private final RedissonClient redissonClient;
 
     private final RemoteMsgFeignApi remoteMsgFeignApi;
+
+    private final QtComplainDefectImproveManService qtComplainDefectImproveManService;
 
 
     @Override
@@ -185,6 +190,30 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         QtDefectProduct qtDefectProduct = getById(id);
         Assert.isTrue(Objects.nonNull(qtDefectProduct.getId()), "记录不存在");
         return removeById(id);
+    }
+
+    @Override
+    public Boolean dispose(QtDefectProductDTO dto) {
+        QtDefectProduct qtDefectProduct = getById(dto.getId());
+        Assert.isTrue(Objects.nonNull(qtDefectProduct.getId()), "记录不存在");
+        BeanUtil.copyProperties(dto, qtDefectProduct);
+        List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
+        QtComplainDefectImproveMan qtComplainDefectImproveMan = new QtComplainDefectImproveMan();
+        qtComplainDefectImproveMan.setBusiId(qtDefectProduct.getId());
+        qtComplainDefectImproveMan.setUserType(QtManagerConstant.userType.APPROVE_MAN.getCode());
+        qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+        qtComplainDefectImproveMan.setUserId(dto.getApproveMan());
+        manList.add(qtComplainDefectImproveMan);
+        if (Objects.nonNull(dto.getCarbonCopyMan())) {
+            QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
+            man.setBusiId(dto.getId());
+            man.setUserId(dto.getCarbonCopyMan());
+            man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
+            man.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+            manList.add(man);
+        }
+        qtComplainDefectImproveManService.saveBatch(manList);
+        return  updateById(qtDefectProduct);
     }
 
 

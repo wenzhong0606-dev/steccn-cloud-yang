@@ -143,4 +143,15 @@ public class QtDefectProductVO {
      * 备注
      */
     private String note;
+
+
+    /**
+     * 创建人名称
+     */
+    private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 }
