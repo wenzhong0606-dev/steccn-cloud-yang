@@ -142,6 +142,6 @@ public interface OaInfoService {
      * @return
      */
     @ApiOperation("根据条件查询")
-    @PostMapping("/user/condition")
+    @PostMapping("/oa/user/condition")
     R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
 }

@@ -240,6 +240,11 @@ public interface PmManagerConstant {
     String LABORATORY_DIRECTOR = "化验室副主任";
 
     /**
+     * 流程字段
+     */
+    String WORKFLOW_SQRGW = "sqrgw";
+
+    /**
      * 配料工id
      */
     String BATCHER_ID = "191";

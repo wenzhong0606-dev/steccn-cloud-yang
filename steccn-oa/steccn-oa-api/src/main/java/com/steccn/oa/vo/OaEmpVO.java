@@ -1,5 +1,6 @@
 package com.steccn.oa.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,4 +29,11 @@ public class OaEmpVO implements Serializable {
      * 职务
      */
     private String jobtitlespan;
+
+    /**
+     * 岗位
+     */
+    private String jobtitle;
+
+
 }

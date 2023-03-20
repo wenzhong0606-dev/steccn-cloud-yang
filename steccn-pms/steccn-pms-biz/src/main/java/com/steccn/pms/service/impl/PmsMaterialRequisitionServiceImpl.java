@@ -275,10 +275,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 workflowDTO.setWorkflowId("131");
                 //主要数据
                 List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
+                //获取岗位
                 OaEmpStatusDTO emp = new OaEmpStatusDTO();
                 emp.setLoginid(SecurityUtils.getUser().getUsername());
                 List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByCondition(emp), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                mainDataList.add(new OaWorkFlowNameValueDTO());
+                if(CollUtil.isNotEmpty(oaEmpVOS)){
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRGW,oaEmpVOS.get(0).getJobtitle()));
+                }
                 //详细数据
                 List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
                 //变成审批中状态
