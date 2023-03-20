@@ -207,8 +207,12 @@ public class OaService {
                 //根据id过滤
                 OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
                 oaUserInfo.setDepartmentName(one.getDepartmentname());
+                oaUserInfo.setDepartmentId(one.getDepartmentid());
+                oaUserInfo.setSubCompanyName(one.getSubcompanyname());
+                oaUserInfo.setSubCompanyId(one.getSubcompanyid());
                 oaUserInfo.setName(one.getLastname());
                 oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
+                oaUserInfo.setJobTitle(one.getJobtitle());
                 oaUserInfo.setStatus(true);
             }else {
                 oaUserInfo.setStatus(false);
