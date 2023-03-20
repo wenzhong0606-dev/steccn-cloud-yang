@@ -54,10 +54,10 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpPartitionService epPartitionService;
     private final TransactionTemplate transactionTemplate;
 
-    private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+    private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
-    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
 
 
@@ -179,6 +179,8 @@ public class EpDwServiceImpl implements EpDwService {
                 }
             }
         }
+        //将开始时间排序
+        taskList.sort(Comparator.comparing(DwConditionDTO::getStart));
         return taskList;
     }
 
