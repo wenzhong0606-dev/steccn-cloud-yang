@@ -14,6 +14,11 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaUserInfo;
+import com.steccn.oa.dto.OaWorkFlowDetailObjDTO;
+import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
+import com.steccn.oa.dto.OaWorkFlowParamDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -36,10 +41,10 @@ import com.steccn.pms.vo.MaterialRequisitionVO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.wms.dto.MaterialStorageDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,6 +73,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     private final PmsCompleteDeliveryInfoService pmsCompleteDeliveryInfoService;
     private final RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
     private final RemoteWmsInventoryFeignApi remoteWmsInventoryFeignApi;
+    private final PmsMaterialRequisitionWorkflowService pmsMaterialRequisitionWorkflowService;
+    private final OaInfoService oaInfoService;
 
     @Override
     public Page<MaterialRequisitionVO> pageList(MaterialRequisitionPageDTO dto) {
@@ -111,6 +118,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             page.getRecords().forEach(materialRequisitionVO -> {
                 BigDecimal quantity = quantityMap.getOrDefault(materialRequisitionVO.getId(), zero);
                 materialRequisitionVO.setQuantity(quantity);
+            });
+            //3.5查看是否有oa流程信息
+            page.getRecords().forEach(materialRequisitionVO -> {
+                PmsMaterialRequisitionWorkflow one = pmsMaterialRequisitionWorkflowService.getOne(new LambdaQueryWrapper<PmsMaterialRequisitionWorkflow>().eq(PmsMaterialRequisitionWorkflow::getRequisitionId, materialRequisitionVO.getId()).orderByDesc(PmsMaterialRequisitionWorkflow::getCreateTime), false);
+                if(Objects.nonNull(one)){
+                    materialRequisitionVO.setRequestId(one.getRequestId());
+                }
             });
         }
         return page;
@@ -243,21 +257,46 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approval(MaterialRequisitionApprovalDTO dto) {
         //1.根据id获取领料单
         PmsMaterialRequisition pmsMaterialRequisition = getById(dto.getId());
         //2.校验领料单是否存在
         Assert.notNull(pmsMaterialRequisition, "该领料单不存在");
         //3.根据审批状态修改审批单
+        //如果传0则是审批中
         if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)) {
+            pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
+            //调用oa接口发起流程
+            //是已创建和拒绝状态才能发起流程
+            if(pmsMaterialRequisition.getStatus().equals(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId())
+                || pmsMaterialRequisition.getStatus().equals(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
+                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId())){
+                //调用oa接口调用数据
+                OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
+                workflowDTO.setWorkflowId("131");
+                //主要数据
+                List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
+                OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(SecurityUtils.getUser().getUsername()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                mainDataList.add(new OaWorkFlowNameValueDTO());
+                //详细数据
+                List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
+            }
+        } else if(dto.getApprovalFlag().equals(PmsCodeUtil.NUM_BIT_1)){
+            //1 表示通过
             pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
-        } else {
+            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
+            pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
+        } else if (dto.getApprovalFlag().equals(PmsCodeUtil.NUM_BIT_2)){
+            //2 表示失败
             pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
+            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
+            pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
         }
-        pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
-        pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
         return updateById(pmsMaterialRequisition);
     }
 

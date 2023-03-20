@@ -99,7 +99,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainCustomer()))).get();
             Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainType()));
             //发送消息
-            sendMessage(officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()), qtCustomerComplain.getTitle(), Sets.newHashSet(qtCustomerComplain.getDealMan()), qtCustomerComplain.getCode());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setCode(qtCustomerComplain.getCode());
+            sendMessage(sysMsgAdditionDTO,content, Sets.newHashSet(qtCustomerComplain.getDealMan()));
             // 流程相关
         } finally {
             lock.unlock();
@@ -232,7 +235,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainType()));
         //发送消息
-        sendMessage(officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle(), Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), customerComplain.getCode());
+        String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setCode(customerComplain.getCode());
+        sendMessage(sysMsgAdditionDTO,content, Sets.newHashSet(qtCustomerComplainDTO.getDealMan()));
         return Boolean.TRUE;
     }
 
@@ -305,6 +311,28 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (!aBoolean) {
                 log.info(complainCustomerName + "：消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
+        //定义消息模板
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
+        sysMsgSendDTO.setContent(content);
+        sysMsgSendDTO.setUserList(userIds);
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                log.info("消息发送失败");
             }
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());

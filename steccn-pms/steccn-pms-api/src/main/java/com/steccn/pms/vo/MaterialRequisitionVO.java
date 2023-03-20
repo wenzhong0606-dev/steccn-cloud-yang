@@ -79,4 +79,7 @@ public class MaterialRequisitionVO implements Serializable {
 
     @ApiModelProperty("详情信息")
     private List<MaterialRequisitionInfoVO> list;
+
+    @ApiModelProperty("oa流程id")
+    private Long requestId;
 }

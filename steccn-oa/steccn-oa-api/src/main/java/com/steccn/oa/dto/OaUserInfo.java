@@ -11,6 +11,10 @@ import lombok.Data;
 @Data
 public class OaUserInfo {
     private String departmentName;
+    private String departmentId;
+    private String subCompanyId;
+    private String subCompanyName;
+    private String jobTitle;
     private String name;
     private String headPortrait;
     private Boolean status;

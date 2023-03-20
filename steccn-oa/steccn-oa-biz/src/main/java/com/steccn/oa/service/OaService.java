@@ -207,8 +207,12 @@ public class OaService {
                 //根据id过滤
                 OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
                 oaUserInfo.setDepartmentName(one.getDepartmentname());
+                oaUserInfo.setDepartmentId(one.getDepartmentid());
+                oaUserInfo.setSubCompanyName(one.getSubcompanyname());
+                oaUserInfo.setSubCompanyId(one.getSubcompanyid());
                 oaUserInfo.setName(one.getLastname());
                 oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
+                oaUserInfo.setJobTitle(one.getJobtitle());
                 oaUserInfo.setStatus(true);
             }else {
                 oaUserInfo.setStatus(false);
@@ -399,7 +403,7 @@ public class OaService {
     /**
      * 新建流程
      */
-    public String getWorkFlow(OaWorkFlowParamDTO dto){
+    public OaWorkflowStatusVO createWorkFlow(OaWorkFlowParamDTO dto){
         OaWorkflowDTO oaWorkflowDTO = new OaWorkflowDTO();
         BeanUtils.copyProperties(dto,oaWorkflowDTO);
         if(CollUtil.isNotEmpty(dto.getMainData())){
@@ -412,7 +416,16 @@ public class OaService {
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
         String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
-        return result;
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        //如果是成功则收到成功消息，否则返回错误信息
+        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            vo.setRequestId(jsonObject.getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+        }else {
+            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+        }
+        return vo;
     }
 
     /**
@@ -511,6 +524,19 @@ public class OaService {
         headers.set("appid",OaConstant.OA_API_APPID);
         headers.set("token",oaTokenService.getApiToken().getToken());
         headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+        return headers;
+    }
+
+    /**
+     * 设置当前用户登录的请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setUserIdHeaders(){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        RSA rsa = new RSA();
+        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userId);
         return headers;
     }
 }
