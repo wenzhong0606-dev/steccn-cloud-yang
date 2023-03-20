@@ -135,4 +135,13 @@ public interface OaInfoService {
     @ApiOperation("新建流程")
     @PostMapping("/oa/workflow/doCreateRequest")
     R<OaWorkflowStatusVO> createWorkflow(@RequestBody OaWorkFlowParamDTO dto);
+
+    /**
+     * 根据用户条件查询
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据条件查询")
+    @PostMapping("/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
 }

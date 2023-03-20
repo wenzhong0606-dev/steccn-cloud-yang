@@ -14,11 +14,9 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
-import com.steccn.oa.dto.OaUserInfo;
-import com.steccn.oa.dto.OaWorkFlowDetailObjDTO;
-import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
-import com.steccn.oa.dto.OaWorkFlowParamDTO;
+import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -266,8 +264,6 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         //3.根据审批状态修改审批单
         //如果传0则是审批中
         if (dto.getApprovalFlag().equals(PmsCodeUtil.DEFAULT_PADDING)) {
-            pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL,
-                    PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
             //调用oa接口发起流程
             //是已创建和拒绝状态才能发起流程
             if(pmsMaterialRequisition.getStatus().equals(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_CREATED,
@@ -279,10 +275,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 workflowDTO.setWorkflowId("131");
                 //主要数据
                 List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
-                OaUserInfo oaUserInfo = FeignOptional.of(() -> oaInfoService.getOaUserInfo(SecurityUtils.getUser().getUsername()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                OaEmpStatusDTO emp = new OaEmpStatusDTO();
+                emp.setLoginid(SecurityUtils.getUser().getUsername());
+                List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByCondition(emp), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 mainDataList.add(new OaWorkFlowNameValueDTO());
                 //详细数据
                 List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
+                //变成审批中状态
+                pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL,
+                        PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
             }
         } else if(dto.getApprovalFlag().equals(PmsCodeUtil.NUM_BIT_1)){
             //1 表示通过

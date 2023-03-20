@@ -33,4 +33,9 @@ public class OaEmpStatusDTO implements Serializable {
      * 当前页
      */
     private Integer current;
+
+    /**
+     * 登录名
+     */
+    private String loginid;
 }
