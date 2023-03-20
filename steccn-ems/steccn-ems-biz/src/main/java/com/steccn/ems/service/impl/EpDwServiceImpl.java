@@ -12,7 +12,9 @@ import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
@@ -29,6 +31,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -188,6 +191,8 @@ public class EpDwServiceImpl implements EpDwService {
     public Boolean electricMoney(LocalDate date) {
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         for (EpDwMeterPartitionDTO meter : meterList) {
+            List<DwConditionDTO> taskList = moneyTask(date, meter);
+
 //            moneyPool.submit(() -> {
 //                Boolean money = money(date, meter);
 //                if (!money) {
@@ -198,6 +203,19 @@ public class EpDwServiceImpl implements EpDwService {
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据仪表和日期 获取小任务集合
+     *
+     * @param date
+     * @param meter
+     * @return
+     */
+    private List<DwConditionDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter) {
+
+
+        return null;
+    }
+
 
 //    /**
 //     * 计算钱
@@ -206,15 +224,17 @@ public class EpDwServiceImpl implements EpDwService {
 //     * @param meter 仪表
 //     */
 //    private Boolean money(LocalDate date, EpDwMeterPartitionDTO meter) {
+//        List<DwMeterReadDTO> taskList = Lists.newArrayList();
+//
 //        if (Objects.nonNull(meter) && Objects.nonNull(date)) {
-//            //保持幂等，判断这个仪表是否已经执行过
-//            long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>()
-//                    .eq(EpEnergyMoney::getClassDate, date)
-//                    .eq(EpEnergyMoney::getPartitionId, meter.getPartitionId()));
-//            if (count > 0) {
-//                log.info("班次日期 -> {} ,仪表{} 已跑过", date, meter.getMeterId());
-//                return Boolean.TRUE;
-//            }
+////            //保持幂等，判断这个仪表是否已经执行过
+////            long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>()
+////                    .eq(EpEnergyMoney::getClassDate, date)
+////                    .eq(EpEnergyMoney::getPartitionId, meter.getPartitionId()));
+////            if (count > 0) {
+////                log.info("班次日期 -> {} ,仪表{} 已跑过", date, meter.getMeterId());
+////                return Boolean.TRUE;
+////            }
 //            //2.查询当前班次日期有效的能源计费方案明细
 //            List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
 //            if (CollUtil.isNotEmpty(priceList)) {
@@ -229,19 +249,20 @@ public class EpDwServiceImpl implements EpDwService {
 //                    DwMeterReadDTO condition1 = new DwMeterReadDTO();
 //                    //班次日期调整
 //                    if (price.getEnd().equals(LocalTime.of(0, 0, 0))) {
-//                        condition1.setStart(LocalDateTime.of(date.plusDays(1), price.getEnd()));
-//                        condition1.setEnd(LocalDateTime.of(date.plusDays(1), price.getEnd()));
+//                        condition1.setRecordTime(LocalDateTime.of(date.plusDays(1), price.getEnd()));
 //                    } else {
-//                        condition1.setStart(LocalDateTime.of(date, price.getEnd()));
-//                        condition1.setEnd(LocalDateTime.of(date, price.getEnd()));
+//                        condition1.setRecordTime(LocalDateTime.of(date, price.getEnd()));
 //                    }
 //                    condition1.setCode(meter.getDistantMapCode());
 //                    dwConditionDTOList.add(condition1);
+//                    //添加任务
+//                    taskList.add(condition1);
 //                    DwMeterReadDTO condition2 = new DwMeterReadDTO();
-//                    condition2.setStart(LocalDateTime.of(date, price.getStart()));
-//                    condition2.setEnd(LocalDateTime.of(date, price.getStart()));
+//                    condition2.setRecordTime(LocalDateTime.of(date, price.getStart()));
 //                    condition2.setCode(meter.getDistantMapCode());
 //                    dwConditionDTOList.add(condition2);
+//                    //添加任务
+//                    taskList.add(condition2);
 //                    meterPriceList.add(vo);
 //                }
 //                //4.根据对应方案 去查询读数
