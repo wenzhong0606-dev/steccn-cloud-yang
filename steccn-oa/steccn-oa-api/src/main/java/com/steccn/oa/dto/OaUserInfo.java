@@ -26,4 +26,8 @@ public class OaUserInfo {
      * id
      */
     private String id;
+    /**
+     * 部门
+     */
+    private String departmentName;
 }
