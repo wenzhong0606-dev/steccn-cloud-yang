@@ -190,13 +190,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             partitionInstrumentVOList.put(s.getPartitionNode(), s);
         });
 
-        //先lou出仪表台账里面所有仪表id以及远传映射编码
-        Set<String> distantCodeList = instrumentAccountVOS.stream().map(EpInstrumentAccountPageVO::getDistantMapCode).collect(Collectors.toSet());
-
-        //查询所有远传仪表编码的最近抄表时间
-        long l = System.currentTimeMillis();
-
-//        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantCodeList), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
         Map<String, LocalDateTime> lastReadTimeMap = Maps.newHashMap();
 
         //查询所有非远传仪表编码的最近抄表时间
@@ -212,7 +205,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             }
         }
         //查询allPartitionNodeName
-        Map<Long,String> allPartitionNameMap = epPartitionService.allPartitionNameMap(dto.getEnergyId(),partitionInstrumentVOList.keySet());
+        Map<Long, String> allPartitionNameMap = epPartitionService.allPartitionNameMap(dto.getEnergyId(), partitionInstrumentVOList.keySet());
         //遍历集合插入数据
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap) && Objects.nonNull(s.getSite())) {
@@ -301,26 +294,28 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
      */
     private LocalDateTime findVMLastTime(Map<Long, List<EpPartitionVO>> map, List<EpPartitionVO> children, Map<String, LocalDateTime> distantMap, Map<Integer, LocalDateTime> readTimeMap) {
         LocalDateTime min = null;
-        for (EpPartitionVO child : children) {
-            LocalDateTime date = null;
-            if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(child.getEntityTable())) {
-                //远传仪表-从数仓获取
-                date = getLastReadTime(child.getDistantMapCode(), distantMap);
-            } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(child.getEntityTable())) {
-                //非远传仪表-从抄表管理获取
-                date = readTimeMap.get(child.getId());
-            } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(child.getEntityTable())) {
-                //虚拟仪表的最后抄表时间：所有下一级子表的最后抄表时间中最早的一个【下一级子表中最后抄表时间为空，则当前虚拟仪表的最后抄表时间也为空】
-                List<EpPartitionVO> curChildren = map.get(child.getId());
-                date = findVMLastTime(map, curChildren, distantMap, readTimeMap);
-            }
-            if (Objects.isNull(date)) {
-                //孩子有一个为空，则直接返回
-                min = null;
-                break;
-            } else if (Objects.isNull(min) || min.isAfter(date)) {
-                //孩子不为空，第一个孩子或者是比前面的抄表时间要小
-                min = date;
+        if (CollUtil.isNotEmpty(children)) {
+            for (EpPartitionVO child : children) {
+                LocalDateTime date = null;
+                if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(child.getEntityTable())) {
+                    //远传仪表-从数仓获取
+                    date = getLastReadTime(child.getDistantMapCode(), distantMap);
+                } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(child.getEntityTable())) {
+                    //非远传仪表-从抄表管理获取
+                    date = readTimeMap.get(child.getId());
+                } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(child.getEntityTable())) {
+                    //虚拟仪表的最后抄表时间：所有下一级子表的最后抄表时间中最早的一个【下一级子表中最后抄表时间为空，则当前虚拟仪表的最后抄表时间也为空】
+                    List<EpPartitionVO> curChildren = map.get(child.getId());
+                    date = findVMLastTime(map, curChildren, distantMap, readTimeMap);
+                }
+                if (Objects.isNull(date)) {
+                    //孩子有一个为空，则直接返回
+                    min = null;
+                    break;
+                } else if (Objects.isNull(min) || min.isAfter(date)) {
+                    //孩子不为空，第一个孩子或者是比前面的抄表时间要小
+                    min = date;
+                }
             }
         }
         return min;
