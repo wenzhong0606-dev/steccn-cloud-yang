@@ -121,6 +121,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
                 //只要在线检
                 .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                //车间
+                .apply(dto.getProductWorkShopId() != null, "JSON_CONTAINS(product_workshop, JSON_OBJECT('id', {0}))", dto.getProductWorkShopId())
+                //产线
+                .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", dto.getProductLineId())
                 .orderByAsc(QtCheckTask::getFinishedTime);
         List<QtCheckTask> taskList = qtCheckTaskService.list(taskCondition);
         List<QtCheckTask> onlineTask = qtCheckTaskService.list(onlineTaskCondition1);
