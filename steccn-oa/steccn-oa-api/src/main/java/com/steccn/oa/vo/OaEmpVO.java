@@ -35,5 +35,8 @@ public class OaEmpVO implements Serializable {
      */
     private String jobtitle;
 
-
+    /**
+     * 分部id
+     */
+    private String subcompanyid1;
 }

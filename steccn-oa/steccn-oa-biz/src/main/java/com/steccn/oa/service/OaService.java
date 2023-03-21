@@ -343,11 +343,7 @@ public class OaService {
         //默认8条数据
         dto.setPageSize(5);
         //待办数据需要修改userId
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String result = "";
         //0为待办列表,1为待阅列表
         if(flag.equals(0)){
@@ -428,11 +424,7 @@ public class OaService {
      */
     public OaWorkflowCountVO getWorkflowCount(){
         OaWorkflowCountVO vo = new OaWorkflowCountVO();
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
         String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
         String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
@@ -508,6 +500,25 @@ public class OaService {
     }
 
     /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByCondition(OaOrgDetailDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        //获取sessionKey
+        String sessionKeyResult = oaApi.getOrgDetail(headers,dto);
+        String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
+        //根据sessionKey获取数据
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        dataKey.setDataKey(sessionKey);
+        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
      * 设置请求头
      * @return
      */
@@ -533,4 +544,5 @@ public class OaService {
         headers.set("userid",userId);
         return headers;
     }
+
 }

@@ -6,6 +6,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import io.swagger.annotations.ApiOperation;
@@ -144,4 +145,13 @@ public interface OaInfoService {
     @ApiOperation("根据条件查询")
     @PostMapping("/oa/user/condition")
     R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情")
+    @PostMapping("/org/detail")
+    R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto);
 }

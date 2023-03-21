@@ -184,4 +184,10 @@ public class OaController {
     public R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes){
         return R.success(hrmresourceService.getIdByWorkCode(workCodes));
     }
+
+    @ApiOperation("根据部门信息查询详情")
+    @PostMapping("/org/detail")
+    public R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto){
+        return R.success(oaService.getOrgDetailByCondition(dto));
+    }
 }

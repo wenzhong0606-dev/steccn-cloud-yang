@@ -38,4 +38,9 @@ public class OaEmpStatusDTO implements Serializable {
      * 登录名
      */
     private String loginid;
+
+    /**
+     * 部门id
+     */
+    private String departmentid;
 }
