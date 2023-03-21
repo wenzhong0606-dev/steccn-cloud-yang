@@ -15,4 +15,5 @@ public class OaUserInfoTmpDTO implements Serializable {
     private String lastname;
     private String icon;
     private Integer id;
+    private String departmentname;
 }

@@ -206,6 +206,7 @@ public class OaService {
                 List<OaUserInfoTmpDTO> infoList = data.toJavaList(OaUserInfoTmpDTO.class);
                 //根据id过滤
                 OaUserInfoTmpDTO one = infoList.stream().filter(v -> v.getId().equals(oaUserIdAndName.getId())).findFirst().orElse(null);
+                oaUserInfo.setDepartmentName(one.getDepartmentname());
                 oaUserInfo.setName(one.getLastname());
                 oaUserInfo.setHeadPortrait(OaConstant.OA_WEAVER_SITE+one.getIcon());
                 oaUserInfo.setStatus(true);
