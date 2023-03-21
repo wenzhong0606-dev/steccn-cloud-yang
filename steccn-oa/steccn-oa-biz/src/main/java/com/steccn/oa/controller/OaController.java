@@ -107,6 +107,12 @@ public class OaController {
         return R.success(oaService.getEmpInfoByCondition(dto));
     }
 
+    @ApiOperation("根据条件查询")
+    @PostMapping("/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto) {
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
     @ApiOperation("根据名称模糊获取人员列表")
     @GetMapping("/user/name/{userName}")
     public R<List<OaUserIdAndName>> getUserByName(@PathVariable("userName") String userName) {

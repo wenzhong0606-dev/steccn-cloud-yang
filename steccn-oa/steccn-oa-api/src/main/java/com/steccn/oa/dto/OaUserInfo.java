@@ -10,13 +10,20 @@ import lombok.Data;
  */
 @Data
 public class OaUserInfo {
-    private String departmentName;
-    private String departmentId;
-    private String subCompanyId;
-    private String subCompanyName;
-    private String jobTitle;
+    /**
+     * 名字
+     */
     private String name;
+    /**
+     * 头像
+     */
     private String headPortrait;
+    /**
+     * 状态
+     */
     private Boolean status;
+    /**
+     * id
+     */
     private String id;
 }
