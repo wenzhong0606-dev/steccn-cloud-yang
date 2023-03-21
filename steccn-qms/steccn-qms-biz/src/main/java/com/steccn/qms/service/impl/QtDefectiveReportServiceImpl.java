@@ -241,7 +241,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         //暂无数据
         if (CollUtil.isEmpty(qtCheckTasks) && CollUtil.isEmpty(collectList)) {
-            throw new BusinessException("暂无数据");
+            throw new SteccnChartException("暂无数据");
         }
         if (CollUtil.isNotEmpty(detailList)) {
             detailList.forEach(ele -> {
