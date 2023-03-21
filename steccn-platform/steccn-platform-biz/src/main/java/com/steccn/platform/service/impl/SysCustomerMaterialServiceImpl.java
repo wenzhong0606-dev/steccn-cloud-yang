@@ -95,7 +95,8 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
     public Boolean commit(SysCustomerMaterialSaveDTO dto) {
         //根据客户物料加分布式锁，属于低频操作，无需双重锁判断
         RLock lock = redissonClient.getLock(LockConstant.CUSTOMER_MATERIAL + ":" + dto.getCustomerId() + ":" + dto.getMaterialId());
-        if (lock.tryLock()) {
+        lock.lock();
+        try {
             if (Objects.nonNull(dto.getId())) {
                 SysCustomerMaterial oldModel = getById(dto.getId());
                 Assert.notNull(oldModel, "客户物料不存在，无法编辑");
@@ -104,7 +105,7 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
             long count = count(new LambdaQueryWrapper<SysCustomerMaterial>()
                     .eq(SysCustomerMaterial::getCustomerId, dto.getCustomerId())
                     .eq(SysCustomerMaterial::getMaterialId, dto.getMaterialId())
-                    .eq(Objects.nonNull(dto.getId()), SysCustomerMaterial::getId, dto.getId()));
+                    .ne(Objects.nonNull(dto.getId()), SysCustomerMaterial::getId, dto.getId()));
             Assert.isTrue(count == 0, "物料客户已存在，无法新增");
             //如果id不存在，则为新增
             SysCustomerMaterial model = new SysCustomerMaterial();
@@ -160,6 +161,8 @@ public class SysCustomerMaterialServiceImpl extends ServiceImpl<SysCustomerMater
                 }
                 return Boolean.TRUE;
             });
+        } finally {
+            lock.unlock();
         }
         return Boolean.TRUE;
     }
