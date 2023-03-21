@@ -287,15 +287,26 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         List<EpPartitionTreeDTO> childList = dataList.stream().filter(v -> root.getId().equals(v.getParentId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(childList)) {
             root.setChildren(childList);
-            for (EpPartitionTreeDTO child : childList) {
-
-
-                List<EpPartitionTreeDTO> sunList = dataList.stream().filter(v -> child.getId().equals(v.getParentId())).collect(Collectors.toList());
-                child.setChildren(sunList);
-
-            }
+            //构造孩子的树形节点结构
+            recycle(dataList, childList);
         }
         return root;
+    }
+
+    /**
+     * 递归构造树形节点结构
+     * @param dataList 数据集合
+     * @param children 孩子节点
+     */
+    private void recycle(List<EpPartitionTreeDTO> dataList, List<EpPartitionTreeDTO> children) {
+        if(CollUtil.isNotEmpty(children)){
+            for (EpPartitionTreeDTO child : children) {
+                //获取孩子的孩子节点 -》 孙子节点
+                List<EpPartitionTreeDTO> sunList = dataList.stream().filter(v -> child.getId().equals(v.getParentId())).collect(Collectors.toList());
+                recycle(dataList,sunList);
+                child.setChildren(sunList);
+            }
+        }
     }
 
     /**
