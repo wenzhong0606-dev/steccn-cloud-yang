@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.RedisConfig;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
@@ -76,6 +77,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     @Autowired
     private  QtDealWayService qtDealWayService;
 
+    private final QtComplainDefectProgressService qtComplainDefectProgressService;
+
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.QT_CUSTOMER_COMPLAIN);
@@ -96,6 +99,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 detailList.add(customerComplainDetail);
             });
             qtCustomerComplainDetailService.saveBatch(detailList);
+            //3.保存进度信息
+            QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+            qtComplainDefectProgress.setBusiId(qtCustomerComplain.getId());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.CREATE.getName());
+            qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
+            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+            qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+            qtComplainDefectProgressService.save(qtComplainDefectProgress);
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainCustomer()))).get();
             Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainType()));
             //发送消息
@@ -148,30 +160,32 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         BeanUtil.copyProperties(resPage, page);
         List<QtCustomerComplainVO> qtCustomerComplainVOList = BeanUtil.copyToList(resPage.getRecords(), QtCustomerComplainVO.class);
         //5.处理数据
-        List<Long> idList = Lists.newArrayList();
-        Set<Integer> officeIds = Sets.newHashSet();
-        Set<Integer> typeIds = Sets.newHashSet();
-        Set<Integer> wayIds = Sets.newHashSet();
-        qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
-            idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
-            idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
-            officeIds.add(qtCustomerComplainVO.getComplainCustomer());
-            typeIds.add(qtCustomerComplainVO.getComplainType());
-            wayIds.add(qtCustomerComplainVO.getDealWay());
-        });
-        Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(typeIds);
-        Map<Integer, String> wayMap = qtDealWayService.listByIdCh(wayIds);
-        qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
-            qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
-            qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
-            qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
-            qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
-            if (Objects.nonNull(qtCustomerComplainVO.getDealWay())){
-                qtCustomerComplainVO.setDealWayName(wayMap.get(qtCustomerComplainVO.getDealWay()));
-            }
-        });
+        if (CollUtil.isNotEmpty(qtCustomerComplainVOList)) {
+            List<Long> idList = Lists.newArrayList();
+            Set<Integer> officeIds = Sets.newHashSet();
+            Set<Integer> typeIds = Sets.newHashSet();
+            Set<Integer> wayIds = Sets.newHashSet();
+            qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
+                idList.add(Long.valueOf(qtCustomerComplainVO.getComplainReceiver()));
+                idList.add(Long.valueOf(qtCustomerComplainVO.getDealMan()));
+                officeIds.add(qtCustomerComplainVO.getComplainCustomer());
+                typeIds.add(qtCustomerComplainVO.getComplainType());
+                wayIds.add(qtCustomerComplainVO.getDealWay());
+            });
+            Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(typeIds);
+            Map<Integer, String> wayMap = qtDealWayService.listByIdCh(wayIds);
+            qtCustomerComplainVOList.forEach(qtCustomerComplainVO -> {
+                qtCustomerComplainVO.setComplainCustomerName(officeMap.get(qtCustomerComplainVO.getComplainCustomer()));
+                qtCustomerComplainVO.setComplainReceiverName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getComplainReceiver())));
+                qtCustomerComplainVO.setDealManName(oaUserMap.get(Long.valueOf(qtCustomerComplainVO.getDealMan())));
+                qtCustomerComplainVO.setComplainTypeName(typeMap.get(qtCustomerComplainVO.getComplainType()));
+                if (Objects.nonNull(qtCustomerComplainVO.getDealWay())) {
+                    qtCustomerComplainVO.setDealWayName(wayMap.get(qtCustomerComplainVO.getDealWay()));
+                }
+            });
+        }
         return page.setRecords(qtCustomerComplainVOList);
     }
 
@@ -266,6 +280,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             manList.add(man);
         }
         qtComplainDefectImproveManService.saveBatch(manList);
+        //处理进度信息
+        QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+        qtComplainDefectProgress.setBusiId(customerComplain.getId());
+        qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.CREATE.getName());
+        qtComplainDefectProgress.setSort(QtManagerConstant.NUM_1);
+        qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+        qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+        qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+        qtComplainDefectProgressService.save(qtComplainDefectProgress);
         //编辑明细信息
         if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
             qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
