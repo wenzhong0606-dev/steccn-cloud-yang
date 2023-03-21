@@ -35,6 +35,8 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
 
     private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
 
+    private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+
     @Override
     public DwEpMeterCollectVO meterRead(DwMeterReadDTO dto) {
         DwEpMeterCollectVO resVo = null;
@@ -63,22 +65,22 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     }
 
     @Override
-    public void addLastRecordTime(List<EpMeterCollect> batchList) {
-        if (CollUtil.isNotEmpty(batchList)) {
-            batchList.forEach(ele -> {
-                lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
-            });
-        }
+    public LocalDateTime getLastRecordTime() {
+        return lastRecordTime;
     }
 
     @Override
     public Boolean refreshLastReadTime(LocalDateTime curTime) {
         List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
-                .lambda().ge(EpMeterCollect::getRecordTime, curTime)
+                .lambda()
+                .between(EpMeterCollect::getRecordTime, curTime, LocalDateTime.now())
                 .groupBy(EpMeterCollect::getCode));
         //如果集合不为空
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
+                if (ele.getRecordTime().isAfter(lastRecordTime)) {
+                    lastRecordTime = ele.getRecordTime();
+                }
                 lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
             });
         }

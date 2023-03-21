@@ -12,14 +12,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
-* @author yequan
-* @description 针对表【ep_meter_collect(能源绩效-远程仪表采样表)】的数据库操作Service
-* @createDate 2022-12-16 13:23:55
-*/
+ * @author yequan
+ * @description 针对表【ep_meter_collect(能源绩效-远程仪表采样表)】的数据库操作Service
+ * @createDate 2022-12-16 13:23:55
+ */
 public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
     /**
      * 数仓条件列表
+     *
      * @param dto
      * @return
      */
@@ -27,19 +28,22 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
     /**
      * 最近抄表时间
+     *
      * @param distantCodeSet 远传仪表编码集合
      * @return
      */
     Map<String, LocalDateTime> lastReadTime(Set<String> distantCodeSet);
 
     /**
-     * 加入最近抄表时间
-     * @param batchList 最近抄表时间
+     * 获取最近抄表时间点
+     *
+     * @return
      */
-    void addLastRecordTime(List<EpMeterCollect> batchList);
+    LocalDateTime getLastRecordTime();
 
     /**
      * 刷新最近抄表时间
+     *
      * @param curTime 大于这个时间
      * @return
      */
