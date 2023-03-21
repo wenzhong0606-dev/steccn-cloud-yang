@@ -249,11 +249,6 @@ public interface PmManagerConstant {
      */
     String WORKFLOW_SQR = "sqr";
     /**
-     * 流程字段-申请人岗位
-     */
-    String WORKFLOW_SQRGW = "sqrgw";
-
-    /**
      * 流程字段-申请部门
      */
     String WORKFLOW_SQBM = "sqbm";
