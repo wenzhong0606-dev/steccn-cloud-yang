@@ -267,12 +267,12 @@ public interface QtManagerConstant {
     /**
      * 客诉排序字段-投诉日期
      */
-    String QT_CUSTOMER_COMPLAIN_DATE= "complainDate";
+    String QT_CUSTOMER_COMPLAIN_DATE = "complainDate";
 
     /**
      * 客诉排序字段-投诉接收人
      */
-    String QT_CUSTOMER_COMPLAIN_RECEIVER= "complainReceiver";
+    String QT_CUSTOMER_COMPLAIN_RECEIVER = "complainReceiver";
 
     /**
      * 客诉排序字段-投诉类型
@@ -282,7 +282,7 @@ public interface QtManagerConstant {
     /**
      * 客诉排序字段-处理人
      */
-    String QT_CUSTOMER_COMPLAIN_DEAL_MAN= "dealMan";
+    String QT_CUSTOMER_COMPLAIN_DEAL_MAN = "dealMan";
 
     /**
      * 客诉排序字段-状态
@@ -297,44 +297,58 @@ public interface QtManagerConstant {
     /**
      * 不合格品处理排序-检验单号
      */
-    String QT_DEFECT_PRODUCT_TASK_CODE= "taskCode";
+    String QT_DEFECT_PRODUCT_TASK_CODE = "taskCode";
 
     /**
      * 不合格品处理排序-检验类型
      */
-    String QT_DEFECT_PRODUCT_TASK_TYPE= "taskType";
+    String QT_DEFECT_PRODUCT_TASK_TYPE = "taskType";
 
 
     /**
      * 不合格品处理排序-检验类型
      */
-    String QT_DEFECT_PRODUCT_MATERIAL_NAME= "materialName";
+    String QT_DEFECT_PRODUCT_MATERIAL_NAME = "materialName";
 
     /**
      * 不合格品处理排序-检验完成人员
      */
-    String QT_DEFECT_PRODUCT_TASK_FINISH_MAN= "taskFinishMan";
+    String QT_DEFECT_PRODUCT_TASK_FINISH_MAN = "taskFinishMan";
 
     /**
      * 不合格品处理排序-检验完成人员
      */
-    String QT_DEFECT_PRODUCT_TASK_FINISH_TIME= "taskFinishTime";
+    String QT_DEFECT_PRODUCT_TASK_FINISH_TIME = "taskFinishTime";
 
     /**
      * 不合格品处理排序-处理人
      */
-    String QT_DEFECT_PRODUCT_DEAL_MAN= "dealMan";
+    String QT_DEFECT_PRODUCT_DEAL_MAN = "dealMan";
 
     /**
      * 不合格品处理排序-状态
      */
-    String QT_DEFECT_PRODUCT_STATUS= "status";
+    String QT_DEFECT_PRODUCT_STATUS = "status";
 
     /**
      * 不合格品处理排序-处理方式
      */
-    String QT_DEFECT_PRODUCT_DEAL_WAY= "dealWay";
+    String QT_DEFECT_PRODUCT_DEAL_WAY = "dealWay";
 
+    /**
+     * 数字
+     */
+    Integer NUM_0 = 0;
+    Integer NUM_1 = 1;
+    Integer NUM_2 = 2;
+    Integer NUM_3 = 3;
+    Integer NUM_4 = 4;
+    Integer NUM_5 = 5;
+    Integer NUM_6 = 6;
+    Integer NUM_7 = 7;
+    Integer NUM_8 = 8;
+    Integer NUM_9 = 9;
+    Integer NUM_10 = 10;
 
 
     /**
@@ -690,5 +704,15 @@ public interface QtManagerConstant {
         private Integer code;
         private String name;
     }
+
+    @Getter
+    @AllArgsConstructor
+    enum progress {
+        CREATE(0, "创建"), DISPOSE(1, "处理"), APPROVAL_RETURN(2, "审批退回"),APPROVE(3,"审批通过"),IMPROVE(4,"关联整改");
+
+        private Integer code;
+        private String name;
+    }
+
 
 }

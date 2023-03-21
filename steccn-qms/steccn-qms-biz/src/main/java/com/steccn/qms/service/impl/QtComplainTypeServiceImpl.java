@@ -76,13 +76,15 @@ public class QtComplainTypeServiceImpl extends ServiceImpl<QtComplainTypeMapper,
     @Override
     public Map<Integer, String> listByIdCh(Set<Integer> ids) {
         Map<Integer, String> map = Maps.newHashMap();
-        List<QtComplainType> qtComplainTypes = listByIds(ids);
-        if (CollUtil.isEmpty(qtComplainTypes)) {
-            return map;
+        if (CollUtil.isNotEmpty(ids)) {
+            List<QtComplainType> qtComplainTypes = listByIds(ids);
+            if (CollUtil.isEmpty(qtComplainTypes)) {
+                return map;
+            }
+            qtComplainTypes.forEach(qtComplainType -> {
+                map.put(qtComplainType.getId(), qtComplainType.getType());
+            });
         }
-        qtComplainTypes.forEach( qtComplainType -> {
-            map.put(qtComplainType.getId(),qtComplainType.getType());
-        });
         return map;
     }
 }

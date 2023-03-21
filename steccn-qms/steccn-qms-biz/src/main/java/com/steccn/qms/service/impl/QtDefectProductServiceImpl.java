@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -20,11 +21,13 @@ import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.QtComplainDefectImproveMan;
+import com.steccn.qms.domain.QtComplainDefectProgress;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.steccn.qms.domain.QtDefectProduct;
 import com.steccn.qms.dto.QtDefectProductDTO;
 import com.steccn.qms.dto.QtDefectProductPageDTO;
 import com.steccn.qms.service.QtComplainDefectImproveManService;
+import com.steccn.qms.service.QtComplainDefectProgressService;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.mapper.QtDefectProductMapper;
@@ -61,6 +64,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
 
     private final QtComplainDefectImproveManService qtComplainDefectImproveManService;
 
+    private final QtComplainDefectProgressService qtComplainDefectProgressService;
+
 
     @Override
     public Boolean add(QtDefectProductDTO dto) {
@@ -71,6 +76,16 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             BeanUtil.copyProperties(dto, qtDefectProduct);
             qtDefectProduct.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_DEFECT_PRODUCT, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
             qtDefectProduct.setStatus(QtManagerConstant.status.APPROVE.getCode());
+            save(qtDefectProduct);
+            //保存进度信息
+            QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+            qtComplainDefectProgress.setBusiId(qtDefectProduct.getId());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.CREATE.getName());
+            qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
+            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+            qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+            qtComplainDefectProgressService.save(qtComplainDefectProgress);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
@@ -81,7 +96,6 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             sysMsgAdditionDTO.setCode(qtDefectProduct.getCode());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-            //发送消息
             try {
                 Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 if (!aBoolean) {
@@ -91,7 +105,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("消息发送失败");
             }
-            return save(qtDefectProduct);
+            return Boolean.TRUE;
         } finally {
             lock.unlock();
         }
@@ -204,6 +218,15 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
         qtComplainDefectImproveMan.setUserId(dto.getApproveMan());
         manList.add(qtComplainDefectImproveMan);
+        //保存进度信息
+        QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+        qtComplainDefectProgress.setBusiId(qtDefectProduct.getId());
+        qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.DISPOSE.getName());
+        qtComplainDefectProgress.setSort(QtManagerConstant.NUM_1);
+        qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+        qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+        qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+        qtComplainDefectProgressService.save(qtComplainDefectProgress);
         if (Objects.nonNull(dto.getCarbonCopyMan())) {
             QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
             man.setBusiId(dto.getId());
