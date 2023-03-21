@@ -156,6 +156,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     public Boolean edit(EpPartitionDTO dto) {
 
         EpPartitionTreeDTO root = convertTree(dto.getEpPartitionListDTO());
+        log.info("root -> {}" , root);
 
 //
 //        //用来处理新增的List
@@ -273,24 +274,28 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     /**
      * 将平铺结构转换成一棵树
      *
-     * @param dataList 数据集合
      * @return root节点的一棵树
      */
-    private EpPartitionTreeDTO convertTree(List<EpPartitionListDTO> dataList) {
-//        List<EpPartitionListDTO> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
-//        Assert.notEmpty(rootList, "根节点为空");
-//        Assert.isTrue(rootList.size() > 1, "存在多个根节点");
-//        EpPartitionListDTO root = rootList.get(0);
-//
-//        Set<Integer> childIdSet = Sets.newHashSet(root.getId());
-//        while (Boolean.TRUE) {
-//            List<EpPartitionListDTO> childList = dataList.stream().filter(v -> childIdSet.contains(v.getParentId())).collect(Collectors.toList());
-//            if (CollUtil.isNotEmpty(childList)) {
-//                break;
-//            }
-//            childIdSet = childList.stream().map(EpPartitionListDTO::getId).collect(Collectors.toSet());
-//        }
-        return null;
+    private EpPartitionTreeDTO convertTree(List<EpPartitionListDTO> sourceDataList) {
+        List<EpPartitionTreeDTO> dataList = BeanUtil.copyToList(sourceDataList, EpPartitionTreeDTO.class);
+
+        List<EpPartitionTreeDTO> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
+        Assert.notEmpty(rootList, "根节点为空");
+        Assert.isTrue(rootList.size() == 1, "存在多个根节点");
+        EpPartitionTreeDTO root = rootList.get(0);
+
+        List<EpPartitionTreeDTO> childList = dataList.stream().filter(v -> root.getId().equals(v.getParentId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(childList)) {
+            root.setChildren(childList);
+            for (EpPartitionTreeDTO child : childList) {
+
+
+                List<EpPartitionTreeDTO> sunList = dataList.stream().filter(v -> child.getId().equals(v.getParentId())).collect(Collectors.toList());
+                child.setChildren(sunList);
+
+            }
+        }
+        return root;
     }
 
     /**

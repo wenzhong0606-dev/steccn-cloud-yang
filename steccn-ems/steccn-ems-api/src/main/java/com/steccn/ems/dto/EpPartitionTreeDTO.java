@@ -27,6 +27,9 @@ public class EpPartitionTreeDTO implements Serializable {
     @ApiModelProperty("排序字段")
     private Integer sort;
 
+    @ApiModelProperty("父级officeId")
+    private Integer parentId;
+
     @ApiModelProperty("孩子节点")
-    private List<EpPartitionListDTO> children;
+    private List<EpPartitionTreeDTO> children;
 }
