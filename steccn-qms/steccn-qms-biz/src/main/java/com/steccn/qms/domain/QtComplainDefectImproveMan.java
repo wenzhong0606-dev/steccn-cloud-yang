@@ -10,13 +10,13 @@ import lombok.Data;
  * 客诉,不合格品，整改审批人，抄送人
  * @TableName qms_complain_defect_improve_man
  */
-@TableName(value ="qms_complain_defect_improve_man")
+@TableName(value ="qt_complain_defect_improve_man")
 @Data
 public class QtComplainDefectImproveMan implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

@@ -7,6 +7,7 @@ import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
+import com.steccn.oa.vo.OaWorkflowStatusVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -125,4 +126,22 @@ public interface OaInfoService {
     @ApiOperation("查询排班信息")
     @PostMapping("/oa/user/workCode")
     R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes);
+
+    /**
+     * 新建流程
+     * @param dto
+     * @return
+     */
+    @ApiOperation("新建流程")
+    @PostMapping("/oa/workflow/doCreateRequest")
+    R<OaWorkflowStatusVO> createWorkflow(@RequestBody OaWorkFlowParamDTO dto);
+
+    /**
+     * 根据用户条件查询
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据条件查询")
+    @PostMapping("/oa/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
 }

@@ -99,6 +99,20 @@ public class OaController {
         }
     }
 
+    @ApiOperation("获取所有在职人员")
+    @PostMapping("/allUser/onJob")
+    R<List<OaEmpVO>> getAllOnJobUser(@RequestBody OaEmpStatusDTO dto) {
+        //在职
+        dto.setStatus("8");
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
+    @ApiOperation("根据条件查询")
+    @PostMapping("/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto) {
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
     @ApiOperation("根据名称模糊获取人员列表")
     @GetMapping("/user/name/{userName}")
     public R<List<OaUserIdAndName>> getUserByName(@PathVariable("userName") String userName) {
@@ -137,9 +151,8 @@ public class OaController {
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R test(@RequestBody OaWorkFlowParamDTO dto) {
-        oaService.getWorkFlow(dto);
-        return null;
+    public R<OaWorkflowStatusVO> createWorkFlow(@RequestBody OaWorkFlowParamDTO dto) {
+        return R.success(oaService.createWorkFlow(dto));
     }
 
     @ApiOperation("根据工号工号查询id")

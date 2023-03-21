@@ -1,7 +1,6 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -37,4 +36,26 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     QtCustomerComplainVO getInfo(Long id);
+
+    /**
+     * 编辑
+     * @param qtCustomerComplainDTO
+     * @return
+     */
+    Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO);
+
+
+    /**
+     * 客诉处理
+     * @param qtCustomerComplainDTO
+     * @return
+     */
+    Boolean dispose(QtCustomerComplainDTO qtCustomerComplainDTO);
+
+    /**
+     * 删除客诉记录
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
 }

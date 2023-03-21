@@ -1,5 +1,7 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -38,6 +40,11 @@ public class QtCustomerComplainDTO {
     private Integer complainCustomer;
 
     /**
+     * 投诉客户名称
+     */
+    private String complainCustomerName;
+
+    /**
      * 投诉日期
      */
     private LocalDate complainDate;
@@ -45,7 +52,13 @@ public class QtCustomerComplainDTO {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
+
+    /**
+     * 投诉接收人名称
+     */
+    private String complainReceiverName;
+
 
     /**
      * 投诉类型
@@ -53,11 +66,22 @@ public class QtCustomerComplainDTO {
 //    @NotNull(message = "投诉类型不能为空")
     private Integer complainType;
 
+
+    /**
+     * 投诉类型名称
+     */
+    private String complainTypeName;
+
     /**
      * 处理人
      */
 //    @NotNull(message = "处理人不能为空")
-    private Integer dealMan;
+    private Long dealMan;
+
+    /**
+     * 处理人名称
+     */
+    private String dealManName;
 
     /**
      * 处理方式
@@ -65,6 +89,10 @@ public class QtCustomerComplainDTO {
 //    @NotNull(message = "处理方式不能为空")
     private Integer dealWay;
 
+    /**
+     * 处理方式名称
+     */
+    private String dealWayName;
     /**
      * 0-待处理、1-待审批、2-已关闭
      */
@@ -84,13 +112,13 @@ public class QtCustomerComplainDTO {
     /**
      * 抄送人
      */
-    private Integer carbonCopyMan;
+    private Long carbonCopyMan;
 
     /**
      * 审批人
      */
-    @NotNull(message = "审批人不能为空")
-    private Integer approveMan;
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "审批人不能为空")
+    private Long approveMan;
 
 
 }

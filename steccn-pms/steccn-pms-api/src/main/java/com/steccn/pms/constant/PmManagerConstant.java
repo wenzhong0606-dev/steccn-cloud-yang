@@ -240,6 +240,48 @@ public interface PmManagerConstant {
     String LABORATORY_DIRECTOR = "化验室副主任";
 
     /**
+     * 流程字段-申请人岗位
+     */
+    String WORKFLOW_SQRGW = "sqrgw";
+
+    /**
+     * 流程字段-申请人
+     */
+    String WORKFLOW_SQR = "sqr";
+    /**
+     * 流程字段-申请部门
+     */
+    String WORKFLOW_SQBM = "sqbm";
+    /**
+     * 流程字段-申请分部
+     */
+    String WORKFLOW_SQFB = "sqfb";
+
+    /**
+     * 流程字段-申请日期
+     */
+    String WORKFLOW_SQRQ = "sqrq";
+    /**
+     * 流程字段-申请编号
+     */
+    String WORKFLOW_SQBH = "sqbh";
+
+    /**
+     * 流程字段-类型
+     */
+    String WORKFLOW_LX = "lx";
+
+    /**
+     * 流程字段-总数量
+     */
+    String WORKFLOW_ZSL = "zsl";
+
+    /**
+     * 流程字段-领料单编码
+     */
+    String WORKFLOW_LLDBM = "lldbm";
+
+    /**
      * 配料工id
      */
     String BATCHER_ID = "191";

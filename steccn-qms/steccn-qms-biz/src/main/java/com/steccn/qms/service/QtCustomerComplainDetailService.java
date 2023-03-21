@@ -2,6 +2,10 @@ package com.steccn.qms.service;
 
 import com.steccn.qms.domain.QtCustomerComplainDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtCustomerComplainDTO;
+import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
+
+import java.util.List;
 
 /**
 * @author yequan
@@ -10,4 +14,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtCustomerComplainDetailService extends IService<QtCustomerComplainDetail> {
 
+    Boolean edit(QtCustomerComplainDTO qtCustomerComplainDTO);
 }

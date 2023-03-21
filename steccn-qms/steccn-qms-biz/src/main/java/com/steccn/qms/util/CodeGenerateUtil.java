@@ -35,6 +35,17 @@ public class CodeGenerateUtil {
     public final static Integer NUM_BIT_8 = 8;
 
     /**
+     * 客诉单号前缀
+     */
+    public final static String  PREFIX_CUSTOMER_COMPLAIN ="KS";
+
+
+    /**
+     * 不合格品单号前缀
+     */
+    public final static String  PREFIX_DEFECT_PRODUCT ="BLCL";
+
+    /**
      * @param prefix 前缀
      * @param numBit 数字位数【0填充】
      * @param currentNum 当前数字

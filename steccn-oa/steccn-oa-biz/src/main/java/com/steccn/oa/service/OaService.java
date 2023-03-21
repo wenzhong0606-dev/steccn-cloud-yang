@@ -308,6 +308,30 @@ public class OaService {
     }
 
     /**
+     * 获取oa人员信息
+     * @param dto
+     * @return
+     */
+    public List<OaEmpVO> getEmpInfoByCondition(OaEmpStatusDTO dto){
+        MultiValueMap<String, String> headers = setHeaders();
+        String sessionResult = oaApi.getEmpInfoSessionKey(headers,dto);
+        //获得sessionKey
+        String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        if(dto.getCurrent()!=null){
+            dataKey.setCurrent(dto.getCurrent());
+        }
+        if(dto.getPageSize()!=null){
+            dataKey.setPageSize(dto.getPageSize());
+        }
+        dataKey.setDataKey(sessionKey);
+        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
+    }
+
+    /**
      * 获取待办数据
      * @param flag 0待办 1待阅
      * @return
@@ -373,7 +397,7 @@ public class OaService {
     /**
      * 新建流程
      */
-    public String getWorkFlow(OaWorkFlowParamDTO dto){
+    public OaWorkflowStatusVO createWorkFlow(OaWorkFlowParamDTO dto){
         OaWorkflowDTO oaWorkflowDTO = new OaWorkflowDTO();
         BeanUtils.copyProperties(dto,oaWorkflowDTO);
         if(CollUtil.isNotEmpty(dto.getMainData())){
@@ -386,7 +410,16 @@ public class OaService {
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
         String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
-        return result;
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        //如果是成功则收到成功消息，否则返回错误信息
+        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            vo.setRequestId(jsonObject.getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+        }else {
+            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+        }
+        return vo;
     }
 
     /**
@@ -485,6 +518,19 @@ public class OaService {
         headers.set("appid",OaConstant.OA_API_APPID);
         headers.set("token",oaTokenService.getApiToken().getToken());
         headers.set("userid",OaConstant.OA_SYSTEM_USERID);
+        return headers;
+    }
+
+    /**
+     * 设置当前用户登录的请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setUserIdHeaders(){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        RSA rsa = new RSA();
+        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userId);
         return headers;
     }
 }

@@ -1,7 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.domain.QtDefectProduct;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtDefectProductDTO;
+import com.steccn.qms.dto.QtDefectProductPageDTO;
+import com.steccn.qms.vo.QtDefectProductVO;
 
 /**
 * @author yequan
@@ -10,4 +15,40 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtDefectProductService extends IService<QtDefectProduct> {
 
+    /**
+     * 新增不合格品处理记录
+     * @param dto
+     * @return
+     */
+    Boolean add(QtDefectProductDTO dto);
+
+    /**
+     * 不合格品处理记录列表
+     * @param dto
+     * @return
+     */
+    Page<QtDefectProductVO> listPage(QtDefectProductPageDTO dto);
+
+
+    /**
+     * 编辑
+     * @param dto
+     * @return
+     */
+    Boolean edit(QtDefectProductDTO dto);
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
+
+
+    /**
+     * 处理
+     * @param dto
+     * @return
+     */
+    Boolean dispose(QtDefectProductDTO dto);
 }

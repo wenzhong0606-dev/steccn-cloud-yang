@@ -1,5 +1,7 @@
 package com.steccn.qms.vo;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -7,6 +9,7 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -51,7 +54,7 @@ public class QtCustomerComplainVO {
     /**
      * 投诉接收人
      */
-    private Integer complainReceiver;
+    private Long complainReceiver;
 
 
     /**
@@ -75,7 +78,7 @@ public class QtCustomerComplainVO {
      * 处理人
      */
 //    @NotNull(message = "处理人不能为空")
-    private Integer dealMan;
+    private Long dealMan;
 
 
     /**
@@ -88,6 +91,11 @@ public class QtCustomerComplainVO {
      */
 //    @NotNull(message = "处理方式不能为空")
     private Integer dealWay;
+
+    /**
+     * 处理方式名称
+     */
+    private String dealWayName;
 
     /**
      * 0-待处理、1-待审批、2-已关闭
@@ -108,13 +116,36 @@ public class QtCustomerComplainVO {
     /**
      * 抄送人
      */
-    private Integer carbonCopyMan;
+    private Long carbonCopyMan;
+
+
+    /**
+     * 抄送人名称
+     */
+    private String carbonCopyManName;
 
     /**
      * 审批人
      */
     @NotNull(message = "审批人不能为空")
-    private Integer approveMan;
+    private Long approveMan;
+
+
+    /**
+     * 审批人名称
+     */
+    private String approveManName;
+
+
+    /**
+     * 创建人名称
+     */
+    private String createName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
 
 }

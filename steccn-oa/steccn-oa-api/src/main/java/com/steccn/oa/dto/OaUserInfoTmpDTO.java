@@ -12,8 +12,8 @@ import java.io.Serializable;
  */
 @Data
 public class OaUserInfoTmpDTO implements Serializable {
-    private String departmentname;
     private String lastname;
     private String icon;
     private Integer id;
+    private String departmentname;
 }
