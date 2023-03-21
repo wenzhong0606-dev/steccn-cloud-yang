@@ -286,7 +286,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRGW,oaEmpVOS.get(0).getJobtitle()));
                 }
                 //申请日期
-                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRQ,pmsMaterialRequisition.getCreateTime().toLocalDate().toString()))
+                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRQ,pmsMaterialRequisition.getCreateTime().toLocalDate().toString()));
                 //申请编号
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBH, RandomUtil.randomString(4)));
                 //总数量
