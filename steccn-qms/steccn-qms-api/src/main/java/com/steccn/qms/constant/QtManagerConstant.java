@@ -336,6 +336,50 @@ public interface QtManagerConstant {
     String QT_DEFECT_PRODUCT_DEAL_WAY = "dealWay";
 
     /**
+     * 整改排序字段-整改单号
+     */
+    String QT_IMPROVE_RECORD_ORDER = "improveOrder";
+
+    /**
+     * 整改排序字段-描述
+     */
+    String QT_IMPROVE_RECORD_DESCRIPTION = "description";
+
+    /**
+     * 整改排序字段-关联客诉标题
+     */
+    String QT_IMPROVE_RECORD_CUSTOMER_COMPLAIN_TITLE = "customerComplainTitle";
+
+
+    /**
+     * 整改排序字段-关联不合格品处理标题
+     */
+    String QT_IMPROVE_RECORD_DEFECT_PRODUCT_TITLE = "defectProductTitle";
+
+
+    /**
+     * 整改排序字段-创建人
+     */
+    String QT_IMPROVE_RECORD_CREATE_NAME= "createName";
+
+    /**
+     * 整改排序字段-创建时间
+     */
+    String QT_IMPROVE_RECORD_CREATE_TIME= "createTime";
+
+
+    /**
+     * 整改排序字段-整改启动审批人
+     */
+    String QT_IMPROVE_RECORD_START_APPROVER_NAME= "startApproverName";
+
+    /**
+     * 整改排序字段 - 状态
+     */
+    String QT_IMPROVE_RECORD_STATUS = "status";
+
+
+    /**
      * 数字
      */
     Integer NUM_0 = 0;
@@ -708,7 +752,36 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum progress {
-        CREATE(0, "创建"), DISPOSE(1, "处理"), APPROVAL_RETURN(2, "审批退回"),APPROVE(3,"审批通过"),IMPROVE(4,"关联整改");
+        CREATE(0, "创建"), DISPOSE(1, "处理"), APPROVAL_RETURN(2, "审批退回"), APPROVE(3, "审批通过"), IMPROVE(4, "关联整改");
+
+        private Integer code;
+        private String name;
+    }
+
+    /**
+     * 整改进度标题
+     */
+    @Getter
+    @AllArgsConstructor
+    enum improveProgress{
+        CREATE(0, "创建"),
+        UNAPPROVED_START(1,"未批准启动"),
+        REDACT(2,"编辑"),
+        APPROVE_START(3,"批准启动"),
+        D1_CREATE(4,"D1:创建团队"),
+        D2_CLEAR_PROBLEM(5,"D2:问题明确"),
+        RETURN_D2(6,"退回D2"),
+        D3_COUNTERMEASURE(7,"D3:临时对策"),
+        D4_REASON_ANALYSIS(8,"D4:原因分析"),
+        D5_PERMANENT_CORRECTIVE_ACTION_PLAN(9,"D5:永久纠正措施"),
+        D6_CORRECTIVE_ACTION_VERIFICATION(10,"D6:纠正措施验证"),
+        D7_PREVENT_RECURRENCE(11,"D7:预防再发生"),
+        D8_APPROVAL_END_PASS(12,"D8:审批结案通过");
+
+
+
+
+
 
         private Integer code;
         private String name;
