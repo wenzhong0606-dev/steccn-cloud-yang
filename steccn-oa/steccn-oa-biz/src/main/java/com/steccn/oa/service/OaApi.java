@@ -201,11 +201,33 @@ public interface OaApi {
     String getHrmSearchResult(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaHrmDTO dto);
 
     /**
-     * 排版记录列表
+     * 排班记录列表
      * @param dto
      * @return
      */
     @PostMapping(value = "/api/customization/Shiftschedule/detail",headers = {"content-type=application/json"})
     @Headers(value = {"content-type=application/json"})
     String getRosterRecord(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaRosterRecordDTO dto);
+
+    /**
+     * 获取部门详情
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/organization/getDepartmentSearchList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getOrgDetail(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaOrgDetailDTO dto);
+
+    /**
+     * 根据部门获取分部信息
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/hrm/batchmaintenanceadjust/getsubcompanyinfo",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getCompanyByOrg(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaDepartmentIdDTO dto);
 }
