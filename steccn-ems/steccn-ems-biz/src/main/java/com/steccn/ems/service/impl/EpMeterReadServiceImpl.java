@@ -228,6 +228,10 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             throw new BusinessException("仪表不存在或停用");
         }
         LocalDate now = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+        if (nowTime.isBefore(LocalTime.of(9, 0))) {
+            now = now.minusDays(1);
+        }
         LocalDate date = LocalDate.parse(readDate, DatePattern.NORM_DATE_FORMATTER);
         EpMeterReadDetailsVO epMeterReadDetailsVO = this.baseMapper.selectByReadDateAndMeterId(readDate, meterId);
 

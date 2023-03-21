@@ -53,10 +53,10 @@
         <if test="dto.customerId != null and dto.customerId != ''">
             AND cm.customer_id = #{dto.customerId}
         </if>
-        <if test="dto.start !=null and dto.start!='' ">
+        <if test="dto.start !=null">
             AND cm.create_time &gt;= #{dto.start}
         </if>
-        <if test="dto.end !=null and dto.end!='' ">
+        <if test="dto.end !=null">
             AND cm.create_time &lt;= #{dto.end}
         </if>
         ORDER BY update_time desc
