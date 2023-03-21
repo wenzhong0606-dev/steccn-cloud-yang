@@ -154,7 +154,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(EpPartitionDTO dto) {
-
+        //构造成树形结构
         EpPartitionTreeDTO root = convertTree(dto.getEpPartitionListDTO());
         log.info("root -> {}" , root);
 
