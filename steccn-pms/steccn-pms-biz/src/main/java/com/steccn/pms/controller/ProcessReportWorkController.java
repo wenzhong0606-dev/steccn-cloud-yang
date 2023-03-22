@@ -98,7 +98,7 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工详情")
     @GetMapping("/{id}")
-    public R<ProcessReportWorkInfoVO> info(@PathVariable("id") Long id) {
+    public R<ProcessReportWorkSubmitDTO> info(@PathVariable("id") Long id) {
         return R.success(pmsReportWorkService.info(id));
     }
 }

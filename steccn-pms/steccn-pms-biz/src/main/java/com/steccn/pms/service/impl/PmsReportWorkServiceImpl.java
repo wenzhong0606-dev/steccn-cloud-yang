@@ -554,15 +554,14 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(d -> d.setUnitName(dictMap.get(d.getUnitId())));
         }
-
         return list;
     }
 
     @Override
-    public ProcessReportWorkInfoVO info(Long id) {
+    public ProcessReportWorkSubmitDTO info(Long id) {
         PmsReportWork model = getById(id);
         Assert.notNull(model, "报工信息不存在");
-        ProcessReportWorkInfoVO resVo = BeanUtil.copyProperties(model, ProcessReportWorkInfoVO.class);
+        ProcessReportWorkSubmitDTO resVo = BeanUtil.copyProperties(model, ProcessReportWorkSubmitDTO.class);
         //获取工时信息
         List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
         //获取物料消息信息

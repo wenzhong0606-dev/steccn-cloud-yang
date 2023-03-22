@@ -110,5 +110,5 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @param id 主键
      * @return
      */
-    ProcessReportWorkInfoVO info(Long id);
+    ProcessReportWorkSubmitDTO info(Long id);
 }

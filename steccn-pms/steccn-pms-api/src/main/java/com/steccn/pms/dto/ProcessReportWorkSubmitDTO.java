@@ -56,6 +56,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @NotNull(message = "批次不能为空")
     private Long batch;
 
+    @ApiModelProperty("批次no")
+    private String batchNo;
+
     @ApiModelProperty("产线id")
     @NotNull(message = "产线不能为空")
     private Integer productLineId;
