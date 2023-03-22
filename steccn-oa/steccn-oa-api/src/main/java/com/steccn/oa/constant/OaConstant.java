@@ -23,6 +23,7 @@ public class OaConstant {
     public static final String OA_JSON_MSG_CODE = "msgcode";
     public static final String OA_JSON_MSG = "msg";
     public static final String OA_JSON_DATA = "data";
+    public static final String OA_JSON_DATA_LIST = "dataList";
     public static final String OA_CAPITAL_DATA = "Data";
     public static final String OA_JSON_DATAS = "datas";
     public static final String OA_JSON_STATUS = "status";
@@ -37,6 +38,7 @@ public class OaConstant {
     public static final String OA_JSON_CODE = "code";
     public static final String OA_JSON_ERRMSG = "errMsg";
     public static final String OA_WORKFLOW_SUCCESS = "SUCCESS";
+    public static final String OA_WORKFLOW_PARAM_ERROR = "PARAM_ERROR";
     public static final String OA_WORKFLOW_REQUESTID = "requestid";
 
 

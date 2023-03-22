@@ -226,8 +226,10 @@ public interface OaApi {
      * @param dto
      * @return
      */
-    @PostMapping(value = "/api/hrm/batchmaintenanceadjust/getsubcompanyinfo",headers = {"content-type=application/x-www-form-urlencoded"})
-    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @PostMapping(value = "/api/hrm/resful/getHrmdepartmentWithPage",headers = {"content-type=application/json"})
+    @Headers(value = {"content-type=application/json"})
     @ResponseBody
-    String getCompanyByOrg(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaDepartmentIdDTO dto);
+    String getCompanyByOrg(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaOrgDetailParamDTO dto);
+
+
 }

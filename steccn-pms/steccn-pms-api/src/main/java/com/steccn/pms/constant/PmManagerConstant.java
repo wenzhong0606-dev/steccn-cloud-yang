@@ -284,7 +284,7 @@ public interface PmManagerConstant {
     /**
      * 详情表名
      */
-    String WORKFLOW_REQ_TABLE_NAME = "formtable_main_103";
+    String WORKFLOW_REQ_TABLE_NAME = "formtable_main_103_dt1";
 
     /**
      * 物料编码
@@ -418,7 +418,7 @@ public interface PmManagerConstant {
         private String name;
 
         public static Integer getCodeByName(String name) {
-            for (QtChartCompareEnum value : QtChartCompareEnum.values()) {
+            for (PmRequisitionWorkFlow value : PmRequisitionWorkFlow.values()) {
                 if (value.getName().equals(name)) {
                     return value.getCode();
                 }

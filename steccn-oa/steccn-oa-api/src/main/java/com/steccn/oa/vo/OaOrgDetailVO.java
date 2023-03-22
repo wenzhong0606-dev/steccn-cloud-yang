@@ -25,4 +25,9 @@ public class OaOrgDetailVO implements Serializable {
      * 部门code
      */
     private String departmentcode;
+
+    /**
+     * 分部id
+     */
+    private String subcompanyid1;
 }

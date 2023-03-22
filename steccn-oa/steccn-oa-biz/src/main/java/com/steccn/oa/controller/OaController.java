@@ -13,6 +13,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -151,7 +152,7 @@ public class OaController {
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R<OaWorkflowStatusVO> createWorkFlow(@RequestBody OaWorkFlowParamDTO dto) {
+    public R<OaWorkflowStatusVO> createWorkFlow(@Validated @RequestBody OaWorkFlowParamDTO dto) {
         return R.success(oaService.createWorkFlow(dto));
     }
 
@@ -189,5 +190,11 @@ public class OaController {
     @PostMapping("/org/detail")
     public R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto){
         return R.success(oaService.getOrgDetailByCondition(dto));
+    }
+
+    @ApiOperation("根据部门信息查询详情V2")
+    @PostMapping("/org/detail/v2")
+    public R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto){
+        return R.success(oaService.getOrgDetailByConditionV2(dto));
     }
 }

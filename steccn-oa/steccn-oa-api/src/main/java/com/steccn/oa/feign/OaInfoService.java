@@ -152,6 +152,15 @@ public interface OaInfoService {
      * @return
      */
     @ApiOperation("根据部门信息查询部门详情")
-    @PostMapping("/org/detail")
+    @PostMapping("/oa/org/detail")
     R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情V2
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情V2")
+    @PostMapping("/oa/org/detail/v2")
+    R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto);
 }

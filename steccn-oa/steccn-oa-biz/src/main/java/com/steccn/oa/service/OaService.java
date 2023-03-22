@@ -405,14 +405,17 @@ public class OaService {
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
-        String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
+        String result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
         //如果是成功则收到成功消息，否则返回错误信息
         if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
-            vo.setRequestId(jsonObject.getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
         }else {
+            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+            }
             vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
         }
         return vo;
@@ -514,6 +517,19 @@ public class OaService {
         dataKey.setDataKey(sessionKey);
         String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
         JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
+     * 根据部门信息查询部门详情,restful版本
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByConditionV2(OaOrgDetailParamDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        String result = oaApi.getCompanyByOrg(headers,dto);
+        JSONArray data =  JSONObject.parseObject(result).getJSONObject(OaConstant.OA_JSON_DATA).getJSONArray(OaConstant.OA_JSON_DATA_LIST);
         List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
         return vos;
     }

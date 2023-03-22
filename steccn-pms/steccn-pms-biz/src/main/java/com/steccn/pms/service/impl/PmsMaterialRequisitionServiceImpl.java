@@ -293,7 +293,8 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //申请日期
                 mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQRQ,pmsMaterialRequisition.getCreateTime().toLocalDate().toString()));
                 //申请编号
-                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBH, RandomUtil.randomString(4)));
+                String requestCode = RandomUtil.randomString(4);
+                mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBH, requestCode));
                 //总数量
                 Set<Long> id = new HashSet<>();
                 id.add(dto.getId());
@@ -309,22 +310,13 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 //查到oa中部门
                 OaOrgDetailDTO oaOrg = new OaOrgDetailDTO();
                 oaOrg.setDepartmentname(officeMap.get(pmsMaterialRequisition.getDepartmentId()));
-                List<OaOrgDetailVO> oaOrgDetailVOS = FeignOptional.of(() -> oaInfoService.getOrgDetailByCondition(oaOrg), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                OaOrgDetailParamDTO oaOrgParam = new OaOrgDetailParamDTO();
+                oaOrgParam.setParams(oaOrg);
+                List<OaOrgDetailVO> oaOrgDetailVOS = FeignOptional.of(() -> oaInfoService.getOrgDetailByConditionV2(oaOrgParam), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                 if(CollUtil.isNotEmpty(oaOrgDetailVOS)){
-                    String departmentId = oaOrgDetailVOS.get(0).getId().toString();
-                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBM,departmentId));
                     //申请分部
-                    OaEmpStatusDTO empStatusDTO = new OaEmpStatusDTO();
-                    empStatusDTO.setDepartmentid(departmentId);
-                    empStatusDTO.setCurrent(1);
-                    empStatusDTO.setPageSize(1);
-                    List<OaEmpVO> empVOS = FeignOptional.of(() -> oaInfoService.getUserByCondition(empStatusDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                    if(CollUtil.isNotEmpty(empVOS)){
-                        mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQFB,empVOS.get(0).getSubcompanyid1()));
-                    }else {
-                        //若没有分部则默认是2,代表桐城新能源
-                        mainDataList.add((new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQFB,PmManagerConstant.NUM_2)));
-                    }
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQBM,oaOrgDetailVOS.get(0).getId().toString()));
+                    mainDataList.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_SQFB,oaOrgDetailVOS.get(0).getSubcompanyid1()));
                 }
                 //类型
                 Set<Long> dictIdSet = Sets.newHashSet();
@@ -345,7 +337,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                 List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
                 //拿到物料详细数据
                 List<PmsMaterialRequisitionInfo> detailList = pmsMaterialRequisitionInfoService.list(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
-                        .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
+                        .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, dto.getId()));
                 if(CollUtil.isNotEmpty(detailList)){
                     List<Long> materialIdSet = Lists.newArrayList();
                     detailList.forEach(tmp -> {
@@ -362,7 +354,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                         EqpSpareVO eqpSpareVO = materialMap.get(tmp.getMaterialId());
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLBM,eqpSpareVO.getCode()));
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_WLMC,eqpSpareVO.getName()));
-                        workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH,eqpSpareVO.getSpecifications()));
+                        if(Objects.nonNull(eqpSpareVO.getSpecifications())){
+                            workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_GGXH,eqpSpareVO.getSpecifications()));
+                        }
                         workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSJ,tmp.getRequireDate().toString()));
                         if(Objects.isNull(tmp.getReceiveQuantity())){
                             workFlowNameValueDTOS.add(new OaWorkFlowNameValueDTO(PmManagerConstant.WORKFLOW_XQSL,BigDecimal.ZERO.toString()));
@@ -375,17 +369,18 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
                     detailDataList.add(oaWorkFlowDetailObjDTO);
                     workflowDTO.setDetailData(detailDataList);
-                    workflowDTO.setRequestName("生产领料单审批流程");
-                    //调用
-                    OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                    if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
-                        throw new BusinessException("流程创建失败");
-                    }
-                    PmsMaterialRequisitionWorkflow pmsMaterialRequisitionWorkflow = new PmsMaterialRequisitionWorkflow();
-                    pmsMaterialRequisitionWorkflow.setRequisitionId(dto.getId());
-                    pmsMaterialRequisitionWorkflow.setRequestId(oaWorkflowStatusVO.getRequestId().longValue());
-                    pmsMaterialRequisitionWorkflowService.save(pmsMaterialRequisitionWorkflow);
                 }
+                workflowDTO.setRequestName("生产领料单审批流程"+requestCode);
+                //调用
+                OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
+                    throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+                }
+                //插入关联表
+                PmsMaterialRequisitionWorkflow pmsMaterialRequisitionWorkflow = new PmsMaterialRequisitionWorkflow();
+                pmsMaterialRequisitionWorkflow.setRequisitionId(dto.getId());
+                pmsMaterialRequisitionWorkflow.setRequestId(oaWorkflowStatusVO.getRequestId().longValue());
+                pmsMaterialRequisitionWorkflowService.save(pmsMaterialRequisitionWorkflow);
                 //变成审批中状态
                 pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL,
                         PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
