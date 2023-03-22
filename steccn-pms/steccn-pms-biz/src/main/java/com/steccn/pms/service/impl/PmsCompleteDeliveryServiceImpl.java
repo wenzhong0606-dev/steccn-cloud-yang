@@ -217,12 +217,26 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
         if (Objects.nonNull(pmsCompleteDelivery)) {
             List<PmsCompleteDeliveryInfo> dbList = pmsCompleteDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
             if (CollUtil.isNotEmpty(dbList)) {
+                Set<Integer> organIdSet = Sets.newHashSet();
+                Set<Long> dictIdSet = Sets.newHashSet();
+                dbList.forEach(ele -> {
+                      organIdSet.add(ele.getWarehouseId());
+                      organIdSet.add(ele.getShelfId());
+                      dictIdSet.add(ele.getUnitId());
+                });
+                Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Integer, String> organMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(organIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 dbList.forEach(ele -> {
                     ProcessReportWorkMaterialListDTO resVo = new ProcessReportWorkMaterialListDTO();
                     BeanUtils.copyProperties(ele, resVo);
                     resVo.setModuleId(ele.getMaterialId());
                     resVo.setModuleCode(ele.getMaterialCode());
                     resVo.setModuleName(ele.getMaterialName());
+                    resVo.setCreateDate(ele.getCreateTime());
+                    resVo.setUnitName(dictMap.get(resVo.getUnitId()));
+                    resVo.setWarehouseName(organMap.get(resVo.getWarehouseId()));
+                    resVo.setShelfName(organMap.get(resVo.getShelfId()));
+                    resVo.setProduceOrderId(pmsCompleteDelivery.getProduceOrderId());
                     resList.add(resVo);
                 });
             }
