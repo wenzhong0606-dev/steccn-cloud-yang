@@ -82,6 +82,11 @@ public class PmsReportWork implements Serializable {
     private Long classGroupId;
 
     /**
+     * 备注
+     */
+    private String note;
+
+    /**
      * 生产订单编码
      */
     private String produceOrderNo;

@@ -6,6 +6,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsReportWork;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.ProcessReportWorkInfoVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 
 import java.math.BigDecimal;
@@ -103,4 +104,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     List<ProcessReportWorkMaterialListDTO> materialLineWarehouse(Integer id);
+
+    /**
+     * 根据报工id获取
+     * @param id 主键
+     * @return
+     */
+    ProcessReportWorkInfoVO info(Long id);
 }
