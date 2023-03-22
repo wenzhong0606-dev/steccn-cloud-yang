@@ -10,15 +10,18 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.pms.domain.PmsCompleteDelivery;
+import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.steccn.pms.domain.PmsProduceOrderCraft;
 import com.steccn.pms.domain.PmsWorkOrderBom;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
 import com.steccn.pms.vo.*;
@@ -203,6 +206,26 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 }
                 resList.add(vo);
             });
+        }
+        return resList;
+    }
+
+    @Override
+    public List<ProcessReportWorkMaterialListDTO> getMaterialConsume(Long reportWorkId) {
+        List<ProcessReportWorkMaterialListDTO> resList = Lists.newArrayList();
+        PmsCompleteDelivery pmsCompleteDelivery = getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, reportWorkId).last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(pmsCompleteDelivery)) {
+            List<PmsCompleteDeliveryInfo> dbList = pmsCompleteDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
+            if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele -> {
+                    ProcessReportWorkMaterialListDTO resVo = new ProcessReportWorkMaterialListDTO();
+                    BeanUtils.copyProperties(ele, resVo);
+                    resVo.setModuleId(ele.getMaterialId());
+                    resVo.setModuleCode(ele.getMaterialCode());
+                    resVo.setModuleName(ele.getMaterialName());
+                    resList.add(resVo);
+                });
+            }
         }
         return resList;
     }

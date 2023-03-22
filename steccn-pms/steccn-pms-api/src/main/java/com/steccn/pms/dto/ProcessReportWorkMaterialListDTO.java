@@ -19,6 +19,9 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("主键id")
+    private Long id;
+
     @ApiModelProperty("库存id")
     private Long inventoryId;
 

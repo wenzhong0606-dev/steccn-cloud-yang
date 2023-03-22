@@ -565,7 +565,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         ProcessReportWorkInfoVO resVo = BeanUtil.copyProperties(model, ProcessReportWorkInfoVO.class);
         //获取工时信息
         List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
+        //获取物料消息信息
+        List<ProcessReportWorkMaterialListDTO> materialConsumeList = completeDeliveryService.getMaterialConsume(id);
         resVo.setHourDTOList(hourDTOList);
+        resVo.setMaterialConsumeList(materialConsumeList);
         return resVo;
     }
 
