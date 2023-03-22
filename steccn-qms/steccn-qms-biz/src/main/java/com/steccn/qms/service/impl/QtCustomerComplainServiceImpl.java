@@ -111,7 +111,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             Map<Integer, String> officeMap = FeignOptional.of(remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainCustomer()))).get();
             Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplain.getComplainType()));
             //发送消息
-            String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()));
+            String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()),qtCustomerComplain.getTitle());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtCustomerComplain.getCode());
             sendMessage(sysMsgAdditionDTO,content, Sets.newHashSet(qtCustomerComplain.getDealMan()));
@@ -249,7 +249,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainType()));
         //发送消息
-        String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()));
+        String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()),qtCustomerComplainDTO.getTitle());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
         sysMsgAdditionDTO.setCode(customerComplain.getCode());
         sendMessage(sysMsgAdditionDTO,content, Sets.newHashSet(qtCustomerComplainDTO.getDealMan()));

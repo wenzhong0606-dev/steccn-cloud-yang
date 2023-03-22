@@ -776,7 +776,18 @@ public interface QtManagerConstant {
         D5_PERMANENT_CORRECTIVE_ACTION_PLAN(9,"D5:永久纠正措施"),
         D6_CORRECTIVE_ACTION_VERIFICATION(10,"D6:纠正措施验证"),
         D7_PREVENT_RECURRENCE(11,"D7:预防再发生"),
-        D8_APPROVAL_END_PASS(12,"D8:审批结案通过");
+        D8_APPROVAL_END_PASS(12,"D8:审批结案通过"),
+        RETURN_D3(13,"退回D3"),
+        RETURN_D4(14,"退回D4"),
+        RETURN_D5(15,"退回D5"),
+        RETURN_D6(16,"退回D6"),
+        RETURN_D7(17,"退回D7"),
+        RETURN_D8(18,"退回D8"),
+        RETURN_D1(19,"退回D1");
+
+
+
+
 
 
 

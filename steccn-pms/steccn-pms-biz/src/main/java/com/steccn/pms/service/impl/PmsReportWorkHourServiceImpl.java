@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.steccn.pms.domain.PmsReportWorkHour;
@@ -38,6 +39,20 @@ public class PmsReportWorkHourServiceImpl extends ServiceImpl<PmsReportWorkHourM
             }
             saveBatch(hourModelList);
         }
+    }
+
+    @Override
+    public List<ProcessReportWorkHourDTO> getReportWorkHour(Long reportWorkId) {
+        List<ProcessReportWorkHourDTO> resList = Lists.newArrayList();
+        List<PmsReportWorkHour> dbList = list(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, reportWorkId));
+        if(CollUtil.isNotEmpty(dbList)){
+            dbList.forEach(ele ->{
+                ProcessReportWorkHourDTO resVo = new ProcessReportWorkHourDTO();
+                BeanUtils.copyProperties(ele,resVo);
+                resList.add(resVo);
+            });
+        }
+        return resList;
     }
 }
 

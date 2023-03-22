@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.domain.QtImproveRecord;
 import com.steccn.qms.domain.QtImproveRecordDetail;
 
 /**
@@ -10,4 +11,11 @@ import com.steccn.qms.domain.QtImproveRecordDetail;
 */
 public interface QtImproveRecordDetailService extends IService<QtImproveRecordDetail> {
 
+    /**
+     * 获取当前状态的详情
+     * @param recordId  记录id
+     * @param status 记录状态
+     * @return
+     */
+    QtImproveRecordDetail getDetail(Long recordId,Integer status);
 }

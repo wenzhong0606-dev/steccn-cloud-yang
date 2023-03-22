@@ -5,7 +5,9 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.domain.QtImproveRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtImproveRecordDTO;
+import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 import com.steccn.qms.dto.QtImproveRecordPageDTO;
+import com.steccn.qms.dto.QtImproveRecordSendBackDTO;
 import com.steccn.qms.vo.QtImproveRecordVO;
 
 /**
@@ -29,4 +31,28 @@ public interface QtImproveRecordService extends IService<QtImproveRecord> {
      * @return
      */
     Boolean add(QtImproveRecordDTO dto);
+
+
+    /**
+     * 编辑整改记录
+     * @param dto
+     * @return
+     */
+    Boolean edit(QtImproveRecordDTO dto);
+
+
+    /**
+     * 处理提交
+     * @param dto
+     * @return
+     */
+    Boolean dispose(QtImproveRecordDisposeDTO dto);
+
+
+    /***
+     * 退回
+     * @param dto
+     * @return
+     */
+    Boolean sendBack(QtImproveRecordSendBackDTO dto);
 }

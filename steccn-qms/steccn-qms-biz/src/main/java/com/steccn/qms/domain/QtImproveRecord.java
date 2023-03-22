@@ -25,6 +25,12 @@ public class QtImproveRecord implements Serializable {
     private String improveOrder;
 
     /**
+     * 整改标题
+     */
+    private String title;
+
+
+    /**
      * 描述
      */
     private String description;

@@ -34,6 +34,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.ProcessReportWorkInfoVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
@@ -43,6 +44,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -554,6 +556,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         }
 
         return list;
+    }
+
+    @Override
+    public ProcessReportWorkInfoVO info(Long id) {
+        PmsReportWork model = getById(id);
+        Assert.notNull(model, "报工信息不存在");
+        ProcessReportWorkInfoVO resVo = BeanUtil.copyProperties(model, ProcessReportWorkInfoVO.class);
+        //获取工时信息
+        List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
+        //获取物料消息信息
+        List<ProcessReportWorkMaterialListDTO> materialConsumeList = completeDeliveryService.getMaterialConsume(id);
+        resVo.setHourDTOList(hourDTOList);
+        resVo.setMaterialConsumeList(materialConsumeList);
+        return resVo;
     }
 
     /**
