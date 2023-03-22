@@ -36,7 +36,7 @@ public class QtCustomerComplainDetailDTO implements Serializable {
      * 物料主键
      */
     @NotNull(message = "物料主键不能为空")
-    private Integer materialId;
+    private Long materialId;
 
     /**
      * 物料名称

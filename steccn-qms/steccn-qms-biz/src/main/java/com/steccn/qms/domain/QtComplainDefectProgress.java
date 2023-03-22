@@ -10,7 +10,7 @@ import lombok.Data;
  * 客诉不合格品进度表
  * @TableName qms_complain_defect_progress
  */
-@TableName(value ="qms_complain_defect_progress")
+@TableName(value ="qt_complain_defect_progress")
 @Data
 public class QtComplainDefectProgress implements Serializable {
     /**

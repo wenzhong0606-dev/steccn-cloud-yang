@@ -1,8 +1,8 @@
 package com.steccn.qms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
+
 
 @Data
 @ApiModel("整改记录")
@@ -17,6 +17,11 @@ public class QtImproveRecordDTO {
      * 整改单号
      */
     private String improveOrder;
+
+    /**
+     * 整改标题
+     */
+    private String title;
 
     /**
      * 描述
@@ -49,15 +54,14 @@ public class QtImproveRecordDTO {
     private Integer status;
 
     /**
-     * 整改启动审批人id
+     * d1整改启动审批人id
      */
     private Long startApproverId;
 
     /**
-     * 整改启动审批人名
+     * d2整改启动审批人名
      */
     private String startApproverName;
-
 
 
 }
