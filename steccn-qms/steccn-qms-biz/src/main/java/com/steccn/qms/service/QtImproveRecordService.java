@@ -1,7 +1,12 @@
 package com.steccn.qms.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.domain.QtImproveRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.dto.QtImproveRecordDTO;
+import com.steccn.qms.dto.QtImproveRecordPageDTO;
+import com.steccn.qms.vo.QtImproveRecordVO;
 
 /**
 * @author yequan
@@ -10,4 +15,18 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface QtImproveRecordService extends IService<QtImproveRecord> {
 
+
+    /**
+     * 整改记录列表
+     * @param dto
+     * @return
+     */
+    Page<QtImproveRecordVO> listPage(QtImproveRecordPageDTO dto);
+
+    /**
+     * 新增整改记录
+     * @param dto
+     * @return
+     */
+    Boolean add(QtImproveRecordDTO dto);
 }

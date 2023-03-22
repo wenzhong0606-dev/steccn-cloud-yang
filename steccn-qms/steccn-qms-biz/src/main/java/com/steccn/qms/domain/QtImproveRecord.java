@@ -10,14 +10,14 @@ import lombok.Data;
  * 整改记录
  * @TableName qms_improve_record
  */
-@TableName(value ="qms_improve_record")
+@TableName(value ="qt_improve_record")
 @Data
 public class QtImproveRecord implements Serializable {
     /**
      * 主键
      */
-    @TableId
-    private Integer id;
+    @TableId(type = IdType.ASSIGN_ID)
+    private Long id;
 
     /**
      * 整改单号
@@ -27,7 +27,7 @@ public class QtImproveRecord implements Serializable {
     /**
      * 描述
      */
-    private String desc;
+    private String description;
 
     /**
      * 客诉id
