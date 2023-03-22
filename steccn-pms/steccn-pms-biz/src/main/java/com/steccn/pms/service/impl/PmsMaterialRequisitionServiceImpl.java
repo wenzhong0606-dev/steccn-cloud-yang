@@ -167,28 +167,45 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         Map<Long, SysDictVO> dictVOMap = FeignOptional.of(()->remoteDictFeignApi.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Assert.notNull(dictVOMap, "订单状态异常");
         String code = dictVOMap.get(materialRequisition.getStatus()).getCode();
-        Assert.isTrue(code.equals(PmManagerConstant.MRBS_CREATED), "领料单不是可编辑状态");
-        //2.处理数据
-        PmsMaterialRequisition model = new PmsMaterialRequisition();
-        BeanUtil.copyProperties(materialRequisitionDTO, model);
-        Boolean aBoolean = updateById(model);
-        //3.编辑数据
-        if (aBoolean) {
-            if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
-                aBoolean = pmsMaterialRequisitionInfoService.editList(materialRequisitionDTO);
+        //只有审批失败和已创建状态才可编辑
+        if(code.equals(PmManagerConstant.MRBS_CREATED)||code.equals(PmManagerConstant.MRBS_APPROVAL_FAIL)){
+            //2.处理数据
+            PmsMaterialRequisition model = new PmsMaterialRequisition();
+            BeanUtil.copyProperties(materialRequisitionDTO, model);
+            Boolean aBoolean = updateById(model);
+            //3.编辑数据
+            if (aBoolean) {
+                if (CollUtil.isNotEmpty(materialRequisitionDTO.getList())) {
+                    aBoolean = pmsMaterialRequisitionInfoService.editList(materialRequisitionDTO);
+                }
             }
+            return aBoolean;
+        } else {
+            throw new BusinessException("订单不是可编辑状态");
         }
-        return aBoolean;
     }
 
     @Override
     public Boolean delete(Long id) {
-        boolean b = removeById(id);
-        if (b) {
-            pmsMaterialRequisitionInfoService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
-                    .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
+        //1.校验领料单状态
+        PmsMaterialRequisition materialRequisition = getById(id);
+        Assert.notNull(materialRequisition, "领料单不存在");
+        List<Long> idSet = Lists.newArrayList();
+        idSet.add(materialRequisition.getStatus());
+        Map<Long, SysDictVO> dictVOMap = FeignOptional.of(()->remoteDictFeignApi.listById(idSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notNull(dictVOMap, "订单状态异常");
+        String code = dictVOMap.get(materialRequisition.getStatus()).getCode();
+        //只有审批失败和已创建状态才可删除
+        if(code.equals(PmManagerConstant.MRBS_CREATED)||code.equals(PmManagerConstant.MRBS_APPROVAL_FAIL)){
+            boolean b = removeById(id);
+            if (b) {
+                pmsMaterialRequisitionInfoService.remove(new LambdaQueryWrapper<PmsMaterialRequisitionInfo>()
+                        .eq(PmsMaterialRequisitionInfo::getMaterialRequisitionId, id));
+            }
+            return b;
+        }else {
+            throw new BusinessException("订单不是可取消状态");
         }
-        return b;
     }
 
     @Override
