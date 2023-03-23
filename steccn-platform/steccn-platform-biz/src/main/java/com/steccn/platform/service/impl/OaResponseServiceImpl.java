@@ -16,10 +16,7 @@ import com.steccn.common.vo.R;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
-import com.steccn.platform.dto.OaMaterialDTO;
-import com.steccn.platform.dto.OaMessagePushDTO;
-import com.steccn.platform.dto.OaProcessNotifyDTO;
-import com.steccn.platform.dto.OaProcessPushDTO;
+import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.platform.service.OaResponseService;
 import com.steccn.platform.mapper.OaResponseMapper;
@@ -27,6 +24,7 @@ import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.MesClassificationVO;
 import com.steccn.platform.vo.OaMaterialVO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +53,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final SysEqpSpareService sysEqpSpareService;
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final RemoteWsFeignApi remoteWsFeignApi;
+    private final RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -86,6 +85,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addProcessNotify(OaProcessNotifyDTO dto) {
+        //1、保存oa流程的值
         OaResponse model = new OaResponse();
         model.setUniqueValue(dto.getUniqueValue());
         model.setType(OaDataConstant.Oa_Data_Type.NOTIFY.getCode());
@@ -95,6 +95,18 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         }
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
+        //2、根据工作流id调用对应的业务
+        OaProcessDataDTO data = dto.getData();
+        //2.1生产领料单业务
+        if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
+            //通过
+
+            //不通过
+            if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
+
+            }
+        }
+
         return save(model);
     }
 

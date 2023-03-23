@@ -2,8 +2,10 @@ package com.steccn.pms.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
+import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.PmsWorkOrderBatchVO;
@@ -12,6 +14,7 @@ import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -97,4 +100,22 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据班次时间查询物料id")
     @GetMapping("/feign/pms/produce/order/getThickByClassTime")
     R<WorkOrderVO> getMaterialCodeByClassTime(@RequestParam("startTime") LocalDateTime startTime, @RequestParam("endTime")LocalDateTime endTime);
+
+    /**
+     * 领用单状态更改
+     * @param dto
+     * @return
+     */
+    @ApiOperation("领用单状态更改")
+    @PostMapping("/feign/pms/material/requisition/approval")
+    R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto);
+
+    /**
+     * 根据requestId查询业务主键
+     * @param requestId
+     * @return
+     */
+    @ApiOperation("根据流程id查询业务id")
+    @GetMapping("/feign/pms/material/requisition/requestId")
+    R<Long> getIdByRequestId(@RequestParam("requestId") Long requestId);
 }
