@@ -111,4 +111,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     ProcessReportWorkSubmitDTO info(Long id);
+
+    /**
+     * 编辑工单报工信息
+     * @param dto dto
+     * @return 是否成功
+     */
+    Boolean edit(ProcessReportWorkSubmitDTO dto);
 }

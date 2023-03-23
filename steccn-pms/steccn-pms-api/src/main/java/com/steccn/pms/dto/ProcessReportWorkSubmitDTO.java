@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

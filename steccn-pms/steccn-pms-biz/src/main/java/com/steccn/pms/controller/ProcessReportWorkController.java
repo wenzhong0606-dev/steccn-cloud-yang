@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
 import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
@@ -105,8 +106,8 @@ public class ProcessReportWorkController {
     @PutMapping
     @ApiOperation("报工编辑")
     @SysLog("报工编辑")
-    public R<Boolean> edit(){
-        return R.success();
+    public R<Boolean> edit(@RequestBody ProcessReportWorkSubmitDTO dto){
+        return R.success(pmsReportWorkService.edit(dto));
     }
 
 }

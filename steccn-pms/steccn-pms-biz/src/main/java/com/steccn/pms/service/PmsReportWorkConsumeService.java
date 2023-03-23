@@ -56,4 +56,6 @@ public interface PmsReportWorkConsumeService extends IService<PmsReportWorkConsu
      * @return 能耗列表
      */
     List<ProcessReportWorkConsumeDTO> getConsumeList(Long id);
+
+    void updateConsume(Long id, List<ProcessReportWorkConsumeDTO> consumeDTOList);
 }
