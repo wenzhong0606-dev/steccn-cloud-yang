@@ -8,10 +8,26 @@ import lombok.Data;
 @ApiModel("整改记录详情")
 public class QtImproveRecordDetailDTO {
 
+
+    /**
+     * id
+     */
+    private Long id;
+
+    /**
+     * 整改主键
+     */
+    private Long recordId;
+
+    /**
+     * 第几步 D1 D2 ...D8
+     */
+    private String approverStep;
+
     /**
      * 处理人主键
      */
-    private Integer approverId;
+    private Long approverId;
 
     /**
      * 处理人名称

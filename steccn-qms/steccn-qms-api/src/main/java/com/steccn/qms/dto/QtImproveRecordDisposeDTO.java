@@ -148,6 +148,12 @@ public class QtImproveRecordDisposeDTO {
     private String approverConclusion;
 
 
-    private List<QtImproveRecordDetailDTO> detailList;
+    /**
+     * d8抄送人
+     */
+    private List<QtCarbonCopyManDTO>  carbonCopyManList;
+
+
+
 
 }

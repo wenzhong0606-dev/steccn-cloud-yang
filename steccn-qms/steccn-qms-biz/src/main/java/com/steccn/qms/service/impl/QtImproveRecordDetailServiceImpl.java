@@ -32,6 +32,8 @@ public class QtImproveRecordDetailServiceImpl extends ServiceImpl<QtImproveRecor
             wrapper.eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName());
         } else if (QtManagerConstant.NUM_7.equals(status)) {
             wrapper.eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName());
+        }else if (QtManagerConstant.NUM_8.equals(status)){
+            wrapper.eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName());
         }
         return getOne(wrapper);
     }

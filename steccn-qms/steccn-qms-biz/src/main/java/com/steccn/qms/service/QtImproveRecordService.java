@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.qms.domain.QtImproveRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.dto.QtImproveRecordDTO;
-import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
-import com.steccn.qms.dto.QtImproveRecordPageDTO;
-import com.steccn.qms.dto.QtImproveRecordSendBackDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtImproveRecordVO;
 
 /**
@@ -55,4 +52,27 @@ public interface QtImproveRecordService extends IService<QtImproveRecord> {
      * @return
      */
     Boolean sendBack(QtImproveRecordSendBackDTO dto);
+
+
+    /**
+     * 获取整改记录详情
+     * @param id
+     * @return
+     */
+    QtImproveRecordVO get(Long id);
+
+    /**
+     * 中断
+     * @param dto
+     * @return
+     */
+    Boolean suspend(QtImproveRecordSuspendDTO dto);
+
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    Boolean delete(Long id);
 }

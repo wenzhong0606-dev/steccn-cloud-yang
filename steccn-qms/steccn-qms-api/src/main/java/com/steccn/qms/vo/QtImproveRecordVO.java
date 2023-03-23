@@ -3,10 +3,12 @@ package com.steccn.qms.vo;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @ApiModel("整改记录")
@@ -76,4 +78,18 @@ public class QtImproveRecordVO {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+
+    /**
+     * D2-D7 的结论详情
+     */
+    private List<QtImproveRecordDetailVO> detailList;
+
+
+    /**
+     * 抄送人
+     */
+    private List<QtCarbonCopyManDTO>  manList;
+
+
 }

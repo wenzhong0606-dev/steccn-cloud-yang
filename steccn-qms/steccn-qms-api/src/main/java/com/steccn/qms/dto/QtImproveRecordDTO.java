@@ -1,7 +1,11 @@
 package com.steccn.qms.dto;
 
+import com.steccn.common.valid.InsertGroup;
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
+
+import javax.validation.constraints.NotNull;
 
 
 @Data
@@ -11,6 +15,7 @@ public class QtImproveRecordDTO {
     /**
      * 主键
      */
+    @NotNull(groups = {UpdateGroup.class},message = "标题不能为空")
     private Long id;
 
     /**
@@ -21,6 +26,7 @@ public class QtImproveRecordDTO {
     /**
      * 整改标题
      */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "标题不能为空")
     private String title;
 
     /**
@@ -55,13 +61,28 @@ public class QtImproveRecordDTO {
 
     /**
      * d1整改启动审批人id
+     *
      */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "启动审批人id不能为空")
     private Long startApproverId;
 
     /**
-     * d2整改启动审批人名
+     * d1整改启动审批人名
      */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "启动审批人名称不能为空")
     private String startApproverName;
+
+    /**
+     * d1处理人
+     */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "d1处理人id不能为空")
+    private Long d1ApproverId;
+
+    /**
+     * d1处理人名称
+     */
+    @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "d1处理人名称不能为空")
+    private String d1ApproverName;
 
 
 }

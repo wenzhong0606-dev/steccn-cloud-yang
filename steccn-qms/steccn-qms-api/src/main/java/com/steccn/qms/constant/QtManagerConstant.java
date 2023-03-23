@@ -1,9 +1,14 @@
 package com.steccn.qms.constant;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.steccn.qms.dto.QtImproveRecordDetailDTO;
+import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -394,6 +399,8 @@ public interface QtManagerConstant {
     Integer NUM_9 = 9;
     Integer NUM_10 = 10;
 
+    Integer NUM_11 = 11;
+
 
     /**
      * 周枚举
@@ -783,19 +790,47 @@ public interface QtManagerConstant {
         RETURN_D6(16,"退回D6"),
         RETURN_D7(17,"退回D7"),
         RETURN_D8(18,"退回D8"),
-        RETURN_D1(19,"退回D1");
-
-
-
-
-
-
-
+        RETURN_D1(19,"退回D1"),
+        SUSPEND(20,"整改中断");
 
 
 
         private Integer code;
         private String name;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    enum DD {
+        D2("D2:问题明确", "getD2Processor", "getD2ProcessorName"),
+        D3("D3:临时对策", "getD3Processor", "getD3ProcessorName"),
+        D4("D4:原因分析", "getD4Processor", "getD4ProcessorName"),
+        D5("D5:永久纠正措施", "getD5Processor", "getD5ProcessorName"),
+        D6("D6:纠正措施验证", "getD6Processor", "getD6ProcessorName"),
+        D7("D7:预防再发生", "getD7Processor", "getD7ProcessorName"),
+        D8("D8:审批结案通过", "getD8Processor", "getD8ProcessorName");
+
+
+        private final String name;
+        private final String methodName1;
+        private final String methodName2;
+
+        public static void execute(QtImproveRecordDetailDTO detail, QtImproveRecordDisposeDTO dto) {
+            for (DD value : DD.values()) {
+                try {
+                    if (value.name.equals(detail.getApproverStep())) {
+                        Method method1 = QtImproveRecordDisposeDTO.class.getMethod(value.getMethodName1(), null);
+                        Object invoke1 = method1.invoke(dto);
+                        detail.setApproverId((Long) invoke1);
+                        Method method2 = QtImproveRecordDisposeDTO.class.getMethod(value.getMethodName2(), null);
+                        Object invoke2 = method2.invoke(dto);
+                        detail.setApproverName((String) invoke2);
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+        }
     }
 
 
