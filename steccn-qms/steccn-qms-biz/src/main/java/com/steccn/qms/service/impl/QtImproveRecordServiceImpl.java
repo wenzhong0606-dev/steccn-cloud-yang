@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,13 +25,16 @@ import com.steccn.qms.service.QtImproveProgresssService;
 import com.steccn.qms.service.QtImproveRecordDetailService;
 import com.steccn.qms.service.QtImproveRecordService;
 import com.steccn.qms.mapper.QtImproveRecordMapper;
+import com.steccn.qms.service.QtImproveStepManService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.PassRateDateVo;
 import com.steccn.qms.vo.QtCustomerComplainVO;
+import com.steccn.qms.vo.QtImproveRecordDetailVO;
 import com.steccn.qms.vo.QtImproveRecordVO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -56,10 +60,11 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
 
     private final QtImproveProgresssService qtImproveProgresssService;
 
-
     private final QtImproveRecordDetailService qtImproveRecordDetailService;
 
     private final RemoteMsgFeignApi remoteMsgFeignApi;
+
+    private final QtImproveStepManService qtImproveStepManService;
 
     @Override
     public Page<QtImproveRecordVO> listPage(QtImproveRecordPageDTO dto) {
@@ -111,21 +116,14 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveRecord.setImproveOrder(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_IMPROVE_RECORD, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
             save(qtImproveRecord);
             //处理进度
-            saveImproveProgresss(dto.getId(),QtManagerConstant.NUM_0);
+            saveImproveProgresss(qtImproveRecord.getId(), QtManagerConstant.NUM_0);
             //保存d1 处理人
             QtImproveRecordDetail qtImproveRecordDetail = new QtImproveRecordDetail();
             qtImproveRecordDetail.setRecordId(qtImproveRecord.getId());
             qtImproveRecordDetail.setApproverStep(QtManagerConstant.improveProgress.D1_CREATE.getName());
-            qtImproveRecordDetail.setApproverId(dto.getStartApproverId());
-            qtImproveRecordDetail.setApproverName(dto.getStartApproverName());
+            qtImproveRecordDetail.setApproverId(dto.getD1ApproverId());
+            qtImproveRecordDetail.setApproverName(dto.getD1ApproverName());
             qtImproveRecordDetailService.save(qtImproveRecordDetail);
-            //获取下一节点信息
-            QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(dto.getId(), qtImproveRecord.getStatus() + QtManagerConstant.NUM_1);
-            //发送消息
-            String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), qtImproveRecord.getTitle(), qtImproveRecord.getCreateName());
-            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
-            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
         } finally {
             lock.unlock();
         }
@@ -139,11 +137,20 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         Assert.isTrue(QtManagerConstant.NUM_0.equals(record.getStatus()), "当前状态不可编辑");
         BeanUtil.copyProperties(dto, record);
         updateById(record);
-        //修改进度
-        QtImproveProgresss one = qtImproveProgresssService.getOne(new LambdaQueryWrapper<QtImproveProgresss>().eq(QtImproveProgresss::getRecordId, dto.getId()));
-        one.setOpId(SecurityUtils.getUser().getUserId());
-        one.setOpCreateName(SecurityUtils.getUser().getName());
-        qtImproveProgresssService.updateById(one);
+        //保存进度
+        QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
+        qtImproveProgresss.setRecordId(record.getId());
+        qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.REDACT.getName());
+        qtImproveProgresss.setOpTime(LocalDateTime.now());
+        qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
+        qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+        qtImproveProgresssService.save(qtImproveProgresss);
+        //修改d1节点执行人
+        QtImproveRecordDetail qtImproveRecordDetail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
+        qtImproveRecordDetail.setApproverStep(QtManagerConstant.improveProgress.D1_CREATE.getName());
+        qtImproveRecordDetail.setApproverId(dto.getD1ApproverId());
+        qtImproveRecordDetail.setApproverName(dto.getD1ApproverName());
+        qtImproveRecordDetailService.updateById(qtImproveRecordDetail);
         return Boolean.TRUE;
     }
 
@@ -151,17 +158,38 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     public Boolean dispose(QtImproveRecordDisposeDTO dto) {
         QtImproveRecord record = getById(dto.getId());
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
+        Assert.checkBetween(record.getStatus(),QtManagerConstant.NUM_2,QtManagerConstant.NUM_8,"当前状态不可处理");
         //判断当前状态的执行人是否一致
-        QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(dto.getId(), dto.getStatus());
+        QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(record.getId(), record.getStatus());
         Assert.isTrue(SecurityUtils.getUser().getUserId().equals(detail.getApproverId()), "记录审批人信息异常");
+        if (QtManagerConstant.NUM_2.equals(record.getStatus())) {
+            //保存d1:创建团队信息
+            saveHandler(dto);
+        }
+        if (QtManagerConstant.NUM_8.equals(record.getStatus())) {
+            if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
+                //调取oa 节点
+                //保存d7 抄送人信息
+                qtImproveStepManService.saveMan(dto);
+            }
+        }
+        //保存进度信息
+        saveImproveProgresss(record.getId(), record.getStatus());
         //修改状态
         record.setStatus(record.getStatus() + QtManagerConstant.NUM_1);
-        BeanUtil.copyProperties(dto, record);
         updateById(record);
-        saveImproveProgresss(record.getId(),record.getStatus());
         //修改结论信息
         detail.setApproverConclusion(dto.getApproverConclusion());
         qtImproveRecordDetailService.updateById(detail);
+        //获取下一节点信息
+        if (record.getStatus()<QtManagerConstant.NUM_9) {
+            QtImproveRecordDetail qtImproveRecordDetail = qtImproveRecordDetailService.getDetail(dto.getId(), record.getStatus());
+            //发送消息
+            String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setCode(record.getImproveOrder());
+            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtImproveRecordDetail.getApproverId()));
+        }
         return Boolean.TRUE;
     }
 
@@ -171,17 +199,73 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
         Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_3, QtManagerConstant.NUM_8, "当前状态不可退回");
         //处理进度信息
-        saveImproveProgresssReturn(record.getId(),record.getStatus());
+        saveImproveProgresssReturn(record.getId(), record.getStatus(),dto.getReason());
         record.setStatus(record.getStatus() - QtManagerConstant.NUM_1);
         //获取上一节点信息
-        QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(dto.getId(), record.getStatus() - QtManagerConstant.NUM_1);
-
+        QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(dto.getId(), record.getStatus());
         //发送消息
         String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
         sysMsgAdditionDTO.setCode(record.getImproveOrder());
         sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
         return updateById(record);
+    }
+
+    @Override
+    public QtImproveRecordVO get(Long id) {
+        QtImproveRecord record = getById(id);
+        QtImproveRecordVO qtImproveRecordVO = new QtImproveRecordVO();
+        BeanUtil.copyProperties(record, qtImproveRecordVO);
+        List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
+        List<QtImproveRecordDetailVO> detailList = BeanUtil.copyToList(list, QtImproveRecordDetailVO.class);
+        list.forEach(qtImproveRecordDetail -> {
+            if (QtManagerConstant.improveProgress.D1_CREATE.getName().equals(qtImproveRecordDetail.getApproverStep())) {
+                qtImproveRecordVO.setStartApproverId(qtImproveRecordDetail.getApproverId());
+                qtImproveRecordVO.setStartApproverName(qtImproveRecordDetail.getApproverName());
+            }
+        });
+        qtImproveRecordVO.setDetailList(detailList);
+        //获取抄送人信息
+        List<QtImproveStepMan> manList = qtImproveStepManService.list(new LambdaQueryWrapper<QtImproveStepMan>()
+                .eq(QtImproveStepMan::getRecordId, id)
+                .eq(QtImproveStepMan::getUserType, QtManagerConstant.NUM_1));
+        if (CollUtil.isNotEmpty(manList)){
+            qtImproveRecordVO.setManList(BeanUtil.copyToList(manList,QtCarbonCopyManDTO.class));
+        }
+        return qtImproveRecordVO;
+    }
+
+    @Override
+    public Boolean suspend(QtImproveRecordSuspendDTO dto) {
+        QtImproveRecord record = getById(dto.getId());
+        Assert.isTrue(Objects.nonNull(record), "记录不存在");
+        Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_2, QtManagerConstant.NUM_8, "当前状态不可中断");
+        record.setStatus(QtManagerConstant.NUM_11);
+        updateById(record);
+        //保存进度
+        QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
+        qtImproveProgresss.setRecordId(record.getId());
+        qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.SUSPEND.getName());
+        qtImproveProgresss.setOpTime(LocalDateTime.now());
+        qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
+        qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+        qtImproveProgresss.setOpNote(dto.getReason());
+        qtImproveProgresssService.save(qtImproveProgresss);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        QtImproveRecord record = getById(id);
+        Assert.isTrue(Objects.nonNull(record), "记录不存在");
+        Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_10, QtManagerConstant.NUM_11, "当前状态不可删除");
+        qtImproveProgresssService.remove(new LambdaQueryWrapper<QtImproveProgresss>()
+                .eq(QtImproveProgresss::getRecordId,id));
+        qtImproveStepManService.remove(new LambdaQueryWrapper<QtImproveStepMan>()
+                .eq(QtImproveStepMan::getRecordId,id));
+        qtImproveRecordDetailService.remove(new LambdaQueryWrapper<QtImproveRecordDetail>()
+                .eq(QtImproveRecordDetail::getRecordId,id));
+        return removeById(id);
     }
 
 
@@ -235,28 +319,28 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         return Boolean.TRUE;
     }
 
-    private Boolean saveImproveProgresss(Long id,Integer status){
+    private Boolean saveImproveProgresss(Long id, Integer status) {
         QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
         qtImproveProgresss.setRecordId(id);
-        if (QtManagerConstant.NUM_0.equals(status)){
+        if (QtManagerConstant.NUM_0.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.CREATE.getName());
-        }else if (QtManagerConstant.NUM_1.equals(status)){
+        } else if (QtManagerConstant.NUM_1.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.UNAPPROVED_START.getName());
-        }else if (QtManagerConstant.NUM_2.equals(status)){
+        } else if (QtManagerConstant.NUM_2.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D1_CREATE.getName());
-        }else if (QtManagerConstant.NUM_3.equals(status)){
+        } else if (QtManagerConstant.NUM_3.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D2_CLEAR_PROBLEM.getName());
-        }else if (QtManagerConstant.NUM_4.equals(status)){
+        } else if (QtManagerConstant.NUM_4.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D3_COUNTERMEASURE.getName());
-        }else if (QtManagerConstant.NUM_5.equals(status)){
+        } else if (QtManagerConstant.NUM_5.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D4_REASON_ANALYSIS.getName());
-        }else if (QtManagerConstant.NUM_6.equals(status)){
+        } else if (QtManagerConstant.NUM_6.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName());
-        }else if (QtManagerConstant.NUM_7.equals(status)){
+        } else if (QtManagerConstant.NUM_7.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName());
-        }else if (QtManagerConstant.NUM_8.equals(status)){
+        } else if (QtManagerConstant.NUM_8.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName());
-        }else if (QtManagerConstant.NUM_9.equals(status)){
+        } else if (QtManagerConstant.NUM_9.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName());
         }
         qtImproveProgresss.setOpTime(LocalDateTime.now());
@@ -265,29 +349,146 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         return qtImproveProgresssService.save(qtImproveProgresss);
     }
 
-
-    private Boolean saveImproveProgresssReturn(Long id,Integer status){
+    /**
+     * 保存退回节点信息
+     *
+     * @param id
+     * @param status
+     * @return
+     */
+    private Boolean saveImproveProgresssReturn(Long id, Integer status,String reason) {
         QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
         qtImproveProgresss.setRecordId(id);
-         if (QtManagerConstant.NUM_3.equals(status)){
+        if (QtManagerConstant.NUM_3.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D1.getName());
-        }else if (QtManagerConstant.NUM_4.equals(status)){
+        } else if (QtManagerConstant.NUM_4.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D2.getName());
-        }else if (QtManagerConstant.NUM_5.equals(status)){
+        } else if (QtManagerConstant.NUM_5.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D3.getName());
-        }else if (QtManagerConstant.NUM_6.equals(status)){
+        } else if (QtManagerConstant.NUM_6.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D4.getName());
-        }else if (QtManagerConstant.NUM_7.equals(status)){
+        } else if (QtManagerConstant.NUM_7.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D5.getName());
-        }else if (QtManagerConstant.NUM_8.equals(status)){
+        } else if (QtManagerConstant.NUM_8.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D6.getName());
-        }else if (QtManagerConstant.NUM_9.equals(status)){
+        } else if (QtManagerConstant.NUM_9.equals(status)) {
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D7.getName());
         }
         qtImproveProgresss.setOpTime(LocalDateTime.now());
         qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
         qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+        qtImproveProgresss.setOpNote(reason);
         return qtImproveProgresssService.save(qtImproveProgresss);
+    }
+
+
+    /**
+     * 保存处理人
+     *
+     * @return
+     */
+    private Boolean saveHandler(QtImproveRecordDisposeDTO dto) {
+        List<QtImproveRecordDetail> detailList = Lists.newArrayList();
+        //获取处理节点信息
+        List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, dto.getId()));
+        if (CollUtil.isNotEmpty(list)) {
+            List<QtImproveRecordDetailDTO> qtImproveRecordDetailDTOS = BeanUtil.copyToList(list, QtImproveRecordDetailDTO.class);
+            qtImproveRecordDetailDTOS.forEach(detail -> {
+                QtManagerConstant.DD.execute(detail, dto);
+                if (!QtManagerConstant.improveProgress.D1_CREATE.getName().equals(detail.getApproverStep())) {
+                    QtImproveRecordDetail qtImproveRecordDetail = BeanUtil.copyProperties(detail, QtImproveRecordDetail.class);
+                    detailList.add(qtImproveRecordDetail);
+                }
+//                if (QtManagerConstant.improveProgress.D2_CLEAR_PROBLEM.getName().equals(detail.getApproverStep())){
+//                    //修改d2
+//                    detail.setApproverId(dto.getD2Processor());
+//                    detail.setApproverName(dto.getD2ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D3_COUNTERMEASURE.getName().equals(detail.getApproverStep())){
+//                    //修改d3
+//                    detail.setApproverId(dto.getD3Processor());
+//                    detail.setApproverName(dto.getD3ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D4_REASON_ANALYSIS.getName().equals(detail.getApproverStep())){
+//                    //修改d4
+//                    detail.setApproverId(dto.getD4Processor());
+//                    detail.setApproverName(dto.getD4ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName().equals(detail.getApproverStep())){
+//                    //修改d5
+//                    detail.setApproverId(dto.getD5Processor());
+//                    detail.setApproverName(dto.getD2ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName().equals(detail.getApproverStep())){
+//                    //修改d6
+//                    detail.setApproverId(dto.getD6Processor());
+//                    detail.setApproverName(dto.getD6ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName().equals(detail.getApproverStep())){
+//                    //修改d7
+//                    detail.setApproverId(dto.getD7Processor());
+//                    detail.setApproverName(dto.getD7ProcessorName());
+//                    detailList.add(detail);
+//                }
+//                if (QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName().equals(detail.getApproverStep())){
+//                    //修改d8
+//                    detail.setApproverId(dto.getD8Processor());
+//                    detail.setApproverName(dto.getD8ProcessorName());
+//                    detailList.add(detail);
+//                }
+            });
+            if (CollUtil.isEmpty(detailList)) {
+                //创建d2-d8
+                QtImproveRecordDetail d2 = new QtImproveRecordDetail();
+                d2.setRecordId(dto.getId());
+                d2.setApproverId(dto.getD2Processor());
+                d2.setApproverName(dto.getD2ProcessorName());
+                d2.setApproverStep(QtManagerConstant.improveProgress.D2_CLEAR_PROBLEM.getName());
+                detailList.add(d2);
+                QtImproveRecordDetail d3 = new QtImproveRecordDetail();
+                d3.setRecordId(dto.getId());
+                d3.setApproverId(dto.getD2Processor());
+                d3.setApproverName(dto.getD2ProcessorName());
+                d3.setApproverStep(QtManagerConstant.improveProgress.D3_COUNTERMEASURE.getName());
+                detailList.add(d3);
+                QtImproveRecordDetail d4 = new QtImproveRecordDetail();
+                d4.setRecordId(dto.getId());
+                d4.setApproverId(dto.getD2Processor());
+                d4.setApproverName(dto.getD2ProcessorName());
+                d4.setApproverStep(QtManagerConstant.improveProgress.D4_REASON_ANALYSIS.getName());
+                detailList.add(d4);
+                QtImproveRecordDetail d5 = new QtImproveRecordDetail();
+                d5.setRecordId(dto.getId());
+                d5.setApproverId(dto.getD2Processor());
+                d5.setApproverName(dto.getD2ProcessorName());
+                d5.setApproverStep(QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName());
+                detailList.add(d5);
+                QtImproveRecordDetail d6 = new QtImproveRecordDetail();
+                d6.setRecordId(dto.getId());
+                d6.setApproverId(dto.getD2Processor());
+                d6.setApproverName(dto.getD2ProcessorName());
+                d6.setApproverStep(QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName());
+                detailList.add(d6);
+                QtImproveRecordDetail d7 = new QtImproveRecordDetail();
+                d7.setRecordId(dto.getId());
+                d7.setApproverId(dto.getD2Processor());
+                d7.setApproverName(dto.getD2ProcessorName());
+                d7.setApproverStep(QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName());
+                detailList.add(d7);
+                QtImproveRecordDetail d8 = new QtImproveRecordDetail();
+                d8.setRecordId(dto.getId());
+                d8.setApproverId(dto.getD2Processor());
+                d8.setApproverName(dto.getD2ProcessorName());
+                d8.setApproverStep(QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName());
+                detailList.add(d8);
+            }
+        }
+        return qtImproveRecordDetailService.saveOrUpdateBatch(detailList);
     }
 
 
