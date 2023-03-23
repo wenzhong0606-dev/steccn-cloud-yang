@@ -98,4 +98,11 @@ public class ProcessReportWorkController {
     public R<Page<PmsReportWorkVO>> reportWorkPageList(@RequestBody PmsReportWorkPageDTO dto){
         return R.success(pmsReportWorkService.reportWorkPageList(dto));
     }
+
+    @ApiOperation("报工详情")
+    @GetMapping("/{id}")
+    public R<Boolean> info(@PathVariable("id") Long id) {
+        log.info("{}", id);
+        return R.success();
+    }
 }
