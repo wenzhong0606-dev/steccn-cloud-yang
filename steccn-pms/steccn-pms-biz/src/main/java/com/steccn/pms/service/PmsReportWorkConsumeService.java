@@ -49,4 +49,13 @@ public interface PmsReportWorkConsumeService extends IService<PmsReportWorkConsu
      * @return list
      */
     List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap);
+
+    /**
+     * 根据报工获取能耗信息
+     * @param id 报工id
+     * @return 能耗列表
+     */
+    List<ProcessReportWorkConsumeDTO> getConsumeList(Long id);
+
+    void updateConsume(Long id, List<ProcessReportWorkConsumeDTO> consumeDTOList);
 }

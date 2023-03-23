@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -21,6 +22,9 @@ import java.util.List;
 @Data
 @ApiModel("工序报工-提交报工")
 public class ProcessReportWorkSubmitDTO implements Serializable {
+
+    @ApiModelProperty("主键id")
+    private Long id;
 
     @ApiModelProperty("生产订单id")
     @NotNull(message = "生产订单不能为空")

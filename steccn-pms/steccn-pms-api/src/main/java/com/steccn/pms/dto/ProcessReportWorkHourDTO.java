@@ -21,6 +21,9 @@ import java.time.LocalDateTime;
 @ApiModel("工序报工-加工时间")
 public class ProcessReportWorkHourDTO implements Serializable {
 
+    @ApiModelProperty("加工时间主键")
+    private Long id;
+
     @ApiModelProperty("原因（字典：工时原因）")
     @NotNull(message = "原因不能为空")
     private Long causeId;
@@ -48,7 +51,6 @@ public class ProcessReportWorkHourDTO implements Serializable {
     @ApiModelProperty("工时单位（字典时间单位）")
     @NotNull(message = "工时单位不能为空")
     private Long unitId;
-
 
     /**
      * 备注

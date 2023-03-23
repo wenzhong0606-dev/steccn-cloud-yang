@@ -46,6 +46,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -584,9 +585,57 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
         //获取物料消息信息
         List<ProcessReportWorkMaterialListDTO> materialConsumeList = completeDeliveryService.getMaterialConsume(id);
+        //获取能耗信息
+        List<ProcessReportWorkConsumeDTO> consumeDTOList = pmsReportWorkConsumeService.getConsumeList(id);
         resVo.setHourDTOList(hourDTOList);
         resVo.setMaterialConsumeList(materialConsumeList);
+        resVo.setConsumeDTOList(consumeDTOList);
         return resVo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean edit(ProcessReportWorkSubmitDTO dto) {
+        //更新报工主表信息
+        PmsReportWork model = getById(dto);
+        Assert.notNull(model,"编辑的报工记录不存在");
+        getReportWork(dto,model);
+        updateById(model);
+        //更新报工工时信息
+        reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
+        //更新报工能耗信息
+        pmsReportWorkConsumeService.updateConsume(dto.getId(),dto.getConsumeDTOList());
+        return null;
+    }
+
+    /**
+     * 获取
+     * @param dto
+     * @return
+     */
+    private void getReportWork(ProcessReportWorkSubmitDTO dto, PmsReportWork pmsReportWork) {
+        PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
+        //校验产线和工位是否存在
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
+        //校验工序是否存在
+        PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
+        Assert.notNull(pmsProduceOrderCraft, "工序不存在");
+
+        validMaterialConsume(dto, pmsProduceOrderCraft.getProcessId());
+
+        //校验批次是否存在
+        PmsWorkOrderBatch pmsWorkOrderBatch = workOrderBatchService.getById(dto.getBatch());
+        Assert.notNull(pmsWorkOrderBatch, "批次不存在");
+        //校验班次和班组是否存在
+        //校验单位是否存在
+        Boolean unitBoolean = FeignOptional.of(() -> remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.isTrue(unitBoolean, "单位不存在");
+        //校验是否物料的条数是否正确
+        //生成报工记录
+        BeanUtils.copyProperties(dto, pmsReportWork);
+        pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
     }
 
     /**
