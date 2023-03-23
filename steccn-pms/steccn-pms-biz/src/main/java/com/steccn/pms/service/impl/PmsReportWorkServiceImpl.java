@@ -562,6 +562,24 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         PmsReportWork model = getById(id);
         Assert.notNull(model, "报工信息不存在");
         ProcessReportWorkSubmitDTO resVo = BeanUtil.copyProperties(model, ProcessReportWorkSubmitDTO.class);
+        //赋值processName,unitName,batch
+        PmsProduceOrderCraft processModel = produceOrderCraftService.getById(model.getProcessId());
+        Assert.notNull(processModel, "工序不存在");
+        resVo.setProcessName(processModel.getName());
+        PmsWorkOrderBatch workOrderBatch = workOrderBatchService.getByCode(resVo.getBatchNo());
+        Assert.notNull(workOrderBatch, "生产订单批次信息不存在");
+        resVo.setBatch(workOrderBatch.getId());
+        //赋值数据字典
+        Set<Long> dictIdSet = Sets.newHashSet(resVo.getUnitId(), resVo.getClassesId(), resVo.getClassGroupId());
+        Map<Long, String> dictIdMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resVo.setClassGroupName(dictIdMap.get(resVo.getClassGroupId()));
+        resVo.setClassesName(dictIdMap.get(resVo.getClassesId()));
+        resVo.setUnitName(dictIdMap.get(resVo.getUnitId()));
+        //赋值组织机构
+        Set<Integer> organIdSet = Sets.newHashSet(resVo.getProductLineId(), resVo.getStationId());
+        Map<Integer, String> organIdMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(organIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resVo.setProductLineName(organIdMap.get(resVo.getProductLineId()));
+        resVo.setStationName(organIdMap.get(resVo.getStationId()));
         //获取工时信息
         List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
         //获取物料消息信息

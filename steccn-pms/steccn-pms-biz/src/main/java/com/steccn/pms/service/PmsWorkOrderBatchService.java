@@ -39,4 +39,11 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
      * @return
      */
     Boolean add(ProduceOrderBatchDto dto);
+
+    /**
+     * 根据批次编码获取批次信息
+     * @param batchNo 批次编码
+     * @return 批次信息
+     */
+    PmsWorkOrderBatch getByCode(String batchNo);
 }

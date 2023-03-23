@@ -69,6 +69,11 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
         return save(orderBatch);
     }
 
+    @Override
+    public PmsWorkOrderBatch getByCode(String batchNo) {
+        return getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getCode, batchNo).last(MpConstant.STR_LIMIT_1));
+    }
+
 
     /**
      * 当前最大的code值

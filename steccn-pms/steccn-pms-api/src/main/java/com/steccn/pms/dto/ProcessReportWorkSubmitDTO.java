@@ -30,9 +30,15 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @NotNull(message = "工序不能为空")
     private Long processId;
 
+    @ApiModelProperty("工序名称")
+    private String processName;
+
     @ApiModelProperty("工位id")
     @NotNull(message = "工位不能为空")
     private Integer stationId;
+
+    @ApiModelProperty("工位名称")
+    private String stationName;
 
     @ApiModelProperty("加工数量")
     @NotNull(message = "加工数量不能为空")
@@ -52,6 +58,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @NotNull(message = "单位不能为空")
     private Long unitId;
 
+    @ApiModelProperty("单位名称")
+    private String unitName;
+
     @ApiModelProperty("批次主键")
     @NotNull(message = "批次不能为空")
     private Long batch;
@@ -63,13 +72,22 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @NotNull(message = "产线不能为空")
     private Integer productLineId;
 
+    @ApiModelProperty("产线名称")
+    private String productLineName;
+
     @ApiModelProperty("班次id")
     @NotNull(message = "班次不能为空")
     private Long classesId;
 
+    @ApiModelProperty("班次名称")
+    private String classesName;
+
     @ApiModelProperty("班组id")
     @NotNull(message = "班组不能为空")
     private Long classGroupId;
+
+    @ApiModelProperty("班组名称")
+    private String classGroupName;
 
     @ApiModelProperty("开始时间")
     private LocalDateTime startTime;
