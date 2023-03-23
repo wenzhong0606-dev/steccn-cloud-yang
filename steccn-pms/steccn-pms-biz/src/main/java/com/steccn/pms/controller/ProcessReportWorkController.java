@@ -101,4 +101,12 @@ public class ProcessReportWorkController {
     public R<ProcessReportWorkSubmitDTO> info(@PathVariable("id") Long id) {
         return R.success(pmsReportWorkService.info(id));
     }
+
+    @PutMapping
+    @ApiOperation("报工编辑")
+    @SysLog("报工编辑")
+    public R<Boolean> edit(){
+        return R.success();
+    }
+
 }

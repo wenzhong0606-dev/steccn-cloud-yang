@@ -22,6 +22,9 @@ import java.util.List;
 @ApiModel("工序报工-提交报工")
 public class ProcessReportWorkSubmitDTO implements Serializable {
 
+    @ApiModelProperty("主键id")
+    private Long id;
+
     @ApiModelProperty("生产订单id")
     @NotNull(message = "生产订单不能为空")
     private Long produceOrderId;

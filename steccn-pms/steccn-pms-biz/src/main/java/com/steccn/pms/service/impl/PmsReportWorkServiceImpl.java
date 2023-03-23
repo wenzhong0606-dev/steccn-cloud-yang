@@ -584,8 +584,11 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
         //获取物料消息信息
         List<ProcessReportWorkMaterialListDTO> materialConsumeList = completeDeliveryService.getMaterialConsume(id);
+        //获取能耗信息
+        List<ProcessReportWorkConsumeDTO> consumeDTOList = pmsReportWorkConsumeService.getConsumeList(id);
         resVo.setHourDTOList(hourDTOList);
         resVo.setMaterialConsumeList(materialConsumeList);
+        resVo.setConsumeDTOList(consumeDTOList);
         return resVo;
     }
 
