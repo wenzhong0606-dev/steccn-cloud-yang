@@ -10,8 +10,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.domain.OaResponse;
@@ -24,7 +27,10 @@ import com.steccn.platform.service.SysEqpSpareService;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.MesClassificationVO;
 import com.steccn.platform.vo.OaMaterialVO;
+import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.websocket.constant.WebsocketConstant;
+import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -103,7 +109,25 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
 
             //不通过
             if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
-
+                //获取业务主键id
+                Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                //修改主键状态
+                MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
+                materialRequisitionApprovalDTO.setId(id);
+                materialRequisitionApprovalDTO.setApprovalFlag(2);
+                FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                //推送刷新消息
+                List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
+                Set<Long> userIds = Sets.newHashSet();
+                MsgPushDTO msgPushDTO = new MsgPushDTO();
+                msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
+                if(CollUtil.isNotEmpty(allOnlineUser)){
+                    allOnlineUser.forEach(tmp -> {
+                        userIds.add(tmp.getUserId());
+                    });
+                }
+                msgPushDTO.setUserIdList(userIds);
+                FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
             }
         }
 
