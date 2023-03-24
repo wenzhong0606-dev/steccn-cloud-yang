@@ -657,9 +657,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<PmsCompleteDeliveryInfo> deleteList = infoList.stream().filter(v -> !existIdSet.contains(v.getId())).collect(Collectors.toList());
         //todo 生成对应的入库单【冲销报工入库】
         Long id = pmsCompleteStorageService.generateByDelivery(dto,deleteList);
-        if(CollUtil.isNotEmpty(existIdSet)){
-            completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().notIn(PmsCompleteDeliveryInfo::getId, existIdSet));
-        }
+        completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>()
+                .eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId())
+                .notIn(CollUtil.isNotEmpty(existIdSet), PmsCompleteDeliveryInfo::getId, existIdSet));
         //保存出库单明细
         if (CollUtil.isNotEmpty(newInfoList)) {
             completeDeliveryInfoService.saveBatch(newInfoList);

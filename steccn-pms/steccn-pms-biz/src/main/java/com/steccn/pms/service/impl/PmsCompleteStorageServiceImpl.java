@@ -496,6 +496,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 BeanUtils.copyProperties(info, modelInfo);
                 modelInfo.setPackTime(info.getCreateTime());
                 modelInfo.setProduceOrderId(dto.getProduceOrderId());
+                modelInfo.setCompleteStorageId(model.getId());
+                modelInfo.setId(IdUtil.getSnowflake().nextId());
                 modelInfoList.add(modelInfo);
             }
             model.setQuantity(sumQuantity);
