@@ -22,6 +22,17 @@ public interface OaDataConstant {
      */
     String WORKFLOW_AGREE = "03";
 
+    /**
+     * 数字3
+     */
+    String NUM_3 = "3";
+
+    /**
+     * 流程归档
+     */
+    String WORKFLOW_FINISHED = "归档";
+
+
     @Getter
     @AllArgsConstructor
     enum Oa_Data_Type {

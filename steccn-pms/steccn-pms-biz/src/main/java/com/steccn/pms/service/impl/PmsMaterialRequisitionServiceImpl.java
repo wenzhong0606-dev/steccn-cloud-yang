@@ -618,6 +618,15 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
         return r;
     }
 
+    @Override
+    public Long getStatusById(Long id) {
+        PmsMaterialRequisition byId = getById(id);
+        if(Objects.nonNull(byId)){
+            return byId.getStatus();
+        }
+        return null;
+    }
+
     private String createOrder(MaterialRequisitionDTO materialRequisitionDTO) {
         //处理数据
         PmsMaterialRequisition model = new PmsMaterialRequisition();

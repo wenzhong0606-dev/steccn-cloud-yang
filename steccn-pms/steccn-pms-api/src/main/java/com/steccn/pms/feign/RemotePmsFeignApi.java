@@ -118,4 +118,13 @@ public interface RemotePmsFeignApi {
     @ApiOperation("根据流程id查询业务id")
     @GetMapping("/feign/pms/material/requisition/requestId")
     R<Long> getIdByRequestId(@RequestParam("requestId") Long requestId);
+
+    /**
+     * 根据业务id查询状态
+     * @param id
+     * @return
+     */
+    @ApiOperation("根据业务id查询状态")
+    @GetMapping("/feign/pms/material/requisition/type")
+    R<Long> getStatusById(@RequestParam("id") Long id);
 }

@@ -40,4 +40,10 @@ public class MaterialRequisitionFeignController {
     public R<Long> getIdByRequestId(@RequestParam("requestId") Long requestId) {
         return R.success(pmsMaterialRequisitionWorkflowService.getIdByRequestId(requestId));
     }
+
+    @ApiOperation("根据业务id查询状态")
+    @GetMapping("/type")
+    public R<Long> getStatusById(@RequestParam("id") Long id) {
+        return R.success(pmsMaterialRequisitionService.getStatusById(id));
+    }
 }
