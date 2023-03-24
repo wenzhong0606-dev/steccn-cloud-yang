@@ -307,7 +307,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
             BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
             //json名字
-            qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
+            QtMaterial qtMaterial = qtMaterialService.getById(qtCheckTask.getMaterialId());
+            if(Objects.nonNull(qtMaterial)){
+                qtCheckTaskListVo.setMaterialName(qtMaterial.getName());
+                qtCheckTaskListVo.setMaterialCode(qtMaterial.getCode());
+            }
             if(qtCheckTask.getMaterialWorkshop() != null) qtCheckTaskListVo.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
