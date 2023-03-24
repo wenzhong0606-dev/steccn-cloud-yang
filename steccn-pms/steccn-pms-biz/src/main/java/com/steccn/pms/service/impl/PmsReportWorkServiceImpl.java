@@ -670,9 +670,9 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         //数量需要更新，重新计算
-
+        BigDecimal quantity = completeDeliveryInfoService.getQuantity(pmsCompleteDelivery.getId());
+        pmsCompleteDelivery.setQuantity(quantity);
         completeDeliveryService.updateById(pmsCompleteDelivery);
-
     }
 
     /**
