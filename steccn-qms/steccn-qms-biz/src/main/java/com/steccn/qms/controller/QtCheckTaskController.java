@@ -128,7 +128,7 @@ public class QtCheckTaskController {
 
     @GetMapping("/code")
     @ApiOperation(value = "检验方案列表")
-    public R<List<String>> pageList(@RequestParam("taskCode") String taskCode) {
+    public R<List<QtCheckTaskCodeIdVO>> pageList(@RequestParam("taskCode") String taskCode) {
         return R.success(qtCheckTaskService.getAllFinishedTaskCode(taskCode));
     }
 

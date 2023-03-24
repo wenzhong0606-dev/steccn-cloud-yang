@@ -2830,18 +2830,21 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
      * @return
      */
     @Override
-    public List<String> getAllFinishedTaskCode(String taskCode) {
+    public List<QtCheckTaskCodeIdVO> getAllFinishedTaskCode(String taskCode) {
         LambdaQueryWrapper condition = new LambdaQueryWrapper<QtCheckTask>()
                 .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                .select(QtCheckTask::getCode)
+                .select(QtCheckTask::getCode,QtCheckTask::getId)
                 .like(StrUtil.isNotBlank(taskCode),QtCheckTask::getCode,taskCode)
                 .orderByDesc(QtCheckTask::getCreateTime)
                 .last("LIMIT 100");
         List<QtCheckTask> result = list(condition);
-        List<String> codes = Lists.newArrayList();
+        List<QtCheckTaskCodeIdVO> codes = Lists.newArrayList();
         if(CollUtil.isNotEmpty(result)){
             result.forEach(tmp -> {
-                codes.add(tmp.getCode());
+                QtCheckTaskCodeIdVO vo = new QtCheckTaskCodeIdVO();
+                vo.setCode(tmp.getCode());
+                vo.setId(tmp.getId());
+                codes.add(vo);
             });
         }
         return codes;

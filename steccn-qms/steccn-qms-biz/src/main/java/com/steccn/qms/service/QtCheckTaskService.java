@@ -228,7 +228,7 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param taskCode
      * @return
      */
-    List<String> getAllFinishedTaskCode(String taskCode);
+    List<QtCheckTaskCodeIdVO> getAllFinishedTaskCode(String taskCode);
 
 }
 
