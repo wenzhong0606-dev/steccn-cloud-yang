@@ -669,6 +669,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 throw new BusinessException("库存变化，请重新报工");
             }
         }
+        //数量需要更新，重新计算
+
+        completeDeliveryService.updateById(pmsCompleteDelivery);
+
     }
 
     /**
