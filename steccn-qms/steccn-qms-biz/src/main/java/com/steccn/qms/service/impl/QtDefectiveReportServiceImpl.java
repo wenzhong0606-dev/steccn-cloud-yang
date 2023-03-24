@@ -958,11 +958,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 //计算缺陷记录时段
                 if (time.getMinute() == 0 && time.getSecond() == 0) {
                     vo.setDefectStartTime(LocalDateTime.of(date, time));
-                    vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+                    vo.setDefectEndTime(vo.getDefectStartTime().plusHours(1));
                 } else {
                     //time
                     vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
-                    vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+                    vo.setDefectEndTime(vo.getDefectStartTime().plusHours(1));
                 }
                 //自然记录时段
                 vo.setNormalStartTime(vo.getDefectStartTime());
