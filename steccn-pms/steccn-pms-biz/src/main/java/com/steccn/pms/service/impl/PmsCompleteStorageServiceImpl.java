@@ -478,7 +478,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = infoList.stream().map(PmsCompleteDeliveryInfo::getCaseNo).collect(Collectors.toSet());
             Assert.isTrue(caseNoSet.size() == infoList.size(), "入库单中有部分箱号重复");
-            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
             //明细集合
             List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(infoList.size());
             model.setId(IdUtil.getSnowflake().nextId());

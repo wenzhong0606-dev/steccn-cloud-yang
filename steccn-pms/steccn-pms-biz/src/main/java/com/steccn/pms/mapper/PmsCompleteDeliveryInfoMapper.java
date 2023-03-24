@@ -8,6 +8,7 @@ import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -33,6 +34,13 @@ public interface PmsCompleteDeliveryInfoMapper extends BaseMapper<PmsCompleteDel
      * @return
      */
     List<FeedQuantityDTO> listQuantity(@Param("feedList") List<FeedQuantityDTO> feedList);
+
+    /**
+     * 获取完工入库单明细数量之和
+     * @param id 入库单id
+     * @return
+     */
+    BigDecimal getQuantity(@Param("completeDeliveryId") Long id);
 }
 
 

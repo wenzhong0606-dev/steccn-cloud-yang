@@ -44,6 +44,11 @@ public class PmsCompleteDeliveryInfoServiceImpl extends ServiceImpl<PmsCompleteD
         //1.自定义sql 获取投料信息
         return map;
     }
+
+    @Override
+    public BigDecimal getQuantity(Long id) {
+        return baseMapper.getQuantity(id);
+    }
 }
 
 
