@@ -94,9 +94,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     @Autowired
     private RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
-
     @Autowired
     private RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    @Autowired
+    private PmsCompleteStorageService pmsCompleteStorageService;
 
 
     @Override
@@ -602,28 +603,30 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //更新报工能耗信息
         pmsReportWorkConsumeService.updateConsume(dto.getId(), dto.getConsumeDTOList());
         //更新物料消耗信息
-        updateMaterialConsume(dto.getId(), dto.getMaterialConsumeList());
+        updateMaterialConsume(dto, dto.getMaterialConsumeList());
         return Boolean.TRUE;
     }
 
     /**
      * 更新物料消耗
-     * @param reportWorkId 报工id
+     * @param dto dto信息
      * @param materialConsumeList 物料消耗集合
      */
-    private void updateMaterialConsume(Long reportWorkId, List<ProcessReportWorkMaterialListDTO> materialConsumeList) {
+    private void updateMaterialConsume(ProcessReportWorkSubmitDTO dto, List<ProcessReportWorkMaterialListDTO> materialConsumeList) {
         //已经存在的物料消耗-不需要更新
         //新增的物料消耗，需要校验库存没有变化后，添加到出库单明细中
         //删除的物料消耗，需要创建入库单+明细
         List<ProcessReportWorkMaterialListDTO> existList = Lists.newArrayList();
         List<ProcessReportWorkMaterialListDTO> insertList = Lists.newArrayList();
-        materialConsumeList.forEach(ele -> {
-            if (Objects.nonNull(ele.getId())) {
-                existList.add(ele);
-            } else {
-                insertList.add(ele);
-            }
-        });
+        if(CollUtil.isNotEmpty(materialConsumeList)){
+            materialConsumeList.forEach(ele -> {
+                if (Objects.nonNull(ele.getId())) {
+                    existList.add(ele);
+                } else {
+                    insertList.add(ele);
+                }
+            });
+        }
         //出库单明细
         Set<Long> existIdSet = existList.stream().map(ProcessReportWorkMaterialListDTO::getId).collect(Collectors.toSet());
 
@@ -631,7 +634,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         List<WmsDeliveryReceiptInfoDTO> materialList = Lists.newArrayList();
 
         //获取出库单
-        PmsCompleteDelivery pmsCompleteDelivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, reportWorkId).last(MpConstant.STR_LIMIT_1));
+        PmsCompleteDelivery pmsCompleteDelivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, dto.getId()).last(MpConstant.STR_LIMIT_1));
         Assert.notNull(pmsCompleteDelivery, "出库单不存在");
         List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
         Assert.notNull(infoList, "出库单明细不存在");
@@ -649,19 +652,22 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             wmsDeliveryReceiptInfoDTO.setMaterialId(newMc.getModuleId());
             materialList.add(wmsDeliveryReceiptInfoDTO);
         }
+
         //删除出库单明细
         List<PmsCompleteDeliveryInfo> deleteList = infoList.stream().filter(v -> !existIdSet.contains(v.getId())).collect(Collectors.toList());
         //todo 生成对应的入库单【冲销报工入库】
-
-
-        completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().notIn(PmsCompleteDeliveryInfo::getId, existIdSet));
+        Long id = pmsCompleteStorageService.generateByDelivery(dto,deleteList);
+        if(CollUtil.isNotEmpty(existIdSet)){
+            completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().notIn(PmsCompleteDeliveryInfo::getId, existIdSet));
+        }
         //保存出库单明细
         if (CollUtil.isNotEmpty(newInfoList)) {
             completeDeliveryInfoService.saveBatch(newInfoList);
-        }
-        Boolean generateFlag = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateOutStorageVoucher(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
-        if (!generateFlag) {
-            throw new BusinessException("库存变化，请重新报工");
+            receiptDTO.setType(pmsCompleteDelivery.getTypeId());
+            Boolean generateFlag = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateOutStorageVoucher(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            if (!generateFlag) {
+                throw new BusinessException("库存变化，请重新报工");
+            }
         }
     }
 

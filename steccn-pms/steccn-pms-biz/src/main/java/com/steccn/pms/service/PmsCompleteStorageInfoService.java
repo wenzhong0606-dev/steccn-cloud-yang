@@ -23,10 +23,12 @@ public interface PmsCompleteStorageInfoService extends IService<PmsCompleteStora
     /**
      * 入库单已存在箱号
      *
+     *
+     * @param id
      * @param caseNoSet 箱号set
      * @return 是否
      */
-    Boolean existCaseNo(Set<String> caseNoSet);
+    Boolean existCaseNo(Long id, Set<String> caseNoSet);
 
 
     /**

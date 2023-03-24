@@ -3,12 +3,11 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.R;
+import com.steccn.pms.domain.PmsCompleteDelivery;
+import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
 import com.steccn.pms.domain.PmsCompleteStorage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.pms.dto.CompleteStoragePageDTO;
-import com.steccn.pms.dto.CompleteStorageScanDTO;
-import com.steccn.pms.dto.ConnectLineStorageDTO;
-import com.steccn.pms.dto.PmsCompleteStorageDTO;
+import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
@@ -83,4 +82,12 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return 入库单编码
      */
     String connectLine(ConnectLineStorageDTO dto);
+
+    /**
+     * 通过出库单生成入库单
+     * @param dto 提交报工信息
+     * @param infoList 明细集合
+     * @return 入库单id
+     */
+    Long generateByDelivery(ProcessReportWorkSubmitDTO dto, List<PmsCompleteDeliveryInfo> infoList);
 }
