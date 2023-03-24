@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,9 +74,14 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
         List<EpPartitionVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dataList)) {
-            //复制结果到新的集合
-//            List<EpPartitionVO> epPartitionVOS = recursiveTree(dataList,energyType);
-//               epPartitionNameListVO.setEpPartitionVOList(epPartitionVOS);
+            //获取所有的officeId集合
+            Set<Integer> officeIdSet = dataList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
+            //找到所有officeName名称
+            Map<Integer, String> officeIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //officeName从最新的组织机构树中取值 ，默认为旧的
+            dataList.forEach(ele ->{
+                ele.setOfficeName(officeIdNameMap.getOrDefault(ele.getOfficeId(),ele.getOfficeName()));
+            });
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
             //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
@@ -153,117 +160,209 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean edit(EpPartitionDTO dto) {
+        //构造成树形结构
+        EpPartitionTreeDTO root = convertTree(dto.getEpPartitionListDTO());
+        //定义需要插入的集合
+        List<EpPartition> insertList = Lists.newArrayList();
+        //定义需要更新的集合
+        List<EpPartition> editList = Lists.newArrayList();
+        //定义需要删除的集合
+        List<EpPartition> deleteList = Lists.newArrayList();
 
-        //用来处理新增的List
-        List<EpPartitionVO> dealAddPartitionList = Lists.newArrayList();
-
-        //用来更新排序的List
-        List<EpPartition> dealUpdatePartitionList = Lists.newArrayList();
-
-        //需要删除的list
-        List<Long> deletePartitionList = Lists.newArrayList();
-        //根据能源类型查询出该类型的所有分区树的集合
-        List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>()
-                .eq(EpPartition::getType, dto.getType())
-                .eq(EpPartition::getDelFlag,MpConstant.NO));
-       //获取数据库中所有officeId
-        List<Integer> officeIds = epPartitions.stream().map(EpPartition::getOfficeId).collect(Collectors.toList());
-       //机构的id以及分区树的id组成的Map集合
-        Map<Integer,Long> partitionMap = Maps.newHashMap();
-        Map<Integer,EpPartition> officeIdPartitionMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(epPartitions)){
-            epPartitions.forEach(v->{
-                //根据officeId分组
-                partitionMap.put(v.getOfficeId(),v.getId());
-                officeIdPartitionMap.put(v.getOfficeId(),v);
-            });
-        }
-        //先过滤掉前端传过来不符合要求的数据
-        List<EpPartitionListDTO> dtoList = dto.getEpPartitionListDTO().stream().filter(s -> Objects.nonNull(s.getId())).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(dtoList)){
-            //先自己给传过来的数据排序
-            for (int i = 0; i < dtoList.size(); i++) {
-                EpPartitionListDTO epPartitionListDTO = dtoList.get(i);
-                epPartitionListDTO.setSort(i);
-            }
-            //然后根据officeId和sort组合成Map
-            Map<Integer,Integer> idSortMap = Maps.newHashMap();
-            dtoList.stream().forEach(v->{
-                idSortMap.put(v.getId(),v.getSort());
-            });
-            for (EpPartitionListDTO partitionDTO : dtoList) {
-                //如果数据库中没有包含该机构的id则新增
-                if (!officeIds.contains(partitionDTO.getId())){
-                    EpPartitionVO epPartitionVO = new EpPartitionVO();
-                    //设置能源分区树主键id
-                    long mainId = IdUtil.getSnowflake().nextId();
-                    epPartitionVO.setId(mainId);
-                    //设置能源类型
-                    epPartitionVO.setType(dto.getType());
-                    //设置机构id
-                    epPartitionVO.setOfficeId(partitionDTO.getId());
-                    //设置机构父id
-                    epPartitionVO.setParentOfficeId(partitionDTO.getParentId());
-                    //设置机构名称
-                    epPartitionVO.setOfficeName(partitionDTO.getOfficeName());
-                    //设置排序字段
-                    epPartitionVO.setSort(partitionDTO.getSort());
-                    partitionMap.put(partitionDTO.getId(),mainId);
-                    dealAddPartitionList.add(epPartitionVO);
-                }else if (officeIds.contains(partitionDTO.getId())){
-                    EpPartition epPartition = officeIdPartitionMap.get(partitionDTO.getId());
-                    epPartition.setSort(idSortMap.get(partitionDTO.getId()));
-                    dealUpdatePartitionList.add(epPartition);
+        //officeId -> id
+        Map<Integer, Long> officeIdMap = existOfficeIdMap(dto.getType());
+        //获取已经存在的officeId
+        Set<Integer> existOfficeSet = officeIdMap.keySet();
+        //获取本次编辑后，所有的officeId
+        Set<Integer> newOfficeIdSet = Sets.newHashSet(root.getId());
+        //自上向下遍历数据
+        List<EpPartitionTreeDTO> dataList = Arrays.asList(root);
+        do {
+            List<EpPartitionTreeDTO> resList = Lists.newArrayList();
+            for (EpPartitionTreeDTO child : dataList) {
+                resList.addAll(child.getChildren());
+                //最后存在的officeId集合，不在该集合的元素都需要被删除掉
+                newOfficeIdSet.add(child.getId());
+                EpPartition model = copyTreeDTO(dto.getType(), child);
+                //节点已经存在了，加入到更新集合
+                if (existOfficeSet.contains(child.getId())) {
+                    model.setId(officeIdMap.get(child.getId()));
+                    editList.add(model);
+                } else {
+                    model.setId(IdUtil.getSnowflake().nextId());
+                    //构造父子关系
+                    Long parentId = officeIdMap.get(child.getParentId());
+                    model.setParentId(parentId);
+                    officeIdMap.put(model.getOfficeId(), model.getId());
+                    insertList.add(model);
                 }
             }
-            //获取dto中office的所有id
-            List<Integer> officeDtoIds = dtoList.stream().map(EpPartitionListDTO::getId).collect(Collectors.toList());
-            //判断officeDtoIds是否包含数据库中所有officeid 如果不是则要删除数据库中多余的
-            if (!officeDtoIds.containsAll(officeIds)){
-                //去除刚刚新增的officeid,比对剩下的
-                List<Integer> addOfficeIds = dealAddPartitionList.stream().map(EpPartitionVO::getOfficeId).collect(Collectors.toList());
-                officeDtoIds.removeAll(addOfficeIds);
-                officeIds.removeAll(officeDtoIds);
-                if (CollUtil.isNotEmpty(officeIds)){
-                    officeIds.forEach(v->{
-                        deletePartitionList.add(partitionMap.get(v));
-                    });
-                }
+            dataList = resList;
+        } while (!dataList.isEmpty());
+        //插入元素
+        if (!insertList.isEmpty()) {
+            saveBatch(insertList);
+        }
+        //编辑元素
+        if (!editList.isEmpty()) {
+            updateBatchById(editList);
+        }
+        //existOfficeSet-编辑之前的所有元素id集合
+        //newOfficeIdSet-编辑之后的所有元素id集合
+        delOldNode(dto.getType(), officeIdMap, existOfficeSet, newOfficeIdSet);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 删除旧的节点
+     * @param type 能源类型
+     * @param officeIdMap officeId -> id map
+     * @param existOfficeSet 编辑之前的所有元素id集合
+     * @param newOfficeIdSet 编辑之后的所有元素id集合
+     */
+    private void delOldNode(Integer type, Map<Integer, Long> officeIdMap, Set<Integer> existOfficeSet, Set<Integer> newOfficeIdSet) {
+        existOfficeSet.removeAll(newOfficeIdSet);
+        //如果existOfficeSet还存在元素，说明需要删除元素
+        if (CollUtil.isNotEmpty(existOfficeSet)) {
+            Set<Long> partitionIdSet = Sets.newHashSet();
+            for (Integer officeId : existOfficeSet) {
+                partitionIdSet.add(officeIdMap.get(officeId));
             }
-        }
-        if (CollUtil.isNotEmpty(dealUpdatePartitionList)){
-            updateBatchById(dealUpdatePartitionList);
-        }
-        if (CollUtil.isNotEmpty(dealAddPartitionList)){
-            dealAddPartitionList.stream().filter(s->Objects.nonNull(s)
-                    &&Objects.nonNull(s.getParentOfficeId())).forEach(s->{
-                //设置能源分区树里的父id
-                s.setParentId(partitionMap.get(s.getParentOfficeId()));
-            });
-            List<EpPartition> addPartitionList = BeanUtil.copyToList(dealAddPartitionList, EpPartition.class);
-            saveOrUpdateBatch(addPartitionList);
-        }
-        if (CollUtil.isNotEmpty(deletePartitionList)) {
             List<EpInstrumentAccount> epInstrumentAccounts = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
                     .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
-                    .eq(EpInstrumentAccount::getMeterType, dto.getType()));
-            //lou出仪表里面某个类型的所有节点
-            List<Long> partitionList = epInstrumentAccounts.stream().map(EpInstrumentAccount::getPartitionNode).collect(Collectors.toList());
-            Map<Long, String> partionIdNames = Maps.newHashMap();
-            epPartitions.stream().forEach(s -> {
-                partionIdNames.put(s.getId(), s.getOfficeName());
-            });
-            //分区树表中
-            List<Long> partitionIds = epPartitions.stream().map(EpPartition::getId).collect(Collectors.toList());
-            //如果有仪表绑定了该节点无法删除
-            deletePartitionList.forEach(s -> {
-                if (partitionList.contains(s) && partitionIds.contains(s)) {
-                    throw new BusinessException("已有仪表绑定节点:" + partionIdNames.get(s) + ",请重新编辑");
+                    .eq(EpInstrumentAccount::getMeterType, type)
+                    .in(EpInstrumentAccount::getPartitionNode, partitionIdSet));
+            if (CollUtil.isNotEmpty(epInstrumentAccounts)) {
+                StringBuilder sb = new StringBuilder();
+                Set<Long> linkInstrumentSet = epInstrumentAccounts.stream().map(v -> v.getPartitionNode()).collect(Collectors.toSet());
+                List<EpPartition> epPartitions = listByIds(linkInstrumentSet);
+                if (CollUtil.isNotEmpty(epPartitions)) {
+                    for (EpPartition epPartition : epPartitions) {
+                        sb.append(epPartition.getOfficeName()).append(",");
+                    }
                 }
-            });
-            removeByIds(deletePartitionList);
+                throw new BusinessException("已有仪表绑定节点:" + sb + "请重新编辑");
+            }
+            removeByIds(partitionIdSet);
         }
-        return Boolean.TRUE;
+    }
+
+    /**
+     * 获取能源类型已经存在的officeId -> Id 的map
+     *
+     * @param type 能源类型
+     * @return
+     */
+    private Map<Integer, Long> existOfficeIdMap(Integer type) {
+        Map<Integer, Long> resMap = Maps.newHashMap();
+        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>()
+                .eq(EpPartition::getType, type)
+                .eq(EpPartition::getDelFlag, MpConstant.NO));
+        if (CollUtil.isNotEmpty(dbList)) {
+            dbList.forEach(ele -> {
+                resMap.put(ele.getOfficeId(), ele.getId());
+            });
+        }
+        return resMap;
+    }
+
+    /**
+     * 拷贝树的vo
+     *
+     *
+     * @param type
+     * @param treeDTO 树vo
+     * @return
+     */
+    private EpPartition copyTreeDTO(Integer type, EpPartitionTreeDTO treeDTO) {
+        EpPartition model = new EpPartition();
+        model.setOfficeName(treeDTO.getOfficeName());
+        model.setOfficeId(treeDTO.getId());
+        model.setSort(treeDTO.getSort());
+        model.setType(type);
+        return model;
+    }
+
+    /**
+     * 将平铺结构转换成一棵树
+     *
+     * @return root节点的一棵树
+     */
+    private EpPartitionTreeDTO convertTree(List<EpPartitionListDTO> sourceDataList) {
+        //校验是否officeId重复
+        Set<Integer> officeIdSet = Sets.newHashSet();
+        //定义父子关系的map
+        Map<Integer, Integer> idParentMap = Maps.newHashMap();
+        for (EpPartitionListDTO ele : sourceDataList) {
+            officeIdSet.add(ele.getId());
+            idParentMap.put(ele.getId(), ele.getParentId());
+        }
+        Assert.isTrue(officeIdSet.size() == sourceDataList.size(), "存在组织机构重复的情况");
+
+        //从下往上校验，是否成环，如果成环，则构不成tree
+        Assert.isTrue(!isRing(sourceDataList, idParentMap), "树成环了");
+
+        List<EpPartitionTreeDTO> dataList = BeanUtil.copyToList(sourceDataList, EpPartitionTreeDTO.class);
+
+        List<EpPartitionTreeDTO> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
+        Assert.notEmpty(rootList, "根节点为空");
+        Assert.isTrue(rootList.size() == 1, "存在多个根节点");
+        EpPartitionTreeDTO root = rootList.get(0);
+
+        List<EpPartitionTreeDTO> childList = dataList.stream().filter(v -> root.getId().equals(v.getParentId())).collect(Collectors.toList());
+        Integer sumNode = 1;
+        if (CollUtil.isNotEmpty(childList)) {
+            root.setChildren(childList);
+            //构造孩子的树形节点结构
+            sumNode += recycle(dataList, childList);
+        }
+        Assert.isTrue(sumNode == sourceDataList.size(), "存在节点没有父节点");
+        return root;
+    }
+
+    /**
+     * 判断树是否成环了
+     *
+     * @param sourceDataList 原始平铺数据
+     * @param parentIdMap    父节点map
+     * @return 是否成环
+     */
+    private boolean isRing(List<EpPartitionListDTO> sourceDataList, Map<Integer, Integer> parentIdMap) {
+        //遍历一颗树，把已经遍历过得节点存放到set中，如果重复了，则成环
+        for (EpPartitionListDTO out : sourceDataList) {
+            //定义该节点的父路径集合
+            Set<Integer> pathSet = Sets.newHashSet();
+            //获取节点的父亲
+            Integer parentId = out.getParentId();
+            //如果父节点不为空
+            while (Objects.nonNull(parentId)) {
+                //加入父节点
+                if (!pathSet.add(parentId)) {
+                    return Boolean.TRUE;
+                }
+                parentId = parentIdMap.get(parentId);
+            }
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 递归构造树形节点结构
+     * @param dataList 数据集合
+     * @param children 孩子节点
+     */
+    private Integer recycle(List<EpPartitionTreeDTO> dataList, List<EpPartitionTreeDTO> children) {
+        Integer sum = 0;
+        if (CollUtil.isNotEmpty(children)) {
+            for (EpPartitionTreeDTO child : children) {
+                //获取孩子的孩子节点 -》 孙子节点
+                List<EpPartitionTreeDTO> sunList = dataList.stream().filter(v -> child.getId().equals(v.getParentId())).collect(Collectors.toList());
+                Integer childSum = recycle(dataList, sunList);
+                child.setChildren(sunList);
+                sum += (childSum + 1);
+            }
+        }
+        return sum;
     }
 
     /**

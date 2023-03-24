@@ -31,8 +31,8 @@ public class ProcessReportWorkHourDTO implements Serializable {
     @ApiModelProperty("工时")
     @NotNull(message = "工时不能为空")
     @DecimalMin(value="0",message="工时应大于0")
-    @DecimalMax(value="99.99",message="工时应小于99.99")
-    @Digits(integer = 2,fraction = 2,message = "工时整数位上限为2位，小数位上限位2位")
+    @DecimalMax(value="720",message="工时应小于720")
+    @Digits(integer = 3,fraction = 2,message = "工时整数位上限为3位，小数位上限位2位")
     private BigDecimal manHour;
 
 

@@ -241,7 +241,7 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
 
         //暂无数据
         if (CollUtil.isEmpty(qtCheckTasks) && CollUtil.isEmpty(collectList)) {
-            throw new BusinessException("暂无数据");
+            throw new SteccnChartException("暂无数据");
         }
         if (CollUtil.isNotEmpty(detailList)) {
             detailList.forEach(ele -> {
@@ -958,11 +958,11 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
                 //计算缺陷记录时段
                 if (time.getMinute() == 0 && time.getSecond() == 0) {
                     vo.setDefectStartTime(LocalDateTime.of(date, time));
-                    vo.setDefectEndTime(LocalDateTime.of(date, time.plusHours(1)));
+                    vo.setDefectEndTime(vo.getDefectStartTime().plusHours(1));
                 } else {
                     //time
                     vo.setDefectStartTime(LocalDateTime.of(date, LocalTime.of(time.getHour(), 0, 0)));
-                    vo.setDefectEndTime(LocalDateTime.of(date, LocalTime.of(time.plusHours(1).getHour(), 0, 0)));
+                    vo.setDefectEndTime(vo.getDefectStartTime().plusHours(1));
                 }
                 //自然记录时段
                 vo.setNormalStartTime(vo.getDefectStartTime());
@@ -1247,11 +1247,17 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private List<DeepDefectiveCategoryDetailVO> legendFilter(QtChartParamDTO dto, List<DeepDefectiveCategoryDetailVO> pageList) {
         //对比模式下考虑到图例的过滤
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+            }
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+            }
         } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+            }
         } else if (CollUtil.isNotEmpty(dto.getGuaFilters())) {
             pageList = pageList.stream().filter(v -> dto.getGuaFilters().contains(v.getName())).collect(Collectors.toList());
         }
