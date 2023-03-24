@@ -126,6 +126,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.pageList(dto));
     }
 
+    @GetMapping("/code")
+    @ApiOperation(value = "检验方案列表")
+    public R<List<String>> pageList(@RequestParam("taskCode") String taskCode) {
+        return R.success(qtCheckTaskService.getAllFinishedTaskCode(taskCode));
+    }
+
     @GetMapping("/productOrder/code")
     @ApiOperation(value = "生产订单号查询生产车间产线批次")
     public R<QtProduceOrderLineVO> productOrderInfo(@RequestParam("code") String code) {

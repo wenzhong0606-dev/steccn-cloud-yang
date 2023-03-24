@@ -2825,6 +2825,29 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     /**
+     * 获取所有完成任务的编码
+     * @param taskCode
+     * @return
+     */
+    @Override
+    public List<String> getAllFinishedTaskCode(String taskCode) {
+        LambdaQueryWrapper condition = new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .select(QtCheckTask::getCode)
+                .like(StrUtil.isNotBlank(taskCode),QtCheckTask::getCode,taskCode)
+                .orderByDesc(QtCheckTask::getCreateTime)
+                .last("LIMIT 100");
+        List<QtCheckTask> result = list(condition);
+        List<String> codes = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(result)){
+            result.forEach(tmp -> {
+                codes.add(tmp.getCode());
+            });
+        }
+        return codes;
+    }
+
+    /**
      * 合格率分组
      *
      * @param compare      对比
