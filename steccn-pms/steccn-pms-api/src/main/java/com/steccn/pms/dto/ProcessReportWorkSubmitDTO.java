@@ -99,6 +99,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @ApiModelProperty("结束时间")
     private LocalDateTime endTime;
 
+    @ApiModelProperty("备注")
+    private String note;
+
     @ApiModelProperty("加工时间")
     @Valid
     private List<ProcessReportWorkHourDTO> hourDTOList;

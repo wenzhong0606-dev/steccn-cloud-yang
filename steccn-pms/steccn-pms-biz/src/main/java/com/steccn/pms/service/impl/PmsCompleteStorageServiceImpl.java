@@ -11,7 +11,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -26,12 +25,10 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
-import com.steccn.wms.dto.WmsStorageAffirmDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
@@ -43,7 +40,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -138,16 +134,18 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String generate(List<CompleteStorageScanDTO> dtoList) {
+        Assert.notEmpty(dtoList, "请选择箱子");
         //分布式锁 ，保证最大入库单号
         //加锁
         RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
         lock.lock();
         PmsCompleteStorage pmsCompleteStorage = new PmsCompleteStorage();
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
         try {
-            Assert.notEmpty(dtoList, "请选择箱子");
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
-            Assert.isFalse(completeStorageInfoService.existCaseNo(caseNoSet), "部分箱已生成入库单了");
+            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(),caseNoSet), "部分箱已生成入库单了");
             //校验生产订单的产线是否相同不同，不可以创建入库单
             Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
             List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
@@ -210,8 +208,6 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             pmsCompleteStorage.setCode(maxCompleteCode());
             pmsCompleteStorage.setQuantity(sumQuantity);
             pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
-
-            SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             pmsCompleteStorage.setTypeId(sysDictVO.getId());
             pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
             save(pmsCompleteStorage);
@@ -462,6 +458,58 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         receiptDTO.setCode(pmsCompleteStorage.getInStorageVoucher());
         FeignOptional.of(() -> remoteWmsInventoryFeignApi.affirm(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
         return generate;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long generateByDelivery(ProcessReportWorkSubmitDTO dto, List<PmsCompleteDeliveryInfo> infoList) {
+        if(Objects.isNull(dto) || CollUtil.isEmpty(infoList)){
+           return null;
+        }
+        //分布式锁 ，保证最大入库单号
+        //加锁
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_COMPLETE_STORAGE);
+        lock.lock();
+        //实体对象
+        PmsCompleteStorage model = new PmsCompleteStorage();
+        //获取类型-冲销入库
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_2, SysDictConstant.TYPE_WAREHOUSING_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        try {
+            //校验一箱货只能存在于一个入库单中
+            Set<String> caseNoSet = infoList.stream().map(PmsCompleteDeliveryInfo::getCaseNo).collect(Collectors.toSet());
+            Assert.isTrue(caseNoSet.size() == infoList.size(), "入库单中有部分箱号重复");
+            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
+            //明细集合
+            List<PmsCompleteStorageInfo> modelInfoList = new ArrayList<>(infoList.size());
+            model.setId(IdUtil.getSnowflake().nextId());
+            model.setUnitId(dto.getUnitId());
+            model.setProductLineId(dto.getProductLineId());
+            model.setTypeId(sysDictVO.getId());
+            model.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+            model.setCode(maxCompleteCode());
+            model.setInStorageVoucher(model.getCode());
+            BigDecimal sumQuantity = BigDecimal.ZERO;
+            //保存明细信息
+            for (PmsCompleteDeliveryInfo info : infoList) {
+                sumQuantity = sumQuantity.add(info.getQuantity());
+                PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
+                BeanUtils.copyProperties(info, modelInfo);
+                modelInfo.setPackTime(info.getCreateTime());
+                modelInfo.setProduceOrderId(dto.getProduceOrderId());
+                modelInfo.setCompleteStorageId(model.getId());
+                modelInfo.setId(IdUtil.getSnowflake().nextId());
+                modelInfoList.add(modelInfo);
+            }
+            model.setQuantity(sumQuantity);
+            save(model);
+            completeStorageInfoService.saveBatch(modelInfoList);
+        }catch (Exception e){
+            log.error("生成入库单[冲销入库]失败 -> {}",e.getLocalizedMessage());
+            throw new BusinessException("生成入库单失败");
+        }finally {
+            lock.unlock();
+        }
+        return model.getId();
     }
 
     /**

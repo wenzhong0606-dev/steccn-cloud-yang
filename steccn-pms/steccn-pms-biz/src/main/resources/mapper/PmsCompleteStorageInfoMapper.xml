@@ -62,4 +62,12 @@
             pbp.material_id,pbp.classes_id
 
     </select>
+    <select id="existCaseNo" resultType="java.lang.Long">
+        select count(1) from pms_complete_storage pcs join pms_complete_storage_info info on pcs.id = info.complete_storage_id
+        where pcs.type_id = #{typeId}
+          AND info.case_no in
+        <foreach collection="caseNoSet" item="id"  open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
 </mapper>
