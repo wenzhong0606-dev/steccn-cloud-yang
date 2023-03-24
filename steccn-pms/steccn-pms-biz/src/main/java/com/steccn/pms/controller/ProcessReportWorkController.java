@@ -110,4 +110,11 @@ public class ProcessReportWorkController {
         return R.success(pmsReportWorkService.edit(dto));
     }
 
+    @DeleteMapping("/{id}")
+    @ApiOperation("报工删除")
+    @SysLog("报工删除")
+    public R<Boolean> delete(@PathVariable("id") Long id){
+        return R.success(pmsReportWorkService.delete(id));
+    }
+
 }

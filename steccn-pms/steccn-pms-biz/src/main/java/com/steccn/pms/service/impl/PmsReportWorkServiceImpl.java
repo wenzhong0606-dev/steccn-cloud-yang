@@ -607,6 +607,29 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(Long id) {
+        PmsReportWork pmsReportWork = getById(id);
+        Assert.notNull(pmsReportWork,"报工信息不存在");
+        //删除报工信息
+        removeById(id);
+        //删除工时信息
+        reportWorkHourService.remove(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, id));
+        //删除能耗信息
+        pmsReportWorkConsumeService.remove(new LambdaQueryWrapper<PmsReportWorkConsume>().eq(PmsReportWorkConsume::getReportWorkId,id));
+        //根据物料消耗信息生成
+        PmsCompleteDelivery delivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, id).last(MpConstant.STR_LIMIT_1));
+        if(Objects.nonNull(delivery)){
+            List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, delivery.getId()));
+            //生成对应的入库单【冲销报工入库】
+            ProcessReportWorkSubmitDTO dto = new ProcessReportWorkSubmitDTO();
+            BeanUtils.copyProperties(pmsReportWork,dto);
+            pmsCompleteStorageService.generateByDelivery(dto,infoList);
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 更新物料消耗
      * @param dto dto信息
@@ -633,11 +656,16 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         WmsDeliveryReceiptDTO receiptDTO = new WmsDeliveryReceiptDTO();
         List<WmsDeliveryReceiptInfoDTO> materialList = Lists.newArrayList();
 
-        //获取出库单
+        //获取出库单-出库单和明细可能不存在，因为无物料消耗
         PmsCompleteDelivery pmsCompleteDelivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, dto.getId()).last(MpConstant.STR_LIMIT_1));
-        Assert.notNull(pmsCompleteDelivery, "出库单不存在");
+        if(Objects.isNull(pmsCompleteDelivery)){
+            pmsCompleteDelivery = new PmsCompleteDelivery();
+
+        }
         List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
-        Assert.notNull(infoList, "出库单明细不存在");
+        if(Objects.isNull(infoList)){
+            infoList = Lists.newArrayList();
+        }
 
         List<PmsCompleteDeliveryInfo> newInfoList = Lists.newArrayList();
         for (ProcessReportWorkMaterialListDTO newMc : insertList) {
@@ -655,13 +683,27 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 
         //删除出库单明细
         List<PmsCompleteDeliveryInfo> deleteList = infoList.stream().filter(v -> !existIdSet.contains(v.getId())).collect(Collectors.toList());
-        //todo 生成对应的入库单【冲销报工入库】
-        Long id = pmsCompleteStorageService.generateByDelivery(dto,deleteList);
+        //生成对应的入库单【冲销报工入库】
+        pmsCompleteStorageService.generateByDelivery(dto, deleteList);
         completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>()
                 .eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId())
                 .notIn(CollUtil.isNotEmpty(existIdSet), PmsCompleteDeliveryInfo::getId, existIdSet));
         //保存出库单明细
         if (CollUtil.isNotEmpty(newInfoList)) {
+            if(Objects.isNull(pmsCompleteDelivery.getId())){
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                pmsCompleteDelivery.setCode(maxOutVouchCode());
+                pmsCompleteDelivery.setOutStorageVoucher(pmsCompleteDelivery.getCode());
+                pmsCompleteDelivery.setDeliveryTime(LocalDateTime.now());
+                pmsCompleteDelivery.setQuantity(BigDecimal.ZERO);
+                pmsCompleteDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
+                pmsCompleteDelivery.setTypeId(sysDictVO.getId());
+                pmsCompleteDelivery.setProduceOrderId(dto.getProduceOrderId());
+                pmsCompleteDelivery.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+                pmsCompleteDelivery.setProcessId(dto.getProcessId());
+                pmsCompleteDelivery.setReportWorkId(dto.getId());
+                completeDeliveryService.save(pmsCompleteDelivery);
+            }
             completeDeliveryInfoService.saveBatch(newInfoList);
             receiptDTO.setType(pmsCompleteDelivery.getTypeId());
             Boolean generateFlag = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateOutStorageVoucher(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
@@ -681,7 +723,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
      * @param materialDTO 物料消耗明细
      * @return 转换后的对象
      */
-    private PmsCompleteDeliveryInfo convert2DeliveryInfo(Long deliveryId,ProcessReportWorkMaterialListDTO materialDTO){
+    private PmsCompleteDeliveryInfo convert2DeliveryInfo(Long deliveryId, ProcessReportWorkMaterialListDTO materialDTO) {
         PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
         BeanUtils.copyProperties(materialDTO, info);
         info.setMaterialId(materialDTO.getModuleId());
