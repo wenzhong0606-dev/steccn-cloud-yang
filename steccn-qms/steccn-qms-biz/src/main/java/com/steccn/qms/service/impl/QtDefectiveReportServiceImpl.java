@@ -1247,11 +1247,17 @@ public class QtDefectiveReportServiceImpl implements QtDefectiveReportService {
     private List<DeepDefectiveCategoryDetailVO> legendFilter(QtChartParamDTO dto, List<DeepDefectiveCategoryDetailVO> pageList) {
         //对比模式下考虑到图例的过滤
         if (QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getProductWorkshopName())).collect(Collectors.toList());
+            }
         } else if (QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+            }
         } else if (QtManagerConstant.QtChartCompareEnum.WORK.getCode().equals(dto.getCompare())) {
-            pageList = pageList.stream().filter(v -> CollUtil.isNotEmpty(dto.getFilters()) && dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dto.getFilters())){
+                pageList = pageList.stream().filter(v -> dto.getFilters().contains(v.getClassesName())).collect(Collectors.toList());
+            }
         } else if (CollUtil.isNotEmpty(dto.getGuaFilters())) {
             pageList = pageList.stream().filter(v -> dto.getGuaFilters().contains(v.getName())).collect(Collectors.toList());
         }
