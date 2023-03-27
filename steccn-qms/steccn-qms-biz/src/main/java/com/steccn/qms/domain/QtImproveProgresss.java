@@ -17,7 +17,7 @@ public class QtImproveProgresss implements Serializable {
      * 主键id
      */
     @TableId(type = IdType.ASSIGN_ID)
-    private Integer id;
+    private Long id;
 
     /**
      * 记录id

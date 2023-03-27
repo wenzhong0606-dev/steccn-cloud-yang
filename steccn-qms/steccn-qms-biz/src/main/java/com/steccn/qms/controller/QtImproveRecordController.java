@@ -77,9 +77,18 @@ public class QtImproveRecordController {
         return R.success(qtImproveRecordService.suspend(dto));
     }
 
+
+    @ApiOperation(value = "提交审批")
+    @PostMapping("/approve")
+    public R<Boolean> approve(@RequestBody QtImproveRecordApproveDTO dto){
+        return R.success(qtImproveRecordService.approve(dto));
+    }
+
+
     @ApiOperation(value = "删除整改记录")
-    @DeleteMapping("/{id")
+    @DeleteMapping("/{id}")
     public R<Boolean> delete(@PathVariable Long id){
         return R.success(qtImproveRecordService.delete(id));
     }
+
 }

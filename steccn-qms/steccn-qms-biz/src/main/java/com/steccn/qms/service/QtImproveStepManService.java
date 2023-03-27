@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.qms.controller.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.QtImproveStepMan;
 import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 
@@ -11,5 +12,5 @@ import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 */
 public interface QtImproveStepManService extends IService<QtImproveStepMan> {
 
-    Boolean saveMan(QtImproveRecordDisposeDTO dto);
+    Boolean saveMan(QtImproveRecordApproveDTO dto);
 }

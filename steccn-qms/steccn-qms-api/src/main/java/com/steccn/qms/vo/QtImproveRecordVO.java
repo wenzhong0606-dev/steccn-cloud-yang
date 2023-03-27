@@ -1,8 +1,6 @@
 package com.steccn.qms.vo;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -89,7 +87,46 @@ public class QtImproveRecordVO {
     /**
      * 抄送人
      */
-    private List<QtCarbonCopyManDTO>  manList;
+    private List<QtCarbonCopyManDTO> manList;
 
 
+    /**
+     * 中断按钮是否可见
+     */
+    private Integer suspendFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 退回按钮是否可见
+     */
+    private Integer sendBackFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 审批按钮是否可见
+     */
+    private Integer approveFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 提交按钮是否可见
+     */
+    private Integer submitFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 处理按钮是否可见
+     */
+    private Integer disposeFlag = QtManagerConstant.NUM_0;
+
+    /**
+     * 编辑按钮是否可见
+     */
+    private Integer editFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 操作进度
+     */
+    private List<QtImproveProgressVO> progresssList;
 }

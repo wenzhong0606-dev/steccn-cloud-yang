@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.controller.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.QtImproveStepMan;
 import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 import com.steccn.qms.mapper.QtImproveStepManMapper;
@@ -21,7 +22,7 @@ import java.util.List;
 @Slf4j
 public class QtImproveStepManServiceImpl extends ServiceImpl<QtImproveStepManMapper, QtImproveStepMan> implements QtImproveStepManService {
     @Override
-    public Boolean saveMan(QtImproveRecordDisposeDTO dto) {
+    public Boolean saveMan(QtImproveRecordApproveDTO dto) {
         List<QtImproveStepMan> manList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
             //保存抄送人信息

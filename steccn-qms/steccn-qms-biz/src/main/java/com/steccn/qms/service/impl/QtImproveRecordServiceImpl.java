@@ -18,7 +18,10 @@ import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.qms.constant.QtManagerConstant;
+import com.steccn.qms.controller.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtImproveProgresssService;
@@ -27,8 +30,7 @@ import com.steccn.qms.service.QtImproveRecordService;
 import com.steccn.qms.mapper.QtImproveRecordMapper;
 import com.steccn.qms.service.QtImproveStepManService;
 import com.steccn.qms.util.CodeGenerateUtil;
-import com.steccn.qms.vo.PassRateDateVo;
-import com.steccn.qms.vo.QtCustomerComplainVO;
+import com.steccn.qms.vo.QtImproveProgressVO;
 import com.steccn.qms.vo.QtImproveRecordDetailVO;
 import com.steccn.qms.vo.QtImproveRecordVO;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -43,8 +45,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -66,8 +70,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
 
     private final QtImproveStepManService qtImproveStepManService;
 
+    private final RemoteMessFeignApi remoteMesFeignApi;
+
+
     @Override
     public Page<QtImproveRecordVO> listPage(QtImproveRecordPageDTO dto) {
+
         //处理时间
         if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())) {
             dto.setStartTime(LocalDateTime.of(dto.getStartDate(), LocalTime.MIN));
@@ -95,6 +103,16 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtImproveRecord::getStatus);
             }
         }
+        //判断当前用户的角色是否是整改管理员
+        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        if (CollUtil.isNotEmpty(role.getStringList())) {
+            if (!role.getStringList().contains(QtManagerConstant.IMPROVE_ADMINISTRATOR)) {
+                //不是整改管理员
+                between.in(QtImproveRecord::getId, getUserAuthData());
+            }
+        } else {
+            between.in(QtImproveRecord::getId, getUserAuthData());
+        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -102,6 +120,21 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //4.拷贝page信息
         BeanUtil.copyProperties(resPage, page);
         List<QtImproveRecordVO> qtImproveRecordVOList = BeanUtil.copyToList(resPage.getRecords(), QtImproveRecordVO.class);
+        //处理、编辑按钮权限
+        qtImproveRecordVOList.forEach(qtImproveRecordVO -> {
+            if (qtImproveRecordVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
+                qtImproveRecordVO.setEditFlag(QtManagerConstant.NUM_1);
+            }
+            if (QtManagerConstant.status.contains(qtImproveRecordVO.getStatus())) {
+                //获取当前登陆人是否有处理按钮的权限
+                QtImproveRecordDetail detail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>()
+                        .eq(QtImproveRecordDetail::getRecordId, qtImproveRecordVO.getId())
+                        .eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.getEnum(qtImproveRecordVO.getStatus()).getName()));
+                if (detail.getApproverId().equals(SecurityUtils.getUser().getUserId())) {
+                    qtImproveRecordVO.setDisposeFlag(QtManagerConstant.NUM_1);
+                }
+            }
+        });
         return page.setRecords(qtImproveRecordVOList);
     }
 
@@ -134,7 +167,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     public Boolean edit(QtImproveRecordDTO dto) {
         QtImproveRecord record = getById(dto.getId());
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
-        Assert.isTrue(QtManagerConstant.NUM_0.equals(record.getStatus()), "当前状态不可编辑");
+        Assert.isTrue(QtManagerConstant.NUM_1.equals(record.getStatus()), "当前状态不可编辑");
         BeanUtil.copyProperties(dto, record);
         updateById(record);
         //保存进度
@@ -158,7 +191,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     public Boolean dispose(QtImproveRecordDisposeDTO dto) {
         QtImproveRecord record = getById(dto.getId());
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
-        Assert.checkBetween(record.getStatus(),QtManagerConstant.NUM_2,QtManagerConstant.NUM_8,"当前状态不可处理");
+        Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_2, QtManagerConstant.NUM_7, "当前状态不可处理");
         //判断当前状态的执行人是否一致
         QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(record.getId(), record.getStatus());
         Assert.isTrue(SecurityUtils.getUser().getUserId().equals(detail.getApproverId()), "记录审批人信息异常");
@@ -166,13 +199,13 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //保存d1:创建团队信息
             saveHandler(dto);
         }
-        if (QtManagerConstant.NUM_8.equals(record.getStatus())) {
-            if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
-                //调取oa 节点
-                //保存d7 抄送人信息
-                qtImproveStepManService.saveMan(dto);
-            }
-        }
+//        if (QtManagerConstant.NUM_8.equals(record.getStatus())) {
+//            if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
+//                //调取oa 节点
+//                //保存d7 抄送人信息
+//                qtImproveStepManService.saveMan(dto);
+//            }
+//        }
         //保存进度信息
         saveImproveProgresss(record.getId(), record.getStatus());
         //修改状态
@@ -182,7 +215,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         detail.setApproverConclusion(dto.getApproverConclusion());
         qtImproveRecordDetailService.updateById(detail);
         //获取下一节点信息
-        if (record.getStatus()<QtManagerConstant.NUM_9) {
+        if (record.getStatus() < QtManagerConstant.NUM_9) {
             QtImproveRecordDetail qtImproveRecordDetail = qtImproveRecordDetailService.getDetail(dto.getId(), record.getStatus());
             //发送消息
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
@@ -199,7 +232,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
         Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_3, QtManagerConstant.NUM_8, "当前状态不可退回");
         //处理进度信息
-        saveImproveProgresssReturn(record.getId(), record.getStatus(),dto.getReason());
+        saveImproveProgresssReturn(record.getId(), record.getStatus(), dto.getReason());
         record.setStatus(record.getStatus() - QtManagerConstant.NUM_1);
         //获取上一节点信息
         QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(dto.getId(), record.getStatus());
@@ -224,15 +257,16 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 qtImproveRecordVO.setStartApproverName(qtImproveRecordDetail.getApproverName());
             }
         });
-        qtImproveRecordVO.setDetailList(detailList);
+        //获取进度信息
+        List<QtImproveProgresss> progresssList = qtImproveProgresssService.list(new LambdaQueryWrapper<QtImproveProgresss>().eq(QtImproveProgresss::getRecordId, qtImproveRecordVO.getId()));
+        qtImproveRecordVO.setProgresssList(BeanUtil.copyToList(progresssList, QtImproveProgressVO.class));
         //获取抄送人信息
-        List<QtImproveStepMan> manList = qtImproveStepManService.list(new LambdaQueryWrapper<QtImproveStepMan>()
-                .eq(QtImproveStepMan::getRecordId, id)
-                .eq(QtImproveStepMan::getUserType, QtManagerConstant.NUM_1));
-        if (CollUtil.isNotEmpty(manList)){
-            qtImproveRecordVO.setManList(BeanUtil.copyToList(manList,QtCarbonCopyManDTO.class));
+        List<QtImproveStepMan> manList = qtImproveStepManService.list(new LambdaQueryWrapper<QtImproveStepMan>().eq(QtImproveStepMan::getRecordId, id).eq(QtImproveStepMan::getUserType, QtManagerConstant.NUM_1));
+        if (CollUtil.isNotEmpty(manList)) {
+            qtImproveRecordVO.setManList(BeanUtil.copyToList(manList, QtCarbonCopyManDTO.class));
         }
-        return qtImproveRecordVO;
+        //处理按钮权限
+        return disposeButton(qtImproveRecordVO);
     }
 
     @Override
@@ -258,14 +292,33 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     public Boolean delete(Long id) {
         QtImproveRecord record = getById(id);
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
-        Assert.checkBetween(record.getStatus(), QtManagerConstant.NUM_10, QtManagerConstant.NUM_11, "当前状态不可删除");
-        qtImproveProgresssService.remove(new LambdaQueryWrapper<QtImproveProgresss>()
-                .eq(QtImproveProgresss::getRecordId,id));
-        qtImproveStepManService.remove(new LambdaQueryWrapper<QtImproveStepMan>()
-                .eq(QtImproveStepMan::getRecordId,id));
-        qtImproveRecordDetailService.remove(new LambdaQueryWrapper<QtImproveRecordDetail>()
-                .eq(QtImproveRecordDetail::getRecordId,id));
+        Assert.isTrue(QtManagerConstant.NUM_10.equals(record.getStatus())
+                || QtManagerConstant.NUM_11.equals(record.getStatus())
+                || QtManagerConstant.NUM_1.equals(record.getStatus()), "当前状态不可删除");
+        qtImproveProgresssService.remove(new LambdaQueryWrapper<QtImproveProgresss>().eq(QtImproveProgresss::getRecordId, id));
+        qtImproveStepManService.remove(new LambdaQueryWrapper<QtImproveStepMan>().eq(QtImproveStepMan::getRecordId, id));
+        qtImproveRecordDetailService.remove(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, id));
         return removeById(id);
+    }
+
+    @Override
+    public Boolean approve(QtImproveRecordApproveDTO dto) {
+        QtImproveRecord record = getById(dto.getId());
+        Assert.isTrue(Objects.nonNull(record), "记录不存在");
+        Assert.isTrue(QtManagerConstant.NUM_8.equals(record.getStatus()), "当前状态不可提交审批");
+        if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
+            //调取oa 节点
+            //保存d7 抄送人信息
+            qtImproveStepManService.saveMan(dto);
+        }
+        //保存进度信息
+        saveImproveProgresss(record.getId(), record.getStatus());
+        //保存结论
+        QtImproveRecordDetail detail = qtImproveRecordDetailService.getDetail(record.getId(), record.getStatus());
+        detail.setApproverConclusion(dto.getApproverConclusion());
+        qtImproveRecordDetailService.updateById(detail);
+        record.setStatus(QtManagerConstant.NUM_9);
+        return updateById(record);
     }
 
 
@@ -356,7 +409,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
      * @param status
      * @return
      */
-    private Boolean saveImproveProgresssReturn(Long id, Integer status,String reason) {
+    private Boolean saveImproveProgresssReturn(Long id, Integer status, String reason) {
         QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
         qtImproveProgresss.setRecordId(id);
         if (QtManagerConstant.NUM_3.equals(status)) {
@@ -399,48 +452,6 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                     QtImproveRecordDetail qtImproveRecordDetail = BeanUtil.copyProperties(detail, QtImproveRecordDetail.class);
                     detailList.add(qtImproveRecordDetail);
                 }
-//                if (QtManagerConstant.improveProgress.D2_CLEAR_PROBLEM.getName().equals(detail.getApproverStep())){
-//                    //修改d2
-//                    detail.setApproverId(dto.getD2Processor());
-//                    detail.setApproverName(dto.getD2ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D3_COUNTERMEASURE.getName().equals(detail.getApproverStep())){
-//                    //修改d3
-//                    detail.setApproverId(dto.getD3Processor());
-//                    detail.setApproverName(dto.getD3ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D4_REASON_ANALYSIS.getName().equals(detail.getApproverStep())){
-//                    //修改d4
-//                    detail.setApproverId(dto.getD4Processor());
-//                    detail.setApproverName(dto.getD4ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName().equals(detail.getApproverStep())){
-//                    //修改d5
-//                    detail.setApproverId(dto.getD5Processor());
-//                    detail.setApproverName(dto.getD2ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName().equals(detail.getApproverStep())){
-//                    //修改d6
-//                    detail.setApproverId(dto.getD6Processor());
-//                    detail.setApproverName(dto.getD6ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName().equals(detail.getApproverStep())){
-//                    //修改d7
-//                    detail.setApproverId(dto.getD7Processor());
-//                    detail.setApproverName(dto.getD7ProcessorName());
-//                    detailList.add(detail);
-//                }
-//                if (QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName().equals(detail.getApproverStep())){
-//                    //修改d8
-//                    detail.setApproverId(dto.getD8Processor());
-//                    detail.setApproverName(dto.getD8ProcessorName());
-//                    detailList.add(detail);
-//                }
             });
             if (CollUtil.isEmpty(detailList)) {
                 //创建d2-d8
@@ -492,8 +503,53 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     }
 
 
-}
+    /**
+     * 获取当前用户拥有的数据权限
+     *
+     * @return
+     */
+    private Set<Long> getUserAuthData() {
+        Set<Long> recordIds = Sets.newHashSet();
+        //获取处理人为自己的记录
+        List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getApproverId, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(list)) {
+            recordIds.addAll(list.stream().map(QtImproveRecordDetail::getRecordId).collect(Collectors.toSet()));
+        }
+        //获取创建人为自己的记录 和审批人为自己的记录
+        List<QtImproveRecord> recordList = list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCreateBy, SecurityUtils.getUser().getUserId()).or().eq(QtImproveRecord::getStartApproverId, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(recordList)) {
+            recordIds.addAll(recordList.stream().map(QtImproveRecord::getId).collect(Collectors.toSet()));
+        }
+        //获取抄送人为自己的记录
+        List<QtImproveStepMan> stepMan = qtImproveStepManService.list(new LambdaQueryWrapper<QtImproveStepMan>().eq(QtImproveStepMan::getUserType, QtManagerConstant.NUM_1).eq(QtImproveStepMan::getUserId, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(stepMan)) {
+            recordIds.addAll(stepMan.stream().map(QtImproveStepMan::getRecordId).collect(Collectors.toSet()));
+        }
+        return recordIds;
+    }
 
+
+    /**
+     * 处理按钮权限
+     *
+     * @return
+     */
+    private QtImproveRecordVO disposeButton(QtImproveRecordVO qtImproveRecordVO) {
+        if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus())) {
+            qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
+        } else if (QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) {
+            qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
+        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus())) {
+            qtImproveRecordVO.setApproveFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
+            qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
+        }
+        return qtImproveRecordVO;
+    }
+}
 
 
 

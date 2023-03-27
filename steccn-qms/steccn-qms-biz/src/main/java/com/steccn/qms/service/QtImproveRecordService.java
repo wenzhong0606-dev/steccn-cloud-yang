@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.qms.controller.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.QtImproveRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
@@ -75,4 +76,12 @@ public interface QtImproveRecordService extends IService<QtImproveRecord> {
      * @return
      */
     Boolean delete(Long id);
+
+
+    /**
+     * 提交审批
+     * @param dto
+     * @return
+     */
+    Boolean approve(QtImproveRecordApproveDTO dto);
 }
