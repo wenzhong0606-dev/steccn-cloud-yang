@@ -125,7 +125,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             if (qtImproveRecordVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
                 qtImproveRecordVO.setEditFlag(QtManagerConstant.NUM_1);
             }
-            if (QtManagerConstant.status.contains(qtImproveRecordVO.getStatus())) {
+            if (QtManagerConstant.states.contains(qtImproveRecordVO.getStatus())) {
                 //获取当前登陆人是否有处理按钮的权限
                 QtImproveRecordDetail detail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>()
                         .eq(QtImproveRecordDetail::getRecordId, qtImproveRecordVO.getId())
