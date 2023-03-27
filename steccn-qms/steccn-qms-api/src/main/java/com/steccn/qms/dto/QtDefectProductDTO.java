@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class QtDefectProductDTO {
@@ -150,7 +151,7 @@ public class QtDefectProductDTO {
     /**
      * 抄送人
      */
-    private Long carbonCopyMan;
+    private List<QtCarbonCopyManDTO> manList;
 
     /**
      * 审批人
