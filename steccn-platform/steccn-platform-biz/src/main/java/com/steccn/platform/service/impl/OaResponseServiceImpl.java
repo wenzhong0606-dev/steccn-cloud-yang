@@ -102,55 +102,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         OaProcessDataDTO data = dto.getData();
         //2.1生产领料单业务
         if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
-            //通过,只有当归档时不是拒绝状态才算通过
-            if(data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
-                //获取业务主键id
-                Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                //根据id查询状态
-                Long status = FeignOptional.of(() -> remotePmsFeignApi.getStatusById(id), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                if(Objects.nonNull(status) && !status.equals(Long.parseLong(OaDataConstant.NUM_3))){
-                    //修改主键状态
-                    MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
-                    materialRequisitionApprovalDTO.setId(id);
-                    materialRequisitionApprovalDTO.setApprovalFlag(1);
-                    FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                    //推送刷新消息
-                    List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
-                    Set<Long> userIds = Sets.newHashSet();
-                    MsgPushDTO msgPushDTO = new MsgPushDTO();
-                    msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-                    if(CollUtil.isNotEmpty(allOnlineUser)){
-                        allOnlineUser.forEach(tmp -> {
-                            userIds.add(tmp.getUserId());
-                        });
-                    }
-                    msgPushDTO.setUserIdList(userIds);
-                    FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
-                }
-            }
-
-            //不通过
-            if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
-                //获取业务主键id
-                Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                //修改主键状态
-                MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
-                materialRequisitionApprovalDTO.setId(id);
-                materialRequisitionApprovalDTO.setApprovalFlag(2);
-                FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                //推送刷新消息
-                List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
-                Set<Long> userIds = Sets.newHashSet();
-                MsgPushDTO msgPushDTO = new MsgPushDTO();
-                msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-                if(CollUtil.isNotEmpty(allOnlineUser)){
-                    allOnlineUser.forEach(tmp -> {
-                        userIds.add(tmp.getUserId());
-                    });
-                }
-                msgPushDTO.setUserIdList(userIds);
-                FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
-            }
+            requisition(dto);
         }
 
         return save(model);
@@ -194,6 +146,59 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
             });
         }
         return page.setRecords(eqpSpareVOList);
+    }
+
+    protected void requisition(OaProcessNotifyDTO dto){
+        OaProcessDataDTO data = dto.getData();
+        //通过,只有当归档时不是拒绝状态才算通过
+        if(data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
+            //获取业务主键id
+            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //根据id查询状态
+            Long status = FeignOptional.of(() -> remotePmsFeignApi.getStatusById(id), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if(Objects.nonNull(status) && !status.equals(Long.parseLong(OaDataConstant.NUM_3))){
+                //修改主键状态
+                MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
+                materialRequisitionApprovalDTO.setId(id);
+                materialRequisitionApprovalDTO.setApprovalFlag(1);
+                FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                //推送刷新消息
+                List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
+                Set<Long> userIds = Sets.newHashSet();
+                MsgPushDTO msgPushDTO = new MsgPushDTO();
+                msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
+                if(CollUtil.isNotEmpty(allOnlineUser)){
+                    allOnlineUser.forEach(tmp -> {
+                        userIds.add(tmp.getUserId());
+                    });
+                }
+                msgPushDTO.setUserIdList(userIds);
+                FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+            }
+        }
+
+        //不通过
+        if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
+            //获取业务主键id
+            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //修改主键状态
+            MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
+            materialRequisitionApprovalDTO.setId(id);
+            materialRequisitionApprovalDTO.setApprovalFlag(2);
+            FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            //推送刷新消息
+            List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
+            Set<Long> userIds = Sets.newHashSet();
+            MsgPushDTO msgPushDTO = new MsgPushDTO();
+            msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
+            if(CollUtil.isNotEmpty(allOnlineUser)){
+                allOnlineUser.forEach(tmp -> {
+                    userIds.add(tmp.getUserId());
+                });
+            }
+            msgPushDTO.setUserIdList(userIds);
+            FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+        }
     }
 }
 
