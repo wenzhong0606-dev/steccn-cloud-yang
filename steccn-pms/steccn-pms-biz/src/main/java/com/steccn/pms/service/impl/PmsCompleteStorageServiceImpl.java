@@ -502,6 +502,12 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             model.setQuantity(sumQuantity);
             save(model);
             completeStorageInfoService.saveBatch(modelInfoList);
+
+//            //生成入库单凭证[wms_delivery_receipt]
+//            WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+//            remoteWmsInventoryFeignApi.generateInStorageVoucher(receiptDTO);
+
+
         }catch (Exception e){
             log.error("生成入库单[冲销入库]失败 -> {}",e.getLocalizedMessage());
             throw new BusinessException("生成入库单失败");
