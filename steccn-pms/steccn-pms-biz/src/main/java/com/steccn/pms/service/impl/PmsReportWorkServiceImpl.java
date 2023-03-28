@@ -561,7 +561,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     public ProcessReportWorkSubmitDTO info(Long id) {
         PmsReportWork model = getById(id);
         Assert.notNull(model, "报工信息不存在");
+        PmsProduceOrder pmsProduceOrder = produceOrderService.getById(model.getProduceOrderId());
+        Assert.notNull(model, "生产订单信息不存在");
         ProcessReportWorkSubmitDTO resVo = BeanUtil.copyProperties(model, ProcessReportWorkSubmitDTO.class);
+        resVo.setMaterialId(pmsProduceOrder.getMaterialId());
+        resVo.setMaterialCode(pmsProduceOrder.getMaterialCode());
+        resVo.setMaterialName(pmsProduceOrder.getMaterialName());
         //赋值processName,unitName,batch
         PmsProduceOrderCraft processModel = produceOrderCraftService.getById(model.getProcessId());
         Assert.notNull(processModel, "工序不存在");

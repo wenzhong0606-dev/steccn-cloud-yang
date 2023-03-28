@@ -1,5 +1,6 @@
 package com.steccn.pms.dto;
 
+import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -26,9 +27,21 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @ApiModelProperty("主键id")
     private Long id;
 
+    @ApiModelProperty("生产报工编码")
+    private String code;
+
     @ApiModelProperty("生产订单id")
     @NotNull(message = "生产订单不能为空")
     private Long produceOrderId;
+
+    @ApiModelProperty("物料编码")
+    private String materialCode;
+
+    @ApiModelProperty("物料id")
+    private Long materialId;
+
+    @ApiModelProperty("物料名称")
+    private String materialName;
 
     @ApiModelProperty("工序id")
     @NotNull(message = "工序不能为空")
@@ -101,6 +114,12 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
 
     @ApiModelProperty("备注")
     private String note;
+
+    @ApiModelProperty("创建人")
+    private String createName;
+
+    @ApiModelProperty("创建时间")
+    private LocalDateTime createTime;
 
     @ApiModelProperty("加工时间")
     @Valid
