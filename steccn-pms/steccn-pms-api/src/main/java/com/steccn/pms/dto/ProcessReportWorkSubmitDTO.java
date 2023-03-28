@@ -34,6 +34,9 @@ public class ProcessReportWorkSubmitDTO implements Serializable {
     @NotNull(message = "生产订单不能为空")
     private Long produceOrderId;
 
+    @ApiModelProperty("生产订单编码")
+    private String produceOrderNo;
+
     @ApiModelProperty("物料编码")
     private String materialCode;
 
