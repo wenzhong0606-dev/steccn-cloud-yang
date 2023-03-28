@@ -166,10 +166,10 @@ public interface OaInfoService {
 
     /**
      * 获取流程节点当前操作人
-     * @param requestId
+     * @param dto
      * @return
      */
     @ApiOperation("获取流程当前节点的操作人")
-    @GetMapping("/oa/workflow/currentOperator")
-    R<List<OaWorkFlowOperatorDTO>> getCurrentOperator(@RequestParam("requestId") Integer requestId);
+    @PostMapping("/oa/workflow/currentOperator")
+    R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto);
 }

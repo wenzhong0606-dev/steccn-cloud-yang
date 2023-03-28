@@ -51,11 +51,7 @@ public class WsFeignController {
     @PostMapping("/push/refresh")
     public R<MsgPushDTO> pushRefreshMsg(@RequestBody MsgPushDTO msgPushDTO) {
         msgPushDTO.setType(msgPushDTO.getType());
-        if(CollUtil.isNotEmpty(msgPushDTO.getUserIdList())){
-            msgPushDTO.getUserIdList().forEach(tmp -> {
-                WebSocketManager.sendMessageByUser(tmp, JSONUtil.toJsonStr(msgPushDTO));
-            });
-        }
+        WebSocketManager.sendMessageToOnlineUser(JSONUtil.toJsonStr(msgPushDTO));
         return new R<>(msgPushDTO);
     }
 }

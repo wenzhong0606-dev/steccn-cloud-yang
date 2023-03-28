@@ -23,11 +23,6 @@ import java.util.List;
 @UtilityClass
 @Slf4j
 public class SecurityUtils {
-
-    @Autowired
-    @Lazy
-    private SessionRegistry sessionRegistry;
-
     /**
      * 获取Authentication
      */
@@ -60,18 +55,4 @@ public class SecurityUtils {
         return getUser(authentication);
     }
 
-    public List<SteccnUser> getAllOnlineUser(){
-        List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
-        List<SteccnUser> users = Lists.newArrayList();
-        if(CollUtil.isEmpty(allPrincipals)){
-            return users;
-        }else {
-            allPrincipals.forEach(tmp -> {
-                if(tmp instanceof SteccnUser){
-                    users.add((SteccnUser) tmp);
-                }
-            });
-        }
-        return users;
-    }
 }

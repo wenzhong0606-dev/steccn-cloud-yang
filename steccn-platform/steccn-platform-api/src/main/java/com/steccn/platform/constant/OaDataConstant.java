@@ -30,7 +30,7 @@ public interface OaDataConstant {
     /**
      * 流程归档
      */
-    String WORKFLOW_FINISHED = "归档";
+    String WORKFLOW_FINISHED = "主管副总";
 
 
     @Getter
