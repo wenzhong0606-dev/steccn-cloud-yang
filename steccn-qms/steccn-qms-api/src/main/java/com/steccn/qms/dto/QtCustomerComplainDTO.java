@@ -114,6 +114,8 @@ public class QtCustomerComplainDTO {
      */
     private Long carbonCopyMan;
 
+    private List<QtCarbonCopyManDTO> manList;
+
     /**
      * 审批人
      */

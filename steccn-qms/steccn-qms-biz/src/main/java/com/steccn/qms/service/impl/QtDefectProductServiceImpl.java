@@ -272,8 +272,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             List<QtCarbonCopyManDTO> manList = Lists.newArrayList();
             list.forEach(man ->{
                 if (QtManagerConstant.NUM_0.equals(man.getUserType())){
-                    qtDefectProductVO.setApproveMan(man.getId());
-                    qtDefectProductVO.setApproveManName(map.get(man.getId()));
+                    qtDefectProductVO.setApproveMan(man.getUserId());
+                    qtDefectProductVO.setApproveManName(map.get(man.getUserId()));
                 }else {
                     QtCarbonCopyManDTO qtCarbonCopyManDTO = new QtCarbonCopyManDTO();
                     qtCarbonCopyManDTO.setUserId(man.getUserId());
