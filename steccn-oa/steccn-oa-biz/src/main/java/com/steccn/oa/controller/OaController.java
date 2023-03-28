@@ -203,7 +203,7 @@ public class OaController {
 
     @ApiOperation("获取流程当前节点的操作人")
     @GetMapping("/workflow/currentOperator")
-    public R<Integer> getCurrentOperator(@RequestParam("requestId") Integer requestId){
+    public R<List<OaWorkFlowOperatorDTO>> getCurrentOperator(@RequestParam("requestId") Integer requestId){
         return R.success(workflowCurrentoperatorService.getUserIdByRequestId(requestId));
     }
 }

@@ -1,5 +1,6 @@
 package com.steccn.oa.mapper;
 
+import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.oa.domain.WorkflowCurrentoperator;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -11,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.steccn.oa.domain.WorkflowCurrentoperator
 */
 @Mapper
-public interface WorkflowCurrentoperatorMapper extends BaseMapper<WorkflowCurrentoperator> {
+public interface WorkflowCurrentoperatorMapper extends MPJBaseMapper<WorkflowCurrentoperator> {
 
 }
 

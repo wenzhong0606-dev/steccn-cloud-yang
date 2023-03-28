@@ -408,14 +408,19 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
 //            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
-            //获取oa最新流程节点的操作人
+            //获取oa流程节点的操作人，由于通过是归档的信息，所以审批人是前一个
 
             pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
         } else if (dto.getApprovalFlag().equals(PmsCodeUtil.NUM_BIT_2)){
             //2 表示失败
             pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_FAIL,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
-            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
+            PmsMaterialRequisitionWorkflow one = pmsMaterialRequisitionWorkflowService.getOne(new LambdaQueryWrapper<PmsMaterialRequisitionWorkflow>()
+                    .eq(PmsMaterialRequisitionWorkflow::getRequisitionId, dto.getId())
+                    .orderByDesc(PmsMaterialRequisitionWorkflow::getCreateName), false);
+            List<OaWorkFlowOperatorDTO> operatorDTOS = FeignOptional.of(() -> oaInfoService.getCurrentOperator(one.getRequestId().intValue()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            pmsMaterialRequisition.setAffirmName(operatorDTOS.get(0).getName());
+            pmsMaterialRequisition.setAffirmId(operatorDTOS.get(0).getId());
             pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
         }
         return updateById(pmsMaterialRequisition);
