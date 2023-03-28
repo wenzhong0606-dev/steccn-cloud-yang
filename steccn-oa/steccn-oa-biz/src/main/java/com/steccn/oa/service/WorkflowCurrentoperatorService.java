@@ -2,6 +2,10 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.domain.WorkflowCurrentoperator;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
+
+import java.util.List;
 
 /**
 * @author Admin
@@ -14,5 +18,5 @@ public interface WorkflowCurrentoperatorService extends IService<WorkflowCurrent
      * @param requestId
      * @return
      */
-    Integer getUserIdByRequestId(Integer requestId);
+    List<OaWorkFlowOperatorDTO> getUserIdByRequestId(Integer requestId);
 }

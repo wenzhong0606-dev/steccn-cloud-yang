@@ -63,6 +63,11 @@ public class PmsMaterialRequisition implements Serializable {
     private String affirmName;
 
     /**
+     * 确认人id
+     */
+    private Integer affirmId;
+
+    /**
      * 确认时间
      */
     private LocalDateTime affirmTime;
