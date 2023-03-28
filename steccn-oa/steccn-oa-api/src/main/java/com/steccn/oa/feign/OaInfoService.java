@@ -6,6 +6,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaOrgDetailVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import io.swagger.annotations.ApiOperation;
@@ -144,4 +145,31 @@ public interface OaInfoService {
     @ApiOperation("根据条件查询")
     @PostMapping("/oa/user/condition")
     R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情")
+    @PostMapping("/oa/org/detail")
+    R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情V2
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情V2")
+    @PostMapping("/oa/org/detail/v2")
+    R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto);
+
+    /**
+     * 获取流程节点当前操作人
+     * @param requestId
+     * @return
+     */
+    @ApiOperation("获取流程当前节点的操作人")
+    @GetMapping("/oa/workflow/currentOperator")
+    R<Integer> getCurrentOperator(@RequestParam("requestId") Integer requestId);
 }

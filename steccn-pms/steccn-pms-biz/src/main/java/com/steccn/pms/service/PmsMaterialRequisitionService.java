@@ -72,4 +72,11 @@ public interface PmsMaterialRequisitionService extends IService<PmsMaterialRequi
      * @return
      */
     R<String> create(List<MaterialRequisitionInfoPlanDTO> list);
+
+    /**
+     * 根据id查询状态
+     * @param id
+     * @return
+     */
+    Long getStatusById(Long id);
 }

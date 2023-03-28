@@ -33,4 +33,11 @@ public interface PmsCompleteDeliveryInfoService extends IService<PmsCompleteDeli
      * @return
      */
     Map<FeedQuantityDTO, BigDecimal> listQuantity(List<FeedQuantityDTO> feedList);
+
+    /**
+     * 获取入库单明细的数量之和
+     * @param id 入库单明细
+     * @return
+     */
+    BigDecimal getQuantity(Long id);
 }

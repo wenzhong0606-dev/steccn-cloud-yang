@@ -100,6 +100,11 @@ public interface LockConstant {
      */
     String QT_DEFECT_PRODUCT = "QT_DEFECT_PRODUCT";
 
+    /**
+     * 整改记录
+     */
+    String QT_IMPROVE_RECORD = "QT_IMPROVE_RECORD";
+
 
 }
 

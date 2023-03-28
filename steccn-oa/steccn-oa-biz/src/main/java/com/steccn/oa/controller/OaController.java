@@ -8,11 +8,13 @@ import com.steccn.oa.dto.*;
 
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.OaService;
+import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import com.steccn.oa.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +36,8 @@ public class OaController {
     private final OaService oaService;
 
     private final HrmresourceService hrmresourceService;
+
+    private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
@@ -151,7 +155,7 @@ public class OaController {
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R<OaWorkflowStatusVO> createWorkFlow(@RequestBody OaWorkFlowParamDTO dto) {
+    public R<OaWorkflowStatusVO> createWorkFlow(@Validated @RequestBody OaWorkFlowParamDTO dto) {
         return R.success(oaService.createWorkFlow(dto));
     }
 
@@ -183,5 +187,23 @@ public class OaController {
     @PostMapping("/user/workCode")
     public R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes){
         return R.success(hrmresourceService.getIdByWorkCode(workCodes));
+    }
+
+    @ApiOperation("根据部门信息查询详情")
+    @PostMapping("/org/detail")
+    public R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto){
+        return R.success(oaService.getOrgDetailByCondition(dto));
+    }
+
+    @ApiOperation("根据部门信息查询详情V2")
+    @PostMapping("/org/detail/v2")
+    public R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto){
+        return R.success(oaService.getOrgDetailByConditionV2(dto));
+    }
+
+    @ApiOperation("获取流程当前节点的操作人")
+    @GetMapping("/workflow/currentOperator")
+    public R<Integer> getCurrentOperator(@RequestParam("requestId") Integer requestId){
+        return R.success(workflowCurrentoperatorService.getUserIdByRequestId(requestId));
     }
 }

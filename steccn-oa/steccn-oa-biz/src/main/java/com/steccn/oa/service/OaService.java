@@ -343,11 +343,7 @@ public class OaService {
         //默认8条数据
         dto.setPageSize(5);
         //待办数据需要修改userId
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String result = "";
         //0为待办列表,1为待阅列表
         if(flag.equals(0)){
@@ -409,14 +405,17 @@ public class OaService {
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
-        String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
+        String result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
         //如果是成功则收到成功消息，否则返回错误信息
         if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
-            vo.setRequestId(jsonObject.getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
         }else {
+            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+            }
             vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
         }
         return vo;
@@ -428,11 +427,7 @@ public class OaService {
      */
     public OaWorkflowCountVO getWorkflowCount(){
         OaWorkflowCountVO vo = new OaWorkflowCountVO();
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
         String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
         String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
@@ -508,6 +503,38 @@ public class OaService {
     }
 
     /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByCondition(OaOrgDetailDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        //获取sessionKey
+        String sessionKeyResult = oaApi.getOrgDetail(headers,dto);
+        String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
+        //根据sessionKey获取数据
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        dataKey.setDataKey(sessionKey);
+        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
+     * 根据部门信息查询部门详情,restful版本
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByConditionV2(OaOrgDetailParamDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        String result = oaApi.getCompanyByOrg(headers,dto);
+        JSONArray data =  JSONObject.parseObject(result).getJSONObject(OaConstant.OA_JSON_DATA).getJSONArray(OaConstant.OA_JSON_DATA_LIST);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
      * 设置请求头
      * @return
      */
@@ -533,4 +560,5 @@ public class OaService {
         headers.set("userid",userId);
         return headers;
     }
+
 }

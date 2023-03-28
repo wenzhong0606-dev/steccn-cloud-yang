@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,25 +11,28 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.domain.QtComplainDefectImproveMan;
-import com.steccn.qms.domain.QtCustomerComplain;
-import com.steccn.qms.domain.QtDefectProduct;
+import com.steccn.qms.domain.*;
+import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtDefectProductDTO;
 import com.steccn.qms.dto.QtDefectProductPageDTO;
 import com.steccn.qms.service.QtComplainDefectImproveManService;
+import com.steccn.qms.service.QtComplainDefectProgressService;
 import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.mapper.QtDefectProductMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
+import com.steccn.qms.vo.QtComplainDefectProgressVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.vo.QtDefectProductVO;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -42,7 +46,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -61,6 +68,10 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
 
     private final QtComplainDefectImproveManService qtComplainDefectImproveManService;
 
+    private final QtComplainDefectProgressService qtComplainDefectProgressService;
+
+    private final OaInfoService oaInfoService;
+
 
     @Override
     public Boolean add(QtDefectProductDTO dto) {
@@ -70,7 +81,17 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             QtDefectProduct qtDefectProduct = new QtDefectProduct();
             BeanUtil.copyProperties(dto, qtDefectProduct);
             qtDefectProduct.setCode(CodeGenerateUtil.getNextCode(CodeGenerateUtil.PREFIX_DEFECT_PRODUCT, CodeGenerateUtil.NUM_BIT_8, currentMaxCode()));
-            qtDefectProduct.setStatus(QtManagerConstant.status.APPROVE.getCode());
+            qtDefectProduct.setStatus(QtManagerConstant.status.PENDING.getCode());
+            save(qtDefectProduct);
+            //保存进度信息
+            QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+            qtComplainDefectProgress.setBusiId(qtDefectProduct.getId());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.CREATE.getName());
+            qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
+            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+            qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+            qtComplainDefectProgressService.save(qtComplainDefectProgress);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
@@ -81,7 +102,6 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             sysMsgAdditionDTO.setCode(qtDefectProduct.getCode());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-            //发送消息
             try {
                 Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 if (!aBoolean) {
@@ -91,7 +111,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("消息发送失败");
             }
-            return save(qtDefectProduct);
+            return Boolean.TRUE;
         } finally {
             lock.unlock();
         }
@@ -197,23 +217,73 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         QtDefectProduct qtDefectProduct = getById(dto.getId());
         Assert.isTrue(Objects.nonNull(qtDefectProduct.getId()), "记录不存在");
         BeanUtil.copyProperties(dto, qtDefectProduct);
+        qtDefectProduct.setStatus(QtManagerConstant.status.APPROVE.getCode());
         List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
+        //保存抄送人审批人信息
         QtComplainDefectImproveMan qtComplainDefectImproveMan = new QtComplainDefectImproveMan();
         qtComplainDefectImproveMan.setBusiId(qtDefectProduct.getId());
         qtComplainDefectImproveMan.setUserType(QtManagerConstant.userType.APPROVE_MAN.getCode());
         qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
         qtComplainDefectImproveMan.setUserId(dto.getApproveMan());
         manList.add(qtComplainDefectImproveMan);
-        if (Objects.nonNull(dto.getCarbonCopyMan())) {
-            QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
-            man.setBusiId(dto.getId());
-            man.setUserId(dto.getCarbonCopyMan());
-            man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
-            man.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
-            manList.add(man);
+        //保存进度信息
+        QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+        qtComplainDefectProgress.setBusiId(qtDefectProduct.getId());
+        qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.DISPOSE.getName());
+        qtComplainDefectProgress.setSort(QtManagerConstant.NUM_1);
+        qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+        qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+        qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+        qtComplainDefectProgressService.save(qtComplainDefectProgress);
+        if (CollUtil.isNotEmpty(dto.getManList())) {
+            for (QtCarbonCopyManDTO qtCarbonCopyManDTO : dto.getManList()) {
+                QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
+                man.setBusiId(dto.getId());
+                man.setUserId(qtCarbonCopyManDTO.getUserId());
+                man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
+                man.setBusiType(QtManagerConstant.QtBusinessType.UNACCEPTED_PRODUCT.getCode());
+                manList.add(man);
+            }
         }
+        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId,dto.getId()));
         qtComplainDefectImproveManService.saveBatch(manList);
         return  updateById(qtDefectProduct);
+    }
+
+    @Override
+    public QtDefectProductVO get(Long id) {
+        QtDefectProduct qtDefectProduct = getById(id);
+        Assert.isTrue(Objects.nonNull(qtDefectProduct), "记录不存在");
+        QtDefectProductVO qtDefectProductVO = new QtDefectProductVO();
+        BeanUtil.copyProperties(qtDefectProduct,qtDefectProductVO);
+        //获取进度信息
+        List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>()
+                .eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
+        if (CollUtil.isNotEmpty(progresses)){
+            qtDefectProductVO.setProgressList(BeanUtil.copyToList(progresses, QtComplainDefectProgressVO.class));
+        }
+        //获取抄送人审批人信息
+        List<QtComplainDefectImproveMan> list = qtComplainDefectImproveManService
+                .list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
+                .eq(QtComplainDefectImproveMan::getBusiId, id));
+        if (CollUtil.isNotEmpty(list)){
+            List<Long> userIds = list.stream().map(QtComplainDefectImproveMan::getUserId).collect(Collectors.toList());
+            Map<Long, String> map = FeignOptional.of(() -> oaInfoService.listByIdCh(userIds), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            List<QtCarbonCopyManDTO> manList = Lists.newArrayList();
+            list.forEach(man ->{
+                if (QtManagerConstant.NUM_0.equals(man.getUserType())){
+                    qtDefectProductVO.setApproveMan(man.getId());
+                    qtDefectProductVO.setApproveManName(map.get(man.getId()));
+                }else {
+                    QtCarbonCopyManDTO qtCarbonCopyManDTO = new QtCarbonCopyManDTO();
+                    qtCarbonCopyManDTO.setUserId(man.getUserId());
+                    qtCarbonCopyManDTO.setUserName(map.get(man.getUserId()));
+                    manList.add(qtCarbonCopyManDTO);
+                }
+            });
+            qtDefectProductVO.setManList(manList);
+        }
+        return qtDefectProductVO;
     }
 
 
@@ -233,7 +303,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         if (Objects.nonNull(maxCodeModel)) {
             try {
                 //4.解析数值部分
-                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_CUSTOMER_COMPLAIN.length());
+                String substringVal = maxCodeModel.getCode().substring(CodeGenerateUtil.PREFIX_DEFECT_PRODUCT.length());
                 //赋值
                 long l = Long.parseLong(substringVal);
                 currentMax = l;

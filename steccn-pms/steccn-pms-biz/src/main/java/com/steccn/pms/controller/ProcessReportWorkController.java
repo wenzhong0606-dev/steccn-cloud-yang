@@ -1,24 +1,22 @@
 package com.steccn.pms.controller;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.annotation.SysLog;
-import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
+import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.*;
 import com.steccn.pms.service.PmsReportWorkService;
-import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
+import com.steccn.pms.vo.ProcessReportWorkInfoVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -101,8 +99,22 @@ public class ProcessReportWorkController {
 
     @ApiOperation("报工详情")
     @GetMapping("/{id}")
-    public R<Boolean> info(@PathVariable("id") Long id) {
-        log.info("{}", id);
-        return R.success();
+    public R<ProcessReportWorkSubmitDTO> info(@PathVariable("id") Long id) {
+        return R.success(pmsReportWorkService.info(id));
     }
+
+    @PutMapping
+    @ApiOperation("报工编辑")
+    @SysLog("报工编辑")
+    public R<Boolean> edit(@RequestBody ProcessReportWorkSubmitDTO dto){
+        return R.success(pmsReportWorkService.edit(dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation("报工删除")
+    @SysLog("报工删除")
+    public R<Boolean> delete(@PathVariable("id") Long id){
+        return R.success(pmsReportWorkService.delete(id));
+    }
+
 }

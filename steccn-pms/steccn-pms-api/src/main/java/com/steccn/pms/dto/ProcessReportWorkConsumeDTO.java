@@ -19,6 +19,9 @@ import java.math.BigDecimal;
 @Data
 public class ProcessReportWorkConsumeDTO implements Serializable {
 
+    @ApiModelProperty("能耗主键")
+    private Long id;
+
     @ApiModelProperty("类型")
     @NotNull(message = "类型不能为空")
     private Integer type;

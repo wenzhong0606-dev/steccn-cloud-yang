@@ -66,4 +66,11 @@ public class QtDefectProductController {
     }
 
 
+    @ApiOperation("获取不合格品记录")
+    @GetMapping("/{id}")
+    public R<QtDefectProductVO> get(@PathVariable("id") Long id){
+        return R.success(qtDefectProductService.get(id));
+    }
+
+
 }

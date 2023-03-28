@@ -13,7 +13,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
-import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -28,15 +27,14 @@ import com.steccn.platform.vo.*;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.*;
-import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
-import com.steccn.pms.vo.MessInStorageVoucherVO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import com.steccn.pms.vo.ProcessReportWorkPageVO;
 import com.steccn.wms.dto.*;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.redisson.api.RLock;
@@ -44,6 +42,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -95,9 +94,10 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
     @Autowired
     private RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
-
     @Autowired
     private RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
+    @Autowired
+    private PmsCompleteStorageService pmsCompleteStorageService;
 
 
     @Override
@@ -116,6 +116,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         records.forEach(ele -> {
             orderSet.add(ele.getProduceOrderId());
             organIdSet.add(ele.getStationId());
+            organIdSet.add(ele.getProductLineId());
             dictIdSet.add(ele.getClassesId());
             dictIdSet.add(ele.getClassGroupId());
         });
@@ -135,6 +136,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             ele.setClassesName(dictMap.get(ele.getClassesId()));
             ele.setClassGroupName(dictMap.get(ele.getClassGroupId()));
             ele.setStationName(sysOfficeMap.get(ele.getStationId()));
+            ele.setProductLineName(sysOfficeMap.get(ele.getProductLineId()));
         });
         return page;
     }
@@ -552,8 +554,222 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(d -> d.setUnitName(dictMap.get(d.getUnitId())));
         }
-
         return list;
+    }
+
+    @Override
+    public ProcessReportWorkSubmitDTO info(Long id) {
+        PmsReportWork model = getById(id);
+        Assert.notNull(model, "报工信息不存在");
+        ProcessReportWorkSubmitDTO resVo = BeanUtil.copyProperties(model, ProcessReportWorkSubmitDTO.class);
+        //赋值processName,unitName,batch
+        PmsProduceOrderCraft processModel = produceOrderCraftService.getById(model.getProcessId());
+        Assert.notNull(processModel, "工序不存在");
+        resVo.setProcessName(processModel.getName());
+        PmsWorkOrderBatch workOrderBatch = workOrderBatchService.getByCode(resVo.getBatchNo());
+        Assert.notNull(workOrderBatch, "生产订单批次信息不存在");
+        resVo.setBatch(workOrderBatch.getId());
+        //赋值数据字典
+        Set<Long> dictIdSet = Sets.newHashSet(resVo.getUnitId(), resVo.getClassesId(), resVo.getClassGroupId());
+        Map<Long, String> dictIdMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resVo.setClassGroupName(dictIdMap.get(resVo.getClassGroupId()));
+        resVo.setClassesName(dictIdMap.get(resVo.getClassesId()));
+        resVo.setUnitName(dictIdMap.get(resVo.getUnitId()));
+        //赋值组织机构
+        Set<Integer> organIdSet = Sets.newHashSet(resVo.getProductLineId(), resVo.getStationId());
+        Map<Integer, String> organIdMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(organIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        resVo.setProductLineName(organIdMap.get(resVo.getProductLineId()));
+        resVo.setStationName(organIdMap.get(resVo.getStationId()));
+        //获取工时信息
+        List<ProcessReportWorkHourDTO> hourDTOList = reportWorkHourService.getReportWorkHour(id);
+        //获取物料消息信息
+        List<ProcessReportWorkMaterialListDTO> materialConsumeList = completeDeliveryService.getMaterialConsume(id);
+        //获取能耗信息
+        List<ProcessReportWorkConsumeDTO> consumeDTOList = pmsReportWorkConsumeService.getConsumeList(id);
+        resVo.setHourDTOList(hourDTOList);
+        resVo.setMaterialConsumeList(materialConsumeList);
+        resVo.setConsumeDTOList(consumeDTOList);
+        return resVo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean edit(ProcessReportWorkSubmitDTO dto) {
+        //更新报工主表信息
+        PmsReportWork model = getById(dto);
+        Assert.notNull(model, "编辑的报工记录不存在");
+        getReportWork(dto, model);
+        updateById(model);
+        //更新报工工时信息
+        reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
+        //更新报工能耗信息
+        pmsReportWorkConsumeService.updateConsume(dto.getId(), dto.getConsumeDTOList());
+        //更新物料消耗信息
+        updateMaterialConsume(dto, dto.getMaterialConsumeList());
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(Long id) {
+        PmsReportWork pmsReportWork = getById(id);
+        Assert.notNull(pmsReportWork,"报工信息不存在");
+        //删除报工信息
+        removeById(id);
+        //删除工时信息
+        reportWorkHourService.remove(new LambdaQueryWrapper<PmsReportWorkHour>().eq(PmsReportWorkHour::getReportWorkId, id));
+        //删除能耗信息
+        pmsReportWorkConsumeService.remove(new LambdaQueryWrapper<PmsReportWorkConsume>().eq(PmsReportWorkConsume::getReportWorkId,id));
+        //根据物料消耗信息生成
+        PmsCompleteDelivery delivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, id).last(MpConstant.STR_LIMIT_1));
+        if(Objects.nonNull(delivery)){
+            List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, delivery.getId()));
+            //生成对应的入库单【冲销报工入库】
+            ProcessReportWorkSubmitDTO dto = new ProcessReportWorkSubmitDTO();
+            BeanUtils.copyProperties(pmsReportWork,dto);
+            pmsCompleteStorageService.generateByDelivery(dto,infoList);
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 更新物料消耗
+     * @param dto dto信息
+     * @param materialConsumeList 物料消耗集合
+     */
+    private void updateMaterialConsume(ProcessReportWorkSubmitDTO dto, List<ProcessReportWorkMaterialListDTO> materialConsumeList) {
+        //已经存在的物料消耗-不需要更新
+        //新增的物料消耗，需要校验库存没有变化后，添加到出库单明细中
+        //删除的物料消耗，需要创建入库单+明细
+        List<ProcessReportWorkMaterialListDTO> existList = Lists.newArrayList();
+        List<ProcessReportWorkMaterialListDTO> insertList = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(materialConsumeList)){
+            materialConsumeList.forEach(ele -> {
+                if (Objects.nonNull(ele.getId())) {
+                    existList.add(ele);
+                } else {
+                    insertList.add(ele);
+                }
+            });
+        }
+        //出库单明细
+        Set<Long> existIdSet = existList.stream().map(ProcessReportWorkMaterialListDTO::getId).collect(Collectors.toSet());
+
+        WmsDeliveryReceiptDTO receiptDTO = new WmsDeliveryReceiptDTO();
+        List<WmsDeliveryReceiptInfoDTO> materialList = Lists.newArrayList();
+
+        //获取出库单-出库单和明细可能不存在，因为无物料消耗
+        PmsCompleteDelivery pmsCompleteDelivery = completeDeliveryService.getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().eq(PmsCompleteDelivery::getReportWorkId, dto.getId()).last(MpConstant.STR_LIMIT_1));
+        if(Objects.isNull(pmsCompleteDelivery)){
+            pmsCompleteDelivery = new PmsCompleteDelivery();
+
+        }
+        List<PmsCompleteDeliveryInfo> infoList = completeDeliveryInfoService.list(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>().eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId()));
+        if(Objects.isNull(infoList)){
+            infoList = Lists.newArrayList();
+        }
+
+        List<PmsCompleteDeliveryInfo> newInfoList = Lists.newArrayList();
+        for (ProcessReportWorkMaterialListDTO newMc : insertList) {
+            //出库单明细
+            PmsCompleteDeliveryInfo pmsCompleteDeliveryInfo = convert2DeliveryInfo(pmsCompleteDelivery.getId(), newMc);
+            newInfoList.add(pmsCompleteDeliveryInfo);
+            //校验库存
+            receiptDTO.setWarehouseId(newMc.getWarehouseId());
+            receiptDTO.setWarehouseName(newMc.getWarehouseName());
+            WmsDeliveryReceiptInfoDTO wmsDeliveryReceiptInfoDTO = new WmsDeliveryReceiptInfoDTO();
+            BeanUtils.copyProperties(newMc, wmsDeliveryReceiptInfoDTO);
+            wmsDeliveryReceiptInfoDTO.setMaterialId(newMc.getModuleId());
+            materialList.add(wmsDeliveryReceiptInfoDTO);
+        }
+
+        //删除出库单明细
+        List<PmsCompleteDeliveryInfo> deleteList = infoList.stream().filter(v -> !existIdSet.contains(v.getId())).collect(Collectors.toList());
+        //生成对应的入库单【冲销报工入库】
+        pmsCompleteStorageService.generateByDelivery(dto, deleteList);
+        completeDeliveryInfoService.remove(new LambdaQueryWrapper<PmsCompleteDeliveryInfo>()
+                .eq(PmsCompleteDeliveryInfo::getCompleteDeliveryId, pmsCompleteDelivery.getId())
+                .notIn(CollUtil.isNotEmpty(existIdSet), PmsCompleteDeliveryInfo::getId, existIdSet));
+        //保存出库单明细
+        if (CollUtil.isNotEmpty(newInfoList)) {
+            if(Objects.isNull(pmsCompleteDelivery.getId())){
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_0, SysDictConstant.TYPE_OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                pmsCompleteDelivery.setCode(maxOutVouchCode());
+                pmsCompleteDelivery.setOutStorageVoucher(pmsCompleteDelivery.getCode());
+                pmsCompleteDelivery.setDeliveryTime(LocalDateTime.now());
+                pmsCompleteDelivery.setQuantity(BigDecimal.ZERO);
+                pmsCompleteDelivery.setUnitId(materialConsumeList.get(0).getUnitId());
+                pmsCompleteDelivery.setTypeId(sysDictVO.getId());
+                pmsCompleteDelivery.setProduceOrderId(dto.getProduceOrderId());
+                pmsCompleteDelivery.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+                pmsCompleteDelivery.setProcessId(dto.getProcessId());
+                pmsCompleteDelivery.setReportWorkId(dto.getId());
+                completeDeliveryService.save(pmsCompleteDelivery);
+            }
+            completeDeliveryInfoService.saveBatch(newInfoList);
+            receiptDTO.setType(pmsCompleteDelivery.getTypeId());
+            Boolean generateFlag = FeignOptional.of(() -> remoteWmsInventoryFeignApi.generateOutStorageVoucher(receiptDTO), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+            if (!generateFlag) {
+                throw new BusinessException("库存变化，请重新报工");
+            }
+        }
+        //数量需要更新，重新计算
+        BigDecimal quantity = completeDeliveryInfoService.getQuantity(pmsCompleteDelivery.getId());
+        pmsCompleteDelivery.setQuantity(quantity);
+        completeDeliveryService.updateById(pmsCompleteDelivery);
+    }
+
+    /**
+     * 转换成出库单明细
+     * @param deliveryId 出库单id
+     * @param materialDTO 物料消耗明细
+     * @return 转换后的对象
+     */
+    private PmsCompleteDeliveryInfo convert2DeliveryInfo(Long deliveryId, ProcessReportWorkMaterialListDTO materialDTO) {
+        PmsCompleteDeliveryInfo info = new PmsCompleteDeliveryInfo();
+        BeanUtils.copyProperties(materialDTO, info);
+        info.setMaterialId(materialDTO.getModuleId());
+        info.setMaterialCode(materialDTO.getModuleCode());
+        info.setMaterialName(materialDTO.getModuleName());
+        info.setCaseNo(materialDTO.getCaseNo());
+        info.setBatchNo(materialDTO.getBatchNo());
+        info.setPackTime(materialDTO.getPackTime());
+        info.setWarehouseId(materialDTO.getWarehouseId());
+        info.setShelfId(materialDTO.getShelfId());
+        info.setCompleteDeliveryId(deliveryId);
+        //新增可用数量
+        info.setAvaQuantity(materialDTO.getAvailableQuantity());
+        return info;
+    }
+
+    /**
+     * 获取
+     * @param dto
+     * @return
+     */
+    private void getReportWork(ProcessReportWorkSubmitDTO dto, PmsReportWork pmsReportWork) {
+        PmsProduceOrder pmsProduceOrder = produceOrderService.getById(dto.getProduceOrderId());
+        Assert.notNull(pmsProduceOrder, "生产订单不存在");
+        //校验产线和工位是否存在
+        Map<Integer, SysOfficeVO> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listById(Sets.newHashSet(dto.getProductLineId(), dto.getStationId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.checkBetween(sysOfficeMap.size(), 2, 2, "产线或工位不存在");
+        //校验工序是否存在
+        PmsProduceOrderCraft pmsProduceOrderCraft = produceOrderCraftService.getById(dto.getProcessId());
+        Assert.notNull(pmsProduceOrderCraft, "工序不存在");
+
+        validMaterialConsume(dto, pmsProduceOrderCraft.getProcessId());
+
+        //校验批次是否存在
+        PmsWorkOrderBatch pmsWorkOrderBatch = workOrderBatchService.getById(dto.getBatch());
+        Assert.notNull(pmsWorkOrderBatch, "批次不存在");
+        //校验班次和班组是否存在
+        //校验单位是否存在
+        Boolean unitBoolean = FeignOptional.of(() -> remoteDictFeignApi.existTypeId(SysDictConstant.TYPE_MEASURE_UNIT, dto.getUnitId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.isTrue(unitBoolean, "单位不存在");
+        //校验是否物料的条数是否正确
+        //生成报工记录
+        BeanUtils.copyProperties(dto, pmsReportWork);
+        pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
     }
 
     /**

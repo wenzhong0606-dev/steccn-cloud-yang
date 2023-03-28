@@ -37,6 +37,11 @@ public class QtCheckTaskListVO implements Serializable {
     private Long materialId;
 
     /**
+     * 物料code
+     */
+    private String materialCode;
+
+    /**
      * 到货时间
      */
     private LocalDate arrivalTime;

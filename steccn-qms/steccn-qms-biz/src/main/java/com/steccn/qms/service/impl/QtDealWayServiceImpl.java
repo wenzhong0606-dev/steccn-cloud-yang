@@ -97,9 +97,12 @@ public class QtDealWayServiceImpl extends ServiceImpl<QtDealWayMapper, QtDealWay
     @Override
     public Map<Integer, String> listByIdCh(Set<Integer> ids) {
         Map<Integer, String> map = Maps.newHashMap();
-        List<QtDealWay> list = list(new LambdaQueryWrapper<QtDealWay>().in(QtDealWay::getId, ids));
-        if (CollUtil.isNotEmpty(list)){
-            list.forEach(qtDealWay -> map.put(qtDealWay.getId(),qtDealWay.getWay()));
+        if (CollUtil.isNotEmpty(ids)) {
+            List<QtDealWay> list = list(new LambdaQueryWrapper<QtDealWay>().in(QtDealWay::getId, ids));
+            if (CollUtil.isNotEmpty(list)) {
+                list.forEach(qtDealWay -> map.put(qtDealWay.getId(), qtDealWay.getWay()));
+            }
+
         }
         return map;
     }

@@ -16,13 +16,13 @@ public class QtImproveRecordDetail implements Serializable {
     /**
      * 主键
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
      * 整改主键
      */
-    private Integer recordId;
+    private Long recordId;
 
     /**
      * 第几步 D1 D2 ...D8
@@ -32,7 +32,7 @@ public class QtImproveRecordDetail implements Serializable {
     /**
      * 处理人主键
      */
-    private Integer approverId;
+    private Long approverId;
 
     /**
      * 处理人名称

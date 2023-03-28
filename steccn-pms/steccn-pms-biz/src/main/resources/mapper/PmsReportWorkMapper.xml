@@ -44,7 +44,8 @@
         prw.unit_id,
         prw.batch_no,
         prw.classes_id,
-        prw.class_group_id
+        prw.class_group_id,
+        prw.product_line_id
         FROM pms_report_work prw
         JOIN pms_produce_order_craft pp ON pp.id = prw.process_id
         WHERE

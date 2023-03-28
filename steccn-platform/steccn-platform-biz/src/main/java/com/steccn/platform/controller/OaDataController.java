@@ -57,7 +57,7 @@ public class OaDataController {
     }
 
     @PutMapping("/process/notify")
-    @ApiOperation(value = "接收oa消息的值")
+    @ApiOperation(value = "接收oa流程返回的值")
     public R<Boolean> addOaNotify(HttpServletRequest request, @Valid @RequestBody OaProcessNotifyDTO dto) {
         validRequestHeader(request);
         return R.success(oaResponseService.addProcessNotify(dto));
