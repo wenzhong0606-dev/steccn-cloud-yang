@@ -116,6 +116,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         records.forEach(ele -> {
             orderSet.add(ele.getProduceOrderId());
             organIdSet.add(ele.getStationId());
+            organIdSet.add(ele.getProductLineId());
             dictIdSet.add(ele.getClassesId());
             dictIdSet.add(ele.getClassGroupId());
         });
@@ -135,6 +136,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             ele.setClassesName(dictMap.get(ele.getClassesId()));
             ele.setClassGroupName(dictMap.get(ele.getClassGroupId()));
             ele.setStationName(sysOfficeMap.get(ele.getStationId()));
+            ele.setProductLineName(sysOfficeMap.get(ele.getProductLineId()));
         });
         return page;
     }
