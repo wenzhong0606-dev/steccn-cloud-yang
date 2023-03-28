@@ -148,4 +148,10 @@ public class QtCustomerComplainVO {
     private LocalDateTime createTime;
 
 
+    /**
+     * 客诉进度
+     */
+    private List<QtComplainDefectProgressVO> progressList;
+
+
 }

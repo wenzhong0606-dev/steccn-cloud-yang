@@ -20,6 +20,8 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsBarcodePrint;
@@ -37,6 +39,7 @@ import com.steccn.pms.service.PmsCompleteStorageService;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.pms.vo.WorkOrderMaterialVO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +76,9 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
     private RedissonClient redissonClient;
     @Autowired
     private TransactionTemplate transactionTemplate;
+
+    @Autowired
+    private RemoteSpareFeignApi remoteSpareFeignApi;
 
 
     @Override
@@ -303,6 +309,43 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
             }
         }
         return resMap;
+    }
+
+    @Override
+    public List<WorkOrderMaterialVO> getMaterialByCaseNo(String code) {
+        List<WorkOrderMaterialVO> list = Lists.newArrayList();
+        List<PmsBarcodePrint> printList = list(new LambdaQueryWrapper<PmsBarcodePrint>().like(PmsBarcodePrint::getCaseNo, code));
+        if (CollUtil.isNotEmpty(printList)){
+            List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
+            Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            printList.forEach(pmsBarcodePrint ->{
+                WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
+                workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
+                workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
+                workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
+                workOrderMaterialVO.setBatchNo(pmsBarcodePrint.getBatchNo());
+                list.add(workOrderMaterialVO);
+            });
+        }
+        return list;
+    }
+
+    @Override
+    public List<WorkOrderMaterialVO> getMaterialByBatchNo(String batchNo) {
+        List<WorkOrderMaterialVO> list = Lists.newArrayList();
+        List<PmsBarcodePrint> printList = list(new LambdaQueryWrapper<PmsBarcodePrint>().like(PmsBarcodePrint::getBatchNo, batchNo));
+        if (CollUtil.isNotEmpty(printList)){
+            List<Long> materialIds = printList.stream().map(PmsBarcodePrint::getMaterialId).collect(Collectors.toList());
+            Map<Long, EqpSpareVO> map = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            printList.forEach(pmsBarcodePrint ->{
+                WorkOrderMaterialVO workOrderMaterialVO = new WorkOrderMaterialVO();
+                workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
+                workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
+                workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
+                list.add(workOrderMaterialVO);
+            });
+        }
+        return list;
     }
 
     /**
