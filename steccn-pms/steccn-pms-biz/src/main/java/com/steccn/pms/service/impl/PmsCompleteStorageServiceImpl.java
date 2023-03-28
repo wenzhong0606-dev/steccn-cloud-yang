@@ -488,7 +488,17 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             model.setCode(maxCompleteCode());
             model.setInStorageVoucher(model.getCode());
             BigDecimal sumQuantity = BigDecimal.ZERO;
+            //获取仓库的名称
+            Set<Integer> organSet = Sets.newHashSet();
+            infoList.forEach(ele ->{
+                organSet.add(ele.getShelfId());
+                organSet.add(ele.getWarehouseId());
+            });
+            Map<Integer, SysOfficeVO> organMap = FeignOptional.of(() -> remoteOfficeFeign.listById(organSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
             //保存明细信息
+            WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
+            List<WmsStorageReceiptInfoDTO> receiptInfoList = Lists.newArrayList();
             for (PmsCompleteDeliveryInfo info : infoList) {
                 sumQuantity = sumQuantity.add(info.getQuantity());
                 PmsCompleteStorageInfo modelInfo = new PmsCompleteStorageInfo();
@@ -498,16 +508,28 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
                 modelInfo.setCompleteStorageId(model.getId());
                 modelInfo.setId(IdUtil.getSnowflake().nextId());
                 modelInfoList.add(modelInfo);
+                receiptDTO.setWarehouseId(info.getWarehouseId());
+                receiptDTO.setWarehouseName(organMap.getOrDefault(receiptDTO.getWarehouseId(), defaultSysOfficeVO).getOfficeName());
+                //入库凭证详细信息
+                WmsStorageReceiptInfoDTO receiptInfo = new WmsStorageReceiptInfoDTO();
+                BeanUtils.copyProperties(info, receiptInfo);
+                receiptInfo.setQuantity(sumQuantity);
+                receiptInfo.setUnit(info.getUnitId());
+                SysOfficeVO shelfOffice = organMap.getOrDefault(info.getShelfId(), defaultSysOfficeVO);
+                receiptInfo.setShelfCode(shelfOffice.getOfficeCode());
+                receiptInfo.setShelfName(shelfOffice.getOfficeName());
+                receiptInfo.setBatch(info.getBatchNo());
+                receiptInfoList.add(receiptInfo);
             }
             model.setQuantity(sumQuantity);
             save(model);
             completeStorageInfoService.saveBatch(modelInfoList);
-
-//            //生成入库单凭证[wms_delivery_receipt]
-//            WmsStorageReceiptDTO receiptDTO = new WmsStorageReceiptDTO();
-//            remoteWmsInventoryFeignApi.generateInStorageVoucher(receiptDTO);
-
-
+            //生成入库单凭证[wms_delivery_receipt]
+            receiptDTO.setType(sysDictVO.getId());
+            //仓库id
+            receiptDTO.setList(receiptInfoList);
+            receiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
+            remoteWmsInventoryFeignApi.generateInStorageVoucher(receiptDTO);
         }catch (Exception e){
             log.error("生成入库单[冲销入库]失败 -> {}",e.getLocalizedMessage());
             throw new BusinessException("生成入库单失败");

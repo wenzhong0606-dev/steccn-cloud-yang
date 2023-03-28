@@ -1,9 +1,11 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class QtDefectProductVO {
@@ -128,7 +130,6 @@ public class QtDefectProductVO {
      */
     private Integer dealWay;
 
-
     /**
      * 处理方式名称
      */
@@ -139,10 +140,33 @@ public class QtDefectProductVO {
      */
     private BigDecimal dealQuantity;
 
+
+    /**
+     * 抄送人
+     */
+    private List<QtCarbonCopyManDTO> manList;
+
+
+    /**
+     * 审批人
+     */
+    private Long approveMan;
+
+
+    /**
+     * 审批人名称
+     */
+    private String approveManName;
     /**
      * 备注
      */
     private String note;
+
+
+    /**
+     * 操作进度
+     */
+    private List<QtComplainDefectProgressVO> progressList;
 
 
     /**

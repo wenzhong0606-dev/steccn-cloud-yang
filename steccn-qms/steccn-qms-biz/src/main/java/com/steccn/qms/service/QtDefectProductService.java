@@ -51,4 +51,12 @@ public interface QtDefectProductService extends IService<QtDefectProduct> {
      * @return
      */
     Boolean dispose(QtDefectProductDTO dto);
+
+
+    /**
+     * 获取详情
+     * @param id
+     * @return
+     */
+    QtDefectProductVO get(Long id);
 }
