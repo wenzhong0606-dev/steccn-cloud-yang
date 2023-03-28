@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.WorkflowCurrentoperatorMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.WorkflowCurrentoperator">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="requestid" column="REQUESTID" jdbcType="INTEGER"/>
+            <result property="userid" column="USERID" jdbcType="INTEGER"/>
+            <result property="groupid" column="GROUPID" jdbcType="INTEGER"/>
+            <result property="workflowid" column="WORKFLOWID" jdbcType="INTEGER"/>
+            <result property="workflowtype" column="WORKFLOWTYPE" jdbcType="INTEGER"/>
+            <result property="usertype" column="USERTYPE" jdbcType="INTEGER"/>
+            <result property="nodeid" column="NODEID" jdbcType="INTEGER"/>
+            <result property="agentorbyagentid" column="AGENTORBYAGENTID" jdbcType="INTEGER"/>
+            <result property="agenttype" column="AGENTTYPE" jdbcType="CHAR"/>
+            <result property="showorder" column="SHOWORDER" jdbcType="INTEGER"/>
+            <result property="receivedate" column="RECEIVEDATE" jdbcType="CHAR"/>
+            <result property="receivetime" column="RECEIVETIME" jdbcType="CHAR"/>
+            <result property="viewtype" column="VIEWTYPE" jdbcType="INTEGER"/>
+            <result property="iscomplete" column="ISCOMPLETE" jdbcType="INTEGER"/>
+            <result property="islasttimes" column="ISLASTTIMES" jdbcType="INTEGER"/>
+            <result property="operatedate" column="OPERATEDATE" jdbcType="CHAR"/>
+            <result property="operatetime" column="OPERATETIME" jdbcType="CHAR"/>
+            <result property="groupdetailid" column="GROUPDETAILID" jdbcType="INTEGER"/>
+            <result property="isreminded" column="ISREMINDED" jdbcType="CHAR"/>
+            <result property="isprocessed" column="ISPROCESSED" jdbcType="CHAR"/>
+            <result property="wfreminduser" column="WFREMINDUSER" jdbcType="VARCHAR"/>
+            <result property="wfusertypes" column="WFUSERTYPES" jdbcType="VARCHAR"/>
+            <result property="isreject" column="ISREJECT" jdbcType="CHAR"/>
+            <result property="needwfback" column="NEEDWFBACK" jdbcType="CHAR"/>
+            <result property="lastisremark" column="LASTISREMARK" jdbcType="CHAR"/>
+            <result property="isremindedCsh" column="ISREMINDED_CSH" jdbcType="CHAR"/>
+            <result property="wfreminduserCsh" column="WFREMINDUSER_CSH" jdbcType="VARCHAR"/>
+            <result property="wfusertypesCsh" column="WFUSERTYPES_CSH" jdbcType="VARCHAR"/>
+            <result property="handleforwardid" column="HANDLEFORWARDID" jdbcType="INTEGER"/>
+            <result property="takisremark" column="TAKISREMARK" jdbcType="INTEGER"/>
+            <result property="lastreminddatetime" column="LASTREMINDDATETIME" jdbcType="VARCHAR"/>
+            <result property="isprocessing" column="isprocessing" jdbcType="CHAR"/>
+            <result property="opdatetime" column="opdatetime" jdbcType="VARCHAR"/>
+            <result property="processuser" column="processUser" jdbcType="INTEGER"/>
+            <result property="isbereject" column="isbereject" jdbcType="CHAR"/>
+            <result property="isremark" column="isremark" jdbcType="INTEGER"/>
+            <result property="preisremark" column="preisremark" jdbcType="INTEGER"/>
+            <result property="overtime" column="overtime" jdbcType="VARCHAR"/>
+            <result property="overworktime" column="overworktime" jdbcType="VARCHAR"/>
+            <result property="takid" column="takid" jdbcType="INTEGER"/>
+            <result property="multitaklevel" column="multitaklevel" jdbcType="INTEGER"/>
+            <result property="istakout" column="istakout" jdbcType="CHAR"/>
+            <result property="viewdate" column="viewdate" jdbcType="CHAR"/>
+            <result property="viewtime" column="viewtime" jdbcType="CHAR"/>
+            <result property="isinmultitak" column="isInMultiTak" jdbcType="INTEGER"/>
+            <result property="firstviewdate" column="firstviewdate" jdbcType="CHAR"/>
+            <result property="firstviewtime" column="firstviewtime" jdbcType="CHAR"/>
+            <result property="operatetype" column="operatetype" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,REQUESTID,USERID,
+        GROUPID,WORKFLOWID,WORKFLOWTYPE,
+        USERTYPE,NODEID,AGENTORBYAGENTID,
+        AGENTTYPE,SHOWORDER,RECEIVEDATE,
+        RECEIVETIME,VIEWTYPE,ISCOMPLETE,
+        ISLASTTIMES,OPERATEDATE,OPERATETIME,
+        GROUPDETAILID,ISREMINDED,ISPROCESSED,
+        WFREMINDUSER,WFUSERTYPES,ISREJECT,
+        NEEDWFBACK,LASTISREMARK,ISREMINDED_CSH,
+        WFREMINDUSER_CSH,WFUSERTYPES_CSH,HANDLEFORWARDID,
+        TAKISREMARK,LASTREMINDDATETIME,isprocessing,
+        opdatetime,processUser,isbereject,
+        isremark,preisremark,overtime,
+        overworktime,takid,multitaklevel,
+        istakout,viewdate,viewtime,
+        isInMultiTak,firstviewdate,firstviewtime,
+        operatetype
+    </sql>
+</mapper>

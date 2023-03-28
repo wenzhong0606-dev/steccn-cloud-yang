@@ -163,4 +163,13 @@ public interface OaInfoService {
     @ApiOperation("根据部门信息查询部门详情V2")
     @PostMapping("/oa/org/detail/v2")
     R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto);
+
+    /**
+     * 获取流程节点当前操作人
+     * @param requestId
+     * @return
+     */
+    @ApiOperation("获取流程当前节点的操作人")
+    @GetMapping("/oa/workflow/currentOperator")
+    R<Integer> getCurrentOperator(@RequestParam("requestId") Integer requestId);
 }

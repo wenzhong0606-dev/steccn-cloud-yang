@@ -12,6 +12,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
@@ -406,7 +407,9 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
             //1 表示通过
             pmsMaterialRequisition.setStatus(FeignOptional.of(()->remoteDictFeignApi.getByCode(PmManagerConstant.MRBS_APPROVAL_PASS,
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId());
-            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
+//            pmsMaterialRequisition.setAffirmName(SecurityUtils.getUser().getName());
+            //获取oa最新流程节点的操作人
+
             pmsMaterialRequisition.setAffirmTime(LocalDateTime.now());
         } else if (dto.getApprovalFlag().equals(PmsCodeUtil.NUM_BIT_2)){
             //2 表示失败

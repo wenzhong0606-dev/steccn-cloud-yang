@@ -15,10 +15,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -107,7 +104,7 @@ public interface RemotePmsFeignApi {
      * @return
      */
     @ApiOperation("领用单状态更改")
-    @PostMapping("/feign/pms/material/requisition/approval")
+    @PutMapping("/feign/pms/material/requisition/approval")
     R<Boolean> approval(@RequestBody MaterialRequisitionApprovalDTO dto);
 
     /**
