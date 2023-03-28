@@ -26,11 +26,13 @@ import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
+import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
+import com.steccn.qms.vo.QtComplainDefectProgressVO;
 import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.websocket.constant.WebsocketConstant;
@@ -229,6 +231,13 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             if (Objects.nonNull(qtCustomerComplainVO.getCarbonCopyMan())){
                 qtCustomerComplainVO.setCarbonCopyManName(oaUserMap.get(qtCustomerComplainVO.getCarbonCopyMan()));
             }
+            //获取客诉进度信息
+            //获取进度信息
+            List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>()
+                    .eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
+            if (CollUtil.isNotEmpty(progresses)){
+                qtCustomerComplainVO.setProgressList(BeanUtil.copyToList(progresses, QtComplainDefectProgressVO.class));
+            }
         }
         return qtCustomerComplainVO;
     }
@@ -271,14 +280,17 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         qtComplainDefectImproveMan.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
         qtComplainDefectImproveMan.setUserId(qtCustomerComplainDTO.getApproveMan());
         manList.add(qtComplainDefectImproveMan);
-        if (Objects.nonNull(qtCustomerComplainDTO.getCarbonCopyMan())) {
-            QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
-            man.setBusiId(customerComplain.getId());
-            man.setUserId(qtCustomerComplainDTO.getCarbonCopyMan());
-            man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
-            man.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
-            manList.add(man);
+        if (CollUtil.isNotEmpty(qtCustomerComplainDTO.getManList())){
+            for (QtCarbonCopyManDTO qtCarbonCopyManDTO : qtCustomerComplainDTO.getManList()) {
+                QtComplainDefectImproveMan man = new QtComplainDefectImproveMan();
+                man.setBusiId(qtCustomerComplainDTO.getId());
+                man.setUserId(qtCarbonCopyManDTO.getUserId());
+                man.setUserType(QtManagerConstant.userType.CARBON_COPY_MAN.getCode());
+                man.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+                manList.add(man);
+            }
         }
+        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId,qtComplainDefectImproveMan.getId()));
         qtComplainDefectImproveManService.saveBatch(manList);
         //处理进度信息
         QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();

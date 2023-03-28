@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 public class ProcessReportWorkPageVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @ApiModelProperty("主键")
+    private Long id;
 
     @ApiModelProperty("报工号")
     private String code;
@@ -32,6 +34,12 @@ public class ProcessReportWorkPageVO implements Serializable {
 
     @ApiModelProperty("工序名称")
     private String processName;
+
+    @ApiModelProperty("产线主键")
+    private Integer productLineId;
+
+    @ApiModelProperty("产线名称")
+    private String productLineName;
 
     @ApiModelProperty("工位")
     private Integer stationId;
