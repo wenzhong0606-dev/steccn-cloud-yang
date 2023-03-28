@@ -111,7 +111,10 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 between.in(QtImproveRecord::getId, getUserAuthData());
             }
         } else {
-            between.in(QtImproveRecord::getId, getUserAuthData());
+            Set<Long> userAuthData = getUserAuthData();
+            if (CollUtil.isNotEmpty(userAuthData)){
+                between.in(QtImproveRecord::getId, userAuthData);
+            }
         }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());

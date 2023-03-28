@@ -3,7 +3,9 @@ package com.steccn.pms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.constant.SysDictConstant;
@@ -226,6 +228,40 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                     resMap.put(pmsPullForce.getClassesId(), pmsPullForce);
                 }
             }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, BigDecimal> getPullForce(Set<String> pfSet) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(pfSet)) {
+            List<PmsPullForce> conditionList = Lists.newArrayList();
+            pfSet.forEach(ele -> {
+                String[] split = ele.split(",");
+                PmsPullForce pmsPullForce = new PmsPullForce();
+                pmsPullForce.setPullForceDate(LocalDate.parse(split[0]));
+                pmsPullForce.setProductLineId(Integer.parseInt(split[1]));
+                pmsPullForce.setClassesId(Long.parseLong(split[2]));
+                conditionList.add(pmsPullForce);
+            });
+            //构造条件 () or ()
+            LambdaQueryWrapper<PmsPullForce> lqw = new LambdaQueryWrapper<PmsPullForce>()
+                    .select(PmsPullForce::getPullForceDate, PmsPullForce::getProductLineId, PmsPullForce::getClassesId, PmsPullForce::getQuantity).and(q -> {
+                        for (int i = 0; i < conditionList.size(); i++) {
+                            PmsPullForce pmsPullForce = conditionList.get(i);
+                            if (i != 0) {
+                                q.or();
+                            }
+                            q.eq(PmsPullForce::getPullForceDate, pmsPullForce.getPullForceDate())
+                                    .eq(PmsPullForce::getProductLineId, pmsPullForce.getProductLineId())
+                                    .eq(PmsPullForce::getClassesId, pmsPullForce.getClassesId());
+                        }
+                    });
+            List<PmsPullForce> dbList = list(lqw);
+            dbList.forEach(ele -> {
+                resMap.put(ele.getPullForceDate() + "," + ele.getProductLineId() + "," + ele.getClassesId(), ele.getQuantity());
+            });
         }
         return resMap;
     }

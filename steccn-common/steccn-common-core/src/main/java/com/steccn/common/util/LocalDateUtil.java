@@ -301,4 +301,22 @@ public class LocalDateUtil {
     public static LocalDateTime getMorning(LocalDateTime date){
         return date.withHour(8).withMinute(0).withSecond(0).withNano(0);
     }
+
+    /**
+     * 根据时间得到班次日期
+     * @param dateTime 时间
+     * @param isPrev 临界点，是否算前一天
+     * @return
+     */
+    public static LocalDate getClassDate(LocalDateTime dateTime, Boolean isPrev) {
+        if (dateTime.isAfter(LocalDateTime.of(dateTime.toLocalDate(), LocalTime.MIN)) && dateTime.isBefore(getMorning(dateTime))) {
+            //在0:00-8:00之间 班次日期为T-1
+            return dateTime.toLocalDate().minusDays(1);
+        } else if (dateTime.isEqual(getMorning(dateTime)) && isPrev) {
+            //正好8：00 isPrev == true  算前一天
+            return dateTime.toLocalDate().minusDays(1);
+        }
+        //其余情况算当天
+        return dateTime.toLocalDate();
+    }
 }

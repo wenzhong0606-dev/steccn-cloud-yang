@@ -12,6 +12,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.vo.SysDictVO;
@@ -22,6 +23,7 @@ import com.steccn.pms.domain.PmsReportWorkConsume;
 import com.steccn.pms.domain.PmsReportWorkHour;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkConsumeDTO;
+import com.steccn.pms.service.PmsPullForceService;
 import com.steccn.pms.service.PmsReportWorkConsumeService;
 import com.steccn.pms.mapper.PmsReportWorkConsumeMapper;
 import com.steccn.pms.service.ReportService;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,6 +54,9 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
 
     @Autowired
     private ReportService reportService;
+
+    @Autowired
+    private PmsPullForceService pmsPullForceService;
 
     @Override
     public void saveConsume(Long id, List<ProcessReportWorkConsumeDTO> consumeDTOList) {
@@ -68,9 +74,54 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
 
     @Override
     public List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
-        List<EnergyGroupListVO> groupList = this.baseMapper.energyGroup(productLineIdList, dateRangeList);
-        return Objects.isNull(groupList) ? Lists.newArrayList() : groupList;
+        List<EnergyGroupListVO> resList = Lists.newArrayList();
+        //返回根据产线，班次，能耗类型分组的信息，包括产线，班组，能耗类型，能耗值，拉引量
+        List<EnergyGroupListVO> allDataList = this.baseMapper.energyGroup(productLineIdList, dateRangeList);
+        if (CollUtil.isNotEmpty(allDataList)) {
+            //获取产线+班次集合
+            Set<String> pfSet = Sets.newHashSet();
+            allDataList.forEach(ele -> {
+                LocalDate classDate = LocalDateUtil.getClassDate(ele.getStartTime(), Boolean.FALSE);
+                pfSet.add(classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
+                ele.setClassDate(classDate);
+            });
+            //根据班次日期+产线+班次查询拉引量
+            Map<String,BigDecimal> pullForceMap = pmsPullForceService.getPullForce(pfSet);
+            allDataList.forEach(ele ->{
+                ele.setPullForce(pullForceMap.getOrDefault(ele.getClassDate() + "," + ele.getProductLineId() + "," + ele.getClassesId(), BigDecimal.ZERO));
+            });
+            //根据产线，班次，能耗类型分组，能耗值累计，拉引量累计
+            resList = groupBy(allDataList);
+
+        }
+        return resList;
     }
+
+    /**
+     * 根据产线，班次，能耗类型分组，能耗值累计，拉引量累计
+     * @param allDataList 所有数据
+     * @return 分组后的数据
+     */
+    List<EnergyGroupListVO> groupBy(List<EnergyGroupListVO> allDataList){
+        List<EnergyGroupListVO> resList = Lists.newArrayList();
+        Map<String, List<EnergyGroupListVO>> lineMap = allDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId()+"_"+v.getClassGroupId()+"_"+v.getType()));
+        lineMap.forEach((line,lineEntry) ->{
+            String[] s = line.split("_");
+            EnergyGroupListVO vo = new EnergyGroupListVO();
+            vo.setProductLineId(Integer.parseInt(s[0]));
+            vo.setClassGroupId(Long.parseLong(s[1]));
+            vo.setType(Integer.parseInt(s[2]));
+            BigDecimal quantitySum = lineEntry.stream().map(EnergyGroupListVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal pullForceSum = lineEntry.stream().map(EnergyGroupListVO::getPullForce).reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setPullForce(pullForceSum);
+            vo.setQuantity(quantitySum);
+            resList.add(vo);
+        });
+        return resList;
+    }
+
+
+
 
     @Override
     public List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap) {
