@@ -1265,10 +1265,9 @@ public class ReportServiceImpl implements ReportService {
      * 获取报工信息
      * @param productLineIdList
      * @param dateRangeList
-     * @param columnList
      * @return
      */
-    private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList, List<SFunction<PmsReportWork, ?>> columnList) {
+    private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
         return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
                 .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
                 .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
@@ -1288,13 +1287,8 @@ public class ReportServiceImpl implements ReportService {
         List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
         //获取班组
         List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_TEAM), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-
-        //添加分组字段获取数据
-        List<SFunction<PmsReportWork, ?>> columnList = new ArrayList<>();
-        columnList.add(PmsReportWork::getClassGroupId);
-        columnList.add(PmsReportWork::getProductLineId);
         //获取报工的信息
-        List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
+        List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList);
 
         OutputCountVO outputCountVO = new OutputCountVO();
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
@@ -1372,17 +1366,20 @@ public class ReportServiceImpl implements ReportService {
         return outputCountVO;
     }
 
+    /**
+     * 班组统计
+     * @param productLineList 产线集合
+     * @param dateRangeList 日期集合
+     * @return
+     */
     private OutputCountVO classGroupCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
         //获取产线id
         Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_team").getData();
+        List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_TEAM), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //获取班组名称
         List<String> classGroupNameList = sysDictVOList.stream().map(SysDictVO::getName).collect(Collectors.toList());
-        //添加分组字段获取数据
-        List<SFunction<PmsReportWork, ?>> columnList = new ArrayList<>();
-        columnList.add(PmsReportWork::getProductLineId);
-        columnList.add(PmsReportWork::getClassGroupId);
-        List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
+
+        List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList);
 
         List<OutputCountListVO> outputCountListVOList = new ArrayList<>();
         OutputCountVO outputCountVO = new OutputCountVO();
@@ -1396,12 +1393,8 @@ public class ReportServiceImpl implements ReportService {
             listVO.setDataType("产量");
             listVO.setDataName(sysOfficeVO.getOfficeName());
 
-            List<PmsReportWork> reportWorkList = pmsReportWorkList.stream().filter(reportWork -> reportWork.getProductLineId().equals(sysOfficeVO.getId())).collect(Collectors.toList());
+            List<PmsReportWork> reportWorkList = pmsReportWorkList.stream().filter(reportWork -> sysOfficeVO.getId().equals(reportWork.getProductLineId())).collect(Collectors.toList());
             for (SysDictVO sysDictVO : sysDictVOList) {
-                if (CollectionUtils.isEmpty(reportWorkList)) {
-                    quantityList.add(BigDecimal.ZERO);
-                    continue;
-                }
                 Optional<PmsReportWork> present = reportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getProcessQuantity());
@@ -1427,10 +1420,6 @@ public class ReportServiceImpl implements ReportService {
 
             List<CompleteStorageCountVO> storageCountVOList = completeStorageCount.stream().filter(storageCountVO -> sysOfficeVO.getId().equals(storageCountVO.getProductionLineId())).collect(Collectors.toList());
             for (SysDictVO sysDictVO : sysDictVOList) {
-                if (CollectionUtils.isEmpty(storageCountVOList)) {
-                    quantityList.add(BigDecimal.ZERO);
-                    continue;
-                }
                 Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> sysDictVO.getId().equals(storageCountVO.getClassGroupId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getQuantity());
