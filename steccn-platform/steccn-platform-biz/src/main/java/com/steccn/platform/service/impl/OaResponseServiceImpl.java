@@ -151,7 +151,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     protected void requisition(OaProcessNotifyDTO dto){
         OaProcessDataDTO data = dto.getData();
         //通过,只有当归档时不是拒绝状态才算通过
-        if(data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
+        if(dto.getType().equals(OaDataConstant.WORKFLOW_AGREE)&&data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
             //获取业务主键id
             Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //根据id查询状态
@@ -161,18 +161,11 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
                 MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
                 materialRequisitionApprovalDTO.setId(id);
                 materialRequisitionApprovalDTO.setApprovalFlag(1);
+                materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
                 FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
                 //推送刷新消息
-                List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
-                Set<Long> userIds = Sets.newHashSet();
                 MsgPushDTO msgPushDTO = new MsgPushDTO();
                 msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-                if(CollUtil.isNotEmpty(allOnlineUser)){
-                    allOnlineUser.forEach(tmp -> {
-                        userIds.add(tmp.getUserId());
-                    });
-                }
-                msgPushDTO.setUserIdList(userIds);
                 FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
             }
         }
@@ -185,18 +178,11 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
             MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
             materialRequisitionApprovalDTO.setId(id);
             materialRequisitionApprovalDTO.setApprovalFlag(2);
+            materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
             FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             //推送刷新消息
-            List<SteccnUser> allOnlineUser = SecurityUtils.getAllOnlineUser();
-            Set<Long> userIds = Sets.newHashSet();
             MsgPushDTO msgPushDTO = new MsgPushDTO();
             msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-            if(CollUtil.isNotEmpty(allOnlineUser)){
-                allOnlineUser.forEach(tmp -> {
-                    userIds.add(tmp.getUserId());
-                });
-            }
-            msgPushDTO.setUserIdList(userIds);
             FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
         }
     }

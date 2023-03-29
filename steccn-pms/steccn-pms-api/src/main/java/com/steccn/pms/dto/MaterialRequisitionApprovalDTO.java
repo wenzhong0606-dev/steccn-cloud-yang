@@ -30,4 +30,6 @@ public class MaterialRequisitionApprovalDTO {
     @Min(groups = {UpdateGroup.class, InsertGroup.class},value = 0, message = "状态不正确 0：通过，1：未通过")
     private Integer approvalFlag;
 
+    @ApiModelProperty("流程节点id")
+    private String nodeId;
 }
