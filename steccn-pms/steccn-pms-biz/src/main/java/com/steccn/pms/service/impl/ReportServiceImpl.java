@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
@@ -17,10 +18,8 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
-import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysDictDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
-import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -1534,15 +1533,20 @@ public class ReportServiceImpl implements ReportService {
         //产线分组map
         Map<Integer, List<EnergyGroupListVO>> productLineMap = energyGroupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getProductLineId));
 
+        Map<String,BigDecimal> pullForceMap = Maps.newHashMap();
+        //存放报工对应的日期集合
+        Map<Long, String> reportWorkDateMap = Maps.newHashMap();
+        energyGroupList.forEach(ele -> {
+            pullForceMap.put(ele.getPullForceStr(), ele.getPullForce());
+            reportWorkDateMap.put(ele.getReportWorkId(), ele.getPullForceStr());
+        });
+
+        //x轴上每个点是由多少报工id渲染出来的
+        Map<Long,Set<Long>> dxReportWorkMap = Maps.newHashMap();
+
         //遍历
         List<String> dxList = Lists.newArrayList();
         List<BigDecimal> pullForceList = Lists.newArrayList();
-
-        //x轴的数据获取，拉引量获取
-        for (SysDictVO sysDictVO : sysDictVOList) {
-            dxList.add(sysDictVO.getName());
-            pullForceList.add(BigDecimal.ZERO);
-        }
 
         //定义变量，水电油气
         EnergySeriesDataVO seriesDataVO = new EnergySeriesDataVO();
@@ -1556,17 +1560,32 @@ public class ReportServiceImpl implements ReportService {
             //获取产线分组的数据，也许会为空
             List<EnergyGroupListVO> productGroup = productLineMap.get(productLine.getId());
             //0耗电量 1耗水量 2耗油量 3耗气量
-            electric.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.ELECTRIC, 0, productGroup));
-            water.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.WATER, 1, productGroup));
-            oil.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.OIL, 2, productGroup));
-            gas.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.GAS, 3, productGroup));
+            electric.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.ELECTRIC, 0, productGroup,dxReportWorkMap));
+            water.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.WATER, 1, productGroup,dxReportWorkMap));
+            oil.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.OIL, 2, productGroup,dxReportWorkMap));
+            gas.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.GAS, 3, productGroup,dxReportWorkMap));
         }
         seriesDataVO.setElectric(electric);
         seriesDataVO.setWater(water);
         seriesDataVO.setOil(oil);
         seriesDataVO.setGas(gas);
-        resVo.setSeriesData(seriesDataVO);
 
+        //x轴的数据获取，拉引量获取
+        for (SysDictVO sysDictVO : sysDictVOList) {
+            dxList.add(sysDictVO.getName());
+            Set<Long> reportWorkIdSet = dxReportWorkMap.getOrDefault(sysDictVO.getId(), Sets.newHashSet());
+            BigDecimal pullForce = BigDecimal.ZERO;
+            //从报工信息中，获取需要计算拉引量的唯一条件，去重
+            Set<String> pullForceSet = Sets.newHashSet();
+            for (Long reportWorkId : reportWorkIdSet) {
+                pullForceSet.add(reportWorkDateMap.get(reportWorkId));
+            }
+            for (String ele : pullForceSet) {
+                pullForce = BigDecimalUtil.add(pullForce, pullForceMap.get(ele));
+            }
+            pullForceList.add(pullForce);
+        }
+        resVo.setSeriesData(seriesDataVO);
         List<List<BigDecimal>> reactiveList = Lists.newArrayList();
 
         LinkedHashMap<Integer, BigDecimal> waterSumMap = lineSum(seriesDataVO.getWater());
@@ -1616,20 +1635,27 @@ public class ReportServiceImpl implements ReportService {
      * @param typeName        类型名称
      * @param type            类型信息
      * @param productGroup    累计分组结果
+     * @param dxReportWorkMap
      * @return
      */
     private EnergyCountListVO countProductLineGauge(List<SysDictVO> sysDictVOList, String
-            productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup) {
+            productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup, Map<Long, Set<Long>> dxReportWorkMap) {
         EnergyCountListVO vo = new EnergyCountListVO();
         vo.setName(productLineName);
         vo.setStack(typeName);
         vo.setType(PmReportConstant.STR_BAR);
         Map<Long, BigDecimal> dataMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(productGroup)) {
-            productGroup.forEach(ele -> {
-                if (type.equals(ele.getType())) {
-                    dataMap.put(ele.getClassGroupId(), ele.getQuantity());
+            //将原始根据能耗类型和班组分组
+            Map<Long, List<EnergyGroupListVO>> gpDataMap = productGroup.stream().filter(v -> type.equals(v.getType())).collect(Collectors.groupingBy(EnergyGroupListVO::getClassGroupId));
+            gpDataMap.forEach((g, list) -> {
+                BigDecimal sumQuantity = BigDecimal.ZERO;
+                dxReportWorkMap.put(g, Sets.newHashSet());
+                for (EnergyGroupListVO ele : list) {
+                    sumQuantity = BigDecimalUtil.add(sumQuantity, ele.getQuantity());
+                    dxReportWorkMap.get(g).add(ele.getReportWorkId());
                 }
+                dataMap.put(g, sumQuantity);
             });
         }
         List<BigDecimal> dataList = Lists.newArrayList();

@@ -33,7 +33,8 @@
             rw.classes_id,
             wc.quantity as quantity,
             rw.id as reportWork,
-            rw.start_time
+            rw.start_time,
+            rw.id as reportWorkId
         FROM
             pms_report_work rw
                 JOIN pms_report_work_consume wc ON rw.id = wc.report_work_id

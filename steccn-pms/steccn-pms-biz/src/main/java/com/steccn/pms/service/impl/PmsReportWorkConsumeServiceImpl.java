@@ -74,7 +74,6 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
 
     @Override
     public List<EnergyGroupListVO> energyGroup(List<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
-        List<EnergyGroupListVO> resList = Lists.newArrayList();
         //返回根据产线，班次，能耗类型分组的信息，包括产线，班组，能耗类型，能耗值，拉引量
         List<EnergyGroupListVO> allDataList = this.baseMapper.energyGroup(productLineIdList, dateRangeList);
         if (CollUtil.isNotEmpty(allDataList)) {
@@ -82,46 +81,17 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             Set<String> pfSet = Sets.newHashSet();
             allDataList.forEach(ele -> {
                 LocalDate classDate = LocalDateUtil.getClassDate(ele.getStartTime(), Boolean.FALSE);
-                pfSet.add(classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
-                ele.setClassDate(classDate);
+                ele.setPullForceStr(classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
+                pfSet.add(ele.getPullForceStr());
             });
             //根据班次日期+产线+班次查询拉引量
             Map<String,BigDecimal> pullForceMap = pmsPullForceService.getPullForce(pfSet);
             allDataList.forEach(ele ->{
-                ele.setPullForce(pullForceMap.getOrDefault(ele.getClassDate() + "," + ele.getProductLineId() + "," + ele.getClassesId(), BigDecimal.ZERO));
+                ele.setPullForce(pullForceMap.getOrDefault(ele.getPullForceStr(),BigDecimal.ZERO));
             });
-            //根据产线，班次，能耗类型分组，能耗值累计，拉引量累计
-            resList = groupBy(allDataList);
-
         }
-        return resList;
+        return Objects.isNull(allDataList) ? Lists.newArrayList() : allDataList;
     }
-
-    /**
-     * 根据产线，班次，能耗类型分组，能耗值累计，拉引量累计
-     * @param allDataList 所有数据
-     * @return 分组后的数据
-     */
-    List<EnergyGroupListVO> groupBy(List<EnergyGroupListVO> allDataList){
-        List<EnergyGroupListVO> resList = Lists.newArrayList();
-        Map<String, List<EnergyGroupListVO>> lineMap = allDataList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId()+"_"+v.getClassGroupId()+"_"+v.getType()));
-        lineMap.forEach((line,lineEntry) ->{
-            String[] s = line.split("_");
-            EnergyGroupListVO vo = new EnergyGroupListVO();
-            vo.setProductLineId(Integer.parseInt(s[0]));
-            vo.setClassGroupId(Long.parseLong(s[1]));
-            vo.setType(Integer.parseInt(s[2]));
-            BigDecimal quantitySum = lineEntry.stream().map(EnergyGroupListVO::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal pullForceSum = lineEntry.stream().map(EnergyGroupListVO::getPullForce).reduce(BigDecimal.ZERO, BigDecimal::add);
-            vo.setPullForce(pullForceSum);
-            vo.setQuantity(quantitySum);
-            resList.add(vo);
-        });
-        return resList;
-    }
-
-
-
 
     @Override
     public List<SubstrateDayReportListVO> substrateEnergy(PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, Map<Integer, BigDecimal> workshopCountMap) {
