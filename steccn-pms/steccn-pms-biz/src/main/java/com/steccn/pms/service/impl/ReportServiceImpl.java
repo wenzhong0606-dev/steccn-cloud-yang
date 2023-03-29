@@ -1401,7 +1401,7 @@ public class ReportServiceImpl implements ReportService {
                     quantityList.add(BigDecimal.ZERO);
                     continue;
                 }
-                Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> storageCountVO.getClassGroupId().equals(sysDictVO.getId())).findAny();
+                Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> sysDictVO.getId().equals(storageCountVO.getClassGroupId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getQuantity());
                 } else {
