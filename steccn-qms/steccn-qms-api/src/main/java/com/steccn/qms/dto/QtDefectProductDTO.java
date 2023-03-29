@@ -42,7 +42,7 @@ public class QtDefectProductDTO {
     /**
      * 检验任务类型
      */
-    private Long taskType;
+    private Integer taskType;
 
     /**
      * 检验任务类型名称

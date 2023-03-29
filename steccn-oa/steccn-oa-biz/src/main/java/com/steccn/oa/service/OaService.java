@@ -555,6 +555,7 @@ public class OaService {
     public MultiValueMap<String, String> setUserIdHeaders(){
         MultiValueMap<String, String> headers = this.setHeaders();
         RSA rsa = new RSA();
+        System.out.println(SecurityUtils.getUser().getUserId());
         String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
         headers.remove("userid");
         headers.set("userid",userId);

@@ -390,6 +390,135 @@ public interface QtManagerConstant {
 
     Set<Integer> states = Sets.newHashSet(2,3,4,5,6,7,8);
 
+    /**
+     * oa不合格品处理审批发起人
+     */
+    String WORKFLOW_SPFQR = "spfqr";
+
+    /**
+     * 不合格品处理单号
+     */
+    String WORKFLOW_BHGPCLDH = "bhgpcldh";
+
+    /**
+     * 不合格品处理标题
+     */
+    String WORKFLOW_BHGPCLBT = "bhgpclbt";
+
+    /**
+     * 问题描述
+     */
+    String WORKFLOW_WTMS = "wtms";
+
+    /**
+     * 创建人
+     */
+    String WORKFLOW_CJR = "cjr";
+
+    /**
+     * 创建时间
+     */
+    String WORKFLOW_CJSJ = "cjsj";
+
+    /**
+     * 检验单号
+     */
+    String WORKFLOW_JYDH = "jydh";
+
+    /**
+     * 检验类型
+     */
+    String WORKFLOW_JYLX = "jylx";
+
+    /**
+     * 检验完成人员
+     */
+    String WORKFLOW_JYWCRY = "jywcry";
+
+    /**
+     * 检验完成时间
+     */
+    String WORKFLOW_JYWCSJ = "jywcsj";
+
+    /**
+     * 物料名称
+     */
+    String WORKFLOW_WLMC = "wlmc";
+
+    /**
+     * 物料编码
+     */
+    String WORKFLOW_WLBM = "wlbm";
+
+    /**
+     * 生产订单号
+     */
+    String WORKFLOW_SCDDH = "scddh";
+
+    /**
+     * 生产批次号
+     */
+    String WORKFLOW_SCPCH = "scpch";
+
+    /**
+     * 供应商
+     */
+    String WORKFLOW_GYS = "gys";
+
+    /**
+     * 样本数量
+     */
+    String WORKFLOW_YBSL = "ybsl";
+
+    /**
+     * 合格数量
+     */
+    String WORKFLOW_HGSL = "hgsl";
+
+    /**
+     * 不合格数量
+     */
+    String WORKFLOW_BHGSL = "bhgsl";
+
+    /**
+     * 处理人
+     */
+    String WORKFLOW_CLR = "clr";
+
+    /**
+     * 处理方式
+     */
+    String WORKFLOW_CLFS = "clfs";
+
+    /**
+     * 处理数量
+     */
+    String WORKFLOW_CLSL = "clsl";
+
+    /**
+     * 备注
+     */
+    String WORKFLOW_BZ = "bz";
+
+    /**
+     * 审批人
+     */
+    String WORKFLOW_SPR = "spr";
+
+    /**
+     * 抄送人
+     */
+    String WORKFLOW_CSR = "csr";
+
+    /**
+     * 关联整改
+     */
+    String WORKFLOW_GLZG = "glzg";
+
+    /**
+     * oa不合格品明细表
+     */
+    String WORKFLOW_TABLE_DEFECT_PRODUCT = "formtable_main_373_dt1";
 
     /**
      * 数字
@@ -506,6 +635,16 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
+
+        public static QtCheckTaskTypeEnum code(Integer code) {
+            for (QtCheckTaskTypeEnum ele : QtCheckTaskTypeEnum.values()) {
+                if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
+
     }
 
     /**

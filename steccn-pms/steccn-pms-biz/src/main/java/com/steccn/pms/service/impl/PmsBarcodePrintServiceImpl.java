@@ -324,6 +324,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
                 workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
                 workOrderMaterialVO.setBatchNo(pmsBarcodePrint.getBatchNo());
+                workOrderMaterialVO.setCaseNo(pmsBarcodePrint.getCaseNo());
                 list.add(workOrderMaterialVO);
             });
         }
@@ -342,6 +343,7 @@ public class PmsBarcodePrintServiceImpl extends ServiceImpl<PmsBarcodePrintMappe
                 workOrderMaterialVO.setMaterialId(pmsBarcodePrint.getMaterialId());
                 workOrderMaterialVO.setMaterialCode(map.get(pmsBarcodePrint.getMaterialId()).getCode());
                 workOrderMaterialVO.setMaterialName(map.get(pmsBarcodePrint.getMaterialId()).getName());
+                workOrderMaterialVO.setBatchNo(pmsBarcodePrint.getBatchNo());
                 list.add(workOrderMaterialVO);
             });
         }

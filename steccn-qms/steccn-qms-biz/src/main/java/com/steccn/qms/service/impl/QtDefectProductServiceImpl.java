@@ -15,12 +15,18 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.constant.ResultCode;
+import com.steccn.oa.dto.OaWorkFlowDetailDataListDTO;
+import com.steccn.oa.dto.OaWorkFlowDetailObjDTO;
+import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
+import com.steccn.oa.dto.OaWorkFlowParamDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
@@ -28,12 +34,10 @@ import com.steccn.qms.dto.QtDefectProductDTO;
 import com.steccn.qms.dto.QtDefectProductPageDTO;
 import com.steccn.qms.service.QtComplainDefectImproveManService;
 import com.steccn.qms.service.QtComplainDefectProgressService;
-import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.mapper.QtDefectProductMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtComplainDefectProgressVO;
-import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.vo.QtDefectProductVO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +75,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private final QtComplainDefectProgressService qtComplainDefectProgressService;
 
     private final OaInfoService oaInfoService;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
 
     @Override
@@ -247,6 +253,78 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         }
         qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId,dto.getId()));
         qtComplainDefectImproveManService.saveBatch(manList);
+        //调用oa创建流程
+        OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
+        workflowDTO.setWorkflowId("152");
+        //主要数据
+        List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
+        //审批发起人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPFQR,SecurityUtils.getUser().getUserId().toString()));
+        //不合格品处理单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BHGPCLDH,qtDefectProduct.getCode()));
+        //不合格品处理标题
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BHGPCLBT,qtDefectProduct.getTitle()));
+        //问题描述
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WTMS,qtDefectProduct.getDescription()));
+        //创建人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR,qtDefectProduct.getCreateName().toString()));
+        //创建时间
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ,qtDefectProduct.getCreateTime().toString()));
+        //检验单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYDH,qtDefectProduct.getTaskCode()));
+        //检验类型
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYLX, QtManagerConstant.QtCheckTaskTypeEnum.code(qtDefectProduct.getTaskType()).getName()));
+        //检验完成人员
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYWCRY,qtDefectProduct.getTaskFinishManName()));
+        //检验完成时间
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYWCSJ,qtDefectProduct.getTaskFinishTime().toString()));
+        //物料名称
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WLMC,qtDefectProduct.getMaterialName()));
+        //物料编码
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WLBM,qtDefectProduct.getMaterialCode()));
+        //生产订单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SCDDH,qtDefectProduct.getProduceOrderNo()));
+        //生产批次号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SCPCH,qtDefectProduct.getProduceBatchNo()));
+        //供应商
+        String supplierName = FeignOptional.of(() -> remoteOfficeFeign.getNameById(qtDefectProduct.getSupplier()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GYS,supplierName));
+        //样本数量
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_YBSL,qtDefectProduct.getSampleQuantity().toString()));
+        //合格数量
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_HGSL,qtDefectProduct.getGoodQuantity().toString()));
+        //不合格数量
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BHGSL,qtDefectProduct.getBadQuantity().toString()));
+        //处理人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLR,qtDefectProduct.getDealManName()));
+        //处理方式
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLFS,qtDefectProduct.getDealWay().toString()));
+        //处理数量
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLSL,qtDefectProduct.getDealQuantity().toString()));
+        //备注
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BZ,qtDefectProduct.getNote()));
+        //审批人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPR,dto.getApproveMan().toString()));
+        //抄送人
+        if (CollUtil.isNotEmpty(dto.getManList())){
+            List<Long> userIds = dto.getManList().stream().map(QtCarbonCopyManDTO::getUserId).collect(Collectors.toList());
+            String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CSR,ids));
+        }
+        workflowDTO.setMainData(mainDataList);
+        //详细数据
+        List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
+        OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
+        oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
+        List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
+        //获取关联的整改
+
+        workflowDTO.setRequestName("不合格品处理审批");
+        //调用
+        OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
+            throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+        }
         return  updateById(qtDefectProduct);
     }
 

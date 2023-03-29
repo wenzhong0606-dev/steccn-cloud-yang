@@ -15,7 +15,7 @@ public class QtImproveRecordDTO {
     /**
      * 主键
      */
-    @NotNull(groups = {UpdateGroup.class},message = "标题不能为空")
+    @NotNull(groups = {UpdateGroup.class},message = "id不能为空")
     private Long id;
 
     /**
