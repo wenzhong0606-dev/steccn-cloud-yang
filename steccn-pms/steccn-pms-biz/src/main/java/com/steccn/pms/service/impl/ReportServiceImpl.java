@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -1242,10 +1243,9 @@ public class ReportServiceImpl implements ReportService {
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(dto.getWorkshopId());
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-        List<SysOfficeVO> productLineList = remoteOfficeFeign.listByParentId(sysOfficeParentDTO).getData();
-        if (CollectionUtils.isEmpty(productLineList)) {
-            throw new BusinessException("该车间没有绑定产线");
-        }
+        //查询产线
+        List<SysOfficeVO> productLineList = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Assert.notEmpty(productLineList, "该车间没有绑定产线");
 
         //获取日期
         List<LocalDateTime> dateRangeList = LocalDateUtil.getFirstAndLastDate(dto.getDateRangeType());
@@ -1270,19 +1270,25 @@ public class ReportServiceImpl implements ReportService {
                 .le(PmsReportWork::getCreateTime, dateRangeList.get(1)).groupBy(columnList));
     }
 
+    /**
+     * 获取产线统计
+     * @param productLineList 产线集合
+     * @param dateRangeList 日期集合
+     * @return
+     */
     private OutputCountVO productLineCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
 
         //获取产线id和产线名称
         Set<Integer> productLineIdList = productLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
         List<String> productLineNameList = productLineList.stream().map(SysOfficeVO::getOfficeName).collect(Collectors.toList());
         //获取班组
-        List<SysDictVO> sysDictVOList = remoteDictFeignApi.listByType("sys_team").getData();
-
+        List<SysDictVO> sysDictVOList = FeignOptional.of(() -> remoteDictFeignApi.listByType(PmManagerConstant.SYS_TEAM), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //添加分组字段获取数据
         List<SFunction<PmsReportWork, ?>> columnList = new ArrayList<>();
         columnList.add(PmsReportWork::getClassGroupId);
         columnList.add(PmsReportWork::getProductLineId);
+        //获取报工的信息
         List<PmsReportWork> pmsReportWorkList = getReportWorkList(productLineIdList, dateRangeList, columnList);
 
         OutputCountVO outputCountVO = new OutputCountVO();
