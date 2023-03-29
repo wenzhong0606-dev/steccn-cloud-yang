@@ -1441,13 +1441,10 @@ public class ReportServiceImpl implements ReportService {
         listVO.setDataType("产量");
         listVO.setDataName(sysDictVO.getName());
 
+        //根据班组过滤出结果集
         List<PmsReportWork> workFilterList = pmsReportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).collect(Collectors.toList());
         for (SysOfficeVO sysOfficeVO : productLineList) {
-            if (CollectionUtils.isEmpty(workFilterList)) {
-                quantityList.add(BigDecimal.ZERO);
-                continue;
-            }
-            Optional<PmsReportWork> present = workFilterList.stream().filter(pmsReportWork -> pmsReportWork.getProductLineId().equals(sysOfficeVO.getId())).findAny();
+            Optional<PmsReportWork> present = workFilterList.stream().filter(pmsReportWork -> sysOfficeVO.getId().equals(pmsReportWork.getProductLineId())).findAny();
             if (present.isPresent()) {
                 quantityList.add(present.get().getProcessQuantity());
             } else {
