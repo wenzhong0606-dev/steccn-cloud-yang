@@ -1261,13 +1261,18 @@ public class ReportServiceImpl implements ReportService {
         return outputCountVO;
     }
 
+    /**
+     * 获取报工信息
+     * @param productLineIdList
+     * @param dateRangeList
+     * @param columnList
+     * @return
+     */
     private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList, List<SFunction<PmsReportWork, ?>> columnList) {
-
         return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
-                .select("class_group_id as classGroupId,product_line_id as productLineId,sum(process_quantity) as processQuantity")
                 .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
                 .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
-                .le(PmsReportWork::getCreateTime, dateRangeList.get(1)).groupBy(columnList));
+                .le(PmsReportWork::getCreateTime, dateRangeList.get(1)));
     }
 
     /**
@@ -1297,10 +1302,12 @@ public class ReportServiceImpl implements ReportService {
         outputCountVO.setDx(productLineNameList);
         outputCountVO.setDataList(outputCountListVOList);
 
-
+        //x轴对应的报工 key-甲乙丙班 value 【key-产线 value-报工集合】
+        Map<Long,Map<Integer,Set<Long>>> xReportMap = Maps.newHashMap();
+        //遍历班组，甲乙丙班
         for (SysDictVO sysDictVO : sysDictVOList) {
             //获取产量数据
-            OutputCountListVO reportWork = getReportWork(sysDictVO, pmsReportWorkList, productLineList);
+            OutputCountListVO reportWork = getReportWork(sysDictVO, pmsReportWorkList, productLineList,xReportMap);
             outputCountListVOList.add(reportWork);
         }
 
@@ -1317,11 +1324,7 @@ public class ReportServiceImpl implements ReportService {
 
             List<CompleteStorageCountVO> storageCountVOList = completeStorageCount.stream().filter(storageCountVO -> sysDictVO.getId().equals(storageCountVO.getClassGroupId())).collect(Collectors.toList());
             for (SysOfficeVO sysOfficeVO : productLineList) {
-                if (CollectionUtils.isEmpty(storageCountVOList)) {
-                    quantityList.add(BigDecimal.ZERO);
-                    continue;
-                }
-                Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> storageCountVO.getProductionLineId().equals(sysOfficeVO.getId())).findAny();
+                Optional<CompleteStorageCountVO> present = storageCountVOList.stream().filter(storageCountVO -> sysOfficeVO.getId().equals(storageCountVO.getProductionLineId())).findAny();
                 if (present.isPresent()) {
                     quantityList.add(present.get().getQuantity());
                 } else {
@@ -1435,21 +1438,32 @@ public class ReportServiceImpl implements ReportService {
         return outputCountVO;
     }
 
-    private OutputCountListVO getReportWork(SysDictVO sysDictVO, List<PmsReportWork> pmsReportWorkList, List<SysOfficeVO> productLineList) {
+    /**
+     * 获取报工的产量信息
+     * @param sysDictVO 班组字典
+     * @param pmsReportWorkList 报工数据集合
+     * @param productLineList 产线集合
+     * @param xReportMap 班组 + 产线 -> 报工id集合
+     * @return
+     */
+    private OutputCountListVO getReportWork(SysDictVO sysDictVO, List<PmsReportWork> pmsReportWorkList, List<SysOfficeVO> productLineList,Map<Long,Map<Integer,Set<Long>>> xReportMap) {
         OutputCountListVO listVO = new OutputCountListVO();
         List<BigDecimal> quantityList = new ArrayList<>();
         listVO.setDataType("产量");
         listVO.setDataName(sysDictVO.getName());
-
+        Map<Integer,Set<Long>> lineReportWorkMap = Maps.newHashMap();
+        xReportMap.put(sysDictVO.getId(), lineReportWorkMap);
         //根据班组过滤出结果集
         List<PmsReportWork> workFilterList = pmsReportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).collect(Collectors.toList());
         for (SysOfficeVO sysOfficeVO : productLineList) {
-            Optional<PmsReportWork> present = workFilterList.stream().filter(pmsReportWork -> sysOfficeVO.getId().equals(pmsReportWork.getProductLineId())).findAny();
-            if (present.isPresent()) {
-                quantityList.add(present.get().getProcessQuantity());
-            } else {
-                quantityList.add(BigDecimal.ZERO);
+            List<PmsReportWork> reportWorkList = workFilterList.stream().filter(pmsReportWork -> sysOfficeVO.getId().equals(pmsReportWork.getProductLineId())).collect(Collectors.toList());
+            BigDecimal sumQuantity = BigDecimal.ZERO;
+            lineReportWorkMap.put(sysOfficeVO.getId(),Sets.newHashSet());
+            for (PmsReportWork pmsReportWork : reportWorkList) {
+                lineReportWorkMap.get(sysOfficeVO.getId()).add(pmsReportWork.getId());
+                sumQuantity = BigDecimalUtil.add(sumQuantity, pmsReportWork.getProcessQuantity());
             }
+            quantityList.add(sumQuantity);
         }
         listVO.setQuantityList(quantityList);
 
