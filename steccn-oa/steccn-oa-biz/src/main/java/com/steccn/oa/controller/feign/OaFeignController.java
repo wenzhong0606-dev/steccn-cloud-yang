@@ -3,7 +3,10 @@ package com.steccn.oa.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaOperatorParamDTO;
+import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,8 @@ public class OaFeignController {
 
     private final HrmresourceService hrmresourceService;
 
+    private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
+
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -40,5 +45,10 @@ public class OaFeignController {
         return R.success(hrmresourceService.listByIdCh(idList));
     }
 
+    @ApiOperation("获取流程当前节点的操作人")
+    @PostMapping("/workflow/currentOperator")
+    public R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto){
+        return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
+    }
 
 }

@@ -170,6 +170,6 @@ public interface OaInfoService {
      * @return
      */
     @ApiOperation("获取流程当前节点的操作人")
-    @PostMapping("/oa/workflow/currentOperator")
+    @PostMapping("/feign/oa/workflow/currentOperator")
     R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto);
 }
