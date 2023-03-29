@@ -81,13 +81,13 @@ public class PmsReportWorkConsumeServiceImpl extends ServiceImpl<PmsReportWorkCo
             Set<String> pfSet = Sets.newHashSet();
             allDataList.forEach(ele -> {
                 LocalDate classDate = LocalDateUtil.getClassDate(ele.getStartTime(), Boolean.FALSE);
-                pfSet.add(classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
-                ele.setClassDate(classDate);
+                ele.setPullForceStr(classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
+                pfSet.add(ele.getPullForceStr());
             });
             //根据班次日期+产线+班次查询拉引量
             Map<String,BigDecimal> pullForceMap = pmsPullForceService.getPullForce(pfSet);
             allDataList.forEach(ele ->{
-                ele.setPullForce(pullForceMap.getOrDefault(ele.getClassDate() + "," + ele.getProductLineId() + "," + ele.getClassesId(), BigDecimal.ZERO));
+                ele.setPullForce(pullForceMap.getOrDefault(ele.getPullForceStr(),BigDecimal.ZERO));
             });
         }
         return Objects.isNull(allDataList) ? Lists.newArrayList() : allDataList;

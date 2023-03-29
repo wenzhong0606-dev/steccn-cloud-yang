@@ -22,9 +22,6 @@ public class EnergyGroupListVO implements Serializable {
     @ApiModelProperty("开始时间")
     private LocalDateTime startTime;
 
-    @ApiModelProperty("班次日期")
-    private LocalDate classDate;
-
     @ApiModelProperty("班组")
     private Long classGroupId;
 
@@ -42,5 +39,8 @@ public class EnergyGroupListVO implements Serializable {
 
     @ApiModelProperty("报工信息集合")
     private Long reportWorkId;
+
+    @ApiModelProperty("拉引量-唯一标识字符串")
+    private String pullForceStr;
 
 }

@@ -1533,9 +1533,12 @@ public class ReportServiceImpl implements ReportService {
         //产线分组map
         Map<Integer, List<EnergyGroupListVO>> productLineMap = energyGroupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getProductLineId));
 
-        Map<Long, BigDecimal> reportWorkMap = Maps.newHashMap();
+        Map<String,BigDecimal> pullForceMap = Maps.newHashMap();
+        //存放报工对应的日期集合
+        Map<Long, String> reportWorkDateMap = Maps.newHashMap();
         energyGroupList.forEach(ele -> {
-            reportWorkMap.put(ele.getReportWorkId(), ele.getPullForce());
+            pullForceMap.put(ele.getPullForceStr(), ele.getPullForce());
+            reportWorkDateMap.put(ele.getReportWorkId(), ele.getPullForceStr());
         });
 
         //x轴上每个点是由多少报工id渲染出来的
@@ -1570,10 +1573,15 @@ public class ReportServiceImpl implements ReportService {
         //x轴的数据获取，拉引量获取
         for (SysDictVO sysDictVO : sysDictVOList) {
             dxList.add(sysDictVO.getName());
-            Set<Long> reportWorkIdSet = dxReportWorkMap.getOrDefault(sysDictVO.getId(),Sets.newHashSet());
+            Set<Long> reportWorkIdSet = dxReportWorkMap.getOrDefault(sysDictVO.getId(), Sets.newHashSet());
             BigDecimal pullForce = BigDecimal.ZERO;
+            //从报工信息中，获取需要计算拉引量的唯一条件，去重
+            Set<String> pullForceSet = Sets.newHashSet();
             for (Long reportWorkId : reportWorkIdSet) {
-                pullForce = BigDecimalUtil.add(pullForce, reportWorkMap.get(reportWorkId));
+                pullForceSet.add(reportWorkDateMap.get(reportWorkId));
+            }
+            for (String ele : pullForceSet) {
+                pullForce = BigDecimalUtil.add(pullForce, pullForceMap.get(ele));
             }
             pullForceList.add(pullForce);
         }
