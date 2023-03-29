@@ -1304,6 +1304,15 @@ public class ReportServiceImpl implements ReportService {
 
         //x轴对应的报工 key-甲乙丙班 value 【key-产线 value-报工集合】
         Map<Long,Map<Integer,Set<Long>>> xReportMap = Maps.newHashMap();
+        //报工对应拉引量
+        Map<Long,String> reportPfMap = Maps.newHashMap();
+        pmsReportWorkList.forEach(ele -> {
+            LocalDate classDate = LocalDateUtil.getClassDate(ele.getStartTime(), Boolean.FALSE);
+            reportPfMap.put(ele.getId(), classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
+        });
+        //根据报工的信息获取拉引量
+        Map<String,BigDecimal> pullForceMap = pmsPullForceService.getPullForce(Sets.newHashSet(reportPfMap.values()));
+
         //遍历班组，甲乙丙班
         for (SysDictVO sysDictVO : sysDictVOList) {
             //获取产量数据
@@ -1341,11 +1350,23 @@ public class ReportServiceImpl implements ReportService {
             listVO.setDataName(sysDictVO.getName());
             listVO.setDataType("拉引量");
             List<BigDecimal> quantityList = new ArrayList<>();
+
+            Map<Integer, Set<Long>> lineMap = xReportMap.getOrDefault(sysDictVO.getId(), Maps.newHashMap());
             for (SysOfficeVO sysOfficeVO : productLineList) {
-                quantityList.add(BigDecimal.ZERO);
+                //获取报工id的集合
+                Set<Long> reportWorkIdSet = lineMap.getOrDefault(sysOfficeVO.getId(), Sets.newHashSet());
+                BigDecimal sumPullForce = BigDecimal.ZERO;
+                Set<String> pfSet = Sets.newHashSet();
+                //将报工的日期，产线，班次拼接成字符串，放入set集合中，目的是为了去重，避免重复计算
+                for (Long rwId : reportWorkIdSet) {
+                    pfSet.add(reportPfMap.get(rwId));
+                }
+                for (String pf : pfSet) {
+                    sumPullForce = BigDecimalUtil.add(sumPullForce, pullForceMap.get(pf));
+                }
+                quantityList.add(sumPullForce);
             }
             listVO.setQuantityList(quantityList);
-
             outputCountListVOList.add(listVO);
         }
         return outputCountVO;
