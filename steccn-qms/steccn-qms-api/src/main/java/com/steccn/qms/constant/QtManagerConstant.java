@@ -400,6 +400,121 @@ public interface QtManagerConstant {
      */
     String WORKFLOW_BHGPCLDH = "bhgpcldh";
 
+
+    /**
+     * 客诉处理单号
+     */
+    String WORKFLOW_KSDH = "ksdh";
+
+    /**
+     * 客诉标题
+     */
+    String WORKFLOW_KSBT ="ksbt";
+
+    /**
+     *  描述
+     */
+    String WORKFLOW_MS = "ms";
+
+    /**
+     * 投诉客户
+     */
+    String WORKFLOW_TSKH ="tskh";
+
+    /**
+     * 投诉日期
+     */
+    String WORKFLOW_TSRQ = "tsrq";
+
+    /**
+     * 投诉接收人
+     */
+    String WORKFLOW_TSJSR = "tsjsr";
+
+    /**
+     * 投诉创建人
+     */
+    String WORKFLOW_TSCJR = "tscjr";
+
+    /**
+     * 投诉创建时间
+     */
+    String WORKFLOW_TSCJSJ = "tscjsj";
+
+    /**
+     * 投诉类型
+     */
+    String WORKFLOW_TSLX =  "tslx";
+
+    /**
+     * 抄送
+     */
+    String WORKFLOW_CS = "cs";
+
+    /**
+     * 箱号
+     */
+    String WORKFLOW_XH = "xh";
+
+    /**
+     * 生产批次号
+     */
+    String WORKFLOW_SCPCH = "scpch";
+
+    /**
+     * 发货数量
+     */
+    String WORKFLOW_FHSL = "fhsl";
+
+    /**
+     * 投诉数量
+     */
+    String WORKFLOW_TSSL = "tssl";
+
+    /**
+     * 上线数量
+     */
+    String WORKFLOW_SXSL = "sxsl";
+
+    /**
+     * 不良率
+     */
+    String WORKFLOW_BLL = "bll";
+
+
+    /**
+     * 抽检数量
+     */
+    String WORKFLOW_CJSL =  "cjsl";
+
+    /**
+     * 抽检率
+     */
+    String WORKFLOW_CJL = "cjl";
+
+    /**
+     * 勘察确认日期
+     */
+    String WORKFLOW_KCQRRQ = "kcqrrq";
+
+    /**
+     * 不良判断依据
+     */
+    String WORKFLOW_BLPDYJ = "blpdyj";
+
+    /**
+     * 勘察确认详细结果
+     */
+    String WORKFLOW_KCQRXXJG = "kcqrxxjg";
+
+
+    /**
+     * 勘察确认初步结论
+     */
+    String WORKFLOW_KCQRCBJ ="kcqrcbj";
+
+    String WORKFLOW_GLZG = "glzg";
+
     /**
      * 不合格品处理标题
      */
@@ -456,11 +571,6 @@ public interface QtManagerConstant {
     String WORKFLOW_SCDDH = "scddh";
 
     /**
-     * 生产批次号
-     */
-    String WORKFLOW_SCPCH = "scpch";
-
-    /**
      * 供应商
      */
     String WORKFLOW_GYS = "gys";
@@ -510,16 +620,21 @@ public interface QtManagerConstant {
      */
     String WORKFLOW_CSR = "csr";
 
-    /**
-     * 关联整改
-     */
-    String WORKFLOW_GLZG = "glzg";
 
     /**
      * oa不合格品明细表
      */
     String WORKFLOW_TABLE_DEFECT_PRODUCT = "formtable_main_373_dt1";
 
+    /**
+     * oa客诉明细表1
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL1 = "formtable_main_372_dt1";
+
+    /**
+     * oa客诉明细表2
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2 = "formtable_main_372_dt2";
     /**
      * 数字
      */

@@ -17,12 +17,18 @@ import com.steccn.common.RedisConfig;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.dto.OaWorkFlowDetailDataListDTO;
+import com.steccn.oa.dto.OaWorkFlowDetailObjDTO;
+import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
+import com.steccn.oa.dto.OaWorkFlowParamDTO;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
@@ -305,6 +311,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         if (Objects.nonNull(qtCustomerComplainDTO.getDetails())) {
             qtCustomerComplainDetailService.edit(qtCustomerComplainDTO);
         }
+        //调用oa流程
+        startOaFlow(qtCustomerComplainDTO,customerComplain);
         return Boolean.TRUE;
     }
 
@@ -402,6 +410,102 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
         }
         return currentMax;
+    }
+    private void startOaFlow(QtCustomerComplainDTO dto,QtCustomerComplain qtCustomerComplain){
+        //调用oa创建流程
+        OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
+        workflowDTO.setWorkflowId("151");
+        workflowDTO.setRequestName("客诉处理审批");
+        //主要数据
+        List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
+        //审批发起人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPFQR,SecurityUtils.getUser().getUserId().toString()));
+        //客诉单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KSDH,qtCustomerComplain.getCode()));
+        //标题
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KSBT,dto.getTitle()));
+        //问题描述
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,dto.getDescription()));
+        //投诉客户
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSKH,dto.getComplainCustomerName()));
+        //投诉日期
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSRQ,dto.getComplainDate().toString()));
+        //投诉接收人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSJSR,dto.getComplainReceiverName()));
+        //投诉创建人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJR,qtCustomerComplain.getCreateName()));
+        //投诉创建时间
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJSJ,qtCustomerComplain.getCreateTime().toString()));
+        //投诉类型
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSLX,qtCustomerComplain.getComplainTypeName()));
+        //处理人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLR,qtCustomerComplain.getDealManName()));
+        //处理方式
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLFS,qtCustomerComplain.getDealWay().toString()));
+        //备注
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BZ,dto.getNote()));
+        //审批人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPR,dto.getApproveMan().toString()));
+        //抄送人
+        if (CollUtil.isNotEmpty(dto.getManList())){
+            List<Long> userIds = dto.getManList().stream().map(QtCarbonCopyManDTO::getUserId).collect(Collectors.toList());
+            String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS,ids));
+        }
+        workflowDTO.setMainData(mainDataList);
+        //详细数据
+        List<OaWorkFlowDetailObjDTO> detailDataList = Lists.newArrayList();
+        OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
+        oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL1);
+
+        List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
+        //获取客诉明细数据
+        List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>()
+                .eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplain.getId()));
+        if (CollUtil.isNotEmpty(list)){
+            list.forEach(detail ->{
+                OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+                List<OaWorkFlowNameValueDTO> valueDTOS = Lists.newArrayList();
+                //箱号
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_XH,detail.getCaseNo()));
+                //生产批次号
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SCPCH,detail.getBatchNo()));
+                //物料名称
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WLMC,detail.getMaterialName()));
+                //物料编码
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WLBM,detail.getMaterialCode()));
+                //发货数量
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_FHSL,detail.getDeliverQuantity().toString()));
+                //投诉数量
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSSL,detail.getComplainQuantity().toString()));
+                //上线数量
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SXSL,detail.getOnlineQuantity().toString()));
+                //不良率
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLL,detail.getDefectRate().toString()));
+                //抽检数量
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSL,detail.getSpotQuantity().toString()));
+                //抽检率
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJL,detail.getSpotRate().toString()));
+                //勘察确认时间
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRRQ,detail.getSurveyDate().toString()));
+                //不良判断依据
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLPDYJ,detail.getBadJudgeBasis().toString()));
+                //勘察确认详细结果
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRXXJG,detail.getSurveyResult()));
+                //勘察确认初步结论
+                valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRCBJ,detail.getSurveyConclusion()));
+                oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(valueDTOS);
+                workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
+            });
+        }
+        oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
+        detailDataList.add(oaWorkFlowDetailObjDTO);
+        workflowDTO.setDetailData(detailDataList);
+        //调用
+        OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
+            throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+        }
     }
 }
 
