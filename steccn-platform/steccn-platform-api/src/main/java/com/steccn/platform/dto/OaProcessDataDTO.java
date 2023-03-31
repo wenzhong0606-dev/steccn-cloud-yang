@@ -78,4 +78,19 @@ public class OaProcessDataDTO implements Serializable {
      * 附件列表
      */
     private String appendixList;
+
+    /**
+     * 节点id
+     */
+    private String nodeId;
+
+    /**
+     * 节点名字
+     */
+    private String nodeName;
+
+    /**
+     * 节点类型
+     */
+    private String nodeType;
 }
