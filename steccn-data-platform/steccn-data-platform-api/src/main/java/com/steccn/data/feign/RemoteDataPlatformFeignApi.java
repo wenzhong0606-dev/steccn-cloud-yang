@@ -5,6 +5,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.EpMeterCollectDTO;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
@@ -75,4 +76,16 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/warehouse/report/work/preload")
     @ApiOperation("生产管理-报工数值预填")
     R<BigDecimal> preload(@RequestBody PmReportWorkPreloadDTO dto);
+
+
+    /**
+     * 迁移数据
+     *
+     * @param dto dto
+     * @return 迁移数据
+     */
+    @PostMapping("/feign/data/warehouse/deal/data")
+    @ApiOperation("迁移数据")
+    R<Boolean> dealData(@RequestBody List<EpMeterCollectDTO> list);
+
 }

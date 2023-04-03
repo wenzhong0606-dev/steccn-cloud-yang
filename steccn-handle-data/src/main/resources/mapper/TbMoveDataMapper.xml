@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.data.mapper.TbMoveDataMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.data.domain.TbMoveData">
+            <id property="id" column="id" jdbcType="OTHER"/>
+            <result property="start" column="start" jdbcType="TIMESTAMP"/>
+            <result property="end" column="end" jdbcType="TIMESTAMP"/>
+            <result property="flag" column="flag" jdbcType="SMALLINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,start,end,
+        flag
+    </sql>
+</mapper>
