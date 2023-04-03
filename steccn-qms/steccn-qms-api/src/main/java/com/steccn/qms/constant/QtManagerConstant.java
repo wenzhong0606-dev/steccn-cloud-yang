@@ -641,6 +641,78 @@ public interface QtManagerConstant {
     String WORKFLOW_D1CLR = "d1clr";
 
     /**
+     * D2处理人
+     */
+    String WORKFLOW_D2CLR = "d2clr";
+
+    /**
+     * d2 结论
+     */
+    String WORKFLOW_J2 = "j2";
+
+    /**
+     * D3处理人
+     */
+    String WORKFLOW_D3CLR = "d3clr";
+
+    /**
+     * d3结论
+     */
+    String WORKFLOW_J3 = "j3";
+
+    /**
+     * D4处理人
+     */
+    String WORKFLOW_D4CLR = "d4clr";
+
+    /**
+     * d4 结论
+     */
+    String WORKFLOW_J4 = "j4";
+
+    /**
+     * d5处理人
+     */
+    String WORKFLOW_D5CLR = "d5clr";
+    /**
+     * d5结论
+     */
+    String WORKFLOW_J5 = "j5";
+
+    /**
+     * D6处理人
+     */
+    String WORKFLOW_D6CLR ="d6clr";
+
+
+    /**
+     * d6结论
+     */
+    String WORKFLOW_J6 = "j6";
+
+    /**
+     * D7处理人
+     */
+    String WORKFLOW_D7CLR ="d7clr";
+
+
+    /**
+     * d6结论
+     */
+    String WORKFLOW_J7 = "j7";
+
+
+    /**
+     * D8 审批人
+     */
+    String WORKFLOW_D8SPR ="d8spr";
+
+
+
+    /**
+     * d6
+     */
+    /**
      * 关联不合格品处理
      */
     String WORKFLOW_GLBHGPCL = "glbhgpcl";

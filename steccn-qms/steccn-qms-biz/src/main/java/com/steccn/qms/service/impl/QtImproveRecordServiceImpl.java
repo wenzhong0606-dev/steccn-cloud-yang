@@ -357,7 +357,70 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         detail.setApproverConclusion(dto.getApproverConclusion());
         qtImproveRecordDetailService.updateById(detail);
         record.setStatus(QtManagerConstant.NUM_9);
-        return updateById(record);
+        updateById(record);
+        //调用OA创建审批流程
+        OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
+        workFlowParamDTO.setWorkflowId("154");
+        workFlowParamDTO.setRequestName("整改结案审批启动");
+        //主要数据
+        List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
+        //审批发起人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPFQR,SecurityUtils.getUser().getUserId().toString()));
+        //整改单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGDH,record.getImproveOrder()));
+        //整改标题
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT,record.getTitle()));
+        //描述
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,record.getDescription()));
+        //创建人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR,SecurityUtils.getUser().getName()));
+        //创建时间
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ,LocalDateTime.now().toString()));
+        //整改启动审批人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR,record.getStartApproverId().toString()));
+        //D1处理人 - D7 处理人
+        List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
+        list.forEach( recordDetail ->{
+            if (QtManagerConstant.ImproveProgressStatus.D1_CREATE.getName().equals(recordDetail.getApproverStep())){
+                //d1
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR,recordDetail.getApproverName()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D2_CLEAR_PROBLEM.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D2CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J2,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D3_COUNTERMEASURE.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D3CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J3,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D4_REASON_ANALYSIS.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D4CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J4,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D5CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J5,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D6_CORRECTIVE_ACTION_VERIFICATION.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D6CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J6,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D7_PREVENT_RECURRENCE.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D7CLR,recordDetail.getApproverName()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_J7,recordDetail.getApproverConclusion()));
+            }else if (QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName().equals(recordDetail.getApproverStep())){
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D8SPR,recordDetail.getApproverId().toString()));
+            }
+        });
+        //关联不合格品处理/关联客诉
+
+        //抄送人数据
+        if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())){
+            List<Long> userIds =dto.getCarbonCopyManList().stream().map(QtCarbonCopyManDTO::getUserId).collect(Collectors.toList());
+            String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS,ids));
+        }
+        workFlowParamDTO.setMainData(mainDataList);
+        //调用
+        OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
+            throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+        }
+        return Boolean.TRUE;
     }
 
 
