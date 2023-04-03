@@ -15,6 +15,7 @@ import com.steccn.data.service.TbMoveDataService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/handle/")
+@Slf4j
 public class TestController {
 
     private final EpMeterCollectService epMeterCollectService;
@@ -53,21 +55,27 @@ public class TestController {
         List<TupleDTO<LocalDateTime, LocalDateTime>> shard = shard(start, end);
         for (TupleDTO<LocalDateTime, LocalDateTime> tupleDTO : shard) {
             pool.execute(() -> {
-                List<EpMeterCollect> resList = epMeterCollectService.list(new LambdaQueryWrapper<EpMeterCollect>()
-                        .ge(EpMeterCollect::getRecordTime, tupleDTO.getField1())
-                        .lt(EpMeterCollect::getRecordTime, tupleDTO.getField2()));
-                if (CollUtil.isNotEmpty(resList)) {
-                    List<EpMeterCollectDTO> epMeterCollects = BeanUtil.copyToList(resList, EpMeterCollectDTO.class);
-                    Boolean flag = FeignOptional.of(() -> remoteDataPlatformFeignApi.dealData(epMeterCollects), "服务不可用").get();
-                    if (flag) {
-                        //保存结果到存储中
-                        TbMoveData tbMoveData = new TbMoveData();
-                        tbMoveData.setStartTime(tupleDTO.getField1());
-                        tbMoveData.setEndTime(tupleDTO.getField2());
-                        tbMoveData.setFlag(1);
-                        tbMoveData.setCountSum(resList.size());
-                        tbMoveDataService.save(tbMoveData);
+                try {
+                    log.info("开始时间 -> {} 结束时间 -> {} START",tupleDTO.getField1(),tupleDTO.getField2());
+                    List<EpMeterCollect> resList = epMeterCollectService.list(new LambdaQueryWrapper<EpMeterCollect>()
+                            .ge(EpMeterCollect::getRecordTime, tupleDTO.getField1())
+                            .lt(EpMeterCollect::getRecordTime, tupleDTO.getField2()));
+                    if (CollUtil.isNotEmpty(resList)) {
+                        List<EpMeterCollectDTO> epMeterCollects = BeanUtil.copyToList(resList, EpMeterCollectDTO.class);
+                        Boolean flag = FeignOptional.of(() -> remoteDataPlatformFeignApi.dealData(epMeterCollects), "服务不可用").get();
+                        if (flag) {
+                            //保存结果到存储中
+                            TbMoveData tbMoveData = new TbMoveData();
+                            tbMoveData.setStartTime(tupleDTO.getField1());
+                            tbMoveData.setEndTime(tupleDTO.getField2());
+                            tbMoveData.setFlag(1);
+                            tbMoveData.setCountSum(resList.size());
+                            tbMoveDataService.save(tbMoveData);
+                        }
                     }
+                    log.info("开始时间 -> {} 结束时间 -> {} END",tupleDTO.getField1(),tupleDTO.getField2());
+                }catch (Exception e){
+                    log.error(e.getLocalizedMessage());
                 }
             });
         }
