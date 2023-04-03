@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
 import com.steccn.qms.domain.QtCustomerComplain;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -58,4 +60,12 @@ public interface QtCustomerComplainService extends IService<QtCustomerComplain> 
      * @return
      */
     Boolean delete(Long id);
+
+
+    /**
+     * 审批确认
+     * @param dto
+     * @return
+     */
+    Boolean approve(OaProcessNotifyDTO dto);
 }

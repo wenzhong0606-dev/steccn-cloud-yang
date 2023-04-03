@@ -41,7 +41,9 @@ public interface SysMsgConstant {
         CUSTOMER_COMPLAIN(5,"客诉待处理",MsgCategoryEnum.SYS_REMIND.code,"客户: %s \r\n投诉类型: %s\r\n客诉标题: %s"),
         DEFECT_PRODUCT(6,"不合格品待处理",MsgCategoryEnum.SYS_REMIND.code,"标题: %s \r\n问题描述: %s\r\n检验类型: %s"),
         IMPROVE_RECORD_PENDING(7,"整改待处理",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n"),
-        IMPROVE_RECORD_SEND_BACK(8,"整改退回",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n");
+        IMPROVE_RECORD_SEND_BACK(8,"整改退回",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n"),
+        CUSTOMER_COMPLAIN_APPROVE(9,"客诉审批通过",MsgCategoryEnum.SYS_REMIND.code,"客户: %s \r\n投诉类型: %s\r\n客诉标题: %s"),
+        SEND_BACK(10,"流程实例标题",MsgCategoryEnum.TO_BE_DO.code,"发起人：%s");
 
         private Integer code;
         private String title;

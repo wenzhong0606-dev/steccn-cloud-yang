@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -103,6 +104,9 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         //2.1生产领料单业务
         if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
             requisition(dto);
+        }
+        //2.2客诉业务
+        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.CUSTOMER_COMPLAIN.getWorkflowId().toString())){
         }
 
         return save(model);

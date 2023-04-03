@@ -20,6 +20,8 @@ public interface WebsocketConstant {
         RECIPE_REFRESH(2, "配方版本刷新通知"),
         REQUISITION(3,"领料单刷新");
 
+
+
         private Integer type;
         private String name;
     }

@@ -19,14 +19,16 @@ import com.steccn.oa.dto.OaWorkFlowParamDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.qms.constant.QtManagerConstant;
-import com.steccn.qms.controller.QtImproveRecordApproveDTO;
+import com.steccn.qms.dto.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.service.QtImproveProgresssService;
@@ -50,7 +52,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -78,6 +79,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     private final RemoteMessFeignApi remoteMesFeignApi;
 
     private final OaInfoService oaInfoService;
+
+    private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
 
 
     @Override
@@ -195,6 +198,15 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
                 throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+            }
+            //保存oa数据与流程关联
+            ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
+            processBusiLinkDTO.setBusiId(qtImproveRecord.getId());
+            processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
+            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE.getCode());
+            Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean){
+                throw new BusinessException("调用保存业务数据失败");
             }
         } finally {
             lock.unlock();
@@ -419,6 +431,15 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
             throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+        }
+        //保存oa数据与流程关联
+        ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
+        processBusiLinkDTO.setBusiId(record.getId());
+        processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
+        processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE.getCode());
+        Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (!aBoolean){
+            throw new BusinessException("调用保存业务数据失败");
         }
         return Boolean.TRUE;
     }

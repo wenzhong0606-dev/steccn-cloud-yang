@@ -22,9 +22,11 @@ import com.steccn.oa.dto.OaWorkFlowParamDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -81,6 +83,9 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final QtImproveRecordService qtImproveRecordService;
+
+    private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
+
 
 
     @Override
@@ -328,6 +333,15 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
             throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+        }
+        //保存oa数据与流程关联
+        ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
+        processBusiLinkDTO.setBusiId(qtDefectProduct.getId());
+        processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
+        processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+        Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        if (!aBoolean){
+            throw new BusinessException("调用保存业务数据失败");
         }
         return  updateById(qtDefectProduct);
     }
