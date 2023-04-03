@@ -20,11 +20,17 @@
         create_time
     </sql>
     <select id="collectDetail" resultType="com.steccn.data.vo.DwDefectCollectVO">
-        select * from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
+        select line,defect_type,sum(defect_count) as defect_count ,
+        concat(to_char(product_time,'yyyy-MM-dd HH24'),':00:00') as product_time
+        from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
         where dc.product_time &gt;= '${start}' and dc.product_time &lt; '${end}'
         AND dc.line IN
         <foreach collection="lineSet" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
+        GROUP BY
+        line,
+        defect_type,
+        to_char(product_time,'yyyy-MM-dd HH24')
     </select>
 </mapper>
