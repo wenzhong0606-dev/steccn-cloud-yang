@@ -154,4 +154,10 @@ public class QtCustomerComplainVO {
     private List<QtComplainDefectProgressVO> progressList;
 
 
+    /**
+     * 关联整改
+     */
+    private List<QtImproveRecordVO> improveRecordList;
+
+
 }

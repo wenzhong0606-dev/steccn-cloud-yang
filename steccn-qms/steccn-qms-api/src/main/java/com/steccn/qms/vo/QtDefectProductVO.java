@@ -178,4 +178,10 @@ public class QtDefectProductVO {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+
+    /**
+     * 关联整改
+     */
+    private List<QtImproveRecordVO> improveRecordList;
 }

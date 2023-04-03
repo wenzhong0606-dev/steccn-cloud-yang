@@ -36,9 +36,11 @@ import com.steccn.qms.service.QtComplainDefectImproveManService;
 import com.steccn.qms.service.QtComplainDefectProgressService;
 import com.steccn.qms.service.QtDefectProductService;
 import com.steccn.qms.mapper.QtDefectProductMapper;
+import com.steccn.qms.service.QtImproveRecordService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtComplainDefectProgressVO;
 import com.steccn.qms.vo.QtDefectProductVO;
+import com.steccn.qms.vo.QtImproveRecordVO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +79,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private final OaInfoService oaInfoService;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final QtImproveRecordService qtImproveRecordService;
 
 
     @Override
@@ -360,6 +364,11 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 }
             });
             qtDefectProductVO.setManList(manList);
+        }
+        //获取整改相关内容
+        List<QtImproveRecord> qtImproveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getDefectProductId, id));
+        if (CollUtil.isNotEmpty(qtImproveRecords)){
+            qtDefectProductVO.setImproveRecordList(BeanUtil.copyToList(qtImproveRecords,QtImproveRecordVO.class));
         }
         return qtDefectProductVO;
     }

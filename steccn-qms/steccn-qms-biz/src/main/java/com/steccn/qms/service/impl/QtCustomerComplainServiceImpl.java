@@ -41,6 +41,7 @@ import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtComplainDefectProgressVO;
 import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
+import com.steccn.qms.vo.QtImproveRecordVO;
 import com.steccn.websocket.constant.WebsocketConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private  QtDealWayService qtDealWayService;
 
     private final QtComplainDefectProgressService qtComplainDefectProgressService;
+
+    @Autowired
+    private QtImproveRecordService qtImproveRecordService;
 
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
@@ -243,6 +247,11 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                     .eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
             if (CollUtil.isNotEmpty(progresses)){
                 qtCustomerComplainVO.setProgressList(BeanUtil.copyToList(progresses, QtComplainDefectProgressVO.class));
+            }
+            //获取关联整改内容
+            List<QtImproveRecord> recordList = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCustomerComplainId, customerComplain.getId()));
+            if (CollUtil.isNotEmpty(recordList)){
+                qtCustomerComplainVO.setImproveRecordList(BeanUtil.copyToList(recordList, QtImproveRecordVO.class));
             }
         }
         return qtCustomerComplainVO;
