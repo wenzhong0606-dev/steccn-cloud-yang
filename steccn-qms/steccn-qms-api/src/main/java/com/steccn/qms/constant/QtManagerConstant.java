@@ -407,6 +407,16 @@ public interface QtManagerConstant {
     String WORKFLOW_KSDH = "ksdh";
 
     /**
+     * 整改单号
+     */
+    String WORKFLOW_ZGDH = "zgdh";
+
+    /**
+     * 整改标题
+     */
+    String WORKFLOW_ZGBT = "zgbt";
+
+    /**
      * 客诉标题
      */
     String WORKFLOW_KSBT ="ksbt";
@@ -619,6 +629,26 @@ public interface QtManagerConstant {
      * 抄送人
      */
     String WORKFLOW_CSR = "csr";
+
+    /**
+     * 整改启动审批人
+     */
+    String WORKFLOW_ZGQDSPR = "zgqdspr";
+
+    /**
+     * D1处理人
+     */
+    String WORKFLOW_D1CLR = "d1clr";
+
+    /**
+     * 关联不合格品处理
+     */
+    String WORKFLOW_GLBHGPCL = "glbhgpcl";
+
+    /**
+     * 关联客诉
+     */
+    String WORKFLOW_GLKS  ="glks";
 
 
     /**

@@ -14,10 +14,15 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
+import com.steccn.oa.dto.OaWorkFlowParamDTO;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -71,6 +76,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     private final QtImproveStepManService qtImproveStepManService;
 
     private final RemoteMessFeignApi remoteMesFeignApi;
+
+    private final OaInfoService oaInfoService;
 
 
     @Override
@@ -160,6 +167,35 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveRecordDetail.setApproverId(dto.getD1ApproverId());
             qtImproveRecordDetail.setApproverName(dto.getD1ApproverName());
             qtImproveRecordDetailService.save(qtImproveRecordDetail);
+            //调用OA创建流程
+            OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
+            workFlowParamDTO.setWorkflowId("153");
+            workFlowParamDTO.setRequestName("整改启动审批");
+            //主要数据
+            List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
+            //审批发起人
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPFQR,SecurityUtils.getUser().getUserId().toString()));
+            //整改单号
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGDH,qtImproveRecord.getImproveOrder()));
+            //整改标题
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT,qtImproveRecord.getTitle()));
+            //描述
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS,qtImproveRecord.getDescription()));
+            //创建人
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR,SecurityUtils.getUser().getName()));
+            //创建时间
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ,LocalDateTime.now().toString()));
+            //整改启动审批人
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR,dto.getStartApproverId().toString()));
+            //D1处理人
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR,dto.getD1ApproverId().toString()));
+            //关联不合格品处理/关联客诉
+            workFlowParamDTO.setMainData(mainDataList);
+            //调用
+            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
+                throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+            }
         } finally {
             lock.unlock();
         }
