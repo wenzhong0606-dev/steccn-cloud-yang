@@ -532,16 +532,26 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //                                });
                                 //把巡检的数据放入
                                 List<QtCheckTaskDetail> xunDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, xunTaskIds));
-                                xunDetails.forEach(tmp -> {
-                                    if (tmp.getDefectId() != null) {
-                                        QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(tmp.getDefectId());
-                                        if (defectCounts.get(defectiveItem.getName()) != null) {
-                                            Integer i = defectCounts.get(defectiveItem.getName());
-                                            i = i + 1;
-                                            defectCounts.put(defectiveItem.getName(), i);
+                                List<Integer> defectIds = xunDetails.stream().map(tmp -> tmp.getDefectId()).collect(Collectors.toList());
+                                //去重
+                                defectIds = defectIds.stream().distinct().collect(Collectors.toList());
+                                if(CollUtil.isNotEmpty(defectIds)){
+                                    List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().in(QtDefectiveItem::getId,defectIds));
+                                    Map<Integer, List<QtDefectiveItem>> collectMap = defectiveItems.stream().collect(Collectors.groupingBy(QtDefectiveItem::getId));
+                                    xunDetails.forEach(tmp -> {
+                                        if (tmp.getDefectId() != null) {
+                                            QtDefectiveItem defectiveItem = null;
+                                            if(CollUtil.isNotEmpty(collectMap.get(tmp.getDefectId()))){
+                                                defectiveItem = collectMap.get(tmp.getDefectId()).get(0);
+                                            }
+                                            if (defectCounts.get(defectiveItem.getName()) != null) {
+                                                Integer i = defectCounts.get(defectiveItem.getName());
+                                                i = i + 1;
+                                                defectCounts.put(defectiveItem.getName(), i);
+                                            }
                                         }
-                                    }
-                                });
+                                    });
+                                }
                             }
                             //只统计一次
                             if(point == 1){
@@ -552,33 +562,49 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 chartParam.setCheckType(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
                                 //对应产线
                                 chartParam.setProductLineId(entry3.getKey());
-                                List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+                                List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = Lists.newArrayList();
+                                try {
+                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+                                } catch (Exception e) {
+                                    log.error(e.getMessage());
+                                }
                                 //加入测点数据
                                 if(CollUtil.isNotEmpty(qtCheckTaskDetailReportVOS)){
-                                    qtCheckTaskDetailReportVOS.forEach(tmp->{
-                                        //是当前班次
-                                        if(tmp.getClassId().equals(entry2.getKey())){
-                                            QtDefectiveItem defectiveItem = qtDefectiveItemService.getById(tmp.getDefectId());
-                                            if(defectiveItem != null){
-                                                if (defectCounts.get(defectiveItem.getName()) == null) {
-                                                    Integer res = 1;
-                                                    if (tmp.getDefectNum() != null) {
-                                                        res = tmp.getDefectNum();
-                                                    }
-                                                    defectCounts.put(defectiveItem.getName(), res);
-                                                } else {
-                                                    Integer res = 1;
-                                                    if (tmp.getDefectNum() != null) {
-                                                        res = tmp.getDefectNum();
-                                                    }
-                                                    Integer i = defectCounts.get(defectiveItem.getName());
-                                                    i = i + res;
-                                                    defectCounts.put(defectiveItem.getName(), i);
+                                    //获取所有
+                                    List<Integer> defectIds = qtCheckTaskDetailReportVOS.stream().map(tmp -> tmp.getDefectId()).collect(Collectors.toList());
+                                    //去重
+                                    defectIds = defectIds.stream().distinct().collect(Collectors.toList());
+                                    if(CollUtil.isNotEmpty(defectIds)){
+                                        List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().in(QtDefectiveItem::getId,defectIds));
+                                        Map<Integer, List<QtDefectiveItem>> collectMap = defectiveItems.stream().collect(Collectors.groupingBy(QtDefectiveItem::getId));
+                                        qtCheckTaskDetailReportVOS.forEach(tmp->{
+                                            //是当前班次
+                                            if(tmp.getClassId().equals(entry2.getKey())){
+                                                QtDefectiveItem defectiveItem = null;
+                                                if(CollUtil.isNotEmpty(collectMap.get(tmp.getDefectId()))){
+                                                    defectiveItem = collectMap.get(tmp.getDefectId()).get(0);
                                                 }
+                                                if(defectiveItem != null){
+                                                    if (defectCounts.get(defectiveItem.getName()) == null) {
+                                                        Integer res = 1;
+                                                        if (tmp.getDefectNum() != null) {
+                                                            res = tmp.getDefectNum();
+                                                        }
+                                                        defectCounts.put(defectiveItem.getName(), res);
+                                                    } else {
+                                                        Integer res = 1;
+                                                        if (tmp.getDefectNum() != null) {
+                                                            res = tmp.getDefectNum();
+                                                        }
+                                                        Integer i = defectCounts.get(defectiveItem.getName());
+                                                        i = i + res;
+                                                        defectCounts.put(defectiveItem.getName(), i);
+                                                    }
 
+                                                }
                                             }
-                                        }
-                                    });
+                                        });
+                                    }
                                 }
                                 point = 2;
                             }
