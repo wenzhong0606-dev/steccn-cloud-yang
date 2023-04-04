@@ -1,16 +1,23 @@
 package com.steccn.data.config;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.google.common.collect.Range;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingValue;
+import org.springframework.core.env.Environment;
 
-import java.time.LocalDate;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 分片算法，按月分片
@@ -67,4 +74,24 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
         collection.retainAll(tables);
         return collection;
     }
+
+    private static void executeSql(List<String> sqlList) {
+        Environment env = SpringUtil.getApplicationContext().getEnvironment();
+        try (Connection conn = DriverManager.getConnection(Objects.requireNonNull(env.getProperty("spring.datasource.hikari.jdbc-url")), env.getProperty("spring.datasource.hikari.username"), env.getProperty("spring.datasource.hikari.password"))) {
+            try (Statement st = conn.createStatement()) {
+                conn.setAutoCommit(false);
+                for (String sql : sqlList) {
+                    st.execute(sql);
+                }
+                conn.commit();
+            } catch (Exception ex) {
+                conn.rollback();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
+
 }

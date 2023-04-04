@@ -4,10 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.domain.EpMeterCollect;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.EpMeterCollectDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.domain.PmStationCollect;
+import com.steccn.data.dto.*;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.service.QtDefectCollectService;
@@ -75,6 +73,14 @@ public class DataPlatformFeignController {
     R<Boolean> dealData(@RequestBody List<EpMeterCollectDTO> dto) {
         List<EpMeterCollect> epMeterCollects = BeanUtil.copyToList(dto, EpMeterCollect.class);
         boolean save = epMeterCollectService.saveBatch(epMeterCollects);
+        return R.success(save);
+    }
+
+    @PostMapping("/psc/deal/data")
+    @ApiOperation("迁移数据pm_station_collect")
+    R<Boolean> pmStationCollectDealData(@RequestBody List<PmStationCollectDTO> list){
+        List<PmStationCollect> resList = BeanUtil.copyToList(list, PmStationCollect.class);
+        boolean save = pmStationCollectService.saveBatch(resList);
         return R.success(save);
     }
 
