@@ -422,6 +422,39 @@ public class OaService {
     }
 
     /**
+     * 提交流程
+     * @param dto
+     * @return
+     */
+    public OaWorkflowStatusVO submitWorkFlow(OaWorkFlowSubmitParamDTO dto){
+        OaWorkflowSubmitDTO oaWorkflowSubmitDTO = new OaWorkflowSubmitDTO();
+        BeanUtils.copyProperties(dto,oaWorkflowSubmitDTO);
+        if(CollUtil.isNotEmpty(dto.getMainData())){
+            oaWorkflowSubmitDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
+        }
+        if(Objects.nonNull(dto.getDetailData())){
+            oaWorkflowSubmitDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
+        }
+        if(CollUtil.isNotEmpty(dto.getOtherParams())){
+            oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
+        }
+        String result = oaApi.submitProcess(this.setUserIdHeaders(),oaWorkflowSubmitDTO);
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        //如果是成功则收到成功消息，否则返回错误信息
+        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+        }else {
+            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+            }
+            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+        }
+        return vo;
+    }
+
+    /**
      * 获取流程状态的数量
      * @return
      */
@@ -559,6 +592,20 @@ public class OaService {
         String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
         headers.remove("userid");
         headers.set("userid",userId);
+        return headers;
+    }
+
+    /**
+     * 设置当前用户登录的请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setUserIdHeaders(Long userId){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        RSA rsa = new RSA();
+        System.out.println(SecurityUtils.getUser().getUserId());
+        String userIdStr = rsa.encrypt(null,userId.toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userIdStr);
         return headers;
     }
 

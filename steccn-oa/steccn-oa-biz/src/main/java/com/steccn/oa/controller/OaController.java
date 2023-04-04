@@ -159,6 +159,12 @@ public class OaController {
         return R.success(oaService.createWorkFlow(dto));
     }
 
+    @ApiOperation("提交流程")
+    @PostMapping("/workflow/submitRequest")
+    public R<OaWorkflowStatusVO> submitWorkFlow(@Validated @RequestBody OaWorkFlowSubmitParamDTO dto) {
+        return R.success(oaService.submitWorkFlow(dto));
+    }
+
     @ApiOperation("根据工号工号查询id")
     @GetMapping("/user/id/{workCode}")
     public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode) {

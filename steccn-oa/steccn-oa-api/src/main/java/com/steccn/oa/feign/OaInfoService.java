@@ -138,6 +138,15 @@ public interface OaInfoService {
     R<OaWorkflowStatusVO> createWorkflow(@RequestBody OaWorkFlowParamDTO dto);
 
     /**
+     * 提交流程
+     * @param dto
+     * @return
+     */
+    @ApiOperation("提交流程")
+    @PostMapping("/oa/workflow/submitRequest")
+    R<OaWorkflowStatusVO> submitWorkflow(@RequestBody OaWorkFlowSubmitParamDTO dto);
+
+    /**
      * 根据用户条件查询
      * @param dto
      * @return
