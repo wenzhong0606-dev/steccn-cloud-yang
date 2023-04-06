@@ -400,7 +400,8 @@ public class OaService {
             oaWorkflowDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
         }
         if(Objects.nonNull(dto.getDetailData())){
-            oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
+            //替换反斜杠
+            oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()).replaceAll("\\\\",""));
         }
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
@@ -438,7 +439,8 @@ public class OaService {
             oaWorkflowSubmitDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
         }
         if(Objects.nonNull(dto.getDetailData())){
-            oaWorkflowSubmitDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
+            //替换反斜杠
+            oaWorkflowSubmitDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()).replaceAll("\\\\",""));
         }
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
