@@ -389,6 +389,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     workflowDTO.setDetailData(detailDataList);
                 }
                 workflowDTO.setRequestName("生产领料单审批流程"+requestCode);
+                workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
                 //调用
                 OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                 if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){
