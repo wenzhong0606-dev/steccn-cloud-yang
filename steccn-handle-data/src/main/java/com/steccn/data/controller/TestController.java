@@ -5,17 +5,15 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
-import com.steccn.data.domain.PmStationCollectNew;
 import com.steccn.data.domain.TbMoveData;
 import com.steccn.data.dto.EpMeterCollectDTO;
+import com.steccn.data.dto.PmStationCollectDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.service.EpMeterCollectService;
-import com.steccn.data.service.PmStationCollectNewService;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.service.TbMoveDataService;
 import io.swagger.annotations.Api;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -50,69 +47,82 @@ public class TestController {
     private final TbMoveDataService tbMoveDataService;
     private final PmStationCollectService pmStationCollectService;
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
-    private final PmStationCollectNewService pmStationCollectNewService;
 
-    private final ThreadPoolExecutor pool = new ThreadPoolExecutor(10, 20, 60L, TimeUnit.SECONDS,
+    private final ThreadPoolExecutor pool = new ThreadPoolExecutor(16, 16, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
 
-
-    @GetMapping("/use/data")
-    @ApiOperation(value = "删除数据pm_station_collect")
-    @Transactional(rollbackFor = Exception.class)
-    public void useData(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end) {
+    @GetMapping("/extract/data")
+    @ApiOperation(value = "将pm_station_collect数据提到new表中")
+    public void extractData(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end) {
         List<TupleDTO<LocalDateTime, LocalDateTime>> shard = shard(start, end);
-
         for (TupleDTO<LocalDateTime, LocalDateTime> tupleDTO : shard) {
             pool.execute(() -> {
-                List<PmStationCollect> resList = pmStationCollectService.list(new QueryWrapper<PmStationCollect>()
-                        .select("code, record_time,value,min(id) as id")
-                        .lambda()
-                        .groupBy(Lists.newArrayList(PmStationCollect::getCode, PmStationCollect::getRecordTime, PmStationCollect::getValue))
-                        .ge(PmStationCollect::getRecordTime, tupleDTO.getField1())
-                        .lt(PmStationCollect::getRecordTime, tupleDTO.getField2()));
-                //需要去查询
-                if (CollUtil.isNotEmpty(resList)) {
-                    List<PmStationCollectNew> dbList = BeanUtil.copyToList(resList, PmStationCollectNew.class);
-                    pmStationCollectNewService.saveBatch(dbList);
+                try {
+                    log.info("开始时间 -> {} 结束时间 -> {} START", tupleDTO.getField1(), tupleDTO.getField2());
+                    List<PmStationCollect> dbList = pmStationCollectService.list(new QueryWrapper<PmStationCollect>()
+                                    .select("code, record_time,value ,min(id) as id, min(create_time) as create_time")
+                                    .lambda()
+                                    .groupBy(Lists.newArrayList(PmStationCollect::getCode, PmStationCollect::getRecordTime, PmStationCollect::getValue))
+                                    .ge(PmStationCollect::getRecordTime, tupleDTO.getField1())
+                                    .lt(PmStationCollect::getRecordTime, tupleDTO.getField2()));
+                    if (CollUtil.isNotEmpty(dbList)) {
+                        List<PmStationCollectDTO> modelList = BeanUtil.copyToList(dbList, PmStationCollectDTO.class);
+                        FeignOptional.of(() -> remoteDataPlatformFeignApi.pmStationCollectDealData(modelList), "服务不可用").get();
+                    }
+
+                    log.info("开始时间 -> {} 结束时间 -> {} END", tupleDTO.getField1(), tupleDTO.getField2());
+                } catch (Exception e) {
+                    log.error("error -> {}", e.getLocalizedMessage());
+                    //保存结果到存储中
+                    TbMoveData tbMoveData = new TbMoveData();
+                    tbMoveData.setStartTime(tupleDTO.getField1());
+                    tbMoveData.setEndTime(tupleDTO.getField2());
+                    tbMoveData.setFlag(0);
+                    tbMoveData.setCountSum(0);
+                    tbMoveDataService.save(tbMoveData);
                 }
             });
         }
     }
 
+
     @GetMapping("/remove/data")
-    @ApiOperation(value = "删除数据pm_station_collect")
-    @Transactional(rollbackFor = Exception.class)
+    @ApiOperation(value = "删除数据pm_station_collect,只适用于小规模数据集")
     public void removeData(@RequestParam("start") LocalDateTime start, @RequestParam("end") LocalDateTime end) {
         List<TupleDTO<LocalDateTime, LocalDateTime>> shard = shard(start, end);
 
         for (TupleDTO<LocalDateTime, LocalDateTime> tupleDTO : shard) {
             pool.execute(() -> {
-                log.info("开始时间 -> {} 结束时间 -> {} START", tupleDTO.getField1(), tupleDTO.getField2());
-                List<PmStationCollect> resList = pmStationCollectService.list(new QueryWrapper<PmStationCollect>()
-                        .select("code, record_time,value ,min(id) as id")
-                        .lambda()
-                        .groupBy(Lists.newArrayList(PmStationCollect::getCode, PmStationCollect::getRecordTime, PmStationCollect::getValue))
-                        .ge(PmStationCollect::getRecordTime, tupleDTO.getField1())
-                        .lt(PmStationCollect::getRecordTime, tupleDTO.getField2())
-                        .having("count(1) > 1"));
-                //需要去查询
-                if (CollUtil.isNotEmpty(resList)) {
-                    for (PmStationCollect ele : resList) {
-                        pmStationCollectService.remove(new LambdaQueryWrapper<PmStationCollect>()
-                                .eq(PmStationCollect::getCode, ele.getCode())
-                                .eq(PmStationCollect::getRecordTime, ele.getRecordTime())
-                                .eq(PmStationCollect::getValue, ele.getValue())
-                                .ne(PmStationCollect::getId, ele.getId()));
+                try {
+                    log.info("开始时间 -> {} 结束时间 -> {} START", tupleDTO.getField1(), tupleDTO.getField2());
+                    List<PmStationCollect> resList = pmStationCollectService.list(new QueryWrapper<PmStationCollect>()
+                            .select("code, record_time,value ,min(id) as id")
+                            .lambda()
+                            .groupBy(Lists.newArrayList(PmStationCollect::getCode, PmStationCollect::getRecordTime, PmStationCollect::getValue))
+                            .ge(PmStationCollect::getRecordTime, tupleDTO.getField1())
+                            .lt(PmStationCollect::getRecordTime, tupleDTO.getField2())
+                            .having("count(1) > 1"));
+                    //需要去查询
+                    if (CollUtil.isNotEmpty(resList)) {
+                        for (PmStationCollect ele : resList) {
+                            pmStationCollectService.remove(new LambdaQueryWrapper<PmStationCollect>()
+                                    .eq(PmStationCollect::getCode, ele.getCode())
+                                    .eq(PmStationCollect::getRecordTime, ele.getRecordTime())
+                                    .eq(PmStationCollect::getValue, ele.getValue())
+                                    .ne(PmStationCollect::getId, ele.getId()));
+                        }
+                        //保存结果到存储中
+                        TbMoveData tbMoveData = new TbMoveData();
+                        tbMoveData.setStartTime(tupleDTO.getField1());
+                        tbMoveData.setEndTime(tupleDTO.getField2());
+                        tbMoveData.setFlag(1);
+                        tbMoveData.setCountSum(resList.size());
+                        tbMoveDataService.save(tbMoveData);
                     }
-                    //保存结果到存储中
-                    TbMoveData tbMoveData = new TbMoveData();
-                    tbMoveData.setStartTime(tupleDTO.getField1());
-                    tbMoveData.setEndTime(tupleDTO.getField2());
-                    tbMoveData.setFlag(1);
-                    tbMoveData.setCountSum(resList.size());
-                    tbMoveDataService.save(tbMoveData);
+                    log.info("开始时间 -> {} 结束时间 -> {} END", tupleDTO.getField1(), tupleDTO.getField2());
+                } catch (Exception e) {
+                    log.error("error -> {}", e.getLocalizedMessage());
                 }
-                log.info("开始时间 -> {} 结束时间 -> {} END", tupleDTO.getField1(), tupleDTO.getField2());
             });
         }
     }
@@ -162,7 +172,7 @@ public class TestController {
         List<TupleDTO<LocalDateTime, LocalDateTime>> resList = Lists.newArrayList();
         while (start.isBefore(end)) {
             LocalDateTime resStart = LocalDateTime.from(start);
-            start = start.plusMinutes(1);
+            start = start.plusMinutes(5);
             LocalDateTime resEnd = LocalDateTime.from(start);
             TupleDTO<LocalDateTime, LocalDateTime> tupleDTO = new TupleDTO<>(resStart, resEnd);
             resList.add(tupleDTO);
