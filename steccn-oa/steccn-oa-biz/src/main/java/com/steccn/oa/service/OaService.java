@@ -443,7 +443,7 @@ public class OaService {
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
-        String result = oaApi.submitProcess(this.setUserIdHeaders(),oaWorkflowSubmitDTO);
+        String result = oaApi.submitProcess(this.setUserIdHeaders(dto.getUserId()),oaWorkflowSubmitDTO);
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
