@@ -18,7 +18,7 @@ public interface RemoteProcessBusiLinkFeignApi {
 
     @PostMapping("/feign/process/busi/Link")
     @ApiOperation("保存OA流程关联业务")
-    R<Boolean> add( @RequestBody ProcessBusiLinkDTO processBusiLinkDTO);
+    R<Boolean> add(@RequestBody ProcessBusiLinkDTO processBusiLinkDTO);
 
 
     @GetMapping("/feign/process/busi/Link")

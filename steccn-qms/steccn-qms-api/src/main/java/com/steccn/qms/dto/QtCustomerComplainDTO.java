@@ -123,4 +123,10 @@ public class QtCustomerComplainDTO {
     private Long approveMan;
 
 
+    /**
+     * 客诉详情页url
+     */
+    private String infoUrl;
+
+
 }

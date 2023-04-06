@@ -401,7 +401,7 @@ public class OaService {
         }
         if(Objects.nonNull(dto.getDetailData())){
             //替换反斜杠
-            oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()).replaceAll("\\\\",""));
+            oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
         }
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));

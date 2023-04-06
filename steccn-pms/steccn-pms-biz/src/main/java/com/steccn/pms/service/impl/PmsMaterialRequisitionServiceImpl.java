@@ -295,6 +295,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId())){
                 //调用oa接口调用数据
                 OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
+                workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
                 workflowDTO.setWorkflowId("131");
 
                 //1、主要数据

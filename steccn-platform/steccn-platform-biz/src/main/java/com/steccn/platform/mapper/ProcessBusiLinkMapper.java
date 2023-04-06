@@ -2,6 +2,7 @@ package com.steccn.platform.mapper;
 
 import com.steccn.platform.domain.ProcessBusiLink;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author W10
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2023-04-03 14:19:42
 * @Entity com.steccn.platform.domain.ProcessBusiLink
 */
+@Mapper
 public interface ProcessBusiLinkMapper extends BaseMapper<ProcessBusiLink> {
 
 }

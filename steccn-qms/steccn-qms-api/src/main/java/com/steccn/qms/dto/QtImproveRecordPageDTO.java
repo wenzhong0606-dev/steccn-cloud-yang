@@ -14,6 +14,12 @@ public class QtImproveRecordPageDTO extends BasePageDTO {
 
 
     /**
+     * 整改标题
+     */
+    private String title;
+
+
+    /**
      * 整改单号
      */
     private String improveOrder;

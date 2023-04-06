@@ -1,6 +1,7 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.qms.dto.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.QtImproveRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -83,4 +84,18 @@ public interface QtImproveRecordService extends IService<QtImproveRecord> {
      * @return
      */
     Boolean approve(QtImproveRecordApproveDTO dto);
+
+
+    /**
+     * OA审批回调
+     * @param dto
+     * @return
+     */
+    Boolean approve(OaProcessNotifyDTO dto);
+
+
+    /**
+     * OA结案审批回调
+     */
+    Boolean finishApprove(OaProcessNotifyDTO dto);
 }

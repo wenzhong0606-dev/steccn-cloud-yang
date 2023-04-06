@@ -36,7 +36,7 @@ public interface OaDataConstant {
     /**
      * 流程节点名称
      */
-    String WORKFLOW_APPROVE = " 审批";
+    String WORKFLOW_APPROVE = "审批";
 
 
     @Getter
@@ -57,7 +57,8 @@ public interface OaDataConstant {
 
         DEFECT_PRODUCT(152, "不合格品处理审批流程"),
 
-        IMPROVE_PROGRESS_START(153, "整改启动审批流程"), IMPROVE_PROGRESS_END(154, "整改结案审批流程");
+        IMPROVE_PROGRESS_START(153, "整改启动审批流程"),
+        IMPROVE_PROGRESS_END(154, "整改结案审批流程");
 
 
         private Integer workflowId;

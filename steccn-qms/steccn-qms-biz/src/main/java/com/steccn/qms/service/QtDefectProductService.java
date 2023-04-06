@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.constant.ResultCode;
+import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.qms.domain.QtDefectProduct;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.QtDefectProductDTO;
@@ -59,4 +60,12 @@ public interface QtDefectProductService extends IService<QtDefectProduct> {
      * @return
      */
     QtDefectProductVO get(Long id);
+
+
+    /**
+     * OA审批回调
+     * @param dto
+     * @return
+     */
+    Boolean approve(OaProcessNotifyDTO dto);
 }
