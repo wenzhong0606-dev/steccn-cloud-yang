@@ -39,4 +39,8 @@ public class OaWorkFlowParamDTO implements Serializable {
      * 详情数据
      */
     private List<OaWorkFlowDetailObjDTO> detailData;
+    /**
+     * 用户id
+     */
+    private Long userId;
 }

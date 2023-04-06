@@ -405,7 +405,12 @@ public class OaService {
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
-        String result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
+        String result = "";
+        if(dto.getUserId()!=null){
+            result = oaApi.postProcess(this.setUserIdHeaders(dto.getUserId()),oaWorkflowDTO);
+        }else {
+            result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
+        }
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
