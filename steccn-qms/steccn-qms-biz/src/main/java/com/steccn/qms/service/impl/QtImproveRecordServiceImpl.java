@@ -300,12 +300,6 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
         List<QtImproveRecordDetailVO> detailList = BeanUtil.copyToList(list, QtImproveRecordDetailVO.class);
         qtImproveRecordVO.setDetailList(detailList);
-        list.forEach(qtImproveRecordDetail -> {
-            if (QtManagerConstant.improveProgress.D1_CREATE.getName().equals(qtImproveRecordDetail.getApproverStep())) {
-                qtImproveRecordVO.setStartApproverId(qtImproveRecordDetail.getApproverId());
-                qtImproveRecordVO.setStartApproverName(qtImproveRecordDetail.getApproverName());
-            }
-        });
         //获取进度信息
         List<QtImproveProgresss> progresssList = qtImproveProgresssService.list(new LambdaQueryWrapper<QtImproveProgresss>().eq(QtImproveProgresss::getRecordId, qtImproveRecordVO.getId()));
         qtImproveRecordVO.setProgresssList(BeanUtil.copyToList(progresssList, QtImproveProgressVO.class));

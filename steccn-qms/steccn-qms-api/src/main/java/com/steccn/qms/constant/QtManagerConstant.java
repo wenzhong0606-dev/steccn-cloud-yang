@@ -388,6 +388,13 @@ public interface QtManagerConstant {
      */
     String IMPROVE_ADMINISTRATOR = "improveAdministrator";
 
+
+    /**
+     * 客诉管理员角色编码
+     */
+    String COMPLAINT_MANAGER = " complaintManager";
+
+
     Set<Integer> states = Sets.newHashSet(2,3,4,5,6,7,8);
 
     /**

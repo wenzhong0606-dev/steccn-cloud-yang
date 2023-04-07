@@ -2,6 +2,7 @@ package com.steccn.qms.vo;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import io.swagger.annotations.ApiModel;
@@ -143,6 +144,12 @@ public class QtCustomerComplainVO {
      */
     private String createName;
 
+
+    /**
+     * 创建人
+     */
+    private Long createBy;
+
     /**
      * 创建时间
      */
@@ -159,6 +166,43 @@ public class QtCustomerComplainVO {
      * 关联整改
      */
     private List<QtImproveRecordVO> improveRecordList;
+
+
+
+    /**
+     * 中断按钮是否可见
+     */
+    private Integer suspendFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 退回按钮是否可见
+     */
+    private Integer sendBackFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 审批按钮是否可见
+     */
+    private Integer approveFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 提交按钮是否可见
+     */
+    private Integer submitFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 处理按钮是否可见
+     */
+    private Integer disposeFlag = QtManagerConstant.NUM_0;
+
+    /**
+     * 编辑按钮是否可见
+     */
+    private Integer editFlag = QtManagerConstant.NUM_0;
+
 
 
 }

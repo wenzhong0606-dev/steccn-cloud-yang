@@ -18,6 +18,7 @@ import com.steccn.common.RedisConfig;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
@@ -27,12 +28,15 @@ import com.steccn.platform.dto.OaProcessDataDTO;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.CustomerComplainPageDTO;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
@@ -95,6 +99,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private QtImproveRecordService qtImproveRecordService;
 
     private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
+
+    private final RemoteMessFeignApi remoteMesFeignApi;
 
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
@@ -168,6 +174,20 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getDealWayName);
             }
         }
+
+        //判断当前用户的角色是否是客诉管理员
+        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        if (CollUtil.isNotEmpty(role.getStringList())) {
+            if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
+                //不是整改管理员
+                between.in(QtCustomerComplain::getId,getUserAuthData());
+            }
+        } else {
+            Set<Long> userAuthData = getUserAuthData();
+            if (CollUtil.isNotEmpty(userAuthData)){
+                between.in(QtCustomerComplain::getId, userAuthData);
+            }
+        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -187,6 +207,16 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 officeIds.add(qtCustomerComplainVO.getComplainCustomer());
                 typeIds.add(qtCustomerComplainVO.getComplainType());
                 wayIds.add(qtCustomerComplainVO.getDealWay());
+                //处理按钮权限
+                if (qtCustomerComplainVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
+                    qtCustomerComplainVO.setEditFlag(QtManagerConstant.NUM_1);
+                }
+                if (QtManagerConstant.NUM_1.equals(qtCustomerComplainVO.getStatus())) {
+                    //获取当前登陆人是否有处理按钮的权限
+                   if (qtCustomerComplainVO.getDealMan().equals(SecurityUtils.getUser().getUserId())){
+                       qtCustomerComplainVO.setDisposeFlag(QtManagerConstant.NUM_1);
+                   }
+                }
             });
             Map<Long, String> oaUserMap = FeignOptional.of(() -> oaInfoService.listByIdCh(idList), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -631,6 +661,35 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         }
         return "";
     }
+
+
+    /**
+     * 获取当前用户拥有的数据权限
+     *
+     * @return
+     */
+    private Set<Long> getUserAuthData() {
+        Set<Long> recordIds = Sets.newHashSet();
+        //获取处理人为自己的记录
+        List<QtCustomerComplain> list = list(new LambdaQueryWrapper<QtCustomerComplain>().eq(QtCustomerComplain::getDealMan, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(list)) {
+            recordIds.addAll(list.stream().map(QtCustomerComplain::getId).collect(Collectors.toSet()));
+        }
+        //获取创建人为自己的记录
+        List<QtCustomerComplain> customerComplainList = list(new LambdaQueryWrapper<QtCustomerComplain>().eq(QtCustomerComplain::getCreateBy, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(customerComplainList)) {
+            recordIds.addAll(customerComplainList.stream().map(QtCustomerComplain::getId).collect(Collectors.toSet()));
+        }
+        //获取审批人为自己的记录或者抄送人为自己
+        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
+                .eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser())
+                .eq(QtComplainDefectImproveMan::getBusiType,QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
+        if (CollUtil.isNotEmpty(qtComplainDefectImproveManList)){
+            recordIds.addAll(qtComplainDefectImproveManList.stream().map(QtComplainDefectImproveMan::getBusiId).collect(Collectors.toSet()));
+        }
+        return recordIds;
+    }
+
 
 
 }
