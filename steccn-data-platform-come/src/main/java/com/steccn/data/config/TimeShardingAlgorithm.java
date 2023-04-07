@@ -1,33 +1,38 @@
 package com.steccn.data.config;
 
-import cn.hutool.extra.spring.SpringUtil;
 import com.google.common.collect.Range;
+import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.util.SpringContextHolder;
+import com.steccn.data.mapper.EpMeterCollectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingValue;
-import org.springframework.core.env.Environment;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
 /**
- * 分片算法，按月分片
+ * @desc 分片算法，按月分片
  */
+@Slf4j
 public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDateTime>, RangeShardingAlgorithm<LocalDateTime> {
+
+    /**
+     * 存在的表-需要验证下此方法在应用层面是否线程安全
+     */
+    private Set<String> tableSet;
+    private Boolean isLoad = false;
 
     /**
      * 需要空构造方法
      */
     public TimeShardingAlgorithm() {
+
     }
 
     /**
@@ -44,7 +49,26 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
      */
     @Override
     public String doSharding(Collection<String> collection, PreciseShardingValue<LocalDateTime> preciseShardingValue) {
-        return buildShardingTable(preciseShardingValue.getLogicTableName(), preciseShardingValue.getValue());
+        if (!isLoad) {
+            tableSet = getTableSet(preciseShardingValue.getLogicTableName());
+            isLoad = true;
+        }
+        String format = preciseShardingValue.getValue().format(DATE_TIME_FORMATTER);
+        String tableName = preciseShardingValue.getLogicTableName() + "_" + format;
+        if (!tableSet.contains(tableName)) {
+            synchronized(preciseShardingValue.getLogicTableName().intern()) {
+                if(!tableSet.contains(tableName)){
+                    String newTable = createTable(preciseShardingValue.getLogicTableName(), "_" + format);
+                    try {
+                        Thread.sleep(5000);
+                    }catch (Exception e){
+                        log.error("{}",e.getLocalizedMessage());
+                    }
+                    tableSet.add(newTable);
+                }
+            }
+        }
+        return tableName;
     }
 
     /**
@@ -61,37 +85,57 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
 
     @Override
     public Collection<String> doSharding(Collection<String> collection, RangeShardingValue<LocalDateTime> rangeShardingValue) {
+        if (!isLoad) {
+            tableSet = getTableSet(rangeShardingValue.getLogicTableName());
+            isLoad = true;
+        }
+        //获取范围属性
         Range<LocalDateTime> valueRange = rangeShardingValue.getValueRange();
         LocalDateTime start = valueRange.lowerEndpoint();
         LocalDateTime end = valueRange.upperEndpoint();
 
-        Collection<String> tables = new ArrayList<>();
+        Collection<String> resTableList = new ArrayList<>();
         while (start.compareTo(end) <= 0) {
-            tables.add(buildShardingTable(rangeShardingValue.getLogicTableName(), start));
+            String tableName = buildShardingTable(rangeShardingValue.getLogicTableName(), start);
+            if (tableSet.contains(tableName)) {
+                resTableList.add(tableName);
+            }
             start = start.plusMonths(1L);
         }
         // collection配置的数据节点表，这里是排除不存在配置中的表
-        collection.retainAll(tables);
+        collection.retainAll(resTableList);
         return collection;
     }
 
-    private static void executeSql(List<String> sqlList) {
-        Environment env = SpringUtil.getApplicationContext().getEnvironment();
-        try (Connection conn = DriverManager.getConnection(Objects.requireNonNull(env.getProperty("spring.datasource.hikari.jdbc-url")), env.getProperty("spring.datasource.hikari.username"), env.getProperty("spring.datasource.hikari.password"))) {
-            try (Statement st = conn.createStatement()) {
-                conn.setAutoCommit(false);
-                for (String sql : sqlList) {
-                    st.execute(sql);
-                }
-                conn.commit();
-            } catch (Exception ex) {
-                conn.rollback();
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    /**
+     * 获取所有的tables
+     *
+     * @param logicTableName
+     * @return
+     */
+    private Set<String> getTableSet(String logicTableName) {
+        EpMeterCollectMapper epMeterCollectMapper = SpringContextHolder.getBean(EpMeterCollectMapper.class);
+        return epMeterCollectMapper.getTableNames(logicTableName + "%");
     }
 
-
-
+    /**
+     * 创建表
+     *
+     * @param suffix 后缀
+     * @return
+     */
+    private String createTable(String logicalTableName, String suffix) {
+        try {
+            EpMeterCollectMapper epMeterCollectMapper = SpringContextHolder.getBean(EpMeterCollectMapper.class);
+            String newTableName = logicalTableName + suffix;
+            epMeterCollectMapper.createTable(newTableName,
+                    newTableName + "_key",
+                    logicalTableName + "_code_time" + suffix,
+                    logicalTableName + "_time_code" + suffix);
+            return newTableName;
+        } catch (Exception e) {
+            log.error("表创建失败，请检查表名是否重复！");
+            throw new BusinessException("表创建失败，请检查表名是否重复！");
+        }
+    }
 }
