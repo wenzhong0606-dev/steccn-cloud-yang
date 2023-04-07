@@ -190,7 +190,7 @@ public class OaController {
 
     @ApiOperation("根据userId查询考勤组")
     @PostMapping("/user/group")
-    public R<Map<Long, List<OaGroupIdAndNameVO>>> getGroupByUser(@RequestBody Set<Long> userId){
+    public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
         return R.success(kqGroupmemberService.findGroupByUserId(userId));
     }
 

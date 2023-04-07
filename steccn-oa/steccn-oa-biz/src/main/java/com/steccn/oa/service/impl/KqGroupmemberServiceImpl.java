@@ -5,6 +5,7 @@ import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.domain.KqGroupmember;
 import com.steccn.oa.dto.OaGroupDTO;
@@ -12,6 +13,7 @@ import com.steccn.oa.service.KqGroupmemberService;
 import com.steccn.oa.mapper.KqGroupmemberMapper;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,20 +32,23 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     private final KqGroupmemberMapper kqGroupmemberMapper;
 
     @Override
-    public Map<Long, List<OaGroupIdAndNameVO>> findGroupByUserId(Set<Long> userId) {
-        Map<Long, List<OaGroupIdAndNameVO>> result = MapUtil.newHashMap();
+    public List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId) {
+        if(CollUtil.isEmpty(userId)){
+            throw new BusinessException("userId不能为空");
+        }
+        List<OaGroupIdAndNameVO> result = Lists.newArrayList();
         MPJLambdaWrapper mpjLambdaWrapper = new MPJLambdaWrapper<OaGroupDTO>()
                 .selectAs(KqGroupmember::getTypevalue,OaGroupDTO::getUserId)
                 .selectAs(KqGroupmember::getGroupid,OaGroupDTO::getGroupId)
                 .selectAs(KqGroup::getGroupname,OaGroupDTO::getGroupName)
                 .leftJoin(KqGroup.class,KqGroup::getId,KqGroupmember::getGroupid)
-                .ne(KqGroupmember::getIsdelete,1);
+                .isNull(KqGroupmember::getIsdelete)
+                .in(KqGroupmember::getTypevalue,userId);
         List<OaGroupDTO> oaGroupDTOS = kqGroupmemberMapper.selectJoinList(OaGroupDTO.class, mpjLambdaWrapper);
         oaGroupDTOS.forEach(tmp -> {
-            if(result.get(tmp.getUserId())==null){
-                result.put(tmp.getUserId(), Lists.newArrayList());
-            }
-            result.get(tmp.getUserId()).add(new OaGroupIdAndNameVO(tmp.getGroupId(),tmp.getGroupName()));
+            OaGroupIdAndNameVO vo = new OaGroupIdAndNameVO();
+            BeanUtils.copyProperties(tmp,vo);
+            result.add(vo);
         });
         return result;
     }

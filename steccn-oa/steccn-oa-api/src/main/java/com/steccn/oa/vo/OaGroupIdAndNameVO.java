@@ -12,8 +12,8 @@ import java.io.Serializable;
  * @date 2023/04/04
  */
 @Data
-@AllArgsConstructor
 public class OaGroupIdAndNameVO implements Serializable {
+    private Long userId;
     private Integer groupId;
     private String groupName;
 }

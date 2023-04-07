@@ -14,5 +14,5 @@ import java.util.Set;
 * @createDate 2023-04-04 11:20:18
 */
 public interface KqGroupmemberService extends IService<KqGroupmember> {
-    Map<Long, List<OaGroupIdAndNameVO>> findGroupByUserId(Set<Long> userId);
+    List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId);
 }
