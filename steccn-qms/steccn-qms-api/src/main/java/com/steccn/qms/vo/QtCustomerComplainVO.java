@@ -2,6 +2,7 @@ package com.steccn.qms.vo;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -116,7 +117,7 @@ public class QtCustomerComplainVO {
     /**
      * 抄送人
      */
-    private Long carbonCopyMan;
+    private List<QtCarbonCopyManDTO> manList;
 
 
     /**

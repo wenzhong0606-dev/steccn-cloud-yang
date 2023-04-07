@@ -299,6 +299,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         BeanUtil.copyProperties(record, qtImproveRecordVO);
         List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
         List<QtImproveRecordDetailVO> detailList = BeanUtil.copyToList(list, QtImproveRecordDetailVO.class);
+        qtImproveRecordVO.setDetailList(detailList);
         list.forEach(qtImproveRecordDetail -> {
             if (QtManagerConstant.improveProgress.D1_CREATE.getName().equals(qtImproveRecordDetail.getApproverStep())) {
                 qtImproveRecordVO.setStartApproverId(qtImproveRecordDetail.getApproverId());
@@ -460,18 +461,21 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTemplate(),qtImproveRecord.getTitle(),qtImproveRecord.getCreateName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
+            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(one.getApproverId()));
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_1);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),qtImproveRecord.getCreateTime()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
-            sysMsgSendDTO.setPushType( SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             //发送消息
             try {
                 Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -506,16 +510,19 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTemplate(),qtImproveRecord.getTitle(),qtImproveRecord.getCreateName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
+            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(one.getApproverId()));
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_8);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),qtImproveRecord.getCreateTime()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType( SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息

@@ -349,6 +349,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             //发送消息
             String content = String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(),defectProduct.getDescription(),defectProduct.getTaskTypeName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(defectProduct.getId());
             sysMsgAdditionDTO.setCode(defectProduct.getCode());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(defectProduct.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
@@ -356,10 +357,12 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             defectProduct.setStatus(QtManagerConstant.NUM_0);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),defectProduct.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType( SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
