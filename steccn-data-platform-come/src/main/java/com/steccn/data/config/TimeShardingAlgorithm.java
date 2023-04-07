@@ -9,7 +9,6 @@ import org.apache.shardingsphere.api.sharding.standard.PreciseShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingValue;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -56,15 +55,10 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
         String format = preciseShardingValue.getValue().format(DATE_TIME_FORMATTER);
         String tableName = preciseShardingValue.getLogicTableName() + "_" + format;
         if (!tableSet.contains(tableName)) {
-            synchronized(preciseShardingValue.getLogicTableName().intern()) {
-                if(!tableSet.contains(tableName)){
-                    String newTable = createTable(preciseShardingValue.getLogicTableName(), "_" + format);
-                    try {
-                        Thread.sleep(5000);
-                    }catch (Exception e){
-                        log.error("{}",e.getLocalizedMessage());
-                    }
-                    tableSet.add(newTable);
+            synchronized (preciseShardingValue.getLogicTableName().intern()) {
+                if (!tableSet.contains(tableName)) {
+                    createTable(preciseShardingValue.getLogicTableName(), "_" + format);
+                    tableSet = getTableSet(preciseShardingValue.getLogicTableName());
                 }
             }
         }

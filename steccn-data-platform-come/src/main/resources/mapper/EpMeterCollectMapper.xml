@@ -17,7 +17,7 @@
         value,create_time
     </sql>
     <update id="createTable">
-        CREATE TABLE "public".${tableName} (
+        CREATE TABLE IF NOT EXISTS "public".${tableName} (
              "id" int8 NOT NULL,
              "code" varchar(50) COLLATE "pg_catalog"."default",
              "record_time" timestamp(6),
@@ -25,14 +25,12 @@
              "create_time" timestamp(6) NOT NULL,
              CONSTRAINT ${idIndex} PRIMARY KEY ("id")
         );
-        ALTER TABLE "public".${tableName}
-            OWNER TO "gpadmin";
-
+        drop index if exists ${indexA};
         CREATE INDEX ${indexA} ON "public".${tableName}  USING btree (
             "code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST,
             "record_time" "pg_catalog"."timestamp_ops" DESC NULLS LAST
             );
-
+        drop index if exists ${indexB};
         CREATE INDEX ${indexB} ON "public".${tableName}  USING btree (
             "record_time" "pg_catalog"."timestamp_ops" DESC NULLS LAST,
             "code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST

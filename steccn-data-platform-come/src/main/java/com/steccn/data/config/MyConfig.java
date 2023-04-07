@@ -12,4 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Configuration
 public class MyConfig {
+
+
+//    CREATE TABLE IF NOT EXISTS
 }

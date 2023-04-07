@@ -4,6 +4,7 @@ import com.google.common.collect.Range;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.util.SpringContextHolder;
 import com.steccn.data.mapper.EpMeterCollectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingAlgorithm;
 import org.apache.shardingsphere.api.sharding.standard.PreciseShardingValue;
 import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
@@ -18,6 +19,7 @@ import java.util.Set;
 /**
  * @desc 分片算法，按月分片
  */
+@Slf4j
 public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDateTime>, RangeShardingAlgorithm<LocalDateTime> {
 
     /**
@@ -54,8 +56,12 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
         String format = preciseShardingValue.getValue().format(DATE_TIME_FORMATTER);
         String tableName = preciseShardingValue.getLogicTableName() + "_" + format;
         if (!tableSet.contains(tableName)) {
-            String newTable = createTable(preciseShardingValue.getLogicTableName(), format);
-            tableSet.add(newTable);
+            synchronized (preciseShardingValue.getLogicTableName().intern()) {
+                if (!tableSet.contains(tableName)) {
+                    createTable(preciseShardingValue.getLogicTableName(), "_" + format);
+                    tableSet = getTableSet(preciseShardingValue.getLogicTableName());
+                }
+            }
         }
         return tableName;
     }
@@ -119,10 +125,11 @@ public class TimeShardingAlgorithm implements PreciseShardingAlgorithm<LocalDate
             String newTableName = logicalTableName + suffix;
             epMeterCollectMapper.createTable(newTableName,
                     newTableName + "_key",
-                    logicalTableName + "code_time" + suffix,
-                    logicalTableName + "time_code" + suffix);
-            return newTableName + suffix;
+                    logicalTableName + "_code_time" + suffix,
+                    logicalTableName + "_time_code" + suffix);
+            return newTableName;
         } catch (Exception e) {
+            log.error("表创建失败，请检查表名是否重复！");
             throw new BusinessException("表创建失败，请检查表名是否重复！");
         }
     }
