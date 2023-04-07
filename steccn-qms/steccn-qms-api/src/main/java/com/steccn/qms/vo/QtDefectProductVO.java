@@ -1,5 +1,6 @@
 package com.steccn.qms.vo;
 
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import lombok.Data;
 
@@ -120,6 +121,9 @@ public class QtDefectProductVO {
      */
     private String dealManName;
 
+
+    private Long createBy;
+
     /**
      * 0-待处理、1-待审批、2-已关闭
      */
@@ -184,4 +188,40 @@ public class QtDefectProductVO {
      * 关联整改
      */
     private List<QtImproveRecordVO> improveRecordList;
+
+
+
+    /**
+     * 中断按钮是否可见
+     */
+    private Integer suspendFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 退回按钮是否可见
+     */
+    private Integer sendBackFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 审批按钮是否可见
+     */
+    private Integer approveFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 提交按钮是否可见
+     */
+    private Integer submitFlag = QtManagerConstant.NUM_0;
+
+
+    /**
+     * 处理按钮是否可见
+     */
+    private Integer disposeFlag = QtManagerConstant.NUM_0;
+
+    /**
+     * 编辑按钮是否可见
+     */
+    private Integer editFlag = QtManagerConstant.NUM_0;
 }

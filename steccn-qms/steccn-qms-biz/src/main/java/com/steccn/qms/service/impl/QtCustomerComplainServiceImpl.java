@@ -211,7 +211,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 if (qtCustomerComplainVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
                     qtCustomerComplainVO.setEditFlag(QtManagerConstant.NUM_1);
                 }
-                if (QtManagerConstant.NUM_1.equals(qtCustomerComplainVO.getStatus())) {
+                if (QtManagerConstant.NUM_0.equals(qtCustomerComplainVO.getStatus())) {
                     //获取当前登陆人是否有处理按钮的权限
                    if (qtCustomerComplainVO.getDealMan().equals(SecurityUtils.getUser().getUserId())){
                        qtCustomerComplainVO.setDisposeFlag(QtManagerConstant.NUM_1);

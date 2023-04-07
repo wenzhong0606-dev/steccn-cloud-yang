@@ -395,6 +395,13 @@ public interface QtManagerConstant {
     String COMPLAINT_MANAGER = " complaintManager";
 
 
+
+    /**
+     * 不合格品管理员角色编码
+     */
+    String DEFECT_PRODUCT_MANAGER = " defectProductManager";
+
+
     Set<Integer> states = Sets.newHashSet(2,3,4,5,6,7,8);
 
     /**
@@ -715,9 +722,6 @@ public interface QtManagerConstant {
     String WORKFLOW_D8SPR ="d8spr";
 
 
-    /**
-     *
-     */
 
 
 

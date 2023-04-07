@@ -29,6 +29,8 @@ import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
 import com.steccn.platform.vo.SysMsgAdditionDTO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.feign.RemoteMessFeignApi;
+import com.steccn.pms.vo.MessScopeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
@@ -86,7 +88,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
 
     private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
 
-
+    private final RemoteMessFeignApi remoteMesFeignApi;
 
     @Override
     public Boolean add(QtDefectProductDTO dto) {
@@ -176,6 +178,20 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getStatus);
             }
         }
+
+        //判断当前用户的角色是否是客诉管理员
+        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        if (CollUtil.isNotEmpty(role.getStringList())) {
+            if (!role.getStringList().contains(QtManagerConstant.DEFECT_PRODUCT_MANAGER)) {
+                //不是整改管理员
+                between.in(QtDefectProduct::getId,getUserAuthData());
+            }
+        } else {
+            Set<Long> userAuthData = getUserAuthData();
+            if (CollUtil.isNotEmpty(userAuthData)){
+                between.in(QtDefectProduct::getId, userAuthData);
+            }
+        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -183,6 +199,21 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         //4.拷贝page信息
         BeanUtil.copyProperties(resPage, page);
         List<QtDefectProductVO> qtCustomerComplainVOList = BeanUtil.copyToList(resPage.getRecords(), QtDefectProductVO.class);
+        if (CollUtil.isNotEmpty(qtCustomerComplainVOList)){
+            qtCustomerComplainVOList.forEach( qtDefectProductVO -> {
+                //处理按钮权限
+                if (qtDefectProductVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
+                    qtDefectProductVO.setEditFlag(QtManagerConstant.NUM_1);
+                }
+                if (QtManagerConstant.NUM_0.equals(qtDefectProductVO.getStatus())) {
+                    //获取当前登陆人是否有处理按钮的权限
+                    if (qtDefectProductVO.getDealMan().equals(SecurityUtils.getUser().getUserId())){
+                        qtDefectProductVO.setDisposeFlag(QtManagerConstant.NUM_1);
+                    }
+                }
+            });
+        }
+
         return page.setRecords(qtCustomerComplainVOList);
     }
 
@@ -517,6 +548,33 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         return Boolean.TRUE;
     }
 
+
+    /**
+     * 获取当前用户拥有的数据权限
+     *
+     * @return
+     */
+    private Set<Long> getUserAuthData() {
+        Set<Long> recordIds = Sets.newHashSet();
+        //获取处理人为自己的记录
+        List<QtDefectProduct> list = list(new LambdaQueryWrapper<QtDefectProduct>().eq(QtDefectProduct::getDealMan, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(list)) {
+            recordIds.addAll(list.stream().map(QtDefectProduct::getId).collect(Collectors.toSet()));
+        }
+        //获取创建人为自己的记录
+        List<QtDefectProduct> customerComplainList = list(new LambdaQueryWrapper<QtDefectProduct>().eq(QtDefectProduct::getCreateBy, SecurityUtils.getUser().getUserId()));
+        if (CollUtil.isNotEmpty(customerComplainList)) {
+            recordIds.addAll(customerComplainList.stream().map(QtDefectProduct::getId).collect(Collectors.toSet()));
+        }
+        //获取审批人为自己的记录或者抄送人为自己
+        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
+                .eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser())
+                .eq(QtComplainDefectImproveMan::getBusiType,QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
+        if (CollUtil.isNotEmpty(qtComplainDefectImproveManList)){
+            recordIds.addAll(qtComplainDefectImproveManList.stream().map(QtComplainDefectImproveMan::getBusiId).collect(Collectors.toSet()));
+        }
+        return recordIds;
+    }
 }
 
 
