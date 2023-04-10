@@ -137,6 +137,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()), qtCustomerComplain.getTitle());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtCustomerComplain.getCode());
+            sysMsgAdditionDTO.setId(qtCustomerComplain.getId());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtCustomerComplain.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
         } finally {
             lock.unlock();
@@ -311,6 +312,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
         sysMsgAdditionDTO.setCode(customerComplain.getCode());
+        sysMsgAdditionDTO.setId(customerComplain.getId());
         sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
         return Boolean.TRUE;
     }
