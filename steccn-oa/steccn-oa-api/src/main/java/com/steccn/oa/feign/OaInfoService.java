@@ -186,6 +186,15 @@ public interface OaInfoService {
      * @return
      */
     @ApiOperation("根据userId查询考勤组")
-    @PostMapping("/user/group")
+    @PostMapping("/feign/oa/user/group")
     R<Map<Long, List<OaGroupIdAndNameVO>>> getGroupByUser(@RequestBody Set<Long> userId);
+
+    /**
+     * 根据id查询用户名
+     * @param id
+     * @return
+     */
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/feign/oa/user/loginid")
+    R<String> getLoginIdById(@RequestParam("id") Integer id);
 }

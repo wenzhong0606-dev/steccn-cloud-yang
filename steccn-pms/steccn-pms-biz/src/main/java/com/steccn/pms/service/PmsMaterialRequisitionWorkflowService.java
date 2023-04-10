@@ -17,4 +17,11 @@ public interface PmsMaterialRequisitionWorkflowService extends IService<PmsMater
      * @return
      */
     Long getIdByRequestId(Long requestId);
+
+    /**
+     * 通过领料单id获取登录token
+     * @param id
+     * @return
+     */
+    String getTokenById(Long id);
 }
