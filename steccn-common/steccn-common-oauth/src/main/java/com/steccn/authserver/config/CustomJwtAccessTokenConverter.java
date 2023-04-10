@@ -31,7 +31,7 @@ public class CustomJwtAccessTokenConverter extends JwtAccessTokenConverter {
                 try {
                     userId = Long.parseLong(String.valueOf(map.get(JwtAdditionConstant.JWT_ADDITION_USERID)));
                     name = (String) map.get(JwtAdditionConstant.JWT_ADDITION_NAME);
-                    String pwStr = (String) map.get("pwStr");
+                    String pwStr = (String) map.get(JwtAdditionConstant.JWT_ADDITION_PW_STR);
                     JSONArray jsonArray = JSONUtil.parseArray(pwStr);
                     permissionArray = new String[jsonArray.size()];
                     for (int i = 0; i < jsonArray.size(); i++) {
