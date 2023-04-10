@@ -55,4 +55,11 @@ public interface HrmresourceService extends IService<Hrmresource> {
      * @return
      */
     List<OaUserIdAndName> getIdByWorkCode(List<String> workCodes);
+
+    /**
+     * 根据id查询用户名
+     * @param id
+     * @return
+     */
+    String getLoginIdById(Integer id);
 }

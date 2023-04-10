@@ -12,6 +12,7 @@ import com.steccn.pms.dto.MaterialRequisitionPageDTO;
 import com.steccn.pms.dto.MaterialRequisitionPlanDTO;
 import com.steccn.pms.service.PmsMaterialRequisitionInfoService;
 import com.steccn.pms.service.PmsMaterialRequisitionService;
+import com.steccn.pms.service.PmsMaterialRequisitionWorkflowService;
 import com.steccn.pms.vo.MaterialRequisitionPlanVO;
 import com.steccn.pms.vo.MaterialRequisitionVO;
 import io.swagger.annotations.ApiOperation;
@@ -40,6 +41,8 @@ public class MaterialRequisitionController {
     private final PmsMaterialRequisitionService pmsMaterialRequisitionService;
 
     private final PmsMaterialRequisitionInfoService pmsMaterialRequisitionInfoService;
+
+    private final PmsMaterialRequisitionWorkflowService pmsMaterialRequisitionWorkflowService;
 
     @ApiOperation("生产领料列表")
     @PostMapping("/list")
@@ -72,6 +75,12 @@ public class MaterialRequisitionController {
     @GetMapping("/{id}")
     public R<MaterialRequisitionVO> get(@PathVariable("id") Long id) {
         return R.success(pmsMaterialRequisitionService.get(id));
+    }
+
+    @ApiOperation("领料单token跳转")
+    @GetMapping("/token/{id}")
+    public R<String> getSsoToken(@PathVariable("id") Long id) {
+        return R.success(pmsMaterialRequisitionWorkflowService.getTokenById(id));
     }
 
     @ApiOperation("领料单审批")

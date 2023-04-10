@@ -13,10 +13,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -60,6 +57,12 @@ public class OaFeignController {
     @PostMapping("/user/group")
     public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
         return R.success(kqGroupmemberService.findGroupByUserId(userId));
+    }
+
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/user/loginid")
+    public R<String> getLoginIdById(@RequestParam("id") Integer id){
+        return R.success(hrmresourceService.getLoginIdById(id));
     }
 
 }
