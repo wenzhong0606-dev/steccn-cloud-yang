@@ -186,11 +186,13 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         Map<Long, List<EpPartitionVO>> partitionLinkChildMap = epPartitionService.allNextChildren(dto.getEnergyId());
         //找到该类型下根据节点分组的全量数据
         Map<Long, EpInstrumentAccountPageVO> partitionInstrumentVOList = Maps.newHashMap();
+        //远传仪表编码
+        Set<String> distantMapCodeSet = Sets.newHashSet();
         instrumentAccountVOS.forEach(s -> {
             partitionInstrumentVOList.put(s.getPartitionNode(), s);
+            distantMapCodeSet.add(s.getDistantMapCode());
         });
-
-        Map<String, LocalDateTime> lastReadTimeMap = Maps.newHashMap();
+        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantMapCodeSet), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
 
         //查询所有非远传仪表编码的最近抄表时间
         Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))

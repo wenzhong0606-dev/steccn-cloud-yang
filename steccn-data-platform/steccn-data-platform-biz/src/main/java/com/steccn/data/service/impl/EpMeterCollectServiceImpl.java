@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.vo.DwEpMeterCollectVO;
@@ -14,15 +15,13 @@ import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import org.apache.commons.compress.utils.Lists;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -36,20 +35,21 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
 
     private final ConcurrentHashMap<String, LocalDateTime> lastRecordTimeMap = new ConcurrentHashMap<>(1024);
 
+    private LocalDateTime lastRecordTime = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+
     @Override
-    public List<DwEpMeterCollectVO> meterRead(List<DwMeterReadDTO> dwList) {
-        Set<DwEpMeterCollectVO> dataCollect = Sets.newHashSet();
-        if (CollUtil.isNotEmpty(dwList)) {
-            List<List<DwMeterReadDTO>> splitList = SplitListUtil.split(dwList, 5);
-            for (List<DwMeterReadDTO> split : splitList) {
-                //批量查询
-                List<EpMeterCollect> dbList = this.baseMapper.batchSearch(split);
-                if (CollUtil.isNotEmpty(dbList)) {
-                    dataCollect.addAll(BeanUtil.copyToList(dbList, DwEpMeterCollectVO.class));
-                }
-            }
+    public DwEpMeterCollectVO meterRead(DwMeterReadDTO dto) {
+        DwEpMeterCollectVO resVo = null;
+        EpMeterCollect one = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, dto.getCode())
+                .between(EpMeterCollect::getRecordTime, LocalDateTime.of(dto.getRecordTime().toLocalDate(), LocalTime.MIN), dto.getRecordTime())
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)) {
+            resVo = new DwEpMeterCollectVO();
+            BeanUtils.copyProperties(one, resVo);
         }
-        return new ArrayList<>(dataCollect);
+        return resVo;
     }
 
     @Override
@@ -65,22 +65,22 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     }
 
     @Override
-    public void addLastRecordTime(List<EpMeterCollect> batchList) {
-        if (CollUtil.isNotEmpty(batchList)) {
-            batchList.forEach(ele -> {
-                lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
-            });
-        }
+    public LocalDateTime getLastRecordTime() {
+        return lastRecordTime;
     }
 
     @Override
     public Boolean refreshLastReadTime(LocalDateTime curTime) {
         List<EpMeterCollect> dbList = list(new QueryWrapper<EpMeterCollect>().select("code, max(record_time) as recordTime")
-                .lambda().ge(EpMeterCollect::getRecordTime, curTime)
+                .lambda()
+                .between(EpMeterCollect::getRecordTime, curTime, LocalDateTime.now())
                 .groupBy(EpMeterCollect::getCode));
         //如果集合不为空
         if (CollUtil.isNotEmpty(dbList)) {
             dbList.forEach(ele -> {
+                if (ele.getRecordTime().isAfter(lastRecordTime)) {
+                    lastRecordTime = ele.getRecordTime();
+                }
                 lastRecordTimeMap.put(ele.getCode(), ele.getRecordTime());
             });
         }

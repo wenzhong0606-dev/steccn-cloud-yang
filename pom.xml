@@ -39,7 +39,7 @@
         <commons-lang.version>2.6</commons-lang.version>
         <lombok.version>1.18.22</lombok.version>
         <validation-api.version>2.0.1.Final</validation-api.version>
-        <mybatis-plus.version>3.2.0</mybatis-plus.version>
+        <mybatis-plus.version>3.4.1</mybatis-plus.version>
         <mysql-connector.version>8.0.17</mysql-connector.version>
         <minio.version>7.0.2</minio.version>
         <spring-cloud-starter-zipkin.version>2.2.6.RELEASE</spring-cloud-starter-zipkin.version>
