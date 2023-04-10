@@ -7,6 +7,7 @@ import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.KqGroupmemberService;
 import com.steccn.oa.service.OaService;
 import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import com.steccn.oa.vo.*;
@@ -18,7 +19,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * oa拦截器
@@ -38,6 +41,8 @@ public class OaController {
     private final HrmresourceService hrmresourceService;
 
     private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
+
+    private final KqGroupmemberService kqGroupmemberService;
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
@@ -159,6 +164,12 @@ public class OaController {
         return R.success(oaService.createWorkFlow(dto));
     }
 
+    @ApiOperation("提交流程")
+    @PostMapping("/workflow/submitRequest")
+    public R<OaWorkflowStatusVO> submitWorkFlow(@Validated @RequestBody OaWorkFlowSubmitParamDTO dto) {
+        return R.success(oaService.submitWorkFlow(dto));
+    }
+
     @ApiOperation("根据工号工号查询id")
     @GetMapping("/user/id/{workCode}")
     public R<Long> getIdByWorkCode(@PathVariable("workCode") String workCode) {
@@ -175,6 +186,12 @@ public class OaController {
     @PostMapping("/user/jobTitle")
     public R<List<OaEmpVO>> getUserByIdByJobTitle(@RequestBody OaHrmDTO dto){
         return R.success(oaService.getHrmSearchResult(dto));
+    }
+
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/user/group")
+    public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
+        return R.success(kqGroupmemberService.findGroupByUserId(userId));
     }
 
     @ApiOperation("查询排班信息")

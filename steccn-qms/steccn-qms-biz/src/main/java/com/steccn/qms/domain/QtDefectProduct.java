@@ -48,7 +48,7 @@ public class QtDefectProduct implements Serializable {
     /**
      * 检验任务类型
      */
-    private Long taskType;
+    private Integer taskType;
 
 
     /**

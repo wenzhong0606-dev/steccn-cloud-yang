@@ -1,4 +1,4 @@
-package com.steccn.qms.controller;
+package com.steccn.qms.dto;
 
 
 import com.steccn.qms.dto.QtCarbonCopyManDTO;

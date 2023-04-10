@@ -141,6 +141,10 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-pms-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-qms-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -179,7 +179,7 @@ public interface OaApi {
     String getToReadWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
 
     /**
-     * 调用oa流程接口
+     * 调用创建oa流程接口
      * @param headers
      * @param dto
      * @return
@@ -188,6 +188,17 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String postProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowDTO dto);
+
+    /**
+     * 调用提交oa流程接口
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/submitRequest",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String submitProcess(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaWorkflowSubmitDTO dto);
 
     /**
      * 调用oa获取人员列表

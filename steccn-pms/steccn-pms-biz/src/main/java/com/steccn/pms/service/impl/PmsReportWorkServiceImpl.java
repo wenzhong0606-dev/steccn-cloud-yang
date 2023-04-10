@@ -239,7 +239,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
 //                }
                 //可用数量必须大于实际数量
                 for (ProcessReportWorkMaterialListDTO materialListDTO : dto.getMaterialConsumeList()) {
-                    if (materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
+                    if (Objects.nonNull(materialListDTO.getQuantity()) && Objects.nonNull(materialListDTO.getAvailableQuantity()) && materialListDTO.getQuantity().compareTo(materialListDTO.getAvailableQuantity()) == 1) {
                         throw new BusinessException("物料消耗实际数量不可以大于可用数量");
                     }
                 }

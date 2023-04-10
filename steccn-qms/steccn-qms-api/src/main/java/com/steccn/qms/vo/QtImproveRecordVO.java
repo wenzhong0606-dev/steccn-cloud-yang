@@ -17,6 +17,12 @@ public class QtImproveRecordVO {
      */
     private Long id;
 
+
+    /**
+     * 整改标题
+     */
+    private String title;
+
     /**
      * 整改单号
      */

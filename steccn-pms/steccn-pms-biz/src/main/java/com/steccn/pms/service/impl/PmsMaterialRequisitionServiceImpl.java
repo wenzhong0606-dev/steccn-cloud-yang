@@ -295,6 +295,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     PmManagerConstant.MATERIAL_REQUISITION_STATUS),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get().getId())){
                 //调用oa接口调用数据
                 OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
+                workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
                 workflowDTO.setWorkflowId("131");
 
                 //1、主要数据
@@ -389,6 +390,7 @@ public class PmsMaterialRequisitionServiceImpl extends ServiceImpl<PmsMaterialRe
                     workflowDTO.setDetailData(detailDataList);
                 }
                 workflowDTO.setRequestName("生产领料单审批流程"+requestCode);
+                workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
                 //调用
                 OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                 if(!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)){

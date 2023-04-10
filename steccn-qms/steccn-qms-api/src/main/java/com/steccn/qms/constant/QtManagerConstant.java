@@ -388,9 +388,371 @@ public interface QtManagerConstant {
      */
     String IMPROVE_ADMINISTRATOR = "improveAdministrator";
 
+
+    /**
+     * 客诉管理员角色编码
+     */
+    String COMPLAINT_MANAGER = " complaintManager";
+
+
+
+    /**
+     * 不合格品管理员角色编码
+     */
+    String DEFECT_PRODUCT_MANAGER = " defectProductManager";
+
+
     Set<Integer> states = Sets.newHashSet(2,3,4,5,6,7,8);
 
+    /**
+     * oa不合格品处理审批发起人
+     */
+    String WORKFLOW_SPFQR = "spfqr";
 
+    /**
+     * 不合格品处理单号
+     */
+    String WORKFLOW_BHGPCLDH = "bhgpcldh";
+
+
+    /**
+     * 客诉处理单号
+     */
+    String WORKFLOW_KSDH = "ksdh";
+
+    /**
+     * 整改单号
+     */
+    String WORKFLOW_ZGDH = "zgdh";
+
+    /**
+     * 整改标题
+     */
+    String WORKFLOW_ZGBT = "zgbt";
+
+    /**
+     * 客诉标题
+     */
+    String WORKFLOW_KSBT ="ksbt";
+
+    /**
+     *  描述
+     */
+    String WORKFLOW_MS = "ms";
+
+    /**
+     * 投诉客户
+     */
+    String WORKFLOW_TSKH ="tskh";
+
+    /**
+     * 投诉日期
+     */
+    String WORKFLOW_TSRQ = "tsrq";
+
+    /**
+     * 投诉接收人
+     */
+    String WORKFLOW_TSJSR = "tsjsr";
+
+    /**
+     * 投诉创建人
+     */
+    String WORKFLOW_TSCJR = "tscjr";
+
+    /**
+     * 投诉创建时间
+     */
+    String WORKFLOW_TSCJSJ = "tscjsj";
+
+    /**
+     * 投诉类型
+     */
+    String WORKFLOW_TSLX =  "tslx";
+
+    /**
+     * 抄送
+     */
+    String WORKFLOW_CS = "cs";
+
+    /**
+     * 箱号
+     */
+    String WORKFLOW_XH = "xh";
+
+    /**
+     * 生产批次号
+     */
+    String WORKFLOW_SCPCH = "scpch";
+
+    /**
+     * 发货数量
+     */
+    String WORKFLOW_FHSL = "fhsl";
+
+    /**
+     * 投诉数量
+     */
+    String WORKFLOW_TSSL = "tssl";
+
+    /**
+     * 上线数量
+     */
+    String WORKFLOW_SXSL = "sxsl";
+
+    /**
+     * 不良率
+     */
+    String WORKFLOW_BLL = "bll";
+
+
+    /**
+     * 抽检数量
+     */
+    String WORKFLOW_CJSL =  "cjsl";
+
+    /**
+     * 抽检率
+     */
+    String WORKFLOW_CJL = "cjl";
+
+    /**
+     * 勘察确认日期
+     */
+    String WORKFLOW_KCQRRQ = "kcqrrq";
+
+    /**
+     * 不良判断依据
+     */
+    String WORKFLOW_BLPDYJ = "blpdyj";
+
+    /**
+     * 勘察确认详细结果
+     */
+    String WORKFLOW_KCQRXXJG = "kcqrxxjg";
+
+
+    /**
+     * 勘察确认初步结论
+     */
+    String WORKFLOW_KCQRCBJ ="kcqrcbj";
+
+    String WORKFLOW_GLZG = "glzg";
+
+    /**
+     * 不合格品处理标题
+     */
+    String WORKFLOW_BHGPCLBT = "bhgpclbt";
+
+    /**
+     * 问题描述
+     */
+    String WORKFLOW_WTMS = "wtms";
+
+    /**
+     * 创建人
+     */
+    String WORKFLOW_CJR = "cjr";
+
+    /**
+     * 创建时间
+     */
+    String WORKFLOW_CJSJ = "cjsj";
+
+    /**
+     * 检验单号
+     */
+    String WORKFLOW_JYDH = "jydh";
+
+    /**
+     * 检验类型
+     */
+    String WORKFLOW_JYLX = "jylx";
+
+    /**
+     * 检验完成人员
+     */
+    String WORKFLOW_JYWCRY = "jywcry";
+
+    /**
+     * 检验完成时间
+     */
+    String WORKFLOW_JYWCSJ = "jywcsj";
+
+    /**
+     * 物料名称
+     */
+    String WORKFLOW_WLMC = "wlmc";
+
+    /**
+     * 物料编码
+     */
+    String WORKFLOW_WLBM = "wlbm";
+
+    /**
+     * 生产订单号
+     */
+    String WORKFLOW_SCDDH = "scddh";
+
+    /**
+     * 供应商
+     */
+    String WORKFLOW_GYS = "gys";
+
+    /**
+     * 样本数量
+     */
+    String WORKFLOW_YBSL = "ybsl";
+
+    /**
+     * 合格数量
+     */
+    String WORKFLOW_HGSL = "hgsl";
+
+    /**
+     * 不合格数量
+     */
+    String WORKFLOW_BHGSL = "bhgsl";
+
+    /**
+     * 处理人
+     */
+    String WORKFLOW_CLR = "clr";
+
+    /**
+     * 处理方式
+     */
+    String WORKFLOW_CLFS = "clfs";
+
+    /**
+     * 处理数量
+     */
+    String WORKFLOW_CLSL = "clsl";
+
+    /**
+     * 备注
+     */
+    String WORKFLOW_BZ = "bz";
+
+    /**
+     * 审批人
+     */
+    String WORKFLOW_SPR = "spr";
+
+    /**
+     * 抄送人
+     */
+    String WORKFLOW_CSR = "csr";
+
+    /**
+     * 整改启动审批人
+     */
+    String WORKFLOW_ZGQDSPR = "zgqdspr";
+
+    /**
+     * D1处理人
+     */
+    String WORKFLOW_D1CLR = "d1clr";
+
+    /**
+     * D2处理人
+     */
+    String WORKFLOW_D2CLR = "d2clr";
+
+    /**
+     * d2 结论
+     */
+    String WORKFLOW_J2 = "j2";
+
+    /**
+     * D3处理人
+     */
+    String WORKFLOW_D3CLR = "d3clr";
+
+    /**
+     * d3结论
+     */
+    String WORKFLOW_J3 = "j3";
+
+    /**
+     * D4处理人
+     */
+    String WORKFLOW_D4CLR = "d4clr";
+
+    /**
+     * d4 结论
+     */
+    String WORKFLOW_J4 = "j4";
+
+    /**
+     * d5处理人
+     */
+    String WORKFLOW_D5CLR = "d5clr";
+    /**
+     * d5结论
+     */
+    String WORKFLOW_J5 = "j5";
+
+    /**
+     * D6处理人
+     */
+    String WORKFLOW_D6CLR ="d6clr";
+
+
+    /**
+     * d6结论
+     */
+    String WORKFLOW_J6 = "j6";
+
+    /**
+     * D7处理人
+     */
+    String WORKFLOW_D7CLR ="d7clr";
+
+
+    /**
+     * d6结论
+     */
+    String WORKFLOW_J7 = "j7";
+
+
+    /**
+     * D8 审批人
+     */
+    String WORKFLOW_D8SPR ="d8spr";
+
+
+
+
+
+    /**
+     * d6
+     */
+    /**
+     * 关联不合格品处理
+     */
+    String WORKFLOW_GLBHGPCL = "glbhgpcl";
+
+    /**
+     * 关联客诉
+     */
+    String WORKFLOW_GLKS  ="glks";
+
+
+    /**
+     * oa不合格品明细表
+     */
+    String WORKFLOW_TABLE_DEFECT_PRODUCT = "formtable_main_373_dt1";
+
+    /**
+     * oa客诉明细表1
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL1 = "formtable_main_372_dt1";
+
+    /**
+     * oa客诉明细表2
+     */
+    String WORKFLOW_TABLE_CUSTOMER_COMPLAIN_DETAIL2 = "formtable_main_372_dt2";
     /**
      * 数字
      */
@@ -506,6 +868,16 @@ public interface QtManagerConstant {
 
         private Integer code;
         private String name;
+
+        public static QtCheckTaskTypeEnum code(Integer code) {
+            for (QtCheckTaskTypeEnum ele : QtCheckTaskTypeEnum.values()) {
+                if (ele.getCode().equals(code)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
+
     }
 
     /**

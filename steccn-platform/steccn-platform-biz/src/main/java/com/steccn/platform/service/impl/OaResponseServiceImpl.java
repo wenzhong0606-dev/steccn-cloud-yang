@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -29,6 +30,9 @@ import com.steccn.platform.vo.MesClassificationVO;
 import com.steccn.platform.vo.OaMaterialVO;
 import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.qms.feign.RemoteCustomerComplainFeignApi;
+import com.steccn.qms.feign.RemoteDefectProductFeignApi;
+import com.steccn.qms.feign.RemoteImproveProgressFeignApi;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
@@ -57,6 +61,12 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final RemoteMesFeignApi remoteMesFeignApi;
     private final RemoteWsFeignApi remoteWsFeignApi;
     private final RemotePmsFeignApi remotePmsFeignApi;
+
+    private final RemoteCustomerComplainFeignApi remoteCustomerComplainFeignApi;
+
+    private final RemoteDefectProductFeignApi remoteDefectProductFeignApi;
+
+    private final RemoteImproveProgressFeignApi remoteImproveProgressFeignApi;
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -104,7 +114,22 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
             requisition(dto);
         }
-
+        //2.2客诉业务
+        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.CUSTOMER_COMPLAIN.getWorkflowId().toString())){
+           FeignOptional.of(() -> remoteCustomerComplainFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        }
+        //2.3不合格品业务
+        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.DEFECT_PRODUCT.getWorkflowId().toString())){
+            FeignOptional.of(() -> remoteDefectProductFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        }
+        //2.4整改启动审批回调
+        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_START.getWorkflowId().toString())){
+            FeignOptional.of(() ->remoteImproveProgressFeignApi.approve(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        }
+        //2.5整改结束审批回调
+        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_END.getWorkflowId().toString())){
+            FeignOptional.of(() ->remoteImproveProgressFeignApi.finishApprove(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        }
         return save(model);
     }
 

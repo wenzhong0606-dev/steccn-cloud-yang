@@ -6,7 +6,9 @@ import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.KqGroupmemberService;
 import com.steccn.oa.service.WorkflowCurrentoperatorService;
+import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * oaFeign
@@ -36,6 +39,8 @@ public class OaFeignController {
 
     private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
 
+    private final KqGroupmemberService kqGroupmemberService;
+
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -49,6 +54,12 @@ public class OaFeignController {
     @PostMapping("/workflow/currentOperator")
     public R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto){
         return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
+    }
+
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/user/group")
+    public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
+        return R.success(kqGroupmemberService.findGroupByUserId(userId));
     }
 
 }

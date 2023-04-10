@@ -106,7 +106,7 @@ public class ProcessReportWorkController {
     @PutMapping
     @ApiOperation("报工编辑")
     @SysLog("报工编辑")
-    public R<Boolean> edit(@RequestBody ProcessReportWorkSubmitDTO dto){
+    public R<Boolean> edit(@Valid @RequestBody ProcessReportWorkSubmitDTO dto){
         return R.success(pmsReportWorkService.edit(dto));
     }
 

@@ -1,9 +1,8 @@
 package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.qms.controller.QtImproveRecordApproveDTO;
+import com.steccn.qms.dto.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.QtImproveStepMan;
-import com.steccn.qms.dto.QtImproveRecordDisposeDTO;
 
 /**
 * @author mengle

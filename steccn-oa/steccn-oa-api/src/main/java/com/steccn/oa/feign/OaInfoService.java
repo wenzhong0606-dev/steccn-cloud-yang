@@ -5,16 +5,14 @@ import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
-import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaOrgDetailVO;
-import com.steccn.oa.vo.OaRosterRecordVO;
-import com.steccn.oa.vo.OaWorkflowStatusVO;
+import com.steccn.oa.vo.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -138,6 +136,15 @@ public interface OaInfoService {
     R<OaWorkflowStatusVO> createWorkflow(@RequestBody OaWorkFlowParamDTO dto);
 
     /**
+     * 提交流程
+     * @param dto
+     * @return
+     */
+    @ApiOperation("提交流程")
+    @PostMapping("/oa/workflow/submitRequest")
+    R<OaWorkflowStatusVO> submitWorkflow(@RequestBody OaWorkFlowSubmitParamDTO dto);
+
+    /**
      * 根据用户条件查询
      * @param dto
      * @return
@@ -172,4 +179,13 @@ public interface OaInfoService {
     @ApiOperation("获取流程当前节点的操作人")
     @PostMapping("/feign/oa/workflow/currentOperator")
     R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto);
+
+    /**
+     * 根据userId查询考勤组
+     * @param userId
+     * @return
+     */
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/user/group")
+    R<Map<Long, List<OaGroupIdAndNameVO>>> getGroupByUser(@RequestBody Set<Long> userId);
 }
