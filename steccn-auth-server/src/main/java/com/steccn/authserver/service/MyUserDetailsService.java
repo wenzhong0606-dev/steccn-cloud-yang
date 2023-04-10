@@ -4,6 +4,8 @@
 package com.steccn.authserver.service;
 
 import cn.hutool.crypto.digest.MD5;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.MD5Utils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.ResultCode;
@@ -18,6 +20,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -48,9 +51,11 @@ public class MyUserDetailsService implements UserDetailsService {
     @Autowired
     private RemoteMessFeignApi remoteMessFeignApi;
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.debug("表单登录用户名:" + username);
         R<OaUserDTO> r = oaInfoService.loadByUsername(username);
         if (Objects.isNull(r) || ResultCode.SUCCESS.getCode() != r.getCode()) {
             throw new UsernameNotFoundException("查无此人");
@@ -59,11 +64,12 @@ public class MyUserDetailsService implements UserDetailsService {
         MessScopeVO scopeVO = remoteMessFeignApi.getScope(username);
         List<String> scope = scopeVO.getStringList();
         String[] permissionArray =  scope.toArray(new String[scope.size()]);
+        stringRedisTemplate.opsForValue().set(userDTO.getUsername(), JSON.toJSONString(permissionArray));
 
         return new SteccnUser(userDTO.getUserId(),
                 userDTO.getName(),
                 userDTO.getUsername(),
                 userDTO.getPassword(),
-                AuthorityUtils.createAuthorityList(permissionArray));
+                AuthorityUtils.createAuthorityList("admin"));
     }
 }
