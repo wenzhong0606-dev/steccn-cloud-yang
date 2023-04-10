@@ -494,9 +494,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        QtCustomerComplain maxCodeModel = getOne(new LambdaQueryWrapper<QtCustomerComplain>().between(QtCustomerComplain::getCreateTime, min, max).orderByDesc(QtCustomerComplain::getCode).last(MpConstant.STR_LIMIT_1));
+        QtCustomerComplain maxCodeModel = getOne(new LambdaQueryWrapper<QtCustomerComplain>().orderByDesc(QtCustomerComplain::getCode).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
