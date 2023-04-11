@@ -49,6 +49,9 @@ public class DwEpEnergyMoneyDTO implements Serializable {
     @ApiModelProperty("单价")
     private BigDecimal price;
 
+    @ApiModelProperty("任务id")
+    private Long taskId;
+
     private static final long serialVersionUID = 1L;
 
 }
