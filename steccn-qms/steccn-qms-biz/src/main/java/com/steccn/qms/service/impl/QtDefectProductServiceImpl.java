@@ -256,14 +256,14 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     @Override
     public Boolean delete(Long id) {
         QtDefectProduct qtDefectProduct = getById(id);
-        Assert.isTrue(Objects.nonNull(qtDefectProduct.getId()), "记录不存在");
+        Assert.isTrue(Objects.nonNull(qtDefectProduct), "记录不存在");
         return removeById(id);
     }
 
     @Override
     public Boolean dispose(QtDefectProductDTO dto) {
         QtDefectProduct qtDefectProduct = getById(dto.getId());
-        Assert.isTrue(Objects.nonNull(qtDefectProduct.getId()), "记录不存在");
+        Assert.isTrue(Objects.nonNull(qtDefectProduct), "记录不存在");
         BeanUtil.copyProperties(dto, qtDefectProduct);
         qtDefectProduct.setStatus(QtManagerConstant.status.APPROVE.getCode());
         List<QtComplainDefectImproveMan> manList = Lists.newArrayList();
