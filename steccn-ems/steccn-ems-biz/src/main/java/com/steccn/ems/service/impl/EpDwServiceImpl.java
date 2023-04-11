@@ -198,7 +198,7 @@ public class EpDwServiceImpl implements EpDwService {
         EpTaskExecute oldTask = epTaskExecuteService.getOne(new LambdaQueryWrapper<EpTaskExecute>().eq(EpTaskExecute::getTaskDate, date)
                 .eq(EpTaskExecute::getType, EpManagerConstant.TaskTypeEnum.TYPE_0.getCode())
                 .last(MpConstant.STR_LIMIT_1));
-        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.ALL_FINISHED.getCode().equals(oldTask.getTaskFlag())) {
+        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.NOT_START.getCode().equals(oldTask.getTaskFlag())) {
             //当前日期的任务已完成
             log.info("当前日期的任务已完成");
             return Boolean.FALSE;
@@ -270,10 +270,11 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter, List<EpDwEnergyPricePlanDTO> priceList) {
+    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter) {
         List<DwEpEnergyMoneyDTO> taskList = Lists.newArrayList();
         if (Objects.nonNull(meter) && Objects.nonNull(date)) {
             //查询当前班次日期有效的能源计费方案明细
+            List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
             if (CollUtil.isNotEmpty(priceList)) {
                 for (EpDwEnergyPricePlanDTO price : priceList) {
                     DwEpEnergyMoneyDTO task = new DwEpEnergyMoneyDTO();
