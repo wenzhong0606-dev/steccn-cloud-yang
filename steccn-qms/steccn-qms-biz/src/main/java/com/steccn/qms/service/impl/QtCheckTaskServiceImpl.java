@@ -281,6 +281,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
+        Assert.notNull(qtCheckTask, "检验记录不存在");
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
         if (qtCheckTask != null) {

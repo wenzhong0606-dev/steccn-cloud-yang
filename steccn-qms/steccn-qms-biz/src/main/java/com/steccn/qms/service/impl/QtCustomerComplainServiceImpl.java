@@ -139,6 +139,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplain.getComplainCustomer()), typeMap.get(qtCustomerComplain.getComplainType()), qtCustomerComplain.getTitle());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtCustomerComplain.getCode());
+            sysMsgAdditionDTO.setId(qtCustomerComplain.getId());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtCustomerComplain.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
         } finally {
             lock.unlock();
@@ -313,6 +314,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
         sysMsgAdditionDTO.setCode(customerComplain.getCode());
+        sysMsgAdditionDTO.setId(customerComplain.getId());
         sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
         return Boolean.TRUE;
     }
@@ -494,9 +496,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //1.定义返回值
         Long currentMax = 0L;
         //2.获取系统最大code
-        LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-        LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        QtCustomerComplain maxCodeModel = getOne(new LambdaQueryWrapper<QtCustomerComplain>().between(QtCustomerComplain::getCreateTime, min, max).orderByDesc(QtCustomerComplain::getCode).last(MpConstant.STR_LIMIT_1));
+        QtCustomerComplain maxCodeModel = getOne(new LambdaQueryWrapper<QtCustomerComplain>().orderByDesc(QtCustomerComplain::getCode).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
