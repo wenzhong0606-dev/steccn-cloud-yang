@@ -1,9 +1,12 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
@@ -12,8 +15,10 @@ import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.domain.EpTaskExecute;
 import com.steccn.ems.dto.DwEpEnergyMoneyDTO;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
@@ -35,10 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,13 +59,14 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpEnergyPricePlanService epEnergyPricePlanService;
     private final EpEnergyMoneyService epEnergyMoneyService;
     private final EpPartitionService epPartitionService;
+    private final EpTaskExecuteService epTaskExecuteService;
     private final TransactionTemplate transactionTemplate;
 
     private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
 
     private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(1000), Executors.defaultThreadFactory());
+            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
 
 
     @Override
@@ -191,16 +194,39 @@ public class EpDwServiceImpl implements EpDwService {
 
     @Override
     public Boolean electricMoney(LocalDate date) {
+        //如果发现date日期任务已完成，则不执行
+        EpTaskExecute oldTask = epTaskExecuteService.getOne(new LambdaQueryWrapper<EpTaskExecute>().eq(EpTaskExecute::getTaskDate, date)
+                .eq(EpTaskExecute::getType, EpManagerConstant.TaskTypeEnum.TYPE_0.getCode())
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.NOT_START.getCode().equals(oldTask.getTaskFlag())) {
+            //当前日期的任务已完成
+            log.info("当前日期的任务已完成");
+            return Boolean.FALSE;
+        }
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
+        //当前有效的计划
+        List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
+        Integer sum = 0 ;
         for (EpDwMeterPartitionDTO meter : meterList) {
-            List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter);
-            log.info("taskList -> {}", taskList);
-            taskList.forEach(ele -> {
-                moneyPool.submit(() -> {
+            //分解出task
+            List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
+            for (DwEpEnergyMoneyDTO ele : taskList) {
+                sum ++;
+                moneyPool.submit(() ->{
                     doMoney(ele);
                 });
-            });
+            }
         }
+        //保存任务条数
+        //如果没有当前任务，则需要插入，如果有当前任务，补偿更新
+        if (Objects.isNull(oldTask)) {
+            oldTask = new EpTaskExecute();
+        }
+        oldTask.setType(EpManagerConstant.TaskTypeEnum.TYPE_0.getCode());
+        oldTask.setTaskDate(date);
+        oldTask.setTaskParam(sum);
+        oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
+        epTaskExecuteService.saveOrUpdate(oldTask);
         return Boolean.TRUE;
     }
 
@@ -244,11 +270,10 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter) {
+    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter, List<EpDwEnergyPricePlanDTO> priceList) {
         List<DwEpEnergyMoneyDTO> taskList = Lists.newArrayList();
         if (Objects.nonNull(meter) && Objects.nonNull(date)) {
             //查询当前班次日期有效的能源计费方案明细
-            List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
             if (CollUtil.isNotEmpty(priceList)) {
                 for (EpDwEnergyPricePlanDTO price : priceList) {
                     DwEpEnergyMoneyDTO task = new DwEpEnergyMoneyDTO();
