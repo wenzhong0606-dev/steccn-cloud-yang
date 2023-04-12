@@ -547,7 +547,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //2.获取系统最大code
         LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
         LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        QtImproveRecord maxCodeModel = getOne(new LambdaQueryWrapper<QtImproveRecord>().between(QtImproveRecord::getCreateTime, min, max).orderByDesc(QtImproveRecord::getImproveOrder).last(MpConstant.STR_LIMIT_1));
+        QtImproveRecord maxCodeModel = getOne(new LambdaQueryWrapper<QtImproveRecord>().orderByDesc(QtImproveRecord::getImproveOrder).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
@@ -677,38 +677,38 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 detailList.add(d2);
                 QtImproveRecordDetail d3 = new QtImproveRecordDetail();
                 d3.setRecordId(dto.getId());
-                d3.setApproverId(dto.getD2Processor());
-                d3.setApproverName(dto.getD2ProcessorName());
+                d3.setApproverId(dto.getD3Processor());
+                d3.setApproverName(dto.getD3ProcessorName());
                 d3.setApproverStep(QtManagerConstant.improveProgress.D3_COUNTERMEASURE.getName());
                 detailList.add(d3);
                 QtImproveRecordDetail d4 = new QtImproveRecordDetail();
                 d4.setRecordId(dto.getId());
-                d4.setApproverId(dto.getD2Processor());
-                d4.setApproverName(dto.getD2ProcessorName());
+                d4.setApproverId(dto.getD4Processor());
+                d4.setApproverName(dto.getD4ProcessorName());
                 d4.setApproverStep(QtManagerConstant.improveProgress.D4_REASON_ANALYSIS.getName());
                 detailList.add(d4);
                 QtImproveRecordDetail d5 = new QtImproveRecordDetail();
                 d5.setRecordId(dto.getId());
-                d5.setApproverId(dto.getD2Processor());
-                d5.setApproverName(dto.getD2ProcessorName());
+                d5.setApproverId(dto.getD5Processor());
+                d5.setApproverName(dto.getD5ProcessorName());
                 d5.setApproverStep(QtManagerConstant.improveProgress.D5_PERMANENT_CORRECTIVE_ACTION_PLAN.getName());
                 detailList.add(d5);
                 QtImproveRecordDetail d6 = new QtImproveRecordDetail();
                 d6.setRecordId(dto.getId());
-                d6.setApproverId(dto.getD2Processor());
-                d6.setApproverName(dto.getD2ProcessorName());
+                d6.setApproverId(dto.getD6Processor());
+                d6.setApproverName(dto.getD6ProcessorName());
                 d6.setApproverStep(QtManagerConstant.improveProgress.D6_CORRECTIVE_ACTION_VERIFICATION.getName());
                 detailList.add(d6);
                 QtImproveRecordDetail d7 = new QtImproveRecordDetail();
                 d7.setRecordId(dto.getId());
-                d7.setApproverId(dto.getD2Processor());
-                d7.setApproverName(dto.getD2ProcessorName());
+                d7.setApproverId(dto.getD7Processor());
+                d7.setApproverName(dto.getD7ProcessorName());
                 d7.setApproverStep(QtManagerConstant.improveProgress.D7_PREVENT_RECURRENCE.getName());
                 detailList.add(d7);
                 QtImproveRecordDetail d8 = new QtImproveRecordDetail();
                 d8.setRecordId(dto.getId());
-                d8.setApproverId(dto.getD2Processor());
-                d8.setApproverName(dto.getD2ProcessorName());
+                d8.setApproverId(dto.getD8Processor());
+                d8.setApproverName(dto.getD8ProcessorName());
                 d8.setApproverStep(QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName());
                 detailList.add(d8);
             }
@@ -749,14 +749,24 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
      * @return
      */
     private QtImproveRecordVO disposeButton(QtImproveRecordVO qtImproveRecordVO) {
-        if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus())) {
+        Long userId = SecurityUtils.getUser().getUserId();
+        Long curApproval = null;
+        if(CollUtil.isNotEmpty(qtImproveRecordVO.getDetailList()) && qtImproveRecordVO.getDetailList().size() >= qtImproveRecordVO.getStatus()){
+            QtImproveRecordDetailVO qtImproveRecordDetailVO = qtImproveRecordVO.getDetailList().get(qtImproveRecordVO.getStatus());
+            curApproval = qtImproveRecordDetailVO.getApproverId();
+        }
+        if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
-        } else if (QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) {
+        } else if ((QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
-        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus())) {
+        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setApproveFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
