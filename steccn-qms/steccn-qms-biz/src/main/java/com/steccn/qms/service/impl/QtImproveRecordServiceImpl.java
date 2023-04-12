@@ -547,7 +547,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //2.获取系统最大code
         LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
         LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        QtImproveRecord maxCodeModel = getOne(new LambdaQueryWrapper<QtImproveRecord>().between(QtImproveRecord::getCreateTime, min, max).orderByDesc(QtImproveRecord::getImproveOrder).last(MpConstant.STR_LIMIT_1));
+        QtImproveRecord maxCodeModel = getOne(new LambdaQueryWrapper<QtImproveRecord>().orderByDesc(QtImproveRecord::getImproveOrder).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {
