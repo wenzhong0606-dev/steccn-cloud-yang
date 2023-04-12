@@ -8,17 +8,17 @@ import java.util.Set;
 
 public interface EpManagerConstant {
     //产品单耗排序字段
-    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "name";
-    String  EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "energyTypeName";
-    String  EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE="standardTypeName";
-    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE ="productTypeName";
-    String  EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS  ="productThickName" ;
-    String  EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
-    String  EP_ENERGY_TYPE_SORT_FIELD_INDATE  = "validStart";
+    String EP_ENERGY_TYPE_SORT_FIELD_STANDARD_NAME = "name";
+    String EP_ENERGY_TYPE_SORT_FIELD_ENERGY_TYPE = "energyTypeName";
+    String EP_ENERGY_TYPE_SORT_FIELD_STANDARD_TYPE = "standardTypeName";
+    String EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_TYPE = "productTypeName";
+    String EP_ENERGY_TYPE_SORT_FIELD_PRODUCT_THICKNESS = "productThickName";
+    String EP_ENERGY_TYPE_SORT_FIELD_UNIT_CONSUMPTION_STANDARD = "unitValue";
+    String EP_ENERGY_TYPE_SORT_FIELD_INDATE = "validStart";
     //仪表名称排序字段
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE = "distantMapCode";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME = "meterName";
-    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME  ="siteName";
+    String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME = "siteName";
     String EP_INSTRUMENT_ACCOUNT_SORT_FIELD_STATUS = "status";
     String EP_INSTRUMENT_ACCOUNT_SORT_METER_READING_TIME = "meterReadingTime";
 
@@ -49,15 +49,16 @@ public interface EpManagerConstant {
      */
     @Getter
     @AllArgsConstructor
-    enum EpProductTypes{
-        SUBSTRATE(0L,"基片"),
-        DEEP_PROCESSING(1L,"深加工");
+    enum EpProductTypes {
+        SUBSTRATE(0L, "基片"),
+        DEEP_PROCESSING(1L, "深加工");
         private Long id;
         private String name;
+
         //根据code查找值
         public static EpProductTypes getProductType(Long id) {
             for (EpProductTypes value : EpProductTypes.values()) {
-                if (value.getId().equals(id)){
+                if (value.getId().equals(id)) {
                     return value;
                 }
             }
@@ -82,6 +83,7 @@ public interface EpManagerConstant {
 
         private Integer code;
         private String name;
+
         //根据code查找值
         public static EpEnergyTypes getByCode(Integer code) {
             for (EpEnergyTypes value : EpEnergyTypes.values()) {
@@ -108,12 +110,12 @@ public interface EpManagerConstant {
     @Getter
     @AllArgsConstructor
     enum EnergyPartitioningTree {
-        POWER_CONSUMPTION_PARTITION(1,"电耗分区"),
-        WATER_CONSUMPTION_PARTITION(2,"水耗分区"),
-        GAS_CONSUMPTION_PARTITION(3,"气耗分区"),
-        FUEL_CONSUMPTION_PARTITION(4,"油耗分区"),
-        GAS_FUEL_CONSUMPTION_PARTITION(5,"气耗/油耗分区"),
-        ENERGY_PARTITION(6,"能耗分区");
+        POWER_CONSUMPTION_PARTITION(1, "电耗分区"),
+        WATER_CONSUMPTION_PARTITION(2, "水耗分区"),
+        GAS_CONSUMPTION_PARTITION(3, "气耗分区"),
+        FUEL_CONSUMPTION_PARTITION(4, "油耗分区"),
+        GAS_FUEL_CONSUMPTION_PARTITION(5, "气耗/油耗分区"),
+        ENERGY_PARTITION(6, "能耗分区");
 
 
         private Integer energyType;
@@ -281,4 +283,34 @@ public interface EpManagerConstant {
             return null;
         }
     }
+
+
+    /**
+     * 任务状态枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum TaskFlagEnum {
+        //未开始
+        NOT_START(0),
+        //所有任务都完成
+        ALL_FINISHED(1);
+        private final Integer code;
+    }
+
+    /**
+     * 任务类型
+     * @see com.steccn.ems.service.impl.EpDwServiceImpl
+     */
+    @Getter
+    @AllArgsConstructor
+    enum TaskTypeEnum {
+        //计算钱
+        TYPE_0(0),
+        //计算读数
+        TYPE_1(1);
+        private final Integer code;
+    }
+
+
 }
