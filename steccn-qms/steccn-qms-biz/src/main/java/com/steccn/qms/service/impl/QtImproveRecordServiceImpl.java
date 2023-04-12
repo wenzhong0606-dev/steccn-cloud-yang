@@ -751,8 +751,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     private QtImproveRecordVO disposeButton(QtImproveRecordVO qtImproveRecordVO) {
         Long userId = SecurityUtils.getUser().getUserId();
         Long curApproval = null;
-        if(CollUtil.isNotEmpty(qtImproveRecordVO.getDetailList()) && qtImproveRecordVO.getDetailList().size() >= qtImproveRecordVO.getStatus()){
-            QtImproveRecordDetailVO qtImproveRecordDetailVO = qtImproveRecordVO.getDetailList().get(qtImproveRecordVO.getStatus());
+        if(CollUtil.isNotEmpty(qtImproveRecordVO.getDetailList()) && qtImproveRecordVO.getDetailList().size() >= qtImproveRecordVO.getStatus() - 1){
+            QtImproveRecordDetailVO qtImproveRecordDetailVO = qtImproveRecordVO.getDetailList().get(qtImproveRecordVO.getStatus() - 2);
             curApproval = qtImproveRecordDetailVO.getApproverId();
         }
         if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
