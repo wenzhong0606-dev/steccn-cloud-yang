@@ -270,11 +270,10 @@ public class EpDwServiceImpl implements EpDwService {
      * @param meter
      * @return
      */
-    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter) {
+    private List<DwEpEnergyMoneyDTO> moneyTask(LocalDate date, EpDwMeterPartitionDTO meter,List<EpDwEnergyPricePlanDTO> priceList) {
         List<DwEpEnergyMoneyDTO> taskList = Lists.newArrayList();
         if (Objects.nonNull(meter) && Objects.nonNull(date)) {
             //查询当前班次日期有效的能源计费方案明细
-            List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
             if (CollUtil.isNotEmpty(priceList)) {
                 for (EpDwEnergyPricePlanDTO price : priceList) {
                     DwEpEnergyMoneyDTO task = new DwEpEnergyMoneyDTO();
