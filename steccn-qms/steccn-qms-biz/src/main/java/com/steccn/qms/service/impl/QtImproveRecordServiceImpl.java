@@ -498,7 +498,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveRecord.setStatus(QtManagerConstant.NUM_10);
             //获取d7的处理人信息
             QtImproveRecordDetail one = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>()
-                            .eq(QtImproveRecordDetail::getRecordId,qtImproveRecord.getId())
+                    .eq(QtImproveRecordDetail::getRecordId,qtImproveRecord.getId())
                     .eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D7_PREVENT_RECURRENCE.getName()));
             //发送消息给处理人
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTemplate(),qtImproveRecord.getTitle(),qtImproveRecord.getCreateName());
@@ -506,6 +506,19 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
             sysMsgAdditionDTO.setId(qtImproveRecord.getId());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(one.getApproverId()));
+
+            //获取d8的处理人信息
+            QtImproveRecordDetail d8Detail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>()
+                    .eq(QtImproveRecordDetail::getRecordId,qtImproveRecord.getId())
+                    .eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName()));
+            //保存D8结案
+            QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
+            qtImproveProgresss.setRecordId(d8Detail.getRecordId());
+            qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.D8_APPROVAL_END_PASS.getName());
+            qtImproveProgresss.setOpTime(LocalDateTime.now());
+            qtImproveProgresss.setOpId(d8Detail.getApproverId());
+            qtImproveProgresss.setOpCreateName(d8Detail.getApproverName());
+            qtImproveProgresssService.save(qtImproveProgresss);
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_8);
@@ -527,7 +540,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 }
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
-                throw new BusinessException("消息发送失败");
+//                throw new BusinessException("消息发送失败");
             }
             return Boolean.TRUE;
         }
