@@ -242,5 +242,14 @@ public interface OaApi {
     @ResponseBody
     String getCompanyByOrg(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaOrgDetailParamDTO dto);
 
-
+    /**
+     * 新建文档
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/doc/save/save",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String saveDoc(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaDocDTO dto);
 }

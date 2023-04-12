@@ -7,8 +7,10 @@ import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.service.HrmresourceService;
 import com.steccn.oa.service.KqGroupmemberService;
+import com.steccn.oa.service.OaService;
 import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaSaveDocVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class OaFeignController {
 
     private final KqGroupmemberService kqGroupmemberService;
 
+    private final OaService oaService;
+
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -63,6 +67,12 @@ public class OaFeignController {
     @GetMapping("/user/loginid")
     public R<String> getLoginIdById(@RequestParam("id") Integer id){
         return R.success(hrmresourceService.getLoginIdById(id));
+    }
+
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/workflow/saveDoc")
+    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
+        return R.success(oaService.saveDoc(url));
     }
 
 }

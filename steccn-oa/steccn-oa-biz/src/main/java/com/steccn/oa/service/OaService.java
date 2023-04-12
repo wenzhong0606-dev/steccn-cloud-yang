@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -572,6 +573,37 @@ public class OaService {
         JSONArray data =  JSONObject.parseObject(result).getJSONObject(OaConstant.OA_JSON_DATA).getJSONArray(OaConstant.OA_JSON_DATA_LIST);
         List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
         return vos;
+    }
+
+    /**
+     * Oa流程跳转文档信息
+     * @param dto
+     * @return
+     */
+    public OaSaveDocVO saveDoc(String url){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        OaDocDTO dto = new OaDocDTO();
+        //默认目录是93
+        dto.setSeccategory(93);
+        dto.setDoccontent("<html>\n" +
+                "<head>\n" +
+                "\t<title></title>\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/weaver/contents.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/copyformatting/styles/copyformatting.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/tableselection/styles/tableselection.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/image2/styles/image2.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/widget/styles/widget.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "</head>\n" +
+                "<body style=\"height: 753px;\">\n" +
+                "<p><a href=\"" +
+                url +
+                "\" target=\"_blank\">百度</a></p>\n" +
+                "</body>\n" +
+                "</html>");
+        dto.setDocSubject("流程跳转"+ RandomUtil.randomString(4));
+        String result = oaApi.saveDoc(headers,dto);
+        OaSaveDocVO oaSaveDocVO = JSONObject.parseObject(result, OaSaveDocVO.class);
+        return oaSaveDocVO;
     }
 
     /**
