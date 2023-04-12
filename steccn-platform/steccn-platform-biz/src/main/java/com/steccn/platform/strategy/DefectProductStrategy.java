@@ -4,11 +4,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
-import com.steccn.pms.feign.RemotePmsFeignApi;
-import com.steccn.qms.feign.RemoteCustomerComplainFeignApi;
 import com.steccn.qms.feign.RemoteDefectProductFeignApi;
-import com.steccn.qms.feign.RemoteImproveProgressFeignApi;
-import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
