@@ -749,14 +749,24 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
      * @return
      */
     private QtImproveRecordVO disposeButton(QtImproveRecordVO qtImproveRecordVO) {
-        if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus())) {
+        Long userId = SecurityUtils.getUser().getUserId();
+        Long curApproval = null;
+        if(CollUtil.isNotEmpty(qtImproveRecordVO.getDetailList()) && qtImproveRecordVO.getDetailList().size() >= qtImproveRecordVO.getStatus()){
+            QtImproveRecordDetailVO qtImproveRecordDetailVO = qtImproveRecordVO.getDetailList().get(qtImproveRecordVO.getStatus());
+            curApproval = qtImproveRecordDetailVO.getApproverId();
+        }
+        if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
-        } else if (QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus()) || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) {
+        } else if ((QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus())
+                || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
-        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus())) {
+        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setApproveFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
