@@ -758,15 +758,11 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         if (QtManagerConstant.NUM_2.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
-        } else if ((QtManagerConstant.NUM_3.equals(qtImproveRecordVO.getStatus())
-                || QtManagerConstant.NUM_4.equals(qtImproveRecordVO.getStatus())
-                || QtManagerConstant.NUM_5.equals(qtImproveRecordVO.getStatus())
-                || QtManagerConstant.NUM_6.equals(qtImproveRecordVO.getStatus())
-                || QtManagerConstant.NUM_7.equals(qtImproveRecordVO.getStatus())) && userId.equals(curApproval)) {
+        } else if ((qtImproveRecordVO.getStatus() <= QtManagerConstant.NUM_8 && qtImproveRecordVO.getStatus() >= QtManagerConstant.NUM_3) && userId.equals(curApproval)) {
             qtImproveRecordVO.setSubmitFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
-        } else if (QtManagerConstant.NUM_8.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
+        } else if (QtManagerConstant.NUM_9.equals(qtImproveRecordVO.getStatus()) && userId.equals(curApproval)) {
             qtImproveRecordVO.setApproveFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSendBackFlag(QtManagerConstant.NUM_1);
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
