@@ -69,7 +69,7 @@ public class OaFeignController {
         return R.success(hrmresourceService.getLoginIdById(id));
     }
 
-    @ApiOperation("根据Id查询用户名")
+    @ApiOperation("保存文档")
     @GetMapping("/workflow/saveDoc")
     public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
         return R.success(oaService.saveDoc(url));

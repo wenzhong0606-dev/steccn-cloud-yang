@@ -203,7 +203,7 @@ public interface OaInfoService {
      * @param url
      * @return
      */
-    @ApiOperation("根据Id查询用户名")
-    @GetMapping("/workflow/saveDoc")
+    @ApiOperation("获取文档id")
+    @GetMapping("/feign/oa/workflow/saveDoc")
     R<OaSaveDocVO> saveDoc(@RequestParam("url") String url);
 }
