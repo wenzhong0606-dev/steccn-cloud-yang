@@ -113,26 +113,6 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         //2、根据工作流id调用对应的业务
 //        OaProcessDataDTO data = dto.getData();
         oaProcessHandler.handler(dto);
-        //2.1生产领料单业务
-//        if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
-//            requisition(dto);
-//        }
-//        //2.2客诉业务
-//        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.CUSTOMER_COMPLAIN.getWorkflowId().toString())){
-//           FeignOptional.of(() -> remoteCustomerComplainFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-//        }
-//        //2.3不合格品业务
-//        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.DEFECT_PRODUCT.getWorkflowId().toString())){
-//            FeignOptional.of(() -> remoteDefectProductFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-//        }
-//        //2.4整改启动审批回调
-//        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_START.getWorkflowId().toString())){
-//            FeignOptional.of(() ->remoteImproveProgressFeignApi.approve(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-//        }
-//        //2.5整改结束审批回调
-//        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_END.getWorkflowId().toString())){
-//            FeignOptional.of(() ->remoteImproveProgressFeignApi.finishApprove(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-//        }
         return save(model);
     }
 

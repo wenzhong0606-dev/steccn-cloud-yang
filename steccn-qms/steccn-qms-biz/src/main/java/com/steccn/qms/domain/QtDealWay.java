@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
@@ -19,6 +20,12 @@ public class QtDealWay implements Serializable {
      */
     @TableId
     private Integer id;
+
+
+    /**
+     * 编码
+     */
+    private Integer code;
 
     /**
      * 类型 0客诉 1不合格品
@@ -51,6 +58,7 @@ public class QtDealWay implements Serializable {
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     /**

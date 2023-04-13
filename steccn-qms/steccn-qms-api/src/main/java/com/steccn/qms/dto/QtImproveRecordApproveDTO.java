@@ -29,4 +29,9 @@ public class QtImproveRecordApproveDTO {
      * d7抄送人
      */
     private List<QtCarbonCopyManDTO> carbonCopyManList;
+
+    /**
+     * oa流程跳转内容
+     */
+    private String infoUrl;
 }

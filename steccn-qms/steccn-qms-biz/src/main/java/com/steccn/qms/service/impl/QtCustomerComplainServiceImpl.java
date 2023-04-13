@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.config.filter.IFilterConfig;
@@ -21,6 +22,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaSaveDocVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
 import com.steccn.platform.constant.OaDataConstant;
 import com.steccn.platform.constant.SysMsgConstant;
@@ -347,7 +349,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //处理进度信息
         QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
         qtComplainDefectProgress.setBusiId(customerComplain.getId());
-        qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.CREATE.getName());
+        qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.DISPOSE.getName());
         qtComplainDefectProgress.setSort(QtManagerConstant.NUM_1);
         qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
         qtComplainDefectProgress.setOpTime(LocalDateTime.now());
@@ -390,6 +392,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             sysMsgAdditionDTO.setId(customerComplain.getId());
             sysMsgAdditionDTO.setCode(customerComplain.getCode());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(customerComplain.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+            //保存进度信息
+            QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+            qtComplainDefectProgress.setBusiId(customerComplain.getId());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVE.getName());
+            qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
+            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+            qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+            qtComplainDefectProgressService.save(qtComplainDefectProgress);
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
             //退回
             customerComplain.setStatus(QtManagerConstant.NUM_0);
@@ -413,6 +424,15 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("消息发送失败");
             }
+            //保存进度信息
+            QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
+            qtComplainDefectProgress.setBusiId(customerComplain.getId());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVAL_RETURN.getName());
+            qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
+            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpTime(LocalDateTime.now());
+            qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
+            qtComplainDefectProgressService.save(qtComplainDefectProgress);
             return Boolean.TRUE;
         }
 
@@ -532,13 +552,16 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //投诉创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJR, qtCustomerComplain.getCreateName()));
         //投诉创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJSJ, qtCustomerComplain.getCreateTime().toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJSJ, LocalDateTimeUtil.format(qtCustomerComplain.getCreateTime(),"yyyy-MM-dd HH:mm:ss").toString()));
         //投诉类型
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSLX, qtCustomerComplain.getComplainTypeName()));
         //处理人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLR, qtCustomerComplain.getDealManName()));
         //处理方式
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLFS, qtCustomerComplain.getDealWay().toString()));
+        QtDealWay dealWay = qtDealWayService.getById(qtCustomerComplain.getDealWay());
+        if (Objects.nonNull(dealWay)) {
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CLFS, dealWay.getCode().toString()));
+        }
         //备注
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BZ, dto.getNote()));
         //审批人
@@ -609,11 +632,11 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords2 = Lists.newArrayList();
         //数据详情
         OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+        //保存url
+        OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+
         List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
-        QtWorkFlowFiledValue qtWorkFlowFiledValue = new QtWorkFlowFiledValue();
-        qtWorkFlowFiledValue.setValue(dto.getInfoUrl());
-        qtWorkFlowFiledValue.setName(qtCustomerComplain.getTitle());
-        urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, JSONObject.toJSONString(qtWorkFlowFiledValue)));
+        urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
         oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
         workflowRequestTableRecords2.add(oaWorkFlowDetailDataListDTO);
         oaWorkFlowDetail2.setWorkflowRequestTableRecords(workflowRequestTableRecords2);
