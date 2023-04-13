@@ -1,16 +1,21 @@
 package com.steccn.authserver.config;
 
+import cn.hutool.core.collection.CollUtil;
 import com.steccn.authserver.constant.JwtAdditionConstant;
 import com.steccn.authserver.util.SteccnUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @description: 配置token内容增强器
@@ -34,6 +39,12 @@ public class JwtTokenEnhancer implements TokenEnhancer {
             info.put(JwtAdditionConstant.JWT_ADDITION_USERID, steccnUser.getUserId());
             info.put(JwtAdditionConstant.JWT_ADDITION_NAME, steccnUser.getName());
             info.put(JwtAdditionConstant.JWT_ADDITION_PW_STR, redisTemplate.opsForValue().get(steccnUser.getUsername()));
+            //临时过度
+            Collection<GrantedAuthority> authorities = steccnUser.getAuthorities();
+            if(CollUtil.isNotEmpty(authorities)){
+                List<String> collect = authorities.stream().map(v -> v.getAuthority()).collect(Collectors.toList());
+                info.put(JwtAdditionConstant.JWT_CONTAIN,collect);
+            }
         }
         ((DefaultOAuth2AccessToken) oAuth2AccessToken).setAdditionalInformation(info);
         return oAuth2AccessToken;
