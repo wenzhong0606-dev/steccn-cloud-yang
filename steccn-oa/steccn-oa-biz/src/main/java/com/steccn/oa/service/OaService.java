@@ -597,7 +597,7 @@ public class OaService {
                 "<body style=\"height: 753px;\">\n" +
                 "<p><a href=\"" +
                 url +
-                "\" target=\"_blank\">百度</a></p>\n" +
+                "\" target=\"_blank\">跳转</a></p>\n" +
                 "</body>\n" +
                 "</html>");
         dto.setDocSubject("流程跳转"+ RandomUtil.randomString(4));
