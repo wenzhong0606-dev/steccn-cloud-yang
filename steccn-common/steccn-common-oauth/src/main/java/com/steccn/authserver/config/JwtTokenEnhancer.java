@@ -39,12 +39,6 @@ public class JwtTokenEnhancer implements TokenEnhancer {
             info.put(JwtAdditionConstant.JWT_ADDITION_USERID, steccnUser.getUserId());
             info.put(JwtAdditionConstant.JWT_ADDITION_NAME, steccnUser.getName());
             info.put(JwtAdditionConstant.JWT_ADDITION_PW_STR, redisTemplate.opsForValue().get(steccnUser.getUsername()));
-            //临时过度
-            Collection<GrantedAuthority> authorities = steccnUser.getAuthorities();
-            if(CollUtil.isNotEmpty(authorities)){
-                List<String> collect = authorities.stream().map(v -> v.getAuthority()).collect(Collectors.toList());
-                info.put(JwtAdditionConstant.JWT_CONTAIN,collect);
-            }
         }
         ((DefaultOAuth2AccessToken) oAuth2AccessToken).setAdditionalInformation(info);
         return oAuth2AccessToken;
