@@ -16,6 +16,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaSaveDocVO;
@@ -517,6 +518,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
             workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
             workFlowSubmitParamDTO.setMainData(mainDataList);
+            workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getId());
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
@@ -525,7 +527,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             //调用oa创建流程
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
             workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
-            workflowDTO.setWorkflowId("152");
+            workflowDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getId());
             workflowDTO.setMainData(mainDataList);
             //详细数据
             List<OaWorkFlowDetailObjDTO>  detailList = Lists.newArrayList();

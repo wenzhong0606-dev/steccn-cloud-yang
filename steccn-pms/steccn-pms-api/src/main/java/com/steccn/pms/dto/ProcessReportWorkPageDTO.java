@@ -74,4 +74,7 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
 
     @ApiModelProperty("产线")
     private Integer productionLineId;
+
+    @ApiModelProperty("班组")
+    private Long teamId;
 }
