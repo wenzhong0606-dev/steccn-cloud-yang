@@ -3,6 +3,7 @@ package com.steccn.qms.dto;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
+import javax.validation.constraints.Size;
 import java.util.List;
 
 
@@ -145,6 +146,7 @@ public class QtImproveRecordDisposeDTO {
     /**
      * 处理结论
      */
+    @Size(min = 0, max = 500, message = "结论长度不能超过 500个字符")
     private String approverConclusion;
 
 
