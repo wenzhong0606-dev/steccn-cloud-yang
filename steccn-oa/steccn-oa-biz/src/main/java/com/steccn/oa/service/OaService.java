@@ -414,7 +414,7 @@ public class OaService {
         }
         String result = "";
         if(dto.getUserId()!=null){
-            result = oaApi.postProcess(this.setUserIdHeaders(dto.getUserId()),oaWorkflowDTO);
+            result = oaApi.postProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowDTO);
         }else {
             result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
         }
@@ -461,7 +461,7 @@ public class OaService {
             oaWorkflowDeleteDetailMapper.deleteComplain1(dto.getRequestId());
             oaWorkflowDeleteDetailMapper.deleteComplain2(dto.getRequestId());
         }
-        String result = oaApi.submitProcess(this.setUserIdHeaders(dto.getUserId()),oaWorkflowSubmitDTO);
+        String result = oaApi.submitProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO);
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
@@ -595,7 +595,7 @@ public class OaService {
 
     /**
      * Oa流程跳转文档信息
-     * @param dto
+     * @param url
      * @return
      */
     public OaSaveDocVO saveDoc(String url){
@@ -655,7 +655,7 @@ public class OaService {
      * 设置当前用户登录的请求头
      * @return
      */
-    public MultiValueMap<String, String> setUserIdHeaders(Long userId){
+    public MultiValueMap<String, String> setUserIdHeadersByFeign(Long userId){
         MultiValueMap<String, String> headers = this.setHeaders();
         RSA rsa = new RSA();
         String userIdStr = rsa.encrypt(null,userId.toString(),null, "utf-8",OaConstant.OA_SPK,false);
