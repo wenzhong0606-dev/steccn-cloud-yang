@@ -20,12 +20,16 @@ public interface RemoteProcessBusiLinkFeignApi {
     @ApiOperation("保存OA流程关联业务")
     R<Boolean> add(@RequestBody ProcessBusiLinkDTO processBusiLinkDTO);
 
-
     @GetMapping("/feign/process/busi/Link")
     @ApiOperation("获取OA流程关联业务数据")
     R<ProcessBusiLinkDTO> get(@RequestParam("instanceId") Integer instanceId);
     @GetMapping("/feign/process/busi/Link/busi/id")
     @ApiOperation("获取OA流程关联业务数据")
     R<ProcessBusiLinkDTO> getByBusiId(@RequestParam("busiId") Long busiId);
+
+    @GetMapping("/feign/process/busi/Link/get")
+    @ApiOperation("获取OA流程关联业务数据")
+ R<ProcessBusiLinkDTO> getByTypeAndBusiId(@RequestParam("busiId") Long busiId,@RequestParam("busiType") Integer busiType);
+
 
 }

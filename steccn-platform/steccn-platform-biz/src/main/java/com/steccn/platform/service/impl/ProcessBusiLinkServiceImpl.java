@@ -36,6 +36,12 @@ public class ProcessBusiLinkServiceImpl extends ServiceImpl<ProcessBusiLinkMappe
         return BeanUtil.copyProperties(one,ProcessBusiLinkDTO.class);
     }
 
+    @Override
+    public ProcessBusiLinkDTO getByTypeAndBusiId(Long busiId, Integer busiType) {
+        ProcessBusiLink one = getOne(new LambdaQueryWrapper<ProcessBusiLink>().eq(ProcessBusiLink::getBusiType, busiType).eq(ProcessBusiLink::getBusiId, busiId));
+        return BeanUtil.copyProperties(one,ProcessBusiLinkDTO.class);
+    }
+
 }
 
 

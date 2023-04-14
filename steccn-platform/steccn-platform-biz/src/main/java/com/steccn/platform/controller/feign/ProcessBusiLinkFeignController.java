@@ -42,4 +42,12 @@ public class ProcessBusiLinkFeignController {
         return R.success(processBusiLinkService.getByBusiId(busiId));
     }
 
+
+    @GetMapping("/get")
+    @ApiOperation("获取OA流程关联业务数据")
+    public R<ProcessBusiLinkDTO> getByTypeAndBusiId(@RequestParam("busiId") Long busiId,@RequestParam("busiType") Integer busiType){
+        return R.success(processBusiLinkService.getByTypeAndBusiId(busiId,busiType));
+    }
+
+
 }

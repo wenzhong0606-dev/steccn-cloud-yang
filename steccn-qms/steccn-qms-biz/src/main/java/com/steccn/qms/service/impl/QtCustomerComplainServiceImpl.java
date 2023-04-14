@@ -348,7 +348,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 manList.add(man);
             }
         }
-        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, qtComplainDefectImproveMan.getId()));
+        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, customerComplain.getId()));
         qtComplainDefectImproveManService.saveBatch(manList);
         //处理进度信息
         QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();

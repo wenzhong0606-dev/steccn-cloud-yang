@@ -1110,7 +1110,7 @@ public interface QtManagerConstant {
     @Getter
     @AllArgsConstructor
     enum QtBusinessType {
-        CUSTOMER_COMPLAIN(0, "客诉"), UNACCEPTED_PRODUCT(1, "不合格品"), IMPROVE(2, "整改");
+        CUSTOMER_COMPLAIN(0, "客诉"), UNACCEPTED_PRODUCT(1, "不合格品"), IMPROVE_START(2, "整改启动"),IMPROVE_CLOSEOUT(3,"整改结案");
 
         private Integer code;
         private String name;

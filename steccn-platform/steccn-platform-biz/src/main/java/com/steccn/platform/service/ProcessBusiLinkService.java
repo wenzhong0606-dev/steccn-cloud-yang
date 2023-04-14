@@ -34,4 +34,12 @@ public interface ProcessBusiLinkService extends IService<ProcessBusiLink> {
      * @return
      */
     ProcessBusiLinkDTO getByBusiId(Long busiId);
+
+    /**
+     * 根据业务id以及类型获取流程信息
+     * @param busiId
+     * @param busiType
+     * @return
+     */
+    ProcessBusiLinkDTO getByTypeAndBusiId(Long busiId, Integer busiType);
 }

@@ -15,6 +15,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaSaveDocVO;
@@ -96,7 +97,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //1.定义查询条件查询数据
-        LambdaQueryWrapper<QtImproveRecord> between = new LambdaQueryWrapper<QtImproveRecord>().like(Objects.nonNull(dto.getImproveOrder()), QtImproveRecord::getImproveOrder, dto.getImproveOrder()).like(Objects.nonNull(dto.getDescription()), QtImproveRecord::getDescription, dto.getDescription()).like(Objects.nonNull(dto.getCustomerComplainTitle()), QtImproveRecord::getCustomerComplainTitle, dto.getCustomerComplainTitle()).like(Objects.nonNull(dto.getDefectProductTitle()), QtImproveRecord::getDefectProductTitle, dto.getDefectProductTitle()).eq(Objects.nonNull(dto.getCreateBy()), QtImproveRecord::getCreateBy, dto.getCreateBy()).eq(Objects.nonNull(dto.getStatus()), QtImproveRecord::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getStartApproverId()), QtImproveRecord::getStartApproverId, dto.getStartApproverId()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtImproveRecord::getCreateTime, dto.getStartTime(), dto.getEndTime());
+        LambdaQueryWrapper<QtImproveRecord> between = new LambdaQueryWrapper<QtImproveRecord>()
+                .like(Objects.nonNull(dto.getTitle()),QtImproveRecord::getTitle,dto.getTitle())
+                .like(Objects.nonNull(dto.getImproveOrder()), QtImproveRecord::getImproveOrder, dto.getImproveOrder())
+                .like(Objects.nonNull(dto.getDescription()), QtImproveRecord::getDescription, dto.getDescription())
+                .like(Objects.nonNull(dto.getCustomerComplainTitle()), QtImproveRecord::getCustomerComplainTitle, dto.getCustomerComplainTitle())
+                .like(Objects.nonNull(dto.getDefectProductTitle()), QtImproveRecord::getDefectProductTitle, dto.getDefectProductTitle()).eq(Objects.nonNull(dto.getCreateBy()), QtImproveRecord::getCreateBy, dto.getCreateBy()).eq(Objects.nonNull(dto.getStatus()), QtImproveRecord::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getStartApproverId()), QtImproveRecord::getStartApproverId, dto.getStartApproverId()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtImproveRecord::getCreateTime, dto.getStartTime(), dto.getEndTime());
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
             if (QtManagerConstant.QT_IMPROVE_RECORD_ORDER.equals(dto.getSortField())) {
@@ -212,7 +218,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
             processBusiLinkDTO.setBusiId(qtImproveRecord.getId());
             processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
-            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE.getCode());
+            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE_START.getCode());
             Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
@@ -229,6 +235,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         Assert.isTrue(Objects.nonNull(record), "记录不存在");
         Assert.isTrue(QtManagerConstant.NUM_1.equals(record.getStatus()), "当前状态不可编辑");
         BeanUtil.copyProperties(dto, record);
+        record.setStatus(QtManagerConstant.NUM_0);
         updateById(record);
         //保存进度
         QtImproveProgresss qtImproveProgresss = new QtImproveProgresss();
@@ -274,6 +281,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
         workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
         workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
+        workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getId());
         workFlowSubmitParamDTO.setMainData(mainDataList);
         OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
@@ -400,10 +408,23 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         qtImproveRecordDetailService.updateById(detail);
         record.setStatus(QtManagerConstant.NUM_9);
         updateById(record);
+        //调用Oa流程
+        return closeout(dto, record);
+    }
+
+    /**
+     * 结案提交流程
+     * @param dto
+     * @param record
+     * @return
+     */
+    private Boolean closeout(QtImproveRecordApproveDTO dto,QtImproveRecord record){
+        //判断是否发起过流程，如果发起过 提交
+        ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByTypeAndBusiId(record.getId(),QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //调用OA创建审批流程
         OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
         workFlowParamDTO.setUserId(SecurityUtils.getUser().getUserId());
-        workFlowParamDTO.setWorkflowId("154");
+        workFlowParamDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
         workFlowParamDTO.setRequestName("整改结案审批启动");
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
@@ -462,20 +483,34 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
-        workFlowParamDTO.setMainData(mainDataList);
-        //调用
-        OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
-            throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
-        }
-        //保存oa数据与流程关联
-        ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
-        processBusiLinkDTO.setBusiId(record.getId());
-        processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
-        processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE.getCode());
-        Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        if (!aBoolean) {
-            throw new BusinessException("调用保存业务数据失败");
+
+        if (Objects.nonNull(linkDTO)){
+            //调用OA 提交流程
+            OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
+            workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
+            workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
+            workFlowSubmitParamDTO.setMainData(mainDataList);
+            workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
+            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
+                throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
+            }
+        }else {
+            workFlowParamDTO.setMainData(mainDataList);
+            //新建
+            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
+                throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+            }
+            //保存oa数据与流程关联
+            ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
+            processBusiLinkDTO.setBusiId(record.getId());
+            processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
+            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode());
+            Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                throw new BusinessException("调用保存业务数据失败");
+            }
         }
         return Boolean.TRUE;
     }
