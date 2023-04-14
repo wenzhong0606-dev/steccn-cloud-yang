@@ -42,4 +42,9 @@ public class OaWorkFlowSubmitParamDTO implements Serializable {
      * 提交人id
      */
     private Long userId;
+
+    /**
+     * workFlowId
+     */
+    private String workFlowId;
 }

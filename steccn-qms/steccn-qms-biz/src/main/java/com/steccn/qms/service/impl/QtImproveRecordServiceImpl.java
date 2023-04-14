@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,10 +15,7 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.oa.dto.OaOperatorParamDTO;
-import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
-import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
-import com.steccn.oa.dto.OaWorkFlowParamDTO;
+import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaSaveDocVO;
 import com.steccn.oa.vo.OaWorkflowStatusVO;
@@ -246,6 +244,41 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         qtImproveRecordDetail.setApproverId(dto.getD1ApproverId());
         qtImproveRecordDetail.setApproverName(dto.getD1ApproverName());
         qtImproveRecordDetailService.updateById(qtImproveRecordDetail);
+        //提交流程
+        ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(record.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //主要数据
+        List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
+        //审批发起人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_SPFQR, SecurityUtils.getUser().getUserId().toString()));
+        //整改单号
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGDH, record.getImproveOrder()));
+        //整改标题
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGBT, record.getTitle()));
+        //描述
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_MS, record.getDescription()));
+        //创建人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
+        //创建时间
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(),"yyyy-MM-dd HH:mm:ss").toString()));
+        //整改启动审批人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, dto.getStartApproverId().toString()));
+        //D1处理人
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR, dto.getD1ApproverId().toString()));
+        //关联不合格品处理/关联客诉
+        OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if (Objects.nonNull(dto.getCustomerComplainId())) {
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS, oaSaveDocVO.getDocid().toString()));
+        } else {
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, oaSaveDocVO.getDocid().toString()));
+        }
+        OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
+        workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
+        workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
+        workFlowSubmitParamDTO.setMainData(mainDataList);
+        OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
+            throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
+        }
         return Boolean.TRUE;
     }
 
@@ -385,7 +418,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
         //创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTime.now().toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(),"yyyy-MM-dd HH:mm:ss")));
         //整改启动审批人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, record.getStartApproverId().toString()));
         //D1处理人 - D7 处理人
@@ -476,7 +509,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
             qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())) {
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_1);
             //发送消息
@@ -507,9 +540,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
             qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
-            return Boolean.TRUE;
         }
-
         return updateById(qtImproveRecord);
     }
 
@@ -545,7 +576,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(d8Detail.getApproverId());
             qtImproveProgresss.setOpCreateName(d8Detail.getApproverName());
             qtImproveProgresssService.save(qtImproveProgresss);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())) {
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())&& OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_8);
             //发送消息
@@ -576,9 +607,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
             qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
-            return Boolean.TRUE;
         }
-
         return updateById(qtImproveRecord);
     }
 

@@ -4,8 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,11 +13,11 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SecurityUtils;
-import com.steccn.common.RedisConfig;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.vo.R;
+
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaSaveDocVO;
@@ -30,7 +28,6 @@ import com.steccn.platform.dto.OaProcessDataDTO;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
-import com.steccn.platform.feign.RemoteMesFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
@@ -43,8 +40,6 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtCarbonCopyManDTO;
 import com.steccn.qms.dto.QtCustomerComplainDTO;
-import com.steccn.qms.dto.QtCustomerComplainDetailDTO;
-import com.steccn.qms.dto.QtWorkFlowFiledValue;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtCustomerComplainMapper;
 import com.steccn.qms.util.CodeGenerateUtil;
@@ -53,17 +48,14 @@ import com.steccn.qms.vo.QtCustomerComplainDetailVO;
 import com.steccn.qms.vo.QtCustomerComplainVO;
 import com.steccn.qms.vo.QtImproveRecordVO;
 import com.steccn.websocket.constant.WebsocketConstant;
-import jdk.nashorn.internal.scripts.JO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -414,7 +406,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())&& OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())){
             //退回
             customerComplain.setStatus(QtManagerConstant.NUM_0);
             //发送消息
@@ -446,9 +438,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
-            return Boolean.TRUE;
         }
-
         return updateById(customerComplain);
     }
 
@@ -565,7 +555,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //投诉创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJR, qtCustomerComplain.getCreateName()));
         //投诉创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJSJ, LocalDateTimeUtil.format(qtCustomerComplain.getCreateTime(),"yyyy-MM-dd HH:mm:ss").toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSCJSJ, LocalDateTimeUtil.format(qtCustomerComplain.getCreateTime(),"yyyy-MM-dd HH:mm:ss")));
         //投诉类型
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_TSLX, qtCustomerComplain.getComplainTypeName()));
         //处理人
@@ -662,6 +652,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
             workFlowSubmitParamDTO.setMainData(mainDataList);
             workFlowSubmitParamDTO.setDetailData(detailDataList);
+            workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getId());
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
@@ -670,7 +661,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             //调用oa创建流程
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
             workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
-            workflowDTO.setWorkflowId("151");
+            workflowDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getId());
             workflowDTO.setRequestName("客诉处理审批");
             workflowDTO.setMainData(mainDataList);
             workflowDTO.setDetailData(detailDataList);
