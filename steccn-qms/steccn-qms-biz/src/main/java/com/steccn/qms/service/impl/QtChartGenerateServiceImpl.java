@@ -393,7 +393,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     produceTime = materialProduceTime.get(materialEntry.getKey());
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
+//                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
+                                //避免偏差,除以100
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(100),4);
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -658,7 +660,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
+//                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
+                                    //数据不对，修改精度
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(100),4);
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
