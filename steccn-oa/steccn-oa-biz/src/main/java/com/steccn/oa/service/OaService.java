@@ -9,10 +9,13 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
@@ -51,6 +55,7 @@ public class OaService {
 
     private final OaTokenService oaTokenService;
 	private final HrmresourceService hrmresourceService;
+    private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -433,6 +438,7 @@ public class OaService {
      * @param dto
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public OaWorkflowStatusVO submitWorkFlow(OaWorkFlowSubmitParamDTO dto){
         OaWorkflowSubmitDTO oaWorkflowSubmitDTO = new OaWorkflowSubmitDTO();
         BeanUtils.copyProperties(dto,oaWorkflowSubmitDTO);
@@ -446,10 +452,22 @@ public class OaService {
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
+        //如果是不合格品处理，删除不合格品详情表
+        if(dto.getWorkFlowId().equals(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getId())){
+            oaWorkflowDeleteDetailMapper.deleteUnqualified(dto.getRequestId());
+        }
+        //如果是客诉，删除客诉详情表
+        if(dto.getWorkFlowId().equals(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getId())){
+            oaWorkflowDeleteDetailMapper.deleteComplain1(dto.getRequestId());
+            oaWorkflowDeleteDetailMapper.deleteComplain2(dto.getRequestId());
+        }
         String result = oaApi.submitProcess(this.setUserIdHeaders(dto.getUserId()),oaWorkflowSubmitDTO);
         OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        if(!vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            throw new BusinessException("提交失败,删除数据回滚");
+        }
         //如果是成功则收到成功消息，否则返回错误信息
 //        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
 //            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));

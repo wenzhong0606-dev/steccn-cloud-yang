@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper">
+    <delete id="deleteUnqualified">
+        delete from formtable_main_373_dt1
+        where mainid = (select id from formtable_main_373 where requestId = #{requestid})
+    </delete>
+
+    <delete id="deleteComplain1">
+        delete from formtable_main_372_dt1
+        where mainid = (select id from formtable_main_372 where requestId = #{requestid})
+    </delete>
+
+    <delete id="deleteComplain2">
+        delete from formtable_main_372_dt2
+        where mainid = (select id from formtable_main_372 where requestId = #{requestid})
+    </delete>
+</mapper>
