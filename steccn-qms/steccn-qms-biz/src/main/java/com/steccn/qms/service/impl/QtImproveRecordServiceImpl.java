@@ -14,7 +14,9 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowNameValueDTO;
+import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.dto.OaWorkFlowParamDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaSaveDocVO;
@@ -451,6 +453,9 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         ProcessBusiLinkDTO processBusiLinkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.get(Integer.valueOf(data.getRequestId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         QtImproveRecord qtImproveRecord = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(qtImproveRecord), "当前业务数据不存在");
+        //获取节点操作人信息
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
+                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_0.equals(qtImproveRecord.getStatus()), "当前状态不可审批通过");
@@ -468,8 +473,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setRecordId(qtImproveRecord.getId());
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.APPROVE_START.getName());
             qtImproveProgresss.setOpTime(LocalDateTime.now());
-            qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
-            qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+            qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
+            qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
         } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())) {
             //退回
@@ -499,8 +504,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setRecordId(qtImproveRecord.getId());
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.UNAPPROVED_START.getName());
             qtImproveProgresss.setOpTime(LocalDateTime.now());
-            qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
-            qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+            qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
+            qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
             return Boolean.TRUE;
         }
@@ -514,6 +519,9 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         ProcessBusiLinkDTO processBusiLinkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.get(Integer.valueOf(data.getRequestId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         QtImproveRecord qtImproveRecord = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(qtImproveRecord), "当前业务数据不存在");
+        //获取节点操作人信息
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
+                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_9.equals(qtImproveRecord.getStatus()), "当前状态不可审批通过");
@@ -565,8 +573,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setRecordId(qtImproveRecord.getId());
             qtImproveProgresss.setOpTitle(QtManagerConstant.improveProgress.RETURN_D7.getName());
             qtImproveProgresss.setOpTime(LocalDateTime.now());
-            qtImproveProgresss.setOpId(SecurityUtils.getUser().getUserId());
-            qtImproveProgresss.setOpCreateName(SecurityUtils.getUser().getName());
+            qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
+            qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
             return Boolean.TRUE;
         }

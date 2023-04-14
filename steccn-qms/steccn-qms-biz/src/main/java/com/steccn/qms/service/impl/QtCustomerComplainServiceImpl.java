@@ -158,7 +158,17 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //1.定义查询条件查询数据
-        LambdaQueryWrapper<QtCustomerComplain> between = new LambdaQueryWrapper<QtCustomerComplain>().like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode()).like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle()).eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer()).eq(Objects.nonNull(dto.getComplainReceiver()), QtCustomerComplain::getComplainReceiver, dto.getComplainReceiver()).eq(Objects.nonNull(dto.getComplainType()), QtCustomerComplain::getComplainType, dto.getComplainType()).eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan()).eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime());
+        LambdaQueryWrapper<QtCustomerComplain> between = new LambdaQueryWrapper<QtCustomerComplain>()
+                .like(Objects.nonNull(dto.getCode()), QtCustomerComplain::getCode, dto.getCode())
+                .like(Objects.nonNull(dto.getTitle()), QtCustomerComplain::getTitle, dto.getTitle())
+                .eq(Objects.nonNull(dto.getComplainCustomer()), QtCustomerComplain::getComplainCustomer, dto.getComplainCustomer())
+                .eq(Objects.nonNull(dto.getComplainReceiver()), QtCustomerComplain::getComplainReceiver, dto.getComplainReceiver())
+                .eq(Objects.nonNull(dto.getComplainType()), QtCustomerComplain::getComplainType, dto.getComplainType())
+                .eq(Objects.nonNull(dto.getDealMan()), QtCustomerComplain::getDealMan, dto.getDealMan())
+                .eq(Objects.nonNull(dto.getStatus()), QtCustomerComplain::getStatus, dto.getStatus())
+                .eq(Objects.nonNull(dto.getDealWay()), QtCustomerComplain::getDealWay, dto.getDealWay())
+                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())
+                , QtCustomerComplain::getComplainDate, dto.getStartTime(), dto.getEndTime());
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
             if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CODE.equals(dto.getSortField())) {
@@ -384,6 +394,9 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         ProcessBusiLinkDTO processBusiLinkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.get(Integer.valueOf(data.getRequestId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         QtCustomerComplain customerComplain = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(customerComplain), "当前业务数据不存在");
+        //获取节点操作人信息
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
+                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_1.equals(customerComplain.getStatus()), "当前状态不可审批通过");
@@ -399,7 +412,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtComplainDefectProgress.setBusiId(customerComplain.getId());
             qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVE.getName());
             qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
-            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
@@ -431,7 +444,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             qtComplainDefectProgress.setBusiId(customerComplain.getId());
             qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVAL_RETURN.getName());
             qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
-            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);

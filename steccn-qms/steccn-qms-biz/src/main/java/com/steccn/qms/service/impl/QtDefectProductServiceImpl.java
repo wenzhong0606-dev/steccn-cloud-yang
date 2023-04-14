@@ -376,6 +376,9 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         ProcessBusiLinkDTO processBusiLinkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.get(Integer.valueOf(data.getRequestId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         QtDefectProduct defectProduct = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(defectProduct), "当前业务数据不存在");
+        //获取节点操作人信息
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
+                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_1.equals(defectProduct.getStatus()), "当前状态不可审批通过");
@@ -389,13 +392,13 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             //保存进度信息
             QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
             qtComplainDefectProgress.setBusiId(defectProduct.getId());
-            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVAL_RETURN.getName());
+            qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVE.getName());
             qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
-            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())){
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())){
             //退回
             defectProduct.setStatus(QtManagerConstant.NUM_0);
             //发送消息
@@ -423,13 +426,11 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             qtComplainDefectProgress.setBusiId(defectProduct.getId());
             qtComplainDefectProgress.setOpStep(QtManagerConstant.progress.APPROVAL_RETURN.getName());
             qtComplainDefectProgress.setSort(QtManagerConstant.NUM_0);
-            qtComplainDefectProgress.setOpCreateName(SecurityUtils.getUser().getName());
+            qtComplainDefectProgress.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
-            return Boolean.TRUE;
         }
-
         return updateById(defectProduct);
     }
 
