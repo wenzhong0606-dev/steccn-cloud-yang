@@ -86,6 +86,10 @@
         <if test="dto.endTimeEnd != null">
             AND prw.end_time &lt;= #{dto.endTimeEnd}
         </if>
+        <if test="dto.productionLineId != null and dto.productionLineId != ''">
+            AND prw.product_line_id = #{dto.productionLineId}
+        </if>
+
         order by prw.create_time desc
     </select>
     <select id="substrateReport" resultType="com.steccn.pms.vo.SubstrateDataListVO">

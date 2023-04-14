@@ -84,5 +84,10 @@ public class QtImproveRecordDTO {
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "d1处理人名称不能为空")
     private String d1ApproverName;
 
+    /**
+     * 流程跳转页面
+     */
+    private String infoUrl;
+
 
 }

@@ -18,6 +18,10 @@ public class QtDealWayVO implements Serializable {
     @ApiModelProperty("主键")
     private Integer id;
 
+
+    @ApiModelProperty("编码")
+    private String code;
+
     @ApiModelProperty("类型 0客诉 1不合格品")
     private Integer type;
 

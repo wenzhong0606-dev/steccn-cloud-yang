@@ -38,7 +38,10 @@ public class WorkflowCurrentoperatorServiceImpl extends ServiceImpl<WorkflowCurr
                 .selectAs(Hrmresource::getWorkcode,OaWorkFlowOperatorDTO::getWorkcode)
                 .leftJoin(Hrmresource.class,Hrmresource::getId,WorkflowCurrentoperator::getUserid)
                 .eq(WorkflowCurrentoperator::getRequestid, dto.getRequestId())
-                .eq(WorkflowCurrentoperator::getNodeid,dto.getNodeId());
+                .eq(WorkflowCurrentoperator::getNodeid,dto.getNodeId())
+                .orderByDesc(WorkflowCurrentoperator::getOperatedate)
+                .orderByDesc(WorkflowCurrentoperator::getOperatetime)
+                .last("LIMIT 1");
         return workflowCurrentoperMapper.selectJoinOne(OaWorkFlowOperatorDTO.class,condition);
     }
 }

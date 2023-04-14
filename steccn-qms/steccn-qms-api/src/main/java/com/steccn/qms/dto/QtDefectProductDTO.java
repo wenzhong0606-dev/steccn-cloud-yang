@@ -158,4 +158,10 @@ public class QtDefectProductDTO {
      */
     @NotNull(groups = {InsertGroup.class, UpdateGroup.class},message = "审批人不能为空")
     private Long approveMan;
+
+
+    /**
+     * 不合格品详情页url
+     */
+    private String infoUrl;
 }

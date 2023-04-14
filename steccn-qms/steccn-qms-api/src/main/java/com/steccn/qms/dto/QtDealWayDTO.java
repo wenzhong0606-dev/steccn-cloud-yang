@@ -2,6 +2,7 @@ package com.steccn.qms.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -21,6 +22,10 @@ public class QtDealWayDTO implements Serializable {
 
     @ApiModelProperty("主键")
     private Integer id;
+
+    @ApiModelProperty("编码")
+    @NotNull(message = "编码不能为空")
+    private Integer code;
 
     @ApiModelProperty("类型 0客诉 1不合格品")
     @NotNull(message = "类型不能为空")

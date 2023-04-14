@@ -22,6 +22,7 @@ import com.steccn.platform.domain.OaResponse;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.*;
 import com.steccn.platform.feign.RemoteMesFeignApi;
+import com.steccn.platform.service.OaProcessHandler;
 import com.steccn.platform.service.OaResponseService;
 import com.steccn.platform.mapper.OaResponseMapper;
 import com.steccn.platform.service.SysEqpSpareService;
@@ -67,6 +68,7 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
     private final RemoteDefectProductFeignApi remoteDefectProductFeignApi;
 
     private final RemoteImproveProgressFeignApi remoteImproveProgressFeignApi;
+    private final OaProcessHandler oaProcessHandler;
 
     @Override
     public Boolean addProcessPush(OaProcessPushDTO dto) {
@@ -109,27 +111,8 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         JSONObject jsonObject = new JSONObject(dto);
         model.setContentJson(jsonObject.toString());
         //2、根据工作流id调用对应的业务
-        OaProcessDataDTO data = dto.getData();
-        //2.1生产领料单业务
-        if(data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.REQUISITION.getWorkflowId().toString())){
-            requisition(dto);
-        }
-        //2.2客诉业务
-        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.CUSTOMER_COMPLAIN.getWorkflowId().toString())){
-           FeignOptional.of(() -> remoteCustomerComplainFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        }
-        //2.3不合格品业务
-        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.DEFECT_PRODUCT.getWorkflowId().toString())){
-            FeignOptional.of(() -> remoteDefectProductFeignApi.approve(dto), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        }
-        //2.4整改启动审批回调
-        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_START.getWorkflowId().toString())){
-            FeignOptional.of(() ->remoteImproveProgressFeignApi.approve(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        }
-        //2.5整改结束审批回调
-        if (data.getWorkflowId().equals(OaDataConstant.Oa_WorkFlow_Type.IMPROVE_PROGRESS_END.getWorkflowId().toString())){
-            FeignOptional.of(() ->remoteImproveProgressFeignApi.finishApprove(dto),FeignConstant.STECCN_QMS_SERVICE_NAME).get();
-        }
+//        OaProcessDataDTO data = dto.getData();
+        oaProcessHandler.handler(dto);
         return save(model);
     }
 
@@ -173,44 +156,44 @@ public class OaResponseServiceImpl extends ServiceImpl<OaResponseMapper, OaRespo
         return page.setRecords(eqpSpareVOList);
     }
 
-    protected void requisition(OaProcessNotifyDTO dto){
-        OaProcessDataDTO data = dto.getData();
-        //通过,只有当归档时不是拒绝状态才算通过
-        if(dto.getType().equals(OaDataConstant.WORKFLOW_AGREE)&&data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
-            //获取业务主键id
-            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-            //根据id查询状态
-            Long status = FeignOptional.of(() -> remotePmsFeignApi.getStatusById(id), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-            if(Objects.nonNull(status) && !status.equals(Long.parseLong(OaDataConstant.NUM_3))){
-                //修改主键状态
-                MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
-                materialRequisitionApprovalDTO.setId(id);
-                materialRequisitionApprovalDTO.setApprovalFlag(1);
-                materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
-                FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                //推送刷新消息
-                MsgPushDTO msgPushDTO = new MsgPushDTO();
-                msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-                FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
-            }
-        }
-
-        //不通过
-        if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
-            //获取业务主键id
-            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-            //修改主键状态
-            MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
-            materialRequisitionApprovalDTO.setId(id);
-            materialRequisitionApprovalDTO.setApprovalFlag(2);
-            materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
-            FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-            //推送刷新消息
-            MsgPushDTO msgPushDTO = new MsgPushDTO();
-            msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
-            FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
-        }
-    }
+//    protected void requisition(OaProcessNotifyDTO dto){
+//        OaProcessDataDTO data = dto.getData();
+//        //通过,只有当归档时不是拒绝状态才算通过
+//        if(dto.getType().equals(OaDataConstant.WORKFLOW_AGREE)&&data.getNodeName().equals(OaDataConstant.WORKFLOW_FINISHED)){
+//            //获取业务主键id
+//            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//            //根据id查询状态
+//            Long status = FeignOptional.of(() -> remotePmsFeignApi.getStatusById(id), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//            if(Objects.nonNull(status) && !status.equals(Long.parseLong(OaDataConstant.NUM_3))){
+//                //修改主键状态
+//                MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
+//                materialRequisitionApprovalDTO.setId(id);
+//                materialRequisitionApprovalDTO.setApprovalFlag(1);
+//                materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
+//                FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//                //推送刷新消息
+//                MsgPushDTO msgPushDTO = new MsgPushDTO();
+//                msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
+//                FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+//            }
+//        }
+//
+//        //不通过
+//        if(dto.getType().equals(OaDataConstant.WORKFLOW_DISAGREE)){
+//            //获取业务主键id
+//            Long id = FeignOptional.of(() -> remotePmsFeignApi.getIdByRequestId(Long.parseLong(data.getRequestId())), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//            //修改主键状态
+//            MaterialRequisitionApprovalDTO materialRequisitionApprovalDTO = new MaterialRequisitionApprovalDTO();
+//            materialRequisitionApprovalDTO.setId(id);
+//            materialRequisitionApprovalDTO.setApprovalFlag(2);
+//            materialRequisitionApprovalDTO.setNodeId(data.getNodeId());
+//            FeignOptional.of(()->remotePmsFeignApi.approval(materialRequisitionApprovalDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+//            //推送刷新消息
+//            MsgPushDTO msgPushDTO = new MsgPushDTO();
+//            msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.REQUISITION.getType());
+//            FeignOptional.of(()->remoteWsFeignApi.pushRefreshMsg(msgPushDTO),FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+//        }
+//    }
 }
 
 

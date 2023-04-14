@@ -197,4 +197,13 @@ public interface OaInfoService {
     @ApiOperation("根据Id查询用户名")
     @GetMapping("/feign/oa/user/loginid")
     R<String> getLoginIdById(@RequestParam("id") Integer id);
+
+    /**
+     * 传入url生产文档
+     * @param url
+     * @return
+     */
+    @ApiOperation("获取文档id")
+    @GetMapping("/feign/oa/workflow/saveDoc")
+    R<OaSaveDocVO> saveDoc(@RequestParam("url") String url);
 }
