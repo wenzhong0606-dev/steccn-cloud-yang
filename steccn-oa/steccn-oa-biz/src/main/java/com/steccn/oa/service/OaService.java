@@ -451,14 +451,14 @@ public class OaService {
         JSONObject jsonObject = JSONObject.parseObject(result);
         vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
         //如果是成功则收到成功消息，否则返回错误信息
-        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
-            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
-        }else {
-            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
-                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
-            }
-            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
-        }
+//        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+//            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+//        }else {
+//            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+//                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+//            }
+//            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+//        }
         return vo;
     }
 
