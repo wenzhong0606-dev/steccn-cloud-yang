@@ -30,8 +30,8 @@ import java.util.List;
 @RequestMapping("/data/platform")
 public class HbCollectController {
 
-    private HbCollectService hbCollectService;
-    private RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
+    private final HbCollectService hbCollectService;
+    private final RemoteSysOauthClientDetailFeignApi remoteSysOauthClientDetailFeignApi;
 
     @PostMapping("/ep/meter")
     @ApiOperation(value = "能源绩效-远传仪表")

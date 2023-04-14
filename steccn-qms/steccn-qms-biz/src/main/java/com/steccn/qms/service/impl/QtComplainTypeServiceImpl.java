@@ -17,6 +17,7 @@ import com.steccn.qms.service.QtCustomerComplainService;
 import com.steccn.qms.vo.QtComplainTypeVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class QtComplainTypeServiceImpl extends ServiceImpl<QtComplainTypeMapper,
         implements QtComplainTypeService {
 
     @Autowired
+    @Lazy
     private QtCustomerComplainService customerComplainService;
 
     @Override

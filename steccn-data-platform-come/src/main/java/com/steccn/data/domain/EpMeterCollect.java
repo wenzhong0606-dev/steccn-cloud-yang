@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * @author yequan
  * @TableName ep_meter_collect
  */
-@TableName(value ="ep_meter_collect_test")
+@TableName(value ="ep_meter_collect")
 @Data
 public class EpMeterCollect implements Serializable {
     /**

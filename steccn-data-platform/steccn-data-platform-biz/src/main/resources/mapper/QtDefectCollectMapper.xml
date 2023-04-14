@@ -19,4 +19,12 @@
         error_code,product_time,line,
         create_time
     </sql>
+    <select id="collectDetail" resultType="com.steccn.data.vo.DwDefectCollectVO">
+        select * from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
+        where dc.product_time &gt;= '${start}' and dc.product_time &lt; '${end}'
+        AND dc.line IN
+        <foreach collection="lineSet" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

@@ -34,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,14 +73,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
         List<EpPartitionVO> rootVOList = Lists.newArrayList();
         if (CollUtil.isNotEmpty(dataList)) {
-            //获取所有的officeId集合
-            Set<Integer> officeIdSet = dataList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
-            //找到所有officeName名称
-            Map<Integer, String> officeIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            //officeName从最新的组织机构树中取值 ，默认为旧的
-            dataList.forEach(ele ->{
-                ele.setOfficeName(officeIdNameMap.getOrDefault(ele.getOfficeId(),ele.getOfficeName()));
-            });
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
             //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
@@ -97,6 +88,17 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 }
                 root.setChildren(children);
             }
+            //去platform中组织机构树取officeName
+            Set<Integer> officeIdSet = Sets.newHashSet();
+            rootVOList.forEach(ele ->{
+                officeIdSet.add(ele.getOfficeId());
+                officeIdSet.add(ele.getParentOfficeId());
+            });
+            Map<Integer, String> officeIdNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            rootVOList.forEach(ele -> {
+                ele.setOfficeName(officeIdNameMap.get(ele.getOfficeId()));
+                ele.setParentOfficeName(officeIdNameMap.get(ele.getParentOfficeId()));
+            });
             epPartitionNameListVO.setEpPartitionVOList(rootVOList);
         }
         return epPartitionNameListVO;

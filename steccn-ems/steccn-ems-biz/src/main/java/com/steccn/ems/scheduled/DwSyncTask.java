@@ -1,10 +1,17 @@
 package com.steccn.ems.scheduled;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.common.constant.LockConstant;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.domain.EpEnergyMoney;
 import com.steccn.ems.domain.EpMeterRead;
+import com.steccn.ems.domain.EpTaskExecute;
 import com.steccn.ems.service.EpDwService;
+import com.steccn.ems.service.EpEnergyMoneyService;
+import com.steccn.ems.service.EpTaskExecuteService;
 import com.steccn.ems.vo.ReadCorrectVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +43,8 @@ public class DwSyncTask {
 
     private final RedissonClient redissonClient;
     private final EpDwService epDwService;
+    private final EpTaskExecuteService epTaskExecuteService;
+    private final EpEnergyMoneyService epEnergyMoneyService;
 
     /**
      * 每天8点05分执行
@@ -60,10 +70,13 @@ public class DwSyncTask {
     }
 
     /**
-     * 每天8点20分执行
+     * 2023-04-12 00:30:00
+     * 2023-04-13 00:30:00
+     * 2023-04-14 00:30:00
+     * 2023-04-15 00:30:00
      */
     @Async
-    @Scheduled(cron = "0 20 8 * * ?")
+    @Scheduled(cron = "0 30 0 * * ?")
     public void electricMoney() {
         RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
         boolean b = lock.tryLock();
@@ -81,4 +94,54 @@ public class DwSyncTask {
             lock.unlock();
         }
     }
+
+    /**
+     * 2023-04-11 16:10:00
+     * 2023-04-11 17:10:00
+     * 2023-04-11 18:10:00
+     * 2023-04-11 19:10:00
+     * 2023-04-11 20:10:00
+     * 2023-04-11 21:10:00
+     * 2023-04-11 22:10:00
+     * 2023-04-11 23:10:00
+     * 2023-04-12 02:10:00
+     * 2023-04-12 03:10:00
+     */
+    @Async
+    @Scheduled(cron = "0 10 2/1 * * ?")
+    public void eM() {
+        RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
+        boolean b = lock.tryLock();
+        if (!b) {
+            log.info("补偿-获取锁失败");
+            return;
+        }
+        log.info("补偿-开始");
+        try {
+            LocalDate date = LocalDate.now().minusDays(1);
+            EpTaskExecute one = epTaskExecuteService.getOne(new LambdaQueryWrapper<EpTaskExecute>()
+                    .eq(EpTaskExecute::getType, EpManagerConstant.TaskTypeEnum.TYPE_0)
+                    .eq(EpTaskExecute::getTaskDate, date).last(MpConstant.STR_LIMIT_1));
+            if(Objects.nonNull(one) && EpManagerConstant.TaskFlagEnum.ALL_FINISHED.getCode().equals(one.getTaskFlag())){
+                log.info("无需补偿");
+            }else{
+                //只补偿当天
+                long count = epEnergyMoneyService.count(new LambdaQueryWrapper<EpEnergyMoney>().eq(EpEnergyMoney::getClassDate, date));
+                if(Objects.nonNull(one) && one.getTaskParam() <= count){
+                    one.setTaskFlag(EpManagerConstant.TaskFlagEnum.ALL_FINISHED.getCode());
+                    epTaskExecuteService.updateById(one);
+                    log.info("计数完毕");
+                }else{
+                    log.info("补偿-重新执行");
+                    epDwService.electricMoney(date);
+                }
+            }
+        } catch (Exception e) {
+            log.error("补偿-异常", e);
+        } finally {
+            log.info("补偿-结束");
+            lock.unlock();
+        }
+    }
+
 }
