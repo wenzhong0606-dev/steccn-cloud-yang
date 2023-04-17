@@ -281,6 +281,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(readOnly = true)
     public QtCheckTaskDetailVO taskDetail(Long id, Boolean isPc) {
         QtCheckTask qtCheckTask = getById(id);
+        Assert.notNull(qtCheckTask, "检验记录不存在");
         QtCheckTaskListVO qtCheckTaskListVo = new QtCheckTaskListVO();
         QtCheckPlanDetailsVO qtCheckPlanDetailsVO = new QtCheckPlanDetailsVO();
         if (qtCheckTask != null) {
@@ -307,7 +308,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }
             BeanUtils.copyProperties(qtCheckTask, qtCheckTaskListVo);
             //json名字
-            qtCheckTaskListVo.setMaterialName(qtMaterialService.getById(qtCheckTask.getMaterialId()).getName());
+            QtMaterial qtMaterial = qtMaterialService.getById(qtCheckTask.getMaterialId());
+            if(Objects.nonNull(qtMaterial)){
+                qtCheckTaskListVo.setMaterialName(qtMaterial.getName());
+                qtCheckTaskListVo.setMaterialCode(qtMaterial.getCode());
+            }
             if(qtCheckTask.getMaterialWorkshop() != null) qtCheckTaskListVo.setMaterialWorkshopName(qtCheckTask.getMaterialWorkshop().getName());
             //如果为复检任务则查询复检任务
             if (qtCheckTask.getType() == 1) {
@@ -2822,6 +2827,32 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //落版
         qtCheckTaskDestoryInfoService.remove(new LambdaQueryWrapper<QtCheckTaskDestoryInfo>().eq(QtCheckTaskDestoryInfo::getTaskId,id));
         return true;
+    }
+
+    /**
+     * 获取所有完成任务的编码
+     * @param taskCode
+     * @return
+     */
+    @Override
+    public List<QtCheckTaskCodeIdVO> getAllFinishedTaskCode(String taskCode) {
+        LambdaQueryWrapper condition = new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getStatus,QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .select(QtCheckTask::getCode,QtCheckTask::getId)
+                .like(StrUtil.isNotBlank(taskCode),QtCheckTask::getCode,taskCode)
+                .orderByDesc(QtCheckTask::getCreateTime)
+                .last("LIMIT 100");
+        List<QtCheckTask> result = list(condition);
+        List<QtCheckTaskCodeIdVO> codes = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(result)){
+            result.forEach(tmp -> {
+                QtCheckTaskCodeIdVO vo = new QtCheckTaskCodeIdVO();
+                vo.setCode(tmp.getCode());
+                vo.setId(tmp.getId());
+                codes.add(vo);
+            });
+        }
+        return codes;
     }
 
     /**

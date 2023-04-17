@@ -3,18 +3,23 @@ package com.steccn.oa.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaOperatorParamDTO;
+import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.KqGroupmemberService;
+import com.steccn.oa.service.OaService;
+import com.steccn.oa.service.WorkflowCurrentoperatorService;
+import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaSaveDocVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * oaFeign
@@ -31,6 +36,12 @@ public class OaFeignController {
 
     private final HrmresourceService hrmresourceService;
 
+    private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
+
+    private final KqGroupmemberService kqGroupmemberService;
+
+    private final OaService oaService;
+
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
     public R<Map<Long, String>> listByIdCh(@RequestBody List<Long> idList) {
@@ -40,5 +51,28 @@ public class OaFeignController {
         return R.success(hrmresourceService.listByIdCh(idList));
     }
 
+    @ApiOperation("获取流程当前节点的操作人")
+    @PostMapping("/workflow/currentOperator")
+    public R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto){
+        return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
+    }
+
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/user/group")
+    public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
+        return R.success(kqGroupmemberService.findGroupByUserId(userId));
+    }
+
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/user/loginid")
+    public R<String> getLoginIdById(@RequestParam("id") Integer id){
+        return R.success(hrmresourceService.getLoginIdById(id));
+    }
+
+    @ApiOperation("保存文档")
+    @GetMapping("/workflow/saveDoc")
+    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
+        return R.success(oaService.saveDoc(url));
+    }
 
 }

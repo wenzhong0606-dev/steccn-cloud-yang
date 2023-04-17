@@ -71,4 +71,10 @@ public class ProcessReportWorkPageDTO extends BasePageDTO {
 
     @ApiModelProperty(value = "结束时间-结束", hidden = true)
     private LocalDateTime endTimeEnd;
+
+    @ApiModelProperty("产线")
+    private Integer productionLineId;
+
+    @ApiModelProperty("班组")
+    private Long teamId;
 }

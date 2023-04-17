@@ -19,6 +19,9 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("主键id")
+    private Long id;
+
     @ApiModelProperty("库存id")
     private Long inventoryId;
 
@@ -50,10 +53,10 @@ public class ProcessReportWorkMaterialListDTO implements Serializable {
     private BigDecimal quantity;
 
     @ApiModelProperty("可用数量")
-    @NotNull(message = "可用数量不能为空")
-    @DecimalMin(value="0",message="可用数量应大于0")
-    @DecimalMax(value="99999999.999",message="可用数量大小应小于99999999.999")
-    @Digits(integer = 8,fraction = 3,message = "可用数量整数位上限为8位，小数位上限位3位")
+//    @NotNull(message = "可用数量不能为空")
+//    @DecimalMin(value="0",message="可用数量应大于0")
+//    @DecimalMax(value="99999999.999",message="可用数量大小应小于99999999.999")
+//    @Digits(integer = 8,fraction = 3,message = "可用数量整数位上限为8位，小数位上限位3位")
     private BigDecimal availableQuantity;
 
     @ApiModelProperty("单位id")

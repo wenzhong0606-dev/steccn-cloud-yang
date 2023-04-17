@@ -5,10 +5,12 @@ import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
+import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
 import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import com.steccn.pms.vo.ProduceOrderProcessNumVO;
 import com.steccn.pms.vo.SubstrateIngredientVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,4 +60,11 @@ public interface PmsCompleteDeliveryService extends IService<PmsCompleteDelivery
      * @return
      */
     List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto);
+
+    /**
+     * 获取物料消息信息
+     * @param id 报工信息
+     * @return
+     */
+    List<ProcessReportWorkMaterialListDTO> getMaterialConsume(Long id);
 }

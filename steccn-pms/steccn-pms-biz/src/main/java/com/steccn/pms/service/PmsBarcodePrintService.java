@@ -1,6 +1,7 @@
 package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsBarcodePrint;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
@@ -9,6 +10,7 @@ import com.steccn.pms.dto.BarcodePrintRecordDTO;
 import com.steccn.pms.dto.CaseSiteDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
 import com.steccn.pms.vo.BarcodePrintRecordVO;
+import com.steccn.pms.vo.WorkOrderMaterialVO;
 
 import java.util.List;
 import java.util.Map;
@@ -103,4 +105,19 @@ public interface PmsBarcodePrintService extends IService<PmsBarcodePrint> {
      */
     Map<String, CaseSiteDTO> caseSite(Set<String> caseNoSet);
 
+
+    /**
+     * 根据箱号获取物料信息
+     * @param code
+     * @return
+     */
+    List<WorkOrderMaterialVO> getMaterialByCaseNo(String code);
+
+
+    /**
+     * 根据批次号获取物料信息
+     * @param batchNo
+     * @return
+     */
+    List<WorkOrderMaterialVO> getMaterialByBatchNo(String batchNo);
 }

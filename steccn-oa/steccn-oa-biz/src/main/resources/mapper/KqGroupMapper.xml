@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.KqGroupMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.KqGroup">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="groupname" column="groupname" jdbcType="VARCHAR"/>
+            <result property="subcompanyid" column="subcompanyid" jdbcType="INTEGER"/>
+            <result property="kqtype" column="kqtype" jdbcType="INTEGER"/>
+            <result property="excludeid" column="excludeid" jdbcType="VARCHAR"/>
+            <result property="signintype" column="signintype" jdbcType="INTEGER"/>
+            <result property="ipscope" column="ipscope" jdbcType="VARCHAR"/>
+            <result property="locationcheck" column="locationcheck" jdbcType="INTEGER"/>
+            <result property="locationcheckscope" column="locationcheckscope" jdbcType="INTEGER"/>
+            <result property="wificheck" column="wificheck" jdbcType="INTEGER"/>
+            <result property="weekday" column="weekday" jdbcType="VARCHAR"/>
+            <result property="shiftcyclename" column="shiftcyclename" jdbcType="VARCHAR"/>
+            <result property="shiftcycleday" column="shiftcycleday" jdbcType="INTEGER"/>
+            <result property="shiftcycleserialids" column="shiftcycleserialids" jdbcType="VARCHAR"/>
+            <result property="serialids" column="serialids" jdbcType="VARCHAR"/>
+            <result property="signstart" column="signstart" jdbcType="VARCHAR"/>
+            <result property="workhour" column="workhour" jdbcType="DECIMAL"/>
+            <result property="outsidesign" column="outsidesign" jdbcType="INTEGER"/>
+            <result property="validity" column="validity" jdbcType="INTEGER"/>
+            <result property="validityfromdate" column="validityfromdate" jdbcType="VARCHAR"/>
+            <result property="validityenddate" column="validityenddate" jdbcType="VARCHAR"/>
+            <result property="isdelete" column="isdelete" jdbcType="INTEGER"/>
+            <result property="excludecount" column="excludecount" jdbcType="INTEGER"/>
+            <result property="locationfacecheck" column="locationfacecheck" jdbcType="INTEGER"/>
+            <result property="locationshowaddress" column="locationshowaddress" jdbcType="INTEGER"/>
+            <result property="wififacecheck" column="wififacecheck" jdbcType="INTEGER"/>
+            <result property="ipscopeV4Pc" column="ipscope_v4_pc" jdbcType="VARCHAR"/>
+            <result property="ipscopeV4Em" column="ipscope_v4_em" jdbcType="VARCHAR"/>
+            <result property="ipscopeV6Pc" column="ipscope_v6_pc" jdbcType="VARCHAR"/>
+            <result property="ipscopeV6Em" column="ipscope_v6_em" jdbcType="VARCHAR"/>
+            <result property="autoCheckin" column="auto_checkin" jdbcType="INTEGER"/>
+            <result property="autoCheckinBefore" column="auto_checkin_before" jdbcType="INTEGER"/>
+            <result property="autoCheckinAfter" column="auto_checkin_after" jdbcType="INTEGER"/>
+            <result property="autoCheckout" column="auto_checkout" jdbcType="INTEGER"/>
+            <result property="autoCheckoutBefore" column="auto_checkout_before" jdbcType="INTEGER"/>
+            <result property="autoCheckoutAfter" column="auto_checkout_after" jdbcType="INTEGER"/>
+            <result property="calmethod" column="calmethod" jdbcType="INTEGER"/>
+            <result property="locationfacechecktype" column="locationfacechecktype" jdbcType="INTEGER"/>
+            <result property="wififacechecktype" column="wififacechecktype" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,groupname,subcompanyid,
+        kqtype,excludeid,signintype,
+        ipscope,locationcheck,locationcheckscope,
+        wificheck,weekday,shiftcyclename,
+        shiftcycleday,shiftcycleserialids,serialids,
+        signstart,workhour,outsidesign,
+        validity,validityfromdate,validityenddate,
+        isdelete,excludecount,locationfacecheck,
+        locationshowaddress,wififacecheck,ipscope_v4_pc,
+        ipscope_v4_em,ipscope_v6_pc,ipscope_v6_em,
+        auto_checkin,auto_checkin_before,auto_checkin_after,
+        auto_checkout,auto_checkout_before,auto_checkout_after,
+        calmethod,locationfacechecktype,wififacechecktype
+    </sql>
+</mapper>

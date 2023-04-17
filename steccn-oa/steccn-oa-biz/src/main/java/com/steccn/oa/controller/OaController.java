@@ -7,16 +7,21 @@ import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.dto.*;
 
 import com.steccn.oa.service.HrmresourceService;
+import com.steccn.oa.service.KqGroupmemberService;
 import com.steccn.oa.service.OaService;
+import com.steccn.oa.service.WorkflowCurrentoperatorService;
 import com.steccn.oa.vo.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * oa拦截器
@@ -34,6 +39,10 @@ public class OaController {
     private final OaService oaService;
 
     private final HrmresourceService hrmresourceService;
+
+    private final WorkflowCurrentoperatorService workflowCurrentoperatorService;
+
+    private final KqGroupmemberService kqGroupmemberService;
 
     @ApiOperation(value = "获取oa用户的菜单权限")
     @GetMapping("/menuList")
@@ -99,6 +108,20 @@ public class OaController {
         }
     }
 
+    @ApiOperation("获取所有在职人员")
+    @PostMapping("/allUser/onJob")
+    R<List<OaEmpVO>> getAllOnJobUser(@RequestBody OaEmpStatusDTO dto) {
+        //在职
+        dto.setStatus("8");
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
+    @ApiOperation("根据条件查询")
+    @PostMapping("/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto) {
+        return R.success(oaService.getEmpInfoByCondition(dto));
+    }
+
     @ApiOperation("根据名称模糊获取人员列表")
     @GetMapping("/user/name/{userName}")
     public R<List<OaUserIdAndName>> getUserByName(@PathVariable("userName") String userName) {
@@ -137,9 +160,14 @@ public class OaController {
 
     @ApiOperation("新建流程")
     @PostMapping("/workflow/doCreateRequest")
-    public R test(@RequestBody OaWorkFlowParamDTO dto) {
-        oaService.getWorkFlow(dto);
-        return null;
+    public R<OaWorkflowStatusVO> createWorkFlow(@Validated @RequestBody OaWorkFlowParamDTO dto) {
+        return R.success(oaService.createWorkFlow(dto));
+    }
+
+    @ApiOperation("提交流程")
+    @PostMapping("/workflow/submitRequest")
+    public R<OaWorkflowStatusVO> submitWorkFlow(@Validated @RequestBody OaWorkFlowSubmitParamDTO dto) {
+        return R.success(oaService.submitWorkFlow(dto));
     }
 
     @ApiOperation("根据工号工号查询id")
@@ -160,6 +188,12 @@ public class OaController {
         return R.success(oaService.getHrmSearchResult(dto));
     }
 
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/user/group")
+    public R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId){
+        return R.success(kqGroupmemberService.findGroupByUserId(userId));
+    }
+
     @ApiOperation("查询排班信息")
     @PostMapping("/roster/record")
     public R<List<OaRosterRecordVO>> getRosterRecord(@RequestBody OaRosterRecordDTO dto){
@@ -170,5 +204,29 @@ public class OaController {
     @PostMapping("/user/workCode")
     public R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes){
         return R.success(hrmresourceService.getIdByWorkCode(workCodes));
+    }
+
+    @ApiOperation("根据部门信息查询详情")
+    @PostMapping("/org/detail")
+    public R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto){
+        return R.success(oaService.getOrgDetailByCondition(dto));
+    }
+
+    @ApiOperation("根据部门信息查询详情V2")
+    @PostMapping("/org/detail/v2")
+    public R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto){
+        return R.success(oaService.getOrgDetailByConditionV2(dto));
+    }
+
+    @ApiOperation("获取流程当前节点的操作人")
+    @PostMapping("/workflow/currentOperator")
+    public R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto){
+        return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
+    }
+
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/workflow/saveDoc")
+    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
+        return R.success(oaService.saveDoc(url));
     }
 }

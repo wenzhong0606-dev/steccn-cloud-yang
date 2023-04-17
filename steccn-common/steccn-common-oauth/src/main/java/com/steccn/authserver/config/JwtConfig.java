@@ -1,7 +1,9 @@
 package com.steccn.authserver.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
@@ -12,6 +14,9 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
  */
 @Configuration
 public class JwtConfig {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 将授权码存放在jwtToken
@@ -41,7 +46,7 @@ public class JwtConfig {
      */
     @Bean
     public JwtTokenEnhancer jwtTokenEnhancer() {
-        return new JwtTokenEnhancer();
+        return new JwtTokenEnhancer(redisTemplate);
     }
 
 

@@ -6,9 +6,11 @@ import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -52,4 +54,10 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      */
     Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date, List<Long> classGroupIdList);
 
+    /**
+     * 根据班次日期+产线+班次查询拉引量
+     * @param pfSet 条件集合
+     * @return
+     */
+    Map<String, BigDecimal> getPullForce(Set<String> pfSet);
 }

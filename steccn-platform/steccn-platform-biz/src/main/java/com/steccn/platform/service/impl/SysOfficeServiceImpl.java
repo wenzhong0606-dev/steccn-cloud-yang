@@ -360,7 +360,7 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {
-            SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).eq(SysOffice::getOfficeCode, child.getParentCode()));
+            SysOffice parent = getOne(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).eq(SysOffice::getOfficeCode, child.getParentCode()),false);
             if (Objects.nonNull(parent)) {
                 SysOfficeVO sysOfficeVO = new SysOfficeVO();
                 BeanUtils.copyProperties(parent, sysOfficeVO);

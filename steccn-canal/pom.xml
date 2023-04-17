@@ -67,7 +67,6 @@
             <artifactId>steccn-common-data</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

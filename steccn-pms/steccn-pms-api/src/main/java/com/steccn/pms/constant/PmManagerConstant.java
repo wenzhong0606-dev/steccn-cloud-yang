@@ -240,6 +240,88 @@ public interface PmManagerConstant {
     String LABORATORY_DIRECTOR = "化验室副主任";
 
     /**
+     * 流程字段-申请人岗位
+     */
+    String WORKFLOW_SQRGW = "sqrgw";
+
+    /**
+     * 流程字段-申请人
+     */
+    String WORKFLOW_SQR = "sqr";
+    /**
+     * 流程字段-申请部门
+     */
+    String WORKFLOW_SQBM = "sqbm";
+    /**
+     * 流程字段-申请分部
+     */
+    String WORKFLOW_SQFB = "sqfb";
+
+    /**
+     * 流程字段-申请日期
+     */
+    String WORKFLOW_SQRQ = "sqrq";
+    /**
+     * 流程字段-申请编号
+     */
+    String WORKFLOW_SQBH = "sqbh";
+
+    /**
+     * 流程字段-类型
+     */
+    String WORKFLOW_LX = "lx";
+
+    /**
+     * 流程字段-总数量
+     */
+    String WORKFLOW_ZSL = "zsl";
+
+    /**
+     * 流程字段-领料单编码
+     */
+    String WORKFLOW_LLDBM = "lldbm";
+
+    /**
+     * 详情表名
+     */
+    String WORKFLOW_REQ_TABLE_NAME = "formtable_main_103_dt1";
+
+    /**
+     * 物料编码
+     */
+    String WORKFLOW_WLBM = "wlbm";
+
+    /**
+     * 物料名称
+     */
+    String WORKFLOW_WLMC = "wlmc";
+
+    /**
+     * 规格型号
+     */
+    String WORKFLOW_GGXH = "ggxh";
+
+    /**
+     * 需求时间
+     */
+    String WORKFLOW_XQSJ = "xqsj";
+
+    /**
+     * 需求数量
+     */
+    String WORKFLOW_XQSL = "xqsl";
+
+    /**
+     * 备注
+     */
+    String WORKFLOW_BZ = "bz";
+
+    /**
+     * 成功
+     */
+    String WORKFLOW_SUCCESS = "SUCCESS";
+
+    /**
      * 配料工id
      */
     String BATCHER_ID = "191";
@@ -315,6 +397,30 @@ public interface PmManagerConstant {
             for (QtChartCompareEnum value : QtChartCompareEnum.values()) {
                 if (value.getCode().equals(code)) {
                     return value.getName();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 领料单工作流选项
+     */
+    @Getter
+    @AllArgsConstructor
+    enum PmRequisitionWorkFlow {
+        PRODUCT(0,"生产领料"),
+        MAINTAIN(1,"部门领料"),
+        OTHER(2,"其他领料"),
+        DEPARTMENT(3,"维修领料");
+
+        private Integer code;
+        private String name;
+
+        public static Integer getCodeByName(String name) {
+            for (PmRequisitionWorkFlow value : PmRequisitionWorkFlow.values()) {
+                if (value.getName().equals(name)) {
+                    return value.getCode();
                 }
             }
             return null;
