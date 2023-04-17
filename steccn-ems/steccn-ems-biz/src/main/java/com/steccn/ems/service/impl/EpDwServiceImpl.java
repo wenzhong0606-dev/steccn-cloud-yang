@@ -60,7 +60,6 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpEnergyMoneyService epEnergyMoneyService;
     private final EpPartitionService epPartitionService;
     private final EpTaskExecuteService epTaskExecuteService;
-    private final TransactionTemplate transactionTemplate;
 
     private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
