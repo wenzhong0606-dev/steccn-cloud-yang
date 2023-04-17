@@ -139,6 +139,25 @@ public class WebSocketManager {
         }
     }
 
+    /**
+     * 给在线用户发送消息
+     *
+     * @param message 消息内容
+     */
+    public static void sendMessageToOnlineUser(String message) {
+        try {
+            for(Map.Entry<Long, CopyOnWriteArraySet<WebSocketServer>> entry:webSocketMap.entrySet()){
+                log.debug("【websocket消息】 单点 用户：{}  消息: {}", entry.getKey(), message);
+                CopyOnWriteArraySet<WebSocketServer> webSocketServers = entry.getValue();
+                for (WebSocketServer webSocketServer : webSocketServers) {
+                    sendOneMessage(webSocketServer, message);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+        }
+    }
+
 
     /**
      * 单播消息

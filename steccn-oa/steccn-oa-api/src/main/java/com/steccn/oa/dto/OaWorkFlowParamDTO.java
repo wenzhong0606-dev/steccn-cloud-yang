@@ -2,6 +2,8 @@ package com.steccn.oa.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +18,9 @@ import java.util.Map;
 public class OaWorkFlowParamDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     /**
-     * 流程名字
+     * 流程标题
      */
+    @NotNull(message = "流程标题不能为空")
     private String requestName;
     /**
      * 主要数据
@@ -26,6 +29,7 @@ public class OaWorkFlowParamDTO implements Serializable {
     /**
      * 工作流id
      */
+    @NotBlank(message = "工作流id不能为空")
     private String workflowId;
     /**
      * 其他参数
@@ -35,4 +39,8 @@ public class OaWorkFlowParamDTO implements Serializable {
      * 详情数据
      */
     private List<OaWorkFlowDetailObjDTO> detailData;
+    /**
+     * 用户id
+     */
+    private Long userId;
 }

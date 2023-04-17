@@ -8,4 +8,9 @@ public interface JwtAdditionConstant {
     String JWT_ADDITION_USERID = "userId";
 
     String JWT_ADDITION_NAME = "name";
+
+    /**
+     * jwt的权限字符串
+     */
+    String JWT_ADDITION_PW_STR ="pwStr";
 }

@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.pms.domain.PmsBarcodePrint;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
@@ -16,7 +14,6 @@ import com.steccn.pms.service.PmsCompleteStorageInfoService;
 import com.steccn.pms.mapper.PmsCompleteStorageInfoMapper;
 import com.steccn.pms.vo.FurtherProduceReportDataVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -37,9 +34,8 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
         implements PmsCompleteStorageInfoService {
 
     @Override
-    public Boolean existCaseNo(Set<String> caseNoSet) {
-        long count = count(new LambdaQueryWrapper<PmsCompleteStorageInfo>()
-                .in(PmsCompleteStorageInfo::getCaseNo, caseNoSet));
+    public Boolean existCaseNo(Long typeId, Set<String> caseNoSet) {
+        long count = baseMapper.existCaseNo(typeId, caseNoSet);
         return count != 0;
     }
 

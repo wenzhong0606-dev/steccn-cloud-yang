@@ -31,5 +31,6 @@ public interface SysDictConstant {
      */
     String CODE_0 = "0";
     String CODE_1 = "1";
+    String CODE_2 ="2";
 
 }

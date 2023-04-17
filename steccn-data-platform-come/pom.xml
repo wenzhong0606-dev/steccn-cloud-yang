@@ -86,16 +86,16 @@
             <groupId>com.steccn</groupId>
             <artifactId>steccn-common-data</artifactId>
         </dependency>
-<!--        &lt;!&ndash;添加actuator依赖&ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash;spring boot admin依赖&ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>de.codecentric</groupId>-->
-<!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
-<!--        </dependency>-->
+        <!--        &lt;!&ndash;添加actuator依赖&ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash;spring boot admin依赖&ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>de.codecentric</groupId>-->
+        <!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
+        <!--        </dependency>-->
         <!--fastJson依赖-->
         <dependency>
             <groupId>com.alibaba</groupId>

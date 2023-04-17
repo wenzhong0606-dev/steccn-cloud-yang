@@ -39,6 +39,14 @@ public interface PmsCompleteStorageInfoMapper extends BaseMapper<PmsCompleteStor
      * @return
      */
     List<FurtherProduceReportDataVO> materialList(@Param("materialSet") Set<Long> materialSet, @Param("date") LocalDate date);
+
+    /**
+     * 同一类型下，是否存在箱号
+     * @param typeId 类型id
+     * @param caseNoSet 箱号集合
+     * @return 条数
+     */
+    long existCaseNo(@Param("typeId") Long typeId, @Param("caseNoSet") Set<String> caseNoSet);
 }
 
 

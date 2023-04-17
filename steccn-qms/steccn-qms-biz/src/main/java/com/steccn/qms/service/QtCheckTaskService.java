@@ -223,6 +223,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      */
     Boolean deleteTask(Long id);
 
+    /**
+     * 获取所有已完成任务编码
+     * @param taskCode
+     * @return
+     */
+    List<QtCheckTaskCodeIdVO> getAllFinishedTaskCode(String taskCode);
+
 }
 
 

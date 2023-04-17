@@ -1,12 +1,19 @@
 package com.steccn.authserver.util;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
+import com.google.common.collect.Lists;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+
+import java.util.List;
 
 /**
  * 安全工具类
@@ -16,7 +23,6 @@ import org.springframework.security.oauth2.provider.authentication.OAuth2Authent
 @UtilityClass
 @Slf4j
 public class SecurityUtils {
-
     /**
      * 获取Authentication
      */
@@ -48,4 +54,5 @@ public class SecurityUtils {
         Authentication authentication = getAuthentication();
         return getUser(authentication);
     }
+
 }

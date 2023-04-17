@@ -113,6 +113,16 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
         }
         return results;
     }
+
+    @Override
+    public String getLoginIdById(Integer id) {
+        Hrmresource hrmresource = this.getOne(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getId, id), false);
+        if(Objects.isNull(hrmresource)){
+            return null;
+        }
+        return hrmresource.getLoginid();
+    }
 }
 
 

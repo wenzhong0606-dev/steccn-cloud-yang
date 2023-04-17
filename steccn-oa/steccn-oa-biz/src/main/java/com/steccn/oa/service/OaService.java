@@ -4,14 +4,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.oa.constant.OaConstant;
+import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
+import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +27,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
@@ -50,6 +55,7 @@ public class OaService {
 
     private final OaTokenService oaTokenService;
 	private final HrmresourceService hrmresourceService;
+    private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -308,6 +314,30 @@ public class OaService {
     }
 
     /**
+     * 获取oa人员信息
+     * @param dto
+     * @return
+     */
+    public List<OaEmpVO> getEmpInfoByCondition(OaEmpStatusDTO dto){
+        MultiValueMap<String, String> headers = setHeaders();
+        String sessionResult = oaApi.getEmpInfoSessionKey(headers,dto);
+        //获得sessionKey
+        String sessionKey = JSONObject.parseObject(sessionResult).getString(OaConstant.OA_SESSION_KEY);
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        if(dto.getCurrent()!=null){
+            dataKey.setCurrent(dto.getCurrent());
+        }
+        if(dto.getPageSize()!=null){
+            dataKey.setPageSize(dto.getPageSize());
+        }
+        dataKey.setDataKey(sessionKey);
+        String result = oaApi.getDataBySessionKey(headers,dataKey);
+        JSONArray data =  JSONObject.parseObject(result).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaEmpVO> vos = data.toJavaList(OaEmpVO.class);
+        return vos;
+    }
+
+    /**
      * 获取待办数据
      * @param flag 0待办 1待阅
      * @return
@@ -319,11 +349,7 @@ public class OaService {
         //默认8条数据
         dto.setPageSize(5);
         //待办数据需要修改userId
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String result = "";
         //0为待办列表,1为待阅列表
         if(flag.equals(0)){
@@ -373,20 +399,85 @@ public class OaService {
     /**
      * 新建流程
      */
-    public String getWorkFlow(OaWorkFlowParamDTO dto){
+    public OaWorkflowStatusVO createWorkFlow(OaWorkFlowParamDTO dto){
         OaWorkflowDTO oaWorkflowDTO = new OaWorkflowDTO();
         BeanUtils.copyProperties(dto,oaWorkflowDTO);
         if(CollUtil.isNotEmpty(dto.getMainData())){
             oaWorkflowDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
         }
         if(Objects.nonNull(dto.getDetailData())){
+            //替换反斜杠
             oaWorkflowDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()));
         }
         if(CollUtil.isNotEmpty(dto.getOtherParams())){
             oaWorkflowDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
         }
-        String result = oaApi.postProcess(this.setHeaders(),oaWorkflowDTO);
-        return result;
+        String result = "";
+        if(dto.getUserId()!=null){
+            result = oaApi.postProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowDTO);
+        }else {
+            result = oaApi.postProcess(this.setUserIdHeaders(),oaWorkflowDTO);
+        }
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        //如果是成功则收到成功消息，否则返回错误信息
+        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+        }else {
+            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+            }
+            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+        }
+        return vo;
+    }
+
+    /**
+     * 提交流程
+     * @param dto
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OaWorkflowStatusVO submitWorkFlow(OaWorkFlowSubmitParamDTO dto){
+        OaWorkflowSubmitDTO oaWorkflowSubmitDTO = new OaWorkflowSubmitDTO();
+        BeanUtils.copyProperties(dto,oaWorkflowSubmitDTO);
+        if(CollUtil.isNotEmpty(dto.getMainData())){
+            oaWorkflowSubmitDTO.setMainData(JSONObject.toJSONString(dto.getMainData()));
+        }
+        if(Objects.nonNull(dto.getDetailData())){
+            //替换反斜杠
+            oaWorkflowSubmitDTO.setDetailData(JSONObject.toJSONString(dto.getDetailData()).replaceAll("\\\\",""));
+        }
+        if(CollUtil.isNotEmpty(dto.getOtherParams())){
+            oaWorkflowSubmitDTO.setOtherParams(JSONObject.toJSONString(dto.getOtherParams()));
+        }
+        //如果是不合格品处理，删除不合格品详情表
+        if(dto.getWorkFlowId().equals(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getId())){
+            oaWorkflowDeleteDetailMapper.deleteUnqualified(dto.getRequestId());
+        }
+        //如果是客诉，删除客诉详情表
+        if(dto.getWorkFlowId().equals(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getId())){
+            oaWorkflowDeleteDetailMapper.deleteComplain1(dto.getRequestId());
+            oaWorkflowDeleteDetailMapper.deleteComplain2(dto.getRequestId());
+        }
+        String result = oaApi.submitProcess(this.setUserIdHeadersByFeign(dto.getUserId()),oaWorkflowSubmitDTO);
+        OaWorkflowStatusVO vo = new OaWorkflowStatusVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        vo.setCode(jsonObject.getString(OaConstant.OA_JSON_CODE));
+        if(!vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+            throw new BusinessException("提交失败,删除数据回滚");
+        }
+        //如果是成功则收到成功消息，否则返回错误信息
+//        if(vo.getCode().equals(OaConstant.OA_WORKFLOW_SUCCESS)){
+//            vo.setRequestId(jsonObject.getJSONObject(OaConstant.OA_JSON_DATA).getInteger(OaConstant.OA_WORKFLOW_REQUESTID));
+//        }else {
+//            if(vo.getCode().equals(OaConstant.OA_WORKFLOW_PARAM_ERROR)){
+//                vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).toString());
+//            }
+//            vo.setErrMsg(jsonObject.getJSONObject(OaConstant.OA_JSON_ERRMSG).getString(OaConstant.OA_JSON_MSG));
+//        }
+        return vo;
     }
 
     /**
@@ -395,11 +486,7 @@ public class OaService {
      */
     public OaWorkflowCountVO getWorkflowCount(){
         OaWorkflowCountVO vo = new OaWorkflowCountVO();
-        MultiValueMap<String, String> headers = this.setHeaders();
-        RSA rsa = new RSA();
-        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
-        headers.remove("userid");
-        headers.set("userid",userId);
+        MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String toDoWorkflowCount = oaApi.getToDoWorkflowCount(headers);
         String createdWorkflowCount = oaApi.getCreatedWorkflowCount(headers);
         String handledWorkflowCount = oaApi.getHandledWorkflowCount(headers);
@@ -475,6 +562,69 @@ public class OaService {
     }
 
     /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByCondition(OaOrgDetailDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        //获取sessionKey
+        String sessionKeyResult = oaApi.getOrgDetail(headers,dto);
+        String sessionKey = JSONObject.parseObject(sessionKeyResult).getString(OaConstant.OA_SESSION_KEY);
+        //根据sessionKey获取数据
+        OaDataKeyDTO dataKey = new OaDataKeyDTO();
+        dataKey.setDataKey(sessionKey);
+        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKey);
+        JSONArray data =  JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
+     * 根据部门信息查询部门详情,restful版本
+     * @param dto
+     * @return
+     */
+    public List<OaOrgDetailVO> getOrgDetailByConditionV2(OaOrgDetailParamDTO dto){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        String result = oaApi.getCompanyByOrg(headers,dto);
+        JSONArray data =  JSONObject.parseObject(result).getJSONObject(OaConstant.OA_JSON_DATA).getJSONArray(OaConstant.OA_JSON_DATA_LIST);
+        List<OaOrgDetailVO> vos = data.toJavaList(OaOrgDetailVO.class);
+        return vos;
+    }
+
+    /**
+     * Oa流程跳转文档信息
+     * @param url
+     * @return
+     */
+    public OaSaveDocVO saveDoc(String url){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        OaDocDTO dto = new OaDocDTO();
+        //默认目录是93
+        dto.setSeccategory(93);
+        dto.setDoccontent("<html>\n" +
+                "<head>\n" +
+                "\t<title></title>\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/weaver/contents.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/copyformatting/styles/copyformatting.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/tableselection/styles/tableselection.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/image2/styles/image2.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "\t<link href=\"/cloudstore/resource/pc/ckeditor-4.6.2/plugins/widget/styles/widget.css\" rel=\"stylesheet\" type=\"text/css\" />\n" +
+                "</head>\n" +
+                "<body style=\"height: 753px;\">\n" +
+                "<p><a href=\"" +
+                url +
+                "\" target=\"_blank\">跳转</a></p>\n" +
+                "</body>\n" +
+                "</html>");
+        dto.setDocSubject("流程跳转"+ RandomUtil.randomString(4));
+        String result = oaApi.saveDoc(headers,dto);
+        OaSaveDocVO oaSaveDocVO = JSONObject.parseObject(result, OaSaveDocVO.class);
+        return oaSaveDocVO;
+    }
+
+    /**
      * 设置请求头
      * @return
      */
@@ -487,4 +637,31 @@ public class OaService {
         headers.set("userid",OaConstant.OA_SYSTEM_USERID);
         return headers;
     }
+
+    /**
+     * 设置当前用户登录的请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setUserIdHeaders(){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        RSA rsa = new RSA();
+        String userId = rsa.encrypt(null,SecurityUtils.getUser().getUserId().toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userId);
+        return headers;
+    }
+
+    /**
+     * 设置当前用户登录的请求头
+     * @return
+     */
+    public MultiValueMap<String, String> setUserIdHeadersByFeign(Long userId){
+        MultiValueMap<String, String> headers = this.setHeaders();
+        RSA rsa = new RSA();
+        String userIdStr = rsa.encrypt(null,userId.toString(),null, "utf-8",OaConstant.OA_SPK,false);
+        headers.remove("userid");
+        headers.set("userid",userIdStr);
+        return headers;
+    }
+
 }

@@ -5,14 +5,14 @@ import com.google.common.collect.Maps;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.*;
-import com.steccn.oa.vo.OaEmpVO;
-import com.steccn.oa.vo.OaRosterRecordVO;
+import com.steccn.oa.vo.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -125,4 +125,85 @@ public interface OaInfoService {
     @ApiOperation("查询排班信息")
     @PostMapping("/oa/user/workCode")
     R<List<OaUserIdAndName>> getInfoByWorkCode(@RequestBody List<String> workCodes);
+
+    /**
+     * 新建流程
+     * @param dto
+     * @return
+     */
+    @ApiOperation("新建流程")
+    @PostMapping("/oa/workflow/doCreateRequest")
+    R<OaWorkflowStatusVO> createWorkflow(@RequestBody OaWorkFlowParamDTO dto);
+
+    /**
+     * 提交流程
+     * @param dto
+     * @return
+     */
+    @ApiOperation("提交流程")
+    @PostMapping("/oa/workflow/submitRequest")
+    R<OaWorkflowStatusVO> submitWorkflow(@RequestBody OaWorkFlowSubmitParamDTO dto);
+
+    /**
+     * 根据用户条件查询
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据条件查询")
+    @PostMapping("/oa/user/condition")
+    R<List<OaEmpVO>> getUserByCondition(@RequestBody OaEmpStatusDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情")
+    @PostMapping("/oa/org/detail")
+    R<List<OaOrgDetailVO>> getOrgDetailByCondition(@RequestBody OaOrgDetailDTO dto);
+
+    /**
+     * 根据部门信息查询部门详情V2
+     * @param dto
+     * @return
+     */
+    @ApiOperation("根据部门信息查询部门详情V2")
+    @PostMapping("/oa/org/detail/v2")
+    R<List<OaOrgDetailVO>> getOrgDetailByConditionV2(@RequestBody OaOrgDetailParamDTO dto);
+
+    /**
+     * 获取流程节点当前操作人
+     * @param dto
+     * @return
+     */
+    @ApiOperation("获取流程当前节点的操作人")
+    @PostMapping("/feign/oa/workflow/currentOperator")
+    R<OaWorkFlowOperatorDTO> getCurrentOperator(@RequestBody OaOperatorParamDTO dto);
+
+    /**
+     * 根据userId查询考勤组
+     * @param userId
+     * @return
+     */
+    @ApiOperation("根据userId查询考勤组")
+    @PostMapping("/feign/oa/user/group")
+    R<Map<Long, List<OaGroupIdAndNameVO>>> getGroupByUser(@RequestBody Set<Long> userId);
+
+    /**
+     * 根据id查询用户名
+     * @param id
+     * @return
+     */
+    @ApiOperation("根据Id查询用户名")
+    @GetMapping("/feign/oa/user/loginid")
+    R<String> getLoginIdById(@RequestParam("id") Integer id);
+
+    /**
+     * 传入url生产文档
+     * @param url
+     * @return
+     */
+    @ApiOperation("获取文档id")
+    @GetMapping("/feign/oa/workflow/saveDoc")
+    R<OaSaveDocVO> saveDoc(@RequestParam("url") String url);
 }

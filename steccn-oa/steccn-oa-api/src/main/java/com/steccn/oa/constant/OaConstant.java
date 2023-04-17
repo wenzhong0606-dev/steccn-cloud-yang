@@ -1,6 +1,8 @@
 package com.steccn.oa.constant;
 
 import com.steccn.oa.config.OaConfig;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +23,7 @@ public class OaConstant {
     public static final String OA_JSON_MSG_CODE = "msgcode";
     public static final String OA_JSON_MSG = "msg";
     public static final String OA_JSON_DATA = "data";
+    public static final String OA_JSON_DATA_LIST = "dataList";
     public static final String OA_CAPITAL_DATA = "Data";
     public static final String OA_JSON_DATAS = "datas";
     public static final String OA_JSON_STATUS = "status";
@@ -32,7 +35,11 @@ public class OaConstant {
     public static final String OA_JSON_URL = "url";
     public static final String OA_JSON_DEPARTMENTNAME = "departmentname";
     public static final String OA_JSON_ICON = "icon";
-
+    public static final String OA_JSON_CODE = "code";
+    public static final String OA_JSON_ERRMSG = "errMsg";
+    public static final String OA_WORKFLOW_SUCCESS = "SUCCESS";
+    public static final String OA_WORKFLOW_PARAM_ERROR = "PARAM_ERROR";
+    public static final String OA_WORKFLOW_REQUESTID = "requestid";
 
 
     /**

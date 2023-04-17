@@ -1,5 +1,6 @@
 package com.steccn.websocket.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,6 +11,7 @@ import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.service.WebSocketManager;
 import com.steccn.websocket.service.WebSocketServer;
+import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.web.bind.annotation.*;
@@ -43,5 +45,13 @@ public class WsFeignController {
             WebSocketManager.sendMessageByUser(ele, msg);
         });
         return R.success(msgPushDTO);
+    }
+
+    @ApiOperation("给指定的人推送刷新消息")
+    @PostMapping("/push/refresh")
+    public R<MsgPushDTO> pushRefreshMsg(@RequestBody MsgPushDTO msgPushDTO) {
+        msgPushDTO.setType(msgPushDTO.getType());
+        WebSocketManager.sendMessageToOnlineUser(JSONUtil.toJsonStr(msgPushDTO));
+        return new R<>(msgPushDTO);
     }
 }

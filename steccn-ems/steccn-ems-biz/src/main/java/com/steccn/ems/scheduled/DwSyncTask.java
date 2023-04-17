@@ -70,13 +70,13 @@ public class DwSyncTask {
     }
 
     /**
-     * 2023-04-12 00:30:00
-     * 2023-04-13 00:30:00
-     * 2023-04-14 00:30:00
-     * 2023-04-15 00:30:00
+     * 2023-04-12 08:20:00
+     * 2023-04-13 08:20:00
+     * 2023-04-14 08:20:00
+     * 2023-04-15 08:20:00
      */
     @Async
-    @Scheduled(cron = "0 30 0 * * ?")
+    @Scheduled(cron = "0 20 8 * * ?")
     public void electricMoney() {
         RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
         boolean b = lock.tryLock();
@@ -108,7 +108,7 @@ public class DwSyncTask {
      * 2023-04-12 03:10:00
      */
     @Async
-    @Scheduled(cron = "0 10 2/1 * * ?")
+    @Scheduled(cron = "0 10 9/1 * * ?")
     public void eM() {
         RLock lock = redissonClient.getLock(LockConstant.DW_ELECTRIC_MONEY_SCHEDULED_TASK);
         boolean b = lock.tryLock();

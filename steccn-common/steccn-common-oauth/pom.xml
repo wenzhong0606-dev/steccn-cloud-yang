@@ -69,6 +69,11 @@
             <version>9.0.54</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.steccn</groupId>
+            <artifactId>steccn-common-redis</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

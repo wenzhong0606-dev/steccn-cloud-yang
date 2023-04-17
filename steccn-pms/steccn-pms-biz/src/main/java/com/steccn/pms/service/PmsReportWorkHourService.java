@@ -19,4 +19,19 @@ public interface PmsReportWorkHourService extends IService<PmsReportWorkHour> {
      * @param hourDTOList 工时信息
      */
     void saveHourList(Long pmsReportWorkId, List<ProcessReportWorkHourDTO> hourDTOList);
+
+    /**
+     * 获取报工的工时信息
+     * @param id 报工id
+     * @return
+     */
+    List<ProcessReportWorkHourDTO> getReportWorkHour(Long id);
+
+    /**
+     * 更新报工的工时信息
+     *
+     * @param reportWorkId 报工id
+     * @param hourDTOList  工时集合
+     */
+    void updateHour(Long reportWorkId, List<ProcessReportWorkHourDTO> hourDTOList);
 }

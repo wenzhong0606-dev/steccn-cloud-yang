@@ -568,6 +568,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean execute(Long orderId) {
         //1.查询订单信息
         PmsProduceOrder order = selectOrder(orderId);
