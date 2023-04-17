@@ -244,7 +244,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     }
                 }
             //去除物料消耗list
-            List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId())).collect(Collectors.toList());
+            List<ProcessReportWorkMaterialListDTO> materialListDTOList = dto.getMaterialConsumeList().stream().filter(v -> Objects.nonNull(v.getInventoryId()) || Objects.nonNull(v.getId())).collect(Collectors.toList());
             dto.setMaterialConsumeList(materialListDTOList);
         }
     }
