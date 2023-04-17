@@ -43,6 +43,9 @@ public class SysMsgSendDTO implements Serializable {
     @NotNull(message = "消接收用户不能为空")
     private Set<Long> userList;
 
+    /**
+     * @see com.steccn.websocket.constant.WebsocketConstant.WsPushTypeEnum
+     */
     @ApiModelProperty("推送类型")
     @NotNull(message = "推送类型不能为空")
     private Integer pushType;

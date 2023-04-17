@@ -314,12 +314,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         idList.add(qtCustomerComplainDTO.getDealMan());
         Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainCustomer())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Map<Integer, String> typeMap = qtComplainTypeService.listByIdCh(Sets.newHashSet(qtCustomerComplainDTO.getComplainType()));
-        //发送消息
-        String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), officeMap.get(qtCustomerComplainDTO.getComplainCustomer()), typeMap.get(qtCustomerComplainDTO.getComplainType()), qtCustomerComplainDTO.getTitle());
-        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setCode(customerComplain.getCode());
-        sysMsgAdditionDTO.setId(customerComplain.getId());
-        sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtCustomerComplainDTO.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+
         return Boolean.TRUE;
     }
 
