@@ -33,19 +33,21 @@ public class LoginController {
      * @param username 用户名
      * @param password 密码
      * @param clientNo 客户端编码
+     * @param loginStatus 不传或0-正常token ,1-临时登录
      * @return r
      */
     @GetMapping("/login")
     public R<SteccnTokenVO> login(@RequestParam("username") String username,
                                   @RequestParam("password") String password,
-                                  @RequestParam(value = "clientNo", required = false) String clientNo) {
+                                  @RequestParam(value = "clientNo", required = false) String clientNo,
+                                  @RequestParam(value = "loginStatus", required = false) Integer loginStatus) {
         String decryptPassword;
         try {
             decryptPassword = AESUtils.decrypt(password);
         } catch (Exception e) {
             throw new BusinessException("密码解密失败");
         }
-        return loginService.login(username, decryptPassword,clientNo);
+        return loginService.login(username, decryptPassword, clientNo, loginStatus);
     }
 
     /**

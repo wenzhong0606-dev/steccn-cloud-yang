@@ -34,4 +34,12 @@ public interface RemoteTokenApi {
                @RequestParam("username") String username,
                @RequestParam("client_id") String clientId,
                @RequestParam("scope") String scope);
+
+    @PostMapping(value = "/oauth/token" , headers = {"Authorization=Basic dGVtcDpzdGVjY25fdGVtcA=="})
+    @Headers(value = {"Authorization=Basic dGVtcDpzdGVjY25fdGVtcA=="})
+    Object getTempToken(@RequestParam("grant_type") String grantType,
+                    @RequestParam("password") String password,
+                    @RequestParam("username") String username,
+                    @RequestParam("client_id") String clientId,
+                    @RequestParam("scope") String scope);
 }

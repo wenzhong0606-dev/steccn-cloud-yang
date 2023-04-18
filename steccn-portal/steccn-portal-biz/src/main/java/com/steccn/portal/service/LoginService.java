@@ -46,7 +46,7 @@ public class LoginService {
      * @param clientNo 移动端唯一标识
      * @return
      */
-    public R<SteccnTokenVO> login(String username, String password,String clientNo) {
+    public R<SteccnTokenVO> login(String username, String password,String clientNo,Integer loginStatus) {
         //1.定义变量
         //自己系统的token返回
         Object token = null;
@@ -59,7 +59,11 @@ public class LoginService {
         try {
             //2.调用自己系统的获取token信息
             try {
-                token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
+                if (Objects.nonNull(loginStatus) && 1 == loginStatus) {
+                    token = remoteTokenApi.getTempToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_TEMP, TokenConstant.SCOPE);
+                } else {
+                    token = remoteTokenApi.getToken(TokenConstant.GRANT_TYPE_PASSWORD, password, username, TokenConstant.CLIENT_ID, TokenConstant.SCOPE);
+                }
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("用户名密码错误");
