@@ -21,6 +21,8 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.vo.QtChartPieVO;
+import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwDefectCollectVO;
