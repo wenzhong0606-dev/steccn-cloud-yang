@@ -565,6 +565,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Boolean itemValue(QtCheckTaskSubmitDTO dto) {
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         QtCheckTask task = getById(dto.getId());
+        //校验落版记录时段
+        if(CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
+            dto.getQtCheckTaskDestoryInfo().forEach(tmp->{
+                if(tmp.getDestoryStartTime()!=null && tmp.getDestoryEndTime()!=null){
+                    if(!CalculateDateUtil.isSameClassType(tmp.getDestoryStartTime(),tmp.getDestoryEndTime())){
+                        throw new BusinessException("落版时段不允许跨班次");
+                    }
+                }
+            });
+        }
         //先删除可能暂存的值
         Map<String, Object> valueCondition = new HashMap<>();
         valueCondition.put("task_id", dto.getId());
@@ -689,6 +699,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Boolean pcItemValue(QtPcCheckTaskSubmitDTO dto) {
         if (CollUtil.isEmpty(dto.getCheckGroup()) && dto.getOnlineItem() == null) {
             throw new BusinessException("传的值为空");
+        }
+        //校验落版记录时段
+        if(CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
+            dto.getQtCheckTaskDestoryInfo().forEach(tmp->{
+                if(tmp.getDestoryStartTime()!=null && tmp.getDestoryEndTime()!=null){
+                    if(!CalculateDateUtil.isSameClassType(tmp.getDestoryStartTime(),tmp.getDestoryEndTime())){
+                        throw new BusinessException("落版时段不允许跨班次");
+                    }
+                }
+            });
         }
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         QtCheckTask tasKDetail = getById(dto.getId());
