@@ -819,6 +819,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
             }
 
         }
+        //降序排序
+        resList.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
         return resList;
     }
 
