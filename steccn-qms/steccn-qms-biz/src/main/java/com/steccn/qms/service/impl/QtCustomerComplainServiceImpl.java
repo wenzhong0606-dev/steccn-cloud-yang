@@ -57,6 +57,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -389,11 +390,25 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             Assert.isTrue(QtManagerConstant.NUM_1.equals(customerComplain.getStatus()), "当前状态不可审批通过");
             customerComplain.setStatus(QtManagerConstant.NUM_2);
             //发送消息
-            String content = String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTemplate(), customerComplain.getComplainCustomerName(),customerComplain.getComplainTypeName(), customerComplain.getTitle());
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTemplate());
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getCode());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTemplate(),customerComplain.getComplainCustomerName(),customerComplain.getComplainTypeName(),customerComplain.getTitle()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(customerComplain.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setId(customerComplain.getId());
-            sysMsgAdditionDTO.setCode(customerComplain.getCode());
-            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(customerComplain.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info(customerComplain + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
             //保存进度信息
             QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
             qtComplainDefectProgress.setBusiId(customerComplain.getId());
@@ -439,40 +454,6 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         return updateById(customerComplain);
     }
 
-
-    /**
-     * 发送消息
-     *
-     * @param complainCustomerName 客户名称
-     * @param complainTypeName     投诉类型
-     * @param title                标签
-     * @param userIds              消息接收人
-     * @param orderCode            单号
-     * @return
-     */
-    private Boolean sendMessage(String complainCustomerName, String complainTypeName, String title, Set<Long> userIds, String orderCode) {
-        //定义消息模板
-        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
-        sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTemplate(), complainCustomerName, complainTypeName, title));
-        sysMsgSendDTO.setUserList(userIds);
-        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setCode(orderCode);
-        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
-        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-        //发送消息
-        try {
-            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if (!aBoolean) {
-                log.info(complainCustomerName + "：消息发送失败");
-            }
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
-            throw new BusinessException("消息发送失败");
-        }
-        return Boolean.TRUE;
-    }
 
     /**
      * 发送消息
@@ -659,7 +640,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
             workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
             workflowDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getId());
-            workflowDTO.setRequestName("客诉处理审批");
+            workflowDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getName(),SecurityUtils.getUser().getName()));
             workflowDTO.setMainData(mainDataList);
             workflowDTO.setDetailData(detailDataList);
             //调用
@@ -676,6 +657,26 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
             }
+        }
+        //发送消息
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+        String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+        sysMsgSendDTO.setContent(content);
+        sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(qtCustomerComplain.getId());
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        try {
+            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                log.info("消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
         }
     }
 
@@ -715,6 +716,16 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     }
 
 
+    /**
+     * 生成流程实例标题  流程实例名称-流程发起人名称-日期
+     *
+     * @param titleName
+     * @param createName
+     * @return
+     */
+    private String sendTitle(String titleName, String createName) {
+        return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
+    }
 
 }
 
