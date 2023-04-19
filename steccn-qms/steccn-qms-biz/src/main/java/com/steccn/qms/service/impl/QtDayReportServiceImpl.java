@@ -753,6 +753,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         return qtDayPollingFirstVO;
     }
 
+    @Override
+    public QtDaySamplingVO sampling(LocalDate date) {
+        //1.根据日期查询全量数据表
+
+
+        return null;
+    }
+
 
     /**
      * 获取缺陷项数量
