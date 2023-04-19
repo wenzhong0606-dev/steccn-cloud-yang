@@ -182,7 +182,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
             workFlowParamDTO.setUserId(SecurityUtils.getUser().getUserId());
             workFlowParamDTO.setWorkflowId("153");
-            workFlowParamDTO.setRequestName("整改启动审批");
+            workFlowParamDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(),SecurityUtils.getUser().getName()));
             //主要数据
             List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
             //审批发起人
@@ -222,6 +222,26 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
+            }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean  b = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!b) {
+                    log.info(qtImproveRecord + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
             }
         } finally {
             lock.unlock();
@@ -287,6 +307,26 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
             throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
         }
+        //发送消息
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(),SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+        sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(record.getId());
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean  b = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!b) {
+                log.info(record + "：消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
         return Boolean.TRUE;
     }
 
@@ -316,6 +356,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //发送消息
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(record.getId());
             sysMsgAdditionDTO.setCode(record.getImproveOrder());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtImproveRecordDetail.getApproverId()));
         }
@@ -335,6 +376,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //发送消息
         String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(record.getId());
         sysMsgAdditionDTO.setCode(record.getImproveOrder());
         sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
         return updateById(record);
@@ -425,7 +467,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
         workFlowParamDTO.setUserId(SecurityUtils.getUser().getUserId());
         workFlowParamDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
-        workFlowParamDTO.setRequestName("整改结案审批启动");
+        workFlowParamDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getName(),SecurityUtils.getUser().getName()));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
         //审批发起人
@@ -484,7 +526,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
 
-        if (Objects.nonNull(linkDTO)){
+        if (Objects.nonNull(linkDTO.getId())){
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
             workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
@@ -551,10 +593,10 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateTime()));
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
+            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             //发送消息
@@ -595,7 +637,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //获取d7的处理人信息
             QtImproveRecordDetail one = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, qtImproveRecord.getId()).eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D7_PREVENT_RECURRENCE.getName()));
             //发送消息给处理人
-            String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTemplate(), qtImproveRecord.getTitle(), qtImproveRecord.getCreateName());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_APPROVE.getTemplate(), qtImproveRecord.getTitle(), qtImproveRecord.getCreateName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
             sysMsgAdditionDTO.setId(qtImproveRecord.getId());
@@ -618,10 +660,10 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateTime()));
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
+            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
@@ -678,8 +720,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
         //定义消息模板
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
+        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTitle());
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getCode());
         sysMsgSendDTO.setContent(content);
         sysMsgSendDTO.setUserList(userIds);
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
@@ -879,6 +921,17 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveRecordVO.setSuspendFlag(QtManagerConstant.NUM_1);
         }
         return qtImproveRecordVO;
+    }
+
+    /**
+     * 生成流程实例标题  流程实例名称-流程发起人名称-日期
+     *
+     * @param titleName
+     * @param createName
+     * @return
+     */
+    private String sendTitle(String titleName, String createName) {
+        return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
     }
 }
 
