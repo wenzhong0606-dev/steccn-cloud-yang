@@ -230,7 +230,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             //发送消息
@@ -314,7 +314,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName()));
         sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setId(record.getId());
+        sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
         sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
         //发送消息
@@ -620,7 +620,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
+            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             //发送消息
@@ -700,7 +700,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(qtImproveRecord.getId());
+            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
