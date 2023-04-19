@@ -420,7 +420,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), defectProduct.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(defectProduct.getId());
+            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
@@ -535,6 +535,26 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
             }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+            sysMsgSendDTO.setContent(content);
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            try {
+                Boolean a = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!a) {
+                    log.info("消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
         } else {
             //调用oa创建流程
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
@@ -571,26 +591,26 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
             }
-        }
-        //发送消息
-        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
-        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
-        String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
-        sysMsgSendDTO.setContent(content);
-        sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
-        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setId(qtDefectProduct.getId());
-        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
-        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
-        try {
-            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            if (!aBoolean) {
-                log.info("消息发送失败");
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+            sysMsgSendDTO.setContent(content);
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            try {
+                Boolean a = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info("消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
             }
-        } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
-            throw new BusinessException("消息发送失败");
         }
     }
 
