@@ -770,6 +770,8 @@ public interface QtManagerConstant {
 
     Integer NUM_11 = 11;
 
+    String WHIPPTREE = "-";
+
 
     /**
      * 周枚举
