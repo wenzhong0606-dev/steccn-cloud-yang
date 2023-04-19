@@ -229,4 +229,10 @@ public class OaController {
     public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
         return R.success(oaService.saveDoc(url));
     }
+
+    @ApiOperation("获取我的考勤信息")
+    @GetMapping("/attendance/info")
+    public R<OaAttendanceVO> getMyAttendance(){
+        return R.success(oaService.getMyAttendance());
+    }
 }

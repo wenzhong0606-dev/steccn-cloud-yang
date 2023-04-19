@@ -252,4 +252,15 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String saveDoc(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaDocDTO dto);
+
+    /**
+     * 考勤统计
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/kq/myattendance/getHrmKQReportInfo",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    @ResponseBody
+    String getMyAttendance(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaAttendanceDTO dto);
 }

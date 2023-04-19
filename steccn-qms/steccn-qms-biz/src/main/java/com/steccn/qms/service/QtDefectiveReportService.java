@@ -2,6 +2,7 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.vo.*;
 
