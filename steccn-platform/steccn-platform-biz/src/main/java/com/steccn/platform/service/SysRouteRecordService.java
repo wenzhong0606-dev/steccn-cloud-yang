@@ -3,6 +3,7 @@ package com.steccn.platform.service;
 import com.steccn.platform.domain.SysRouteRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.platform.dto.SysRouteRecordDTO;
+import com.steccn.platform.vo.SysRouteRecordVO;
 
 import java.util.List;
 
@@ -23,5 +24,5 @@ public interface SysRouteRecordService extends IService<SysRouteRecord> {
      * 获取记录
      * @return
      */
-    List<SysRouteRecordDTO> getRouteRecord();
+    List<SysRouteRecordVO> getRouteRecord();
 }

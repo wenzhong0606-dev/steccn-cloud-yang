@@ -5,6 +5,7 @@ import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysRouteRecordDTO;
 import com.steccn.platform.service.SysRouteRecordService;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.platform.vo.SysRouteRecordVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class SysRouteRecordController {
 
     @ApiOperation("拿到记录记录")
     @GetMapping("/record")
-    public R<List<SysRouteRecordDTO>> getRecord() {
+    public R<List<SysRouteRecordVO>> getRecord() {
         return R.success(sysRouteRecordService.getRouteRecord());
     }
 }
