@@ -69,8 +69,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMapper, QtDefectProduct>
-        implements QtDefectProductService {
+public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMapper, QtDefectProduct> implements QtDefectProductService {
 
     private final RedissonClient redissonClient;
 
@@ -113,13 +112,17 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTemplate(),dto.getTitle(),dto.getDescription(),dto.getTaskTypeName()));
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTitle());
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getCode());
+            String description = qtDefectProduct.getDescription();
+            if (Objects.isNull(description)) {
+                description = "-";
+            }
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTemplate(), dto.getTitle(), description, dto.getTaskTypeName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtDefectProduct.getDealMan()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setCode(qtDefectProduct.getCode());
-            sysMsgAdditionDTO.setId(qtDefectProduct.getTaskId());
+            sysMsgAdditionDTO.setId(qtDefectProduct.getId());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             try {
@@ -145,40 +148,29 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //1.定义查询条件查询数据
-        LambdaQueryWrapper<QtDefectProduct> between = new LambdaQueryWrapper<QtDefectProduct>()
-                .like(Objects.nonNull(dto.getCode()), QtDefectProduct::getCode, dto.getCode())
-                .like(Objects.nonNull(dto.getTitle()), QtDefectProduct::getTitle, dto.getTitle())
-                .eq(Objects.nonNull(dto.getTaskCode()), QtDefectProduct::getTaskCode, dto.getTaskCode())
-                .eq(Objects.nonNull(dto.getTaskType()), QtDefectProduct::getTaskType, dto.getTaskType())
-                .eq(Objects.nonNull(dto.getMaterialName()), QtDefectProduct::getMaterialName, dto.getMaterialName())
-                .eq(Objects.nonNull(dto.getDealMan()), QtDefectProduct::getDealMan, dto.getDealMan())
-                .eq(Objects.nonNull(dto.getStatus()), QtDefectProduct::getStatus, dto.getStatus())
-                .eq(Objects.nonNull(dto.getDealWay()), QtDefectProduct::getDealWay, dto.getDealWay())
-                .eq(Objects.nonNull(dto.getTaskFinishMan()),QtDefectProduct::getTaskFinishMan,dto.getTaskFinishMan())
-                .between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()),
-                        QtDefectProduct::getTaskFinishTime, dto.getStartTime(), dto.getEndTime());
-        if (Objects.nonNull(dto.getSortField())){
+        LambdaQueryWrapper<QtDefectProduct> between = new LambdaQueryWrapper<QtDefectProduct>().like(Objects.nonNull(dto.getCode()), QtDefectProduct::getCode, dto.getCode()).like(Objects.nonNull(dto.getTitle()), QtDefectProduct::getTitle, dto.getTitle()).eq(Objects.nonNull(dto.getTaskCode()), QtDefectProduct::getTaskCode, dto.getTaskCode()).eq(Objects.nonNull(dto.getTaskType()), QtDefectProduct::getTaskType, dto.getTaskType()).eq(Objects.nonNull(dto.getMaterialName()), QtDefectProduct::getMaterialName, dto.getMaterialName()).eq(Objects.nonNull(dto.getDealMan()), QtDefectProduct::getDealMan, dto.getDealMan()).eq(Objects.nonNull(dto.getStatus()), QtDefectProduct::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getDealWay()), QtDefectProduct::getDealWay, dto.getDealWay()).eq(Objects.nonNull(dto.getTaskFinishMan()), QtDefectProduct::getTaskFinishMan, dto.getTaskFinishMan()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtDefectProduct::getTaskFinishTime, dto.getStartTime(), dto.getEndTime());
+        if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
-            if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CODE.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getCode);
-            }else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_title.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getTitle);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_CODE.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getTaskCode);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_TYPE.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getTaskTypeName);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_MATERIAL_NAME.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getMaterialName);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_DEAL_MAN.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getDealManName);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_FINISH_MAN.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getTaskFinishManName);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_DEAL_WAY.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getDealWayName);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_FINISH_TIME.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getTaskFinishTime);
-            }else if (QtManagerConstant.QT_DEFECT_PRODUCT_STATUS.equals(dto.getSortField())){
-                between.orderBy(Boolean.TRUE,dto.getAscFlag(),QtDefectProduct::getStatus);
+            if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_CODE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getCode);
+            } else if (QtManagerConstant.QT_CUSTOMER_COMPLAIN_title.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getTitle);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_CODE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getTaskCode);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_TYPE.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getTaskTypeName);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_MATERIAL_NAME.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getMaterialName);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_DEAL_MAN.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getDealManName);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_FINISH_MAN.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getTaskFinishManName);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_DEAL_WAY.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getDealWayName);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_TASK_FINISH_TIME.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getTaskFinishTime);
+            } else if (QtManagerConstant.QT_DEFECT_PRODUCT_STATUS.equals(dto.getSortField())) {
+                between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getStatus);
             }
         }
 
@@ -187,11 +179,11 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         if (CollUtil.isNotEmpty(role.getStringList())) {
             if (!role.getStringList().contains(QtManagerConstant.DEFECT_PRODUCT_MANAGER)) {
                 //不是整改管理员
-                between.in(QtDefectProduct::getId,getUserAuthData());
+                between.in(QtDefectProduct::getId, getUserAuthData());
             }
         } else {
             Set<Long> userAuthData = getUserAuthData();
-            if (CollUtil.isNotEmpty(userAuthData)){
+            if (CollUtil.isNotEmpty(userAuthData)) {
                 between.in(QtDefectProduct::getId, userAuthData);
             }
         }
@@ -202,15 +194,15 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         //4.拷贝page信息
         BeanUtil.copyProperties(resPage, page);
         List<QtDefectProductVO> qtCustomerComplainVOList = BeanUtil.copyToList(resPage.getRecords(), QtDefectProductVO.class);
-        if (CollUtil.isNotEmpty(qtCustomerComplainVOList)){
-            qtCustomerComplainVOList.forEach( qtDefectProductVO -> {
+        if (CollUtil.isNotEmpty(qtCustomerComplainVOList)) {
+            qtCustomerComplainVOList.forEach(qtDefectProductVO -> {
                 //处理按钮权限
                 if (qtDefectProductVO.getCreateBy().equals(SecurityUtils.getUser().getUserId())) {
                     qtDefectProductVO.setEditFlag(QtManagerConstant.NUM_1);
                 }
                 if (QtManagerConstant.NUM_0.equals(qtDefectProductVO.getStatus())) {
                     //获取当前登陆人是否有处理按钮的权限
-                    if (qtDefectProductVO.getDealMan().equals(SecurityUtils.getUser().getUserId())){
+                    if (qtDefectProductVO.getDealMan().equals(SecurityUtils.getUser().getUserId())) {
                         qtDefectProductVO.setDisposeFlag(QtManagerConstant.NUM_1);
                     }
                 }
@@ -230,12 +222,16 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             BeanUtil.copyProperties(dto, qtDefectProduct);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTemplate(), dto.getTitle(), dto.getDescription(), dto.getTaskTypeName()));
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTitle());
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getCode());
+            String description = qtDefectProduct.getDescription();
+            if (Objects.isNull(description)) {
+                description = "-";
+            }
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTemplate(), dto.getTitle(), description, dto.getTaskTypeName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtDefectProduct.getDealMan()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(qtDefectProduct.getTaskId());
+            sysMsgAdditionDTO.setId(qtDefectProduct.getId());
             sysMsgAdditionDTO.setCode(qtDefectProduct.getCode());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
@@ -250,7 +246,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 throw new BusinessException("消息发送失败");
             }
             return updateById(qtDefectProduct);
-        }finally {
+        } finally {
             lock.unlock();
         }
     }
@@ -295,10 +291,10 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 manList.add(man);
             }
         }
-        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId,dto.getId()));
+        qtComplainDefectImproveManService.remove(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, dto.getId()));
         qtComplainDefectImproveManService.saveBatch(manList);
-        startWorkFlow(dto,qtDefectProduct);
-        return  updateById(qtDefectProduct);
+        startWorkFlow(dto, qtDefectProduct);
+        return updateById(qtDefectProduct);
     }
 
     @Override
@@ -306,26 +302,23 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         QtDefectProduct qtDefectProduct = getById(id);
         Assert.isTrue(Objects.nonNull(qtDefectProduct), "记录不存在");
         QtDefectProductVO qtDefectProductVO = new QtDefectProductVO();
-        BeanUtil.copyProperties(qtDefectProduct,qtDefectProductVO);
+        BeanUtil.copyProperties(qtDefectProduct, qtDefectProductVO);
         //获取进度信息
-        List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>()
-                .eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
-        if (CollUtil.isNotEmpty(progresses)){
+        List<QtComplainDefectProgress> progresses = qtComplainDefectProgressService.list(new LambdaQueryWrapper<QtComplainDefectProgress>().eq(QtComplainDefectProgress::getBusiId, id).orderByAsc(QtComplainDefectProgress::getCreateTime));
+        if (CollUtil.isNotEmpty(progresses)) {
             qtDefectProductVO.setProgressList(BeanUtil.copyToList(progresses, QtComplainDefectProgressVO.class));
         }
         //获取抄送人审批人信息
-        List<QtComplainDefectImproveMan> list = qtComplainDefectImproveManService
-                .list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
-                .eq(QtComplainDefectImproveMan::getBusiId, id));
-        if (CollUtil.isNotEmpty(list)){
+        List<QtComplainDefectImproveMan> list = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getBusiId, id));
+        if (CollUtil.isNotEmpty(list)) {
             List<Long> userIds = list.stream().map(QtComplainDefectImproveMan::getUserId).collect(Collectors.toList());
             Map<Long, String> map = FeignOptional.of(() -> oaInfoService.listByIdCh(userIds), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             List<QtCarbonCopyManDTO> manList = Lists.newArrayList();
-            list.forEach(man ->{
-                if (QtManagerConstant.NUM_0.equals(man.getUserType())){
+            list.forEach(man -> {
+                if (QtManagerConstant.NUM_0.equals(man.getUserType())) {
                     qtDefectProductVO.setApproveMan(man.getUserId());
                     qtDefectProductVO.setApproveManName(map.get(man.getUserId()));
-                }else {
+                } else {
                     QtCarbonCopyManDTO qtCarbonCopyManDTO = new QtCarbonCopyManDTO();
                     qtCarbonCopyManDTO.setUserId(man.getUserId());
                     qtCarbonCopyManDTO.setUserName(map.get(man.getUserId()));
@@ -336,8 +329,8 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         }
         //获取整改相关内容
         List<QtImproveRecord> qtImproveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getDefectProductId, id));
-        if (CollUtil.isNotEmpty(qtImproveRecords)){
-            qtDefectProductVO.setImproveRecordList(BeanUtil.copyToList(qtImproveRecords,QtImproveRecordVO.class));
+        if (CollUtil.isNotEmpty(qtImproveRecords)) {
+            qtDefectProductVO.setImproveRecordList(BeanUtil.copyToList(qtImproveRecords, QtImproveRecordVO.class));
         }
         return qtDefectProductVO;
     }
@@ -378,18 +371,36 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         QtDefectProduct defectProduct = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(defectProduct), "当前业务数据不存在");
         //获取节点操作人信息
-        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
-                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()), Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_1.equals(defectProduct.getStatus()), "当前状态不可审批通过");
             defectProduct.setStatus(QtManagerConstant.NUM_2);
             //发送消息
-            String content = String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(),defectProduct.getDescription(),defectProduct.getTaskTypeName());
+            String description = defectProduct.getDescription();
+            if (Objects.isNull(description)) {
+                description = "-";
+            }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate());
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getCode());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(), description, defectProduct.getTaskTypeName()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getDealMan()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(defectProduct.getTaskId());
-            sysMsgAdditionDTO.setCode(defectProduct.getCode());
-            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(defectProduct.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+            sysMsgAdditionDTO.setId(defectProduct.getId());
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info(defectProduct + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
             //保存进度信息
             QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
             qtComplainDefectProgress.setBusiId(defectProduct.getId());
@@ -399,19 +410,19 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             qtComplainDefectProgress.setOpTime(LocalDateTime.now());
             qtComplainDefectProgress.setBusiType(QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN.getCode());
             qtComplainDefectProgressService.save(qtComplainDefectProgress);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())){
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             //退回
             defectProduct.setStatus(QtManagerConstant.NUM_0);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),defectProduct.getCreateName()));
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), defectProduct.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(defectProduct.getTaskId());
+            sysMsgAdditionDTO.setId(defectProduct.getId());
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
-            sysMsgSendDTO.setPushType( SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
+            sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
             try {
                 Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -438,10 +449,11 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
 
     /**
      * 调用OA启动流程
+     *
      * @param dto
      * @param qtDefectProduct
      */
-    private void startWorkFlow(QtDefectProductDTO dto,QtDefectProduct qtDefectProduct){
+    private void startWorkFlow(QtDefectProductDTO dto, QtDefectProduct qtDefectProduct) {
         //判断流程是否是第一次提交
         ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(qtDefectProduct.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //主要数据
@@ -457,7 +469,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, qtDefectProduct.getCreateName()));
         //创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(qtDefectProduct.getCreateTime(),"yyyy-MM-dd HH:mm:ss")));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(qtDefectProduct.getCreateTime(), "yyyy-MM-dd HH:mm:ss")));
         //检验单号
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYDH, qtDefectProduct.getTaskCode()));
         //检验类型
@@ -465,7 +477,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         //检验完成人员
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYWCRY, qtDefectProduct.getTaskFinishManName()));
         //检验完成时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYWCSJ, LocalDateTimeUtil.format(qtDefectProduct.getTaskFinishTime(),"yyyy-MM-dd HH:mm:ss")));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_JYWCSJ, LocalDateTimeUtil.format(qtDefectProduct.getTaskFinishTime(), "yyyy-MM-dd HH:mm:ss")));
         //物料名称
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_WLMC, qtDefectProduct.getMaterialName()));
         //物料编码
@@ -484,7 +496,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_YBSL, qtDefectProduct.getSampleQuantity().toString()));
         }
         //合格数量
-        if(Objects.nonNull(qtDefectProduct.getGoodQuantity())) {
+        if (Objects.nonNull(qtDefectProduct.getGoodQuantity())) {
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_HGSL, qtDefectProduct.getGoodQuantity().toString()));
         }
         //不合格数量
@@ -512,7 +524,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
-        if (Objects.nonNull(linkDTO.getId())){
+        if (Objects.nonNull(linkDTO.getId())) {
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
             workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
@@ -523,14 +535,14 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
             }
-        }else {
+        } else {
             //调用oa创建流程
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
             workflowDTO.setUserId(SecurityUtils.getUser().getUserId());
             workflowDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getId());
             workflowDTO.setMainData(mainDataList);
             //详细数据
-            List<OaWorkFlowDetailObjDTO>  detailList = Lists.newArrayList();
+            List<OaWorkFlowDetailObjDTO> detailList = Lists.newArrayList();
             OaWorkFlowDetailObjDTO oaWorkFlowDetailObjDTO = new OaWorkFlowDetailObjDTO();
             oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
             List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
@@ -544,7 +556,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
             detailList.add(oaWorkFlowDetailObjDTO);
             workflowDTO.setDetailData(detailList);
-            workflowDTO.setRequestName("不合格品处理审批");
+            workflowDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
             //调用
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
@@ -560,22 +572,43 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 throw new BusinessException("调用保存业务数据失败");
             }
         }
+        //发送消息
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+        String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+        sysMsgSendDTO.setContent(content);
+        sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(qtDefectProduct.getId());
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        try {
+            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                log.info("消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
     }
 
 
     /**
      * 发送消息
+     *
      * @param sysMsgAdditionDTO
      * @param content
      * @param userIds
      * @param pushType
      * @return
      */
-    private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds,Integer pushType) {
+    private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds, Integer pushType) {
         //定义消息模板
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
+        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getTitle());
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT.getCode());
         sysMsgSendDTO.setContent(content);
         sysMsgSendDTO.setUserList(userIds);
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
@@ -612,14 +645,25 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             recordIds.addAll(customerComplainList.stream().map(QtDefectProduct::getId).collect(Collectors.toSet()));
         }
         //获取审批人为自己的记录或者抄送人为自己
-        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>()
-                .eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser())
-                .eq(QtComplainDefectImproveMan::getBusiType,QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
-        if (CollUtil.isNotEmpty(qtComplainDefectImproveManList)){
+        List<QtComplainDefectImproveMan> qtComplainDefectImproveManList = qtComplainDefectImproveManService.list(new LambdaQueryWrapper<QtComplainDefectImproveMan>().eq(QtComplainDefectImproveMan::getUserId, SecurityUtils.getUser()).eq(QtComplainDefectImproveMan::getBusiType, QtManagerConstant.QtBusinessType.CUSTOMER_COMPLAIN));
+        if (CollUtil.isNotEmpty(qtComplainDefectImproveManList)) {
             recordIds.addAll(qtComplainDefectImproveManList.stream().map(QtComplainDefectImproveMan::getBusiId).collect(Collectors.toSet()));
         }
         return recordIds;
     }
+
+
+    /**
+     * 生成流程实例标题  流程实例名称-流程发起人名称-日期
+     *
+     * @param titleName
+     * @param createName
+     * @return
+     */
+    private String sendTitle(String titleName, String createName) {
+        return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
+    }
+
 }
 
 
