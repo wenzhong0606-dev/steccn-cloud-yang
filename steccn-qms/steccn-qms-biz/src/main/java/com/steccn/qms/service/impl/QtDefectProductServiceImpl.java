@@ -383,7 +383,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             }
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate());
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTitle());
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getCode());
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(), description, defectProduct.getTaskTypeName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getDealMan()));

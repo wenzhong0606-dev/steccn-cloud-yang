@@ -391,7 +391,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             customerComplain.setStatus(QtManagerConstant.NUM_2);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTemplate());
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTitle());
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getCode());
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN_APPROVE.getTemplate(),customerComplain.getComplainCustomerName(),customerComplain.getComplainTypeName(),customerComplain.getTitle()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(customerComplain.getCreateBy()));
