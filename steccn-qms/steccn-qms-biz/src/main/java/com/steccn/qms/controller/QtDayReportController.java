@@ -5,6 +5,7 @@ import com.steccn.qms.service.QtDayReportService;
 import com.steccn.qms.vo.QtDayPollingFirstVO;
 import com.steccn.qms.vo.QtDayReportFirstVO;
 import com.steccn.qms.vo.QtDayReportOnlineVO;
+import com.steccn.qms.vo.QtDaySamplingVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,10 @@ public class QtDayReportController {
         return R.success(qtDayReportService.pollingDefectItem(date,productLineId));
     }
 
-
+    @GetMapping("/sampling")
+    @ApiOperation("配料抽检日报表")
+    public R<QtDaySamplingVO> sampling(@RequestParam("date") LocalDate date) {
+        return R.success(qtDayReportService.sampling(date));
+    }
 
 }
