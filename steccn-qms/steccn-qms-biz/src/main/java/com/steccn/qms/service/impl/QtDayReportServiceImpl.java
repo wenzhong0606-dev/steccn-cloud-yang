@@ -23,6 +23,7 @@ import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtDaySamplingDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.*;
@@ -755,9 +756,27 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     @Override
     public QtDaySamplingVO sampling(LocalDate date) {
-        //1.根据日期查询全量数据表
-
-
+        //1.获取原始数据
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingList();
+        //2.如果原始数据集合不为空，则继续执行
+        SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
+        //3.获取早班和晚班时间
+        LocalDateTime morning = LocalDateUtil.getMorning(date);
+        LocalDateTime night = LocalDateUtil.getNight(date);
+        //4.拆分时间并过滤
+        List<QtDaySamplingDTO> filterList = Lists.newArrayList();
+        for (QtDaySamplingDTO samplingDTO : sourceList) {
+            for (LocalDateTime ldt : samplingDTO.getSamplingTimeArray()) {
+                //如果时间符合要求，则保存到filterList中
+                if (LocalDateUtil.isRange(ldt, morning, night, Boolean.TRUE, Boolean.TRUE)) {
+                    QtDaySamplingDTO newDTO = new QtDaySamplingDTO();
+                    BeanUtils.copyProperties(samplingDTO,newDTO);
+                    newDTO.setSamplingTime(ldt);
+                    filterList.add(newDTO);
+                }
+            }
+        }
+        SteccnTableAssertUtil.notEmpty(filterList, "配料抽检时间范围内数据为空");
         return null;
     }
 

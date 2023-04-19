@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.steccn.qms.dto.QtDaySamplingDTO;
 import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
 import com.steccn.qms.vo.QtDefectItemInfoVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
@@ -68,6 +69,13 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return
      */
     List<QtDefectItemInfoVO> getDefectItemList(@Param("apparentCondition")String apparentCondition,@Param("taskIds") List<Long> taskIds);
+
+
+    /**
+     * 获取所有的配料检数
+     * @return
+     */
+    List<QtDaySamplingDTO> samplingList();
 }
 
 
