@@ -27,6 +27,7 @@ import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -763,20 +764,46 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //4.拆分时间并过滤
         //记录所有的检验项
         Set<Integer> itemIdSet = Sets.newHashSet();
-
+        sourceList.forEach(ele -> itemIdSet.add(ele.getItemId()));
         Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(itemIdSet));
-        List<String> dynamicHeadList = itemMap.values().stream().map(v -> v.getName()).collect(Collectors.toList());
+        //构造idxmap
+        Map<Integer,Integer> idxMap = Maps.newHashMap();
+        List<String> dynamicHeadList = Lists.newArrayList();
+        int idx = 0 ;
+        for (Map.Entry<Integer, QtCheckItem> itemEntry : itemMap.entrySet()) {
+            dynamicHeadList.add(itemEntry.getValue().getName());
+            idxMap.put(itemEntry.getKey(),idx++);
+        }
         QtDaySamplingVO resVo = new QtDaySamplingVO();
         resVo.setDynamicHeadList(dynamicHeadList);
         List<QtDaySamplingDataVO> dataList = Lists.newArrayList();
-        Map<Long, List<QtDaySamplingDTO>> taskMap = sourceList.stream().collect(Collectors.groupingBy(QtDaySamplingDTO::getTaskId));
+        Map<String, List<QtDaySamplingDTO>> taskMap = sourceList.stream().collect(Collectors.groupingBy(v -> v.getTaskId() + "_" + v.getSamplingTime() + "_" + v.getCopy()));
 
-        for (QtDaySamplingDTO samplingDTO : sourceList) {
+        for (Map.Entry<String, List<QtDaySamplingDTO>> taskEntry : taskMap.entrySet()) {
+            String[] key = taskEntry.getKey().split("_");
+            LocalDateTime samplingTime = LocalDateTime.parse(key[1]);
+            QtDaySamplingDTO samplingDTO = taskEntry.getValue().get(0);
             QtDaySamplingDataVO data = new QtDaySamplingDataVO();
             BeanUtils.copyProperties(samplingDTO, data);
-            data.setClassId(ClassUtil.classAndDate(samplingDTO.getSamplingTime()).getField2());
+            data.setSamplingTime(samplingTime.toLocalTime());
+            data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
+            //配料付数
+            int sum = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
+            data.setIngredientNum(sum);
             dataList.add(data);
+            List<String> itemList = new ArrayList<>();
+            for (int i = 0; i < idx; i++) {
+                itemList.add("-");
+            }
+            //构造检验项
+            for (QtDaySamplingDTO qtDaySamplingDTO : taskEntry.getValue()) {
+                Integer index = idxMap.get(qtDaySamplingDTO.getItemId());
+                if(Objects.nonNull(index)){
+                    itemList.set(index, Objects.isNull(qtDaySamplingDTO.getCheckResult()) ? Strings.EMPTY : qtDaySamplingDTO.getCheckResult());
+                }
+            }
+            data.setItemList(itemList);
         }
         resVo.setDataList(dataList);
         return resVo;
