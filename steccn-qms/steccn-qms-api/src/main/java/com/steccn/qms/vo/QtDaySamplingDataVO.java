@@ -33,7 +33,7 @@ public class QtDaySamplingDataVO implements Serializable {
     private Integer ingredientNum;
 
     @ApiModelProperty("检验结果")
-    private String checkResult;
+    private String result;
 
     @ApiModelProperty("备注")
     private String note;

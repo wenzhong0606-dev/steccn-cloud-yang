@@ -23,9 +23,6 @@ public class QtDaySamplingDTO implements Serializable {
     @ApiModelProperty("任务id")
     private Long taskId;
 
-    @ApiModelProperty("取样时间")
-    private List<LocalDateTime> samplingTimeArray;
-
     @ApiModelProperty("配料付数")
     private Integer ingredientNum;
 

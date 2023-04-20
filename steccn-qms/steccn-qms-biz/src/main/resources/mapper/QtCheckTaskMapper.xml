@@ -252,7 +252,10 @@
                 JOIN qt_check_task_copy copy ON task.id = copy.task_id and copy.sampling_time_array is not null and copy.del_flag = 0
                 JOIN qt_check_task_detail detail ON task.id = detail.task_id and detail.del_flag = 0
         WHERE
-            task.del_flag = 0 AND
-            task.task_type = 7
+            task.del_flag = 0
+            AND task.task_type = 7
+        <if test="morning != null and morning != null">
+            AND copy.sampling_time between #{morning} and #{night}
+        </if>
     </select>
 </mapper>

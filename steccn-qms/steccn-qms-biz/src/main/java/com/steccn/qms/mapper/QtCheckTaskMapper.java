@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.security.core.parameters.P;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -73,9 +74,11 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
     /**
      * 获取所有的配料检数
+     * @param morning 早上
+     * @param night 晚上
      * @return
      */
-    List<QtDaySamplingDTO> samplingList();
+    List<QtDaySamplingDTO> samplingList(@Param("morning") LocalDateTime morning, @Param("night") LocalDateTime night);
 }
 
 
