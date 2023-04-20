@@ -46,7 +46,7 @@ public interface SysMsgConstant {
         SEND_BACK(10,"流程实例标题",MsgCategoryEnum.TO_BE_DO.code,"发起人：%s"),
         DEFECT_PRODUCT_APPROVE(11,"不合格品处理通过",MsgCategoryEnum.SYS_REMIND.code, "标题： %s \r\n问题描述： %s \r\n 检验类型：%s"),
         IMPROVE_RECORD_APPROVE(12,"整改审批结案",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n"),
-        IMPROVE_RECORD_APPROVE_PASS(12,"整改审批结案通过",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n");
+        IMPROVE_RECORD_APPROVE_PASS(13,"整改审批结案通过",MsgCategoryEnum.SYS_REMIND.code,"整改标题: %s \r\n创建人: %s\r\n");
 
         private Integer code;
         private String title;

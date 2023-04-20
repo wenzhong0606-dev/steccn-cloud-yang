@@ -378,7 +378,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
         sysMsgAdditionDTO.setId(record.getId());
         sysMsgAdditionDTO.setCode(record.getImproveOrder());
-        sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
+        sendMessage(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTitle(),sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
         return updateById(record);
     }
 
@@ -753,6 +753,28 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         return currentMax;
     }
 
+
+    private Boolean sendMessage(String title,SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
+        //定义消息模板
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(title);
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getCode());
+        sysMsgSendDTO.setContent(content);
+        sysMsgSendDTO.setUserList(userIds);
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                log.info("消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
+        return Boolean.TRUE;
+    }
 
     private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
         //定义消息模板
