@@ -23,7 +23,9 @@ import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtDaySamplingDTO;
+import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.*;
@@ -60,6 +62,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final QtDefectiveItemMapper qtDefectiveItemMapper;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
+    private final QtChartGenerateService qtChartGenerateService;
 
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
@@ -836,7 +839,45 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         return resVo;
     }
 
+    /**
+     * 损耗日报表
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtDayReportLossVO loss(QtLossReportDTO dto) {
+        //1、拿到全量数据表，若是月则修改数据
+        if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+            dto.setStartDate(dto.getStartDate().withDayOfMonth(1));
+            dto.setEndDate(dto.getEndDate().withDayOfMonth(dto.getEndDate().lengthOfMonth()));
+        }
+        List<QtChartSubDetailDTO> allData = Lists.newArrayList();
+        QtChartParamDTO chartParam = new QtChartParamDTO();
+        dto.getProductLineIds().forEach(tmp->{
+            chartParam.setProductLineId(tmp);
+            chartParam.setDateStart(dto.getStartDate());
+            chartParam.setDateEnd(dto.getEndDate());
+            List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(chartParam);
+            allData.addAll(qtChartSubDetailDTOS);
+        });
+        //判空
+        SteccnTableAssertUtil.notEmpty(allData, "损耗数据为空");
+        //2、组合报表
+        QtDayReportLossVO chart = new QtDayReportLossVO();
+        //头
+        QtDayReportTableHeadersVO headers = new QtDayReportTableHeadersVO();
+        //静态表头
+        List<QtSpcHeadTitleVO> common = Lists.newArrayList();
+        //动态表头
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        //数据
+        List<QtDayReportLossDataVO> tableData = Lists.newArrayList();
+        //日报表
+        if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
 
+        }
+        return null;
+    }
 
 
     /**
