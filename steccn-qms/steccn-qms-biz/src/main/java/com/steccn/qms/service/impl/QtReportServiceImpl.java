@@ -236,34 +236,25 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     @Override
     public List<QtReportChartVO> getQtReportList(Integer reportGroupId) {
         List<QtReportChartVO> qtReportChartVOlist = Lists.newArrayList();
-        if (Objects.isNull(reportGroupId)) {
-            return qtReportChartVOlist;
-        }
-
         List<QtReport> qtReportList = list(new LambdaQueryWrapper<QtReport>().eq(QtReport::getReportGroupId, reportGroupId)
                 .orderByDesc(QtReport::getId));
-        //List<Long> materialIds= qtReportList.stream().map(QtReport::getMaterialId).collect(Collectors.toList());
         if (CollUtil.isEmpty(qtReportList)) {
             return qtReportChartVOlist;
         }
+
+        //获取物料id
+        Set<Long> materialIdSet = Sets.newHashSet();
+        qtReportList.forEach(ele -> materialIdSet.add(ele.getMaterialId()));
+        Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //遍历查出来的集合封装数据`
         qtReportList.forEach(q -> {
             //返回报表数据
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
-            qtReportChartVO.setReportCardType(q.getReportCardType());
-            qtReportChartVO.setId(q.getId());
-            qtReportChartVO.setMaterialId(q.getMaterialId());
+            //赋值物料名称
+            qtReportChartVO.setMaterialName(materialIdNameMap.get(q.getMaterialId()));
 
-            //根据物料id查询物料
-            if (Objects.nonNull(q.getMaterialId())) {
-                QtMaterial material = qtMaterialService.getById(q.getMaterialId());
-                //设置物料名称
-                if (Objects.nonNull(material)) {
-                    qtReportChartVO.setMaterialName(material.getName());
-                }
-            }
             //该检验任务的包括快照的id集合
             List<Integer> itemIds = Lists.newArrayList();
             if (Objects.nonNull(q.getCheckItemId())) {
