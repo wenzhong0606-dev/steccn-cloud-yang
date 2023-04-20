@@ -16,15 +16,28 @@
         id,code,record_time,
         value,create_time
     </sql>
-    <select id="batchSearch" resultType="com.steccn.data.domain.EpMeterCollect">
-        SELECT
-        *
-        FROM
-        ep_meter_collect
-        WHERE
-        <foreach collection="dwList" item="dw"  open="(" close=")" separator="or">
-           (ID = ( SELECT ID FROM ep_meter_collect WHERE code = #{dw.code} AND record_time &lt;= #{dw.end} ORDER BY record_time DESC LIMIT 1 ))
-        </foreach>
-
+    <update id="createTable">
+        CREATE TABLE IF NOT EXISTS "public".${tableName} (
+            "id" int8 NOT NULL,
+            "code" varchar(50) COLLATE "pg_catalog"."default",
+            "record_time" timestamp(6),
+            "value" numeric(14,4),
+            "create_time" timestamp(6) NOT NULL,
+            CONSTRAINT ${idIndex} PRIMARY KEY ("id")
+            );
+        drop index if exists ${indexA};
+        CREATE INDEX ${indexA} ON "public".${tableName}  USING btree (
+            "code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST,
+            "record_time" "pg_catalog"."timestamp_ops" DESC NULLS LAST
+            );
+        drop index if exists ${indexB};
+        CREATE INDEX ${indexB} ON "public".${tableName}  USING btree (
+            "record_time" "pg_catalog"."timestamp_ops" DESC NULLS LAST,
+            "code" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST
+            );
+    </update>
+    <select id="getTableNames" resultType="java.lang.String">
+        select tablename from pg_tables
+        where tablename like '${logicTableName}'
     </select>
 </mapper>

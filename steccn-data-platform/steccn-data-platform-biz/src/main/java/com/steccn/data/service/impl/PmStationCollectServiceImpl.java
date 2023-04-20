@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
 import com.steccn.data.dto.DwStationCollectDTO;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
@@ -41,8 +43,7 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
         if (CollUtil.isNotEmpty(dto.getCodeList()) && Objects.nonNull(dto.getDate())) {
             List<PmStationCollect> dbList = list(new LambdaQueryWrapper<PmStationCollect>()
                     .in(PmStationCollect::getCode, dto.getCodeList())
-                    .ge(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate(), LocalTime.MIN))
-                    .le(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate(), LocalTime.MAX)));
+                    .between(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate(), LocalTime.MIN), LocalDateTime.of(dto.getDate(), LocalTime.MAX)));
             if (CollUtil.isNotEmpty(dbList)) {
                 //根据编码分组，查询昨天最大的一条数据，用于差值计算
                 Map<String, BigDecimal> previousMap = lastDay(dto);
@@ -69,11 +70,19 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
     @Override
     public BigDecimal rwPreLoad(PmReportWorkPreloadDTO dto) {
         //根据条件获取出站采集点的采集数据
-        List<PmStationCollect> resList = baseMapper.rwPreLoad(dto);
-        if (CollUtil.isNotEmpty(resList) && resList.size() == 2) {
-            resList.sort(Comparator.comparing(PmStationCollect::getRecordTime));
-            PmStationCollect start = resList.get(0);
-            PmStationCollect end = resList.get(1);
+        LocalDateTime startTime = dto.getStartTime().minusDays(1);
+        LocalDateTime endTime = dto.getEndTime().minusDays(1);
+        PmStationCollect start = getOne(new LambdaQueryWrapper<PmStationCollect>()
+                .eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, startTime, dto.getStartTime())
+                .orderByDesc(PmStationCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        PmStationCollect end = getOne(new LambdaQueryWrapper<PmStationCollect>()
+                .eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, endTime, dto.getEndTime())
+                .orderByDesc(PmStationCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(start) && Objects.nonNull(end)) {
             return BigDecimalUtil.subtract(end.getValue(), start.getValue());
         }
         return null;
@@ -91,8 +100,7 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
                 .select("code,max(value) as value")
                 .lambda()
                 .in(PmStationCollect::getCode, dto.getCodeList())
-                .ge(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MIN))
-                .le(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MAX))
+                .between(PmStationCollect::getRecordTime, LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MIN), LocalDateTime.of(dto.getDate().minusDays(1), LocalTime.MAX))
                 .groupBy(PmStationCollect::getCode));
         if (Objects.nonNull(lastDayList)) {
             lastDayList.forEach(ele -> {
