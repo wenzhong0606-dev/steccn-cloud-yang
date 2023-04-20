@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 
@@ -209,6 +210,7 @@ public class QtCheckTask implements Serializable {
 
     /**
      * 任务类型 来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     * @see QtManagerConstant.QtCheckTaskTypeEnum
      */
     private Integer taskType;
 

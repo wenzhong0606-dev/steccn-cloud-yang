@@ -1,9 +1,11 @@
 package com.steccn.common.util;
 
+import cn.hutool.core.lang.Assert;
 import com.steccn.common.constant.LocalDateEnum;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.validation.constraints.NotNull;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -300,6 +302,34 @@ public class LocalDateUtil {
      */
     public static LocalDateTime getMorning(LocalDateTime date){
         return date.withHour(8).withMinute(0).withSecond(0).withNano(0);
+    }
+
+    /**
+     * 判断time是否在start-end之前
+     * @param time 时间
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param leftEq 左包含
+     * @param rightEq 右包含
+     * @return
+     */
+    public static Boolean isRange(LocalDateTime time, LocalDateTime start, LocalDateTime end, boolean leftEq, boolean rightEq) {
+        Assert.notNull(time, "时间不能为空");
+        Assert.notNull(start, "开始时间不能为空");
+        Assert.notNull(end, "结束时间不能为空");
+        // start < time < end
+        if (time.isAfter(start) && time.isBefore(end)) {
+            return Boolean.TRUE;
+        }
+        //左包含 start == time
+        if (leftEq && start.isEqual(time)) {
+            return Boolean.TRUE;
+        }
+        //右包含 end == time
+        if (rightEq) {
+            return end.isEqual(time);
+        }
+        return Boolean.FALSE;
     }
 
     /**
