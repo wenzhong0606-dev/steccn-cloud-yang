@@ -11,10 +11,13 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -63,6 +66,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
     private final QtItemCategoryService qtItemCategoryService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -769,11 +773,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //构造idxmap
         Map<Integer,Integer> idxMap = Maps.newHashMap();
         List<String> dynamicHeadList = Lists.newArrayList();
+        //如果为百分比的，加上%号，其余的看measure_unit
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_2,SysDictConstant.TYPE_CHECK_DATA_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //存放数据字典
+        Set<Long> dictIdSet = Sets.newHashSet();
         int idx = 0 ;
         for (Map.Entry<Integer, QtCheckItem> itemEntry : itemMap.entrySet()) {
             dynamicHeadList.add(itemEntry.getValue().getName());
             idxMap.put(itemEntry.getKey(),idx++);
+            if(Objects.nonNull(itemEntry.getValue().getMeasureUnit())){
+                dictIdSet.add(itemEntry.getValue().getMeasureUnit());
+            }
         }
+        Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
         QtDaySamplingVO resVo = new QtDaySamplingVO();
         resVo.setDynamicHeadList(dynamicHeadList);
         List<QtDaySamplingDataVO> dataList = Lists.newArrayList();
@@ -799,8 +813,21 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //构造检验项
             for (QtDaySamplingDTO qtDaySamplingDTO : taskEntry.getValue()) {
                 Integer index = idxMap.get(qtDaySamplingDTO.getItemId());
-                if(Objects.nonNull(index)){
-                    itemList.set(index, Objects.isNull(qtDaySamplingDTO.getCheckResult()) ? Strings.EMPTY : qtDaySamplingDTO.getCheckResult());
+                QtCheckItem qtCheckItem = itemMap.get(qtDaySamplingDTO.getItemId());
+                if(Objects.nonNull(index) && Objects.nonNull(qtCheckItem)){
+                    String checkResult = null;
+                    //如果检验结果为空，则默认赋值
+                    if (Objects.isNull(qtDaySamplingDTO.getCheckResult()) || StrUtil.isBlank(qtDaySamplingDTO.getCheckResult())) {
+                        checkResult = Strings.EMPTY;
+                    } else {
+                        checkResult = qtDaySamplingDTO.getCheckResult();
+                        if (sysDictVO.getId().equals(qtCheckItem.getDataType())) {
+                            checkResult += '%';
+                        } else {
+                            checkResult += dictIdNameMap.getOrDefault(qtCheckItem.getMeasureUnit(), Strings.EMPTY);
+                        }
+                    }
+                    itemList.set(index, checkResult);
                 }
             }
             data.setItemList(itemList);
@@ -808,6 +835,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         resVo.setDataList(dataList);
         return resVo;
     }
+
+
 
 
     /**
