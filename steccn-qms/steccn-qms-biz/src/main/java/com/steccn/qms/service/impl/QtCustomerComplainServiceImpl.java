@@ -28,6 +28,7 @@ import com.steccn.platform.dto.OaProcessDataDTO;
 import com.steccn.platform.dto.OaProcessNotifyDTO;
 import com.steccn.platform.dto.ProcessBusiLinkDTO;
 import com.steccn.platform.dto.SysMsgSendDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteProcessBusiLinkFeignApi;
@@ -98,6 +99,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
 
     private final RemoteMessFeignApi remoteMesFeignApi;
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public Boolean add(QtCustomerComplainDTO dto) {
@@ -564,6 +567,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         List<QtCustomerComplainDetail> list = qtCustomerComplainDetailService.list(new LambdaQueryWrapper<QtCustomerComplainDetail>()
                 .eq(QtCustomerComplainDetail::getCustomerComplainId, qtCustomerComplain.getId()));
         if (CollUtil.isNotEmpty(list)) {
+            Set<Long> dictIds = list.stream().map(QtCustomerComplainDetail::getBadJudgeBasis).collect(Collectors.toSet());
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             list.forEach(detail -> {
                 OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
                 List<OaWorkFlowNameValueDTO> valueDTOS = Lists.newArrayList();
@@ -593,7 +598,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 }
                 //不良判断依据
                 if (Objects.nonNull(detail.getBadJudgeBasis())){
-                    valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLPDYJ, detail.getBadJudgeBasis().toString()));
+                    valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLPDYJ, dictMap.get(detail.getCustomerComplainId())));
                 }
                 //勘察确认详细结果
                 valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRXXJG, detail.getSurveyResult()));
