@@ -86,7 +86,6 @@ public class HbCollectServiceImpl implements HbCollectService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean epMeter(CollectCommonDTO<EpMeterCollectDTO> dto) {
         List<EpMeterCollectDTO> dataList = dto.getData();
         LocalDateTime now = LocalDateTime.now();

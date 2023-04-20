@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author yequan
@@ -17,6 +18,19 @@ import java.util.List;
 @Mapper
 public interface EpMeterCollectMapper extends BaseMapper<EpMeterCollect> {
 
+    /**
+     * 动态建表
+     *
+     * @param tableName 表明
+     * @return int
+     */
+    int createTable(@Param("tableName") String tableName, @Param("idIndex") String idIndex, @Param("indexA") String indexA, @Param("indexB") String indexB);
+
+    /**
+     * 获取所有的表名
+     * @return 表名称集合
+     */
+    Set<String> getTableNames(@Param("logicTableName") String logicTableName);
 }
 
 

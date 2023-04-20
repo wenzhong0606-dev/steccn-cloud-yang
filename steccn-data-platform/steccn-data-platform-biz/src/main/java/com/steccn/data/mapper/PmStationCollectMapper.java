@@ -16,13 +16,6 @@ import java.util.List;
 */
 @Mapper
 public interface PmStationCollectMapper extends BaseMapper<PmStationCollect> {
-
-    /**
-     * 报工加工总数预填
-     * @param dto
-     * @return
-     */
-    List<PmStationCollect> rwPreLoad(@Param("dto") PmReportWorkPreloadDTO dto);
 }
 
 
