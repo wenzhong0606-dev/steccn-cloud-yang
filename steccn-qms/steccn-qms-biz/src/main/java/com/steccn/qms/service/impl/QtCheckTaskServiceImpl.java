@@ -623,6 +623,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     copyDetailModel.setTaskId(dto.getId());
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
                     copyDetailModel.setAnalystTime(valueTmp.getCopyDetails().getAnalystTime().atStartOfDay());
+                    //如果是配料抽检则加入取样时间，字段，便于统计
+                    if(task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(copyDetailModel.getSamplingTimeArray());
+                        String str = jsonArray.get(0).toString();
+                        copyDetailModel.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
@@ -811,6 +817,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 objectMap.forEach((key,qtCheckTaskCopyInfo)->{
                     QtCheckTaskCopy qtCheckTaskCopy1 = new QtCheckTaskCopy();
                     BeanUtils.copyProperties(qtCheckTaskCopyInfo,qtCheckTaskCopy1);
+                    //如果是配料抽检，方便取报表，传参
+                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(qtCheckTaskCopyInfo.getSamplingTimeArray());
+                        String str = jsonArray.get(0).toString();
+                        qtCheckTaskCopy1.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
                     if(key.length() != 0) {
