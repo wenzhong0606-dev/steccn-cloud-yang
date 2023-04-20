@@ -22,7 +22,7 @@
     <select id="collectDetail" resultType="com.steccn.data.vo.DwDefectCollectVO">
         select
         line,
-        to_char( product_time, 'yyyy-mm-dd HH' ) || ':00:00' AS product_time,
+        to_char( product_time, 'yyyy-mm-dd HH24' ) || ':00:00' AS product_time,
         defect_type,
         SUM ( defect_count ) as defect_count
         from qt_defect_collect dc join qt_defect_collect_detail detail on dc.id = detail.push_id
@@ -33,7 +33,7 @@
         </foreach>
         GROUP BY
         line,
-        to_char( product_time, 'yyyy-mm-dd HH' ),
+        to_char( product_time, 'yyyy-mm-dd HH24' ),
         defect_type
     </select>
 </mapper>
