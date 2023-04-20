@@ -527,34 +527,34 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
 
-//        if (Objects.nonNull(linkDTO.getId())){
-//            //调用OA 提交流程
-//            OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
-//            workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
-//            workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
-//            workFlowSubmitParamDTO.setMainData(mainDataList);
-//            workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
-//            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-//            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
-//                throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
-//            }
-//        }else {
-//            workFlowParamDTO.setMainData(mainDataList);
-//            //新建
-//            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-//            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
-//                throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
-//            }
-//            //保存oa数据与流程关联
-//            ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
-//            processBusiLinkDTO.setBusiId(record.getId());
-//            processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
-//            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode());
-//            Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-//            if (!aBoolean) {
-//                throw new BusinessException("调用保存业务数据失败");
-//            }
-//        }
+        if (Objects.nonNull(linkDTO.getId())){
+            //调用OA 提交流程
+            OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
+            workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
+            workFlowSubmitParamDTO.setRequestId(linkDTO.getInstanceId());
+            workFlowSubmitParamDTO.setMainData(mainDataList);
+            workFlowSubmitParamDTO.setWorkFlowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
+            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
+                throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
+            }
+        }else {
+            workFlowParamDTO.setMainData(mainDataList);
+            //新建
+            OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+            if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
+                throw new BusinessException("流程创建失败," + oaWorkflowStatusVO.getErrMsg());
+            }
+            //保存oa数据与流程关联
+            ProcessBusiLinkDTO processBusiLinkDTO = new ProcessBusiLinkDTO();
+            processBusiLinkDTO.setBusiId(record.getId());
+            processBusiLinkDTO.setInstanceId(oaWorkflowStatusVO.getRequestId());
+            processBusiLinkDTO.setBusiType(QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode());
+            Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                throw new BusinessException("调用保存业务数据失败");
+            }
+        }
         //发送消息
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
         sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getName(),SecurityUtils.getUser().getName()));
