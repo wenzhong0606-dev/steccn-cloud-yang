@@ -872,11 +872,29 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         List<BaseReportHeaderVO> module = Lists.newArrayList();
         //数据
         List<QtDayReportLossDataVO> tableData = Lists.newArrayList();
+        //3、先做数据准备和排序
+        //缺陷和落板原因
+        List<String> defectAndLuo = Lists.newArrayList();
+        allData.forEach(tmp->{
+            defectAndLuo.add(tmp.getReason());
+            //转换localDate
+            tmp.setWorkOrderDate(LocalDate.parse(tmp.getWorkOrderTime(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        });
+        //拿到所有的缺陷项code
+        LambdaQueryWrapper defectCondition = new LambdaQueryWrapper<QtDefectiveItem>()
+                .select(QtDefectiveItem::getName,QtDefectiveItem::getCode)
+                .in(QtDefectiveItem::getName,defectAndLuo)
+                .eq(QtDefectiveItem::getShowFlag,QtManagerConstant.NUM_1)
+                .orderByAsc(QtDefectiveItem::getCode);
+        List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(defectCondition);
+        //拿到所有落版原因
+
+        //先根据日期分组
+//        Map<String,List<QtChartSubDetailDTO>> groupByDate = allData.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::group));
         //日报表
         if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
-
         }
-        return null;
+        return chart;
     }
 
 
