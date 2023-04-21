@@ -296,12 +296,15 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
             qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
+            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
+            Assert.notNull(granularityEnum,"粒度不存在");
+
             if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.equals(q.getCheckType())){
                 //来料检
-                incomingCheck(q, qtReportChartVO, itemIds);
+                incomingCheck(q, qtReportChartVO, itemIds,granularityEnum);
             }else{
                 //其余检验方案，以完成时间来区分
-                otherCheck(q, qtReportChartVO, itemIds);
+                otherCheck(q, qtReportChartVO, itemIds,granularityEnum);
             }
             qtReportChartVOlist.add(qtReportChartVO);
         });
@@ -314,11 +317,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param qtReportChartVO
      * @param itemIds
      */
-    private void incomingCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds) {
+    private void incomingCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds,QtManagerConstant.QtGranularityEnum granularityEnum) {
         //获取符合条件的原始数据
         List<QtIncomingCheckDTO> sourceList = qtCheckTaskService.comingList(itemIds);
-        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-        Assert.notNull(granularityEnum,"粒度不存在");
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
         //设置折线图数据
@@ -349,7 +350,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             double sum = conditionTasks.stream().mapToDouble(v -> Double.parseDouble(v.getCheckResult())).sum();
             if (conditionTasks.size() == 0) {
                 //避免分母为0
-                itemValue.add(BigDecimal.ZERO.toString());
+                itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
             } else {
                 itemValue.add(BigDecimalUtil.format(new BigDecimal(sum / conditionTasks.size())));
             }
@@ -366,7 +367,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param qtReportChartVO 图表对象
      * @param itemIds 检验项快照id集合
      */
-    private void otherCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds) {
+    private void otherCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds,QtManagerConstant.QtGranularityEnum granularityEnum) {
         //根据条件查出所有的任务
         List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
                 .eq(QtCheckTask::getMaterialId, q.getMaterialId())
@@ -377,8 +378,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         );
         //设置时间分片
         List<String> dates = Lists.newArrayList();
-        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-        Assert.notNull(granularityEnum,"粒度不存在");
         //将时间范围根据粒度分片
         List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
         //设置折线图数据
@@ -395,28 +394,23 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
 
-            //如果检验任务为空则该时间段下检验结果为0
-            List<BigDecimal> bigDecimals = Lists.newArrayList();
-            conditionTasks.forEach(r -> {
+            if (CollUtil.isNotEmpty(conditionTasks)) {
+                //如果检验任务为空则该时间段下检验结果为0
+                Set<Long> taskIdSet = conditionTasks.stream().map(v -> v.getId()).collect(Collectors.toSet());
                 //检验任务样本结果集合
                 OptionalDouble op = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                                .in(QtCheckTaskDetail::getTaskId, taskIdSet)
                                 .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
                         .stream().filter(qt -> Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
                         .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
                         .mapToDouble(v -> Double.parseDouble(v.getCheckResult())).average();
                 if (op.isPresent()) {
-                    bigDecimals.add(BigDecimal.valueOf(op.getAsDouble()).setScale(BigDecimalUtil.DEFAULT_SCALE));
-                }else{
-                    bigDecimals.add(BigDecimal.ZERO);
+                    itemValue.add(BigDecimalUtil.format(BigDecimal.valueOf(op.getAsDouble())));
+                } else {
+                    itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
                 }
-            });
-            if (CollUtil.isNotEmpty(bigDecimals)) {
-                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                itemValue.add(average.toString());
             } else {
-                itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
+                itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
             }
             //赋值x轴点
             dates.add(XAxisUtil.convert(granularityEnum,start));
