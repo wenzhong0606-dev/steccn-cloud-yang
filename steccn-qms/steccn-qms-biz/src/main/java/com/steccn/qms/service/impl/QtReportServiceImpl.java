@@ -1219,29 +1219,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return page;
     }
 
-//    private Map<String, Object> getListMap(String name, List<String> itemCodes,
-//                            List<String> finshedTimeList, List<BigDecimal> checkResultList,
-//                            List<String> materialNameList, List<QtBaseIdNameDTO> productLineList,
-//                            List<QtBaseIdNameDTO> workshopList, List<QtBaseIdNameDTO> supplierList,
-//                                           Integer checkType) {
-//        Map<String, Object> listMap = Maps.newHashMap();
-//        listMap.put(QtManagerConstant.SPC_HEADER_FIELD_ORDER,itemCodes);
-//        listMap.put(QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME,finshedTimeList);
-//        listMap.put(name,checkResultList);
-//        listMap.put(QtManagerConstant.SPC_HEADER_FIELD_MATERIAL_NAME,materialNameList);
-//        if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode()==checkType){
-//            listMap.put(QtManagerConstant.SPC_HEADER_FIELD_WORKSHOP,workshopList);
-//            listMap.put(QtManagerConstant.SPC_HEADER_FILELD_SUPPLIER,supplierList);
-//        }else if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode()==checkType){
-//            listMap.put(QtManagerConstant.SPC_HEADER_FIELD_WORKSHOP,workshopList);
-//        }else {
-//            listMap.put(QtManagerConstant.SPC_HEADER_FIELD_PRODUCT_LINE,productLineList);
-//        }
-//
-//        return listMap;
-//    }
-
-
     private void getHSCList(List<Integer> itemIds, String name, List<QtCheckTask> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
         //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
         List<QtSpcReportHSCDetailTaskVO> qtSpcReportHSCDetailTaskVOS = Lists.newArrayList();
