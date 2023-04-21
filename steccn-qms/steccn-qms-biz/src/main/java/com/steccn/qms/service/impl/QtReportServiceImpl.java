@@ -2,6 +2,7 @@ package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
@@ -242,71 +243,61 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             return qtReportChartVOlist;
         }
 
-        //获取物料id
+        //检验项快照集合
+        Set<Integer> checkItemSet = Sets.newHashSet();
+        //物料主键集合
         Set<Long> materialIdSet = Sets.newHashSet();
-        qtReportList.forEach(ele -> materialIdSet.add(ele.getMaterialId()));
+        qtReportList.forEach(ele -> {
+            materialIdSet.add(ele.getMaterialId());
+            checkItemSet.add(ele.getCheckItemId());
+        });
         Map<Long, String> materialIdNameMap = FeignOptional.of(() -> remoteSpareFeignApi.listByIdCh(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
-        //遍历查出来的集合封装数据`
+        //获取快照集合和检验项集合
+        List<Integer> checkItemList = Lists.newArrayList(checkItemSet);
+        Map<Integer, Set<Integer>> snapshotMap = qtCheckItemService.checkItemSnapshotSet(checkItemList);
+        Map<Integer, QtCheckItem> checkItemMap = qtCheckItemService.mapCheckItem(checkItemList);
+        QtCheckItem defaultQtCheckItem = new QtCheckItem();
+
+        //获取检验项的数据类型和单位
+        Set<Long> dictIdSet = Sets.newHashSet();
+        checkItemMap.values().forEach(ele ->{
+              dictIdSet.add(ele.getDataType());
+              dictIdSet.add(ele.getMeasureUnit());
+        });
+        Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+
+        //遍历查出来的集合封装数据
         qtReportList.forEach(q -> {
             //返回报表数据
             QtReportChartVO qtReportChartVO = new QtReportChartVO();
             BeanUtils.copyProperties(q, qtReportChartVO);
             //赋值物料名称
             qtReportChartVO.setMaterialName(materialIdNameMap.get(q.getMaterialId()));
-
             //该检验任务的包括快照的id集合
-            List<Integer> itemIds = Lists.newArrayList();
+            Set<Integer> itemIds = snapshotMap.get(q.getCheckItemId());
             if (Objects.nonNull(q.getCheckItemId())) {
-                QtCheckItem qtCheckItem = qtCheckItemService.getById(q.getCheckItemId());
-                if (Objects.nonNull(qtCheckItem)) {
-                    if (Objects.nonNull(qtCheckItem.getName())) {
-                        qtReportChartVO.setCheckItemName(qtCheckItem.getName());
-                    }
-                    List<Integer> checkIds = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getCode, qtCheckItem.getCode()))
-                            .stream().map(QtCheckItem::getId).collect(Collectors.toList());
-                    //添加快照ids
-                    if (CollUtil.isNotEmpty(checkIds)) {
-                        checkIds.forEach(s -> {
-                            itemIds.add(s);
-                        });
-                    }
-                    //设置检验项的数据类型
-                    Long dataType = qtCheckItem.getDataType();
-                    qtReportChartVO.setDataTypeId(dataType);
-                    List<Long> ids = Lists.newArrayList();
-                    ids.add(dataType);
-                    Map<Long, SysDictVO> longSysDictVOMap = FeignOptional.of(() -> remoteDictFeignApi.listById(ids), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                    SysDictVO sysDictVO = longSysDictVOMap.get(dataType);
-                    if (Objects.nonNull(sysDictVO.getName())) {
-                        qtReportChartVO.setDataTypeName(sysDictVO.getName());
-                    }
-
-                    if (Objects.nonNull(qtCheckItem.getMeasureUnit())) {
-                        Set<Long> measureIds = Sets.newHashSet();
-                        measureIds.add(qtCheckItem.getMeasureUnit());
-                        Map<Long, String> longStringMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(measureIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-                        String measureName = longStringMap.get(qtCheckItem.getMeasureUnit());
-                        if (Objects.nonNull(measureName)) {
-                            qtReportChartVO.setMeasureUnit(measureName);
-
-                        }
-                    }
-                    if (QtManagerConstant.QtChartUnit.PERCENT.getCode().equals(dataType)) {
-                        qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
-                    }
+                QtCheckItem qtCheckItem = checkItemMap.getOrDefault(q.getCheckItemId(), defaultQtCheckItem);
+                qtReportChartVO.setCheckItemName(qtCheckItem.getName());
+                //设置检验项的数据类型
+                qtReportChartVO.setDataTypeId(qtCheckItem.getDataType());
+                String dataTypeName = dictIdNameMap.get(qtCheckItem.getDataType());
+                qtReportChartVO.setDataTypeName(dataTypeName);
+                qtReportChartVO.setMeasureUnit(dictIdNameMap.get(qtCheckItem.getMeasureUnit()));
+                //如果是百分比，则单位会为% ， 否则其他都是单位本身
+                if (Objects.nonNull(dataTypeName) && dataTypeName.contains("百分")) {
+                    qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
                 }
             }
 
             //根据条件查出所有的任务
             List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
-                            .eq(QtCheckTask::getMaterialId, q.getMaterialId())
-                            .eq(QtCheckTask::getTaskType, q.getCheckType())
-                            .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                            .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
-                            .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
-                    //.and(Objects.nonNull(q.getWorkshop()),wrapper->wrapper.apply("JSON_CONTAIN(customer,JSON_OBJECT('Id',#{0})) "),q.getCustomer())
+                    .eq(QtCheckTask::getMaterialId, q.getMaterialId())
+                    .eq(QtCheckTask::getTaskType, q.getCheckType())
+                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                    .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                    .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
             );
 
             //设置开始结束时间
@@ -315,13 +306,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             //设置时间分片
             List<String> dates = Lists.newArrayList();
             QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-            if (Objects.isNull(granularityEnum)) {
-                throw new BusinessException("粒度不存在");
-            }
+            Assert.notNull(granularityEnum,"粒度不存在");
             //将时间范围根据粒度分片
-            List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType()
-                    , q.getTimeScopeStart()
-                    , q.getTimeScopeEnd());
+            List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
             //设置折线图数据
             List<String> itemValue = new ArrayList<>();
             for (int i = 1; i < localDateTimes.size(); i++) {
