@@ -18,6 +18,7 @@ import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -864,7 +865,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         SteccnTableAssertUtil.notEmpty(allData, "损耗数据为空");
         //2、组合报表
         QtDayReportLossVO chart = new QtDayReportLossVO();
-        //头
+        //表头
         QtDayReportTableHeadersVO headers = new QtDayReportTableHeadersVO();
         //静态表头
         List<QtSpcHeadTitleVO> common = Lists.newArrayList();
@@ -888,11 +889,70 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 .orderByAsc(QtDefectiveItem::getCode);
         List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(defectCondition);
         //拿到所有落版原因
-
+        List<SysDictVO> destroyReason = FeignOptional.of(() -> remoteDictFeignApi.listByType("sys_destory_reason"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //根据sort排序
+        destroyReason = destroyReason.stream().sorted(Comparator.comparing(SysDictVO::getSort)).collect(Collectors.toList());
+        //拿到所有产线并排序
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(dto.getProductLineIds()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysOfficeVO> productLineList = sysOfficeVOMap.values().stream().collect(Collectors.toList());
+        productLineList = productLineList.stream().sorted(Comparator.comparing(SysOfficeVO::getOfficeName)).collect(Collectors.toList());
         //先根据日期分组
-//        Map<String,List<QtChartSubDetailDTO>> groupByDate = allData.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::group));
+        Map<LocalDate,List<QtChartSubDetailDTO>> groupByDate = allData.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getWorkOrderDate));
         //日报表
         if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
+            //1)、组表头
+            //静态表头
+            common.add(new QtSpcHeadTitleVO("productLineName","产线"));
+            common.add(new QtSpcHeadTitleVO("defectName","缺陷"));
+            headers.setCommon(common);
+            //动态表头
+            int dayCount = dto.getEndDate().getDayOfMonth() - dto.getStartDate().getDayOfMonth();
+            List<String> head = Lists.newArrayList();
+            head.add("重量(吨)");
+            head.add("损耗率");
+            for(int i = 0; i < dayCount; i++){
+                module.add(new BaseReportHeaderVO(dto.getStartDate().getMonth() + "月" + dto.getStartDate().getDayOfMonth()+i + "日",head));
+            }
+            //小计
+            module.add(new BaseReportHeaderVO("小计",head));
+            headers.setCommon(common);
+            headers.setModule(module);
+            chart.setHeaders(headers);
+            //2)、组数据
+            for(SysOfficeVO productLine:productLineList){
+                QtDayReportLossDataVO qtDayReportLossDataVO = new QtDayReportLossDataVO();
+                //静态数据
+                qtDayReportLossDataVO.setProductLineName(productLine.getOfficeName());
+                qtDayReportLossDataVO.setType(QtManagerConstant.NUM_0);
+                //动态数据
+                List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
+                //获取该产线下所有缺陷项和落版
+                List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId())).collect(Collectors.toList());
+                List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
+                //缺陷项排序数据
+                List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v->reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                //落板排序数据
+                List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                //根据日期
+                for(int i = 0; i < dayCount; i++){
+                    List<QtChartSubDetailDTO> dayData = groupByDate.get(dto.getStartDate().plusDays(i));
+                    //拉引量
+                    qtDayReportLossDataVO.setDefectName("拉引量");
+                    List<String> lineDataTmp = Lists.newArrayList();
+                    if(CollUtil.isEmpty(dayData)){
+                        lineDataTmp.add(null);
+                        lineDataTmp.add(null);
+                        moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
+                    }else {
+                        //早班拉引量
+                        QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).findFirst().orElse(null);
+                        QtChartSubDetailDTO pullAmountNight = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).findFirst().orElse(null);
+
+                    }
+                }
+
+            }
+
         }
         return chart;
     }
