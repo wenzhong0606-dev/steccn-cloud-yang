@@ -539,6 +539,9 @@ public interface QtManagerConstant {
 
     String WORKFLOW_GLZG = "glzg";
 
+
+    String WORKFLOW_GLZG_MOBILE = "glzgmobile";
+
     /**
      * 不合格品处理标题
      */
@@ -721,22 +724,27 @@ public interface QtManagerConstant {
      */
     String WORKFLOW_D8SPR ="d8spr";
 
-
-
-
-
-    /**
-     * d6
-     */
     /**
      * 关联不合格品处理
      */
     String WORKFLOW_GLBHGPCL = "glbhgpcl";
 
     /**
+     * 关联不合格品处理-移动
+     */
+    String WORKFLOW_GLBHGPCL_MOBILE = "glbhgpclmobile";
+
+
+    /**
      * 关联客诉
      */
     String WORKFLOW_GLKS  ="glks";
+
+    /**
+     * 关联客诉-移动
+     */
+    String WORKFLOW_GLKS_MOBILE  ="glksmobile";
+
 
 
     /**

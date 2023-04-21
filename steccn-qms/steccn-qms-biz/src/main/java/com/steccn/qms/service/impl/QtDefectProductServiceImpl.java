@@ -456,6 +456,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private void startWorkFlow(QtDefectProductDTO dto, QtDefectProduct qtDefectProduct) {
         //判断流程是否是第一次提交
         ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(qtDefectProduct.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<QtImproveRecord> improveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getDefectProductId, qtDefectProduct.getId()));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
         //审批发起人
@@ -567,14 +568,19 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
             List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
             //保存url
-            OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-            OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
-            List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
-            urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
-            oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
-            workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
-            oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
-            detailList.add(oaWorkFlowDetailObjDTO);
+            if (CollUtil.isNotEmpty(improveRecords)){
+                OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+                List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
+                for (QtImproveRecord improveRecord : improveRecords) {
+                    OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+improveRecord.getId(),improveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
+                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,"请在PC端查看整改详情"));
+                }
+                oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
+                workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
+                oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
+                detailList.add(oaWorkFlowDetailObjDTO);
+            }
             workflowDTO.setDetailData(detailList);
             workflowDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
             //调用

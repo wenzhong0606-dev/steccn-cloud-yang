@@ -517,6 +517,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private void startOaFlow(QtCustomerComplainDTO dto, QtCustomerComplain qtCustomerComplain) {
         //判断是否发起过流程，如果发起过 提交
         ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(qtCustomerComplain.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<QtImproveRecord> qtImproveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCustomerComplainId, qtCustomerComplain));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
         //审批发起人
@@ -617,17 +618,20 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
         //表中详情数据
         List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords2 = Lists.newArrayList();
         //数据详情
-        OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
         //保存url
-        OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-
-        List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
-        urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
-        oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
-        workflowRequestTableRecords2.add(oaWorkFlowDetailDataListDTO);
-        oaWorkFlowDetail2.setWorkflowRequestTableRecords(workflowRequestTableRecords2);
-        detailDataList.add(oaWorkFlowDetail2);
-
+        if (CollUtil.isNotEmpty(qtImproveRecords)){
+            OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+            List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
+            for (QtImproveRecord qtImproveRecord : qtImproveRecords) {
+                OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+qtImproveRecord.getId(),qtImproveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
+                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,"请在PC端查看整改详情"));
+            }
+            oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
+            workflowRequestTableRecords2.add(oaWorkFlowDetailDataListDTO);
+            oaWorkFlowDetail2.setWorkflowRequestTableRecords(workflowRequestTableRecords2);
+            detailDataList.add(oaWorkFlowDetail2);
+        }
         if (Objects.nonNull(linkDTO.getId())){
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
