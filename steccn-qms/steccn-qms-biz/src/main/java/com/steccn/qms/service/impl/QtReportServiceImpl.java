@@ -30,6 +30,7 @@ import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtReportMapper;
 import com.steccn.qms.util.*;
@@ -77,6 +78,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
     private final QtReportWarnUserService qtReportWarnUserService;
     private final RemoteMsgFeignApi remoteMsgFeignApi;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final QtCheckTaskMapper taskMapper;
 
     /**
      * 新建报表卡片
@@ -291,85 +293,136 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     qtReportChartVO.setMeasureUnit(QtManagerConstant.QtChartUnit.PERCENT.getUnitType());
                 }
             }
-
-            //根据条件查出所有的任务
-            List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
-                    .eq(QtCheckTask::getMaterialId, q.getMaterialId())
-                    .eq(QtCheckTask::getTaskType, q.getCheckType())
-                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                    .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
-                    .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
-            );
-
             //设置开始结束时间
             qtReportChartVO.setTimeScopeStart(q.getTimeScopeStart().toLocalDate());
             qtReportChartVO.setTimeScopeEnd(q.getTimeScopeEnd().toLocalDate());
-            //设置时间分片
-            List<String> dates = Lists.newArrayList();
-            QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
-            Assert.notNull(granularityEnum,"粒度不存在");
-            //将时间范围根据粒度分片
-            List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
-            //设置折线图数据
-            List<String> itemValue = new ArrayList<>();
-            for (int i = 1; i < localDateTimes.size(); i++) {
-                LocalDateTime start = localDateTimes.get(i - 1);
-                LocalDateTime end = localDateTimes.get(i);
-                //过滤出时间分片内所有检验任务的数据
-                List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
-                    //数据范围应该是大于等于开始时间  小于结束时间
-                    if (LocalDateUtil.isRange(v.getFinishedTime(), start, end, true, false)) {
-                        return Boolean.TRUE;
-                    }
-                    return Boolean.FALSE;
-                }).collect(Collectors.toList());
-
-                //如果检验任务为空则该时间段下检验结果为0
-                if (CollUtil.isEmpty(conditionTasks)) {
-                    itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
-                } else {
-                    List<BigDecimal> bigDecimals = Lists.newArrayList();
-                    conditionTasks.forEach(r -> {
-                        //检验任务样本结果集合
-                        List<String> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                .eq(QtCheckTaskDetail::getTaskId, r.getId())
-                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                                .stream().filter(qt -> Objects.nonNull(qt) && Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
-                                .map(QtCheckTaskDetail::getCheckResult)
-                                .collect(Collectors.toList());
-                        List<BigDecimal> resultList = Lists.newArrayList();
-                        if (CollUtil.isNotEmpty(results)) {
-                            results.forEach(re -> {
-                                if (isNumber(re) || isFloatNumber(re)) {
-                                    BigDecimal bigDecimal = new BigDecimal(re);
-                                    if (Objects.nonNull(bigDecimal)) {
-                                        resultList.add(bigDecimal);
-                                    }
-                                }
-                            });
-                        }
-                        if (CollUtil.isNotEmpty(resultList)) {
-                            BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                            BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
-                            bigDecimals.add(result);
-                        }
-                    });
-                    if (CollUtil.isNotEmpty(bigDecimals)) {
-                        BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                        BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
-                        itemValue.add(average.toString());
-                    } else {
-                        itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
-                    }
-                }
-                dates.add(XAxisUtil.convert(granularityEnum,start));
+            if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.equals(q.getCheckType())){
+                //来料检
+                incomingCheck(q, qtReportChartVO, itemIds);
+            }else{
+                //其余检验方案，以完成时间来区分
+                otherCheck(q, qtReportChartVO, itemIds);
             }
-            qtReportChartVO.setXData(dates);
-            qtReportChartVO.setItemValue(itemValue);
-
             qtReportChartVOlist.add(qtReportChartVO);
         });
         return qtReportChartVOlist;
+    }
+
+    /**
+     * 来料检
+     * @param q
+     * @param qtReportChartVO
+     * @param itemIds
+     */
+    private void incomingCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds) {
+        //获取符合条件的原始数据
+        List<QtIncomingCheckDTO> sourceList = qtCheckTaskService.comingList(itemIds);
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
+        Assert.notNull(granularityEnum,"粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
+        //设置折线图数据
+        List<String> itemValue = new ArrayList<>();
+
+        //将原始数据根据时间日期
+        List<QtIncomingCheckDTO> dataList = Lists.newArrayList();
+        sourceList.forEach(ele ->{
+            ele.getSamplingTimeArray().forEach(inner ->{
+                ele.setSamplingTime(inner);
+                dataList.add(ele);
+            });
+        });
+        //设置时间分片
+        List<String> xList = Lists.newArrayList();
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+            //过滤出时间分片内所有检验任务的数据
+            List<QtIncomingCheckDTO> conditionTasks = dataList.stream().filter(v -> isNumber(v.getCheckResult()) || isFloatNumber(v.getCheckResult())).filter(v -> Objects.nonNull(v.getSamplingTime())).filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if (LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+            //取平均值
+            double sum = conditionTasks.stream().mapToDouble(v -> Double.parseDouble(v.getCheckResult())).sum();
+            if (conditionTasks.size() == 0) {
+                //避免分母为0
+                itemValue.add(BigDecimal.ZERO.toString());
+            } else {
+                itemValue.add(BigDecimalUtil.format(new BigDecimal(sum / conditionTasks.size())));
+            }
+            //赋值x轴点
+            xList.add(XAxisUtil.convert(granularityEnum,start));
+        }
+        qtReportChartVO.setXData(xList);
+        qtReportChartVO.setItemValue(itemValue);
+    }
+
+    /**
+     * 其他检验类型
+     * @param q 报表对象
+     * @param qtReportChartVO 图表对象
+     * @param itemIds 检验项快照id集合
+     */
+    private void otherCheck(QtReport q, QtReportChartVO qtReportChartVO, Set<Integer> itemIds) {
+        //根据条件查出所有的任务
+        List<QtCheckTask> qtCheckTasks = qtCheckTaskService.list(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getMaterialId, q.getMaterialId())
+                .eq(QtCheckTask::getTaskType, q.getCheckType())
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                .ge(QtCheckTask::getFinishedTime, q.getTimeScopeStart())
+                .lt(QtCheckTask::getFinishedTime, q.getTimeScopeEnd())
+        );
+        //设置时间分片
+        List<String> dates = Lists.newArrayList();
+        QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
+        Assert.notNull(granularityEnum,"粒度不存在");
+        //将时间范围根据粒度分片
+        List<LocalDateTime> localDateTimes = ShardTimeUtil.cutDateRange(granularityEnum.getType(), q.getTimeScopeStart(), q.getTimeScopeEnd());
+        //设置折线图数据
+        List<String> itemValue = new ArrayList<>();
+        for (int i = 1; i < localDateTimes.size(); i++) {
+            LocalDateTime start = localDateTimes.get(i - 1);
+            LocalDateTime end = localDateTimes.get(i);
+            //过滤出时间分片内所有检验任务的数据
+            List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
+                //数据范围应该是大于等于开始时间  小于结束时间
+                if (LocalDateUtil.isRange(v.getFinishedTime(), start, end, true, false)) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).collect(Collectors.toList());
+
+            //如果检验任务为空则该时间段下检验结果为0
+            List<BigDecimal> bigDecimals = Lists.newArrayList();
+            conditionTasks.forEach(r -> {
+                //检验任务样本结果集合
+                OptionalDouble op = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                                .eq(QtCheckTaskDetail::getTaskId, r.getId())
+                                .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
+                        .stream().filter(qt -> Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
+                        .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
+                        .mapToDouble(v -> Double.parseDouble(v.getCheckResult())).average();
+                if (op.isPresent()) {
+                    bigDecimals.add(BigDecimal.valueOf(op.getAsDouble()).setScale(BigDecimalUtil.DEFAULT_SCALE));
+                }else{
+                    bigDecimals.add(BigDecimal.ZERO);
+                }
+            });
+            if (CollUtil.isNotEmpty(bigDecimals)) {
+                BigDecimal sum = bigDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal average = BigDecimalUtil.divide(sum, BigDecimal.valueOf(bigDecimals.size()));
+                itemValue.add(average.toString());
+            } else {
+                itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
+            }
+            //赋值x轴点
+            dates.add(XAxisUtil.convert(granularityEnum,start));
+        }
+        qtReportChartVO.setXData(dates);
+        qtReportChartVO.setItemValue(itemValue);
     }
 
     /**

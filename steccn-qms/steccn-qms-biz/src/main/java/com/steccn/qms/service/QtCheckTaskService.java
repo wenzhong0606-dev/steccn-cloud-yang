@@ -6,10 +6,12 @@ import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.*;
+import org.apache.ibatis.annotations.Param;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author AndrewLuo
@@ -229,6 +231,13 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @return
      */
     List<QtCheckTaskCodeIdVO> getAllFinishedTaskCode(String taskCode);
+
+    /**
+     * 获取来料检
+     * @param itemIdSet 检验项集合
+     * @return 所有的来料检
+     */
+    List<QtIncomingCheckDTO> comingList(@Param("itemIdSet") Set<Integer> itemIdSet);
 
 }
 

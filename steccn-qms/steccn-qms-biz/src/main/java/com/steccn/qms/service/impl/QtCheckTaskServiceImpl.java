@@ -2887,6 +2887,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return codes;
     }
 
+    @Override
+    public List<QtIncomingCheckDTO> comingList(Set<Integer> itemIdSet) {
+        List<QtIncomingCheckDTO> resList = null;
+        if (CollUtil.isNotEmpty(itemIdSet)) {
+            resList = baseMapper.comingList(itemIdSet);
+        }
+        return Objects.nonNull(resList) ? resList : Lists.newArrayList();
+    }
+
     /**
      * 合格率分组
      *

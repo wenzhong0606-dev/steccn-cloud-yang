@@ -5,6 +5,7 @@ import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.qms.dto.QtDaySamplingDTO;
+import com.steccn.qms.dto.QtIncomingCheckDTO;
 import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
 import com.steccn.qms.vo.QtDefectItemInfoVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
@@ -79,6 +80,15 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      * @return
      */
     List<QtDaySamplingDTO> samplingList(@Param("morning") LocalDateTime morning, @Param("night") LocalDateTime night);
+
+
+
+    /**
+     * 获取来料检
+     * @param itemIdSet 检验项集合
+     * @return 所有的来料检
+     */
+    List<QtIncomingCheckDTO> comingList(@Param("itemIdSet") Set<Integer> itemIdSet);
 }
 
 
