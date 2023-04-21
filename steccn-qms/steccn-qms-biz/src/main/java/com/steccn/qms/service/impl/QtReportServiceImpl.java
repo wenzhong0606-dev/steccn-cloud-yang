@@ -347,13 +347,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 return Boolean.FALSE;
             }).collect(Collectors.toList());
             //取平均值
-            double sum = conditionTasks.stream().mapToDouble(v -> Double.parseDouble(v.getCheckResult())).sum();
-            if (conditionTasks.size() == 0) {
-                //避免分母为0
-                itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
-            } else {
-                itemValue.add(BigDecimalUtil.format(new BigDecimal(sum / conditionTasks.size())));
-            }
+            BigDecimal reduce = conditionTasks.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            itemValue.add(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, new BigDecimal(conditionTasks.size()))));
             //赋值x轴点
             xList.add(XAxisUtil.convert(granularityEnum,start));
         }
@@ -398,14 +393,15 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 //如果检验任务为空则该时间段下检验结果为0
                 Set<Long> taskIdSet = conditionTasks.stream().map(v -> v.getId()).collect(Collectors.toSet());
                 //检验任务样本结果集合
-                OptionalDouble op = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                List<BigDecimal> valueList = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                                 .in(QtCheckTaskDetail::getTaskId, taskIdSet)
                                 .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
                         .stream().filter(qt -> Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
                         .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
-                        .mapToDouble(v -> Double.parseDouble(v.getCheckResult())).average();
-                if (op.isPresent()) {
-                    itemValue.add(BigDecimalUtil.format(BigDecimal.valueOf(op.getAsDouble())));
+                        .map(v -> new BigDecimal(v.getCheckResult())).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(valueList)) {
+                    BigDecimal reduce = valueList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    itemValue.add(BigDecimalUtil.format(BigDecimalUtil.divide(reduce,new BigDecimal(valueList.size()))));
                 } else {
                     itemValue.add(BigDecimalUtil.format(BigDecimal.ZERO));
                 }
