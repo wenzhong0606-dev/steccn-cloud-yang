@@ -625,7 +625,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             for (QtImproveRecord qtImproveRecord : qtImproveRecords) {
                 OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+qtImproveRecord.getId(),qtImproveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                 urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
-                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,"请在PC端查看整改详情"));
+                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,qtImproveRecord.getTitle()+"(请在PC端查看整改详情)"));
             }
             oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
             workflowRequestTableRecords2.add(oaWorkFlowDetailDataListDTO);

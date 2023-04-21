@@ -574,7 +574,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 for (QtImproveRecord improveRecord : improveRecords) {
                     OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+improveRecord.getId(),improveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
                     urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
-                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,"请在PC端查看整改详情"));
+                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,improveRecord.getTitle()+"(请在PC端查看整改详情)"));
                 }
                 oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
                 workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
