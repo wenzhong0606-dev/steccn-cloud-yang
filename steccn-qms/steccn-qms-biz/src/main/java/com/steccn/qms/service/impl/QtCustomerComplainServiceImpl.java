@@ -517,7 +517,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
     private void startOaFlow(QtCustomerComplainDTO dto, QtCustomerComplain qtCustomerComplain) {
         //判断是否发起过流程，如果发起过 提交
         ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(qtCustomerComplain.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<QtImproveRecord> qtImproveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCustomerComplainId, qtCustomerComplain));
+        List<QtImproveRecord> qtImproveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getCustomerComplainId, qtCustomerComplain.getId()));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
         //审批发起人
