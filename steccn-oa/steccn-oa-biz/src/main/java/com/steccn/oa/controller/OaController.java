@@ -224,9 +224,9 @@ public class OaController {
         return R.success(workflowCurrentoperatorService.getUserIdByRequestId(dto));
     }
 
-    @ApiOperation("根据Id查询用户名")
+    @ApiOperation("保存文档名字")
     @GetMapping("/workflow/saveDoc")
-    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
-        return R.success(oaService.saveDoc(url));
+    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url, @RequestParam("docName") String docName){
+        return R.success(oaService.saveDoc(url,docName));
     }
 }

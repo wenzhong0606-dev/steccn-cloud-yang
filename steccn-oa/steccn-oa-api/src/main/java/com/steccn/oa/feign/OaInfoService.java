@@ -200,10 +200,10 @@ public interface OaInfoService {
 
     /**
      * 传入url生产文档
-     * @param url
+     * @param url 跳转url  docName 文档名字
      * @return
      */
-    @ApiOperation("获取文档id")
+    @ApiOperation("保存文档并获取文档id")
     @GetMapping("/feign/oa/workflow/saveDoc")
-    R<OaSaveDocVO> saveDoc(@RequestParam("url") String url);
+    R<OaSaveDocVO> saveDoc(@RequestParam("url") String url,@RequestParam("docName") String docName);
 }
