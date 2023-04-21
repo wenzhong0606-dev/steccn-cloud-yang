@@ -920,10 +920,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             chart.setHeaders(headers);
             //2)、组数据
             for(SysOfficeVO productLine:productLineList){
-                QtDayReportLossDataVO qtDayReportLossDataVO = new QtDayReportLossDataVO();
+                //拉引量
+                QtDayReportLossDataVO qtDayReportLossDataPullAmount = new QtDayReportLossDataVO();
                 //静态数据
-                qtDayReportLossDataVO.setProductLineName(productLine.getOfficeName());
-                qtDayReportLossDataVO.setType(QtManagerConstant.NUM_0);
+                qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
+                qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
                 //动态数据
                 List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
                 //获取该产线下所有缺陷项和落版
@@ -933,24 +934,50 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v->reasonTmp.contains(v.getName())).collect(Collectors.toList());
                 //落板排序数据
                 List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+
+                //先算拉引量
                 //根据日期
+                BigDecimal pullAmountAll = BigDecimal.ZERO;
                 for(int i = 0; i < dayCount; i++){
                     List<QtChartSubDetailDTO> dayData = groupByDate.get(dto.getStartDate().plusDays(i));
                     //拉引量
-                    qtDayReportLossDataVO.setDefectName("拉引量");
+                    qtDayReportLossDataPullAmount.setDefectName("拉引量");
                     List<String> lineDataTmp = Lists.newArrayList();
                     if(CollUtil.isEmpty(dayData)){
                         lineDataTmp.add(null);
-                        lineDataTmp.add(null);
-                        moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
                     }else {
-                        //早班拉引量
+                        //早班拉引量+晚班拉引量
                         QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).findFirst().orElse(null);
                         QtChartSubDetailDTO pullAmountNight = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).findFirst().orElse(null);
-
+                        BigDecimal pullAmount = BigDecimal.ZERO;
+                        if(Objects.nonNull(pullAmountDay)){
+                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountDay.getPullAmount());
+                        }
+                        if(Objects.nonNull(pullAmountNight)){
+                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountNight.getPullAmount());
+                        }
+                        pullAmountAll = BigDecimalUtil.add(pullAmountAll,pullAmount);
+                        lineDataTmp.add(pullAmount.toString());
                     }
+                    lineDataTmp.add(null);
+                    moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
                 }
+                //小计
+                List<String> lineDataTmp1 = Lists.newArrayList();
+                lineDataTmp1.add(pullAmountAll.toString());
+                lineDataTmp1.add(null);
+                moduleTmp.add(new FurtherValueStrVO(lineDataTmp1));
+                qtDayReportLossDataPullAmount.setModule(moduleTmp);
+                tableData.add(qtDayReportLossDataPullAmount);
 
+                //后算缺陷项
+                if(CollUtil.isNotEmpty(defectiveItemsTmp)){
+                    defectiveItemsTmp.forEach(tmp->{
+                        QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
+                        qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
+                        qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
+                    });
+                }
             }
 
         }
