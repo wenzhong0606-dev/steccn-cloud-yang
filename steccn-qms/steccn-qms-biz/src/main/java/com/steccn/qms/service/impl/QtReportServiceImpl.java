@@ -277,6 +277,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             qtReportChartVO.setMaterialName(materialIdNameMap.get(q.getMaterialId()));
             //该检验任务的包括快照的id集合
             Set<Integer> itemIds = snapshotMap.get(q.getCheckItemId());
+            //设置检验项类型，数据类型和单位
             if (Objects.nonNull(q.getCheckItemId())) {
                 QtCheckItem qtCheckItem = checkItemMap.getOrDefault(q.getCheckItemId(), defaultQtCheckItem);
                 qtReportChartVO.setCheckItemName(qtCheckItem.getName());
@@ -317,7 +318,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 //过滤出时间分片内所有检验任务的数据
                 List<QtCheckTask> conditionTasks = qtCheckTasks.stream().filter(v -> Objects.nonNull(v.getFinishedTime())).filter(v -> {
                     //数据范围应该是大于等于开始时间  小于结束时间
-                    if ((start.isBefore(v.getFinishedTime()) || start.isEqual(v.getFinishedTime())) && end.isAfter(v.getFinishedTime())) {
+                    if (LocalDateUtil.isRange(v.getFinishedTime(), start, end, true, false)) {
                         return Boolean.TRUE;
                     }
                     return Boolean.FALSE;
@@ -361,39 +362,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                         itemValue.add(QtManagerConstant.THE_CALCULATION_RESULTS);
                     }
                 }
-
-                String timeFormat = new String();
-                if (QtManagerConstant.QtGranularityEnum.HOUR.getName().equals(q.getGranularity())) {
-                    String startHourFormat = LocalDateUtil.format(start, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
-                    String endHourFormat = LocalDateUtil.format(end, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
-                    timeFormat = startHourFormat + "~" + endHourFormat;
-                } else if (QtManagerConstant.QtGranularityEnum.DAY.getName().equals(q.getGranularity())) {
-                    timeFormat = LocalDateUtil.localDateFormat(start.toLocalDate(), DatePattern.NORM_DATE_PATTERN);
-                } else if (QtManagerConstant.QtGranularityEnum.WEEK.getName().equals(q.getGranularity())) {
-                    LocalDate date = start.toLocalDate();
-                    WeekFields weekFields = WeekFields.ISO;
-                    int weekNumber = date.get(weekFields.weekOfWeekBasedYear());
-                    String weekFormat = LocalDateUtil.localDateFormat(date, DatePattern.NORM_DATE_PATTERN);
-                    timeFormat = "第" + weekNumber + "周" + " " + weekFormat;
-                } else if (QtManagerConstant.QtGranularityEnum.MONTH.getName().equals(q.getGranularity())) {
-                    timeFormat = LocalDateUtil.localDateFormat(start.toLocalDate(), DatePattern.NORM_MONTH_PATTERN);
-                } else if (QtManagerConstant.QtGranularityEnum.QUARTER.getName().equals(q.getGranularity())) {
-                    int currentMonth = start.getMonthValue();
-                    String quarter = "";
-                    if (currentMonth >= 1 && currentMonth <= 3) {
-                        quarter = "第一季度";
-                    } else if (currentMonth >= 4 && currentMonth <= 6) {
-                        quarter = "第二季度";
-                    } else if (currentMonth >= 7 && currentMonth <= 9) {
-                        quarter = "第三季度";
-                    } else if (currentMonth >= 10 && currentMonth <= 12) {
-                        quarter = "第四季度";
-                    }
-                    timeFormat = start.getYear() + " " + quarter;
-                } else if (QtManagerConstant.QtGranularityEnum.YEAR.getName().equals(q.getGranularity())) {
-                    timeFormat = start.getYear() + "";
-                }
-                dates.add(timeFormat);
+                dates.add(XAxisUtil.convert(granularityEnum,start));
             }
             qtReportChartVO.setXData(dates);
             qtReportChartVO.setItemValue(itemValue);
