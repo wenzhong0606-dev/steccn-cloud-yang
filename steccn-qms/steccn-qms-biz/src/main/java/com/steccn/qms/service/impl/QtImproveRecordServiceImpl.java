@@ -196,7 +196,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //创建人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
             //创建时间
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTime.now().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(),"yyyy-MM-dd HH:mm:ss")));
             //整改启动审批人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, dto.getStartApproverId().toString()));
             //D1处理人
