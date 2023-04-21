@@ -399,27 +399,16 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<BigDecimal> bigDecimals = Lists.newArrayList();
             conditionTasks.forEach(r -> {
                 //检验任务样本结果集合
-                List<String> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                OptionalDouble op = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                                 .eq(QtCheckTaskDetail::getTaskId, r.getId())
                                 .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                        .stream().filter(qt -> Objects.nonNull(qt) && Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
-                        .map(QtCheckTaskDetail::getCheckResult)
-                        .collect(Collectors.toList());
-                List<BigDecimal> resultList = Lists.newArrayList();
-                if (CollUtil.isNotEmpty(results)) {
-                    results.forEach(re -> {
-                        if (isNumber(re) || isFloatNumber(re)) {
-                            BigDecimal bigDecimal = new BigDecimal(re);
-                            if (Objects.nonNull(bigDecimal)) {
-                                resultList.add(bigDecimal);
-                            }
-                        }
-                    });
-                }
-                if (CollUtil.isNotEmpty(resultList)) {
-                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
-                    bigDecimals.add(result);
+                        .stream().filter(qt -> Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
+                        .filter(qt -> isNumber(qt.getCheckResult()) || isFloatNumber(qt.getCheckResult()))
+                        .mapToDouble(v -> Double.parseDouble(v.getCheckResult())).average();
+                if (op.isPresent()) {
+                    bigDecimals.add(BigDecimal.valueOf(op.getAsDouble()).setScale(BigDecimalUtil.DEFAULT_SCALE));
+                }else{
+                    bigDecimals.add(BigDecimal.ZERO);
                 }
             });
             if (CollUtil.isNotEmpty(bigDecimals)) {
