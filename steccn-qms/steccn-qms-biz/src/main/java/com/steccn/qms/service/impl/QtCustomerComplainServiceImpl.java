@@ -599,7 +599,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 }
                 //不良判断依据
                 if (Objects.nonNull(detail.getBadJudgeBasis())){
-                    valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLPDYJ, dictMap.get(detail.getCustomerComplainId())));
+                    valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_BLPDYJ, dictMap.get(detail.getBadJudgeBasis())));
                 }
                 //勘察确认详细结果
                 valueDTOS.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_KCQRXXJG, detail.getSurveyResult()));
