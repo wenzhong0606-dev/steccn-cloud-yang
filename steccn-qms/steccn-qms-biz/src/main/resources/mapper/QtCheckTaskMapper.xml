@@ -79,6 +79,10 @@
         <result property="result" column="result" jdbcType="VARCHAR"/>
         <result property="samplingTimeArray" column="sampling_time_array"
                 typeHandler="com.steccn.common.convert.LocalDateTimeTypeHandler"/>
+        <result property="materialWorkshop" column="material_workshop"
+                typeHandler="com.steccn.qms.constant.IdNameTypeHandler"/>
+        <result property="supplier" column="supplier"
+                typeHandler="com.steccn.qms.constant.IdNameTypeHandler"/>
         <result property="copy" column="copy" jdbcType="INTEGER"/>
     </resultMap>
 
@@ -270,7 +274,9 @@
             detail.item_id,
             task.result,
             copy.sampling_time_array,
-            copy.copy
+            copy.copy,
+            task.material_workshop,
+            task.supplier
         FROM
             qt_check_task task
                 JOIN qt_check_task_copy copy ON task.id = copy.task_id and copy.del_flag = 0

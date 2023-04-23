@@ -44,4 +44,9 @@ public class QtIncomingCheckDTO implements Serializable {
     @ApiModelProperty("样本")
     private Integer copy;
 
+    @ApiModelProperty("物料使用车间")
+    private QtBaseIdNameDTO materialWorkshop;
+
+    @ApiModelProperty("供应商")
+    private QtBaseIdNameDTO supplier;
 }
