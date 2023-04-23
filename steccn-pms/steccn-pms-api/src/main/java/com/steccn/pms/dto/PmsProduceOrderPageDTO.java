@@ -86,4 +86,15 @@ public class PmsProduceOrderPageDTO  extends BasePageDTO {
     @ApiModelProperty("实际结束时间-结束")
     private LocalDateTime actualEndTimeEnd;
 
+    @ApiModelProperty("开始时间")
+    private LocalDateTime startTime;
+
+    @ApiModelProperty("结束时间")
+    private LocalDateTime endTime;
+
+    @ApiModelProperty("开始日期")
+    private LocalDate startDate;
+
+    @ApiModelProperty("结束日期")
+    private LocalDate endDate;
 }
