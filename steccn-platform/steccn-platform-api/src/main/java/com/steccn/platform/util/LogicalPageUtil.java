@@ -25,7 +25,7 @@ public class LogicalPageUtil {
      * @return
      */
     public static <T> Page<T> page(List<T> dataList, int current, int size) {
-        if(CollUtil.isEmpty(dataList)){
+        if(Objects.isNull(dataList)){
             dataList = Lists.newArrayList();
         }
         int idx = (current - 1) * size;
