@@ -186,10 +186,10 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
         }
 
-        //判断当前用户的角色是否是客诉管理员
-        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
-        if (CollUtil.isNotEmpty(role.getStringList())) {
-            if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
+       //判断当前用户的角色是否是客诉管理员
+        List<String> role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        if (CollUtil.isNotEmpty(role)) {
+            if (!role.contains(QtManagerConstant.COMPLAINT_MANAGER)) {
                 //不是整改管理员
                 between.in(QtCustomerComplain::getId,getUserAuthData());
             }
@@ -646,7 +646,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getName(),SecurityUtils.getUser().getName()));
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
             sysMsgSendDTO.setContent(content);
@@ -688,7 +688,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.CUSTOMER_COMPLAIN.getName(),SecurityUtils.getUser().getName()));
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
             sysMsgSendDTO.setContent(content);

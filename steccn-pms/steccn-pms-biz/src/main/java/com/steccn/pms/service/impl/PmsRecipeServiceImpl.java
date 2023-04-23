@@ -187,15 +187,15 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         pmsRecipeVO.setRawList(rawVOS);
         //4、处理按钮权限数据
         SteccnUser user = SecurityUtils.getUser();
-        MessScopeVO role = remoteMessFeignApi.getRole(user.getUsername());
-        if (CollUtil.isNotEmpty(role.getStringList())) {
-            if (role.getStringList().contains(PmManagerConstant.RECIPE_ROLE_ADMIN)) {
+        List<String> role = remoteMessFeignApi.getRole(user.getUsername());
+        if (CollUtil.isNotEmpty(role)) {
+            if (role.contains(PmManagerConstant.RECIPE_ROLE_ADMIN)) {
                 pmsRecipeVO.setButtonRateAuth(1);
             } else {
                 pmsRecipeVO.setButtonRateAuth(0);
             }
 
-            if (role.getStringList().contains(PmManagerConstant.RECIPE_ROLE_SYSTEM)) {
+            if (role.contains(PmManagerConstant.RECIPE_ROLE_SYSTEM)) {
                 pmsRecipeVO.setButtonAmountAuth(1);
             } else {
                 pmsRecipeVO.setButtonAmountAuth(0);
