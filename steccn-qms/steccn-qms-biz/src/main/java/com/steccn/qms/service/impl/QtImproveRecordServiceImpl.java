@@ -124,19 +124,19 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtImproveRecord::getStatus);
             }
         }
-//        //判断当前用户的角色是否是整改管理员
-//        List<String> role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
-//        if (CollUtil.isNotEmpty(role)) {
-//            if (!role.contains(QtManagerConstant.IMPROVE_ADMINISTRATOR)) {
-//                //不是整改管理员
-//                between.in(QtImproveRecord::getId, getUserAuthData());
-//            }
-//        } else {
-//            Set<Long> userAuthData = getUserAuthData();
-//            if (CollUtil.isNotEmpty(userAuthData)) {
-//                between.in(QtImproveRecord::getId, userAuthData);
-//            }
-//        }
+        //判断当前用户的角色是否是整改管理员
+        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+        if (CollUtil.isNotEmpty(role.getStringList())) {
+            if (!role.getStringList().contains(QtManagerConstant.IMPROVE_ADMINISTRATOR)) {
+                //不是整改管理员
+                between.in(QtImproveRecord::getId, getUserAuthData());
+            }
+        } else {
+            Set<Long> userAuthData = getUserAuthData();
+            if (CollUtil.isNotEmpty(userAuthData)) {
+                between.in(QtImproveRecord::getId, userAuthData);
+            }
+        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
