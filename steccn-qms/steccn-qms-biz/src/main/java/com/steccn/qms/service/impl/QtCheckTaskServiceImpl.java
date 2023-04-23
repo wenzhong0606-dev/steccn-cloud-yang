@@ -449,7 +449,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     //设置样本概况模块数据
                     //先删除样本概况表中可能存在的数据
 
-                    String[] strings = {"sampleNum","licensePlate","analyst","analystTime","analystName","ingredientNum","samplingTime"};
+                    String[] strings = {"sampleNum","licensePlate","analyst","analystTime","analystName","ingredientNum","samplingTime","samplingTimeMix"};
                     List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, id));
                     List<QtCheckTaskSimpleDTO> qtCheckTaskSimpleDTOS = Lists.newArrayList();
                     if (!qtCheckTaskCopies.isEmpty()) {
@@ -476,6 +476,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTimeArray());
+                                }
+                                else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(s)) {
+                                    if(qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+                                        simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
+                                    }
                                 }
                             }
                             qtCheckTaskSimpleDTO.setResult(simpleMap);
@@ -779,6 +784,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
                                 }
+                            }else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
+                                //配料抽检专用localDateTime
+                                if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
+                                    qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                }
                             }
                         } else {
                                 if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
@@ -808,6 +818,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 } else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
                                     if (StringUtils.isNotBlank(entry.getKey())) {
                                         qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
+                                    }
+                                } else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
+                                    //配料抽检专用localDateTime
+                                    if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
+                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
                                     }
                                 }
                             if(!entry.getKey().contains(QtManagerConstant.ANALYST)) objectMap.put(entry.getKey(),qtCheckTaskCopy);
