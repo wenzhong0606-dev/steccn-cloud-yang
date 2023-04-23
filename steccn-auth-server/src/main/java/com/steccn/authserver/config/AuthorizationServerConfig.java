@@ -102,8 +102,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .withClient("temp")
                 //client-secret
                 .secret(passwordEncoder.encode("steccn_temp"))
-                //配置访问token的有效期设置为50s
-                .accessTokenValiditySeconds(300)
+                //配置访问token的有效期设置为30分钟
+                .accessTokenValiditySeconds(1800)
                 //配置重定向的跳转，用于授权成功之后的跳转
                 .redirectUris("http://127.0.0.1:9001/api/portal/login")
                 //作用域

@@ -153,6 +153,7 @@ public interface QtManagerConstant {
     String ANALYST = "analyst"; //分析人
     String ANALYSTNAME = "analystName"; //分析人名
     String SAMPLINGTIME = "samplingTime"; //取样时间
+    String SAMPLINGTIMEMIX = "samplingTimeMix"; //配料抽检取样时间
     String ANALYSTIME = "analystTime"; //分析时间
     String INGREDIENTNUM = "ingredientNum"; //配料付数
 
