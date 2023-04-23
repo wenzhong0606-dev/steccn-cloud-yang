@@ -5,6 +5,7 @@ import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.qms.dto.QtDaySamplingDTO;
+import com.steccn.qms.dto.QtIncomingCheckDTO;
 import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
 import com.steccn.qms.vo.QtDefectItemInfoVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
@@ -13,6 +14,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.security.core.parameters.P;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -73,9 +75,20 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
 
     /**
      * 获取所有的配料检数
+     * @param morning 早上
+     * @param night 晚上
      * @return
      */
-    List<QtDaySamplingDTO> samplingList();
+    List<QtDaySamplingDTO> samplingList(@Param("morning") LocalDateTime morning, @Param("night") LocalDateTime night);
+
+
+
+    /**
+     * 获取来料检
+     * @param itemIdSet 检验项集合
+     * @return 所有的来料检
+     */
+    List<QtIncomingCheckDTO> comingList(@Param("itemIdSet") Set<Integer> itemIdSet);
 }
 
 

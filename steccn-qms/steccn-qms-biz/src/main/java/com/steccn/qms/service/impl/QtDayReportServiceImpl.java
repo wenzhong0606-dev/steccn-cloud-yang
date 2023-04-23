@@ -11,25 +11,29 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.CalculateDateUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.MapUtil;
+import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.vo.BaseReportHeaderVO;
 import com.steccn.pms.vo.FurtherValueStrVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.QtChartParamDTO;
+import com.steccn.qms.dto.QtChartSubDetailDTO;
 import com.steccn.qms.dto.QtDaySamplingDTO;
+import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.mapper.QtCheckTaskMapper;
 import com.steccn.qms.mapper.QtDefectiveItemMapper;
 import com.steccn.qms.service.*;
 import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -59,12 +63,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
     private final QtDefectiveItemService qtDefectiveItemService;
     private final QtDefectiveItemMapper qtDefectiveItemMapper;
     private final QtCheckTaskDestoryInfoService qtCheckTaskDestoryInfoService;
+    private final QtChartGenerateService qtChartGenerateService;
 
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
     private final QtCheckTaskDetailService qtCheckTaskDetailService;
     private final QtCheckItemService qtCheckItemService;
     private final QtItemCategoryService qtItemCategoryService;
+    private final RemoteDictFeignApi remoteDictFeignApi;
 
     @Override
     public QtDayReportOnlineVO online(LocalDate date, Integer productLineId) {
@@ -756,28 +762,226 @@ public class QtDayReportServiceImpl implements QtDayReportService {
 
     @Override
     public QtDaySamplingVO sampling(LocalDate date) {
-        //1.获取原始数据
-        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingList();
-        //2.如果原始数据集合不为空，则继续执行
-        SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
-        //3.获取早班和晚班时间
+        //1.获取早班和晚班时间
         LocalDateTime morning = LocalDateUtil.getMorning(date);
-        LocalDateTime night = LocalDateUtil.getNight(date);
+        LocalDateTime night = LocalDateUtil.getNight(date).plusDays(1);
+        //2.获取原始数据
+        List<QtDaySamplingDTO> sourceList = qtCheckTaskMapper.samplingList(morning, night);
+        //3.如果原始数据集合不为空，则继续执行
+        SteccnTableAssertUtil.notEmpty(sourceList, "配料抽检原始数据集合为空");
         //4.拆分时间并过滤
-        List<QtDaySamplingDTO> filterList = Lists.newArrayList();
-        for (QtDaySamplingDTO samplingDTO : sourceList) {
-            for (LocalDateTime ldt : samplingDTO.getSamplingTimeArray()) {
-                //如果时间符合要求，则保存到filterList中
-                if (LocalDateUtil.isRange(ldt, morning, night, Boolean.TRUE, Boolean.TRUE)) {
-                    QtDaySamplingDTO newDTO = new QtDaySamplingDTO();
-                    BeanUtils.copyProperties(samplingDTO,newDTO);
-                    newDTO.setSamplingTime(ldt);
-                    filterList.add(newDTO);
-                }
+        //记录所有的检验项
+        Set<Integer> itemIdSet = Sets.newHashSet();
+        sourceList.forEach(ele -> itemIdSet.add(ele.getItemId()));
+        Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(itemIdSet));
+        //构造idxmap
+        Map<Integer,Integer> idxMap = Maps.newHashMap();
+        List<String> dynamicHeadList = Lists.newArrayList();
+        //如果为百分比的，加上%号，其余的看measure_unit
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_2,SysDictConstant.TYPE_CHECK_DATA_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //存放数据字典
+        Set<Long> dictIdSet = Sets.newHashSet();
+        int idx = 0 ;
+        for (Map.Entry<Integer, QtCheckItem> itemEntry : itemMap.entrySet()) {
+            dynamicHeadList.add(itemEntry.getValue().getName());
+            idxMap.put(itemEntry.getKey(),idx++);
+            if(Objects.nonNull(itemEntry.getValue().getMeasureUnit())){
+                dictIdSet.add(itemEntry.getValue().getMeasureUnit());
             }
         }
-        SteccnTableAssertUtil.notEmpty(filterList, "配料抽检时间范围内数据为空");
-        return null;
+        Map<Long, String> dictIdNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        QtDaySamplingVO resVo = new QtDaySamplingVO();
+        resVo.setDynamicHeadList(dynamicHeadList);
+        List<QtDaySamplingDataVO> dataList = Lists.newArrayList();
+        Map<String, List<QtDaySamplingDTO>> taskMap = sourceList.stream().collect(Collectors.groupingBy(v -> v.getTaskId() + "_" + v.getSamplingTime() + "_" + v.getCopy()));
+
+        for (Map.Entry<String, List<QtDaySamplingDTO>> taskEntry : taskMap.entrySet()) {
+            String[] key = taskEntry.getKey().split("_");
+            LocalDateTime samplingTime = LocalDateTime.parse(key[1]);
+            QtDaySamplingDTO samplingDTO = taskEntry.getValue().get(0);
+            QtDaySamplingDataVO data = new QtDaySamplingDataVO();
+            BeanUtils.copyProperties(samplingDTO, data);
+            data.setSamplingTime(samplingTime.toLocalTime());
+            data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
+            data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
+            //配料付数
+            int sum = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
+            data.setIngredientNum(sum);
+            dataList.add(data);
+            List<String> itemList = new ArrayList<>();
+            for (int i = 0; i < idx; i++) {
+                itemList.add("-");
+            }
+            //构造检验项
+            for (QtDaySamplingDTO qtDaySamplingDTO : taskEntry.getValue()) {
+                Integer index = idxMap.get(qtDaySamplingDTO.getItemId());
+                QtCheckItem qtCheckItem = itemMap.get(qtDaySamplingDTO.getItemId());
+                if(Objects.nonNull(index) && Objects.nonNull(qtCheckItem)){
+                    String checkResult = null;
+                    //如果检验结果为空，则默认赋值
+                    if (Objects.isNull(qtDaySamplingDTO.getCheckResult()) || StrUtil.isBlank(qtDaySamplingDTO.getCheckResult())) {
+                        checkResult = Strings.EMPTY;
+                    } else {
+                        checkResult = qtDaySamplingDTO.getCheckResult();
+                        if (sysDictVO.getId().equals(qtCheckItem.getDataType())) {
+                            checkResult += '%';
+                        } else {
+                            checkResult += dictIdNameMap.getOrDefault(qtCheckItem.getMeasureUnit(), Strings.EMPTY);
+                        }
+                    }
+                    itemList.set(index, checkResult);
+                }
+            }
+            data.setItemList(itemList);
+        }
+        resVo.setDataList(dataList);
+        return resVo;
+    }
+
+    /**
+     * 损耗日报表
+     * @param dto
+     * @return
+     */
+    @Override
+    public QtDayReportLossVO loss(QtLossReportDTO dto) {
+        //1、拿到全量数据表，若是月则修改数据
+        if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+            dto.setStartDate(dto.getStartDate().withDayOfMonth(1));
+            dto.setEndDate(dto.getEndDate().withDayOfMonth(dto.getEndDate().lengthOfMonth()));
+        }
+        List<QtChartSubDetailDTO> allData = Lists.newArrayList();
+        QtChartParamDTO chartParam = new QtChartParamDTO();
+        dto.getProductLineIds().forEach(tmp->{
+            chartParam.setProductLineId(tmp);
+            chartParam.setDateStart(dto.getStartDate());
+            chartParam.setDateEnd(dto.getEndDate());
+            List<QtChartSubDetailDTO> qtChartSubDetailDTOS = qtChartGenerateService.generateSubstrateLossData(chartParam);
+            allData.addAll(qtChartSubDetailDTOS);
+        });
+        //判空
+        SteccnTableAssertUtil.notEmpty(allData, "损耗数据为空");
+        //2、组合报表
+        QtDayReportLossVO chart = new QtDayReportLossVO();
+        //表头
+        QtDayReportTableHeadersVO headers = new QtDayReportTableHeadersVO();
+        //静态表头
+        List<QtSpcHeadTitleVO> common = Lists.newArrayList();
+        //动态表头
+        List<BaseReportHeaderVO> module = Lists.newArrayList();
+        //数据
+        List<QtDayReportLossDataVO> tableData = Lists.newArrayList();
+        //3、先做数据准备和排序
+        //缺陷和落板原因
+        List<String> defectAndLuo = Lists.newArrayList();
+        allData.forEach(tmp->{
+            defectAndLuo.add(tmp.getReason());
+            //转换localDate
+            tmp.setWorkOrderDate(LocalDate.parse(tmp.getWorkOrderTime(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        });
+        //拿到所有的缺陷项code
+        LambdaQueryWrapper defectCondition = new LambdaQueryWrapper<QtDefectiveItem>()
+                .select(QtDefectiveItem::getName,QtDefectiveItem::getCode)
+                .in(QtDefectiveItem::getName,defectAndLuo)
+                .eq(QtDefectiveItem::getShowFlag,QtManagerConstant.NUM_1)
+                .orderByAsc(QtDefectiveItem::getCode);
+        List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(defectCondition);
+        //拿到所有落版原因
+        List<SysDictVO> destroyReason = FeignOptional.of(() -> remoteDictFeignApi.listByType("sys_destory_reason"), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //根据sort排序
+        destroyReason = destroyReason.stream().sorted(Comparator.comparing(SysDictVO::getSort)).collect(Collectors.toList());
+        //拿到所有产线并排序
+        Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(dto.getProductLineIds()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<SysOfficeVO> productLineList = sysOfficeVOMap.values().stream().collect(Collectors.toList());
+        productLineList = productLineList.stream().sorted(Comparator.comparing(SysOfficeVO::getOfficeName)).collect(Collectors.toList());
+        //先根据日期分组
+        Map<LocalDate,List<QtChartSubDetailDTO>> groupByDate = allData.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getWorkOrderDate));
+        //日报表
+        if(dto.getType().equals(QtManagerConstant.LossReportType.DAY.getCode())){
+            //1)、组表头
+            //静态表头
+            common.add(new QtSpcHeadTitleVO("productLineName","产线"));
+            common.add(new QtSpcHeadTitleVO("defectName","缺陷"));
+            headers.setCommon(common);
+            //动态表头
+            int dayCount = dto.getEndDate().getDayOfMonth() - dto.getStartDate().getDayOfMonth();
+            List<String> head = Lists.newArrayList();
+            head.add("重量(吨)");
+            head.add("损耗率");
+            for(int i = 0; i < dayCount; i++){
+                module.add(new BaseReportHeaderVO(dto.getStartDate().getMonth() + "月" + dto.getStartDate().getDayOfMonth()+i + "日",head));
+            }
+            //小计
+            module.add(new BaseReportHeaderVO("小计",head));
+            headers.setCommon(common);
+            headers.setModule(module);
+            chart.setHeaders(headers);
+            //2)、组数据
+            for(SysOfficeVO productLine:productLineList){
+                //拉引量
+                QtDayReportLossDataVO qtDayReportLossDataPullAmount = new QtDayReportLossDataVO();
+                //静态数据
+                qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
+                qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
+                //动态数据
+                List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
+                //获取该产线下所有缺陷项和落版
+                List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId())).collect(Collectors.toList());
+                List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
+                //缺陷项排序数据
+                List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v->reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                //落板排序数据
+                List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+
+                //先算拉引量
+                //根据日期
+                BigDecimal pullAmountAll = BigDecimal.ZERO;
+                for(int i = 0; i < dayCount; i++){
+                    List<QtChartSubDetailDTO> dayData = groupByDate.get(dto.getStartDate().plusDays(i));
+                    //拉引量
+                    qtDayReportLossDataPullAmount.setDefectName("拉引量");
+                    List<String> lineDataTmp = Lists.newArrayList();
+                    if(CollUtil.isEmpty(dayData)){
+                        lineDataTmp.add(null);
+                    }else {
+                        //早班拉引量+晚班拉引量
+                        QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName())).findFirst().orElse(null);
+                        QtChartSubDetailDTO pullAmountNight = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName())).findFirst().orElse(null);
+                        BigDecimal pullAmount = BigDecimal.ZERO;
+                        if(Objects.nonNull(pullAmountDay)){
+                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountDay.getPullAmount());
+                        }
+                        if(Objects.nonNull(pullAmountNight)){
+                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountNight.getPullAmount());
+                        }
+                        pullAmountAll = BigDecimalUtil.add(pullAmountAll,pullAmount);
+                        lineDataTmp.add(pullAmount.toString());
+                    }
+                    lineDataTmp.add(null);
+                    moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
+                }
+                //小计
+                List<String> lineDataTmp1 = Lists.newArrayList();
+                lineDataTmp1.add(pullAmountAll.toString());
+                lineDataTmp1.add(null);
+                moduleTmp.add(new FurtherValueStrVO(lineDataTmp1));
+                qtDayReportLossDataPullAmount.setModule(moduleTmp);
+                tableData.add(qtDayReportLossDataPullAmount);
+
+                //后算缺陷项
+                if(CollUtil.isNotEmpty(defectiveItemsTmp)){
+                    defectiveItemsTmp.forEach(tmp->{
+                        QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
+                        qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
+                        qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
+                    });
+                }
+            }
+
+        }
+        return chart;
     }
 
 

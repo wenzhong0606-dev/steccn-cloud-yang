@@ -1245,5 +1245,17 @@ public interface QtManagerConstant {
         }
     }
 
+    /**
+     * 样本概览枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum LossReportType {
+        CLASS(0, "班次"), DAY(1, "日"), MONTH(2, "月");
+
+        private Integer code;
+        private String name;
+    }
+
 
 }
