@@ -927,6 +927,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
                 //拉引量动态数据
                 List<FurtherValueStrVO> modulePullTmp = Lists.newArrayList();
+                //掰边损耗动态数据
+                List<FurtherValueStrVO> moduleBaiTmp = Lists.newArrayList();
                 //获取该产线下所有缺陷项和落版
                 List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId())).collect(Collectors.toList());
                 List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
@@ -970,6 +972,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                             lossAmount = BigDecimalUtil.add(lossAmount,pullAmountDay.getLossWeight());
                         }
                         pullAmountAll = BigDecimalUtil.add(pullAmountAll,pullAmount);
+                        lossAmountAll = BigDecimalUtil.add(lossAmount,lossAmountAll);
                         lineDataPullTmp.add(pullAmount.toString());
                         lineDataLossTmp.add(lossAmount.toString());
                     }
@@ -984,22 +987,34 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
                     }else {
                         modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
-                        modulePullTmp.add(new FurtherValueStrVO(lineDataLossTmp));
+                        moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp));
                     }
                 }
                 //小计
+                //拉引量
                 List<String> lineDataPullTmp1 = Lists.newArrayList();
+                List<String> lineDataLossTmp1 = Lists.newArrayList();
                 //0表示该产线没有数据
                 if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
                     lineDataPullTmp1.add(null);
+                    lineDataLossTmp1.add(null);
                 }else {
                     lineDataPullTmp1.add(pullAmountAll.toString());
+                    lineDataLossTmp1.add(lossAmountAll.toString());
+                }
+                //0表示该产线没有数据
+                if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
+                    lineDataLossTmp1.add(null);
+                }else {
+                    lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(lossAmountAll,pullAmountAll,4)));
                 }
                 lineDataPullTmp1.add(null);
                 modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp1));
+                moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp1));
                 qtDayReportLossDataPullAmount.setModule(modulePullTmp);
+                qtDayReportLossDataBai.setModule(moduleBaiTmp);
                 tableData.add(qtDayReportLossDataPullAmount);
-
+                tableData.add(qtDayReportLossDataBai);
                 //后算缺陷项
                 if(CollUtil.isNotEmpty(defectiveItemsTmp)){
                     defectiveItemsTmp.forEach(tmp->{
