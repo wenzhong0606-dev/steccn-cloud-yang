@@ -157,6 +157,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (Objects.nonNull(dto.getActualEndDateEnd())) {
             dto.setActualEndTimeEnd(LocalDateTime.of(dto.getActualEndDateEnd(), LocalTime.MAX));
         }
+        //开始时间-结束时间
+        if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())){
+            dto.setStartTime(LocalDateTime.of(dto.getStartDate(),LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getEndDate(),LocalTime.MAX));
+        }
         //2.自定义sql查询订单信息列表
         Page<PmsProduceOrderVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
         //3.处理数据
