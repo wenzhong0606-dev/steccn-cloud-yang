@@ -1,9 +1,11 @@
 package com.steccn.platform.util;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -23,7 +25,7 @@ public class LogicalPageUtil {
      * @return
      */
     public static <T> Page<T> page(List<T> dataList, int current, int size) {
-        if(Objects.isNull(dataList)){
+        if(CollUtil.isEmpty(dataList)){
             dataList = Lists.newArrayList();
         }
         int idx = (current - 1) * size;
