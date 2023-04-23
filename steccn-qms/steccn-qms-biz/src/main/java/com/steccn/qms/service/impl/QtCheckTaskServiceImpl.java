@@ -478,6 +478,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTimeArray());
                                 }
                                 else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(s)) {
+                                    //配料抽检专用时间
                                     if(qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
                                         simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
                                     }
