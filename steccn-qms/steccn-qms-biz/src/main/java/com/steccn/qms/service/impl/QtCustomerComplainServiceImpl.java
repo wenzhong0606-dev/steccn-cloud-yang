@@ -186,19 +186,19 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             }
         }
 
-       //判断当前用户的角色是否是客诉管理员
-        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
-        if (CollUtil.isNotEmpty(role.getStringList())) {
-            if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
-                //不是整改管理员
-                between.in(QtCustomerComplain::getId,getUserAuthData());
-            }
-        } else {
-            Set<Long> userAuthData = getUserAuthData();
-            if (CollUtil.isNotEmpty(userAuthData)){
-                between.in(QtCustomerComplain::getId, userAuthData);
-            }
-        }
+//       //判断当前用户的角色是否是客诉管理员
+//        MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
+//        if (CollUtil.isNotEmpty(role.getStringList())) {
+//            if (!role.getStringList().contains(QtManagerConstant.COMPLAINT_MANAGER)) {
+//                //不是整改管理员
+//                between.in(QtCustomerComplain::getId,getUserAuthData());
+//            }
+//        } else {
+//            Set<Long> userAuthData = getUserAuthData();
+//            if (CollUtil.isNotEmpty(userAuthData)){
+//                between.in(QtCustomerComplain::getId, userAuthData);
+//            }
+//        }
         //2.定义分页对象
         Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //3.查询分页数据
@@ -624,7 +624,7 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
             for (QtImproveRecord qtImproveRecord : qtImproveRecords) {
                 OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+qtImproveRecord.getId(),qtImproveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
+                urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG2, oaSaveDocVO.getDocid().toString()));
                 urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,qtImproveRecord.getTitle()+"(请在PC端查看整改详情)"));
             }
             oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);

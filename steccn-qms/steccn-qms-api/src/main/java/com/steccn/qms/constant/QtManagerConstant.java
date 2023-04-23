@@ -539,6 +539,8 @@ public interface QtManagerConstant {
 
     String WORKFLOW_GLZG = "glzg";
 
+    String WORKFLOW_GLZG2 = "glzg2";
+
 
     String WORKFLOW_GLZG_MOBILE = "glzgmobile";
 
