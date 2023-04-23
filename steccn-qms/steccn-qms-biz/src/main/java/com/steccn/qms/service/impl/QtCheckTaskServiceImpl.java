@@ -624,11 +624,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
                     copyDetailModel.setAnalystTime(valueTmp.getCopyDetails().getAnalystTime().atStartOfDay());
                     //如果是配料抽检则加入取样时间，字段，便于统计
-                    if(task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
-                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(copyDetailModel.getSamplingTimeArray());
-                        String str = jsonArray.get(0).toString();
-                        copyDetailModel.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                    }
+//                    if(task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+//                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(copyDetailModel.getSamplingTimeArray());
+//                        String str = jsonArray.get(0).toString();
+//                        copyDetailModel.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//                    }
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
