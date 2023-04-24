@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtBaseIdNameDTO;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -65,6 +66,7 @@ public class QtReport implements Serializable {
 
     /**
      * 检验类型:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
+     * @see QtManagerConstant.QtCheckTaskTypeEnum
      */
     @TableField(value = "check_type")
     private Integer checkType;

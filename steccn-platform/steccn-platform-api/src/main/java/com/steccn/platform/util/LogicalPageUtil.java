@@ -1,9 +1,11 @@
 package com.steccn.platform.util;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
