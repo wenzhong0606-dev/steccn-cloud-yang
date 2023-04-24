@@ -196,4 +196,11 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.delete(sysOfficeDTO));
     }
 
+
+    @PostMapping("/list/filter")
+    @ApiOperation("根据机构类型以及多关键字名称返回SysOffice列表信息")
+    public R<List<SysOfficeVO>> listMultiFilter(@RequestBody SysOfficeTypeKeyDTO dto){
+        return R.success(sysOfficeService.listMultiFilter(dto));
+    }
+
 }

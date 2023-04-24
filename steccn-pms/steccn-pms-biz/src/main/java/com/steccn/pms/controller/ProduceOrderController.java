@@ -170,4 +170,11 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.listByMaterialIds(materialIds));
     }
 
+
+    @ApiOperation("获取正在执行中的生产订单信息")
+    @GetMapping("/execute/info")
+    public R<List<ProduceOrderDataInfoVO>> getExecuteOrderInfo(){
+        return R.success(pmsProduceOrderService.getExecuteOrderInfo());
+    }
+
 }

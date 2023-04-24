@@ -237,4 +237,14 @@ public interface RemoteOfficeFeign {
     @DeleteMapping("/feign/platform/sys/office/delete")
     @ApiOperation("删除机构信息")
     R<Boolean> delete(@RequestBody SysOfficeDTO sysOfficeDTO);
+
+
+    /**
+     * 根据机构类型以及多关键字名称返回SysOffice列表信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/list/filter")
+    @ApiOperation("根据机构类型以及多关键字名称返回SysOffice列表信息")
+    R<List<SysOfficeVO>> listMultiFilter(@RequestBody SysOfficeTypeKeyDTO dto);
 }
