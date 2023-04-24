@@ -2,6 +2,7 @@ package com.steccn.pms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.pms.domain.PmsProduceOrder;
 import com.steccn.pms.dto.*;
@@ -213,4 +214,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return list
      */
     List<DwCurrentReportWorkDTO> currentDateReportWork(LocalDate currentDate);
+
+
+    /**
+     * 获取16条产线下的生产订单的详情数据
+     * @return
+     */
+    List<ProduceOrderDataInfoVO> getExecuteOrderInfo();
 }

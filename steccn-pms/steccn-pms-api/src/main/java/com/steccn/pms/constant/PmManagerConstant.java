@@ -67,6 +67,10 @@ public interface PmManagerConstant {
 
     String RECIPE_STR = "0000";
 
+
+    String UROPATAGIA = "基片";
+    String DEEP_PROCESSING = "深加工";
+
     /**
      * mrp 类型
      */
