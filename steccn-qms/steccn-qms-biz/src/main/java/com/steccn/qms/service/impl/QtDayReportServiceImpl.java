@@ -963,196 +963,218 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //5、组数据
             for(SysOfficeVO productLine:productLineList){
                 //分早班晚班循环 0是早班 1是晚班
-                for(int i = 0; i < QtManagerConstant.NUM_2;i++){
-
-                }
-                //拉引量
-                QtDayReportLossDataVO qtDayReportLossDataPullAmount = new QtDayReportLossDataVO();
-                //掰边损耗
-                QtDayReportLossDataVO qtDayReportLossDataBai = new QtDayReportLossDataVO();
-                //静态数据
-                qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
-                qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
-                //拉引量动态数据
-                List<FurtherValueStrVO> modulePullTmp = Lists.newArrayList();
-                //掰边损耗动态数据
-                List<FurtherValueStrVO> moduleBaiTmp = Lists.newArrayList();
-                //获取该产线下所有缺陷项和落版
-                List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId())).collect(Collectors.toList());
-                List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
-                //缺陷项排序数据
-                List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v->reasonTmp.contains(v.getName())).collect(Collectors.toList());
-                //落板排序数据
-                List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
-                //合并原因
-                List<String> reasonStr = Lists.newArrayList();
-                if(CollUtil.isNotEmpty(defectiveItemsTmp)){
-                    defectiveItemsTmp.forEach(v -> {
-                       reasonStr.add(v.getName());
-                    });
-                }
-                if(CollUtil.isNotEmpty(destroyReasonTmp)){
-                    destroyReasonTmp.forEach(v -> {
-                        reasonStr.add(v.getName());
-                    });
-                }
-                //一天的损耗统计
-                Map<LocalDate, BigDecimal> countLossData = Maps.newHashMap();
-                //一天的拉引量统计
-                Map<LocalDate, BigDecimal> countPullData = Maps.newHashMap();
-                //先算拉引量和掰边损耗
-                //根据日期
-                BigDecimal pullAmountAll = BigDecimal.ZERO;
-                BigDecimal baiLossAmountAll = BigDecimal.ZERO;
-                for(int i = 0; i < dayCount; i++){
-                    List<QtChartSubDetailDTO> dayData = groupByDate.get(dto.getStartDate().plusDays(i));
+                for(int j = 0; j < QtManagerConstant.NUM_2;j++){
                     //拉引量
-                    qtDayReportLossDataPullAmount.setDefectName("拉引量");
+                    QtDayReportLossDataVO qtDayReportLossDataPullAmount = new QtDayReportLossDataVO();
                     //掰边损耗
-                    qtDayReportLossDataBai.setDefectName("掰边损耗");
-                    //拉引量
-                    List<String> lineDataPullTmp = Lists.newArrayList();
-                    //掰边损耗
-                    List<String> lineDataLossTmp = Lists.newArrayList();
-                    //拉引量 损耗量
-                    BigDecimal pullAmount = BigDecimal.ZERO;
-                    BigDecimal lossAmount = BigDecimal.ZERO;
-                    if(CollUtil.isEmpty(dayData)){
-                        lineDataPullTmp.add(null);
-                        lineDataLossTmp.add(null);
-                    }else {
-                        //早班拉引量+晚班拉引量  掰边损耗重量=早班损耗重量+晚班损耗重量
-                        QtChartSubDetailDTO pullAmountDay = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName()) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
-                        QtChartSubDetailDTO pullAmountNight = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName()) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
-
-                        if(Objects.nonNull(pullAmountDay)){
-                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountDay.getPullAmount());
-                            lossAmount = BigDecimalUtil.add(lossAmount,pullAmountDay.getLossWeight());
-                        }
-                        if(Objects.nonNull(pullAmountNight)){
-                            pullAmount = BigDecimalUtil.add(pullAmount,pullAmountNight.getPullAmount());
-                            lossAmount = BigDecimalUtil.add(lossAmount,pullAmountDay.getLossWeight());
-                        }
-                        pullAmountAll = BigDecimalUtil.add(pullAmountAll,pullAmount);
-                        baiLossAmountAll = BigDecimalUtil.add(lossAmount,baiLossAmountAll);
-                        lineDataPullTmp.add(pullAmount.toString());
-                        lineDataLossTmp.add(lossAmount.toString());
-                        countLossData.put(dto.getStartDate().plusDays(i),lossAmount);
-                        countPullData.put(dto.getEndDate().plusDays(i),pullAmount);
+                    QtDayReportLossDataVO qtDayReportLossDataBai = new QtDayReportLossDataVO();
+                    //静态数据
+                    qtDayReportLossDataPullAmount.setProductLineName(productLine.getOfficeName());
+                    qtDayReportLossDataPullAmount.setType(QtManagerConstant.NUM_0);
+                    //算代表的班次
+                    String className = QtManagerConstant.QtClassesEnum.code(j).getName();
+                    //如果是班次报表则显示班次
+                    if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                        qtDayReportLossDataPullAmount.setClassName(className);
                     }
-                    lineDataPullTmp.add(null);
-                    BigDecimal lossRate = BigDecimalUtil.divide(lossAmount,pullAmount,4);
-                    if(pullAmount.compareTo(BigDecimal.ZERO)==0){
-                        lineDataLossTmp.add(null);
-                    }else {
-                        lineDataLossTmp.add(new DecimalFormat("0.00%").format(lossRate));
+                    //拉引量动态数据
+                    List<FurtherValueStrVO> modulePullTmp = Lists.newArrayList();
+                    //掰边损耗动态数据
+                    List<FurtherValueStrVO> moduleBaiTmp = Lists.newArrayList();
+                    //获取该产线下该班次的所有缺陷项和落版
+                    List<QtChartSubDetailDTO> dataTmp = allData.stream().filter(v -> v.getProductLineId().equals(productLine.getId()) && v.getWorkOrder().equals(className)).collect(Collectors.toList());
+                    List<String> reasonTmp = dataTmp.stream().map(QtChartSubDetailDTO::getReason).collect(Collectors.toList());
+                    //缺陷项排序数据
+                    List<QtDefectiveItem> defectiveItemsTmp = defectiveItems.stream().filter(v->reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                    //落板排序数据
+                    List<SysDictVO> destroyReasonTmp = destroyReason.stream().filter(v -> reasonTmp.contains(v.getName())).collect(Collectors.toList());
+                    //合并原因
+                    List<String> reasonStr = Lists.newArrayList();
+                    if(CollUtil.isNotEmpty(defectiveItemsTmp)){
+                        defectiveItemsTmp.forEach(v -> {
+                            reasonStr.add(v.getName());
+                        });
                     }
-                    if(CollUtil.isEmpty(dayData)){
-                        modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
-                    }else {
-                        modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
-                        moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp));
+                    if(CollUtil.isNotEmpty(destroyReasonTmp)){
+                        destroyReasonTmp.forEach(v -> {
+                            reasonStr.add(v.getName());
+                        });
                     }
-                }
-                //小计
-                //拉引量
-                List<String> lineDataPullTmp1 = Lists.newArrayList();
-                List<String> lineDataLossTmp1 = Lists.newArrayList();
-                //0表示该产线没有数据
-                if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
-                    lineDataPullTmp1.add(null);
-                    lineDataLossTmp1.add(null);
-                }else {
-                    lineDataPullTmp1.add(pullAmountAll.toString());
-                    lineDataLossTmp1.add(baiLossAmountAll.toString());
-                }
-                //0表示该产线没有数据
-                if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
-                    lineDataLossTmp1.add(null);
-                }else {
-                    lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll,pullAmountAll,4)));
-                }
-                lineDataPullTmp1.add(null);
-                modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp1));
-                moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp1));
-                qtDayReportLossDataPullAmount.setModule(modulePullTmp);
-                qtDayReportLossDataBai.setModule(moduleBaiTmp);
-                tableData.add(qtDayReportLossDataPullAmount);
-                tableData.add(qtDayReportLossDataBai);
-                //后算缺陷项和落版原因
-                if(CollUtil.isNotEmpty(reasonStr)){
-                    reasonStr.forEach(tmp->{
-                        QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
-                        //静态数据
-                        defectLine.setProductLineName(productLine.getOfficeName());
-                        defectLine.setType(QtManagerConstant.NUM_0);
-                        defectLine.setDefectName(tmp);
-                        //动态数据
-                        List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
-                        BigDecimal lossAmountAll = BigDecimal.ZERO;
-                        for(int i = 0; i < dayCount; i++){
-                            LocalDate tmpDate = dto.getStartDate().plusDays(i);
-                            List<QtChartSubDetailDTO> dayData = groupByDate.get(tmpDate);
-                            List<String> lineDataTmp = Lists.newArrayList();
-                            //早班对象和晚班对象
-                            if(CollUtil.isNotEmpty(dayData)){
-                                QtChartSubDetailDTO amountDay = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName()) && v.getReason().equals(tmp)).findFirst().orElse(null);
-                                QtChartSubDetailDTO amountNight = dayData.stream().filter(v->v.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.NIGHT.getName()) && v.getReason().equals(tmp)).findFirst().orElse(null);
-                                BigDecimal lossAmount = BigDecimal.ZERO;
-                                BigDecimal pullAmount = BigDecimal.ZERO;
-                                if(Objects.nonNull(amountDay)){
-                                    lossAmount = BigDecimalUtil.add(lossAmount,amountDay.getLossWeight());
-                                    pullAmount = BigDecimalUtil.add(pullAmount,amountDay.getPullAmount());
-                                }
-                                if(Objects.nonNull(amountNight)){
-                                    lossAmount = BigDecimalUtil.add(lossAmount,amountNight.getLossWeight());
-                                    pullAmount = BigDecimalUtil.add(pullAmount,amountDay.getPullAmount());
-                                }
-                                BigDecimal finalLossAmount = lossAmount;
-                                countLossData.compute(tmpDate,(k, v)-> BigDecimalUtil.add(v, finalLossAmount));
-                                lossAmountAll = BigDecimalUtil.add(lossAmountAll,lossAmount);
-                                lineDataTmp.add(lossAmount.toString());
-                                lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(lossAmount,pullAmount,4)));
-                            }else {
-                                lineDataTmp.add(null);
-                                lineDataTmp.add(null);
-                            }
-                            moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
-                        }
-                        defectLine.setModule(moduleTmp);
-                        tableData.add(defectLine);
-                    });
-                }
-                //损耗合计
-                if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
-                    QtDayReportLossDataVO lossLine = new QtDayReportLossDataVO();
-                    lossLine.setType(QtManagerConstant.NUM_2);
-                    //损耗动态数据
-                    List<FurtherValueStrVO> lossLineModule = Lists.newArrayList();
+                    //一天的损耗统计
+                    Map<LocalDate, BigDecimal> countLossData = Maps.newHashMap();
+                    //一天的拉引量统计
+                    Map<LocalDate, BigDecimal> countPullData = Maps.newHashMap();
+                    //先算拉引量和掰边损耗
+                    //根据日期
+                    //表示该产线是否有数据
+                    Boolean haveData = false;
                     for(int i = 0; i < dayCount; i++){
-                        LocalDate dateTmp = dto.getStartDate().plusDays(i);
-                        List<String> lossAmount = Lists.newArrayList();
-                        BigDecimal pull = countPullData.get(dateTmp);
-                        BigDecimal loss = countLossData.get(dateTmp);
-                        if(loss == null || pull == null){
-                            lossAmount.add(null);
-                            lossAmount.add(null);
+                        List<QtChartSubDetailDTO> dayData = Lists.newArrayList();
+                        //月报表则累加月份
+                        if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+                            dayData = groupByDate.get(dto.getStartDate().plusMonths(i));
                         }else {
-                            lossAmount.add(loss.toString());
-                            if(pull.compareTo(BigDecimal.ZERO)==0){
-                                lossAmount.add(null);
-                            }
-                            lossAmount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(loss,pull)));
+                            dayData = groupByDate.get(dto.getStartDate().plusDays(i));
                         }
-                        lossLineModule.add(new FurtherValueStrVO(lossAmount));
+                        //过滤班次数据
+                        dayData = dayData.stream().filter(v->v.getWorkOrder().equals(className)).collect(Collectors.toList());
+                        //拉引量
+                        qtDayReportLossDataPullAmount.setDefectName("拉引量");
+                        //掰边损耗
+                        qtDayReportLossDataBai.setDefectName("掰边损耗");
+                        //拉引量
+                        List<String> lineDataPullTmp = Lists.newArrayList();
+                        //掰边损耗
+                        List<String> lineDataLossTmp = Lists.newArrayList();
+                        //拉引量 损耗量
+                        BigDecimal pullAmount = BigDecimal.ZERO;
+                        BigDecimal lossAmount = BigDecimal.ZERO;
+                        if(CollUtil.isEmpty(dayData)){
+                            lineDataPullTmp.add(null);
+                            lineDataLossTmp.add(null);
+                        }else {
+                            //算拉引量和掰边损耗
+                            QtChartSubDetailDTO pullAndLoss = dayData.stream().filter(v->v.getWorkOrder().equals(className) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);
+                            if(Objects.nonNull(pullAndLoss)){
+                                pullAmount = BigDecimalUtil.add(pullAmount,pullAndLoss.getPullAmount());
+                                lossAmount = BigDecimalUtil.add(lossAmount,pullAndLoss.getLossWeight());
+                                haveData = true;
+                            }
+                            lineDataPullTmp.add(pullAmount.toString());
+                            lineDataLossTmp.add(lossAmount.toString());
+                            countLossData.put(dto.getStartDate().plusDays(i),lossAmount);
+                            countPullData.put(dto.getEndDate().plusDays(i),pullAmount);
+                        }
+                        lineDataPullTmp.add(null);
+                        //损耗
+                        BigDecimal lossRate = BigDecimalUtil.divide(lossAmount,pullAmount,4);
+                        if(pullAmount.compareTo(BigDecimal.ZERO)==0){
+                            lineDataLossTmp.add(null);
+                        }else {
+                            lineDataLossTmp.add(new DecimalFormat("0.00%").format(lossRate));
+                        }
+                        if(CollUtil.isEmpty(dayData)){
+                            modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
+                        }else {
+                            modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp));
+                            moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp));
+                        }
                     }
                     //小计
-                    List<String> lossLineCount = Lists.newArrayList();
-                    lossLineCount.add(baiLossAmountAll.toString());
-                    lossLineCount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll,pullAmountAll,4)));
-                    lossLineModule.add(new FurtherValueStrVO(lossLineCount));
-                    lossLine.setModule(lossLineModule);
-                    tableData.add(lossLine);
+                    //拉引量
+                    List<String> lineDataPullTmp1 = Lists.newArrayList();
+                    List<String> lineDataLossTmp1 = Lists.newArrayList();
+                    //拉引量小计
+                    BigDecimal pullAmountAll = BigDecimal.ZERO;
+                    //掰边损耗小计
+                    BigDecimal baiLossAmountAll = BigDecimal.ZERO;
+                    //查看是否有数据
+                    if(!haveData){
+                        lineDataPullTmp1.add(null);
+                        lineDataLossTmp1.add(null);
+                    }else {
+                        pullAmountAll = countHorizontal(modulePullTmp);
+                        baiLossAmountAll = countHorizontal(moduleBaiTmp);
+                        lineDataPullTmp1.add(pullAmountAll.toString());
+                        lineDataLossTmp1.add(baiLossAmountAll.toString());
+                    }
+                    //查看该产线是否有数据
+                    if(!haveData){
+                        lineDataLossTmp1.add(null);
+                    }else {
+                        lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll,pullAmountAll,4)));
+                    }
+                    lineDataPullTmp1.add(null);
+                    modulePullTmp.add(new FurtherValueStrVO(lineDataPullTmp1));
+                    moduleBaiTmp.add(new FurtherValueStrVO(lineDataLossTmp1));
+                    qtDayReportLossDataPullAmount.setModule(modulePullTmp);
+                    qtDayReportLossDataBai.setModule(moduleBaiTmp);
+                    tableData.add(qtDayReportLossDataPullAmount);
+                    tableData.add(qtDayReportLossDataBai);
+                    //后算缺陷项和落版原因
+                    if(CollUtil.isNotEmpty(reasonStr)){
+                        for(String tmp:reasonStr){
+                            QtDayReportLossDataVO defectLine = new QtDayReportLossDataVO();
+                            //静态数据
+                            defectLine.setProductLineName(productLine.getOfficeName());
+                            defectLine.setType(QtManagerConstant.NUM_0);
+                            defectLine.setDefectName(tmp);
+                            //班次则加入班次
+                            if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
+                                defectLine.setClassName(className);
+                            }
+                            //动态数据
+                            List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
+                            BigDecimal lossAmountAll = BigDecimal.ZERO;
+                            for(int i = 0; i < dayCount; i++){
+                                LocalDate tmpDate;
+                                if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
+                                    tmpDate = dto.getStartDate().plusMonths(i);
+                                }else {
+                                    tmpDate = dto.getStartDate().plusDays(i);
+                                }
+                                List<QtChartSubDetailDTO> dayData = groupByDate.get(tmpDate);
+                                List<String> lineDataTmp = Lists.newArrayList();
+                                //早班对象和晚班对象
+                                if(CollUtil.isNotEmpty(dayData)){
+                                    QtChartSubDetailDTO amountDay = dayData.stream().filter(v->v.getWorkOrder().equals(className) && v.getReason().equals(tmp)).findFirst().orElse(null);
+                                    BigDecimal lossAmount = BigDecimal.ZERO;
+                                    BigDecimal pullAmount = BigDecimal.ZERO;
+                                    if(Objects.nonNull(amountDay)){
+                                        lossAmount = BigDecimalUtil.add(lossAmount,amountDay.getLossWeight());
+                                        pullAmount = BigDecimalUtil.add(pullAmount,amountDay.getPullAmount());
+                                    }
+                                    lineDataTmp.add(lossAmount.toString());
+                                    lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(lossAmount,pullAmount,4)));
+                                }else {
+                                    lineDataTmp.add(null);
+                                    lineDataTmp.add(null);
+                                }
+                                moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
+                            }
+                            //小计
+                            List<String> lineDataTmp = Lists.newArrayList();
+                            lossAmountAll = countHorizontal(moduleTmp);
+                            lineDataTmp.add(lossAmountAll.toString());
+                            lineDataTmp.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(lossAmountAll,pullAmountAll,4)));
+                            moduleTmp.add(new FurtherValueStrVO(lineDataTmp));
+                            defectLine.setModule(moduleTmp);
+                            tableData.add(defectLine);
+                        }
+
+                    }
+                    //损耗合计
+                    if(pullAmountAll.compareTo(BigDecimal.ZERO)==0){
+                        QtDayReportLossDataVO lossLine = new QtDayReportLossDataVO();
+                        lossLine.setType(QtManagerConstant.NUM_2);
+                        //损耗动态数据
+                        List<FurtherValueStrVO> lossLineModule = Lists.newArrayList();
+                        for(int i = 0; i < dayCount; i++){
+                            LocalDate dateTmp = dto.getStartDate().plusDays(i);
+                            List<String> lossAmount = Lists.newArrayList();
+                            BigDecimal pull = countPullData.get(dateTmp);
+                            BigDecimal loss = countLossData.get(dateTmp);
+                            if(loss == null || pull == null){
+                                lossAmount.add(null);
+                                lossAmount.add(null);
+                            }else {
+                                lossAmount.add(loss.toString());
+                                if(pull.compareTo(BigDecimal.ZERO)==0){
+                                    lossAmount.add(null);
+                                }
+                                lossAmount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(loss,pull)));
+                            }
+                            lossLineModule.add(new FurtherValueStrVO(lossAmount));
+                        }
+                        //小计
+                        List<String> lossLineCount = Lists.newArrayList();
+                        lossLineCount.add(baiLossAmountAll.toString());
+                        lossLineCount.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll,pullAmountAll,4)));
+                        lossLineModule.add(new FurtherValueStrVO(lossLineCount));
+                        lossLine.setModule(lossLineModule);
+                        tableData.add(lossLine);
+                    }
+
                 }
             }
             //总计
@@ -1214,6 +1236,23 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
         }
         return quantity;
+    }
+
+    /**
+     * 横向累加算损耗量
+     * @return
+     */
+    private BigDecimal countHorizontal(List<FurtherValueStrVO> horizon){
+        BigDecimal result = BigDecimal.ZERO;
+        if(CollUtil.isNotEmpty(horizon)){
+            for(FurtherValueStrVO tmp:horizon){
+                String strTmp = tmp.getValue().get(0);
+                if(StrUtil.isNotBlank(strTmp)){
+                    result = BigDecimalUtil.add(result,new BigDecimal(tmp.getValue().get(0))) ;
+                }
+            }
+        }
+        return result;
     }
 
 }
