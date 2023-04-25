@@ -963,7 +963,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             //5、组数据
             for(SysOfficeVO productLine:productLineList){
                 //分早班晚班循环 0是早班 1是晚班
-                for(int i = 0; i < 2;i++){
+                for(int i = 0; i < QtManagerConstant.NUM_2;i++){
 
                 }
                 //拉引量
