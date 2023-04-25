@@ -5,10 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.common.util.SplitListUtil;
-import com.steccn.data.domain.EpMeterCollect;
-import com.steccn.data.domain.PmStationCollect;
-import com.steccn.data.domain.QtDefectCollect;
-import com.steccn.data.domain.QtDefectCollectDetail;
+import com.steccn.data.domain.*;
 import com.steccn.data.dto.*;
 import com.steccn.data.service.*;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +34,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     private final QtDefectCollectDetailService qtDefectCollectDetailService;
     private final EpMeterCollectService epMeterCollectService;
     private final PmStationCollectService pmStationCollectService;
+    private final MesEqpSignalService mesEqpSignalService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,5 +111,18 @@ public class HbCollectServiceImpl implements HbCollectService {
             batchList.add(pmStationCollect);
         }
         return pmStationCollectService.saveBatch(batchList);
+    }
+
+    @Override
+    public Boolean mesEqpSignal(CollectCommonDTO<MesEqpSignalDTO> dto) {
+        List<MesEqpSignalDTO> data = dto.getData();
+        List<MesEqpSignal> models = Lists.newArrayList();
+        data.forEach(tmp -> {
+            MesEqpSignal model = new MesEqpSignal();
+            BeanUtils.copyProperties(tmp,model);
+            model.setCreateTime(LocalDateTime.now());
+            models.add(model);
+        });
+        return mesEqpSignalService.saveBatch(models);
     }
 }

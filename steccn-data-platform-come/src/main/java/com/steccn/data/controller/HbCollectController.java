@@ -6,10 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
 import com.steccn.data.constant.HbThirdPartyConstant;
-import com.steccn.data.dto.CollectCommonDTO;
-import com.steccn.data.dto.EpMeterCollectDTO;
-import com.steccn.data.dto.PmStationCollectDTO;
-import com.steccn.data.dto.QtThirdPartyDefectiveDTO;
+import com.steccn.data.dto.*;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.HbCollectService;
 import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
@@ -54,6 +51,14 @@ public class HbCollectController {
     public R<Boolean> saveDefective(HttpServletRequest request, @RequestBody QtThirdPartyDefectiveDTO dto) {
         validRequestHeader(request);
         return R.success(hbCollectService.saveDefective(dto));
+    }
+
+    @PostMapping("/mes/signal")
+    @ApiOperation(value = "设备管理-设备启停信号")
+    public R<Boolean> mesEqpSignal(HttpServletRequest request, @RequestBody CollectCommonDTO<MesEqpSignalDTO> dto) {
+        validRequestHeader(request);
+        Assert.notEmpty(dto.getData(), "数据集合为空");
+        return R.success(hbCollectService.mesEqpSignal(dto));
     }
 
     /**
