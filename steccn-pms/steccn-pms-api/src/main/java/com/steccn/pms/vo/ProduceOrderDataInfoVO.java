@@ -3,6 +3,7 @@ package com.steccn.pms.vo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class ProduceOrderDataInfoVO {
@@ -54,4 +55,22 @@ public class ProduceOrderDataInfoVO {
      * 单位名称
      */
     private String unitName;
+
+
+    /**
+     * 计划开始时间
+     */
+    private LocalDateTime planStartTime;
+
+    /**
+     * 计划结束时间
+     */
+    private LocalDateTime planEndTime;
+
+
+    /**
+     * 产线标识:(0:基片 1：深加工)
+     */
+    private Integer lineFlag = 1;
+
 }

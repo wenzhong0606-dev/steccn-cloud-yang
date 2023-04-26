@@ -900,6 +900,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 //todo 当前产量（暂时用随机数代替）
                 Random random = new Random();
                 produceOrderDataInfoVO.setCurrentProduction(BigDecimal.valueOf(random.nextDouble()));
+                if (produceOrderDataInfoVO.getProductionLineName().startsWith(PmManagerConstant.UROPATAGIA)){
+                    produceOrderDataInfoVO.setLineFlag(0);
+                }
             }
         }
         return infoVOList;
