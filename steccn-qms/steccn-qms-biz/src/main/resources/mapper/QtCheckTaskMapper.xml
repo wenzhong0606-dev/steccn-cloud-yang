@@ -61,6 +61,7 @@
 
     <resultMap id="SamplingMap" type="com.steccn.qms.dto.QtDaySamplingDTO">
         <id property="taskId" column="task_id" jdbcType="BIGINT"/>
+
         <result property="ingredientNum" column="ingredient_num" jdbcType="INTEGER"/>
         <result property="checkResult" column="check_result" jdbcType="VARCHAR"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
@@ -72,6 +73,7 @@
 
     <resultMap id="IncomingMap" type="com.steccn.qms.dto.QtIncomingCheckDTO">
         <id property="taskId" column="task_id" jdbcType="BIGINT"/>
+        <result property="task_code" column="taskCode" jdbcType="VARCHAR"/>
         <result property="ingredientNum" column="ingredient_num" jdbcType="INTEGER"/>
         <result property="checkResult" column="check_result" jdbcType="VARCHAR"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
@@ -268,6 +270,7 @@
     <select id="comingList" resultMap="IncomingMap">
         SELECT
             task.id as task_id,
+            task.code as task_code,
             copy.ingredient_num,
             detail.check_result ,
             task.note,
