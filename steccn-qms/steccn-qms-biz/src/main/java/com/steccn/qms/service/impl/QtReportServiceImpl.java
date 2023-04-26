@@ -1155,10 +1155,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                     .filter(v -> LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
             //取平均值
             BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimalUtil.format(BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size())));
 
             //设置返回数据类型对象
             QtSpcReportDetailVO qtSpcReportDetailVO = new QtSpcReportDetailVO();
+            qtSpcReportDetailVO.setResultAverage(BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size())));
             BeanUtils.copyProperties(report, qtSpcReportDetailVO);
             //设置主键id
             qtSpcReportDetailVO.setId(i);
@@ -1186,7 +1186,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             }
 
-            getIQCList(itemIds, material.getName(),conditionDataList, qtSpcReportDetailVO, qtSpcReportDetailTaskAllVO);
+            getIQCList(material.getName(), conditionDataList, qtSpcReportDetailTaskAllVO);
             qtSpcReportDetailVO.setDetailTaskAllVO(qtSpcReportDetailTaskAllVO);
             mainList.add(qtSpcReportDetailVO);
         }
@@ -1406,65 +1406,36 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param qtSpcReportDetailVO
      * @param qtSpcReportDetailTaskAllVO
      */
-    private void getIQCList(Set<Integer> itemIds, String name, List<QtIncomingCheckDTO> conditionDataList, QtSpcReportDetailVO qtSpcReportDetailVO, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
+    private void getIQCList(String name, List<QtIncomingCheckDTO> conditionDataList, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
         //如果conditionDataList为空则该时间段下没有检验任务,检验结果平均值设置为0,检验详情数据为空
         List<QtSpcReportIQCDetailTaskVO> reportDetailTaskVOS = Lists.newArrayList();
-        BigDecimal resultAverage = new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS);
         if (CollUtil.isEmpty(conditionDataList)) {
-            qtSpcReportDetailVO.setResultAverage(resultAverage);
             qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(reportDetailTaskVOS);
         } else {
-            List<BigDecimal> mainDecimals = Lists.newArrayList();
-            //遍历该时间段下的检验任务设置详情
-            conditionDataList.forEach(s -> {
+            //根据检验任务taskId分组
+            Map<Long, List<QtIncomingCheckDTO>> taskMap = conditionDataList.stream().collect(Collectors.groupingBy(QtIncomingCheckDTO::getTaskId));
+            taskMap.forEach((key,value) -> {
                 QtSpcReportIQCDetailTaskVO taskVO = new QtSpcReportIQCDetailTaskVO();
+                QtIncomingCheckDTO sourceCheck = value.get(0);
                 //详情检验结果值
-                BeanUtils.copyProperties(s, taskVO);
-                //设置物料名称
-                if (Objects.nonNull(name)) {
-                    taskVO.setMaterialName(name);
+                BeanUtils.copyProperties(sourceCheck, taskVO);
+                taskVO.setMaterialName(name);
+                List<LocalDateTime> samplingTimeArray = sourceCheck.getSamplingTimeArray();
+                StringBuilder sb = new StringBuilder();
+                for (LocalDateTime localDateTime : samplingTimeArray) {
+                    sb.append(LocalDateUtil.format(localDateTime, DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                    sb.append(",");
                 }
-
-                //设置完成时间
-                taskVO.setFinishedTime(LocalDateUtil.format(s.getSamplingTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
-                //检验任务样本结果集合
-                List<String> results = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                        .eq(QtCheckTaskDetail::getTaskId, s.getTaskId())
-                        .in(CollUtil.isNotEmpty(itemIds), QtCheckTaskDetail::getItemId, itemIds))
-                        .stream().filter(qt -> Objects.nonNull(qt) && Objects.nonNull(qt.getCheckResult()) && StrUtil.isNotBlank(qt.getCheckResult()))
-                        .map(QtCheckTaskDetail::getCheckResult)
-                        .collect(Collectors.toList());
-                List<BigDecimal> resultList = Lists.newArrayList();
-                if (CollUtil.isNotEmpty(results)) {
-                    results.forEach(re -> {
-                        if (isNumber(re) || isFloatNumber(re)) {
-                            BigDecimal bigDecimal = new BigDecimal(re);
-                            if (Objects.nonNull(bigDecimal)) {
-                                resultList.add(bigDecimal);
-                            }
-                        }
-                    });
-                }
-                if (CollUtil.isNotEmpty(resultList)) {
-                    BigDecimal detailSum = resultList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal result = BigDecimalUtil.divide(detailSum, BigDecimal.valueOf(resultList.size()));
-                    taskVO.setCheckResult(result.toString());
-                    mainDecimals.add(result);
-                } else {
-                    taskVO.setCheckResult(QtManagerConstant.THE_CALCULATION_RESULTS);
-                }
-                taskVO.setWorkshop(s.getMaterialWorkshop());
-                taskVO.setSupplier(s.getSupplier());
+                taskVO.setFinishedTime(sb.substring(0, sb.length() - 1));
+                taskVO.setWorkshop(sourceCheck.getMaterialWorkshop());
+                taskVO.setSupplier(sourceCheck.getSupplier());
+                //平均值
+                BigDecimal reduce = value.stream().filter(v -> Objects.nonNull(v.getCheckResult())).map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                taskVO.setCheckResult(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, BigDecimal.valueOf(value.size()))));
+                taskVO.setId(sourceCheck.getTaskId());
+                taskVO.setCode(sourceCheck.getTaskCode());
                 reportDetailTaskVOS.add(taskVO);
             });
-            if (CollUtil.isNotEmpty(mainDecimals)) {
-                BigDecimal sum = mainDecimals.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                resultAverage = BigDecimalUtil.divide(sum, BigDecimal.valueOf(mainDecimals.size()));
-                qtSpcReportDetailVO.setResultAverage(resultAverage);
-            } else {
-                qtSpcReportDetailVO.setResultAverage(new BigDecimal(QtManagerConstant.THE_CALCULATION_RESULTS));
-            }
-
             qtSpcReportDetailTaskAllVO.setReportDetailTaskVOList(reportDetailTaskVOS);
         }
     }
@@ -1491,17 +1462,19 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         QtSpcHeadTitleVO qtSpcHeadTitleVO6 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_HEADER_FIELD_WORKSHOP,QtManagerConstant.SPC_HEADER_FIELD_WORKSHOP_VALUE);
         //供应商
         QtSpcHeadTitleVO qtSpcHeadTitleVO7 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_HEADER_FILELD_SUPPLIER,QtManagerConstant.SPC_HEADER_FILELD_SUPPLIER_VALUE);
+        //取样时间
+        QtSpcHeadTitleVO qtSpcHeadTitleVO8 = new QtSpcHeadTitleVO(QtManagerConstant.SPC_REPORT_SAMPLING_TIME,QtManagerConstant.SPC_HEADER_FIELD_FINISHED_TIME_VALUE);
+
         //所有检都需要【检验任务单号，检验完成时间，检验项，物料名称】
-        Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO2, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4);
         if (QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(dataType)) {
             //来料检需要加入【物料使用车间，供应商】
-            Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO6, qtSpcHeadTitleVO7);
+            Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO8, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4, qtSpcHeadTitleVO6, qtSpcHeadTitleVO7);
         } else if (QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(dataType)) {
             //配料抽检需要加入【物料使用车间】
-            qtSpcHeadTitleVOS.add(qtSpcHeadTitleVO6);
+            Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO2, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4,qtSpcHeadTitleVO6);
         } else {
             //其余检需要加入【生产产线】
-            qtSpcHeadTitleVOS.add(qtSpcHeadTitleVO5);
+            Collections.addAll(qtSpcHeadTitleVOS, qtSpcHeadTitleVO, qtSpcHeadTitleVO2, qtSpcHeadTitleVO3, qtSpcHeadTitleVO4,qtSpcHeadTitleVO5);
         }
         return qtSpcHeadTitleVOS;
     }
