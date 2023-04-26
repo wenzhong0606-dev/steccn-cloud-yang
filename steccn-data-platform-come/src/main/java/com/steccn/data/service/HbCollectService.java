@@ -1,5 +1,6 @@
 package com.steccn.data.service;
 
+import com.steccn.common.dto.ValidList;
 import com.steccn.data.dto.*;
 
 /**
@@ -34,5 +35,5 @@ public interface HbCollectService {
      * @param dto
      * @return true | false
      */
-    Boolean mesEqpSignal(CollectCommonDTO<MesEqpSignalDTO> dto);
+    Boolean mesEqpSignal(CollectCommonValidDTO<MesEqpSignalDTO> dto);
 }

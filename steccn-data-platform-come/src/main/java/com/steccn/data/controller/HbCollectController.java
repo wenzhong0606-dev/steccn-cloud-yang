@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
 import com.steccn.data.constant.HbThirdPartyConstant;
 import com.steccn.data.dto.*;
@@ -13,6 +14,7 @@ import com.steccn.platform.feign.RemoteSysOauthClientDetailFeignApi;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -55,7 +57,7 @@ public class HbCollectController {
 
     @PostMapping("/mes/signal")
     @ApiOperation(value = "设备管理-设备启停信号")
-    public R<Boolean> mesEqpSignal(HttpServletRequest request, @RequestBody CollectCommonDTO<MesEqpSignalDTO> dto) {
+    public R<Boolean> mesEqpSignal(HttpServletRequest request, @RequestBody @Validated CollectCommonValidDTO<MesEqpSignalDTO> dto) {
         validRequestHeader(request);
         Assert.notEmpty(dto.getData(), "数据集合为空");
         return R.success(hbCollectService.mesEqpSignal(dto));

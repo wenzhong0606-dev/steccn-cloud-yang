@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.*;
 import com.steccn.data.dto.*;
@@ -114,7 +115,7 @@ public class HbCollectServiceImpl implements HbCollectService {
     }
 
     @Override
-    public Boolean mesEqpSignal(CollectCommonDTO<MesEqpSignalDTO> dto) {
+    public Boolean mesEqpSignal(CollectCommonValidDTO<MesEqpSignalDTO> dto) {
         List<MesEqpSignalDTO> data = dto.getData();
         List<MesEqpSignal> models = Lists.newArrayList();
         data.forEach(tmp -> {
