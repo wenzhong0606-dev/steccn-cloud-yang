@@ -968,6 +968,85 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean warnSerialUpOrDown(List<LocalDateTime> timeList, String granularity) {
+        //根据时间粒度获取spc卡片数据
+        List<QtReport> reportList = list(new LambdaQueryWrapper<QtReport>()
+                .le(QtReport::getTimeScopeStart, timeList.get(0))
+                .ge(QtReport::getTimeScopeEnd, timeList.get(timeList.size() - 1))
+                .eq(QtReport::getGranularity, granularity)
+                .eq(QtReport::getWarnFlag, QtManagerConstant.QtMaterialStatusEnum.ENABLE.getCode()));
+        if (CollUtil.isEmpty(reportList)) {
+            log.info("指定时间范围内，暂无卡片开启提醒");
+            return Boolean.TRUE;
+        }
+        //存放需要警示的报表
+        Map<Integer, QtReport> resultMap = Maps.newHashMap();
+        //根据spc卡片配置的物料以及检验类型检验项,物料使用车间,生产车间,生产产线获取该时间段内已检验的任务数据
+        //获取检验项快照数据
+        List<Integer> checkItemIdList = Lists.newArrayList();
+        Set<Long> materialIds = Sets.newHashSet();
+        reportList.forEach(report -> {
+            checkItemIdList.add(report.getCheckItemId());
+            materialIds.add(report.getMaterialId());
+        });
+        Map<Integer, Set<Integer>> checkItemSnapshotMap = qtCheckItemService.checkItemSnapshotSet(checkItemIdList);
+        List<Integer> reportIds = Lists.newArrayList();
+        reportList.forEach(report ->{
+            List<BigDecimal> lastSerialDataList = new ArrayList<>(timeList.size());
+            for (int i = 1; i < timeList.size(); i++) {
+
+                LocalDateTime start = timeList.get(i-1);
+                LocalDateTime end = timeList.get(i);
+                //根据报表不同类型获取平均值
+//                BigDecimal avg = checkAvg(report,start,end, checkItemSnapshotMap);
+                BigDecimal avg = null;
+                lastSerialDataList.add(avg);
+            }
+            //判断连续升或者连续下降7次
+            if(adjustSerialUpOrDown(lastSerialDataList)){
+                resultMap.put(report.getId(), report);
+                reportIds.add(report.getId());
+            }
+        });
+        sendWarnMsg(resultMap, checkItemIdList, materialIds, reportIds);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 判断dataList 是否连续上升
+     *
+     * @param dataList
+     * @return
+     */
+    private static boolean adjustSerialUpOrDown(List<BigDecimal> dataList) {
+        //集合为空，或者集合里面存在空元素，则返回false
+        if (CollUtil.isNotEmpty(dataList) && !dataList.contains(null)) {
+            boolean flag1 = Boolean.TRUE;
+            boolean flag2 = Boolean.TRUE;
+            BigDecimal tmp = dataList.get(0);
+            for (int i = 1; i < dataList.size(); i++) {
+                //没有呈现上升趋势
+                if (!(tmp.compareTo(dataList.get(i)) > 0)) {
+                    flag1 = Boolean.FALSE;
+                    break;
+                }
+                tmp = dataList.get(i);
+            }
+            for (int i = 1; i < dataList.size(); i++) {
+                //没有呈现下降趋势
+                if (!(tmp.compareTo(dataList.get(i)) < 0)) {
+                    flag2 = Boolean.FALSE;
+                    break;
+                }
+                tmp = dataList.get(i);
+            }
+            //既没有呈现上升趋势 也没有呈现下降趋势，则返回false，否则返回true
+            return flag1 || flag2;
+        }
+        return Boolean.FALSE;
+    }
+
     /**
      * 发送预警消息
      * @param resultMap
