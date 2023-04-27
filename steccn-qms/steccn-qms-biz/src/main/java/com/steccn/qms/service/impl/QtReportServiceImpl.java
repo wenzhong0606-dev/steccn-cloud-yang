@@ -878,6 +878,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 .ge(QtReport::getTimeScopeEnd, endTime)
                 .eq(QtReport::getGranularity, granularity)
                 .eq(QtReport::getWarnFlag, QtManagerConstant.QtMaterialStatusEnum.ENABLE.getCode()));
+        if(CollUtil.isEmpty(list)){
+            log.info("指定时间范围内，暂无卡片开启提醒");
+            return Boolean.TRUE;
+        }
         Map<Integer, QtReport> resultMap = Maps.newHashMap();
         //2.根据spc卡片配置的物料以及检验类型检验项,物料使用车间,生产车间,生产产线获取该时间段内已检验的任务数据
         //获取检验项快照数据
@@ -960,6 +964,18 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             });
         });
+        sendWarnMsg(resultMap, ids, materialIds, reportIds);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 发送预警消息
+     * @param resultMap
+     * @param ids
+     * @param materialIds
+     * @param reportIds
+     */
+    private void sendWarnMsg(Map<Integer, QtReport> resultMap, List<Integer> ids, Set<Long> materialIds, List<Integer> reportIds) {
         //根据spc配置的告警人员进行信息告警
         if (CollUtil.isNotEmpty(resultMap)) {
             //获取告警人员
@@ -995,7 +1011,6 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             }
         }
-        return Boolean.TRUE;
     }
 
     /**
