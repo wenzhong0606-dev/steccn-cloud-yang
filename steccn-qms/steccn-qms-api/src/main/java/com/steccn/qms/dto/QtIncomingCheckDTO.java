@@ -20,6 +20,9 @@ public class QtIncomingCheckDTO implements Serializable {
     @ApiModelProperty("任务id")
     private Long taskId;
 
+    @ApiModelProperty("任务id")
+    private String taskCode;
+
     @ApiModelProperty("配料付数")
     private Integer ingredientNum;
 

@@ -3,16 +3,15 @@ package com.steccn.qms.mapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseMapper;
 import com.steccn.qms.domain.QtCheckTask;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.steccn.qms.dto.QtDaySamplingDTO;
 import com.steccn.qms.dto.QtIncomingCheckDTO;
+import com.steccn.qms.dto.QtOtherCheckDTO;
 import com.steccn.qms.dto.QtSubOrDeepAcceptabilityDTO;
 import com.steccn.qms.vo.QtDefectItemInfoVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
-import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,14 +80,22 @@ public interface QtCheckTaskMapper extends MPJBaseMapper<QtCheckTask> {
      */
     List<QtDaySamplingDTO> samplingList(@Param("morning") LocalDateTime morning, @Param("night") LocalDateTime night);
 
-
-
     /**
      * 获取来料检
      * @param itemIdSet 检验项集合
      * @return 所有的来料检
      */
     List<QtIncomingCheckDTO> comingList(@Param("itemIdSet") Set<Integer> itemIdSet);
+
+    /**
+     * 其余检的数据
+     * @param checkType 校验类型
+     * @param itemIdSet 检验项集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return list
+     */
+    List<QtOtherCheckDTO> otherList(@Param("checkType") Integer checkType, @Param("itemIdSet") Set<Integer> itemIdSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
 
 

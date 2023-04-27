@@ -193,6 +193,10 @@ public interface QtManagerConstant {
     String SPC_REPORT_MATERIAL_NAME = "物料名称:";
     String SPC_REPORT_CHECK_ITEM_NAME = "检验项名称:";
 
+
+    String SPC_REPORT_SAMPLING_TIME = "取样日期";
+    String SPC_REPORT_SAMPLING_TIME_VALUE = "samplingTime";
+
     /**
      * 首检质量日报表 常量
      */
