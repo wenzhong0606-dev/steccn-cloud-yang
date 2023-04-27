@@ -1,6 +1,8 @@
 package com.steccn.qms.service;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.qms.domain.QtCheckTask;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -11,6 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -237,7 +240,18 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
      * @param itemIdSet 检验项集合
      * @return 所有的来料检
      */
-    List<QtIncomingCheckDTO> comingList(@Param("itemIdSet") Set<Integer> itemIdSet);
+    List<QtIncomingCheckDTO> comingList(Set<Integer> itemIdSet);
+
+    /**
+     *
+     * 获取其余检的数据
+     * @param checkType 检验类型
+     * @param itemIdSet 缺陷项集合
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    List<QtOtherCheckDTO> otherList(Integer checkType, Set<Integer> itemIdSet, LocalDateTime start, LocalDateTime end);
 
 }
 

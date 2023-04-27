@@ -50,8 +50,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "H",1);
-            qtReportService.warnSPC(hs[0], hs[1], "小时");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "H", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "小时");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "H", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "小时");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -77,8 +79,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "D",1);
-            qtReportService.warnSPC(hs[0], hs[1], "天");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "D", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "天");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "D", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "天");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -105,8 +109,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "W",1);
-            qtReportService.warnSPC(hs[0], hs[1], "周");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "W", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "周");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "W", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "周");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -133,8 +139,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "M",1);
-            qtReportService.warnSPC(hs[0], hs[1], "月");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "M", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "月");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "M", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "月");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -162,8 +170,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "Q",1);
-            qtReportService.warnSPC(hs[0], hs[1], "季度");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Q", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "季度");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Q", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "季度");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -190,8 +200,10 @@ public class SpcWarnTask {
         }
         log.info("spc预警任务开始");
         try {
-            LocalDateTime[] hs = preTimeSlot(LocalDateTime.now(), "Y",1);
-            qtReportService.warnSPC(hs[0], hs[1], "年");
+            List<LocalDateTime> hs = preTimeSlot(LocalDateTime.now(), "Y", 1);
+            qtReportService.warnSPC(hs.get(0), hs.get(1), "年");
+            List<LocalDateTime> serialHs = preTimeSlot(LocalDateTime.now(), "Y", 7);
+            qtReportService.warnSerialUpOrDown(serialHs, "年");
         } catch (Exception e) {
             log.error("spc预警任务异常", e);
         } finally {
@@ -208,7 +220,7 @@ public class SpcWarnTask {
      * @param granularity 粒度
      * @return
      */
-    private static LocalDateTime[] preTimeSlot(LocalDateTime currentTime, String granularity,Integer num) {
+    private static List<LocalDateTime> preTimeSlot(LocalDateTime currentTime, String granularity, Integer num) {
         LocalDateTime start = null;
         LinkedList<LocalDateTime> resList = Lists.newLinkedList();
         while (num-- > 0) {
@@ -251,6 +263,6 @@ public class SpcWarnTask {
             resList.addFirst(end);
         }
         resList.addFirst(start);
-        return resList.toArray(new LocalDateTime[resList.size()]);
+        return resList;
     }
 }

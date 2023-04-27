@@ -970,10 +970,12 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
     @Override
     public Boolean warnSerialUpOrDown(List<LocalDateTime> timeList, String granularity) {
+        LocalDateTime min = timeList.get(0);
+        LocalDateTime max = timeList.get(timeList.size() - 1);
         //根据时间粒度获取spc卡片数据
         List<QtReport> reportList = list(new LambdaQueryWrapper<QtReport>()
-                .le(QtReport::getTimeScopeStart, timeList.get(0))
-                .ge(QtReport::getTimeScopeEnd, timeList.get(timeList.size() - 1))
+                .le(QtReport::getTimeScopeStart, min)
+                .ge(QtReport::getTimeScopeEnd, max)
                 .eq(QtReport::getGranularity, granularity)
                 .eq(QtReport::getWarnFlag, QtManagerConstant.QtMaterialStatusEnum.ENABLE.getCode()));
         if (CollUtil.isEmpty(reportList)) {
@@ -993,16 +995,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         Map<Integer, Set<Integer>> checkItemSnapshotMap = qtCheckItemService.checkItemSnapshotSet(checkItemIdList);
         List<Integer> reportIds = Lists.newArrayList();
         reportList.forEach(report ->{
-            List<BigDecimal> lastSerialDataList = new ArrayList<>(timeList.size());
-            for (int i = 1; i < timeList.size(); i++) {
-
-                LocalDateTime start = timeList.get(i-1);
-                LocalDateTime end = timeList.get(i);
-                //根据报表不同类型获取平均值
-//                BigDecimal avg = checkAvg(report,start,end, checkItemSnapshotMap);
-                BigDecimal avg = null;
-                lastSerialDataList.add(avg);
-            }
+            List<BigDecimal> lastSerialDataList = checkAvg(report, timeList, checkItemSnapshotMap);
             //判断连续升或者连续下降7次
             if(adjustSerialUpOrDown(lastSerialDataList)){
                 resultMap.put(report.getId(), report);
@@ -1012,6 +1005,79 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         sendWarnMsg(resultMap, checkItemIdList, materialIds, reportIds);
         return Boolean.TRUE;
     }
+
+    /**
+     * 检验的平均值
+     * @param report 报表
+     * @param timeList 时间分片
+     * @param checkItemSnapshotMap 检验项的快照集合
+     * @return 每个时间段的平均值
+     */
+    private List<BigDecimal> checkAvg(QtReport report, List<LocalDateTime> timeList, Map<Integer, Set<Integer>> checkItemSnapshotMap) {
+        LocalDateTime min = timeList.get(0);
+        LocalDateTime max = timeList.get(timeList.size() - 1);
+        List<BigDecimal> resList = new ArrayList<>(timeList.size());
+        //根据检验类型去查询不同的
+        if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(report.getCheckType())){
+            //来料检
+            List<QtIncomingCheckDTO> sourceList = qtCheckTaskService.comingList(checkItemSnapshotMap.get(report.getCheckItemId()));
+            if(CollUtil.isNotEmpty(sourceList)){
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDateTime start = timeList.get(i - 1);
+                    LocalDateTime end = timeList.get(i);
+                    resList.add(computeIncomingAvg(sourceList, start, end));
+                }
+            }
+        }else{
+            //其余检验方式
+            List<QtOtherCheckDTO> sourceList = qtCheckTaskService.otherList(report.getCheckType(), checkItemSnapshotMap.get(report.getCheckItemId()), min, max);
+            if(CollUtil.isNotEmpty(sourceList)){
+                for (int i = 1; i < timeList.size(); i++) {
+                    LocalDateTime start = timeList.get(i - 1);
+                    LocalDateTime end = timeList.get(i);
+                    resList.add(computeOtherAvg(sourceList, start, end));
+                }
+            }
+        }
+        return resList;
+    }
+
+    /**
+     * 计算来料检的平均值
+     * @param sourceList 原始数据
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    private BigDecimal computeIncomingAvg(List<QtIncomingCheckDTO> sourceList, LocalDateTime start, LocalDateTime end) {
+        //先过滤空结果和空时间的
+        sourceList = sourceList.stream().filter(v -> Objects.nonNull(v.getSamplingTime()) && StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
+        //过滤出该时间分片下的所有检验任务
+        List<QtIncomingCheckDTO> conditionDataList = sourceList.stream()
+                .filter(v -> LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
+        //取平均值
+        BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size()));
+    }
+
+    /**
+     * 计算来料检的平均值
+     * @param sourceList 原始数据
+     * @param start 开始时间
+     * @param end 结束时间
+     * @return
+     */
+    private BigDecimal computeOtherAvg(List<QtOtherCheckDTO> sourceList, LocalDateTime start, LocalDateTime end) {
+        //先过滤空结果和空时间的
+        sourceList = sourceList.stream().filter(v -> Objects.nonNull(v.getFinishTime()) && StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
+        //过滤出该时间分片下的所有检验任务
+        List<QtOtherCheckDTO> conditionDataList = sourceList.stream()
+                .filter(v -> LocalDateUtil.isRange(v.getFinishTime(), start, end, true, false)).collect(Collectors.toList());
+        //取平均值
+        BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return BigDecimalUtil.divide(reduce, new BigDecimal(conditionDataList.size()));
+    }
+
 
     /**
      * 判断dataList 是否连续上升

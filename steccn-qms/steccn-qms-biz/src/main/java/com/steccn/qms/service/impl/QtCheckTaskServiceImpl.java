@@ -71,6 +71,7 @@ import com.steccn.qms.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
@@ -2911,6 +2912,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
         return Objects.nonNull(resList) ? resList : Lists.newArrayList();
     }
+
+    @Override
+    public List<QtOtherCheckDTO> otherList(Integer checkType, Set<Integer> itemIdSet, LocalDateTime start, LocalDateTime end) {
+        List<QtOtherCheckDTO> resList = null;
+        if(CollUtil.isNotEmpty(itemIdSet)){
+            resList = baseMapper.otherList(checkType, itemIdSet, start, end);
+        }
+        return Objects.nonNull(resList) ? resList : Lists.newArrayList();
+    }
+
 
     /**
      * 合格率分组
