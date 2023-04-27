@@ -2,6 +2,8 @@ package com.steccn.qms.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -28,6 +30,8 @@ public class QtLossReportDTO implements Serializable {
      * 报表类型 班次0 日报表1 月报表2
      */
     @NotNull(message = "报表类型不能为空")
+    @Min(value = 0,message = "类型只能是0 1 2")
+    @Max(value = 2, message = "类型只能是0 1 2")
     private Integer type;
 
     /**
