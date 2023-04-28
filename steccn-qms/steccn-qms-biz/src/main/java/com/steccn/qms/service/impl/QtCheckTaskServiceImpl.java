@@ -449,7 +449,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     //设置样本概况模块数据
                     //先删除样本概况表中可能存在的数据
 
-                    String[] strings = {"sampleNum","licensePlate","analyst","analystTime","analystName","ingredientNum","samplingTime"};
+                    String[] strings = {"sampleNum","licensePlate","analyst","analystTime","analystName","ingredientNum","samplingTime","samplingTimeMix"};
                     List<QtCheckTaskCopy> qtCheckTaskCopies = qtCheckTaskCopyService.list(new LambdaQueryWrapper<QtCheckTaskCopy>().eq(QtCheckTaskCopy::getTaskId, id));
                     List<QtCheckTaskSimpleDTO> qtCheckTaskSimpleDTOS = Lists.newArrayList();
                     if (!qtCheckTaskCopies.isEmpty()) {
@@ -476,6 +476,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getIngredientNum());
                                 } else if (QtManagerConstant.SAMPLINGTIME.equals(s)) {
                                     simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTimeArray());
+                                }
+                                else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(s)) {
+                                    //配料抽检专用时间
+                                    if(qtCheckTask.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+                                        simpleMap.put("checkResult" + qtCheckTaskCopy.getCopy(), qtCheckTaskCopy.getSamplingTime());
+                                    }
                                 }
                             }
                             qtCheckTaskSimpleDTO.setResult(simpleMap);
@@ -565,6 +571,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     public Boolean itemValue(QtCheckTaskSubmitDTO dto) {
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         QtCheckTask task = getById(dto.getId());
+        //校验落版记录时段
+        if(CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
+            dto.getQtCheckTaskDestoryInfo().forEach(tmp->{
+                if(tmp.getDestoryStartTime()!=null && tmp.getDestoryEndTime()!=null){
+                    if(!CalculateDateUtil.isSameClassType(tmp.getDestoryStartTime(),tmp.getDestoryEndTime())){
+                        throw new BusinessException("落版时段不允许跨班次");
+                    }
+                }
+            });
+        }
         //先删除可能暂存的值
         Map<String, Object> valueCondition = new HashMap<>();
         valueCondition.put("task_id", dto.getId());
@@ -613,6 +629,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     copyDetailModel.setTaskId(dto.getId());
                     BeanUtils.copyProperties(valueTmp.getCopyDetails(), copyDetailModel);
                     copyDetailModel.setAnalystTime(valueTmp.getCopyDetails().getAnalystTime().atStartOfDay());
+                    //如果是配料抽检则加入取样时间，字段，便于统计
+//                    if(task.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+//                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(copyDetailModel.getSamplingTimeArray());
+//                        String str = jsonArray.get(0).toString();
+//                        copyDetailModel.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//                    }
                     //先删除冗余数据
                     qtCheckTaskCopyMapper.deleteByMap(deleteCondition);
                     qtCheckTaskCopyMapper.insert(copyDetailModel);
@@ -690,6 +712,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if (CollUtil.isEmpty(dto.getCheckGroup()) && dto.getOnlineItem() == null) {
             throw new BusinessException("传的值为空");
         }
+        //校验落版记录时段
+        if(CollUtil.isNotEmpty(dto.getQtCheckTaskDestoryInfo())){
+            dto.getQtCheckTaskDestoryInfo().forEach(tmp->{
+                if(tmp.getDestoryStartTime()!=null && tmp.getDestoryEndTime()!=null){
+                    if(!CalculateDateUtil.isSameClassType(tmp.getDestoryStartTime(),tmp.getDestoryEndTime())){
+                        throw new BusinessException("落版时段不允许跨班次");
+                    }
+                }
+            });
+        }
         List<QtCheckTaskDetail> valueModels = new ArrayList<>();
         QtCheckTask tasKDetail = getById(dto.getId());
         //先删除可能暂存的值
@@ -753,6 +785,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 if (StringUtils.isNotBlank(entry.getKey())) {
                                     objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
                                 }
+                            }else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
+                                //配料抽检专用localDateTime
+                                if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
+                                    qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                }
                             }
                         } else {
                                 if (QtManagerConstant.SAMPLENUM.equals(sampleInfo.getId())) {
@@ -783,6 +820,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                     if (StringUtils.isNotBlank(entry.getKey())) {
                                         qtCheckTaskCopy.setIngredientNum(Integer.valueOf(entry.getKey()));
                                     }
+                                } else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
+                                    //配料抽检专用localDateTime
+                                    if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
+                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                    }
                                 }
                             if(!entry.getKey().contains(QtManagerConstant.ANALYST)) objectMap.put(entry.getKey(),qtCheckTaskCopy);
                         }
@@ -791,6 +833,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 objectMap.forEach((key,qtCheckTaskCopyInfo)->{
                     QtCheckTaskCopy qtCheckTaskCopy1 = new QtCheckTaskCopy();
                     BeanUtils.copyProperties(qtCheckTaskCopyInfo,qtCheckTaskCopy1);
+                    //如果是配料抽检，方便取报表，传参
+                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
+                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(qtCheckTaskCopyInfo.getSamplingTimeArray());
+                        String str = jsonArray.get(0).toString();
+                        qtCheckTaskCopy1.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
                     if(key.length() != 0) {
@@ -2853,6 +2901,15 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             });
         }
         return codes;
+    }
+
+    @Override
+    public List<QtIncomingCheckDTO> comingList(Set<Integer> itemIdSet) {
+        List<QtIncomingCheckDTO> resList = null;
+        if (CollUtil.isNotEmpty(itemIdSet)) {
+            resList = baseMapper.comingList(itemIdSet);
+        }
+        return Objects.nonNull(resList) ? resList : Lists.newArrayList();
     }
 
     /**

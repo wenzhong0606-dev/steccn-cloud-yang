@@ -22,6 +22,11 @@ public class QtChartSubDetailDTO implements Serializable {
     private String workOrderTime;
 
     /**
+     * 班次时间的date类型
+     */
+    private LocalDate workOrderDate;
+
+    /**
      * 班次
      */
     private String workOrder;

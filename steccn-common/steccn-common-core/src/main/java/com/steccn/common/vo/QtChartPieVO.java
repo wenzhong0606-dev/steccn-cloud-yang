@@ -1,4 +1,4 @@
-package com.steccn.qms.vo;
+package com.steccn.common.vo;
 
 import lombok.Data;
 

@@ -12,6 +12,9 @@ import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnUser;
+import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.vo.QtChartPieVO;
+import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
 import com.steccn.oa.dto.*;
@@ -32,8 +35,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -622,6 +628,54 @@ public class OaService {
         String result = oaApi.saveDoc(headers,dto);
         OaSaveDocVO oaSaveDocVO = JSONObject.parseObject(result, OaSaveDocVO.class);
         return oaSaveDocVO;
+    }
+
+    /**
+     * 获取我的考勤信息
+     * @return
+     */
+    public OaAttendanceVO getMyAttendance(){
+        OaAttendanceDTO dto = new OaAttendanceDTO();
+        dto.setResourceId(SecurityUtils.getUser().getUserId().toString());
+        dto.setType(OaConstant.TWO);
+        dto.setTypevalue(LocalDate.now().format(DateTimeFormatter.ofPattern("YYYY-MM")));
+        String result = oaApi.getMyAttendance(setUserIdHeaders(), dto);
+        OaAttendanceVO vo = new OaAttendanceVO();
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        //出勤相关
+        JSONObject groupItem1 = jsonObject.getJSONObject(OaConstant.OA_JSON_GROUPITEM1);
+        //应出勤
+        vo.setRequiredNum(groupItem1.getBigDecimal(OaConstant.OA_JSON_VALUE));
+        JSONArray groupItem1Array = groupItem1.getJSONArray(OaConstant.OA_JSON_ITEMS);
+        //未出勤
+        vo.setUnAttendedNum(groupItem1Array.getJSONObject(0).getBigDecimal(OaConstant.OA_JSON_VALUE));
+        //实际出勤
+        vo.setActualNum(groupItem1Array.getJSONObject(1).getBigDecimal(OaConstant.OA_JSON_VALUE));
+        //迟到相关
+        JSONArray groupItem3Array = jsonObject.getJSONObject(OaConstant.OA_JSON_GROUPITEM3).getJSONArray(OaConstant.OA_JSON_ITEMS);
+        vo.setLateNum(groupItem3Array.getJSONObject(0).getBigDecimal(OaConstant.OA_JSON_VALUE).add(groupItem3Array.getJSONObject(1).getBigDecimal(OaConstant.OA_JSON_VALUE)));
+        //早退
+        vo.setEarlyNum(groupItem3Array.getJSONObject(2).getBigDecimal(OaConstant.OA_JSON_VALUE).add(groupItem3Array.getJSONObject(3).getBigDecimal(OaConstant.OA_JSON_VALUE)));
+        //旷工
+        vo.setAbsentNum(groupItem3Array.getJSONObject(4).getBigDecimal(OaConstant.OA_JSON_VALUE));
+        //漏签
+        vo.setMissedNum(groupItem3Array.getJSONObject(5).getBigDecimal(OaConstant.OA_JSON_VALUE));
+        //图表
+        QtChartPieVO chart = new QtChartPieVO<BigDecimal>();
+        List<QtChartPieValueVO<BigDecimal>> data = Lists.newArrayList();
+        if (!vo.getRequiredNum().equals(BigDecimal.ZERO)) {
+            QtChartPieValueVO<BigDecimal> tmp1 = new QtChartPieValueVO();
+            tmp1.setValue(BigDecimalUtil.divide(vo.getActualNum(), vo.getRequiredNum(), 4));
+            tmp1.setName("实际出勤占比");
+            data.add(tmp1);
+            QtChartPieValueVO tmp2 = new QtChartPieValueVO<BigDecimal>();
+            tmp2.setName("未出勤占比");
+            tmp2.setValue(BigDecimalUtil.divide(vo.getUnAttendedNum(), vo.getRequiredNum(), 4));
+            data.add(tmp2);
+        }
+        chart.setData(data);
+        vo.setChart(chart);
+        return vo;
     }
 
     /**

@@ -95,6 +95,9 @@
             <if test="dto.actualEndDateStart !=null and dto.actualEndDateEnd !=null">
                 and actual_end_time between #{dto.actualEndDateStart} and #{dto.actualEndDateEnd}
             </if>
+            <if test="dto.startTime != null and dto.endTime != null">
+                and (plan_start_time between #{dto.startTime} and #{dto.endTime} or plan_end_time between #{dto.startTime} and #{dto.endTime} )
+            </if>
         </where>
         Order By create_time DESC
     </select>

@@ -40,6 +40,10 @@ public class OaConstant {
     public static final String OA_WORKFLOW_SUCCESS = "SUCCESS";
     public static final String OA_WORKFLOW_PARAM_ERROR = "PARAM_ERROR";
     public static final String OA_WORKFLOW_REQUESTID = "requestid";
+    public static final String OA_JSON_GROUPITEM1 = "groupitem1";
+    public static final String OA_JSON_GROUPITEM3 = "groupitem3";
+    public static final String OA_JSON_VALUE = "value";
+    public static final String OA_JSON_ITEMS = "items";
 
 
     /**
@@ -65,6 +69,7 @@ public class OaConstant {
     public static final String BEFORE_HOURS = "小时之前";
     public static final String BEFORE_DAYS = "天之前";
     public static final String ONE = "1";
+    public static final String TWO = "2";
     public static final int SIXTY = 60;
 }
 

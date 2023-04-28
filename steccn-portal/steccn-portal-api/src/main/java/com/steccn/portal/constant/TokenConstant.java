@@ -1,7 +1,5 @@
 package com.steccn.portal.constant;
 
-import io.swagger.annotations.ApiModelProperty;
-
 /**
  * @desc token的字符串常量
  */
@@ -11,6 +9,7 @@ public interface TokenConstant {
     String GRANT_TYPE_PASSWORD = "password";
 
     String CLIENT_ID = "admin";
+    String CLIENT_TEMP = "temp";
 
     String SCOPE = "all";
 

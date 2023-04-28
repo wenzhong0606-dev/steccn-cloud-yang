@@ -1,8 +1,8 @@
 package com.steccn.qms.service;
 
-import com.steccn.qms.vo.QtDayPollingFirstVO;
-import com.steccn.qms.vo.QtDayReportFirstVO;
-import com.steccn.qms.vo.QtDayReportOnlineVO;
+import com.steccn.common.constant.ResultCode;
+import com.steccn.qms.dto.QtLossReportDTO;
+import com.steccn.qms.vo.*;
 
 import java.time.LocalDate;
 
@@ -38,4 +38,18 @@ public interface QtDayReportService {
      * @return
      */
     QtDayPollingFirstVO pollingDefectItem(LocalDate date, Integer productLineId);
+
+    /**
+     * 配料抽检日报表
+     * @param date 日期
+     * @return 报表
+     */
+    QtDaySamplingVO sampling(LocalDate date);
+
+    /**
+     * 基片损耗日报表
+     * @param dto
+     * @return
+     */
+    QtDayReportLossVO loss(QtLossReportDTO dto);
 }

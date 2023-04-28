@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.config.annotation.builders.InMemoryClientDetailsServiceBuilder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -14,6 +15,7 @@ import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,20 +82,35 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()
+        InMemoryClientDetailsServiceBuilder builder = clients.inMemory();
+        builder
                 //配置client Id
                 .withClient("admin")
                 //client-secret
                 .secret(passwordEncoder.encode("admin"))
                 //配置访问token的有效期设置为1个月
-                .accessTokenValiditySeconds(3600*24*30)
+                .accessTokenValiditySeconds(3600 * 24 * 30)
                 //配置重定向的跳转，用于授权成功之后的跳转
                 .redirectUris("http://127.0.0.1:9001/api/portal/login")
                 //作用域
                 .scopes("all")
                 //Grant_type  授权码模式
                 // 密码模式和刷新令牌模式
-                .authorizedGrantTypes("password","refresh_token","authorization_code");
+                .authorizedGrantTypes("password", "refresh_token", "authorization_code");
+        builder
+                //配置client Id
+                .withClient("temp")
+                //client-secret
+                .secret(passwordEncoder.encode("steccn_temp"))
+                //配置访问token的有效期设置为30分钟
+                .accessTokenValiditySeconds(1800)
+                //配置重定向的跳转，用于授权成功之后的跳转
+                .redirectUris("http://127.0.0.1:9001/api/portal/login")
+                //作用域
+                .scopes("all")
+                //Grant_type  授权码模式
+                // 密码模式和刷新令牌模式
+                .authorizedGrantTypes("password", "refresh_token", "authorization_code");
     }
 
 }

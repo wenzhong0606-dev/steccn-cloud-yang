@@ -153,6 +153,7 @@ public interface QtManagerConstant {
     String ANALYST = "analyst"; //分析人
     String ANALYSTNAME = "analystName"; //分析人名
     String SAMPLINGTIME = "samplingTime"; //取样时间
+    String SAMPLINGTIMEMIX = "samplingTimeMix"; //配料抽检取样时间
     String ANALYSTIME = "analystTime"; //分析时间
     String INGREDIENTNUM = "ingredientNum"; //配料付数
 
@@ -191,6 +192,10 @@ public interface QtManagerConstant {
     String SPC_REPORT_NAME = "SPC名称:";
     String SPC_REPORT_MATERIAL_NAME = "物料名称:";
     String SPC_REPORT_CHECK_ITEM_NAME = "检验项名称:";
+
+
+    String SPC_REPORT_SAMPLING_TIME = "取样日期";
+    String SPC_REPORT_SAMPLING_TIME_VALUE = "samplingTime";
 
     /**
      * 首检质量日报表 常量
@@ -1253,6 +1258,18 @@ public interface QtManagerConstant {
                 }
             }
         }
+    }
+
+    /**
+     * 样本概览枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    enum LossReportType {
+        CLASS(0, "班次"), DAY(1, "日"), MONTH(2, "月");
+
+        private Integer code;
+        private String name;
     }
 
 

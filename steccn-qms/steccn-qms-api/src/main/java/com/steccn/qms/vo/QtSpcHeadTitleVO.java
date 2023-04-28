@@ -18,9 +18,10 @@ import java.util.List;
 @AllArgsConstructor
 public class QtSpcHeadTitleVO {
 
+    @ApiModelProperty("标签")
+    private String label;
+
     @ApiModelProperty("动态表格头的value")
     private String value;
 
-    @ApiModelProperty("标签")
-    private String label;
 }

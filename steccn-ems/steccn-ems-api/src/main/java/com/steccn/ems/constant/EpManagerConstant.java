@@ -132,7 +132,6 @@ public interface EpManagerConstant {
         }
     }
 
-
     /**
      * 仪表类型
      */

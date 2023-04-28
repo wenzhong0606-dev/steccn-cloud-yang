@@ -18,6 +18,7 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -156,6 +157,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //实际结束时间-结束
         if (Objects.nonNull(dto.getActualEndDateEnd())) {
             dto.setActualEndTimeEnd(LocalDateTime.of(dto.getActualEndDateEnd(), LocalTime.MAX));
+        }
+        //开始时间-结束时间
+        if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())){
+            dto.setStartTime(LocalDateTime.of(dto.getStartDate(),LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getEndDate(),LocalTime.MAX));
         }
         //2.自定义sql查询订单信息列表
         Page<PmsProduceOrderVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
@@ -858,6 +864,48 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             });
         }
         return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public List<ProduceOrderDataInfoVO> getExecuteOrderInfo(){
+        //1.获取16条产线的信息
+        SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
+        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(PmManagerConstant.NUM_9));
+        sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList(PmManagerConstant.UROPATAGIA,PmManagerConstant.DEEP_PROCESSING));
+        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(()->remoteOfficeFeign.listMultiFilter(sysOfficeTypeKeyDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> officeIdSet = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Map<Integer, String> officeNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //2.查询16条产线下正在执行中的订单
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getProductionLineId, officeIdSet).eq(PmsProduceOrder::getState, PmManagerConstant.NUM_2));
+        //3.定义返回数据的集合
+        List<ProduceOrderDataInfoVO> infoVOList = Lists.newArrayList();
+        //4.处理数据
+        if (CollUtil.isNotEmpty(list)){
+            for (PmsProduceOrder pmsProduceOrder : list) {
+                ProduceOrderDataInfoVO produceOrderDataInfoVO = BeanUtil.copyProperties(pmsProduceOrder, ProduceOrderDataInfoVO.class);
+                produceOrderDataInfoVO.setProductionLineName(officeNameMap.get(produceOrderDataInfoVO.getProductionLineId()));
+                produceOrderDataInfoVO.setPlanQuantity(pmsProduceOrder.getQuantity());
+                infoVOList.add(produceOrderDataInfoVO);
+            }
+            //获取单位名称
+            Set<Long> dictIds = infoVOList.stream().map(ProduceOrderDataInfoVO::getUnitId).collect(Collectors.toSet());
+            Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //获取物料信息
+            List<Long> materialIds = infoVOList.stream().map(ProduceOrderDataInfoVO::getMaterialId).collect(Collectors.toList());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            //处理规格数据以及单位数据
+            for (ProduceOrderDataInfoVO produceOrderDataInfoVO : infoVOList) {
+                produceOrderDataInfoVO.setSpecification(materialMap.get(produceOrderDataInfoVO.getMaterialId()).getSpecifications());
+                produceOrderDataInfoVO.setUnitName(dictMap.get(produceOrderDataInfoVO.getUnitId()));
+                //todo 当前产量（暂时用随机数代替）
+                Random random = new Random();
+                produceOrderDataInfoVO.setCurrentProduction(BigDecimal.valueOf(random.nextDouble()));
+                if (produceOrderDataInfoVO.getProductionLineName().startsWith(PmManagerConstant.UROPATAGIA)){
+                    produceOrderDataInfoVO.setLineFlag(0);
+                }
+            }
+        }
+        return infoVOList;
     }
 
     /**

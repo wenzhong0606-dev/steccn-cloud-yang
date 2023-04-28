@@ -1,18 +1,16 @@
 package com.steccn.qms.controller;
 
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.QtLossReportDTO;
 import com.steccn.qms.service.QtDayReportService;
-import com.steccn.qms.vo.QtDayPollingFirstVO;
-import com.steccn.qms.vo.QtDayReportFirstVO;
-import com.steccn.qms.vo.QtDayReportOnlineVO;
+import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDate;
 
 /**
@@ -51,6 +49,16 @@ public class QtDayReportController {
         return R.success(qtDayReportService.pollingDefectItem(date,productLineId));
     }
 
+    @GetMapping("/sampling")
+    @ApiOperation("配料抽检日报表")
+    public R<QtDaySamplingVO> sampling(@RequestParam("date") LocalDate date) {
+        return R.success(qtDayReportService.sampling(date));
+    }
 
+    @PostMapping("/loss")
+    @ApiOperation("损耗日报表")
+    public R<QtDayReportLossVO> loss(@RequestBody @Validated QtLossReportDTO dto) {
+        return R.success(qtDayReportService.loss(dto));
+    }
 
 }
