@@ -1173,6 +1173,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     //如果是班次则算损耗小计，否则算损耗合计
                     if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
                         lossLine.setClassName(className);
+                        lossLine.setProductLineName(productLine.getOfficeName());
                         lossLine.setType(QtManagerConstant.NUM_1);
                     }else {
                         lossLine.setType(QtManagerConstant.NUM_2);
@@ -1189,10 +1190,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 List<QtDayReportLossDataVO> tableDataTmp = Lists.newArrayList();
                 //如果是班次报表则算损耗合计，否则算损耗总计
                 //把拉引量和小计数据放入
-                tableDataTmp = tableData.stream().filter(v->v.getDefectName()!=null
-                        &&v.getProductLineName()!=null
-                        &&(v.getDefectName().equals("拉引量") || v.getType().equals(QtManagerConstant.NUM_1))
-                        &&v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+                tableDataTmp = tableData.stream().filter(v->(v.getDefectName()!=null&&v.getDefectName().equals("拉引量"))
+                        &&(v.getProductLineName()!=null&&v.getProductLineName().equals(productLine.getOfficeName()))
+                        || (v.getType().equals(QtManagerConstant.NUM_1))).collect(Collectors.toList());
                 //size小于2说明没有数据
                 if(tableDataTmp.size() > QtManagerConstant.NUM_2){
                     QtDayReportLossDataVO lossLine = countAmount(tableDataTmp);
