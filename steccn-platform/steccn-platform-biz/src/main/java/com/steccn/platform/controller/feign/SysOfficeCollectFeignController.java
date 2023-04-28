@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -39,5 +41,17 @@ public class SysOfficeCollectFeignController {
     @ApiOperation("获取工位的出站采集点")
     R<SysOfficeCollectVO> outCollect(@RequestParam("stationId") Integer stationId){
         return R.success(sysOfficeCollectService.outCollect(stationId));
+    }
+
+    /**
+     * 查询工位的进出站的采集点编码
+     * @param stationIdSet
+     * @param type  进站0 出站1
+     * @return
+     */
+    @GetMapping("/station/list")
+    @ApiOperation("查询工位的进/出站的采集点编码")
+    R<Map<Integer,String>> listByStation(@RequestParam("stationIdSet") Set<Integer> stationIdSet, @RequestParam("type") Integer type){
+        return R.success(sysOfficeCollectService.listByStation(stationIdSet,type));
     }
 }

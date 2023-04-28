@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOfficeCollect;
@@ -29,7 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -117,6 +120,23 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
             BeanUtils.copyProperties(one, res);
         }
         return res;
+    }
+
+    @Override
+    public Map<Integer, String> listByStation(Set<Integer> stationIdSet, Integer type) {
+        Map<Integer, String> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(stationIdSet)) {
+            List<SysOfficeCollect> dbList = list(new LambdaQueryWrapper<SysOfficeCollect>()
+                    .eq(SysOfficeCollect::getOfficeType, 13)
+                    .in(SysOfficeCollect::getOfficeId,stationIdSet)
+                    .eq(SysOfficeCollect::getType, type));
+            if (CollUtil.isNotEmpty(dbList)) {
+               dbList.forEach( collect ->{
+                   resMap.put(collect.getOfficeId(),collect.getCode());
+               });
+            }
+        }
+        return resMap;
     }
 }
 

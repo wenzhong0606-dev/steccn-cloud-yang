@@ -8,6 +8,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 类说明
@@ -31,4 +33,15 @@ public interface RemoteSysOfficeCollectFeignApi {
     @GetMapping("/feign/platform/sys/office/collect/station/out")
     @ApiOperation("获取工位的出站采集点")
     R<SysOfficeCollectVO> outCollect(@RequestParam("stationId") Integer stationId);
+
+
+    /**
+     * 查询工位的进出站的采集点编码
+     * @param stationIdSet
+     * @param type  进站0 出站1
+     * @return
+     */
+    @GetMapping("/feign/platform/sys/office/collect/station/list")
+    @ApiOperation("查询工位的进/出站的采集点编码")
+    R<Map<Integer,String>> listByStation(@RequestParam("stationIdSet") Set<Integer> stationIdSet, @RequestParam("type") Integer type);
 }

@@ -19,10 +19,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -44,6 +42,18 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
                     BeanUtils.copyProperties(pmsWorkOrderBatch, vo);
                     resMap.put(vo.getId(), vo);
                 }
+            }
+        }
+        return resMap;
+    }
+
+    @Override
+    public Map<Long, List<PmsWorkOrderBatch>>listByOrderId(Set<Long> idList) {
+        Map<Long, List<PmsWorkOrderBatch>>  resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(idList)) {
+            Collection<PmsWorkOrderBatch> collection = listByIds(idList);
+            if (CollUtil.isNotEmpty(collection)) {
+                resMap  = collection.stream().collect(Collectors.groupingBy(PmsWorkOrderBatch::getProduceOrderId));
             }
         }
         return resMap;

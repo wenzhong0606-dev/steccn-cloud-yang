@@ -1,5 +1,6 @@
 package com.steccn.pms.vo;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -72,5 +73,48 @@ public class ProduceOrderDataInfoVO {
      * 产线标识:(0:基片 1：深加工)
      */
     private Integer lineFlag = 1;
+
+    /**
+     * 车间
+     */
+    private Integer workNumberFlag;
+
+    /**
+     * 产线
+     */
+    private Integer lineNumberFlag;
+
+
+    /**
+     * 长度单位
+     */
+    private String lengthUnitName;
+
+    /**
+     * 长度
+     */
+    private BigDecimal lengthQuantity;
+
+
+    /**
+     * 高度单位
+     */
+    private String highUnitName;
+
+    /**
+     * 高度
+     */
+    private BigDecimal highQuantity;
+
+    /**
+     * 宽度单位
+     */
+    private String wideUnidName;
+
+    /**
+     * 宽度
+     */
+    private BigDecimal wideQuantity;
+
 
 }
