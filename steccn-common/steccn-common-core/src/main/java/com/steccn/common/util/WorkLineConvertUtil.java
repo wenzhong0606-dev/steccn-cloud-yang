@@ -3,6 +3,8 @@ package com.steccn.common.util;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * @author yequan
  * @desc 车间产线转换
@@ -55,6 +57,14 @@ public class WorkLineConvertUtil {
     @Getter
     @AllArgsConstructor
     public enum ProductLineEnum {
+        PRODUCT_LINE_19(16, "十六产线"),
+        PRODUCT_LINE_15(15, "十五产线"),
+        PRODUCT_LINE_14(14, "十四产线"),
+        PRODUCT_LINE_13(13, "十三产线"),
+        PRODUCT_LINE_12(12, "十二产线"),
+        PRODUCT_LINE_11(11, "十一产线"),
+        PRODUCT_LINE_10(10, "十产线"),
+        PRODUCT_LINE_9(9, "九产线"),
         PRODUCT_LINE_8(8, "八产线"),
         PRODUCT_LINE_7(7, "七产线"),
         PRODUCT_LINE_6(6, "六产线"),
