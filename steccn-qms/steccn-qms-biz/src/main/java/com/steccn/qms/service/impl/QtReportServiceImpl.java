@@ -964,7 +964,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 }
             });
         });
-        sendWarnMsg(resultMap, ids, materialIds, reportIds);
+        sendWarnMsg(resultMap, ids, materialIds, reportIds, SysMsgConstant.MsgTypeEnum.SPC_WARN);
         return Boolean.TRUE;
     }
 
@@ -983,7 +983,11 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             return Boolean.TRUE;
         }
         //存放需要警示的报表
-        Map<Integer, QtReport> resultMap = Maps.newHashMap();
+        Map<Integer, QtReport> upResultMap = Maps.newHashMap();
+        List<Integer> upReportIds = Lists.newArrayList();
+        Map<Integer, QtReport> downResultMap = Maps.newHashMap();
+        List<Integer> downReportIds = Lists.newArrayList();
+
         //根据spc卡片配置的物料以及检验类型检验项,物料使用车间,生产车间,生产产线获取该时间段内已检验的任务数据
         //获取检验项快照数据
         List<Integer> checkItemIdList = Lists.newArrayList();
@@ -993,16 +997,22 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             materialIds.add(report.getMaterialId());
         });
         Map<Integer, Set<Integer>> checkItemSnapshotMap = qtCheckItemService.checkItemSnapshotSet(checkItemIdList);
-        List<Integer> reportIds = Lists.newArrayList();
+
         reportList.forEach(report ->{
             List<BigDecimal> lastSerialDataList = checkAvg(report, timeList, checkItemSnapshotMap);
-            //判断连续升或者连续下降7次
-            if(adjustSerialUpOrDown(lastSerialDataList)){
-                resultMap.put(report.getId(), report);
-                reportIds.add(report.getId());
+            //判断连续升或者连续下降7次 1表示上升 2表示下降
+            if(adjustSerialUpOrDown(lastSerialDataList) == 1){
+                upResultMap.put(report.getId(), report);
+                upReportIds.add(report.getId());
+            }else if(adjustSerialUpOrDown(lastSerialDataList) == 2){
+                downResultMap.put(report.getId(), report);
+                downReportIds.add(report.getId());
             }
         });
-        sendWarnMsg(resultMap, checkItemIdList, materialIds, reportIds);
+        //发送上升消息
+        sendWarnMsg(upResultMap, checkItemIdList, materialIds, upReportIds,SysMsgConstant.MsgTypeEnum.SPC_SERIAL_UP_WARN);
+        //发送下降消息
+        sendWarnMsg(downResultMap, checkItemIdList, materialIds, downReportIds, SysMsgConstant.MsgTypeEnum.SPC_SERIAL_DOWN_WARN);
         return Boolean.TRUE;
     }
 
@@ -1085,7 +1095,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param dataList
      * @return
      */
-    private static boolean adjustSerialUpOrDown(List<BigDecimal> dataList) {
+    private static int adjustSerialUpOrDown(List<BigDecimal> dataList) {
         //集合为空，或者集合里面存在空元素，则返回false
         if (CollUtil.isNotEmpty(dataList) && !dataList.contains(null)) {
             boolean flag1 = Boolean.TRUE;
@@ -1108,9 +1118,13 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 tmp = dataList.get(i);
             }
             //既没有呈现上升趋势 也没有呈现下降趋势，则返回false，否则返回true
-            return flag1 || flag2;
+            if (flag1) {
+                return 1;
+            } else if (flag2) {
+                return 2;
+            }
         }
-        return Boolean.FALSE;
+        return -1;
     }
 
     /**
@@ -1120,7 +1134,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @param materialIds
      * @param reportIds
      */
-    private void sendWarnMsg(Map<Integer, QtReport> resultMap, List<Integer> ids, Set<Long> materialIds, List<Integer> reportIds) {
+    private void sendWarnMsg(Map<Integer, QtReport> resultMap, List<Integer> ids, Set<Long> materialIds, List<Integer> reportIds,SysMsgConstant.MsgTypeEnum template) {
         //根据spc配置的告警人员进行信息告警
         if (CollUtil.isNotEmpty(resultMap)) {
             //获取告警人员
@@ -1132,10 +1146,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             for (Map.Entry<Integer, QtReport> entry : resultMap.entrySet()) {
                 //定义消息模板
                 SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-                sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTitle());
-                sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SPC_WARN.getCode());
+                sysMsgSendDTO.setTitle(template.getTitle());
+                sysMsgSendDTO.setType(template.getCode());
                 String materialName = materialMap.get(entry.getValue().getMaterialId());
-                sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SPC_WARN.getTemplate(),entry.getValue().getName(),materialName,itemMap.get(entry.getValue().getCheckItemId()).getName()));
+                sysMsgSendDTO.setContent(String.format(template.getTemplate(),entry.getValue().getName(),materialName,itemMap.get(entry.getValue().getCheckItemId()).getName()));
                 Set<Long> userIds = Sets.newHashSet();
                 integerListMap.get(entry.getValue().getId()).forEach(user->userIds.add(user.getUserId()));
                 sysMsgSendDTO.setUserList(userIds);
@@ -1560,10 +1574,8 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
 
     /**
      * 获取来料检
-     * @param itemIds
      * @param name
      * @param conditionDataList
-     * @param qtSpcReportDetailVO
      * @param qtSpcReportDetailTaskAllVO
      */
     private void getIQCList(String name, List<QtIncomingCheckDTO> conditionDataList, QtSpcReportDetailTaskAllVO qtSpcReportDetailTaskAllVO) {
