@@ -1,9 +1,7 @@
 package com.steccn.data.service;
 
-import com.steccn.data.dto.CollectCommonDTO;
-import com.steccn.data.dto.EpMeterCollectDTO;
-import com.steccn.data.dto.PmStationCollectDTO;
-import com.steccn.data.dto.QtThirdPartyDefectiveDTO;
+import com.steccn.common.dto.ValidList;
+import com.steccn.data.dto.*;
 
 /**
  * @author yequan
@@ -31,4 +29,11 @@ public interface HbCollectService {
      * @return true | false
      */
     Boolean pmStation(CollectCommonDTO<PmStationCollectDTO> dto);
+
+    /**
+     * 设备管理-设备启停信号
+     * @param dto
+     * @return true | false
+     */
+    Boolean mesEqpSignal(CollectCommonValidDTO<MesEqpSignalDTO> dto);
 }

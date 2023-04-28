@@ -1,10 +1,11 @@
 package com.steccn.data.controller.feign;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.domain.EpMeterCollect;
+import com.steccn.data.domain.PmStationCollect;
+import com.steccn.data.dto.*;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.service.QtDefectCollectService;
@@ -14,6 +15,7 @@ import com.steccn.data.vo.DwStationCollectVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -65,4 +67,21 @@ public class DataPlatformFeignController {
     R<BigDecimal> preload(@RequestBody PmReportWorkPreloadDTO dto) {
         return R.success(pmStationCollectService.rwPreLoad(dto));
     }
+
+    @PostMapping("/deal/data")
+    @ApiOperation("迁移数据")
+    R<Boolean> dealData(@RequestBody List<EpMeterCollectDTO> dto) {
+        List<EpMeterCollect> epMeterCollects = BeanUtil.copyToList(dto, EpMeterCollect.class);
+        boolean save = epMeterCollectService.saveBatch(epMeterCollects);
+        return R.success(save);
+    }
+
+    @PostMapping("/psc/deal/data")
+    @ApiOperation("迁移数据pm_station_collect")
+    R<Boolean> pmStationCollectDealData(@RequestBody List<PmStationCollectDTO> list){
+        List<PmStationCollect> resList = BeanUtil.copyToList(list, PmStationCollect.class);
+        boolean save = pmStationCollectService.saveBatch(resList);
+        return R.success(save);
+    }
+
 }

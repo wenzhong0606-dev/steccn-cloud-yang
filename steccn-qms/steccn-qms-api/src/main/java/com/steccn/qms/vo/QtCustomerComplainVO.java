@@ -155,6 +155,11 @@ public class QtCustomerComplainVO {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
+
 
     /**
      * 客诉进度

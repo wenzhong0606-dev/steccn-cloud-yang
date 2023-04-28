@@ -7,22 +7,31 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 /**
-* @author yequan
-* @description 针对表【ep_meter_collect(能源绩效-远程仪表采样表)】的数据库操作Mapper
-* @createDate 2022-12-16 13:23:55
-* @Entity com.steccn.data.domain.EpMeterCollect
-*/
+ * @author yequan
+ * @description 针对表【ep_meter_collect(能源绩效-远程仪表采样表)】的数据库操作Mapper
+ * @createDate 2022-12-16 13:23:55
+ * @Entity com.steccn.data.domain.EpMeterCollect
+ */
 @Mapper
 public interface EpMeterCollectMapper extends BaseMapper<EpMeterCollect> {
 
     /**
-     * 批量查询数据
-     * @param dwList 数仓条件集合
-     * @return list
+     * 动态建表
+     *
+     * @param tableName 表明
+     * @return int
      */
-    List<EpMeterCollect> batchSearch(@Param("dwList") List<DwMeterReadDTO> dwList);
+    int createTable(@Param("tableName") String tableName, @Param("idIndex") String idIndex, @Param("indexA") String indexA, @Param("indexB") String indexB);
+
+    /**
+     * 获取所有的表名
+     * @return 表名称集合
+     */
+    Set<String> getTableNames(@Param("logicTableName") String logicTableName);
+
 }
 
 

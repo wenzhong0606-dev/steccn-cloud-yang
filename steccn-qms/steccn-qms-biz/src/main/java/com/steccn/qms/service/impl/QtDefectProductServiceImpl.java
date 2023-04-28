@@ -381,11 +381,26 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             if (Objects.isNull(description)) {
                 description = "-";
             }
-            String content = String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(), description, defectProduct.getTaskTypeName());
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTitle());
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getCode());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.DEFECT_PRODUCT_APPROVE.getTemplate(), defectProduct.getTitle(), description, defectProduct.getTaskTypeName()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getDealMan()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
             sysMsgAdditionDTO.setId(defectProduct.getId());
-            sysMsgAdditionDTO.setCode(defectProduct.getCode());
-            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(defectProduct.getDealMan()), SysMsgConstant.MsgCategoryEnum.SYS_REMIND.getCode());
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info(defectProduct + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
             //保存进度信息
             QtComplainDefectProgress qtComplainDefectProgress = new QtComplainDefectProgress();
             qtComplainDefectProgress.setBusiId(defectProduct.getId());
@@ -405,7 +420,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), defectProduct.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(defectProduct.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(defectProduct.getId());
+            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
@@ -441,6 +456,7 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
     private void startWorkFlow(QtDefectProductDTO dto, QtDefectProduct qtDefectProduct) {
         //判断流程是否是第一次提交
         ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByBusiId(qtDefectProduct.getId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<QtImproveRecord> improveRecords = qtImproveRecordService.list(new LambdaQueryWrapper<QtImproveRecord>().eq(QtImproveRecord::getDefectProductId, qtDefectProduct.getId()));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = Lists.newArrayList();
         //审批发起人
@@ -520,6 +536,26 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
             }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+            sysMsgSendDTO.setContent(content);
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            try {
+                Boolean a = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!a) {
+                    log.info("消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
         } else {
             //调用oa创建流程
             OaWorkFlowParamDTO workflowDTO = new OaWorkFlowParamDTO();
@@ -532,16 +568,21 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             oaWorkFlowDetailObjDTO.setTableDbName(QtManagerConstant.WORKFLOW_TABLE_DEFECT_PRODUCT);
             List<OaWorkFlowDetailDataListDTO> workflowRequestTableRecords = Lists.newArrayList();
             //保存url
-            OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-            OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
-            List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
-            urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
-            oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
-            workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
-            oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
-            detailList.add(oaWorkFlowDetailObjDTO);
+            if (CollUtil.isNotEmpty(improveRecords)){
+                OaWorkFlowDetailDataListDTO oaWorkFlowDetailDataListDTO = new OaWorkFlowDetailDataListDTO();
+                List<OaWorkFlowNameValueDTO> urlTableData = Lists.newArrayList();
+                for (QtImproveRecord improveRecord : improveRecords) {
+                    OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()+improveRecord.getId(),improveRecord.getTitle()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG, oaSaveDocVO.getDocid().toString()));
+                    urlTableData.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLZG_MOBILE,improveRecord.getTitle()+"(请在PC端查看整改详情)"));
+                }
+                oaWorkFlowDetailDataListDTO.setWorkflowRequestTableFields(urlTableData);
+                workflowRequestTableRecords.add(oaWorkFlowDetailDataListDTO);
+                oaWorkFlowDetailObjDTO.setWorkflowRequestTableRecords(workflowRequestTableRecords);
+                detailList.add(oaWorkFlowDetailObjDTO);
+            }
             workflowDTO.setDetailData(detailList);
-            workflowDTO.setRequestName("不合格品处理审批");
+            workflowDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
             //调用
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workflowDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
@@ -555,6 +596,26 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
             Boolean aBoolean = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.add(processBusiLinkDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
+            }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.DEFECT_PRODUCT.getName(),SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            String content = String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(),SecurityUtils.getUser().getName());
+            sysMsgSendDTO.setContent(content);
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getApproveMan()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            try {
+                Boolean a = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info("消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
             }
         }
     }
@@ -617,6 +678,17 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
         return recordIds;
     }
 
+
+    /**
+     * 生成流程实例标题  流程实例名称-流程发起人名称-日期
+     *
+     * @param titleName
+     * @param createName
+     * @return
+     */
+    private String sendTitle(String titleName, String createName) {
+        return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
+    }
 
 }
 
