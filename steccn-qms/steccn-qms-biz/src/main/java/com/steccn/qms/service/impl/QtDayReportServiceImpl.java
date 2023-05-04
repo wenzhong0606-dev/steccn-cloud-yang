@@ -14,6 +14,7 @@ import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
+import com.steccn.common.vo.R;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -853,6 +854,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         }
         List<QtChartSubDetailDTO> allData = Lists.newArrayList();
         QtChartParamDTO chartParam = new QtChartParamDTO();
+        //如果为空则传所有产线
+        if(CollUtil.isEmpty(dto.getProductLineIds())){
+            List<SysOfficeVO> list = FeignOptional.of(()->remoteOfficeFeign.flatData(QtManagerConstant.NUM_9.toString()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get() ;
+            Set<Integer> officeSet = Sets.newHashSet();
+            list.forEach(tmp -> {
+                officeSet.add(tmp.getId());
+            });
+            dto.setProductLineIds(officeSet);
+        }
         for(Integer tmp:dto.getProductLineIds()){
             chartParam.setProductLineId(tmp);
             chartParam.setDateStart(dto.getStartDate());
@@ -1040,7 +1050,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     if(CollUtil.isEmpty(dayData)){
                         lineDataPullTmp.add(null);
                         lineDataPullTmp.add(null);
-                        lineDataLossTmp.add(null);
+                        lineDataLossTmp.add("");
                     }else {
                         //算拉引量和掰边损耗
                         QtChartSubDetailDTO pullAndLoss = dayData.stream().filter(v->v.getWorkOrder().equals(className) && v.getReason().equals("掰边损耗")).findFirst().orElse(null);

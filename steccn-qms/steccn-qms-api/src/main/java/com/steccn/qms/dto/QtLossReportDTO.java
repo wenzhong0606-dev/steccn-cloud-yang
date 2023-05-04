@@ -23,7 +23,7 @@ public class QtLossReportDTO implements Serializable {
     /**
      * 产线id
      */
-    @NotEmpty(message = "产线id不能为空")
+    @NotNull(message = "产线id不能为空")
     private Set<Integer> productLineIds;
 
     /**
