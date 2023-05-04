@@ -71,8 +71,8 @@ public class OaFeignController {
 
     @ApiOperation("保存文档")
     @GetMapping("/workflow/saveDoc")
-    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url){
-        return R.success(oaService.saveDoc(url));
+    public R<OaSaveDocVO> saveDoc(@RequestParam("url") String url, @RequestParam("docName") String docName){
+        return R.success(oaService.saveDoc(url,docName));
     }
 
 }

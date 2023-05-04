@@ -16,14 +16,4 @@
         id,code,record_time,
         value,create_time
     </sql>
-    <select id="rwPreLoad" resultType="com.steccn.data.domain.PmStationCollect">
-        SELECT
-         *
-        FROM
-         pm_station_collect
-        WHERE
-            (ID = ( SELECT ID FROM pm_station_collect WHERE code = #{dto.code} AND record_time &lt;= #{dto.startTime} ORDER BY record_time DESC LIMIT 1 ))
-           OR
-            (ID = ( SELECT ID FROM pm_station_collect WHERE code = #{dto.code} AND record_time &lt;= #{dto.endTime} ORDER BY record_time DESC LIMIT 1 ))
-    </select>
 </mapper>

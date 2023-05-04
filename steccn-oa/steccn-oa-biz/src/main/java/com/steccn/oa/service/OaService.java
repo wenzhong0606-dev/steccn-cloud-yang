@@ -604,7 +604,7 @@ public class OaService {
      * @param url
      * @return
      */
-    public OaSaveDocVO saveDoc(String url){
+    public OaSaveDocVO saveDoc(String url,String docName){
         MultiValueMap<String, String> headers = this.setHeaders();
         OaDocDTO dto = new OaDocDTO();
         //默认目录是93
@@ -624,7 +624,7 @@ public class OaService {
                 "\" target=\"_blank\">跳转</a></p>\n" +
                 "</body>\n" +
                 "</html>");
-        dto.setDocSubject("流程跳转"+ RandomUtil.randomString(4));
+        dto.setDocSubject(docName);
         String result = oaApi.saveDoc(headers,dto);
         OaSaveDocVO oaSaveDocVO = JSONObject.parseObject(result, OaSaveDocVO.class);
         return oaSaveDocVO;

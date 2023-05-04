@@ -36,11 +36,8 @@ import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.QtImproveRecordApproveDTO;
 import com.steccn.qms.domain.*;
 import com.steccn.qms.dto.*;
-import com.steccn.qms.service.QtImproveProgresssService;
-import com.steccn.qms.service.QtImproveRecordDetailService;
-import com.steccn.qms.service.QtImproveRecordService;
+import com.steccn.qms.service.*;
 import com.steccn.qms.mapper.QtImproveRecordMapper;
-import com.steccn.qms.service.QtImproveStepManService;
 import com.steccn.qms.util.CodeGenerateUtil;
 import com.steccn.qms.vo.QtImproveProgressVO;
 import com.steccn.qms.vo.QtImproveRecordDetailVO;
@@ -51,6 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -86,6 +85,13 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     private final OaInfoService oaInfoService;
 
     private final RemoteProcessBusiLinkFeignApi remoteProcessBusiLinkFeignApi;
+    @Lazy
+    @Autowired
+    private  QtCustomerComplainService qtCustomerComplainService;
+
+    @Lazy
+    @Autowired
+    private  QtDefectProductService qtDefectProductService;
 
 
     @Override
@@ -97,12 +103,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //1.定义查询条件查询数据
-        LambdaQueryWrapper<QtImproveRecord> between = new LambdaQueryWrapper<QtImproveRecord>()
-                .like(Objects.nonNull(dto.getTitle()),QtImproveRecord::getTitle,dto.getTitle())
-                .like(Objects.nonNull(dto.getImproveOrder()), QtImproveRecord::getImproveOrder, dto.getImproveOrder())
-                .like(Objects.nonNull(dto.getDescription()), QtImproveRecord::getDescription, dto.getDescription())
-                .like(Objects.nonNull(dto.getCustomerComplainTitle()), QtImproveRecord::getCustomerComplainTitle, dto.getCustomerComplainTitle())
-                .like(Objects.nonNull(dto.getDefectProductTitle()), QtImproveRecord::getDefectProductTitle, dto.getDefectProductTitle()).eq(Objects.nonNull(dto.getCreateBy()), QtImproveRecord::getCreateBy, dto.getCreateBy()).eq(Objects.nonNull(dto.getStatus()), QtImproveRecord::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getStartApproverId()), QtImproveRecord::getStartApproverId, dto.getStartApproverId()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtImproveRecord::getCreateTime, dto.getStartTime(), dto.getEndTime());
+        LambdaQueryWrapper<QtImproveRecord> between = new LambdaQueryWrapper<QtImproveRecord>().like(Objects.nonNull(dto.getTitle()), QtImproveRecord::getTitle, dto.getTitle()).like(Objects.nonNull(dto.getImproveOrder()), QtImproveRecord::getImproveOrder, dto.getImproveOrder()).like(Objects.nonNull(dto.getDescription()), QtImproveRecord::getDescription, dto.getDescription()).like(Objects.nonNull(dto.getCustomerComplainTitle()), QtImproveRecord::getCustomerComplainTitle, dto.getCustomerComplainTitle()).like(Objects.nonNull(dto.getDefectProductTitle()), QtImproveRecord::getDefectProductTitle, dto.getDefectProductTitle()).eq(Objects.nonNull(dto.getCreateBy()), QtImproveRecord::getCreateBy, dto.getCreateBy()).eq(Objects.nonNull(dto.getStatus()), QtImproveRecord::getStatus, dto.getStatus()).eq(Objects.nonNull(dto.getStartApproverId()), QtImproveRecord::getStartApproverId, dto.getStartApproverId()).between(Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime()), QtImproveRecord::getCreateTime, dto.getStartTime(), dto.getEndTime());
         if (Objects.nonNull(dto.getSortField())) {
             //定义排序条件
             if (QtManagerConstant.QT_IMPROVE_RECORD_ORDER.equals(dto.getSortField())) {
@@ -182,7 +183,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
             workFlowParamDTO.setUserId(SecurityUtils.getUser().getUserId());
             workFlowParamDTO.setWorkflowId("153");
-            workFlowParamDTO.setRequestName("整改启动审批");
+            workFlowParamDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(), SecurityUtils.getUser().getName()));
             //主要数据
             List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
             //审批发起人
@@ -196,17 +197,21 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //创建人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
             //创建时间
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTime.now().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss")));
             //整改启动审批人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, dto.getStartApproverId().toString()));
             //D1处理人
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR, dto.getD1ApproverId().toString()));
-            //关联不合格品处理/关联客诉
-            OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-            if (Objects.nonNull(dto.getCustomerComplainId())) {
-                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS, oaSaveDocVO.getDocid().toString()));
+            if (Objects.nonNull(qtImproveRecord.getCustomerComplainId())) {
+                //关联客诉
+                QtCustomerComplain customerComplain = qtCustomerComplainService.getById(qtImproveRecord.getCustomerComplainId());
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
             } else {
-                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, oaSaveDocVO.getDocid().toString()));
+                //关联不合格品
+                QtDefectProduct qtDefectProduct = qtDefectProductService.getById(qtImproveRecord.getDefectProductId());
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
             }
             workFlowParamDTO.setMainData(mainDataList);
             //调用
@@ -223,10 +228,29 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
             }
+            //发送消息
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(), SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), SecurityUtils.getUser().getName()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
+            SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(Long.valueOf(oaWorkflowStatusVO.getRequestId()));
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean b = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!b) {
+                    log.info(qtImproveRecord + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+                throw new BusinessException("消息发送失败");
+            }
         } finally {
             lock.unlock();
-        }
-        return Boolean.TRUE;
+        } return Boolean.TRUE;
     }
 
     @Override
@@ -266,17 +290,21 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
         //创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(),"yyyy-MM-dd HH:mm:ss").toString()));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss").toString()));
         //整改启动审批人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, dto.getStartApproverId().toString()));
         //D1处理人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR, dto.getD1ApproverId().toString()));
-        //关联不合格品处理/关联客诉
-        OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
-        if (Objects.nonNull(dto.getCustomerComplainId())) {
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS, oaSaveDocVO.getDocid().toString()));
+        if (Objects.nonNull(record.getCustomerComplainId())) {
+            //关联客诉
+            QtCustomerComplain customerComplain = qtCustomerComplainService.getById(record.getCustomerComplainId());
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
         } else {
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, oaSaveDocVO.getDocid().toString()));
+            //关联不合格品
+            QtDefectProduct qtDefectProduct = qtDefectProductService.getById(record.getDefectProductId());
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
         }
         OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
         workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
@@ -286,6 +314,26 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.submitWorkflow(workFlowSubmitParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
             throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
+        }
+        //发送消息
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_APPROVE.getName(), SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
+        sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setUserList(Sets.newHashSet(dto.getStartApproverId()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(Long.valueOf(linkDTO.getInstanceId()));
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean b = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!b) {
+                log.info(record + "：消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
         }
         return Boolean.TRUE;
     }
@@ -316,6 +364,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //发送消息
             String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+            sysMsgAdditionDTO.setId(record.getId());
             sysMsgAdditionDTO.setCode(record.getImproveOrder());
             sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(qtImproveRecordDetail.getApproverId()));
         }
@@ -335,8 +384,9 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //发送消息
         String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTemplate(), record.getTitle(), record.getCreateName());
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(record.getId());
         sysMsgAdditionDTO.setCode(record.getImproveOrder());
-        sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
+        sendMessage(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_SEND_BACK.getTitle(), sysMsgAdditionDTO, content, Sets.newHashSet(detail.getApproverId()));
         return updateById(record);
     }
 
@@ -414,18 +464,19 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
 
     /**
      * 结案提交流程
+     *
      * @param dto
      * @param record
      * @return
      */
-    private Boolean closeout(QtImproveRecordApproveDTO dto,QtImproveRecord record){
+    private Boolean closeout(QtImproveRecordApproveDTO dto, QtImproveRecord record) {
         //判断是否发起过流程，如果发起过 提交
-        ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByTypeAndBusiId(record.getId(),QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        ProcessBusiLinkDTO linkDTO = FeignOptional.of(() -> remoteProcessBusiLinkFeignApi.getByTypeAndBusiId(record.getId(), QtManagerConstant.QtBusinessType.IMPROVE_CLOSEOUT.getCode()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //调用OA创建审批流程
         OaWorkFlowParamDTO workFlowParamDTO = new OaWorkFlowParamDTO();
         workFlowParamDTO.setUserId(SecurityUtils.getUser().getUserId());
         workFlowParamDTO.setWorkflowId(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getId());
-        workFlowParamDTO.setRequestName("整改结案审批启动");
+        workFlowParamDTO.setRequestName(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getName(), SecurityUtils.getUser().getName()));
         //主要数据
         List<OaWorkFlowNameValueDTO> mainDataList = com.google.common.collect.Lists.newArrayList();
         //审批发起人
@@ -439,12 +490,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         //创建人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJR, SecurityUtils.getUser().getName()));
         //创建时间
-        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(),"yyyy-MM-dd HH:mm:ss")));
+        mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CJSJ, LocalDateTimeUtil.format(LocalDateTime.now(), "yyyy-MM-dd HH:mm:ss")));
         //整改启动审批人
         mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_ZGQDSPR, record.getStartApproverId().toString()));
         //D1处理人 - D7 处理人
         List<QtImproveRecordDetail> list = qtImproveRecordDetailService.list(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()));
-        list.forEach(recordDetail -> {
+        for (QtImproveRecordDetail recordDetail : list) {
             if (QtManagerConstant.ImproveProgressStatus.D1_CREATE.getName().equals(recordDetail.getApproverStep())) {
                 //d1
                 mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D1CLR, recordDetail.getApproverName()));
@@ -469,13 +520,17 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             } else if (QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName().equals(recordDetail.getApproverStep())) {
                 mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_D8SPR, recordDetail.getApproverId().toString()));
             }
-        });
-        //关联不合格品处理/关联客诉
-        OaSaveDocVO oaSaveDocVO = FeignOptional.of(() -> oaInfoService.saveDoc(dto.getInfoUrl()), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        }
         if (Objects.nonNull(record.getCustomerComplainId())) {
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS, oaSaveDocVO.getDocid().toString()));
+            //关联客诉
+            QtCustomerComplain customerComplain = qtCustomerComplainService.getById(record.getCustomerComplainId());
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
         } else {
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, oaSaveDocVO.getDocid().toString()));
+            //关联不合格品
+            QtDefectProduct qtDefectProduct = qtDefectProductService.getById(record.getDefectProductId());
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
         }
         //抄送人数据
         if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {
@@ -484,7 +539,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
 
-        if (Objects.nonNull(linkDTO)){
+        if (Objects.nonNull(linkDTO.getId())) {
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
             workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
@@ -495,7 +550,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
             }
-        }else {
+        } else {
             workFlowParamDTO.setMainData(mainDataList);
             //新建
             OaWorkflowStatusVO oaWorkflowStatusVO = FeignOptional.of(() -> oaInfoService.createWorkflow(workFlowParamDTO), FeignConstant.STECCN_OA_SERVICE_NAME).get();
@@ -512,6 +567,29 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 throw new BusinessException("调用保存业务数据失败");
             }
         }
+        //发送消息
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(sendTitle(OaManagerConstant.OaWorkFlow.IMPROVER_CLOSEOUT.getName(), SecurityUtils.getUser().getName()));
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_APPROVE.getCode());
+        sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), SecurityUtils.getUser().getName()));
+        //获取d8审批人
+        QtImproveRecordDetail qtImproveRecordDetail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()).eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName()));
+        sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecordDetail.getApproverId()));
+        SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
+        sysMsgAdditionDTO.setId(record.getId());
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean b = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!b) {
+                log.info(record + "：消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
+
         return Boolean.TRUE;
     }
 
@@ -522,8 +600,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         QtImproveRecord qtImproveRecord = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(qtImproveRecord), "当前业务数据不存在");
         //获取节点操作人信息
-        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
-                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()), Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_0.equals(qtImproveRecord.getStatus()), "当前状态不可审批通过");
@@ -551,10 +628,10 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateTime()));
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
+            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
             //发送消息
@@ -586,8 +663,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         QtImproveRecord qtImproveRecord = getById(processBusiLinkDTO.getBusiId());
         Assert.isTrue(Objects.nonNull(qtImproveRecord), "当前业务数据不存在");
         //获取节点操作人信息
-        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()),
-                Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        OaWorkFlowOperatorDTO oaWorkFlowOperatorDTO = FeignOptional.of(() -> oaInfoService.getCurrentOperator(new OaOperatorParamDTO(Integer.valueOf(dto.getData().getRequestId()), Integer.valueOf(dto.getData().getNodeId()))), FeignConstant.STECCN_OA_SERVICE_NAME).get();
         //审批通过
         if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             Assert.isTrue(QtManagerConstant.NUM_9.equals(qtImproveRecord.getStatus()), "当前状态不可审批通过");
@@ -595,12 +671,25 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //获取d7的处理人信息
             QtImproveRecordDetail one = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, qtImproveRecord.getId()).eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D7_PREVENT_RECURRENCE.getName()));
             //发送消息给处理人
-            String content = String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTemplate(), qtImproveRecord.getTitle(), qtImproveRecord.getCreateName());
+            SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+            sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_APPROVE.getCode());
+            sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_APPROVE_PASS.getTitle());
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_APPROVE_PASS.getTemplate(), qtImproveRecord.getTitle(), qtImproveRecord.getCreateName()));
+            sysMsgSendDTO.setUserList(Sets.newHashSet(one.getApproverId()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setCode(qtImproveRecord.getImproveOrder());
             sysMsgAdditionDTO.setId(qtImproveRecord.getId());
-            sendMessage(sysMsgAdditionDTO, content, Sets.newHashSet(one.getApproverId()));
-
+            sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+            sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            //发送消息
+            try {
+                Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if (!aBoolean) {
+                    log.info(qtImproveRecord + "：消息发送失败");
+                }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+//                throw new BusinessException("消息发送失败");
+            }
             //获取d8的处理人信息
             QtImproveRecordDetail d8Detail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, qtImproveRecord.getId()).eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName()));
             //保存D8结案
@@ -611,17 +700,17 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(d8Detail.getApproverId());
             qtImproveProgresss.setOpCreateName(d8Detail.getApproverName());
             qtImproveProgresssService.save(qtImproveProgresss);
-        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType())&& OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
+        } else if (OaDataConstant.WORKFLOW_DISAGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_APPROVE.equals(dto.getData().getNodeName())) {
             //退回
             qtImproveRecord.setStatus(QtManagerConstant.NUM_8);
             //发送消息
             SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
             sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.SEND_BACK.getCode());
             sysMsgSendDTO.setTitle(data.getRequestName());
-            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateTime()));
+            sysMsgSendDTO.setContent(String.format(SysMsgConstant.MsgTypeEnum.SEND_BACK.getTemplate(), qtImproveRecord.getCreateName()));
             sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecord.getCreateBy()));
             SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-            sysMsgAdditionDTO.setId(Long.valueOf(data.getRequestId()));
+            sysMsgAdditionDTO.setId(Long.valueOf(dto.getData().getRequestId()));
             sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
             sysMsgSendDTO.setPushType(SysMsgConstant.MsgCategoryEnum.TO_BE_DO.getCode());
             //发送消息
@@ -675,11 +764,33 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     }
 
 
+    private Boolean sendMessage(String title, SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
+        //定义消息模板
+        SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
+        sysMsgSendDTO.setTitle(title);
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getCode());
+        sysMsgSendDTO.setContent(content);
+        sysMsgSendDTO.setUserList(userIds);
+        sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
+        sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+        //发送消息
+        try {
+            Boolean aBoolean = FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgSendDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            if (!aBoolean) {
+                log.info("消息发送失败");
+            }
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new BusinessException("消息发送失败");
+        }
+        return Boolean.TRUE;
+    }
+
     private Boolean sendMessage(SysMsgAdditionDTO sysMsgAdditionDTO, String content, Set<Long> userIds) {
         //定义消息模板
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
-        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getTitle());
-        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.CUSTOMER_COMPLAIN.getCode());
+        sysMsgSendDTO.setTitle(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getTitle());
+        sysMsgSendDTO.setType(SysMsgConstant.MsgTypeEnum.IMPROVE_RECORD_PENDING.getCode());
         sysMsgSendDTO.setContent(content);
         sysMsgSendDTO.setUserList(userIds);
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
@@ -880,6 +991,28 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         }
         return qtImproveRecordVO;
     }
+
+    /**
+     * 生成流程实例标题  流程实例名称-流程发起人名称-日期
+     *
+     * @param titleName
+     * @param createName
+     * @return
+     */
+    private String sendTitle(String titleName, String createName) {
+        return titleName + QtManagerConstant.WHIPPTREE + createName + QtManagerConstant.WHIPPTREE + LocalDate.now();
+    }
+
+    /**
+     * 保存infourl的详情内容
+     * @param infoUrl
+     * @param docName
+     * @return
+     */
+    private OaSaveDocVO saveDoc(String infoUrl, String docName) {
+        return FeignOptional.of(() -> oaInfoService.saveDoc(infoUrl, docName), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+    }
+
 }
 
 

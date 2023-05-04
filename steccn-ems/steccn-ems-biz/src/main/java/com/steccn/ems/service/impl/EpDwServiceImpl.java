@@ -197,7 +197,7 @@ public class EpDwServiceImpl implements EpDwService {
         EpTaskExecute oldTask = epTaskExecuteService.getOne(new LambdaQueryWrapper<EpTaskExecute>().eq(EpTaskExecute::getTaskDate, date)
                 .eq(EpTaskExecute::getType, EpManagerConstant.TaskTypeEnum.TYPE_0.getCode())
                 .last(MpConstant.STR_LIMIT_1));
-        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.NOT_START.getCode().equals(oldTask.getTaskFlag())) {
+        if (Objects.nonNull(oldTask) && EpManagerConstant.TaskFlagEnum.ALL_FINISHED.getCode().equals(oldTask.getTaskFlag())) {
             //当前日期的任务已完成
             log.info("当前日期的任务已完成");
             return Boolean.FALSE;

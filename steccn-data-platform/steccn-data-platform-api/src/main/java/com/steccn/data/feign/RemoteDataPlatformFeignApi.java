@@ -3,9 +3,7 @@ package com.steccn.data.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.steccn.data.dto.DwStationCollectDTO;
-import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.dto.*;
 import com.steccn.data.vo.DwDefectCollectVO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.vo.DwStationCollectVO;
@@ -75,4 +73,27 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/warehouse/report/work/preload")
     @ApiOperation("生产管理-报工数值预填")
     R<BigDecimal> preload(@RequestBody PmReportWorkPreloadDTO dto);
+
+
+    /**
+     * 迁移数据
+     *
+     * @param dto dto
+     * @return 迁移数据
+     */
+    @PostMapping("/feign/data/warehouse/deal/data")
+    @ApiOperation("迁移数据")
+    R<Boolean> dealData(@RequestBody List<EpMeterCollectDTO> list);
+
+
+    /**
+     * 迁移数据
+     *
+     * @param list dto
+     * @return 迁移数据 pm_station_collect
+     */
+    @PostMapping("/feign/data/warehouse/psc/deal/data")
+    @ApiOperation("迁移数据")
+    R<Boolean> pmStationCollectDealData(@RequestBody List<PmStationCollectDTO> list);
+
 }
