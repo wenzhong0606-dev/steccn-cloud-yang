@@ -11,6 +11,8 @@ import com.steccn.platform.dto.SysStationWarehouseDTO;
 import com.steccn.platform.vo.SysOfficeCollectVO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yequan
@@ -54,4 +56,13 @@ public interface SysOfficeCollectService extends IService<SysOfficeCollect> {
      * @return 出站采集点
      */
     SysOfficeCollectVO outCollect(Integer stationId);
+
+
+    /**
+     * 查询工位的进出站采集点
+     * @param stationIdSet
+     * @param type
+     * @return
+     */
+    Map<Integer,String> listByStation(Set<Integer> stationIdSet, Integer type);
 }

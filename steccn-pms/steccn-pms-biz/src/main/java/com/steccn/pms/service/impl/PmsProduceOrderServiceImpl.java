@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -17,12 +18,12 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.WorkLineConvertUtil;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.data.dto.PmReportWorkPreloadDTO;
+import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
-import com.steccn.platform.feign.RemoteDictFeignApi;
-import com.steccn.platform.feign.RemoteOfficeFeign;
-import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.platform.feign.RemoteSpareUnitConvertFeignApi;
+import com.steccn.platform.feign.*;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -36,6 +37,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -57,8 +59,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder>
-        implements PmsProduceOrderService {
+public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder> implements PmsProduceOrderService {
 
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
     private final PmsWorkOrderBomService pmsWorkOrderBomService;
@@ -73,6 +74,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     private final RedissonClient redissonClient;
     private final PmsReportWorkMapper pmsReportWorkMapper;
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
+    private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
+
 
     /**
      * 新增生产订单信息
@@ -97,7 +101,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             //4.1.保存基础信息
             //获取货架信息
             if (Objects.nonNull(model.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(model.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.parent(model.getDefaultShelfId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 model.setDefaultWarehouseId(sysOfficeVO.getId());
             }
             save(model);
@@ -159,9 +163,9 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             dto.setActualEndTimeEnd(LocalDateTime.of(dto.getActualEndDateEnd(), LocalTime.MAX));
         }
         //开始时间-结束时间
-        if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())){
-            dto.setStartTime(LocalDateTime.of(dto.getStartDate(),LocalTime.MIN));
-            dto.setEndTime(LocalDateTime.of(dto.getEndDate(),LocalTime.MAX));
+        if (Objects.nonNull(dto.getStartDate()) && Objects.nonNull(dto.getEndDate())) {
+            dto.setStartTime(LocalDateTime.of(dto.getStartDate(), LocalTime.MIN));
+            dto.setEndTime(LocalDateTime.of(dto.getEndDate(), LocalTime.MAX));
         }
         //2.自定义sql查询订单信息列表
         Page<PmsProduceOrderVO> page = this.baseMapper.pageList(new Page(dto.getCurrent(), dto.getSize()), dto);
@@ -171,18 +175,16 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Set<Long> craftIds = Sets.newHashSet();
         Set<Long> orderSet = Sets.newHashSet();
         Set<Long> craftSet = Sets.newHashSet();
-        page.getRecords().forEach(
-                pmsProduceOrderVO -> {
+        page.getRecords().forEach(pmsProduceOrderVO -> {
 //                    //获取工序信息
-                    craftSet.add(pmsProduceOrderVO.getId());
-                    craftIds.add(pmsProduceOrderVO.getCraftId());
-                    dictIds.add(pmsProduceOrderVO.getTypeId());
-                    dictIds.add(pmsProduceOrderVO.getUnitId());
-                    officeIds.add(pmsProduceOrderVO.getProductionLineId());
-                    officeIds.add(pmsProduceOrderVO.getCustomerId());
-                    orderSet.add(pmsProduceOrderVO.getId());
-                }
-        );
+            craftSet.add(pmsProduceOrderVO.getId());
+            craftIds.add(pmsProduceOrderVO.getCraftId());
+            dictIds.add(pmsProduceOrderVO.getTypeId());
+            dictIds.add(pmsProduceOrderVO.getUnitId());
+            officeIds.add(pmsProduceOrderVO.getProductionLineId());
+            officeIds.add(pmsProduceOrderVO.getCustomerId());
+            orderSet.add(pmsProduceOrderVO.getId());
+        });
         Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(craftSet);
         //获取物料信息
         Map<Long, List<PmsWorkOrderBomVO>> materials = pmsWorkOrderBomService.materials(craftSet);
@@ -190,45 +192,41 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PmsWorkOrderBomVO> bomVOList = Lists.newArrayList();
         //3.0 补充处理完工信息
         Map<Long, PmsCompleteStorageNumDTO> map = pmsBarcodePrintService.orderSum(orderSet);
-        page.getRecords().forEach(
-                pmsProduceOrderVO -> {
-                    List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
-                    List<PmsWorkOrderBomVO> orderBomVOList = materials.getOrDefault(pmsProduceOrderVO.getId(), bomVOList);
-                    PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
-                    pmsProduceOrderVO.setProcessList(orderCraftVOList);
-                    pmsProduceOrderVO.setMaterialList(orderBomVOList);
-                    if (Objects.nonNull(storageNumDTO)) {
-                        pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
-                        pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
-                        dictIds.add(storageNumDTO.getUnitId());
-                    }
-                }
-        );
+        page.getRecords().forEach(pmsProduceOrderVO -> {
+            List<PmsProduceOrderCraftVO> orderCraftVOList = craftMap.getOrDefault(pmsProduceOrderVO.getId(), craftVOList);
+            List<PmsWorkOrderBomVO> orderBomVOList = materials.getOrDefault(pmsProduceOrderVO.getId(), bomVOList);
+            PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
+            pmsProduceOrderVO.setProcessList(orderCraftVOList);
+            pmsProduceOrderVO.setMaterialList(orderBomVOList);
+            if (Objects.nonNull(storageNumDTO)) {
+                pmsProduceOrderVO.setCompleteQuantity(storageNumDTO.getQuantity());
+                pmsProduceOrderVO.setCompleteUnitId(storageNumDTO.getUnitId());
+                dictIds.add(storageNumDTO.getUnitId());
+            }
+        });
         //3.1查询字典数据
         Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.2查询机构数据
-        Map<Integer, String> officeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //3.3查询工艺信息
         Map<Long, String> versionMap = pmCraftRouteService.versionById(craftIds);
         //4.处理列表单位以及产线数据
-        page.getRecords().forEach(
-                pmsProduceOrderVO -> {
-                    //4.1 处理类型数据
-                    pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
-                    //4.2 处理产线数据
-                    pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
-                    //4.3 处理单位数据
-                    pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
-                    pmsProduceOrderVO.setMinPackageUnit(dictMap.get(pmsProduceOrderVO.getMinPackageUnitId()));
-                    pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
-                    //4.4 处理工艺版本数据
-                    pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
-                    //4.4 处理完工数据
-                    pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
-                    //客户名称
-                    pmsProduceOrderVO.setCustomerName(officeMap.get(pmsProduceOrderVO.getCustomerId()));
-                }
-        );
+        page.getRecords().forEach(pmsProduceOrderVO -> {
+            //4.1 处理类型数据
+            pmsProduceOrderVO.setType(dictMap.get(pmsProduceOrderVO.getTypeId()));
+            //4.2 处理产线数据
+            pmsProduceOrderVO.setProductionLineName(officeMap.get(pmsProduceOrderVO.getProductionLineId()));
+            //4.3 处理单位数据
+            pmsProduceOrderVO.setUnit(dictMap.get(pmsProduceOrderVO.getUnitId()));
+            pmsProduceOrderVO.setMinPackageUnit(dictMap.get(pmsProduceOrderVO.getMinPackageUnitId()));
+            pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+            //4.4 处理工艺版本数据
+            pmsProduceOrderVO.setCraftVersion(versionMap.get(pmsProduceOrderVO.getCraftId()));
+            //4.4 处理完工数据
+            pmsProduceOrderVO.setCompleteUnitName(dictMap.get(pmsProduceOrderVO.getCompleteUnitId()));
+            //客户名称
+            pmsProduceOrderVO.setCustomerName(officeMap.get(pmsProduceOrderVO.getCustomerId()));
+        });
         return page;
     }
 
@@ -244,54 +242,52 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             BeanUtil.copyProperties(dto, pmsProduceOrder);
             //获取货架信息
             if (Objects.nonNull(pmsProduceOrder.getDefaultShelfId())) {
-                SysOfficeVO sysOfficeVO = FeignOptional.of(()->remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                SysOfficeVO sysOfficeVO = FeignOptional.of(() -> remoteOfficeFeign.parent(pmsProduceOrder.getDefaultShelfId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 pmsProduceOrder.setDefaultShelfId(sysOfficeVO.getId());
             }
             updateById(pmsProduceOrder);
             // 获取工序信息
             if (CollUtil.isNotEmpty(dto.getProcessList())) {
                 Set<Long> ids = Sets.newHashSet();
-                dto.getProcessList().forEach(
-                        pmsProduceOrderCraftDTO -> {
-                            PmsProduceOrderCraft craft = new PmsProduceOrderCraft();
-                            BeanUtil.copyProperties(pmsProduceOrderCraftDTO, craft);
-                            craft.setProduceOrderId(dto.getId());
-                            if (Objects.nonNull(craft.getId())) {
-                                //修改工序信息
-                                ids.add(craft.getId());
-                                pmsProduceOrderCraftService.updateById(craft);
-                                //处理工位数据
-                                if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
-                                    pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
-                                        PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
-                                        BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
-                                        pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
-                                        if (Objects.nonNull(pmsWorkOrderCraftStation.getId())) {
-                                            pmsWorkOrderCraftStationService.updateById(pmsWorkOrderCraftStation);
-                                        } else {
-                                            pmsWorkOrderCraftStationService.save(pmsWorkOrderCraftStation);
-                                        }
-                                    });
+                dto.getProcessList().forEach(pmsProduceOrderCraftDTO -> {
+                    PmsProduceOrderCraft craft = new PmsProduceOrderCraft();
+                    BeanUtil.copyProperties(pmsProduceOrderCraftDTO, craft);
+                    craft.setProduceOrderId(dto.getId());
+                    if (Objects.nonNull(craft.getId())) {
+                        //修改工序信息
+                        ids.add(craft.getId());
+                        pmsProduceOrderCraftService.updateById(craft);
+                        //处理工位数据
+                        if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
+                            pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
+                                PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
+                                BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
+                                pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
+                                if (Objects.nonNull(pmsWorkOrderCraftStation.getId())) {
+                                    pmsWorkOrderCraftStationService.updateById(pmsWorkOrderCraftStation);
+                                } else {
+                                    pmsWorkOrderCraftStationService.save(pmsWorkOrderCraftStation);
                                 }
-                            } else {
-                                //新增工序信息
-                                craft.setProduceOrderId(dto.getId());
-                                pmsProduceOrderCraftService.save(craft);
-                                //处理工位数据
-                                if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
-                                    List<PmsWorkOrderCraftStation> stations = Lists.newArrayList();
-                                    pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
-                                        PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
-                                        pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
-                                        BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
-                                        stations.add(pmsWorkOrderCraftStation);
-                                    });
-                                    //保存工位数据
-                                    pmsWorkOrderCraftStationService.saveBatch(stations);
-                                }
-                            }
+                            });
                         }
-                );
+                    } else {
+                        //新增工序信息
+                        craft.setProduceOrderId(dto.getId());
+                        pmsProduceOrderCraftService.save(craft);
+                        //处理工位数据
+                        if (CollUtil.isNotEmpty(pmsProduceOrderCraftDTO.getStationList())) {
+                            List<PmsWorkOrderCraftStation> stations = Lists.newArrayList();
+                            pmsProduceOrderCraftDTO.getStationList().forEach(station -> {
+                                PmsWorkOrderCraftStation pmsWorkOrderCraftStation = new PmsWorkOrderCraftStation();
+                                pmsWorkOrderCraftStation.setProduceOrderCraftId(craft.getId());
+                                BeanUtil.copyProperties(station, pmsWorkOrderCraftStation);
+                                stations.add(pmsWorkOrderCraftStation);
+                            });
+                            //保存工位数据
+                            pmsWorkOrderCraftStationService.saveBatch(stations);
+                        }
+                    }
+                });
                 //删除工序信息
                 pmsProduceOrderCraftService.deleteCrafts(ids, dto.getId());
             }
@@ -367,11 +363,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public ReportWorkOrderVO reportWorkOrder(Integer productLineId, Integer stationId) {
         //1.根据产线查询订单
-        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                .eq(PmsProduceOrder::getProductionLineId, productLineId)
-                .eq(PmsProduceOrder::getState, 2)
-                .orderByDesc(PmsProduceOrder::getCreateTime)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, productLineId).eq(PmsProduceOrder::getState, 2).orderByDesc(PmsProduceOrder::getCreateTime).last(MpConstant.STR_LIMIT_1));
         Assert.notNull(order, "该产线暂无执行中的订单，请选择其他订单");
         return reportWorkOrder(order, stationId);
     }
@@ -418,7 +410,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             dictIds.add(pmsCompleteStorageNum.getUnitId());
         });
         //3.3查询字典数据
-        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //4.处理返回数据
         page.getRecords().forEach(pmsProduceOrderVO -> {
             PmsCompleteStorageNumDTO storageNumDTO = map.get(pmsProduceOrderVO.getId());
@@ -542,8 +534,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //1.查询订单
         PmsProduceOrder order = selectOrder(orderId);
         //2.判断订单状态
-        Assert.isTrue(PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState())
-                || PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState()), "当前订单状态不可确认");
+        Assert.isTrue(PmManagerConstant.OrderStateEnum.THREE.getCode().equals(order.getState()) || PmManagerConstant.OrderStateEnum.FIVE.getCode().equals(order.getState()), "当前订单状态不可确认");
         //3.记录批次时间
         //3.1 获取批次信息
         PmsWorkOrderBatch batch = pmsWorkOrderBatchService.getByOrderId(orderId);
@@ -611,19 +602,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //定义返回对象
         PmsProduceOrderVO pmsProduceOrderVO = null;
         //查询产线正在执行的订单
-        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                .eq(PmsProduceOrder::getProductionLineId, produceLineId)
-                .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
-                .last(MpConstant.STR_LIMIT_1)
-        );
+        PmsProduceOrder order = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getProductionLineId, produceLineId).eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()).last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(order)) {
             pmsProduceOrderVO = new PmsProduceOrderVO();
             BeanUtil.copyProperties(order, pmsProduceOrderVO);
-            PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
-                    .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
-                    .eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES)
-                    .last(MpConstant.STR_LIMIT_1));
-            String productionLineName = FeignOptional.of(()->remoteOfficeFeign.getNameById(order.getProductionLineId()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            PmsWorkOrderBatch pmsWorkOrderBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, order.getId()).eq(PmsWorkOrderBatch::getCurrentBatchFlag, MpConstant.YES).last(MpConstant.STR_LIMIT_1));
+            String productionLineName = FeignOptional.of(() -> remoteOfficeFeign.getNameById(order.getProductionLineId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId(), order.getMinPackageUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             if (Objects.nonNull(pmsWorkOrderBatch)) {
                 pmsProduceOrderVO.setBatch(pmsWorkOrderBatch.getId());
@@ -671,7 +655,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             List<PmsProduceOrder> pmsProduceOrders = listByIds(orderSet);
             if (CollUtil.isNotEmpty(pmsProduceOrders)) {
                 Set<Long> unitSet = pmsProduceOrders.stream().map(PmsProduceOrder::getUnitId).collect(Collectors.toSet());
-                Map<Long, String> unitDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Long, String> unitDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(unitSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 for (PmsProduceOrder pmsProduceOrder : pmsProduceOrders) {
                     BaseSelectVO<Long> baseVo = new BaseSelectVO<>();
                     baseVo.setId(pmsProduceOrder.getUnitId());
@@ -717,8 +701,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             BigDecimal conversionQuantity = null;
             BigDecimal quantity = null;
             if (CollectionUtils.isNotEmpty(map.get(produceOrderTrackReportVO.getMaterialId()))) {
-                Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId())
-                        .stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
+                Optional<SysSpareUnitConversionVO> optional = map.get(produceOrderTrackReportVO.getMaterialId()).stream().filter(sysSpareUnitConversionVO -> sysDictVO.getId().equals(sysSpareUnitConversionVO.getConversionUnitId())).findAny();
 
                 if (optional.isPresent()) {
                     conversionQuantity = optional.get().getConversionQuantity();
@@ -775,12 +758,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     @Override
     public List<PmsProduceOrderVO> executionOfOrder(Set<Integer> ids) {
         //查询产线正在执行的订单
-        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .in(PmsProduceOrder::getProductionLineId, ids)
-                .notIn(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.ZERO.getCode(),
-                        PmManagerConstant.OrderStateEnum.SIX.getCode(),
-                        PmManagerConstant.OrderStateEnum.SEVEN.getCode())
-        );
+        List<PmsProduceOrder> orderList = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getProductionLineId, ids).notIn(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.ZERO.getCode(), PmManagerConstant.OrderStateEnum.SIX.getCode(), PmManagerConstant.OrderStateEnum.SEVEN.getCode()));
         return BeanUtil.copyToList(orderList, PmsProduceOrderVO.class);
     }
 
@@ -789,9 +767,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         Map<Long, PmsProduceOrder> map = Maps.newHashMap();
         List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getId, orderIds));
         if (CollUtil.isNotEmpty(list)) {
-            list.forEach(order ->
-                    map.put(order.getId(), order)
-            );
+            list.forEach(order -> map.put(order.getId(), order));
         }
         return map;
     }
@@ -802,9 +778,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         if (CollUtil.isEmpty(materialIds)) {
             return map;
         }
-        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .in(PmsProduceOrder::getMaterialId, materialIds)
-                .isNotNull(PmsProduceOrder::getActualEndTime));
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getMaterialId, materialIds).isNotNull(PmsProduceOrder::getActualEndTime));
         if (CollUtil.isNotEmpty(list)) {
             Map<Long, List<PmsProduceOrder>> collect = list.stream().collect(Collectors.groupingBy(PmsProduceOrder::getMaterialId));
             collect.forEach((key, value) -> {
@@ -836,15 +810,15 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<DwCurrentReportWorkDTO> resList = pmsReportWorkMapper.currentDateReportWork(start, end);
         if (CollUtil.isNotEmpty(resList)) {
             Set<Long> classIdSet = resList.stream().map(v -> v.getClassesId()).collect(Collectors.toSet());
-            Map<Long, SysDictVO> classMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(classIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, SysDictVO> classMap = FeignOptional.of(() -> remoteDictFeignApi.listById(Lists.newArrayList(classIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Long> materialSet = resList.stream().map(v -> v.getMaterialId()).collect(Collectors.toSet());
-            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
             Set<Integer> productLineIdSet = resList.stream().map(v -> v.getProductLineId()).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> parentMap = FeignOptional.of(() -> remoteOfficeFeign.parentInfo(new ArrayList<>(productLineIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             Set<Integer> collect = parentMap.values().stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(()->remoteOfficeFeign.parentInfo(new ArrayList<>(collect)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, SysOfficeVO> grandPaMap = FeignOptional.of(() -> remoteOfficeFeign.parentInfo(new ArrayList<>(collect)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             SysOfficeVO defaultSysOfficeVO = new SysOfficeVO();
             resList.forEach(ele -> {
                 BigDecimal thick = materialMap.getOrDefault(ele.getMaterialId(), defaultEqpSpareVO).getThickQuantity();
@@ -867,24 +841,30 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
-    public List<ProduceOrderDataInfoVO> getExecuteOrderInfo(){
+    public List<ProduceOrderDataInfoVO> getExecuteOrderInfo() {
         //1.获取16条产线的信息
         SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
         sysOfficeTypeKeyDTO.setType(Lists.newArrayList(PmManagerConstant.NUM_9));
-        sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList(PmManagerConstant.UROPATAGIA,PmManagerConstant.DEEP_PROCESSING));
-        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(()->remoteOfficeFeign.listMultiFilter(sysOfficeTypeKeyDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        sysOfficeTypeKeyDTO.setKeyList(Lists.newArrayList(PmManagerConstant.UROPATAGIA, PmManagerConstant.DEEP_PROCESSING));
+        List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listMultiFilter(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         Set<Integer> officeIdSet = sysOfficeVOS.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
-        Map<Integer, String> officeNameMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(officeIdSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> officeNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //2.查询16条产线下正在执行中的订单
         List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().in(PmsProduceOrder::getProductionLineId, officeIdSet).eq(PmsProduceOrder::getState, PmManagerConstant.NUM_2));
         //3.定义返回数据的集合
         List<ProduceOrderDataInfoVO> infoVOList = Lists.newArrayList();
         //4.处理数据
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
+            //获取当前产量
+            Map<Long, BigDecimal> currentProductionMap = getCurrentProduction(list.stream().map(PmsProduceOrder::getId).collect(Collectors.toSet()));
             for (PmsProduceOrder pmsProduceOrder : list) {
                 ProduceOrderDataInfoVO produceOrderDataInfoVO = BeanUtil.copyProperties(pmsProduceOrder, ProduceOrderDataInfoVO.class);
                 produceOrderDataInfoVO.setProductionLineName(officeNameMap.get(produceOrderDataInfoVO.getProductionLineId()));
                 produceOrderDataInfoVO.setPlanQuantity(pmsProduceOrder.getQuantity());
+                produceOrderDataInfoVO.setCurrentProduction(currentProductionMap.get(pmsProduceOrder.getId()));
+                Integer[] convert = WorkLineConvertUtil.convert(produceOrderDataInfoVO.getProductionLineName());
+                produceOrderDataInfoVO.setWorkNumberFlag(convert[0]);
+                produceOrderDataInfoVO.setLineNumberFlag(convert[1]);
                 infoVOList.add(produceOrderDataInfoVO);
             }
             //获取单位名称
@@ -895,17 +875,120 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //处理规格数据以及单位数据
             for (ProduceOrderDataInfoVO produceOrderDataInfoVO : infoVOList) {
-                produceOrderDataInfoVO.setSpecification(materialMap.get(produceOrderDataInfoVO.getMaterialId()).getSpecifications());
+                EqpSpareVO material = materialMap.get(produceOrderDataInfoVO.getMaterialId());
+                produceOrderDataInfoVO.setSpecification(material.getSpecifications());
                 produceOrderDataInfoVO.setUnitName(dictMap.get(produceOrderDataInfoVO.getUnitId()));
-                //todo 当前产量（暂时用随机数代替）
-                Random random = new Random();
-                produceOrderDataInfoVO.setCurrentProduction(BigDecimal.valueOf(random.nextDouble()));
-                if (produceOrderDataInfoVO.getProductionLineName().startsWith(PmManagerConstant.UROPATAGIA)){
+                produceOrderDataInfoVO.setLengthQuantity(material.getLengthQuantity());
+                produceOrderDataInfoVO.setLengthUnitName(material.getLengthUnitName());
+                produceOrderDataInfoVO.setWideQuantity(material.getWideQuantity());
+                produceOrderDataInfoVO.setWideUnidName(material.getWideUnidName());
+                produceOrderDataInfoVO.setHighQuantity(material.getHighQuantity());
+                produceOrderDataInfoVO.setHighUnitName(material.getHighUnitName());
+                if (produceOrderDataInfoVO.getProductionLineName().startsWith(PmManagerConstant.UROPATAGIA)) {
                     produceOrderDataInfoVO.setLineFlag(0);
                 }
             }
+            //排序
+            infoVOList.sort(Comparator.comparing(ProduceOrderDataInfoVO::getLineFlag)
+                    .thenComparing(ProduceOrderDataInfoVO::getWorkNumberFlag)
+                    .thenComparing(ProduceOrderDataInfoVO::getLineNumberFlag));
         }
         return infoVOList;
+    }
+
+
+    /**
+     * 处理订单的当前产量
+     *
+     * @param orderIdSet
+     * @return
+     */
+    private Map<Long, BigDecimal> getCurrentProduction(Set<Long> orderIdSet) {
+        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orderIdSet)) {
+            //获取订单的执行工位
+            Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
+            //获取订单的批次时间
+            Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
+            //获取工位绑定的的采集点
+            Set<Integer> stationIdSet = Sets.newHashSet();
+            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
+                stationIdSet.addAll(entry.getValue());
+            }
+            Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for (Long orderId : orderIdSet) {
+                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
+                Set<Integer> stationSet = stationMap.get(orderId);
+                BigDecimal currentProduction = BigDecimal.ZERO;
+                if (CollUtil.isNotEmpty(stationSet)) {
+                    for (Integer stationId : stationSet) {
+                        if (Objects.nonNull(codeMap.get(stationId))) {
+                            pmReportWorkPreloadDTO.setCode(codeMap.get(stationId));
+                            currentProduction.add(FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get());
+                        }
+                    }
+                }
+                resMap.put(orderId,currentProduction);
+            }
+        }
+        return resMap;
+    }
+
+
+    /**
+     * 获取订单最后一个工序的执行工位
+     *
+     * @param orderIdSet
+     * @return
+     */
+    private Map<Long, Set<Integer>> getStation(Set<Long> orderIdSet) {
+        Map<Long, Set<Integer>> map = Maps.newHashMap();
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(orderIdSet);
+        if (CollUtil.isNotEmpty(craftMap)) {
+            for (Map.Entry<Long, List<PmsProduceOrderCraftVO>> entry : craftMap.entrySet()) {
+                List<PmsProduceOrderCraftVO> value = entry.getValue();
+                if (CollUtil.isNotEmpty(value)) {
+                    List<PmsProduceOrderCraftVO> orderCraftVOList = value.stream().sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort).reversed()).collect(Collectors.toList());
+                    PmsProduceOrderCraftVO pmsProduceOrderCraftVO = orderCraftVOList.get(0);
+                    List<PmsWorkOrderCraftStationVO> stationList = pmsProduceOrderCraftVO.getStationList();
+                    Set<Integer> stationIdSet = Sets.newHashSet();
+                    if (CollUtil.isNotEmpty(stationList)) {
+                        stationList.forEach(station -> stationIdSet.add(station.getExecuteStationId().intValue()));
+                    }
+                    map.put(entry.getKey(), stationIdSet);
+                }
+            }
+        }
+        return map;
+    }
+
+
+    /**
+     * 获取订单的执行时间段
+     *
+     * @param orderIdSet
+     * @return
+     */
+    private Map<Long, PmReportWorkPreloadDTO> getOrderDate(Set<Long> orderIdSet) {
+        Map<Long, PmReportWorkPreloadDTO> resMap = Maps.newHashMap();
+        Map<Long, List<PmsWorkOrderBatch>> batchMap = pmsWorkOrderBatchService.listByOrderId(orderIdSet);
+        if (CollUtil.isNotEmpty(batchMap)) {
+            for (Map.Entry<Long, List<PmsWorkOrderBatch>> batchEntry : batchMap.entrySet()) {
+                LocalDateTime startTime = Collections.min(batchEntry.getValue().stream().map(PmsWorkOrderBatch::getStartTime).collect(Collectors.toList()));
+                LocalDateTime endTime = Collections.max(batchEntry.getValue().stream().map(PmsWorkOrderBatch::getStartTime).collect(Collectors.toList()));
+                for (PmsWorkOrderBatch pmsWorkOrderBatch : batchEntry.getValue()) {
+                    if (Objects.isNull(pmsWorkOrderBatch.getEndTime())) {
+                        //如果当前批次的结束时间为空，那么结束时间为当前时间
+                        endTime = LocalDateTime.now();
+                    }
+                }
+                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = new PmReportWorkPreloadDTO();
+                pmReportWorkPreloadDTO.setStartTime(startTime);
+                pmReportWorkPreloadDTO.setEndTime(endTime);
+                resMap.put(batchEntry.getKey(), pmReportWorkPreloadDTO);
+            }
+        }
+        return resMap;
     }
 
     /**
@@ -928,23 +1011,15 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
      */
     private ReportWorkOrderVO reportWorkOrder(PmsProduceOrder order, Integer stationId) {
         //1.根据订单查询当前批次
-        PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>()
-                .eq(PmsWorkOrderBatch::getProduceOrderId, order.getId())
-                .orderByDesc(PmsWorkOrderBatch::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsWorkOrderBatch currentBatch = pmsWorkOrderBatchService.getOne(new LambdaQueryWrapper<PmsWorkOrderBatch>().eq(PmsWorkOrderBatch::getProduceOrderId, order.getId()).orderByDesc(PmsWorkOrderBatch::getCode).last(MpConstant.STR_LIMIT_1));
         Assert.notNull(currentBatch, "订单" + order.getCode() + "无当前批次");
 
         //查询订单的工序craft
-        List<PmsProduceOrderCraft> craftList = pmsProduceOrderCraftService.list(new LambdaQueryWrapper<PmsProduceOrderCraft>()
-                .eq(PmsProduceOrderCraft::getProduceOrderId, order.getId())
-                .select(PmsProduceOrderCraft::getId));
+        List<PmsProduceOrderCraft> craftList = pmsProduceOrderCraftService.list(new LambdaQueryWrapper<PmsProduceOrderCraft>().eq(PmsProduceOrderCraft::getProduceOrderId, order.getId()).select(PmsProduceOrderCraft::getId));
         Assert.notEmpty(craftList, "该订单暂未配置工序信息");
         Set<Long> craftIdSet = craftList.stream().map(PmsProduceOrderCraft::getId).collect(Collectors.toSet());
         //2.查询工位
-        PmsWorkOrderCraftStation station = pmsWorkOrderCraftStationService.getOne(new LambdaQueryWrapper<PmsWorkOrderCraftStation>()
-                .eq(PmsWorkOrderCraftStation::getExecuteStationId, stationId)
-                .in(PmsWorkOrderCraftStation::getProduceOrderCraftId, craftIdSet)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsWorkOrderCraftStation station = pmsWorkOrderCraftStationService.getOne(new LambdaQueryWrapper<PmsWorkOrderCraftStation>().eq(PmsWorkOrderCraftStation::getExecuteStationId, stationId).in(PmsWorkOrderCraftStation::getProduceOrderCraftId, craftIdSet).last(MpConstant.STR_LIMIT_1));
         Assert.notNull(station, "该工位暂无工序配置");
         //3.查询工序
         PmsProduceOrderCraft craft = pmsProduceOrderCraftService.getById(station.getProduceOrderCraftId());
@@ -954,7 +1029,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         BeanUtils.copyProperties(order, vo);
 
         vo.setUnitId(order.getUnitId());
-        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId())),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, String> unitMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(Sets.newHashSet(order.getUnitId())), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         vo.setUnitName(unitMap.get(order.getUnitId()));
 
         vo.setProduceOrderId(order.getId());
@@ -980,10 +1055,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         //2.获取系统最大code
         LocalDateTime max = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
         LocalDateTime min = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                .between(PmsProduceOrder::getCreateTime, min, max)
-                .orderByDesc(PmsProduceOrder::getCode)
-                .last(MpConstant.STR_LIMIT_1));
+        PmsProduceOrder maxCodeModel = getOne(new LambdaQueryWrapper<PmsProduceOrder>().between(PmsProduceOrder::getCreateTime, min, max).orderByDesc(PmsProduceOrder::getCode).last(MpConstant.STR_LIMIT_1));
         //3.如果最大code不为空
         if (Objects.nonNull(maxCodeModel)) {
             try {

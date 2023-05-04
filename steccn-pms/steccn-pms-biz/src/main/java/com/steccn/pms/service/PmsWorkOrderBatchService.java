@@ -5,6 +5,7 @@ import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.ProduceOrderBatchDto;
 import com.steccn.pms.vo.WorkOrderBatchVO;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,16 +26,25 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
     Map<Long, WorkOrderBatchVO> listById(Set<Long> idList);
 
     /**
+     * 根据订单id查询该生产订单的批次信息
+     *
+     * @param idList
+     * @return
+     */
+    Map<Long, List<PmsWorkOrderBatch>> listByOrderId(Set<Long> idList);
+
+    /**
      * 根据订单id查询正在执行中批次信息
+     *
      * @param orderId
      * @return
      */
     PmsWorkOrderBatch getByOrderId(Long orderId);
 
 
-
     /**
      * 批次新增
+     *
      * @param dto
      * @return
      */
@@ -42,6 +52,7 @@ public interface PmsWorkOrderBatchService extends IService<PmsWorkOrderBatch> {
 
     /**
      * 根据批次编码获取批次信息
+     *
      * @param batchNo 批次编码
      * @return 批次信息
      */

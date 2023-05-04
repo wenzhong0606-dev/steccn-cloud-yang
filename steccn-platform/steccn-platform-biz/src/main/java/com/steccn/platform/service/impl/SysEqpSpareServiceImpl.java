@@ -10,10 +10,12 @@ import com.github.xiaoymin.knife4j.core.util.StrUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.platform.domain.SysEqpSpare;
 import com.steccn.platform.dto.EqpSpareDto;
 import com.steccn.platform.dto.SpareDTO;
 import com.steccn.platform.dto.SparePageDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.mapper.SysEqpSpareMapper;
 import com.steccn.platform.service.SysDictService;
 import com.steccn.platform.service.SysEqpSpareService;
@@ -35,6 +37,7 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
 
     private final SysEqpSpareMapper sysEqpSpareMapper;
     private final SysDictService sysDictService;
+
 
     @Override
     public List<EqpSpareVO> listSpares(String name) {
@@ -136,9 +139,27 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
             return resMap;
         }
         List<EqpSpareVO> eqpSpareVOList = BeanUtil.copyToList(spareList, EqpSpareVO.class);
+        Set<Long> dictIds= Sets.newHashSet();
         for (EqpSpareVO eqpSpareVO : eqpSpareVOList) {
+            dictIds.add(eqpSpareVO.getHighUnitId());
+            dictIds.add(eqpSpareVO.getLengthUnitId());
+            dictIds.add(eqpSpareVO.getThickUnitId());
+            dictIds.add(eqpSpareVO.getVolumeUnitId());
+            dictIds.add(eqpSpareVO.getProcurementTypeId());
+            dictIds.add(eqpSpareVO.getWeightUnitId());
+            dictIds.add(eqpSpareVO.getWideUnitId());
             resMap.put(eqpSpareVO.getId(), eqpSpareVO);
         }
+        Map<Long, String> map = sysDictService.listByIdCh(dictIds);
+        eqpSpareVOList.forEach(vo -> {
+            vo.setHighUnitName(map.get(vo.getHighUnitId()));
+            vo.setLengthUnitName(map.get(vo.getLengthUnitId()));
+            vo.setThickUnitName(map.get(vo.getThickUnitId()));
+            vo.setWeightUnitName(map.get(vo.getWeightUnitId()));
+            vo.setWideUnidName(map.get(vo.getWideUnitId()));
+            vo.setProcurementTypeName(map.get(vo.getProcurementTypeId()));
+            vo.setVolumeUnitName(map.get(vo.getVolumeUnitId()));
+        });
         return resMap;
     }
 
