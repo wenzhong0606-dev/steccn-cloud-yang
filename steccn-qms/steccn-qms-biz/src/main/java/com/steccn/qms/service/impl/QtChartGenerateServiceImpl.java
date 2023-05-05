@@ -1,6 +1,8 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -8,14 +10,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.CalculateDateUtil;
-import com.steccn.common.util.RegularUtil;
-import com.steccn.common.util.StackGraphUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
@@ -133,6 +133,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         //加入在线检的数据
         taskList.addAll(onlineTask);
         if (CollUtil.isNotEmpty(taskList)) {
+            Set<Long> taskIdList = Sets.newHashSet();
             for (QtCheckTask tmp : taskList) {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 //如果是在线检则根据缺陷记录时段算班次日期
@@ -143,7 +144,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     tmp.setDate(df.format(tmp.getClassTime()));
                 }
                 tmp.setProductLineId(tmp.getProductLine().getId());
+                taskIdList.add(tmp.getId());
             }
+            //一下获取所有详情数据，便于后续计算
+            List<QtCheckTaskDetail> allTaskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                    .in(QtCheckTaskDetail::getTaskId,taskIdList));
             //根据班次日期进行分组
             Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
             //遍历日期map
@@ -304,9 +309,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //获取所有单片掰边重量
                             List<QtCheckTaskDetail> baiItemDetails = Lists.newArrayList();
                             if (taskIds.size() > 0 && baiItemIds.size() > 0) {
-                                baiItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
-                                        .in(CollUtil.isNotEmpty(baiItemIds), QtCheckTaskDetail::getItemId, baiItemIds));
+//                                baiItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+//                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
+//                                        .in(CollUtil.isNotEmpty(baiItemIds), QtCheckTaskDetail::getItemId, baiItemIds));
+                                baiItemDetails = allTaskDetails.stream().filter(v->taskIds.contains(v.getTaskId())
+                                        && baiItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
                             }
                             if (CollUtil.isNotEmpty(baiItemDetails)) {
                                 for (QtCheckTaskDetail tmp : baiItemDetails) {
@@ -320,9 +328,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //获取所有单片重量
                             List<QtCheckTaskDetail> danItemDetails = Lists.newArrayList();
                             if (taskIds.size() > 0 && danItemIds.size() > 0) {
-                                danItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
-                                        .in(CollUtil.isNotEmpty(danItemIds), QtCheckTaskDetail::getItemId, danItemIds));
+//                                danItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+//                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
+//                                        .in(CollUtil.isNotEmpty(danItemIds), QtCheckTaskDetail::getItemId, danItemIds));
+                                danItemDetails = allTaskDetails.stream().filter(v->taskIds.contains(v.getTaskId())
+                                                && danItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
                             }
                             if (CollUtil.isNotEmpty(danItemDetails)) {
                                 for (QtCheckTaskDetail tmp : danItemDetails) {
@@ -339,9 +350,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //获取所有拉引时速
                             List<QtCheckTaskDetail> laItemDetails = Lists.newArrayList();
                             if (taskIds.size() > 0 && laItemIds.size() > 0) {
-                                laItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
-                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
-                                        .in(CollUtil.isNotEmpty(laItemIds), QtCheckTaskDetail::getItemId, laItemIds));
+//                                laItemDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+//                                        .in(CollUtil.isNotEmpty(taskIds), QtCheckTaskDetail::getTaskId, taskIds)
+//                                        .in(CollUtil.isNotEmpty(laItemIds), QtCheckTaskDetail::getItemId, laItemIds));
+                                laItemDetails = allTaskDetails.stream().filter(v->taskIds.contains(v.getTaskId())
+                                                && laItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
                             }
                             if (CollUtil.isNotEmpty(laItemDetails)) {
                                 for (QtCheckTaskDetail tmp : laItemDetails) {
@@ -442,25 +456,30 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 endTimeDate = LocalDateTime.parse(eveningEndStr, formatter);
                                 endTimeDate = endTimeDate.plusDays(1);
                             }
-                            LambdaQueryWrapper<QtCheckTask> onlineTaskCondition = new LambdaQueryWrapper<QtCheckTask>()
-                                    //任务完成
-                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                                    //完成时间范围
-                                    .ge(QtCheckTask::getDefectStartTime, startTimeDate).lt(QtCheckTask::getDefectStartTime, endTimeDate)
-                                    //只要基片车间
-                                    .like(QtCheckTask::getProductLineName, "基片")
-                                    //班次
-//                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
-                                    //只要在线检
-                                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
-                                    //该物料
-                                    .eq(QtCheckTask::getMaterialId, materialEntry.getKey())
-                                    //该产线
-                                    .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", entry3.getKey())
-                                    .orderByAsc(QtCheckTask::getFinishedTime);
+                            LocalDateTime finalStartTimeDate = startTimeDate;
+                            LocalDateTime finalEndTimeDate = endTimeDate;
+//                            LambdaQueryWrapper<QtCheckTask> onlineTaskCondition = new LambdaQueryWrapper<QtCheckTask>()
+//                                    //任务完成
+//                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+//                                    //完成时间范围
+//                                    .ge(QtCheckTask::getDefectStartTime, startTimeDate).lt(QtCheckTask::getDefectStartTime, endTimeDate)
+//                                    //只要基片车间
+//                                    .like(QtCheckTask::getProductLineName, "基片")
+//                                    //班次
+////                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
+//                                    //只要在线检
+//                                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+//                                    //该物料
+//                                    .eq(QtCheckTask::getMaterialId, materialEntry.getKey())
+//                                    //该产线
+//                                    .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", entry3.getKey())
+//                                    .orderByAsc(QtCheckTask::getFinishedTime);
                             //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
-                            List<QtCheckTask> onlineTaskList = qtCheckTaskService.list(onlineTaskCondition);
+                            List<QtCheckTask> onlineTaskList = onlineTask.stream().filter(v-> (v.getDefectStartTime()!=null && LocalDateUtil.isRange(v.getDefectStartTime(), finalStartTimeDate, finalEndTimeDate,true,false))
+                                            && v.getMaterialId().equals(materialEntry.getKey())
+                                            && (v.getProductLineId()!=null && v.getProductLineId().equals(entry3.getKey())))
+                                    .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
                             List<Long> onlineTaskIds = new ArrayList<>();
                             if (CollUtil.isNotEmpty(onlineTaskList)) {
                                 onlineTaskList.forEach(tmp -> {
@@ -470,7 +489,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             //拿到所有在线检data的数据
                             List<QtCheckTaskDetail> onlineDetails = Lists.newArrayList();
                             if (CollUtil.isNotEmpty(onlineTaskIds)) {
-                                onlineDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(CollUtil.isNotEmpty(onlineTaskIds), QtCheckTaskDetail::getTaskId, onlineTaskIds));
+//                                onlineDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(CollUtil.isNotEmpty(onlineTaskIds), QtCheckTaskDetail::getTaskId, onlineTaskIds));
+                                onlineDetails = allTaskDetails.stream().filter(v->onlineTaskIds.contains(v.getTaskId()))
+                                        .collect(Collectors.toList());
                             }
                             Map<String, Integer> defectCounts = MapUtil.newHashMap();
                             if (onlineDetails.size() > 0) {
@@ -504,23 +525,27 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //抽检时间业务
                             //巡检 抽检时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总
-                            LambdaQueryWrapper<QtCheckTask> patrolTaskCondition = new LambdaQueryWrapper<QtCheckTask>()
-                                    //任务完成
-                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                                    //完成时间范围
-                                    .ge(QtCheckTask::getSpotTime,startTimeDate).lt(QtCheckTask::getSpotTime,endTimeDate)
-                                    //只要基片车间
-                                    .like(QtCheckTask::getProductLineName, "基片")
-                                    //班次
-//                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
-                                    //只要巡检
-                                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
-                                    //该物料
-                                    .eq(QtCheckTask::getMaterialId, materialEntry.getKey())
-                                    //该产线
-                                    .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", entry3.getKey())
-                                    .orderByAsc(QtCheckTask::getFinishedTime);
-                            List<QtCheckTask> patrolTaskList = qtCheckTaskService.list(patrolTaskCondition);
+//                            LambdaQueryWrapper<QtCheckTask> patrolTaskCondition = new LambdaQueryWrapper<QtCheckTask>()
+//                                    //任务完成
+//                                    .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+//                                    //完成时间范围
+//                                    .ge(QtCheckTask::getSpotTime,startTimeDate).lt(QtCheckTask::getSpotTime,endTimeDate)
+//                                    //只要基片车间
+//                                    .like(QtCheckTask::getProductLineName, "基片")
+//                                    //班次
+////                                    .eq(dto.getWorkingOrder() != null, QtCheckTask::getClassesId, entry2.getKey())
+//                                    //只要巡检
+//                                    .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+//                                    //该物料
+//                                    .eq(QtCheckTask::getMaterialId, materialEntry.getKey())
+//                                    //该产线
+//                                    .apply(dto.getProductLineId() != null, "JSON_CONTAINS(product_line, JSON_OBJECT('id', {0}))", entry3.getKey())
+//                                    .orderByAsc(QtCheckTask::getFinishedTime);
+//                            List<QtCheckTask> patrolTaskList = qtCheckTaskService.list(patrolTaskCondition);
+                            List<QtCheckTask> patrolTaskList = taskList.stream().filter(v-> (v.getSpotTime()!=null && LocalDateUtil.isRange(v.getSpotTime(), finalStartTimeDate, finalEndTimeDate,true,false))
+                                    && v.getMaterialId().equals(materialEntry.getKey())
+                                    && (v.getProductLineId()!=null && v.getProductLineId().equals(entry3.getKey())))
+                                    .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
                             List<Long> xunTaskIds = new ArrayList<>();
                             if (CollUtil.isNotEmpty(patrolTaskList)) {
                                 patrolTaskList.forEach(tmp -> {
@@ -535,7 +560,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //                                    }
 //                                });
                                 //把巡检的数据放入
-                                List<QtCheckTaskDetail> xunDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, xunTaskIds));
+//                                List<QtCheckTaskDetail> xunDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>().in(QtCheckTaskDetail::getTaskId, xunTaskIds));
+                                List<QtCheckTaskDetail> xunDetails = allTaskDetails.stream().filter(v->xunTaskIds.contains(v.getTaskId())).collect(Collectors.toList());
                                 List<Integer> defectIds = xunDetails.stream().map(tmp -> tmp.getDefectId()).collect(Collectors.toList());
                                 //去重
                                 defectIds = defectIds.stream().distinct().collect(Collectors.toList());
