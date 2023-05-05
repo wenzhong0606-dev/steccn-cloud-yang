@@ -121,4 +121,13 @@ public interface QtReportService extends IService<QtReport> {
      * @return
      */
     Boolean warnSPC(LocalDateTime startTime, LocalDateTime endTime, String granularity);
+
+
+    /**
+     * 预警连续上升或者下降 -- 依赖时间区间有几段
+     * @param list 时间区间
+     * @param granularity 粒度
+     * @return
+     */
+    Boolean warnSerialUpOrDown(List<LocalDateTime> list, String granularity);
 }
