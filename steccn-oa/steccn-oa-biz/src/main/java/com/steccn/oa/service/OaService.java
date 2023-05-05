@@ -621,7 +621,7 @@ public class OaService {
                 "<body style=\"height: 753px;\">\n" +
                 "<p><a href=\"" +
                 url +
-                "\" target=\"_blank\">跳转</a></p>\n" +
+                "\" target=\"_blank\"><font color=\"#3498db\"><span style=\"font-size:16px;\">点击查看详情</span><span style=\"font-size:9px;\"></span></font></a><span style=\"font-size:20px;\"></span></p>\n" +
                 "</body>\n" +
                 "</html>");
         dto.setDocSubject(docName);
