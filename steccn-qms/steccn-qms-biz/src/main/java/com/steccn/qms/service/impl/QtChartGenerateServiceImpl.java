@@ -149,6 +149,11 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             //一下获取所有详情数据，便于后续计算
             List<QtCheckTaskDetail> allTaskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
                     .in(QtCheckTaskDetail::getTaskId,taskIdList));
+            List<Integer> allDefectIds = allTaskDetails.stream().filter(tmp->tmp.getDefectId()!=null).map(tmp -> tmp.getDefectId()).collect(Collectors.toList());
+            List<QtDefectiveItem> allDefectDetails = Lists.newArrayList();
+            if(CollUtil.isNotEmpty(allDefectIds)){
+                allDefectDetails = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().eq(QtDefectiveItem::getId,allDefectIds));
+            }
             //根据班次日期进行分组
             Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
             //遍历日期map
@@ -245,22 +250,29 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     }
 
                     //查询单片掰边重量(改成了掰边重量)
-                    List<QtCheckItem> baiItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "掰边重量"));
+                    //把掰边，样品，拉引时速加入
+                    List<String> bdlTmp = Lists.newArrayList();
+                    bdlTmp.add("掰边重量");
+                    bdlTmp.add("样品重量");
+                    bdlTmp.add("拉引速度");
+                    List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                            .in(QtCheckItem::getName,bdlTmp));
+                    List<QtCheckItem> baiItems = bdlItems.stream().filter(v->v.getName().equals("掰边重量"))
+                            .collect(Collectors.toList());
                     List<Integer> baiItemIds = new ArrayList<>();
                     baiItems.forEach(tmp -> {
                         baiItemIds.add(tmp.getId());
                     });
                     //查询单片重量 (生产改成样品重量)
-                    List<QtCheckItem> danItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "样品重量"));
+                    List<QtCheckItem> danItems = bdlItems.stream().filter(v->v.getName().equals("样品重量"))
+                            .collect(Collectors.toList());
                     List<Integer> danItemIds = new ArrayList<>();
                     danItems.forEach(tmp -> {
                         danItemIds.add(tmp.getId());
                     });
                     //查询拉引时速(改成了拉引速度)
-                    List<QtCheckItem> laItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
-                            .eq(QtCheckItem::getName, "拉引速度"));
+                    List<QtCheckItem> laItems = bdlItems.stream().filter(v->v.getName().equals("拉引速度"))
+                            .collect(Collectors.toList());
                     List<Integer> laItemIds = new ArrayList<>();
                     laItems.forEach(tmp -> {
                         laItemIds.add(tmp.getId());
@@ -566,7 +578,9 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 //去重
                                 defectIds = defectIds.stream().distinct().collect(Collectors.toList());
                                 if(CollUtil.isNotEmpty(defectIds)){
-                                    List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().in(QtDefectiveItem::getId,defectIds));
+//                                    List<QtDefectiveItem> defectiveItems = qtDefectiveItemService.list(new LambdaQueryWrapper<QtDefectiveItem>().in(QtDefectiveItem::getId,defectIds));
+                                    List<Integer> finalDefectIds = defectIds;
+                                    List<QtDefectiveItem> defectiveItems = allDefectDetails.stream().filter(v -> finalDefectIds.contains(v.getId())).collect(Collectors.toList());
                                     Map<Integer, List<QtDefectiveItem>> collectMap = defectiveItems.stream().collect(Collectors.groupingBy(QtDefectiveItem::getId));
                                     xunDetails.forEach(tmp -> {
                                         if (tmp.getDefectId() != null) {
