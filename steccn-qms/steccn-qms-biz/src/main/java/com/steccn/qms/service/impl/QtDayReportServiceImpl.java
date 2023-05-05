@@ -15,6 +15,7 @@ import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
@@ -854,9 +855,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         }
         List<QtChartSubDetailDTO> allData = Lists.newArrayList();
         QtChartParamDTO chartParam = new QtChartParamDTO();
-        //如果为空则传所有产线
+        //如果为空则传基片二车间下所有产线
         if(CollUtil.isEmpty(dto.getProductLineIds())){
-            List<SysOfficeVO> list = FeignOptional.of(()->remoteOfficeFeign.flatData(QtManagerConstant.NUM_9.toString()),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get() ;
+            SysOfficeParentDTO officeDTO = new SysOfficeParentDTO();
+            officeDTO.setOfficeType(QtManagerConstant.NUM_9.toString());
+            officeDTO.setId(QtManagerConstant.QT_JP_2_ID);
+            List<SysOfficeVO> list = FeignOptional.of(()->remoteOfficeFeign.listByParentId(officeDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get() ;
             Set<Integer> officeSet = Sets.newHashSet();
             list.forEach(tmp -> {
                 officeSet.add(tmp.getId());
