@@ -147,6 +147,11 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS = "JPXJHGLQS.xlsx"; //基片巡检合格率
 
+    /**
+     * 基片二车间ID
+     */
+    Integer QT_JP_2_ID = 76;
+
     //质量管控模块样本概况字段常量
     String SAMPLENUM = "sampleNum"; //样本编号
     String LICENSEPLATE = "licensePlate"; //车牌号
