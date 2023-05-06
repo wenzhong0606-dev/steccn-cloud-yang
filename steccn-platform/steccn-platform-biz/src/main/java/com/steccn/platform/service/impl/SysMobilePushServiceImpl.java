@@ -41,7 +41,7 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
                     .addHeader("User-Agent", "Apifox/1.0.0 (https://www.apifox.cn)")
                     .addHeader("Content-Type", "application/json")
                     .addHeader("Accept", "*/*")
-                    .addHeader("Host", "fc-mp-921e670b-6809-4f1c-9538-76bc3476034d.next.bspapp.com")
+                    .addHeader("Host", "fc-mp-30f51d85-3e63-44fd-857e-4ccb40499ef1.next.bspapp.com")
                     .addHeader("Connection", "keep-alive")
                     .build();
             try {
