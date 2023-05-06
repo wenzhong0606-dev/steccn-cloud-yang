@@ -36,7 +36,7 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(dto));
             Request request = new Request.Builder()
-                    .url("https://fc-mp-921e670b-6809-4f1c-9538-76bc3476034d.next.bspapp.com/smartfactory")
+                    .url("https://fc-mp-30f51d85-3e63-44fd-857e-4ccb40499ef1.next.bspapp.com/smartfactory")
                     .method("POST", body)
                     .addHeader("User-Agent", "Apifox/1.0.0 (https://www.apifox.cn)")
                     .addHeader("Content-Type", "application/json")
