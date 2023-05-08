@@ -1000,7 +1000,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             taskModel.setClassTime(taskClassCalculate.getClassDate());
         }
 
-        //如果是配料抽检，则pushtype为5
+        //如果是配料抽检，则pushtype为SPOT_CHECK
         if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(taskModel.getTaskType())){
             //推送刷新消息
             MsgPushDTO msgPushDTO = new MsgPushDTO();
