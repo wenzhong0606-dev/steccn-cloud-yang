@@ -789,7 +789,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                             }else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
                                 //配料抽检专用localDateTime
                                 if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
-                                    qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                    objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                                 }
                             }
                         } else {
@@ -824,10 +824,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 } else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
                                     //配料抽检专用localDateTime
                                     if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
-                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getValue(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                                     }
                                 }
-                            if(!entry.getKey().contains(QtManagerConstant.ANALYST)) objectMap.put(entry.getKey(),qtCheckTaskCopy);
+                            if(!entry.getKey().contains(QtManagerConstant.ANALYST)){
+                                objectMap.put(entry.getKey(),qtCheckTaskCopy);
+                            }
                         }
                     }
                 });
@@ -835,10 +837,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     QtCheckTaskCopy qtCheckTaskCopy1 = new QtCheckTaskCopy();
                     BeanUtils.copyProperties(qtCheckTaskCopyInfo,qtCheckTaskCopy1);
                     //如果是配料抽检，方便取报表，传参
-                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
-                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(qtCheckTaskCopyInfo.getSamplingTimeArray());
-                        String str = jsonArray.get(0).toString();
-                        qtCheckTaskCopy1.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())&&qtCheckTaskCopyInfo.getSamplingTime()!=null){
+                        qtCheckTaskCopy1.setSamplingTimeArray(getSamplingTimeArray(new String[]{qtCheckTaskCopyInfo.getSamplingTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}));
                     }
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
