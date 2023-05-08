@@ -45,6 +45,7 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -68,6 +69,9 @@ import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
+import com.steccn.websocket.constant.WebsocketConstant;
+import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -128,6 +132,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+
+    private final RemoteWsFeignApi remoteWsFeignApi;
 
     /**
      * 新增
@@ -992,6 +998,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(taskModel.getFinishedTime());
             taskModel.setClassesId(taskClassCalculate.getClassType());
             taskModel.setClassTime(taskClassCalculate.getClassDate());
+        }
+
+        //如果是配料抽检，则pushtype为5
+        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(taskModel.getTaskType())){
+            //推送刷新消息
+            MsgPushDTO msgPushDTO = new MsgPushDTO();
+            msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
+            FeignOptional.of(() -> remoteWsFeignApi.pushRefreshMsg(msgPushDTO), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
         }
         return updateById(taskModel);
     }
