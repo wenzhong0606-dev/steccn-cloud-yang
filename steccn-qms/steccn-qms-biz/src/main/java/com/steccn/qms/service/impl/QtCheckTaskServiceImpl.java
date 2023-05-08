@@ -1001,7 +1001,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         }
 
         //如果是配料抽检，则pushtype为SPOT_CHECK
-        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(taskModel.getTaskType())){
+        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(tasKDetail.getTaskType())){
             //推送刷新消息
             MsgPushDTO msgPushDTO = new MsgPushDTO();
             msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
