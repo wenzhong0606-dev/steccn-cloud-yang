@@ -837,6 +837,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             }
             data.setItemList(itemList);
         }
+        //对dataList排序
+        //1级排序：早班在上、晚班在下
+        //2级排序：按取样时间升序排列（但时段显示格式为hh:mm，隐藏日期），例如9-21 23:00<9-22 1:00，则显示为23:00在上，1:00在下
+        dataList.sort((o1, o2) -> {
+            if(!o1.getClassId().equals(o2.getClassId())){
+                return o1.getClassId().compareTo(o2.getClassId());
+            }
+            return o1.getSamplingTime().compareTo(o2.getSamplingTime());
+        });
         resVo.setDataList(dataList);
         return resVo;
     }
