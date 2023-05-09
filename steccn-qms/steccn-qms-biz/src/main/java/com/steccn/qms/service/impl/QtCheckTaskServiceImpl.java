@@ -1004,6 +1004,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(tasKDetail.getTaskType())){
             //推送刷新消息
             MsgPushDTO msgPushDTO = new MsgPushDTO();
+            msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             FeignOptional.of(() -> remoteWsFeignApi.pushRefreshMsg(msgPushDTO), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
         }
