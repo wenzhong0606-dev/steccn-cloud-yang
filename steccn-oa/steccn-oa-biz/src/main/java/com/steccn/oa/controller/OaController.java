@@ -194,6 +194,12 @@ public class OaController {
         return R.success(kqGroupmemberService.findGroupByUserId(userId));
     }
 
+    @ApiOperation("根据userId查询考勤组")
+    @GetMapping("/team/group")
+    public R<OaGroupIdAndNameVO> getGroupByUser(){
+        return R.success(kqGroupmemberService.getOneGroupByUserId());
+    }
+
     @ApiOperation("查询排班信息")
     @PostMapping("/roster/record")
     public R<List<OaRosterRecordVO>> getRosterRecord(@RequestBody OaRosterRecordDTO dto){
