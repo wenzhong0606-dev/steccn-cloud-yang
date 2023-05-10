@@ -1303,7 +1303,7 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
                 .eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType())
                 .le(EpProductUnitConsumeStandard::getValidStart, dto.getStart()).ge(EpProductUnitConsumeStandard::getValidEnd, dto.getEnd())
                 .in(EpProductUnitConsumeStandard::getStandardType, standardList)
-                .in(EpProductUnitConsumeStandard::getProductType, productTypeList);
+                .in(CollUtil.isNotEmpty(productTypeList), EpProductUnitConsumeStandard::getProductType, productTypeList);
         if (Objects.nonNull(thick)) {
             standardQueryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, thick.getId());
         } else {
