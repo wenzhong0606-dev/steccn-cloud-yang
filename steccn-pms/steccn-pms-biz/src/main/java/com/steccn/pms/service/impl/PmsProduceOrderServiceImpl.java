@@ -24,6 +24,7 @@ import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -894,6 +895,20 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .thenComparing(ProduceOrderDataInfoVO::getLineNumberFlag));
         }
         return infoVOList;
+    }
+
+    @Override
+    public Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO) {
+        //查询生产订单数据
+        List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
+
+        //排序
+        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        //逻辑分页
+        Page<PanoramicTracingVO> page = LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
+        return page;
     }
 
 
