@@ -220,7 +220,7 @@ public class SpcWarnTask {
      * @param granularity 粒度
      * @return
      */
-    private static List<LocalDateTime> preTimeSlot(LocalDateTime currentTime, String granularity, Integer num) {
+    public static List<LocalDateTime> preTimeSlot(LocalDateTime currentTime, String granularity, Integer num) {
         LocalDateTime start = null;
         LinkedList<LocalDateTime> resList = Lists.newLinkedList();
         while (num-- > 0) {

@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.scheduled.SpcWarnTask;
 import com.steccn.qms.service.QtReportService;
 import com.steccn.qms.vo.*;
 import io.swagger.annotations.ApiModelProperty;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -128,11 +131,19 @@ public class QtReportController {
         response.getWriter().println(JSON.toJSONString(map));
     }
 
-
     @PostMapping("/warn")
     @ApiOperation(value = "Spc控制图明细")
     public R<Boolean> warnSpc( @RequestBody QtReportWarnDTO dto) {
         return R.success(qtReportService.warnSPC(dto.getStartTime(),dto.getEndTime(), dto.getGranularity()));
+    }
+
+    @PostMapping("/serial/updown")
+    @ApiOperation(value = "spc连续上升和下降")
+    public R<Boolean> serialUpDown(@RequestBody QtReportWarnDTO dto) {
+        QtManagerConstant.QtGranularityEnum granularity = QtManagerConstant.QtGranularityEnum.getByName(dto.getGranularity());
+        Assert.notNull(granularity, "时间粒度不存在");
+        List<LocalDateTime> timeList = SpcWarnTask.preTimeSlot(dto.getStartTime(), granularity.getType(), 7);
+        return R.success(qtReportService.warnSerialUpOrDown(timeList, granularity.getName()));
     }
 
 }

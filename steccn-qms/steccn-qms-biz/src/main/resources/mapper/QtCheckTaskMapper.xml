@@ -318,7 +318,7 @@
             task.note,
             detail.check_result,
             detail.item_id,
-            task.finished_time,
+            task.finished_time as finish_time,
             task.material_workshop,
             task.supplier
         FROM
