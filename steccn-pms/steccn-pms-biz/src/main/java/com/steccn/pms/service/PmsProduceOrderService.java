@@ -221,4 +221,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     List<ProduceOrderDataInfoVO> getExecuteOrderInfo();
+
+    /**
+     * 全景追溯数据
+     * @param panoramicTracingDTO
+     * @return
+     */
+    Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO);
 }

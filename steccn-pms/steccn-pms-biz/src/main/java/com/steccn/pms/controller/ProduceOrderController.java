@@ -177,4 +177,11 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.getExecuteOrderInfo());
     }
 
+
+    @ApiOperation("全景追溯")
+    @PostMapping("/panoramic/tracing")
+    public R<Page<PanoramicTracingVO>>  tracing(PanoramicTracingDTO panoramicTracingDTO){
+        return R.success(pmsProduceOrderService.tracing(panoramicTracingDTO));
+    }
+
 }
