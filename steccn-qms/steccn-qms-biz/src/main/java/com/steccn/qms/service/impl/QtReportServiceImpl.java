@@ -1001,10 +1001,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         reportList.forEach(report ->{
             List<BigDecimal> lastSerialDataList = checkAvg(report, timeList, checkItemSnapshotMap);
             //判断连续升或者连续下降7次 1表示上升 2表示下降
-            if(adjustSerialUpOrDown(lastSerialDataList) == 1){
+            if(adjustSerialUpOrDown(lastSerialDataList) == 2){
                 upResultMap.put(report.getId(), report);
                 upReportIds.add(report.getId());
-            }else if(adjustSerialUpOrDown(lastSerialDataList) == 2){
+            }else if(adjustSerialUpOrDown(lastSerialDataList) == 1){
                 downResultMap.put(report.getId(), report);
                 downReportIds.add(report.getId());
             }
