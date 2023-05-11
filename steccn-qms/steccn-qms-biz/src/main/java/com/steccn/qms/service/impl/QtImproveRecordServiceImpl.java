@@ -161,7 +161,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
     }
 
     @Override
-    public Boolean add(QtImproveRecordDTO dto) {
+    public Long add(QtImproveRecordDTO dto) {
         RLock lock = redissonClient.getLock(LockConstant.QT_IMPROVE_RECORD);
         lock.lock();
         try {
@@ -206,12 +206,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 //关联客诉
                 QtCustomerComplain customerComplain = qtCustomerComplainService.getById(qtImproveRecord.getCustomerComplainId());
                 mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
-                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "(请在PC端查看客诉详情)"));
             } else {
                 //关联不合格品
                 QtDefectProduct qtDefectProduct = qtDefectProductService.getById(qtImproveRecord.getDefectProductId());
                 mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
-                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
+                mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "(请到PC端查看不合格品处理详情)"));
             }
             workFlowParamDTO.setMainData(mainDataList);
             //调用
@@ -248,9 +248,10 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 log.error(e.getLocalizedMessage());
                 throw new BusinessException("消息发送失败");
             }
+            return qtImproveRecord.getId();
         } finally {
             lock.unlock();
-        } return Boolean.TRUE;
+        }
     }
 
     @Override
@@ -299,12 +300,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //关联客诉
             QtCustomerComplain customerComplain = qtCustomerComplainService.getById(record.getCustomerComplainId());
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "(请在PC端查看客诉详情)"));
         } else {
             //关联不合格品
             QtDefectProduct qtDefectProduct = qtDefectProductService.getById(record.getDefectProductId());
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "(请到PC端查看不合格品处理详情)"));
         }
         OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
         workFlowSubmitParamDTO.setUserId(SecurityUtils.getUser().getUserId());
@@ -525,12 +526,12 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             //关联客诉
             QtCustomerComplain customerComplain = qtCustomerComplainService.getById(record.getCustomerComplainId());
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS,saveDoc(dto.getInfoUrl(), customerComplain.getTitle()).getDocid().toString()));
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "请在PC端查看客诉详情"));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLKS_MOBILE,customerComplain.getTitle() + "(请在PC端查看客诉详情)"));
         } else {
             //关联不合格品
             QtDefectProduct qtDefectProduct = qtDefectProductService.getById(record.getDefectProductId());
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL, saveDoc(dto.getInfoUrl(),qtDefectProduct.getTitle()).getDocid().toString()));
-            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "请到PC端查看不合格品处理详情"));
+            mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_GLBHGPCL_MOBILE,qtDefectProduct.getTitle() + "(请到PC端查看不合格品处理详情)"));
         }
         //抄送人数据
         if (CollUtil.isNotEmpty(dto.getCarbonCopyManList())) {

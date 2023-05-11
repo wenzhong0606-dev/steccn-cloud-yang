@@ -191,6 +191,35 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return rootVOList;
     }
 
+    @Override
+    public List<SysOfficeVO> workShopLineStation(List<String> typeList) {
+        //根据前端传过来的机构类型获取组织机构列表
+        List<SysOffice> dbList = list(new LambdaQueryWrapper<SysOffice>()
+                .in(SysOffice::getOfficeType, typeList)
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .orderByAsc(SysOffice::getTreeSort));
+        List<SysOfficeVO> rootVOList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(dbList)) {
+            //复制查询结果到新的集合
+            List<SysOfficeVO> sysOfficeVOS = BeanUtil.copyToList(dbList, SysOfficeVO.class);
+            //根据一堆元素 ，自己去查询根节点
+            rootVOList = searchRoot(sysOfficeVOS);
+            //维护车间产线工位的父子关系
+            Map<String, String> relationMap = Maps.newHashMap();
+            relationMap.put(SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.WORKSHOP);
+            relationMap.put(SysOfficeConstant.STATION, SysOfficeConstant.PRODUCT_LINE);
+
+            rootVOList = rootVOList.stream().filter(v -> SysOfficeConstant.WORKSHOP.equals(v.getOfficeType())).collect(Collectors.toList());
+            //从上往下递归查询
+            for (SysOfficeVO root : rootVOList) {
+                //根节点是车间
+                List<SysOfficeVO> children = getChildrenStrict(relationMap, sysOfficeVOS, root);
+                root.setChildren(children);
+            }
+        }
+        return rootVOList;
+    }
+
     /**
      * 根据一堆元素 ，自己去查询根节点
      *
@@ -226,6 +255,30 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
             if (sysOfficeVO.getParentCode().equals(parentCode)) {
                 sysOfficeVO.setParentId(id);
                 sysOfficeVO.setParentName(name);
+                //递归方法找到子节点
+                List<SysOfficeVO> children = getChildren(childrenList, sysOfficeVO.getOfficeCode(), sysOfficeVO.getId(), sysOfficeVO.getOfficeName());
+                sysOfficeVO.setChildren(children);
+                result.add(sysOfficeVO);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 获取子节点
+     */
+    /**
+     * @param childrenList
+     * @param parent 父节点
+     * @return
+     */
+    public List<SysOfficeVO> getChildrenStrict(Map<String,String> relationMap, List<SysOfficeVO> childrenList,SysOfficeVO parent) {
+        ArrayList<SysOfficeVO> result = new ArrayList<>();
+        //遍历集合设置子节点
+        for (SysOfficeVO sysOfficeVO : childrenList) {
+            if (sysOfficeVO.getParentCode().equals(parent.getOfficeCode()) && parent.getOfficeType().equals(relationMap.get(sysOfficeVO.getOfficeType()))) {
+                sysOfficeVO.setParentId(parent.getId());
+                sysOfficeVO.setParentName(parent.getOfficeName());
                 //递归方法找到子节点
                 List<SysOfficeVO> children = getChildren(childrenList, sysOfficeVO.getOfficeCode(), sysOfficeVO.getId(), sysOfficeVO.getOfficeName());
                 sysOfficeVO.setChildren(children);

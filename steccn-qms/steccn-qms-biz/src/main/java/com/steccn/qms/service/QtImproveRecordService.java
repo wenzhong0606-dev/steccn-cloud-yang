@@ -28,7 +28,7 @@ public interface QtImproveRecordService extends IService<QtImproveRecord> {
      * @param dto
      * @return
      */
-    Boolean add(QtImproveRecordDTO dto);
+    Long add(QtImproveRecordDTO dto);
 
 
     /**

@@ -1404,7 +1404,6 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             QtChartPieValueVO<BigDecimal> onePie = new QtChartPieValueVO();
             onePie.setName("成品");
             onePie.setValue(chengRate.abs());
-            pieList.add(onePie);
 
             //遍历损耗原因分组
             for (Map.Entry<String, BigDecimal> reasonEntry : orderByReason.entrySet()) {
@@ -1418,8 +1417,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 }
             }
             SteccnTableAssertUtil.notEmpty(pieList, "饼图暂无数据");
-            //倒序排序value
-            pieList.sort(Comparator.comparing(QtChartPieValueVO<BigDecimal>::getValue).reversed());
+            pieList.sort(Comparator.comparing(QtChartPieValueVO<BigDecimal>::getValue));
+            pieList.add(onePie);
             result.setData(pieList);
             return result;
         } else {

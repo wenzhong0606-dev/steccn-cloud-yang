@@ -86,6 +86,7 @@ public class EpDwServiceImpl implements EpDwService {
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, allReportWorkList);
             for (DwConditionDTO task : taskList) {
                 readPool.submit(() -> {
+                    //执行任务
                     doMeterRead(task);
                 });
             }

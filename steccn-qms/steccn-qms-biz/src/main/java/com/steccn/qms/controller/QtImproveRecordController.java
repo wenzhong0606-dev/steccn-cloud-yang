@@ -34,7 +34,7 @@ public class QtImproveRecordController {
     @ApiOperation(value = "新建整改记录")
     @PostMapping
     @SysLog("新建整改记录")
-    public R<Boolean> add(@Validated(InsertGroup.class)@RequestBody QtImproveRecordDTO dto) {
+    public R<Long> add(@Validated(InsertGroup.class)@RequestBody QtImproveRecordDTO dto) {
         return R.success(qtImproveRecordService.add(dto));
     }
 

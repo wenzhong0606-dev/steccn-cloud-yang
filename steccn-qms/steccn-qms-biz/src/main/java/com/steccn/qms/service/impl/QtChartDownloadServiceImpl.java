@@ -280,6 +280,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
         }
         //先排序
         qtChartSubDetailDTOS = qtChartSubDetailDTOS.stream().sorted(Comparator.comparing(QtChartSubDetailDTO::getWorkOrderTime).thenComparing(QtChartSubDetailDTO::getProductLineName).thenComparing(QtChartSubDetailDTO::getProductLineName).thenComparing(QtChartSubDetailDTO::getWorkOrder)).collect(Collectors.toList());
+        int size = qtChartSubDetailDTOS.size();
         //分页
         int pageSize = dto.getSize();
         int current = dto.getCurrent() - 1;
@@ -288,7 +289,7 @@ public class QtChartDownloadServiceImpl implements QtChartDownloadService {
                 .collect(Collectors.toList());
         Page<QtChartSubDetailDTO> page = new Page<>(dto.getCurrent(), dto.getSize());
         page.setRecords(qtChartSubDetailDTOS);
-        page.setTotal(qtChartSubDetailDTOS.size());
+        page.setTotal(size);
         return page;
     }
 
