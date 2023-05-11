@@ -198,7 +198,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     if (pmsProduceOrderVO1 != null
                                             && pmsProduceOrderVO1.getActualStartTime()!=null
                                             && pmsProduceOrderVO1.getActualEndTime()!=null
-                                            && pmsProduceOrderVO1.getActualEndTime().isBefore(materialN1.get(0).getFinishedTime())) {
+                                            && pmsProduceOrderVO1.getActualEndTime().isBefore(materialN1.get(0).getFinishedTime())
+                                            && pmsProduceOrderVO1.getActualEndTime().isAfter(materialN.get(materialN.size()-1).getFinishedTime())) {
                                         LocalDateTime time = LocalDateTime.now();
                                         if(entry.getValue().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                                             //早班
@@ -212,12 +213,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                             Duration dr = Duration.between(time,pmsProduceOrderVO1.getActualEndTime());
                                             preMaterialTime = pmsProduceOrderVO1.getActualEndTime();
                                             double hours = dr.toMinutes() / 60.0;
-                                            materialProduceTime.put(materialId, new BigDecimal(hours));
+                                            materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
                                         }else {
                                             Duration dr = Duration.between(preMaterialTime,pmsProduceOrderVO1.getActualEndTime());
                                             preMaterialTime = pmsProduceOrderVO1.getActualEndTime();
                                             double hours = dr.toMinutes() / 60.0;
-                                            materialProduceTime.put(materialId, new BigDecimal(hours));
+                                            materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
                                         }
 
                                     } else {
@@ -234,7 +235,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                         Duration dr = Duration.between(time,materialN1.get(0).getFinishedTime());
                                         preMaterialTime = materialN1.get(0).getFinishedTime();
                                         double hours = dr.toMinutes() / 60.0;
-                                        materialProduceTime.put(materialId, new BigDecimal(hours));
+                                        materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
                                     }
                                 }
                             }else {
@@ -248,7 +249,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 Duration dr = Duration.between(preMaterialTime,time);
                                 double hours = dr.toMinutes() / 60.0;
-                                materialProduceTime.put(materialId, new BigDecimal(hours));
+                                materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
                             }
                         }
                     }
