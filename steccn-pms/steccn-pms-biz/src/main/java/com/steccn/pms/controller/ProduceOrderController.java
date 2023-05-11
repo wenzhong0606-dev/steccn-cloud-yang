@@ -180,7 +180,7 @@ public class ProduceOrderController {
 
     @ApiOperation("全景追溯")
     @PostMapping("/panoramic/tracing")
-    public R<Page<PanoramicTracingVO>>  tracing(PanoramicTracingDTO panoramicTracingDTO){
+    public R<Page<PanoramicTracingVO>>  tracing(@RequestBody PanoramicTracingDTO panoramicTracingDTO){
         return R.success(pmsProduceOrderService.tracing(panoramicTracingDTO));
     }
 
