@@ -33,15 +33,13 @@ public interface SysOfficeConstant {
      */
     String normal = "0";
 
-    /**
-     * 产线类型
-     */
-    String PRODUCT_LINE = "9";
 
     /**
-     * 车间类型
+     * 车间 产线 工位
      */
     String WORKSHOP = "8";
+    String PRODUCT_LINE = "9";
+    String STATION = "13";
 
     /**
      * 进站0  出站1
