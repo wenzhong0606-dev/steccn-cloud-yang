@@ -1,8 +1,10 @@
 package com.steccn.platform.controller;
 
 
+import com.google.common.collect.Lists;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOffice;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -68,9 +70,16 @@ public class SysOfficeController {
      */
     @PostMapping("/warehouse")
     @ApiOperation("根据机构类型查询下拉选项树结构")
-    //@PreAuthorize("hasAnyAuthority('admin1')")
     public R<List<SysOfficeVO>> warehouseAndShelf(@RequestBody List<String> typeList) {
-        return R.success(sysOfficeService.warehouseAndShelf(typeList));
+        if (typeList.size() == 3 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
+            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION)));
+        } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.WORKSHOP) && typeList.contains(SysOfficeConstant.PRODUCT_LINE)) {
+            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.WORKSHOP, SysOfficeConstant.PRODUCT_LINE)));
+        } else if (typeList.size() == 2 && typeList.contains(SysOfficeConstant.PRODUCT_LINE) && typeList.contains(SysOfficeConstant.STATION)) {
+            return R.success(sysOfficeService.workShopLineStation(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE, SysOfficeConstant.STATION)));
+        } else {
+            return R.success(sysOfficeService.warehouseAndShelf(typeList));
+        }
     }
 
     @ApiOperation("货架的仓库")

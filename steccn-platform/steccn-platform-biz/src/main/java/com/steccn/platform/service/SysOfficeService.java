@@ -85,6 +85,13 @@ public interface SysOfficeService extends IService<SysOffice> {
     List<SysOfficeVO> warehouseAndShelf(List<String> typeList);
 
     /**
+     *
+     * 严格的车间产线工位的层级结构
+     * @return 属性结构
+     */
+    List<SysOfficeVO> workShopLineStation(List<String> typeList);
+
+    /**
      * 查询货架的仓库id，如果无仓库，则返回null
      *
      * @param id 货架id
