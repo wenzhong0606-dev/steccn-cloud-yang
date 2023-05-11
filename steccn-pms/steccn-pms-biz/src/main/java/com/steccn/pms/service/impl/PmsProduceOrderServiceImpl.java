@@ -911,56 +911,58 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             //获取订单的批次时间
             Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
             //获取工位绑定的的采集点
-            Set<Integer> stationIdSet = Sets.newHashSet();
-            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
-                stationIdSet.addAll(entry.getValue());
-            }
+            Set<Integer> stationIdSet = stationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
             Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            for (Long orderId : orderIdSet) {
+            resMap = orderIdSet.stream().collect(Collectors.toMap(orderId -> orderId, orderId -> {
                 PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
                 Set<Integer> stationSet = stationMap.get(orderId);
                 BigDecimal currentProduction = BigDecimal.ZERO;
                 if (CollUtil.isNotEmpty(stationSet)) {
-                    for (Integer stationId : stationSet) {
-                        if (Objects.nonNull(codeMap.get(stationId))) {
-                            pmReportWorkPreloadDTO.setCode(codeMap.get(stationId));
-                            currentProduction.add(FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get());
-                        }
-                    }
+                    currentProduction = stationSet.stream()
+                            .map(stationId -> codeMap.get(stationId))
+                            .filter(Objects::nonNull)
+                            .map(code -> {
+                                pmReportWorkPreloadDTO.setCode(code);
+                                return FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+                            })
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
                 }
-                resMap.put(orderId,currentProduction);
-            }
+                return currentProduction;
+            }));
         }
         return resMap;
     }
 
 
+
     /**
-     * 获取订单最后一个工序的执行工位
-     *
-     * @param orderIdSet
-     * @return
+     * 根据订单ID集合获取工位信息:获取订单最后一个工序的执行工位(20230511改为取下片工序)
+     * @param orderIdSet 订单ID集合
+     * @return 工位信息Map，key为订单ID，value为工位ID集合
      */
     private Map<Long, Set<Integer>> getStation(Set<Long> orderIdSet) {
-        Map<Long, Set<Integer>> map = Maps.newHashMap();
-        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(orderIdSet);
-        if (CollUtil.isNotEmpty(craftMap)) {
-            for (Map.Entry<Long, List<PmsProduceOrderCraftVO>> entry : craftMap.entrySet()) {
-                List<PmsProduceOrderCraftVO> value = entry.getValue();
-                if (CollUtil.isNotEmpty(value)) {
-                    List<PmsProduceOrderCraftVO> orderCraftVOList = value.stream().sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort).reversed()).collect(Collectors.toList());
-                    PmsProduceOrderCraftVO pmsProduceOrderCraftVO = orderCraftVOList.get(0);
-                    List<PmsWorkOrderCraftStationVO> stationList = pmsProduceOrderCraftVO.getStationList();
-                    Set<Integer> stationIdSet = Sets.newHashSet();
-                    if (CollUtil.isNotEmpty(stationList)) {
-                        stationList.forEach(station -> stationIdSet.add(station.getExecuteStationId().intValue()));
-                    }
-                    map.put(entry.getKey(), stationIdSet);
+        Map<Long, Set<Integer>> map = new HashMap<>(); // 创建一个Map对象，用于存储订单ID和对应的工位ID集合
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(orderIdSet); // 调用服务获取订单ID和对应的工艺信息
+        if (CollUtil.isNotEmpty(craftMap)) { // 判断工艺信息是否为空
+            for (Map.Entry<Long, List<PmsProduceOrderCraftVO>> entry : craftMap.entrySet()) { // 遍历工艺信息Map
+                List<PmsProduceOrderCraftVO> value = entry.getValue(); // 获取工艺信息列表
+                if (CollUtil.isNotEmpty(value)) { // 判断工艺信息列表是否为空
+                    Optional<PmsProduceOrderCraftVO> result = value.stream() // 通过流处理获取工艺信息列表中的第一个符合条件的工艺信息
+                            .filter(item -> PmManagerConstant.XPGX.equals(item.getCode()))
+                            .findFirst();
+                    result.ifPresent(pmsProduceOrderCraftVO -> { // 如果存在符合条件的工艺信息，则将其对应的工位ID集合存入Map中
+                        Set<Integer> stationIdSet = pmsProduceOrderCraftVO.getStationList().stream()
+                                .map(PmsWorkOrderCraftStationVO::getExecuteStationId)
+                                .map(Long::intValue)
+                                .collect(Collectors.toSet());
+                        map.put(entry.getKey(), stationIdSet);
+                    });
                 }
             }
         }
-        return map;
+        return map; // 返回工位信息Map
     }
+
 
 
     /**
