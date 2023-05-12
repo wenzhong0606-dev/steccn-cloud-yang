@@ -183,7 +183,7 @@ public class ProduceOrderController {
 
     @ApiOperation("获取当前班次时间内的生产订单")
     @GetMapping("/dw/current")
-    public List<DwProduceOrderDTO> currentProduceOrder(@RequestParam("date") LocalDate currentDate) {
-        return pmsProduceOrderService.currentProduceOrder(currentDate);
+    public R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestParam("date") LocalDate currentDate) {
+        return R.success(pmsProduceOrderService.currentProduceOrder(currentDate));
     }
 }

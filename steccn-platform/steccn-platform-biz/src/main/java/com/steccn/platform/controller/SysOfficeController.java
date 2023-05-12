@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 机构数据
@@ -132,4 +134,11 @@ public class SysOfficeController {
         BeanUtils.copyProperties(sysOffice,sysOfficeVO);
         return R.success(sysOfficeVO);
     }
+
+    @PostMapping("/parent/line")
+    @ApiOperation("查询一个节点的产线父节点-自己是产线，则返回自己")
+    public Map<Integer,Integer> parentLine(@RequestBody Set<Integer> officeIdSet){
+        return sysOfficeService.parentLine(officeIdSet);
+    }
+
 }

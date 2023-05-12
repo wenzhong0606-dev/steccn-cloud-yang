@@ -1,14 +1,11 @@
 package com.steccn.ems.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
-import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.CalculateDateUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.dto.DwConditionDTO;
@@ -25,22 +22,24 @@ import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
+import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -76,18 +75,19 @@ public class EpDwServiceImpl implements EpDwService {
         Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
         //3.获取仅统计每日能耗（类型II）的节点
         Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
-        //4.获取当前班次日期所有的报工信息
-        List<DwCurrentReportWorkDTO> allReportWorkList = FeignOptional.of(() -> remotePmsFeignApi.currentReportWork(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+       //4.获取当前班次日期所有订单信息
+        List<DwProduceOrderDTO> produceOrderList = FeignOptional.of(() -> remotePmsFeignApi.currentProduceOrder(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+
         //5.遍历所有的远传仪表
         for (EpDwMeterPartitionDTO meter : meterList) {
             //一开始 应该划分好任务，然后插入数据库中，加上标识
             //子任务执行好插入数据，更新标识
             //避免重复执行
-            List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, allReportWorkList);
+            List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList);
             for (DwConditionDTO task : taskList) {
                 readPool.submit(() -> {
                     //执行任务
-                    doMeterRead(task);
+//                    doMeterRead(task);
                 });
             }
         }
@@ -144,7 +144,7 @@ public class EpDwServiceImpl implements EpDwService {
      * @param allReportWorkList     所有报工信息
      * @return
      */
-    private List<DwConditionDTO> read(LocalDate date, EpDwMeterPartitionDTO meter, Set<Long> otherPartitionNodeSet, List<DwCurrentReportWorkDTO> allReportWorkList) {
+    private List<DwConditionDTO> read(LocalDate date, EpDwMeterPartitionDTO meter, Set<Long> otherPartitionNodeSet, List<DwProduceOrderDTO> produceOrderList) {
         List<DwConditionDTO> taskList = Lists.newArrayList();
         if (Objects.nonNull(meter)) {
             //仅统计每日能耗（类型II）的节点
@@ -163,9 +163,9 @@ public class EpDwServiceImpl implements EpDwService {
                 //节点N是产线节点或产线节点的下级节点：统计能耗考虑班次、产品厚度（类型I）
                 //根据仪表挂载的节点获取报工记录
                 //获取产线的报工集合
-                List<DwCurrentReportWorkDTO> lineList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getProductLineId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> lineList = null;
                 //获取工位的报工集合
-                List<DwCurrentReportWorkDTO> stationList = allReportWorkList.stream().filter(v -> meter.getOfficeId().equals(v.getStationId())).collect(Collectors.toList());
+                List<DwCurrentReportWorkDTO> stationList = null;
                 //如果2个都为空
                 if (CollUtil.isEmpty(lineList) && CollUtil.isEmpty(stationList)) {
                     LocalDateTime morningLdt = LocalDateUtil.getMorning(date);

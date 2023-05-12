@@ -37,7 +37,7 @@
     </sql>
     <select id="meterPartition" resultType="com.steccn.ems.dto.EpDwMeterPartitionDTO">
         SELECT
-            ep.type,
+            ep.type as energyType,
             office_id,
             ac.distant_map_code,
             ac.meter_name,

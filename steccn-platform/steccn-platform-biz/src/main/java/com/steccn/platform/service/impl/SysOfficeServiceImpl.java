@@ -410,6 +410,50 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
+    public Map<Integer, Integer> parentLine(Set<Integer> officeIdSet) {
+        Map<Integer, Integer> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            List<SysOffice> dbList = list();
+            Map<Integer, SysOffice> idMap = Maps.newHashMap();
+            Map<String, SysOffice> codeMap = Maps.newHashMap();
+            dbList.forEach(v -> {
+                idMap.put(v.getId(),v);
+                codeMap.put(v.getOfficeCode(), v);
+            });
+            for (Integer officeId : officeIdSet) {
+                SysOffice sysOffice = idMap.get(officeId);
+                if (Objects.nonNull(sysOffice)) {
+                    if (SysOfficeConstant.PRODUCT_LINE.equals(sysOffice.getOfficeType())) {
+                        resMap.put(officeId, officeId);
+                    } else {
+                        Integer parentLineId = getLineParent(sysOffice, codeMap);
+                        resMap.put(officeId, parentLineId);
+                    }
+                }
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取产线父节点
+     * @param current 当前节点
+     * @param codeMap 所有节点的数据
+     * @return list
+     */
+    private Integer getLineParent(SysOffice current, Map<String, SysOffice> codeMap) {
+        if(SysOfficeConstant.PRODUCT_LINE.equals(current.getOfficeType())){
+          return current.getId();
+        } else if(Objects.isNull(current.getParentCode())){
+            //如果当前节点的父亲节点为空，则表示查询到底了，没有
+            return null;
+        }else{
+
+        }
+       return null;
+    }
+
+    @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {
