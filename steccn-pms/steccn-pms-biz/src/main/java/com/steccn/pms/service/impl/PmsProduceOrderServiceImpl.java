@@ -897,6 +897,44 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
 
+//    /**
+//     * 处理订单的当前产量
+//     *
+//     * @param orderIdSet
+//     * @return
+//     */
+//    private Map<Long, BigDecimal> getCurrentProduction(Set<Long> orderIdSet) {
+//        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+//        if (CollUtil.isNotEmpty(orderIdSet)) {
+//            //获取订单的执行工位
+//            Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
+//            //获取订单的批次时间
+//            Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
+//            //获取工位绑定的的采集点
+//            Set<Integer> stationIdSet = stationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+//            Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//            resMap = orderIdSet.stream().collect(Collectors.toMap(orderId -> orderId, orderId -> {
+//                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
+//                Set<Integer> stationSet = stationMap.get(orderId);
+//                BigDecimal currentProduction = BigDecimal.ZERO;
+//                if (CollUtil.isNotEmpty(stationSet)) {
+//                    currentProduction = stationSet.stream()
+//                            .map(stationId -> codeMap.get(stationId))
+//                            .filter(Objects::nonNull)
+//                            .map(code -> {
+//                                pmReportWorkPreloadDTO.setCode(code);
+//                                return FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+//                            })
+//                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+//                }
+//                return currentProduction;
+//            }));
+//        }
+//        return resMap;
+//    }
+
+
+
     /**
      * 处理订单的当前产量
      *
@@ -911,24 +949,28 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             //获取订单的批次时间
             Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
             //获取工位绑定的的采集点
-            Set<Integer> stationIdSet = stationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+            Set<Integer> stationIdSet = Sets.newHashSet();
+            for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
+                stationIdSet.addAll(entry.getValue());
+            }
             Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-            resMap = orderIdSet.stream().collect(Collectors.toMap(orderId -> orderId, orderId -> {
+            for (Long orderId : orderIdSet) {
                 PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
                 Set<Integer> stationSet = stationMap.get(orderId);
                 BigDecimal currentProduction = BigDecimal.ZERO;
                 if (CollUtil.isNotEmpty(stationSet)) {
-                    currentProduction = stationSet.stream()
-                            .map(stationId -> codeMap.get(stationId))
-                            .filter(Objects::nonNull)
-                            .map(code -> {
-                                pmReportWorkPreloadDTO.setCode(code);
-                                return FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-                            })
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    for (Integer stationId : stationSet) {
+                        if (Objects.nonNull(codeMap.get(stationId))) {
+                            pmReportWorkPreloadDTO.setCode(codeMap.get(stationId));
+                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+                            if (Objects.nonNull(bigDecimal)) {
+                                currentProduction = currentProduction.add(bigDecimal);
+                            }
+                        }
+                    }
                 }
-                return currentProduction;
-            }));
+                resMap.put(orderId,currentProduction);
+            }
         }
         return resMap;
     }
