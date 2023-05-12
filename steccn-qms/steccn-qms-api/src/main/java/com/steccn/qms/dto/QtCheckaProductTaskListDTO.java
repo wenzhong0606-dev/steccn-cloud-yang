@@ -21,4 +21,9 @@ public class QtCheckaProductTaskListDTO extends BasePageDTO implements Serializa
      */
     private String productOrder;
 
+    /**
+     * 工位id
+     */
+    private List<Long> stationIds;
+
 }
