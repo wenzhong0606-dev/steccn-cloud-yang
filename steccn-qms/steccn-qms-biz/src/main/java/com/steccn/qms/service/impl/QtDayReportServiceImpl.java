@@ -1067,7 +1067,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     BigDecimal lossAmount = BigDecimal.ZERO;
                     if(CollUtil.isEmpty(dayData)){
                         lineDataPullTmp.add(null);
-                        lineDataPullTmp.add(null);
+                        lineDataPullTmp.add("");
                         lineDataLossTmp.add("");
                     }else {
                         //算拉引量和掰边损耗
@@ -1120,7 +1120,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //查看该产线是否有数据
                 if(!haveData){
                     lineDataLossTmp1.add(null);
-                    lineDataPullTmp1.add(null);
+                    lineDataPullTmp1.add("");
                 }else {
                     lineDataLossTmp1.add(new DecimalFormat("0.00%").format(BigDecimalUtil.divide(baiLossAmountAll,pullAmountAll,4)));
                     lineDataPullTmp1.add("");
