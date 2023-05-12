@@ -37,6 +37,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.Collator;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -954,7 +955,11 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //拿到所有产线并排序
         Map<Integer, SysOfficeVO> sysOfficeVOMap = FeignOptional.of(() -> remoteOfficeFeign.listById(dto.getProductLineIds()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysOfficeVO> productLineList = sysOfficeVOMap.values().stream().collect(Collectors.toList());
-        productLineList = productLineList.stream().sorted(Comparator.comparing(SysOfficeVO::getOfficeName)).collect(Collectors.toList());
+        productLineList.stream().forEach(tmp->{
+            tmp.setOfficeNamePrefix(tmp.getOfficeName().substring(0,2));
+        });
+        productLineList = productLineList.stream().sorted(Comparator.comparing(SysOfficeVO::getOfficeNamePrefix).thenComparing(SysOfficeVO::getTreeSort)).collect(Collectors.toList());
+
         //先根据日期分组
         Map<LocalDate,List<QtChartSubDetailDTO>> groupByDate = allData.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getWorkOrderDate));
         //4、组表头

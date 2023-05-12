@@ -28,6 +28,9 @@ public class SysOfficeVO implements Serializable {
     @ApiModelProperty("名称")
     private String officeName;
 
+    @ApiModelProperty("机构名称前缀，便于排序")
+    private String officeNamePrefix;
+
     @ApiModelProperty("编码")
     private String officeCode;
 
