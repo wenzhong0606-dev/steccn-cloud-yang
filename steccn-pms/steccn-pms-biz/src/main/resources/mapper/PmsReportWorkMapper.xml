@@ -63,7 +63,7 @@
             AND prw.station_id = #{dto.stationId}
         </if>
         <if test="dto.processId != null and dto.processId != ''">
-            AND pp.process_id = #{dto.processId}
+            AND prw.process_id = #{dto.processId}
         </if>
         <if test="dto.classesId != null and dto.classesId != ''">
             AND prw.classes_id = #{dto.classesId}
