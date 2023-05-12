@@ -17,11 +17,9 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.ClassUtil;
-import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.util.WorkLineConvertUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -44,6 +42,7 @@ import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -850,10 +849,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<DwProduceOrderDTO> resList = Lists.newArrayList();
         //获取班次日期-早班和晚班
         LocalDateTime start = LocalDateUtil.getMorning(currentDate);
-        LocalDateTime end = LocalDateUtil.getNight(currentDate).plusDays(1);
+        LocalDateTime end = start.plusDays(1);
         //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
         List<PmsProduceOrder> dbList = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
-            wr.isNull(PmsProduceOrder::getActualEndTime).or().le(PmsProduceOrder::getActualEndTime, start);
+            wr.isNull(PmsProduceOrder::getActualEndTime).or().gt(PmsProduceOrder::getActualEndTime, start);
         }));
         if (CollUtil.isNotEmpty(dbList)) {
             //获取物料的信息
@@ -880,13 +879,34 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 //开始时间-end
                 DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
                 BeanUtil.copyProperties(order, orderDTO);
+                orderDTO.setClassDate(currentDate);
                 orderDTO.setProductLineId(order.getProductionLineId());
+                orderDTO.setProduceOrderId(order.getId());
+                orderDTO.setProduceOrderNo(order.getCode());
                 LocalDateTime tempStart = LocalDateUtil.gt(order.getActualStartTime(),start) ? order.getActualStartTime() : start;
                 LocalDateTime tempEnd = Objects.isNull(order.getActualEndTime()) || LocalDateUtil.ge(order.getActualEndTime(), end) ? end : order.getActualEndTime();
                 orderDTO.setStart(tempStart);
                 orderDTO.setEnd(tempEnd);
                 orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
-                resList.add(orderDTO);
+                //考虑开始时间和结束时间是否跨班次问题，如果跨班次，则基于班次进行分割。如果不跨班次，则直接返回
+                if (!CalculateDateUtil.isSameClassType(tempStart, tempEnd)) {
+                    DwProduceOrderDTO left = new DwProduceOrderDTO();
+                    DwProduceOrderDTO right = new DwProduceOrderDTO();
+                    BeanUtil.copyProperties(orderDTO, left);
+                    BeanUtil.copyProperties(orderDTO, right);
+                    left.setStart(tempStart);
+                    left.setEnd(LocalDateUtil.getNight(currentDate));
+                    left.setClassId(ClassUtil.MORNING);
+                    resList.add(left);
+                    right.setStart(LocalDateUtil.getNight(currentDate));
+                    right.setEnd(tempEnd);
+                    right.setClassId(ClassUtil.NIGHT);
+                    resList.add(right);
+                } else {
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(start);
+                    orderDTO.setClassId(qtTaskClassCalculate.getClassType());
+                    resList.add(orderDTO);
+                }
             }
         }
         return resList;
