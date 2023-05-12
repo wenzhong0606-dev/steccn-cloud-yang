@@ -39,6 +39,7 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder> implements PmsProduceOrderService {
 
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
@@ -848,15 +850,17 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<DwProduceOrderDTO> resList = Lists.newArrayList();
         //获取班次日期-早班和晚班
         LocalDateTime start = LocalDateUtil.getMorning(currentDate);
-        LocalDateTime end = LocalDateUtil.getNight(currentDate);
+        LocalDateTime end = LocalDateUtil.getNight(currentDate).plusDays(1);
         //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
-        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
+        List<PmsProduceOrder> dbList = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
             wr.isNull(PmsProduceOrder::getActualEndTime).or().le(PmsProduceOrder::getActualEndTime, start);
         }));
-        if(CollUtil.isNotEmpty(list)){
-
-            for (PmsProduceOrder order : list) {
-                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料的信息
+            Set<Long> materialIdSet = dbList.stream().map(PmsProduceOrder::getMaterialId).collect(Collectors.toSet());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for (PmsProduceOrder order : dbList) {
+                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
                 //①结束时间小于end，开始时间小于start        ==> start,结束时间
                 //②结束时间小于end，开始时间等于start        ==> start,结束时间
                 //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
@@ -865,23 +869,27 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
 
                 //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
-                //①开始时间小于start    ==> start,end
-                //②开始时间等于start    ==> start,end
-                //③开始时间大于start    ==> 开始时间,end
-                if(Objects.nonNull(order.getActualEndTime())){
-                     if(LocalDateUtil.lt(order.getActualEndTime(),end) && LocalDateUtil.le(order.getActualStartTime(),start)) {
+                //⑦开始时间小于start    ==> start,end
+                //⑧开始时间等于start    ==> start,end
+                //⑨开始时间大于start    ==> 开始时间,end
 
-                     }else{
-
-                     }
-                }else{
-
-                }
-
+                //3.总共分成四种情况
+                //start-结束时间
+                //start-end
+                //开始时间-结束时间
+                //开始时间-end
+                DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
+                BeanUtil.copyProperties(order, orderDTO);
+                orderDTO.setProductLineId(order.getProductionLineId());
+                LocalDateTime tempStart = LocalDateUtil.gt(order.getActualStartTime(),start) ? order.getActualStartTime() : start;
+                LocalDateTime tempEnd = Objects.isNull(order.getActualEndTime()) || LocalDateUtil.ge(order.getActualEndTime(), end) ? end : order.getActualEndTime();
+                orderDTO.setStart(tempStart);
+                orderDTO.setEnd(tempEnd);
+                orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
+                resList.add(orderDTO);
             }
-
         }
-        return Lists.newArrayList();
+        return resList;
     }
 
     @Override

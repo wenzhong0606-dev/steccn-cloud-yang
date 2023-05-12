@@ -18,12 +18,6 @@ import java.time.LocalDateTime;
 @ApiModel("数仓生产订单的数据")
 public class DwProduceOrderDTO implements Serializable {
 
-    @ApiModelProperty("班次日期")
-    private LocalDate classDate;
-
-    @ApiModelProperty("班次id-数据字典数值")
-    private Long classesId;
-
     @ApiModelProperty("班次id")
     private Integer classId;
 
