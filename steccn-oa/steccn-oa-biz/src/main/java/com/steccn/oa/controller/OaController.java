@@ -196,7 +196,7 @@ public class OaController {
 
     @ApiOperation("根据userId查询考勤组")
     @GetMapping("/team/group")
-    public R<OaGroupIdAndNameVO> getGroupByUser(){
+    public R<List<OaGroupIdAndNameVO>> getGroupByLoginUser(){
         return R.success(kqGroupmemberService.getOneGroupByUserId());
     }
 

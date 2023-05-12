@@ -25,5 +25,5 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
      * 获取一个考勤组
      * @return
      */
-    OaGroupIdAndNameVO getOneGroupByUserId();
+    List<OaGroupIdAndNameVO> getOneGroupByUserId();
 }
