@@ -215,6 +215,12 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      */
     List<DwCurrentReportWorkDTO> currentDateReportWork(LocalDate currentDate);
 
+    /**
+     * 获取当前日期下所有的订单
+     * @param currentDate 当前班次日期
+     * @return 订单集合
+     */
+    List<DwProduceOrderDTO> currentProduceOrder(LocalDate currentDate);
 
     /**
      * 获取16条产线下的生产订单的详情数据

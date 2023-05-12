@@ -18,6 +18,8 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.ClassUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.WorkLineConvertUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
@@ -838,6 +840,48 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             });
         }
         return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public List<DwProduceOrderDTO> currentProduceOrder(LocalDate currentDate) {
+        //定义返回集合
+        List<DwProduceOrderDTO> resList = Lists.newArrayList();
+        //获取班次日期-早班和晚班
+        LocalDateTime start = LocalDateUtil.getMorning(currentDate);
+        LocalDateTime end = LocalDateUtil.getNight(currentDate);
+        //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
+        List<PmsProduceOrder> list = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
+            wr.isNull(PmsProduceOrder::getActualEndTime).or().le(PmsProduceOrder::getActualEndTime, start);
+        }));
+        if(CollUtil.isNotEmpty(list)){
+
+            for (PmsProduceOrder order : list) {
+                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end
+                //①结束时间小于end，开始时间小于start        ==> start,结束时间
+                //②结束时间小于end，开始时间等于start        ==> start,结束时间
+                //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
+                //④结束时间大于等于end，开始时间小于start     ==> start,end
+                //⑤结束时间大于等于end，开始时间等于start     ==> start,end
+                //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
+
+                //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
+                //①开始时间小于start    ==> start,end
+                //②开始时间等于start    ==> start,end
+                //③开始时间大于start    ==> 开始时间,end
+                if(Objects.nonNull(order.getActualEndTime())){
+                     if(LocalDateUtil.lt(order.getActualEndTime(),end) && LocalDateUtil.le(order.getActualStartTime(),start)) {
+
+                     }else{
+
+                     }
+                }else{
+
+                }
+
+            }
+
+        }
+        return Lists.newArrayList();
     }
 
     @Override
