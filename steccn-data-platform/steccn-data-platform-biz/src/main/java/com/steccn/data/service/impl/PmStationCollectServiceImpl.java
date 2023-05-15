@@ -83,7 +83,11 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
                 .orderByDesc(PmStationCollect::getRecordTime)
                 .last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(start) && Objects.nonNull(end)) {
-            return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            if(start.getValue().compareTo(end.getValue()) > 0){
+                return end.getValue();
+            }else {
+                return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            }
         }
         return null;
     }

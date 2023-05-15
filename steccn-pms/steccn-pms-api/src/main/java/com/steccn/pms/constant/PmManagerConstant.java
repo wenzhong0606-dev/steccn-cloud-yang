@@ -71,6 +71,12 @@ public interface PmManagerConstant {
     String UROPATAGIA = "基片";
     String DEEP_PROCESSING = "深加工";
 
+
+    /**
+     * 下片工序code
+     */
+    String XPGX = "XPGX";
+
     /**
      * mrp 类型
      */
