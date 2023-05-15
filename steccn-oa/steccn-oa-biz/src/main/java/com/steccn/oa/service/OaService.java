@@ -203,7 +203,7 @@ public class OaService {
             MultiValueMap<String, String> headers = this.setHeaders();
             OaUserParam oaUserParam = new OaUserParam();
             OaUserIdAndName oaUserIdAndName = hrmresourceService.getNameByLoginId(loginId);
-            if(Objects.isNull(oaUserParam)){
+            if(Objects.isNull(oaUserIdAndName)){
                 oaUserInfo.setStatus(false);
                 log.error("没有获取userInfo");
                 return oaUserInfo;

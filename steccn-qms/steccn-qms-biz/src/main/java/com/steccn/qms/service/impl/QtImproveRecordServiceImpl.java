@@ -653,6 +653,9 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             qtImproveProgresss.setOpId(Long.valueOf(oaWorkFlowOperatorDTO.getId()));
             qtImproveProgresss.setOpCreateName(oaWorkFlowOperatorDTO.getName());
             qtImproveProgresssService.save(qtImproveProgresss);
+        }else if (OaDataConstant.WORKFLOW_AGREE.equals(dto.getType()) && OaDataConstant.WORKFLOW_CREATE.equals(dto.getData().getNodeName())){
+            //oa重新提交
+            qtImproveRecord.setStatus(QtManagerConstant.NUM_0);
         }
         return updateById(qtImproveRecord);
     }
