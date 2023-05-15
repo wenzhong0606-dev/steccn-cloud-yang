@@ -21,6 +21,7 @@ import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
+import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
@@ -59,6 +60,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpEnergyMoneyService epEnergyMoneyService;
     private final EpPartitionService epPartitionService;
     private final EpTaskExecuteService epTaskExecuteService;
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
@@ -75,8 +77,12 @@ public class EpDwServiceImpl implements EpDwService {
         Set<Long> allPartitionIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getPartitionId).collect(Collectors.toSet());
         //3.获取仅统计每日能耗（类型II）的节点
         Set<Long> otherPartitionNodeSet = epPartitionService.otherPartition(allPartitionIdSet);
-       //4.获取当前班次日期所有订单信息
+        //4.获取当前班次日期所有订单信息
         List<DwProduceOrderDTO> produceOrderList = FeignOptional.of(() -> remotePmsFeignApi.currentProduceOrder(new TupleDTO<>(date, date)), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        //5.查询所有仪表的产线父节点
+        Set<Integer> officeIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getOfficeId).collect(Collectors.toSet());
+//        FeignOptional.of(() -> remoteOfficeFeign)
+
 
         //5.遍历所有的远传仪表
         for (EpDwMeterPartitionDTO meter : meterList) {

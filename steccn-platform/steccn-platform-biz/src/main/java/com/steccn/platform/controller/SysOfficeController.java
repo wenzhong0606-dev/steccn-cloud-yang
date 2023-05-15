@@ -2,7 +2,6 @@ package com.steccn.platform.controller;
 
 
 import com.google.common.collect.Lists;
-import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.vo.R;
 import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.domain.SysOffice;
@@ -19,11 +18,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -136,9 +132,14 @@ public class SysOfficeController {
     }
 
     @PostMapping("/parent/line")
-    @ApiOperation("查询一个节点的产线父节点-自己是产线，则返回自己")
-    public Map<Integer,Integer> parentLine(@RequestBody Set<Integer> officeIdSet){
-        return sysOfficeService.parentLine(officeIdSet);
+    @ApiOperation("查询一个节点指定类型的父节点-产线")
+    public R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet) {
+        return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.PRODUCT_LINE));
     }
 
+    @PostMapping("/parent/warehouse")
+    @ApiOperation("查询一个节点指定类型的父节点-仓库")
+    public R<Map<Integer, Integer>> parentWarehouse(@RequestBody Set<Integer> officeIdSet) {
+        return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.WAREHOUSE_TYPE));
+    }
 }
