@@ -402,7 +402,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1000000),4);
+                                //产品改需求，除以1即可
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1),4);
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -411,8 +412,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
 //                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
-                                //避免偏差,除以100
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(100),4);
+                                //产品改需求，除以1即可
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1),4);
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -424,7 +425,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量
                             if (flag) {
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1000000),4);
+                                //产品改需求，除以1即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1),4);
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -433,7 +435,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
 //                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(100),4);
+                                //产品改需求，除以1即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1),4);
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
 
