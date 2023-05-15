@@ -411,24 +411,29 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
 
     @Override
     public Map<Integer, Integer> parentLine(Set<Integer> officeIdSet) {
+        //定义返回集合
         Map<Integer, Integer> resMap = Maps.newHashMap();
+        //如果组织机构id为空，则直接返回空map
         if (CollUtil.isNotEmpty(officeIdSet)) {
+            //查询出所有的组织机构数据
             List<SysOffice> dbList = list();
+            //定义组织机构的idMap
             Map<Integer, SysOffice> idMap = Maps.newHashMap();
+            //定义组织机构的codeMap
             Map<String, SysOffice> codeMap = Maps.newHashMap();
+            //往idMap和codeMap里面插入数据
             dbList.forEach(v -> {
                 idMap.put(v.getId(),v);
                 codeMap.put(v.getOfficeCode(), v);
             });
+            //逐个遍历，查询每个officeId产线父节点
             for (Integer officeId : officeIdSet) {
+                //获取当前officeId的节点数据
                 SysOffice sysOffice = idMap.get(officeId);
+                //如果节点数据不为空
                 if (Objects.nonNull(sysOffice)) {
-                    if (SysOfficeConstant.PRODUCT_LINE.equals(sysOffice.getOfficeType())) {
-                        resMap.put(officeId, officeId);
-                    } else {
-                        Integer parentLineId = getLineParent(sysOffice, codeMap);
-                        resMap.put(officeId, parentLineId);
-                    }
+                    Integer parentLineId = getLineParent(sysOffice, codeMap);
+                    resMap.put(officeId, parentLineId);
                 }
             }
         }
@@ -442,15 +447,17 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
      * @return list
      */
     private Integer getLineParent(SysOffice current, Map<String, SysOffice> codeMap) {
-        if(SysOfficeConstant.PRODUCT_LINE.equals(current.getOfficeType())){
-          return current.getId();
-        } else if(Objects.isNull(current.getParentCode())){
+        //如果是产线节点，则直接返回
+        if (SysOfficeConstant.PRODUCT_LINE.equals(current.getOfficeType())) {
+            return current.getId();
+        } else {
             //如果当前节点的父亲节点为空，则表示查询到底了，没有
-            return null;
-        }else{
-
+            SysOffice parent = codeMap.get(current.getParentCode());
+            if (Objects.nonNull(parent)) {
+                return getLineParent(parent, codeMap);
+            }
         }
-       return null;
+        return null;
     }
 
     @Override
