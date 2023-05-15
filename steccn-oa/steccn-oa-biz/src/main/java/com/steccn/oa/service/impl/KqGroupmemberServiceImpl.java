@@ -56,7 +56,9 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
         List<OaGroupDTO> oaGroupDTOS = kqGroupmemberMapper.selectJoinList(OaGroupDTO.class, mpjLambdaWrapper);
         oaGroupDTOS.forEach(tmp -> {
             OaGroupIdAndNameVO vo = new OaGroupIdAndNameVO();
-            BeanUtils.copyProperties(tmp,vo);
+            vo.setClassGroupId(tmp.getGroupId());
+            vo.setClassGroupName(tmp.getGroupName());
+            vo.setUserId(tmp.getUserId());
             result.add(vo);
         });
         return result;
@@ -83,8 +85,8 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
         List<KqGroup> list = kqGroupService.list(new LambdaQueryWrapper<KqGroup>().in(KqGroup::getGroupname, oaClassName));
         for(KqGroup tmp:list){
             OaGroupIdAndNameVO vo = new OaGroupIdAndNameVO();
-            vo.setGroupId(tmp.getId());
-            vo.setGroupName(tmp.getGroupname());
+            vo.setClassGroupId(tmp.getId());
+            vo.setClassGroupName(tmp.getGroupname());
             result.add(vo);
         }
         //修改有映射关系
@@ -101,9 +103,9 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     private List<OaGroupIdAndNameVO> changeGroupRelation(List<OaGroupIdAndNameVO> resultList){
         if(CollUtil.isNotEmpty(resultList)){
             resultList.forEach(tmp->{
-                String nameByOaName = OaManagerConstant.OaTeamGroupMapping.getNameByOaName(tmp.getGroupName());
+                String nameByOaName = OaManagerConstant.OaTeamGroupMapping.getNameByOaName(tmp.getClassGroupName());
                 if(StrUtil.isNotEmpty(nameByOaName)){
-                    tmp.setGroupName(nameByOaName);
+                    tmp.setClassGroupName(nameByOaName);
                 }
             });
         }
