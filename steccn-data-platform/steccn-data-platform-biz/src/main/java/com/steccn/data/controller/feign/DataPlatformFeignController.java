@@ -44,6 +44,12 @@ public class DataPlatformFeignController {
         return R.success(epMeterCollectService.meterRead(dto));
     }
 
+    @PostMapping("/meter/read/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
+    public R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto) {
+        return R.success(epMeterCollectService.meterReadDiff(dto));
+    }
+
     @PostMapping("/meter/last/read/time")
     @ApiOperation(value = "最近抄表时间")
     R<Map<String, LocalDateTime>> lastReadTime(@RequestBody Set<String> distantCodeSet) {
