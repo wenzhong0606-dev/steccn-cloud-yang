@@ -22,8 +22,15 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
     List<OaGroupIdAndNameVO> findGroupByUserId(Set<Long> userId);
 
     /**
-     * 获取一个考勤组
+     * 获取用户所属考勤组
      * @return
      */
     List<OaGroupIdAndNameVO> getOneGroupByUserId();
+
+    /**
+     * 获取甲乙丙班的班组id
+     *
+     * @return
+     */
+    List<OaGroupIdAndNameVO> getABCGroup();
 }
