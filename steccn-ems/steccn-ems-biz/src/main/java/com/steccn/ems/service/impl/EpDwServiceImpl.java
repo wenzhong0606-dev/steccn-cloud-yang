@@ -103,18 +103,18 @@ public class EpDwServiceImpl implements EpDwService {
      */
     private boolean doMeterRead(DwConditionDTO task) {
         //执行任务，考虑重复执行的问题
-//        long count = epMeterReadDistantService.count(new LambdaQueryWrapper<EpMeterReadDistant>()
-//                .eq(EpMeterReadDistant::getMeterId, task.getMeterId())
-//                .eq(EpMeterReadDistant::getDistantMapCode, task.getCode())
-//                .eq(EpMeterReadDistant::getReadDate, task.getReadDate())
-//                .eq(Objects.nonNull(task.getClassId()), EpMeterReadDistant::getClassId, task.getClassId())
-//                .eq(Objects.nonNull(task.getThick()), EpMeterReadDistant::getThick, task.getThick())
-//                .eq(EpMeterReadDistant::getStart, task.getStart())
-//                .eq(EpMeterReadDistant::getEnd, task.getEnd()));
-//        if (count > 0) {
-//            log.info("读数归档 班次日期 -> {} 已跑过", task);
-//            return Boolean.FALSE;
-//        }
+        long count = epMeterReadDistantService.count(new LambdaQueryWrapper<EpMeterReadDistant>()
+                .eq(EpMeterReadDistant::getMeterId, task.getMeterId())
+                .eq(EpMeterReadDistant::getDistantMapCode, task.getCode())
+                .eq(EpMeterReadDistant::getReadDate, task.getReadDate())
+                .eq(Objects.nonNull(task.getClassId()), EpMeterReadDistant::getClassId, task.getClassId())
+                .eq(Objects.nonNull(task.getThick()), EpMeterReadDistant::getThick, task.getThick())
+                .eq(EpMeterReadDistant::getStart, task.getStart())
+                .eq(EpMeterReadDistant::getEnd, task.getEnd()));
+        if (count > 0) {
+            log.info("读数归档 班次日期 -> {} 已跑过", task);
+            return Boolean.FALSE;
+        }
         //构造请求
         DwMeterReadDiffDTO readDTO = new DwMeterReadDiffDTO();
         readDTO.setCode(task.getCode());
