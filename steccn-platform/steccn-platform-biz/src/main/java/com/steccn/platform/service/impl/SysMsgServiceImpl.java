@@ -87,6 +87,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
         msgPushDTO.setMsgType(msg.getType());
         msgPushDTO.setUserIdList(sysMsgDTO.getUserList());
         msgPushDTO.setAddition(sysMsgDTO.getAddition());
+        msgPushDTO.setWarnFlag(sysMsgDTO.getWarnFlag());
         msgPushDTO.setReadFlag(MpConstant.NO);
         //得到推送类型
         msgPushDTO.setType(sysMsgDTO.getPushType());
@@ -104,6 +105,7 @@ public class SysMsgServiceImpl extends ServiceImpl<SysMsgMapper, SysMsg>
                     sysMobilePushDTO.setType(msgPushDTO.getMsgType());
                     sysMobilePushDTO.setTitle(msgPushDTO.getTitle());
                     sysMobilePushDTO.setContent(msgPushDTO.getContent());
+                    sysMobilePushDTO.setWarnFlag(msgPushDTO.getWarnFlag());
                     sysMobilePushDTO.setUserId(ele);
                     sysMobilePushService.push(sysMobilePushDTO);
                 });
