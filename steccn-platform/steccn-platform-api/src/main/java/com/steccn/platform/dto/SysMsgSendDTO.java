@@ -26,6 +26,10 @@ public class SysMsgSendDTO implements Serializable {
     @NotNull(message = "消息类型不能为空")
     private Integer type;
 
+    @ApiModelProperty("消息强提醒标识")
+    @NotNull(message = "消息强提醒类型不能为空")
+    private Integer warnFlag = 0;
+
     @ApiModelProperty("标题")
     @NotBlank(message = "消息标题不能为空")
     private String title;

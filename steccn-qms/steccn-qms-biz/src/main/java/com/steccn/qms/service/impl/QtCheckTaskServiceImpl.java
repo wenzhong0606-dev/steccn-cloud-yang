@@ -45,10 +45,18 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaHrmDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;
+import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -134,6 +142,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     private final RemoteWsFeignApi remoteWsFeignApi;
+
+    private final OaInfoService oaInfoService;
+
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     /**
      * 新增
@@ -1007,6 +1019,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             FeignOptional.of(() -> remoteWsFeignApi.pushRefreshMsg(msgPushDTO), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+            sendMessage();
         }
         return updateById(taskModel);
     }
@@ -1062,6 +1075,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
         qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+        //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
+        QtCheckTask task = getById(dto.getId());
+        if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
+            sendMessage();
+        }
         return updateById(qtCheckTask);
     }
 
@@ -3098,6 +3116,54 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return list;
     }
 
+
+    protected void sendMessage() {
+        Set<Long> longIds = Sets.newHashSet();
+        //发送给配料工
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setJobtitle(PmManagerConstant.BATCHER_ID);
+        List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            classStr = "早班";
+        } else {
+            classStr = "晚班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到配料工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(longIds)) {
+            SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+            sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getCode());
+            sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTitle());
+            sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getWarnFlag());
+            //不给自己发消息
+//            longIds.remove(SecurityUtils.getUser().getUserId());
+            sysMsgDTO.setUserList(longIds);
+            String content = SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTemplate();
+            sysMsgDTO.setContent(String.format(content, SecurityUtils.getUser().getName()));
+            sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+    }
 }
 
 

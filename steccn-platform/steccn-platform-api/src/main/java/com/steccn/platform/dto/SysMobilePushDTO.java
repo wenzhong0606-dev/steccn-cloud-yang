@@ -26,6 +26,13 @@ public class SysMobilePushDTO implements Serializable {
     @ApiModelProperty("标题")
     private String title;
 
+
+    /**
+     * 强提醒标识 0:不提醒 1:提醒
+     */
+    @ApiModelProperty("强提醒标识")
+    private Integer warnFlag;
+
     @ApiModelProperty("内容")
     private String content;
 
