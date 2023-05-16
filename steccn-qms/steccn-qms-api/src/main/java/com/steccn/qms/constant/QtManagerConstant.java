@@ -158,6 +158,14 @@ public interface QtManagerConstant {
     String INGREDIENTNUM = "ingredientNum"; //配料付数
 
     /**
+     * 数字孪生使用
+     */
+    String JIPIAN = "基片";
+    String HENGXIANG = "横向厚度";
+    String ZONGXIANG = "纵向厚度";
+    String MAOBAN = "毛板宽";
+
+    /**
      * 机构类型编码
      */
     String OFFICE_WORKSHOP_TYPE = "8";
@@ -784,6 +792,8 @@ public interface QtManagerConstant {
     Integer NUM_10 = 10;
 
     Integer NUM_11 = 11;
+
+    Integer NUM_24 = 24;
 
     String WHIPPTREE = "-";
 
