@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -44,11 +45,16 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
                     .addHeader("Host", "fc-mp-30f51d85-3e63-44fd-857e-4ccb40499ef1.next.bspapp.com")
                     .addHeader("Connection", "keep-alive")
                     .build();
+            Response response = null;
             try {
-                Response response = client.newCall(request).execute();
+                response = client.newCall(request).execute();
                 log.debug("response {}", response);
             } catch (Exception e) {
                 log.error("异常原因 -> {}", e.getLocalizedMessage());
+            } finally {
+                if (Objects.nonNull(response)) {
+                    response.close();
+                }
             }
         }
 
