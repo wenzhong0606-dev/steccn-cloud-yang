@@ -180,15 +180,17 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         for(int i = 0; i < materialList.size(); i++){
                             Long materialId = materialList.get(i);
                             //物料n
-                            List<QtCheckTask> materialN = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialId))
-                                    .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+                            List<QtCheckTask> materialN = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialId)
+                                            &&v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()))
+                                    .sorted(Comparator.comparing(QtCheckTask::getSpotTime)).collect(Collectors.toList());
                             if(i!=materialList.size()-1){
                                 Set<Long> pmsParams = new HashSet<>();
                                 pmsParams.add(materialId);
                                 pmsParams.add(materialList.get(i+1));
                                 //物料n+1的最早巡检时间
                                 int finalI1 = i;
-                                List<QtCheckTask> materialN1 = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialList.get(finalI1 +1)))
+                                List<QtCheckTask> materialN1 = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialList.get(finalI1 +1))
+                                                &&v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()))
                                         .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
                                 R<Map<Long, PmsProduceOrderVO>> mapR = remotePmsFeignApi.listByMaterialIds(pmsParams);
                                 if (mapR.getData() != null) {
@@ -198,8 +200,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     if (pmsProduceOrderVO1 != null
                                             && pmsProduceOrderVO1.getActualStartTime()!=null
                                             && pmsProduceOrderVO1.getActualEndTime()!=null
-                                            && pmsProduceOrderVO1.getActualEndTime().isBefore(materialN1.get(0).getFinishedTime())
-                                            && pmsProduceOrderVO1.getActualEndTime().isAfter(materialN.get(materialN.size()-1).getFinishedTime())) {
+                                            && pmsProduceOrderVO1.getActualEndTime().isBefore(materialN1.get(0).getSpotTime())
+                                            && pmsProduceOrderVO1.getActualEndTime().isAfter(materialN.get(materialN.size()-1).getSpotTime())) {
                                         LocalDateTime time = LocalDateTime.now();
                                         if(entry.getValue().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
                                             //早班
@@ -232,8 +234,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                             //晚班
                                             time = materialNTmp.getClassTime().withHour(20).withMinute(0).withSecond(0);
                                         }
-                                        Duration dr = Duration.between(time,materialN1.get(0).getFinishedTime());
-                                        preMaterialTime = materialN1.get(0).getFinishedTime();
+                                        Duration dr = Duration.between(time,materialN1.get(0).getSpotTime());
+                                        preMaterialTime = materialN1.get(0).getSpotTime();
                                         double hours = dr.toMinutes() / 60.0;
                                         materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
                                     }
@@ -402,8 +404,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
-                                //产品改需求，除以1即可
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1),4);
+                                //产品改需求，乘以2
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlass12, new BigDecimal(2));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -412,8 +414,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
 //                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
-                                //产品改需求，除以1即可
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1),4);
+                                //产品改需求，乘以2
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlassTime, new BigDecimal(2));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -425,8 +427,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量
                             if (flag) {
-                                //产品改需求，除以1即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1),4);
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(2));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -435,8 +437,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
 //                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
-                                //产品改需求，除以1即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1),4);
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(2));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
 
