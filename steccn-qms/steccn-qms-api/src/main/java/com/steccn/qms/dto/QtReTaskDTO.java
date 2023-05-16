@@ -2,6 +2,7 @@ package com.steccn.qms.dto;
 
 import com.steccn.common.dto.BasePageDTO;
 import com.steccn.common.valid.InsertGroup;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import javax.validation.constraints.Max;
@@ -141,4 +142,14 @@ public class QtReTaskDTO implements Serializable {
          * 原始任务code
          */
         private String originalTaskCode;
+
+        /**
+         * 考勤组id
+         */
+        private Integer classGroupId;
+
+        /**
+         * 考勤组名称
+         */
+        private String classGroupName;
 }

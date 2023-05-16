@@ -45,6 +45,8 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -128,6 +130,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
 
+    private final OaInfoService oaInfoService;
+
     /**
      * 新增
      *
@@ -140,6 +144,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //巡检抽检时间必填
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
             Assert.notNull(dto.getSpotTime(),"巡检任务的抽检时间不能为空");
+        }
+        //首检、在线检、巡检班组必填
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+            ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+            ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+            Assert.notNull(dto.getClassGroupId(),"首检、在线检、巡检班组不能为空");
+            Assert.notNull(dto.getClassGroupName(),"首检、在线检、巡检班组不能为空");
         }
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
@@ -1099,6 +1110,39 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean refreshGroupClass() {
+        List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));
+        taskList.forEach(tmp->{
+            QtCheckTask taskModel = new QtCheckTask();
+            taskModel.setUpdateBy(tmp.getUpdateBy());
+            taskModel.setUpdateTime(tmp.getUpdateTime());
+            taskModel.setId(tmp.getId());
+            if(tmp.getStartBy()==null){
+                taskModel.setClassGroupName("甲班");
+                taskModel.setClassesId(1);
+            }else {
+                Set<Long> idList = Sets.newHashSet();
+                idList.add(tmp.getStartBy());
+                Map<Long, List<OaGroupIdAndNameVO>> groupByUser = oaInfoService.getGroupByUser(idList).getData();
+                if(CollUtil.isEmpty(groupByUser)){
+                    taskModel.setClassGroupName("甲班");
+                    taskModel.setClassesId(1);
+                }else {
+                    List<OaGroupIdAndNameVO> oaGroupIdAndNameVOS = groupByUser.get(tmp.getStartBy());
+                    taskModel.setClassGroupId(oaGroupIdAndNameVOS.get(0).getClassGroupId());
+                    taskModel.setClassGroupName(oaGroupIdAndNameVOS.get(0).getClassGroupName());
+                }
+                updateById(taskModel);
+            }
+        });
+        return true;
+    }
+
+    @Override
     public List<QtCheckTaskTypeCountVO> countTaskByType() {
         List<QtCheckTaskTypeCountVO> vos = Lists.newArrayList();
         //检验方案编码:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
@@ -1141,7 +1185,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         QtCheckTask::getCode,QtCheckTask::getProductWorkshop,QtCheckTask::getStartBy,QtCheckTask::getStartName,
                         QtCheckTask::getCancelBy,QtCheckTask::getCancelName,QtCheckTask::getFinishedBy,QtCheckTask::getFinishedName,
                         QtCheckTask::getCancelTime,QtCheckTask::getSendOrder,QtCheckTask::getDefectNum,QtCheckTask::getClassesId,QtCheckTask::getStationId,
-                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime)
+                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime,QtCheckTask::getClassGroupId,QtCheckTask::getClassGroupName)
                 //关联表映射
                 .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)

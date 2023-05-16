@@ -370,4 +370,13 @@ public class QtCheckTask implements Serializable {
      * 抽检时间
      */
     private LocalDateTime spotTime;
+
+    /**
+     * 班组id
+     */
+    private Integer classGroupId;
+    /**
+     * 班组名字
+     */
+    private String classGroupName;
 }

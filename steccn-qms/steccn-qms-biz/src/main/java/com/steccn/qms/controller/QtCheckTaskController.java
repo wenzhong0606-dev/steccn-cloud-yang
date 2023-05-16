@@ -65,6 +65,12 @@ public class QtCheckTaskController {
         return R.success(qtCheckTaskService.taskDetail(id, true));
     }
 
+    @GetMapping("/refreshClassGroup")
+    @ApiOperation(value = "刷新班组数据")
+    public R<Boolean> refreshClassGroup() {
+        return R.success(qtCheckTaskService.refreshGroupClass());
+    }
+
     @PutMapping("/status")
     @ApiOperation(value = "修改任务状态")
     @SysLog("修改任务状态")
