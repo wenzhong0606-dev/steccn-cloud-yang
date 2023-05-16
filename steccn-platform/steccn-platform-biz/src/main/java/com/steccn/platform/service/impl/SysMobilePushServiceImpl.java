@@ -29,7 +29,6 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
         //根据用户id查询clientId
         String clientId = sysUserClientRefService.lastClientId(dto.getUserId());
         if (StrUtil.isNotBlank(clientId)) {
-            dto.setCategory(null);
             dto.setCids(clientId);
             dto.setForce_notification(Boolean.TRUE);
             dto.setRequest_id(UUID.randomUUID().toString().replaceAll("-", ""));
