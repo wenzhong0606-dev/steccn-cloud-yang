@@ -1,7 +1,6 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.steccn.platform.dto.SysMobilePushDTO;
 import com.steccn.platform.service.SysMobilePushService;
@@ -30,7 +29,8 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
         //根据用户id查询clientId
         String clientId = sysUserClientRefService.lastClientId(dto.getUserId());
         if (StrUtil.isNotBlank(clientId)) {
-            dto.setPush_clientid(clientId);
+            dto.setCategory(null);
+            dto.setCids(clientId);
             dto.setForce_notification(Boolean.TRUE);
             dto.setRequest_id(UUID.randomUUID().toString().replaceAll("-", ""));
             OkHttpClient client = new OkHttpClient().newBuilder().build();
