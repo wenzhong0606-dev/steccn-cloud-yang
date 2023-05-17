@@ -330,6 +330,7 @@ public class EpDwServiceImpl implements EpDwService {
         dwConditionDTO.setThick(data.getThick());
         dwConditionDTO.setStart(data.getStart());
         dwConditionDTO.setEnd(data.getEnd());
+        dwConditionDTO.setProduceOrderId(data.getProduceOrderId());
         return dwConditionDTO;
     }
 }
