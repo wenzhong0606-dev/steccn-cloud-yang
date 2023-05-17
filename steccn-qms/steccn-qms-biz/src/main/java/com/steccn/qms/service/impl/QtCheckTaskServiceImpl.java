@@ -49,6 +49,7 @@ import com.steccn.oa.dto.OaHrmDTO;
 import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;import com.steccn.platform.dto.SysOfficeDTO;
