@@ -76,6 +76,11 @@ public interface LockConstant {
     String TABLE_PMS_RECIPE = "TABLE_PMS_RECIPE";
 
     /**
+     * 更新拉引量
+     */
+    String TABLE_PMS_PULL_FORCE = "TABLE_PMS_PULL_FORCE";
+
+    /**
      * SPC告警锁
      */
     String SPC_WARN_HOUR = "SPC_WARN_HOUR";

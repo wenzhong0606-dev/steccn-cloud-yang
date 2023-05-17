@@ -4,11 +4,13 @@ import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.dto.QtChartParamDTO;
 import com.steccn.qms.dto.QtChartSubDetailDTO;
+import com.steccn.qms.dto.QtPullAmountDTO;
 import com.steccn.qms.dto.QtTimeDTO;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -66,4 +68,12 @@ public interface QtChartGenerateService {
      * @return
      */
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
+
+    /**
+     * 计算拉引量
+     * @param classTimeStart
+     * @param classTimeEnd
+     * @return
+     */
+    public List<QtPullAmountDTO> calculatePullAmount(LocalDate classTimeStart,LocalDate classTimeEnd);
 }
