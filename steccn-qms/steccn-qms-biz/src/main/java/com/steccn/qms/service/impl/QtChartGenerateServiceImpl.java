@@ -11,21 +11,27 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -78,6 +84,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemotePmsFeignApi remotePmsFeignApi;
 
     private final QtDefectiveReportService qtDefectiveReportService;
+
+    private final RemotePullForceFeignApi remotePullForceFeignApi;
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
     /**
      * 生产基片损耗数据
      *
@@ -1600,6 +1610,52 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             }
         }
         return result;
+    }
+
+    @Override
+    public Boolean calculatePullAmountTask() {
+        LocalDateTime now = LocalDateTime.now();
+        List<QtPullAmountDTO> qtPullAmountDTOS = Lists.newArrayList();
+        //如果是早8点则查班次日期为昨天的拉引量
+        if(QtManagerConstant.NUM_8 == now.getHour()){
+            qtPullAmountDTOS = calculatePullAmount(now.toLocalDate().minusDays(1), now.toLocalDate().minusDays(1));
+            //拿到晚班数据
+            qtPullAmountDTOS = qtPullAmountDTOS.stream().filter(v->v.getClassId().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())).collect(Collectors.toList());
+        }else {
+            qtPullAmountDTOS = calculatePullAmount(now.toLocalDate(), now.toLocalDate());
+            //拿到早班数据
+            qtPullAmountDTOS = qtPullAmountDTOS.stream().filter(v->v.getClassId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())).collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(qtPullAmountDTOS)){
+            ValidList<PmsPullForceEditDTO> dtoList = new ValidList<>();
+            //计算班次
+            String className;
+            if(qtPullAmountDTOS.get(0).getClassId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                className = QtManagerConstant.QtClassesEnum.DAY.getName();
+            }else {
+                className = QtManagerConstant.QtClassesEnum.NIGHT.getName();
+            }
+            Set<String> nameList = Sets.newHashSet(className);
+            Map<String, Long> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(nameList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            Long classId = classMap.get(className);
+            //输入数据
+            qtPullAmountDTOS.forEach(tmp->{
+                PmsPullForceEditDTO dto = new PmsPullForceEditDTO();
+                dto.setProductLineId(tmp.getProductLineId());
+                dto.setClassesId(classId);
+                dto.setPullForceDate(now.toLocalDate().minusDays(1));
+                dto.setWorkshopId(tmp.getProductWorkShopId());
+                dto.setQuantity(tmp.getPullAmount());
+                dtoList.add(dto);
+            });
+            Boolean result = FeignOptional.of(() -> remotePullForceFeignApi.edit(dtoList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if(result){
+                log.info("载入成功,时间为"+now);
+            }
+        }else {
+            log.info("没有拉引量数据");
+        }
+        return true;
     }
 
     /**

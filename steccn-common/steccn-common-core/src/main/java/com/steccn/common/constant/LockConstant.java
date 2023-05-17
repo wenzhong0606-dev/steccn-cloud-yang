@@ -110,6 +110,9 @@ public interface LockConstant {
      */
     String QT_IMPROVE_RECORD = "QT_IMPROVE_RECORD";
 
-
+    /**
+     * 拉引量计算
+     */
+    String pullAmountCalculate = "pullAmountCalculate";
 }
 
