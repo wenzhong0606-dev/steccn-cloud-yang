@@ -225,8 +225,8 @@
     </select>
     <select id="tracing" resultType="com.steccn.pms.vo.PanoramicTracingVO">
         SELECT
-            a.id,
-            a.CODE,
+            a.id as orderId,
+            a.CODE as orderCode,
             a.material_code,
             a.material_name,
             b.CODE AS batchNo,

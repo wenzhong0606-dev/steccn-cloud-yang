@@ -903,12 +903,11 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
 
         //排序
-        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getCode, Comparator.nullsFirst(String::compareTo)).reversed()
+        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
                 .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
                 .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
         //逻辑分页
-        Page<PanoramicTracingVO> page = LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
-        return page;
+        return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
     }
 
 

@@ -10,12 +10,12 @@ public class PanoramicTracingVO {
     /**
      * id
      */
-    private Long id;
+    private Long orderId;
 
     /**
      * 生产订单号
      */
-    private String code;
+    private String orderCode;
 
 
     /**
