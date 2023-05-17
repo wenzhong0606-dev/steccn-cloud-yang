@@ -499,20 +499,24 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Map<Integer, EpInstrumentAccount> epPartitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
             EpInstrumentAccount defaultEpInstrumentAccount = new EpInstrumentAccount();
 
-            //根据条件获取数据
+            //查询全量数据表-手动抄表部分【需要多查询一天，用于差值求当前值】
             List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
                     .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
                     .in(EpMeterRead::getReadDate, sortedDateList)
                     .orderByAsc(Lists.newArrayList(EpMeterRead::getReadDate, EpMeterRead::getStart)));
+
+            //查询全量数据表-自动抄表部分【只需要查询当天】
+            dataList.addAll(autoRead(meterPartitionMap.keySet(),dateList));
+
             if (CollUtil.isNotEmpty(dataList)) {
+
+                //获取基片产线的每一行对应的拉引量
+                //获取深加工产线的每一行对应的产量
+
 
                 //获取报工集合
                 Set<Long> reportWorkIdSet = Sets.newHashSet();
-                dataList.forEach(ep ->{
-                    if(Objects.nonNull(ep.getReportWorkId())){
-                        reportWorkIdSet.add(ep.getReportWorkId());
-                    }
-                });
+                //获取每一个报工对应的班组
                 Map<Long, Long> reportMap = FeignOptional.of(() -> remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
                 //存放仪表的班次日期的抄表数据

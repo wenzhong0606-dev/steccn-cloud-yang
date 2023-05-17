@@ -73,7 +73,9 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
                 .orderByDesc(EpMeterCollect::getRecordTime)
                 .last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(start) && Objects.nonNull(end)) {
-            return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            //考虑当前数据断传了， 前一天未断传，则会出现负数
+            BigDecimal subtract = BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            return BigDecimalUtil.ge(subtract, BigDecimal.ZERO) ? subtract : BigDecimal.ZERO;
         }
         return null;
     }
