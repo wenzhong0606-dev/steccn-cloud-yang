@@ -87,8 +87,12 @@ public class EpDwServiceImpl implements EpDwService {
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
             for (DwConditionDTO task : taskList) {
                 readPool.submit(() -> {
-                    //执行任务
-                    doMeterRead(task);
+                    try {
+                        //执行任务
+                        doMeterRead(task);
+                    }catch (Exception e){
+                        log.error("{}",e);
+                    }
                 });
             }
         }
@@ -110,7 +114,8 @@ public class EpDwServiceImpl implements EpDwService {
                 .eq(Objects.nonNull(task.getClassId()), EpMeterReadDistant::getClassId, task.getClassId())
                 .eq(Objects.nonNull(task.getThick()), EpMeterReadDistant::getThick, task.getThick())
                 .eq(EpMeterReadDistant::getStart, task.getStart())
-                .eq(EpMeterReadDistant::getEnd, task.getEnd()));
+                .eq(EpMeterReadDistant::getEnd, task.getEnd())
+                .eq(Objects.nonNull(task.getProduceOrderId()), EpMeterReadDistant::getProduceOrderId, task.getProduceOrderId()));
         if (count > 0) {
             log.info("读数归档 班次日期 -> {} 已跑过", task);
             return Boolean.FALSE;
@@ -131,7 +136,6 @@ public class EpDwServiceImpl implements EpDwService {
         }
         return Boolean.FALSE;
     }
-
 
     /**
      * 分解小任务
