@@ -216,4 +216,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Boolean updateOffice(SysOfficeDTO sysOfficeDTO);
+
+    /**
+     * 模糊查询客户
+     * @param sysOfficeDTO
+     * @return
+     */
+    List<SysOfficeVO> getCustomer(String name);
 }

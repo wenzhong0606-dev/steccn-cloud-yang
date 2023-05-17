@@ -410,6 +410,23 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     }
 
     @Override
+    public List<SysOfficeVO> getCustomer(String name) {
+        List<SysOfficeVO> resultList = Lists.newArrayList();
+        List<SysOffice> list = list(new LambdaUpdateWrapper<SysOffice>()
+                .eq(SysOffice::getOfficeType, SysOfficeConstant.CUSTOMER)
+                .like(StrUtil.isNotBlank(name), SysOffice::getOfficeName, name)
+                .last("LIMIT 100"));
+        if(CollUtil.isNotEmpty(list)){
+            list.forEach(tmp->{
+                SysOfficeVO vo = new SysOfficeVO();
+                BeanUtil.copyProperties(tmp,vo);
+                resultList.add(vo);
+            });
+        }
+        return resultList;
+    }
+
+    @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);
         if (Objects.nonNull(child) && StrUtil.isNotBlank(child.getParentCode())) {

@@ -35,11 +35,12 @@ public interface SysOfficeConstant {
 
 
     /**
-     * 车间 产线 工位
+     * 车间 产线 工位 客户
      */
     String WORKSHOP = "8";
     String PRODUCT_LINE = "9";
     String STATION = "13";
+    String CUSTOMER = "7";
 
     /**
      * 进站0  出站1

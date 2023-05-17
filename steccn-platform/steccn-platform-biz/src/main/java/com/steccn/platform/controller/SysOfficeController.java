@@ -58,6 +58,12 @@ public class SysOfficeController {
         return R.success(sysOfficeService.flatData(type));
     }
 
+    @ApiOperation("返回客户信息")
+    @GetMapping("/customer")
+    public R<List<SysOfficeVO>> listCustomer(@RequestParam String name) {
+        return R.success(sysOfficeService.getCustomer(name));
+    }
+
     @ApiOperation("返回类型和父级节点下数据")
     @PostMapping("/getByPcodeAndType")
     public R<List<SysOfficeVO>> listFlatDataByPcode(@RequestBody SysOfficeParentDTO dto) {

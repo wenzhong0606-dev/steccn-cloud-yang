@@ -65,13 +65,18 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
     }
 
     @Override
-    public List<OaGroupIdAndNameVO> getOneGroupByUserId() {
+    public OaGroupIdAndNameVO getOneGroupByUserId() {
+        OaGroupIdAndNameVO result = new OaGroupIdAndNameVO();
         Set<Long> userIdSet = Sets.newHashSet();
         userIdSet.add(SecurityUtils.getUser().getUserId());
         List<OaGroupIdAndNameVO> resultList = this.findGroupByUserId(userIdSet);
+        if(CollUtil.isEmpty(resultList)){
+            return result;
+        }
         //修改映射关系
         resultList = changeGroupRelation(resultList);
-        return resultList;
+        result = resultList.get(0);
+        return result;
     }
 
     @Override
