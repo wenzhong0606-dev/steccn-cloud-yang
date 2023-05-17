@@ -1,5 +1,6 @@
 package com.steccn.qms.controller;
 
+import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.vo.R;
 import com.steccn.qms.constant.QtManagerConstant;
 import com.steccn.qms.dto.*;
+import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.service.QtCheckPlanGroupItemService;
 import com.steccn.qms.service.QtCheckTaskService;
 import com.steccn.qms.vo.*;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +42,8 @@ public class QtCheckTaskController {
     private final QtCheckTaskService qtCheckTaskService;
 
     private final QtCheckPlanGroupItemService qtCheckPlanGroupItemService;
+
+    private final QtChartGenerateService qtChartGenerateService;
 
     @PostMapping
     @ApiOperation(value = "新建巡检任务")
@@ -271,6 +276,14 @@ public class QtCheckTaskController {
             // 若有异常则重置response
             this.exceptionResponse(response,e);
         }
+    }
+
+    @ApiOperation("获取拉引量")
+    @GetMapping("/getPullAmount")
+    public R<List<QtPullAmountDTO>> getByClassTime(@RequestParam LocalDate classTimeStart, LocalDate classTimeEnd){
+        Assert.notNull(classTimeStart);
+        Assert.notNull(classTimeEnd);
+        return R.success(qtChartGenerateService.calculatePullAmount(classTimeStart,classTimeEnd));
     }
 
     /**
