@@ -51,9 +51,9 @@ public class PmsWorkOrderBatchServiceImpl extends ServiceImpl<PmsWorkOrderBatchM
     public Map<Long, List<PmsWorkOrderBatch>>listByOrderId(Set<Long> idList) {
         Map<Long, List<PmsWorkOrderBatch>>  resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(idList)) {
-            Collection<PmsWorkOrderBatch> collection = listByIds(idList);
-            if (CollUtil.isNotEmpty(collection)) {
-                resMap  = collection.stream().collect(Collectors.groupingBy(PmsWorkOrderBatch::getProduceOrderId));
+            List<PmsWorkOrderBatch> list = list(new LambdaQueryWrapper<PmsWorkOrderBatch>().in(PmsWorkOrderBatch::getProduceOrderId, idList));
+            if (CollUtil.isNotEmpty(list)) {
+                resMap  = list.stream().collect(Collectors.groupingBy(PmsWorkOrderBatch::getProduceOrderId));
             }
         }
         return resMap;

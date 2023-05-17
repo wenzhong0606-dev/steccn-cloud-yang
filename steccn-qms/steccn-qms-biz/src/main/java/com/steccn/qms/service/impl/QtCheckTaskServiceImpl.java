@@ -45,11 +45,16 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaHrmDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.feign.OaInfoService;
-import com.steccn.oa.vo.OaGroupIdAndNameVO;
-import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
+import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.dto.SysMsgSendDTO;import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -70,9 +75,13 @@ import com.steccn.qms.util.DownloadModelUtil;
 import com.steccn.qms.util.DownloadUtil;
 import com.steccn.qms.util.ShardTimeUtil;
 import com.steccn.qms.vo.*;
+import com.steccn.websocket.constant.WebsocketConstant;
+import com.steccn.websocket.dto.MsgPushDTO;
+import com.steccn.websocket.feign.RemoteWsFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
@@ -129,9 +138,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
+    private final RemoteWsFeignApi remoteWsFeignApi;
 
     private final OaInfoService oaInfoService;
 
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
     /**
      * 新增
      *
@@ -799,7 +810,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                             }else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
                                 //配料抽检专用localDateTime
                                 if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
-                                    qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                    objectMap.get(entry.getKey()).setSamplingTime(LocalDateTime.parse(entry.getValue(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                                 }
                             }
                         } else {
@@ -834,10 +845,12 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 } else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
                                     //配料抽检专用localDateTime
                                     if (StringUtils.isNotBlank(entry.getValue()) && tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())) {
-                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getKey()));
+                                        qtCheckTaskCopy.setSamplingTime(LocalDateTime.parse(entry.getValue(),DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                                     }
                                 }
-                            if(!entry.getKey().contains(QtManagerConstant.ANALYST)) objectMap.put(entry.getKey(),qtCheckTaskCopy);
+                            if(!entry.getKey().contains(QtManagerConstant.ANALYST)){
+                                objectMap.put(entry.getKey(),qtCheckTaskCopy);
+                            }
                         }
                     }
                 });
@@ -845,10 +858,8 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     QtCheckTaskCopy qtCheckTaskCopy1 = new QtCheckTaskCopy();
                     BeanUtils.copyProperties(qtCheckTaskCopyInfo,qtCheckTaskCopy1);
                     //如果是配料抽检，方便取报表，传参
-                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())){
-                        cn.hutool.json.JSONArray jsonArray = new cn.hutool.json.JSONArray(qtCheckTaskCopyInfo.getSamplingTimeArray());
-                        String str = jsonArray.get(0).toString();
-                        qtCheckTaskCopy1.setSamplingTime(LocalDateTime.parse(str,DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    if(tasKDetail.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode())&&qtCheckTaskCopyInfo.getSamplingTime()!=null){
+                        qtCheckTaskCopy1.setSamplingTimeArray(getSamplingTimeArray(new String[]{qtCheckTaskCopyInfo.getSamplingTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}));
                     }
                     qtCheckTaskCopy1.setTaskId(dto.getId());
                     //不是在线检，设置copy值
@@ -1003,6 +1014,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             taskModel.setClassesId(taskClassCalculate.getClassType());
             taskModel.setClassTime(taskClassCalculate.getClassDate());
         }
+
+        //如果是配料抽检，则pushtype为SPOT_CHECK
+        if(QtManagerConstant.QtCheckTaskTypeEnum.MIXED.getCode().equals(tasKDetail.getTaskType())){
+            //推送刷新消息
+            MsgPushDTO msgPushDTO = new MsgPushDTO();
+            msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
+            msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
+            FeignOptional.of(() -> remoteWsFeignApi.pushRefreshMsg(msgPushDTO), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+            sendMessage();
+        }
         return updateById(taskModel);
     }
 
@@ -1057,6 +1078,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
         qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+        //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
+        QtCheckTask task = getById(dto.getId());
+        if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
+            sendMessage();
+        }
         return updateById(qtCheckTask);
     }
 
@@ -2957,6 +2983,16 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return Objects.nonNull(resList) ? resList : Lists.newArrayList();
     }
 
+    @Override
+    public List<QtOtherCheckDTO> otherList(Integer checkType, Set<Integer> itemIdSet, LocalDateTime start, LocalDateTime end) {
+        List<QtOtherCheckDTO> resList = null;
+        if(CollUtil.isNotEmpty(itemIdSet)){
+            resList = baseMapper.otherList(checkType, itemIdSet, start, end);
+        }
+        return Objects.nonNull(resList) ? resList : Lists.newArrayList();
+    }
+
+
     /**
      * 合格率分组
      *
@@ -3117,6 +3153,54 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return list;
     }
 
+
+    protected void sendMessage() {
+        Set<Long> longIds = Sets.newHashSet();
+        //发送给配料工
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setJobtitle(PmManagerConstant.BATCHER_ID);
+        List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            classStr = "早班";
+        } else {
+            classStr = "晚班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到配料工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(longIds)) {
+            SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+            sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getCode());
+            sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTitle());
+            sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getWarnFlag());
+            //不给自己发消息
+//            longIds.remove(SecurityUtils.getUser().getUserId());
+            sysMsgDTO.setUserList(longIds);
+            String content = SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTemplate();
+            sysMsgDTO.setContent(String.format(content, SecurityUtils.getUser().getName()));
+            sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+    }
 }
 
 

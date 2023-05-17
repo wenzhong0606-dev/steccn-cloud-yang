@@ -147,6 +147,11 @@ public interface QtManagerConstant {
 
     String QT_CHART_EXCEL_MODEL_NAME_JPXJHGLQS = "JPXJHGLQS.xlsx"; //基片巡检合格率
 
+    /**
+     * 基片二车间ID
+     */
+    Integer QT_JP_2_ID = 76;
+
     //质量管控模块样本概况字段常量
     String SAMPLENUM = "sampleNum"; //样本编号
     String LICENSEPLATE = "licensePlate"; //车牌号
@@ -156,6 +161,14 @@ public interface QtManagerConstant {
     String SAMPLINGTIMEMIX = "samplingTimeMix"; //配料抽检取样时间
     String ANALYSTIME = "analystTime"; //分析时间
     String INGREDIENTNUM = "ingredientNum"; //配料付数
+
+    /**
+     * 数字孪生使用
+     */
+    String JIPIAN = "基片";
+    String HENGXIANG = "横向厚度";
+    String ZONGXIANG = "纵向厚度";
+    String MAOBAN = "毛板宽";
 
     /**
      * 机构类型编码
@@ -784,6 +797,8 @@ public interface QtManagerConstant {
     Integer NUM_10 = 10;
 
     Integer NUM_11 = 11;
+
+    Integer NUM_24 = 24;
 
     String WHIPPTREE = "-";
 

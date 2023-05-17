@@ -1,7 +1,6 @@
 package com.steccn.platform.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.steccn.platform.dto.SysMobilePushDTO;
 import com.steccn.platform.service.SysMobilePushService;
@@ -11,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -29,7 +29,7 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
         //根据用户id查询clientId
         String clientId = sysUserClientRefService.lastClientId(dto.getUserId());
         if (StrUtil.isNotBlank(clientId)) {
-            dto.setPush_clientid(clientId);
+            dto.setCids(clientId);
             dto.setForce_notification(Boolean.TRUE);
             dto.setRequest_id(UUID.randomUUID().toString().replaceAll("-", ""));
             OkHttpClient client = new OkHttpClient().newBuilder().build();
@@ -44,11 +44,16 @@ public class SysMobilePushServiceImpl implements SysMobilePushService {
                     .addHeader("Host", "fc-mp-30f51d85-3e63-44fd-857e-4ccb40499ef1.next.bspapp.com")
                     .addHeader("Connection", "keep-alive")
                     .build();
+            Response response = null;
             try {
-                Response response = client.newCall(request).execute();
+                response = client.newCall(request).execute();
                 log.debug("response {}", response);
             } catch (Exception e) {
                 log.error("异常原因 -> {}", e.getLocalizedMessage());
+            } finally {
+                if (Objects.nonNull(response)) {
+                    response.close();
+                }
             }
         }
 

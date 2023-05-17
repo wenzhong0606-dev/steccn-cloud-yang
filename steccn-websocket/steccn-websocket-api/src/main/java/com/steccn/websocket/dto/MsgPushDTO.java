@@ -31,6 +31,13 @@ public class MsgPushDTO implements Serializable {
     @ApiModelProperty("消息类型")
     private Integer msgType;
 
+
+    /**
+     * 强提醒标识 0:不提醒 1:提醒
+     */
+    @ApiModelProperty("强提醒标识")
+    private Integer warnFlag;
+
     @ApiModelProperty("标题")
     private String title;
 

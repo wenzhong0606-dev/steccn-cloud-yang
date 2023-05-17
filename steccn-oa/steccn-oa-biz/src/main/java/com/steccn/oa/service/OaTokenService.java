@@ -24,7 +24,7 @@ public class OaTokenService {
      * 获取请求oa后台apiToken
      * @return OaApiTokenResult
      */
-    @Cacheable(cacheNames = "OaToken#1500",unless = "#result.status == false")
+    @Cacheable(cacheNames = "OaToken#300",unless = "#result.status == false")
     public OaApiTokenResult getApiToken(){
         MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
         headers.set("appid", OaConstant.OA_API_APPID);

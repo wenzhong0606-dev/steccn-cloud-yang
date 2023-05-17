@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class SysMobilePushDTO implements Serializable {
 
     @ApiModelProperty("设备id，支持多个以数组的形式指定多个设备，如[\"cid-1\",\"cid-2\"]，数组长度不大于1000")
-    private String push_clientid;
+    private String cids;
 
     @ApiModelProperty("消息分类")
     private Integer category;
@@ -25,6 +25,12 @@ public class SysMobilePushDTO implements Serializable {
 
     @ApiModelProperty("标题")
     private String title;
+
+    /**
+     * 强提醒标识 0:不提醒 1:提醒
+     */
+    @ApiModelProperty("强提醒标识")
+    private Integer warnFlag;
 
     @ApiModelProperty("内容")
     private String content;

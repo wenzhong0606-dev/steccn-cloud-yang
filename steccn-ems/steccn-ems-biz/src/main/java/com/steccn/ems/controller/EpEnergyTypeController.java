@@ -35,6 +35,7 @@ public class EpEnergyTypeController {
     }
 
     @GetMapping("/selectAll")
+    @SysLog("查询能源列表")
     @ApiOperation(value = "查询能源列表")
     public R<List<EpEnergyTypeVO>> getEpEnergyTypeVOList(){
         return R.success(epEnergyTypeService.getEpEnergyTypeVOList());

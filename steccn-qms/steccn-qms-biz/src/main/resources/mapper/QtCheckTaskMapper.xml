@@ -73,7 +73,7 @@
 
     <resultMap id="IncomingMap" type="com.steccn.qms.dto.QtIncomingCheckDTO">
         <id property="taskId" column="task_id" jdbcType="BIGINT"/>
-        <result property="task_code" column="taskCode" jdbcType="VARCHAR"/>
+        <result property="taskCode" column="task_code" jdbcType="VARCHAR"/>
         <result property="ingredientNum" column="ingredient_num" jdbcType="INTEGER"/>
         <result property="checkResult" column="check_result" jdbcType="VARCHAR"/>
         <result property="note" column="note" jdbcType="VARCHAR"/>
@@ -86,6 +86,20 @@
         <result property="supplier" column="supplier"
                 typeHandler="com.steccn.qms.constant.IdNameTypeHandler"/>
         <result property="copy" column="copy" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="OtherComingMap" type="com.steccn.qms.dto.QtOtherCheckDTO">
+        <id property="taskId" column="task_id" jdbcType="BIGINT"/>
+        <result property="taskCode" column="task_code" jdbcType="VARCHAR"/>
+        <result property="result" column="result" jdbcType="VARCHAR"/>
+        <result property="note" column="note" jdbcType="VARCHAR"/>
+        <result property="checkResult" column="check_result" jdbcType="VARCHAR"/>
+        <result property="itemId" column="item_id" jdbcType="INTEGER"/>
+        <result property="finishTime" column="finish_Time" jdbcType="TIMESTAMP"/>
+        <result property="materialWorkshop" column="material_workshop"
+                typeHandler="com.steccn.qms.constant.IdNameTypeHandler"/>
+        <result property="supplier" column="supplier"
+                typeHandler="com.steccn.qms.constant.IdNameTypeHandler"/>
     </resultMap>
 
     <select id="rateDataList" resultMap="BaseResultMap">
@@ -286,6 +300,7 @@
                 JOIN qt_check_task_detail detail ON task.id = detail.task_id and detail.del_flag = 0 and copy.copy = detail.copy
         WHERE
             task.del_flag = 0
+            AND task.status =2
             AND task.task_type = 1
             AND copy.sampling_time_array is not null
             <if test="itemIdSet !=null and itemIdSet.size > 0">
@@ -294,5 +309,33 @@
                     #{id}
                 </foreach>
             </if>
+    </select>
+    <select id="otherList" resultMap="OtherComingMap">
+        SELECT
+            task.id AS task_id,
+            task.CODE AS task_code,
+            task.result,
+            task.note,
+            detail.check_result,
+            detail.item_id,
+            task.finished_time as finish_time,
+            task.material_workshop,
+            task.supplier
+        FROM
+            qt_check_task task
+                JOIN qt_check_task_detail detail ON task.id = detail.task_id
+        WHERE
+            task.del_flag = 0
+          AND detail.del_flag = 0
+          AND task.STATUS = 2
+          AND finished_time &gt;= #{start}
+          AND finished_time &lt;= #{end}
+          AND task.task_type = #{checkType}
+          <if test="itemIdSet !=null and itemIdSet.size > 0">
+            and detail.item_id in
+            <foreach collection="itemIdSet" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+         </if>
     </select>
 </mapper>
