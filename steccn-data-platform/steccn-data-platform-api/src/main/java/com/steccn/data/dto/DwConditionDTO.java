@@ -29,9 +29,6 @@ public class DwConditionDTO implements Serializable {
     @ApiModelProperty("厚度")
     private BigDecimal thick;
 
-    @ApiModelProperty("报工id")
-    private Long reportWorkId;
-
     @ApiModelProperty("远传仪表编码")
     private String code;
 

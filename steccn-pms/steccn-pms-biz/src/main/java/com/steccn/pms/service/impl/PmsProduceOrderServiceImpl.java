@@ -17,9 +17,9 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.WorkLineConvertUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -37,10 +37,12 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder> implements PmsProduceOrderService {
 
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
@@ -838,6 +841,75 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             });
         }
         return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public List<DwProduceOrderDTO> currentProduceOrder(LocalDate currentDate) {
+        //定义返回集合
+        List<DwProduceOrderDTO> resList = Lists.newArrayList();
+        //获取班次日期-早班和晚班
+        LocalDateTime start = LocalDateUtil.getMorning(currentDate);
+        LocalDateTime end = start.plusDays(1);
+        //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
+        List<PmsProduceOrder> dbList = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
+            wr.isNull(PmsProduceOrder::getActualEndTime).or().gt(PmsProduceOrder::getActualEndTime, start);
+        }));
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料的信息
+            Set<Long> materialIdSet = dbList.stream().map(PmsProduceOrder::getMaterialId).collect(Collectors.toSet());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for (PmsProduceOrder order : dbList) {
+                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
+                //①结束时间小于end，开始时间小于start        ==> start,结束时间
+                //②结束时间小于end，开始时间等于start        ==> start,结束时间
+                //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
+                //④结束时间大于等于end，开始时间小于start     ==> start,end
+                //⑤结束时间大于等于end，开始时间等于start     ==> start,end
+                //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
+
+                //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
+                //⑦开始时间小于start    ==> start,end
+                //⑧开始时间等于start    ==> start,end
+                //⑨开始时间大于start    ==> 开始时间,end
+
+                //3.总共分成四种情况
+                //start-结束时间
+                //start-end
+                //开始时间-结束时间
+                //开始时间-end
+                DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
+                BeanUtil.copyProperties(order, orderDTO);
+                orderDTO.setClassDate(currentDate);
+                orderDTO.setProductLineId(order.getProductionLineId());
+                orderDTO.setProduceOrderId(order.getId());
+                orderDTO.setProduceOrderNo(order.getCode());
+                LocalDateTime tempStart = LocalDateUtil.gt(order.getActualStartTime(),start) ? order.getActualStartTime() : start;
+                LocalDateTime tempEnd = Objects.isNull(order.getActualEndTime()) || LocalDateUtil.ge(order.getActualEndTime(), end) ? end : order.getActualEndTime();
+                orderDTO.setStart(tempStart);
+                orderDTO.setEnd(tempEnd);
+                orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
+                //考虑开始时间和结束时间是否跨班次问题，如果跨班次，则基于班次进行分割。如果不跨班次，则直接返回
+                if (!CalculateDateUtil.isSameClassType(tempStart, tempEnd)) {
+                    DwProduceOrderDTO left = new DwProduceOrderDTO();
+                    DwProduceOrderDTO right = new DwProduceOrderDTO();
+                    BeanUtil.copyProperties(orderDTO, left);
+                    BeanUtil.copyProperties(orderDTO, right);
+                    left.setStart(tempStart);
+                    left.setEnd(LocalDateUtil.getNight(currentDate));
+                    left.setClassId(ClassUtil.MORNING);
+                    resList.add(left);
+                    right.setStart(LocalDateUtil.getNight(currentDate));
+                    right.setEnd(tempEnd);
+                    right.setClassId(ClassUtil.NIGHT);
+                    resList.add(right);
+                } else {
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(start);
+                    orderDTO.setClassId(qtTaskClassCalculate.getClassType());
+                    resList.add(orderDTO);
+                }
+            }
+        }
+        return resList;
     }
 
     @Override

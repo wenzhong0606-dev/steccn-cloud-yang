@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
+import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.MaterialRequisitionApprovalDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.vo.PmsProduceOrderVO;
@@ -13,6 +14,7 @@ import com.steccn.pms.vo.ReportWorkOrderVO;
 import com.steccn.pms.vo.WorkOrderVO;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -42,6 +45,16 @@ public interface RemotePmsFeignApi {
     @PostMapping("/feign/pms/produce/order/report")
     @ApiOperation("根据班次日期 查询当前班次日期的所有报工记录")
     R<List<DwCurrentReportWorkDTO>> currentReportWork(@RequestBody TupleDTO<LocalDate, LocalDate> currentDate);
+
+
+    /**
+     * 获取当前班次时间内的生产订单
+     * @param tupleDTO
+     * @return
+     */
+    @PostMapping("/feign/pms/produce/order/dw/current")
+    @ApiOperation("获取当前班次时间内的生产订单")
+    R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO);
 
     /**
      * 根据产线id批量获取当前产线下正在执行中的订单信息
