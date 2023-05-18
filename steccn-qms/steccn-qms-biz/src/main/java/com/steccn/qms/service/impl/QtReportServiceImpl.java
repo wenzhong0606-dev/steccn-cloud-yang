@@ -299,7 +299,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
             Assert.notNull(granularityEnum,"粒度不存在");
 
-            if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.equals(q.getCheckType())){
+            if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(q.getCheckType())){
                 //来料检
                 incomingCheck(q, qtReportChartVO, itemIds,granularityEnum);
             }else{
@@ -1599,7 +1599,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 List<LocalDateTime> samplingTimeArray = sourceCheck.getSamplingTimeArray();
                 StringBuilder sb = new StringBuilder();
                 for (LocalDateTime localDateTime : samplingTimeArray) {
-                    sb.append(LocalDateUtil.format(localDateTime, DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                    sb.append(LocalDateUtil.format(localDateTime, DatePattern.NORM_DATE_PATTERN));
                     sb.append(",");
                 }
                 taskVO.setFinishedTime(sb.substring(0, sb.length() - 1));
@@ -1686,6 +1686,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @return
      */
     public static boolean isFloatNumber(String str) {
+        if(StrUtil.isBlank(str)){
+            return Boolean.FALSE;
+        }
         Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER);
         Matcher num = pattern.matcher(str);
         if (!num.matches()) {
@@ -1701,6 +1704,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @return
      */
     public static boolean isNumber(String str) {
+        if(StrUtil.isBlank(str)){
+            return Boolean.FALSE;
+        }
         Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_NUMBER);
         Matcher num = pattern.matcher(str);
         if (!num.matches()) {
