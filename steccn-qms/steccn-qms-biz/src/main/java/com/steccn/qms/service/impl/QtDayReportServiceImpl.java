@@ -776,7 +776,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //记录所有的检验项
         Set<Integer> itemIdSet = Sets.newHashSet();
         sourceList.forEach(ele -> itemIdSet.add(ele.getItemId()));
-        Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(itemIdSet));
+        Map<Integer, Integer> originalMap = qtCheckItemService.queryOriginal(itemIdSet);
+        //将检验项替换成原照-屏蔽所有的快照可能
+        sourceList.forEach(ele -> ele.setItemId(originalMap.get(ele.getItemId())));
+        //查询所有原照的检验项
+        Set<Integer> newItemIdSet = Sets.newHashSet();
+        sourceList.forEach(ele -> newItemIdSet.add(ele.getItemId()));
+        Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(newItemIdSet));
         //构造idxmap
         Map<Integer,Integer> idxMap = Maps.newHashMap();
         List<String> dynamicHeadList = Lists.newArrayList();
@@ -789,6 +795,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         for (Map.Entry<Integer, QtCheckItem> itemEntry : itemMap.entrySet()) {
             dynamicHeadList.add(itemEntry.getValue().getName());
             idxMap.put(itemEntry.getKey(),idx++);
+            //添加测量单位
             if(Objects.nonNull(itemEntry.getValue().getMeasureUnit())){
                 dictIdSet.add(itemEntry.getValue().getMeasureUnit());
             }
