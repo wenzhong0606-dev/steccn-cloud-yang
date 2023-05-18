@@ -435,6 +435,18 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         return resMap;
     }
 
+    @Override
+    public List<EpDwMeterPartitionDTO> meterPartition() {
+        //1.获取所有的远传仪表
+        List<EpDwMeterPartitionDTO> dbList = this.baseMapper.meterPartition();
+        //2.如果仪表集合不为空
+        if(CollUtil.isNotEmpty(dbList)){
+            //获取所有的组织机构id
+            Set<Integer> officeIdSet = dbList.stream().map(EpDwMeterPartitionDTO::getOfficeId).collect(Collectors.toSet());
+        }
+        return null;
+    }
+
     /**
      * 根据条件判断是否抛出异常
      *

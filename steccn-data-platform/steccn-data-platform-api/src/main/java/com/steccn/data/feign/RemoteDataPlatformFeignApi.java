@@ -35,6 +35,10 @@ public interface RemoteDataPlatformFeignApi {
     @ApiOperation("能源绩效系统-抄表归档")
     R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto);
 
+    @PostMapping("/feign/data/warehouse/meter/read/diff")
+    @ApiOperation(value = "数仓条件列表-一块仪表，2个时间点的差值")
+    R<BigDecimal> meterReadDiff(@RequestBody DwMeterReadDiffDTO dto);
+
     /**
      * 生产管理-进出站计数归档
      *

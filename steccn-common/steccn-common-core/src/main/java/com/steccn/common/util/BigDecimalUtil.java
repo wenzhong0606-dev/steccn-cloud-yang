@@ -1,12 +1,14 @@
 package com.steccn.common.util;
 
 
+import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collector;
@@ -80,6 +82,60 @@ public class BigDecimalUtil {
      */
     public static BigDecimal subtract(BigDecimal val1, BigDecimal val2) {
         return subtract(val1, val2, DEFAULT_SCALE);
+    }
+
+    /**
+     * val1 > val2 ? true : false
+     * @param val1
+     * @param val2
+     * @return
+     */
+    public static boolean gt(BigDecimal val1, BigDecimal val2) {
+        return greaterMeta(val1, val2, Boolean.FALSE);
+    }
+
+    /**
+     * val1 >= val2 ? true : false
+     * @param val1
+     * @param val2
+     * @return
+     */
+    public static boolean ge(BigDecimal val1, BigDecimal val2) {
+        return greaterMeta(val1, val2, Boolean.TRUE);
+    }
+
+    /**
+     * val1 < val2 ? true : false
+     * @param val1
+     * @param val2
+     * @return
+     */
+    public static boolean lt(BigDecimal val1, BigDecimal val2) {
+        return greaterMeta(val2, val1, Boolean.FALSE);
+    }
+
+    /**
+     * val1 <= val2 ? true : false
+     * @param val1
+     * @param val2
+     * @return
+     */
+    public static boolean le(BigDecimal val1, BigDecimal val2) {
+        return greaterMeta(val2, val1, Boolean.TRUE);
+    }
+
+    /**
+     * 如果equalsFlag == false left > right
+     * 如果equalsFlag == true  left >= right
+     * @param left
+     * @param right
+     * @param equalsFlag
+     * @return
+     */
+    private static Boolean greaterMeta(BigDecimal left, BigDecimal right, boolean equalsFlag) {
+        Assert.notNull(left, "值不能为空");
+        Assert.notNull(right, "值不能为空");
+        return left.compareTo(right) > 0 || (equalsFlag && left.compareTo(right) == 0);
     }
 
     /**

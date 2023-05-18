@@ -60,7 +60,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public EpPartitionNameListVO getEpEnergyTypeVOList(Integer energyType) {
-
         EpPartitionNameListVO epPartitionNameListVO = new EpPartitionNameListVO();
         if (DEFAULT_ENERGY_SET.contains(energyType)) {
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.getByEnergyType(energyType).getName());
@@ -383,7 +382,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //准备数据
         List<EpPartitionVO> childTree = Lists.newArrayList();
         if(CollUtil.isNotEmpty(treeList)){
-
             dto.getPartitionId().forEach(partitionTmp -> {
                 //过滤子树信息
                 EpPartitionVO resTmp = new EpPartitionVO();
