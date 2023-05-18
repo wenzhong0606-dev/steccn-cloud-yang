@@ -895,6 +895,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         }else {
             dayCount = dto.getEndDate().getMonthValue() - dto.getStartDate().getMonthValue();
         }
+        //为了进循环,如果是0,那么加1
+        if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())&&dayCount==0){
+            dayCount = 1;
+        }
         //如果不是班次相关报表则合并数据
         if(!dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
             //如果是月报表则把所有月份相同的数据聚合
