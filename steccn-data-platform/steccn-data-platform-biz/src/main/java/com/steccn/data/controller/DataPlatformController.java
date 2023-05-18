@@ -4,6 +4,7 @@ import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.DwStationInfoDTO;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.service.PmStationCollectService;
@@ -55,6 +56,12 @@ public class DataPlatformController {
     @ApiOperation("生产管理-进出站计数归档")
     R<List<DwStationCollectVO>> stationCollect(@RequestBody DwStationCollectDTO dto) {
         return R.success(pmStationCollectService.stationCollect(dto));
+    }
+
+    @PostMapping("/station/info")
+    @ApiOperation("生产管理-进出站计数信息")
+    R<List<DwStationCollectVO>> stationInfo(@RequestBody DwStationInfoDTO dto) {
+        return R.success(pmStationCollectService.stationInfo(dto));
     }
 
     @PostMapping("/defect")
