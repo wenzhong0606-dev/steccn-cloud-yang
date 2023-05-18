@@ -124,6 +124,8 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtImproveRecord::getStatus);
             }
         }
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
         //判断当前用户的角色是否是整改管理员
         MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
         if (CollUtil.isNotEmpty(role.getStringList())) {
@@ -135,10 +137,11 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             Set<Long> userAuthData = getUserAuthData();
             if (CollUtil.isNotEmpty(userAuthData)) {
                 between.in(QtImproveRecord::getId, userAuthData);
+            }else {
+                return page;
             }
         }
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+
         //3.查询分页数据
         IPage resPage = page(page, between);
         //4.拷贝page信息
