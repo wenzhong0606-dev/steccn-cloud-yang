@@ -3,14 +3,12 @@ package com.steccn.pms.feign;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,4 +29,11 @@ public interface RemoteReportWorkFeignApi {
     @ApiOperation("报工班组信息")
     @PostMapping("feign/pms/report/work/class/group")
     R<Map<Long, Long>> reportWorkClassGroup(@RequestBody Set<Long> reportWorkIdSet);
+
+    /**
+     * 获取深加工车间 订单的报工记录
+     * @param sjgDataList 深加工车间数据
+     * @return
+     */
+    R<List<EpMeterReadRowDTO>> sjgOrderRw(List<EpMeterReadRowDTO> sjgDataList);
 }

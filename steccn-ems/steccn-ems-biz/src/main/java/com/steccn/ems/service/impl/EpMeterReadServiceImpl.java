@@ -23,10 +23,7 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
-import com.steccn.ems.dto.EpEnergyParamDTO;
-import com.steccn.ems.dto.EpEnergyTreeDTO;
-import com.steccn.ems.dto.EpMeterReadAddDTO;
-import com.steccn.ems.dto.EpMeterReadUpdateDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.*;
@@ -36,6 +33,7 @@ import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -499,12 +497,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
             sortedDateList.add(0 , minLocalDate);
 
-            //获取所有的产量信息
+//            //获取所有的产量信息
             List<EpProduceDetailVO> produceDetailList = epComputeProduceDetailService.getProduceDetailList(minLocalDate, sortedDateList.get(sortedDateList.size() - 1));
-
             Set<Integer> officeIdSet = produceDetailList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
-
-
             //根据组织机构id和能源类型查询分区节点
             Map<Integer, EpInstrumentAccount> epPartitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
             EpInstrumentAccount defaultEpInstrumentAccount = new EpInstrumentAccount();
@@ -532,14 +527,16 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
                 EpPartition defaultPartition = new EpPartition();
 
-                List<EpMeterRead> sjgDataList = Lists.newArrayList();
+                List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
 
                 dataList.forEach(ele -> {
                     EpInstrumentAccount account = meterPartitionMap.getOrDefault(ele.getMeterId(), defaultAccount);
                     EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
                     //如果是深加工节点
                     if (sjgLineSet.contains(epPartition.getOfficeId())) {
-                        sjgDataList.add(ele);
+                        EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
+                        BeanUtils.copyProperties(ele, rowDTO);
+                        sjgDataList.add(rowDTO);
                     }
                 });
 
@@ -547,8 +544,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
                 //报工记录关联的生产订单为当前行的生产订单
                 //报工记录的时段在当前行的班次时段内
-
-
+                List<EpMeterReadRowDTO> epMeterReadRowDTOList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
 
                 //获取报工集合
