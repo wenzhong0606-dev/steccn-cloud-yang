@@ -100,4 +100,8 @@ public interface RemoteDataPlatformFeignApi {
     @ApiOperation("迁移数据")
     R<Boolean> pmStationCollectDealData(@RequestBody List<PmStationCollectDTO> list);
 
+    @PostMapping("/feign/data/warehouse/station/info")
+    @ApiOperation("生产管理-进出站计数信息")
+    R<List<DwStationCollectVO>> stationInfo(@RequestBody DwStationInfoDTO dto);
+
 }

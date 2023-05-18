@@ -24,7 +24,7 @@ public class DwStationInfoDTO implements Serializable {
     private LocalDateTime endTime;
 
     @ApiModelProperty("编码")
-    private List<String> codeList;
+    private String code;
 
 
 

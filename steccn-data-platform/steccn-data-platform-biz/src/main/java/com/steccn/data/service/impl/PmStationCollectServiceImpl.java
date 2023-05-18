@@ -99,7 +99,7 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
         //根据条件获取出站采集点的采集数据
         LocalDateTime startTime = dto.getStartTime().minusDays(1);
         LocalDateTime endTime = dto.getEndTime().minusDays(1);
-        List<PmStationCollect> list = list(new LambdaQueryWrapper<PmStationCollect>().in(PmStationCollect::getCode, dto.getCodeList())
+        List<PmStationCollect> list = list(new LambdaQueryWrapper<PmStationCollect>().eq(PmStationCollect::getCode, dto.getCode())
                 .between(PmStationCollect::getRecordTime, startTime, endTime)
                 .orderByDesc(PmStationCollect::getRecordTime));
         return BeanUtil.copyToList(list,DwStationCollectVO.class);
