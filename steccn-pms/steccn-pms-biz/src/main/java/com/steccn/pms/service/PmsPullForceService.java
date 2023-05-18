@@ -1,5 +1,6 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.domain.PmsPullForce;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.pms.dto.PmsPullForceEditDTO;
@@ -60,4 +61,11 @@ public interface PmsPullForceService extends IService<PmsPullForce> {
      * @return
      */
     Map<String, BigDecimal> getPullForce(Set<String> pfSet);
+
+    /**
+     * 拉引量值预填 如果存在则覆盖
+     * @param list
+     * @return
+     */
+    Boolean edit(List<PmsPullForceEditDTO> list);
 }

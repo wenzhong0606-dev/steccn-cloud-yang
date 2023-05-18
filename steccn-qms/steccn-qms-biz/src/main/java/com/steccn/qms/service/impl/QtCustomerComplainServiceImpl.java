@@ -185,7 +185,8 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtCustomerComplain::getDealWayName);
             }
         }
-
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
        //判断当前用户的角色是否是客诉管理员
         MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
         if (CollUtil.isNotEmpty(role.getStringList())) {
@@ -197,10 +198,11 @@ public class QtCustomerComplainServiceImpl extends ServiceImpl<QtCustomerComplai
             Set<Long> userAuthData = getUserAuthData();
             if (CollUtil.isNotEmpty(userAuthData)){
                 between.in(QtCustomerComplain::getId, userAuthData);
+            }else {
+                return page;
             }
         }
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+
         //3.查询分页数据
         IPage resPage = page(page, between);
         //4.拷贝page信息

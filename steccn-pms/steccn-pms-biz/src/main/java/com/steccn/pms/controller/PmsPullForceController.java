@@ -1,6 +1,7 @@
 package com.steccn.pms.controller;
 
 import com.steccn.common.dto.ValidList;
+import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
 
@@ -44,5 +45,11 @@ public class PmsPullForceController {
     @PutMapping
     public R<Boolean> editBatch(@Valid @RequestBody ValidList<PmsPullForceEditDTO> dtoList) {
         return R.success(pmsPullForceService.editBatch(dtoList.getList()));
+    }
+
+    @ApiOperation("拉引量值预填")
+    @PostMapping
+    public R<Boolean> edit(@Validated(UpdateGroup.class)@Valid @RequestBody ValidList<PmsPullForceEditDTO> dtoList) {
+        return R.success(pmsPullForceService.edit(dtoList.getList()));
     }
 }

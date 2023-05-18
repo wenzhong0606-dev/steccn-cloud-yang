@@ -90,4 +90,9 @@ public class DataPlatformFeignController {
         return R.success(save);
     }
 
+    @PostMapping("/station/info")
+    @ApiOperation("生产管理-进出站计数信息")
+    R<List<DwStationCollectVO>> stationInfo(@RequestBody DwStationInfoDTO dto) {
+        return R.success(pmStationCollectService.stationInfo(dto));
+    }
 }

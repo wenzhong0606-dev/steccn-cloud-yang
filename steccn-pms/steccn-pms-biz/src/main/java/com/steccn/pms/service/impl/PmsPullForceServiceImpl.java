@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -24,6 +26,8 @@ import com.steccn.pms.vo.PmsPullForceClassQuantity;
 import com.steccn.pms.vo.PmsPullForceDetailsVO;
 import com.steccn.pms.vo.PmsPullForceVO;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,7 @@ import org.springframework.util.Assert;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE;
@@ -49,6 +54,8 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     private final RemoteDictFeignApi remoteDictFeignApi;
 
     private final RemoteOfficeFeign remoteOfficeFeign;
+
+    private final RedissonClient redissonClient;
 
     @Override
     public List<PmsPullForceVO> list(Integer workshopId, String monthDate) {
@@ -188,29 +195,35 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean editBatch(List<PmsPullForceEditDTO> dtoList) {
-        List<PmsPullForce> addList = new ArrayList<>();
-        List<PmsPullForce> updateList = new ArrayList<>();
-        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T, PmManagerConstant.ENERGY_CONSUME).getData();
-
-        for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
-            PmsPullForce pmsPullForce = new PmsPullForce();
-            BeanUtils.copyProperties(pmsPullForceEditDTO, pmsPullForce);
-            pmsPullForce.setUnitId(sysDictVO.getId());
-            if (Objects.isNull(pmsPullForceEditDTO.getId())) {
-                addList.add(pmsPullForce);
-            } else {
-                updateList.add(pmsPullForce);
+        //防止出现重复数据
+        RLock lock = redissonClient.getLock(LockConstant.TABLE_PMS_PULL_FORCE);
+        lock.lock();
+        try {
+            List<PmsPullForce> addList = new ArrayList<>();
+            List<PmsPullForce> updateList = new ArrayList<>();
+            SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T, PmManagerConstant.ENERGY_CONSUME).getData();
+            for (PmsPullForceEditDTO pmsPullForceEditDTO : dtoList) {
+                PmsPullForce pmsPullForce = new PmsPullForce();
+                BeanUtils.copyProperties(pmsPullForceEditDTO, pmsPullForce);
+                pmsPullForce.setUnitId(sysDictVO.getId());
+                if (Objects.isNull(pmsPullForceEditDTO.getId())) {
+                    addList.add(pmsPullForce);
+                } else {
+                    updateList.add(pmsPullForce);
+                }
             }
-        }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            if (!saveBatch(addList)) {
-                throw new BusinessException("拉引量新增失败");
+            if (CollectionUtils.isNotEmpty(addList)) {
+                if (!saveBatch(addList)) {
+                    throw new BusinessException("拉引量新增失败");
+                }
             }
-        }
-        if (CollectionUtils.isNotEmpty(updateList)) {
-            if (!updateBatchById(updateList)) {
-                throw new BusinessException("拉引量编辑失败");
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                if (!updateBatchById(updateList)) {
+                    throw new BusinessException("拉引量编辑失败");
+                }
             }
+        }finally {
+            lock.unlock();
         }
         return true;
     }
@@ -264,6 +277,29 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             });
         }
         return resMap;
+    }
+
+    @Override
+    public Boolean edit(List<PmsPullForceEditDTO> list) {
+        SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T, PmManagerConstant.ENERGY_CONSUME).getData();
+        List<PmsPullForce> forces = list.stream().map(dto -> {
+            PmsPullForce force = getOne(new LambdaQueryWrapper<PmsPullForce>()
+                    .in(PmsPullForce::getWorkshopId, dto.getWorkshopId())
+                    .in(PmsPullForce::getProductLineId, dto.getProductLineId())
+                    .in(PmsPullForce::getClassesId, dto.getClassesId())
+                    .in(PmsPullForce::getPullForceDate, dto.getPullForceDate()));
+            if (Objects.nonNull(force)) {
+                removeById(force.getId());
+            }
+            PmsPullForce pmsPullForce = new PmsPullForce();
+            BeanUtils.copyProperties(dto, pmsPullForce);
+            pmsPullForce.setUnitId(sysDictVO.getId());
+            return pmsPullForce;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(forces)) {
+            saveBatch(forces);
+        }
+        return true;
     }
 }
 

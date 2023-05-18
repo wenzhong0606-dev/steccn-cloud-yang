@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -805,7 +806,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             QtDaySamplingDTO samplingDTO = taskEntry.getValue().get(0);
             QtDaySamplingDataVO data = new QtDaySamplingDataVO();
             BeanUtils.copyProperties(samplingDTO, data);
-            data.setSamplingTime(samplingTime.toLocalTime());
+            //格式化时间 HH:mm
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            String format = dateTimeFormatter.format(samplingTime.toLocalTime());
+            data.setSamplingTime(format);
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
@@ -1049,6 +1053,8 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     }else {
                         dayData = groupByDate.get(dto.getStartDate().plusDays(i));
                     }
+                    //获取当前产线
+                    dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
                     //过滤班次数据
                     if(Objects.nonNull(dayData)){
                         dayData = dayData.stream().filter(v->v.getWorkOrder()!=null
@@ -1156,6 +1162,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 tmpDate = dto.getStartDate().plusDays(i);
                             }
                             List<QtChartSubDetailDTO> dayData = groupByDate.get(tmpDate);
+                            dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
                             List<String> lineDataTmp = Lists.newArrayList();
                             //早班对象和晚班对象
                             if(CollUtil.isNotEmpty(dayData)){
