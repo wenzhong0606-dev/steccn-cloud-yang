@@ -638,6 +638,20 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<EpMeterReadRowDTO> sjgOrderRw(List<EpMeterReadRowDTO> sjgDataList) {
+        //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
+        //报工记录关联的生产订单为当前行的生产订单
+        //报工记录的时段在当前行的班次时段内
+        if(CollUtil.isNotEmpty(sjgDataList)){
+            //获取生产
+            Set<Long> orderIdSet = sjgDataList.stream().map(EpMeterReadRowDTO::getProduceOrderId).collect(Collectors.toSet());
+
+        }
+
+        return null;
+    }
+
     /**
      * 更新物料消耗
      * @param dto dto信息

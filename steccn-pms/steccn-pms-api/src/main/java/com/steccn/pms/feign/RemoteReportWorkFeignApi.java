@@ -31,9 +31,11 @@ public interface RemoteReportWorkFeignApi {
     R<Map<Long, Long>> reportWorkClassGroup(@RequestBody Set<Long> reportWorkIdSet);
 
     /**
-     * 获取深加工车间 订单的报工记录
-     * @param sjgDataList 深加工车间数据
+     * 获取深加工产线-订单的报工记录
+     * @param sjgDataList 深加工产线数据
      * @return
      */
-    R<List<EpMeterReadRowDTO>> sjgOrderRw(List<EpMeterReadRowDTO> sjgDataList);
+    @ApiOperation("获取深加工产线-订单的报工记录")
+    @PostMapping("feign/pms/report/work/sjg/order/rw")
+    R<List<EpMeterReadRowDTO>> sjgOrderRw(@RequestBody List<EpMeterReadRowDTO> sjgDataList);
 }
