@@ -228,4 +228,11 @@ public interface PmsProduceOrderService extends IService<PmsProduceOrder> {
      * @return
      */
     Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO);
+
+    /**
+     * 获取客户
+     * @param dto
+     * @return
+     */
+    CustomerIdAndNameVO getCustomer(QmsCustomerDTO dto);
 }
