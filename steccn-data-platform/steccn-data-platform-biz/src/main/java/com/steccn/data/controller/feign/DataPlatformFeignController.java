@@ -31,7 +31,7 @@ import java.util.Set;
 @Api("数据中台服务")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("feign/data/warehouse")
+@RequestMapping("/feign/data/warehouse")
 public class DataPlatformFeignController {
 
     private final EpMeterCollectService epMeterCollectService;

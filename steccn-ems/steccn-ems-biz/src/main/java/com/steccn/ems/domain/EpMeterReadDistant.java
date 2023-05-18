@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 import lombok.Data;
 
 /**
@@ -47,6 +46,11 @@ public class EpMeterReadDistant implements Serializable {
      * 厚度
      */
     private BigDecimal thick;
+
+    /**
+     * 生产订单id
+     */
+    private Long produceOrderId;
 
     /**
      * 开始时间

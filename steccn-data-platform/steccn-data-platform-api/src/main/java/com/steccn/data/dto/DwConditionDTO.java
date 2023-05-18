@@ -37,4 +37,7 @@ public class DwConditionDTO implements Serializable {
 
     @ApiModelProperty("结束时间")
     private LocalDateTime end;
+
+    @ApiModelProperty("生产订单主键")
+    private Long produceOrderId;
 }

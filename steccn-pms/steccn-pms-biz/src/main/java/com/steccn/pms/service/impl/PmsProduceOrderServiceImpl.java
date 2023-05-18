@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,6 +25,7 @@ import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -966,6 +968,60 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     .thenComparing(ProduceOrderDataInfoVO::getLineNumberFlag));
         }
         return infoVOList;
+    }
+
+    @Override
+    public Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO) {
+        //查询生产订单数据
+        List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
+
+        //排序
+        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        //逻辑分页
+        return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
+    }
+
+    @Override
+    public CustomerIdAndNameVO getCustomer(QmsCustomerDTO dto) {
+        CustomerIdAndNameVO result = new CustomerIdAndNameVO();
+        PmsProduceOrder one = new PmsProduceOrder();
+        if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_2))){
+            //2）仅当手动输入生产订单号后校验为有效单号且该订单上的客户非空，预填该客户（若字段已填值，覆盖已填值）
+            if(StrUtil.isNotBlank(dto.getProductOrder())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, dto.getProductOrder()), false);
+            }else {
+                throw new BusinessException("生产订单不能为空");
+            }
+        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_3))){
+            //3）仅当生产产线的值更新且值非空且检验类型为首检、巡检时，查询生产管理系统当前产线、当前时间执行中的生产订单的“客户”属性，若非空，系统自动带出该值（若字段已填值，覆盖已填值)
+            if(Objects.nonNull(dto.getProductLineId())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                        .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                        .eq(PmsProduceOrder::getState,PmManagerConstant.OrderStateEnum.TWO.getCode()), false);
+            }else {
+                throw new BusinessException("产线不能为空");
+            }
+        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_4))){
+            if(Objects.nonNull(dto.getTimeSpot())&&Objects.nonNull(dto.getProductLineId())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                        .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                        .lt(PmsProduceOrder::getActualEndTime,dto.getTimeSpot())
+                        .gt(PmsProduceOrder::getActualStartTime,dto.getTimeSpot()), false);
+            }else {
+                throw new BusinessException("产线、时间点不能为空");
+            }
+        }
+        if(Objects.isNull(one) || one.getCustomerId()==null){
+            return result;
+        }
+        result.setCustomerId(one.getCustomerId());
+        Set<Long> idSet = Sets.newHashSet();
+        idSet.add(one.getCustomerId().longValue());
+        Map<Long, String> customerMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        result.setCustomerName(customerMap.get(one.getCustomerId().longValue()));
+        return result;
     }
 
 

@@ -225,4 +225,11 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     Map<Integer, Integer> parentType(Set<Integer> officeIdSet, String type);
+
+    /**
+     * 模糊查询客户
+     * @param sysOfficeDTO
+     * @return
+     */
+    List<SysOfficeVO> getCustomer(String name);
 }

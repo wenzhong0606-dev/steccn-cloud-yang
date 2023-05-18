@@ -47,6 +47,13 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.add(dto));
     }
 
+    @ApiOperation("获取订单相关客户")
+    @PostMapping("/customer")
+    @SysLog("获取订单相关客户")
+    public R<CustomerIdAndNameVO> getCustomer(@Validated @RequestBody QmsCustomerDTO dto) {
+        return R.success(pmsProduceOrderService.getCustomer(dto));
+    }
+
     @ApiOperation("生产订单分页列表")
     @PostMapping("/list")
     public R<Page<PmsProduceOrderVO>> pageList(@RequestBody PmsProduceOrderPageDTO dto) {
@@ -186,4 +193,11 @@ public class ProduceOrderController {
     public R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestParam("date") LocalDate currentDate) {
         return R.success(pmsProduceOrderService.currentProduceOrder(currentDate));
     }
+
+    @ApiOperation("全景追溯")
+    @PostMapping("/panoramic/tracing")
+    public R<Page<PanoramicTracingVO>>  tracing(@RequestBody PanoramicTracingDTO panoramicTracingDTO){
+        return R.success(pmsProduceOrderService.tracing(panoramicTracingDTO));
+    }
+
 }

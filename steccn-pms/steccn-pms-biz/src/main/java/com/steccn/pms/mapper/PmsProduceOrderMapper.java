@@ -3,13 +3,11 @@ package com.steccn.pms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsProduceOrder;
+import com.steccn.pms.dto.PanoramicTracingDTO;
 import com.steccn.pms.dto.PmsProduceOrderPageDTO;
 import com.steccn.pms.dto.ProduceOrderAcceptPageDTO;
 import com.steccn.pms.dto.ReportWorkOrderPageDTO;
-import com.steccn.pms.vo.CompleteStorageCountVO;
-import com.steccn.pms.vo.PmsProduceOrderVO;
-import com.steccn.pms.vo.ProduceOrderTrackReportVO;
-import com.steccn.pms.vo.WorkOrderVO;
+import com.steccn.pms.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -78,6 +76,13 @@ public interface PmsProduceOrderMapper extends BaseMapper<PmsProduceOrder> {
      * @return
      */
     WorkOrderVO selectByClassTime(@Param("startTime")LocalDateTime startTime,@Param("endTime")LocalDateTime endTime);
+
+    /**
+     * 全景追诉
+     * @param dto
+     * @return
+     */
+    List<PanoramicTracingVO>  tracing(@Param("dto") PanoramicTracingDTO dto);
 }
 
 

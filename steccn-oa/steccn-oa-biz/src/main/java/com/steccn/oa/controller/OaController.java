@@ -194,6 +194,18 @@ public class OaController {
         return R.success(kqGroupmemberService.findGroupByUserId(userId));
     }
 
+    @ApiOperation("获取当前登录用户的考勤组")
+    @GetMapping("/team/group")
+    public R<OaGroupIdAndNameVO> getGroupByLoginUser(){
+        return R.success(kqGroupmemberService.getOneGroupByUserId());
+    }
+
+    @ApiOperation("获取甲乙丙班下拉框")
+    @GetMapping("/team/group/dropDown")
+    public R<List<OaGroupIdAndNameVO>> getGroupDropDown(){
+        return R.success(kqGroupmemberService.getABCGroup());
+    }
+
     @ApiOperation("查询排班信息")
     @PostMapping("/roster/record")
     public R<List<OaRosterRecordVO>> getRosterRecord(@RequestBody OaRosterRecordDTO dto){

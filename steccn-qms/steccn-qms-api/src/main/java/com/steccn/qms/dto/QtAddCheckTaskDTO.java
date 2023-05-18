@@ -170,4 +170,14 @@ public class QtAddCheckTaskDTO implements Serializable {
      * 抽检时间
      */
     private LocalDateTime spotTime;
+
+    /**
+     * 班组id
+     */
+    private Integer classGroupId;
+
+    /**
+     * 班组名称
+     */
+    private String classGroupName;
 }

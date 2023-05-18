@@ -31,6 +31,11 @@ import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
+import com.steccn.platform.constant.SysOfficeConstant;
+import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -71,6 +76,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteReportWorkFeignApi remoteReportWorkFeignApi;
     @Autowired
     private EpMeterReadDistantService readDistantService;
+    @Autowired
+    private RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -484,6 +491,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         });
 
         if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterPartitionMap)) {
+            //查询全量节点映射关系
+            Map<Long, EpPartition> partitionMap = epPartitionService.listById(childTree.getPartitionIds());
+
             //获取集合最小的日期
             List<LocalDate> sortedDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
             LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
@@ -511,7 +521,34 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             if (CollUtil.isNotEmpty(dataList)) {
 
                 //获取基片产线的每一行对应的拉引量
+
                 //获取深加工产线的每一行对应的产量
+                SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
+                sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
+                sysOfficeTypeKeyDTO.setKey(PmManagerConstant.DEEP_PROCESSING);
+                List<SysOfficeVO> sjgLineList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                //过滤出所有的深加工节点
+                Set<Integer> sjgLineSet = sjgLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+                EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
+                EpPartition defaultPartition = new EpPartition();
+
+                List<EpMeterRead> sjgDataList = Lists.newArrayList();
+
+                dataList.forEach(ele -> {
+                    EpInstrumentAccount account = meterPartitionMap.getOrDefault(ele.getMeterId(), defaultAccount);
+                    EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
+                    //如果是深加工节点
+                    if (sjgLineSet.contains(epPartition.getOfficeId())) {
+                        sjgDataList.add(ele);
+                    }
+                });
+
+                //计算【生产明细表】中深加工产线的每一行对应的深加工产量（即成品玻璃的产量），填入右侧追加的“深加工产量”一列，单位为㎡
+                //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
+                //报工记录关联的生产订单为当前行的生产订单
+                //报工记录的时段在当前行的班次时段内
+
+
 
 
                 //获取报工集合
@@ -996,10 +1033,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     if (Objects.equals(meterReadListVO.getEntityTable(), 2)) {
                         for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
                             int finalI = i;
-//                            BigDecimal reduce = meterReadListVO.getMeterReadListVOList().stream()
-//                                    .filter(meterReadList -> Objects.nonNull(meterReadList.getReadValueList().get(finalI).getReadValue()))
-//                                    .map(meterReadList -> meterReadList.getReadValueList().get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
-//                            meterReadListVO.getReadValueList().get(i).setReadValue(reduce);
                             List<List<ReadValueListVO>> readValueAllList = new ArrayList<>();
                             reduceRecursion(meterReadListVO.getMeterReadListVOList(),readValueAllList);
                             BigDecimal sumReduce = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue())).map(v -> v.get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
