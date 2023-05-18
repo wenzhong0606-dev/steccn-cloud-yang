@@ -278,14 +278,6 @@ public class QtCheckTaskController {
         }
     }
 
-    @ApiOperation("获取拉引量")
-    @GetMapping("/getPullAmount")
-    public R<List<QtPullAmountDTO>> getByClassTime(@RequestParam LocalDate classTimeStart, LocalDate classTimeEnd){
-        Assert.notNull(classTimeStart);
-        Assert.notNull(classTimeEnd);
-        return R.success(qtChartGenerateService.calculatePullAmount(classTimeStart,classTimeEnd));
-    }
-
     /**
      * 对响应异常进行封装
      * @param response

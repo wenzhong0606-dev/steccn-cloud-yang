@@ -33,7 +33,7 @@ public class PullAmountCalculateTask {
      * 20:10:00
      */
     @Async
-    @Scheduled(cron = "10 8,20 * * *")
+    @Scheduled(cron = "0 10 8,20 * * *")
     public void calculatePullAmount() {
         RLock lock = redissonClient.getLock(LockConstant.pullAmountCalculate);
         boolean b = lock.tryLock();

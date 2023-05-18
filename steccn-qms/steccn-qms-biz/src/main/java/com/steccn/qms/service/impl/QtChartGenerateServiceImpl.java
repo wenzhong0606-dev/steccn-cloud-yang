@@ -559,7 +559,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 chartParam.setProductLineId(entry3.getKey());
                                 List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = Lists.newArrayList();
                                 try {
-                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+//                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
                                 } catch (Exception e) {
                                     log.error(e.getMessage());
                                 }
@@ -1615,10 +1615,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public Boolean calculatePullAmountTask() {
         LocalDateTime now = LocalDateTime.now();
+        LocalDate date = LocalDate.now();
         List<QtPullAmountDTO> qtPullAmountDTOS = Lists.newArrayList();
         //如果是早8点则查班次日期为昨天的拉引量
         if(QtManagerConstant.NUM_8 == now.getHour()){
             qtPullAmountDTOS = calculatePullAmount(now.toLocalDate().minusDays(1), now.toLocalDate().minusDays(1));
+            date = date.minusDays(1);
             //拿到晚班数据
             qtPullAmountDTOS = qtPullAmountDTOS.stream().filter(v->v.getClassId().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())).collect(Collectors.toList());
         }else {
@@ -1639,11 +1641,12 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
             Map<String, Long> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(nameList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
             Long classId = classMap.get(className);
             //输入数据
+            LocalDate finalDate = date;
             qtPullAmountDTOS.forEach(tmp->{
                 PmsPullForceEditDTO dto = new PmsPullForceEditDTO();
                 dto.setProductLineId(tmp.getProductLineId());
                 dto.setClassesId(classId);
-                dto.setPullForceDate(now.toLocalDate().minusDays(1));
+                dto.setPullForceDate(finalDate);
                 dto.setWorkshopId(tmp.getProductWorkShopId());
                 dto.setQuantity(tmp.getPullAmount());
                 dtoList.add(dto);
