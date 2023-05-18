@@ -43,7 +43,7 @@ public class QtCheckTaskDetailFeignController {
 
     @ApiOperation("ems获取拉引量")
     @PostMapping("/ems/getPullAmount")
-    public R<List<QtEmsPullAmountDTO>> getByClassTime(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto){
+    public R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto){
         return R.success(qtChartGenerateService.calculateEmsPullAmount(dto));
     }
 }
