@@ -560,7 +560,10 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
     @Override
     public List<SysOfficeVO> getListByTypeAndKey(SysOfficeTypeKeyDTO dto) {
         List<SysOfficeVO> vos = new ArrayList<>();
-        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>().eq(SysOffice::getStatus, SysOfficeConstant.normal).in(SysOffice::getOfficeType, dto.getType()).like(SysOffice::getOfficeName, dto.getKey()));
+        List<SysOffice> officeList = list(new LambdaQueryWrapper<SysOffice>()
+                .eq(SysOffice::getStatus, SysOfficeConstant.normal)
+                .in(SysOffice::getOfficeType, dto.getType())
+                .like(StrUtil.isNotBlank(dto.getKey()), SysOffice::getOfficeName, dto.getKey()));
         if (CollUtil.isNotEmpty(officeList)) {
             officeList.forEach(tmp -> {
                 SysOfficeVO vo = new SysOfficeVO();
