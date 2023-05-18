@@ -3,9 +3,11 @@ package com.steccn.data.service;
 import com.steccn.common.constant.ResultCode;
 import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,13 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     DwEpMeterCollectVO meterRead(DwMeterReadDTO dto);
+
+    /**
+     * 一个仪表 2个时间差值
+     * @param dto
+     * @return
+     */
+    BigDecimal meterReadDiff(DwMeterReadDiffDTO dto) ;
 
     /**
      * 最近抄表时间

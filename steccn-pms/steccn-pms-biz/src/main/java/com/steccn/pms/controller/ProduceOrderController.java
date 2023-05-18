@@ -2,7 +2,9 @@ package com.steccn.pms.controller;
 
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -18,6 +20,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -184,6 +188,11 @@ public class ProduceOrderController {
         return R.success(pmsProduceOrderService.getExecuteOrderInfo());
     }
 
+    @ApiOperation("获取当前班次时间内的生产订单")
+    @GetMapping("/dw/current")
+    public R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestParam("date") LocalDate currentDate) {
+        return R.success(pmsProduceOrderService.currentProduceOrder(currentDate));
+    }
 
     @ApiOperation("全景追溯")
     @PostMapping("/panoramic/tracing")

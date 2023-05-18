@@ -90,13 +90,13 @@ public class SysLogAspect {
         sysLog.setCreateTime(LocalDateTime.now());
         sysLog.setType(LogTypeEnum.NORMAL.getType());
         sysLog.setRemoteAddr(ServletUtil.getClientIP(request));
-        sysLog.setRequestUri(URLUtil.getPath(request.getRequestURI()));
         sysLog.setMethod(request.getMethod());
         sysLog.setUserAgent(request.getHeader("user-agent"));
         sysLog.setParams(JSONUtil.toJsonStr(args));
         //确定服务
         String requestUri = sysLog.getRequestUri();
         try {
+            sysLog.setRequestUri(URLUtil.getPath(request.getRequestURI()));
             String[] split = requestUri.split("/");
             if (split[1].equals("feign")) {
                 sysLog.setServiceId(split[2]);

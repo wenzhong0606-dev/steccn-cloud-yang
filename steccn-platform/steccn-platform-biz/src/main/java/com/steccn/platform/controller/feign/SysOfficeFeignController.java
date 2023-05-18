@@ -3,6 +3,7 @@ package com.steccn.platform.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
@@ -203,4 +204,9 @@ public class SysOfficeFeignController {
         return R.success(sysOfficeService.listMultiFilter(dto));
     }
 
+    @PostMapping("/parent/line")
+    @ApiOperation("查询一个节点指定类型的父节点-产线")
+    public R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet) {
+        return R.success(sysOfficeService.parentType(officeIdSet, SysOfficeConstant.PRODUCT_LINE));
+    }
 }

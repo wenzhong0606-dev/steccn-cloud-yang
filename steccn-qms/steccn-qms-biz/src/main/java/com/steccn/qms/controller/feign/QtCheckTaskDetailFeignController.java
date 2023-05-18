@@ -2,7 +2,9 @@ package com.steccn.qms.controller.feign;
 
 import cn.hutool.core.lang.Assert;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
+import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.dto.QtPullAmountDTO;
 import com.steccn.qms.service.QtChartGenerateService;
 import com.steccn.qms.service.QtCheckTaskDetailService;
@@ -12,6 +14,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,11 +41,9 @@ public class QtCheckTaskDetailFeignController {
         return R.success(qtCheckTaskDetailService.getByClassTime(tupleDTO.getField1(), tupleDTO.getField2()));
     }
 
-    @ApiOperation("获取拉引量")
-    @GetMapping("/getPullAmount")
-    public R<List<QtPullAmountDTO>> getByClassTime(@RequestParam LocalDate classTimeStart, LocalDate classTimeEnd){
-        Assert.notNull(classTimeStart);
-        Assert.notNull(classTimeEnd);
-        return R.success(qtChartGenerateService.calculatePullAmount(classTimeStart,classTimeEnd));
+    @ApiOperation("ems获取拉引量")
+    @PostMapping("/ems/getPullAmount")
+    public R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto){
+        return R.success(qtChartGenerateService.calculateEmsPullAmount(dto));
     }
 }

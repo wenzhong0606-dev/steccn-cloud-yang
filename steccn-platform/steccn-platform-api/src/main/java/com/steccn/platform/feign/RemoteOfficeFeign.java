@@ -2,6 +2,7 @@ package com.steccn.platform.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.vo.R;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeParentIdsDTO;
@@ -247,4 +248,14 @@ public interface RemoteOfficeFeign {
     @PostMapping("/feign/platform/sys/office/list/filter")
     @ApiOperation("根据机构类型以及多关键字名称返回SysOffice列表信息")
     R<List<SysOfficeVO>> listMultiFilter(@RequestBody SysOfficeTypeKeyDTO dto);
+
+    /**
+     * 查询一个节点指定类型的父节点-产线
+     * @param officeIdSet 组织机构id集合
+     * @return
+     */
+    @PostMapping("/feign/platform/sys/office/parent/line")
+    @ApiOperation("查询一个节点指定类型的父节点-产线")
+    R<Map<Integer, Integer>> parentLine(@RequestBody Set<Integer> officeIdSet);
+
 }

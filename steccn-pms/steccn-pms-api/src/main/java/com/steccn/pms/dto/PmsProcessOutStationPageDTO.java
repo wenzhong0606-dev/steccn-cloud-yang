@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,11 +40,11 @@ public class PmsProcessOutStationPageDTO extends BasePageDTO {
 
     @ApiModelProperty("开始时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime startTime;
+    private LocalDate startTime;
 
     @ApiModelProperty("结束时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime endTime;
+    private LocalDate endTime;
 
     @ApiModelProperty("批次号")
     private String batchNo;
