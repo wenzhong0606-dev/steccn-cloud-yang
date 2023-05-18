@@ -53,21 +53,21 @@ public interface QtChartGenerateService {
      * @param dto
      * @return
      */
-    public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
+    List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
 
     /**
      * 生成基片损耗柱状图
      * @param dto
      * @return
      */
-    public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto);
+    QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto);
 
     /**
      * 生成基片损耗饼图
      * @param dto
      * @return
      */
-    public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
+    QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
 
     /**
      * 计算拉引量
@@ -75,5 +75,11 @@ public interface QtChartGenerateService {
      * @param classTimeEnd
      * @return
      */
-    public List<QtPullAmountDTO> calculatePullAmount(LocalDate classTimeStart,LocalDate classTimeEnd);
+    List<QtPullAmountDTO> calculatePullAmount(LocalDate classTimeStart,LocalDate classTimeEnd);
+
+    /**
+     * 计算拉引量
+     * @return
+     */
+    Boolean calculatePullAmountTask();
 }
