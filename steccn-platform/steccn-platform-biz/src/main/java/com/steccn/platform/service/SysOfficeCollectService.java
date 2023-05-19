@@ -64,5 +64,5 @@ public interface SysOfficeCollectService extends IService<SysOfficeCollect> {
      * @param type
      * @return
      */
-    Map<Integer,String> listByStation(Set<Integer> stationIdSet, Integer type);
+    Map<Integer,List<String>> listByStation(Set<Integer> stationIdSet, Integer type);
 }

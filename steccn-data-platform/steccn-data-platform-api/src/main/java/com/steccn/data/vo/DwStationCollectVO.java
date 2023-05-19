@@ -28,4 +28,11 @@ public class DwStationCollectVO implements Serializable {
 
     @ApiModelProperty("值")
     private BigDecimal value;
+
+    @ApiModelProperty("工位id")
+    private Integer stationId;
+
+    @ApiModelProperty("批次号")
+    private String batchNo;
+
 }
