@@ -1342,8 +1342,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
         if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
             queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
-        } else {
-            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, sysDictVO.getId());
+        } else if(Objects.nonNull(sysDictVO)){
+            queryWrapper.eq(Objects.nonNull(sysDictVO.getId()), EpProductUnitConsumeStandard::getProductThick, sysDictVO.getId());
         }
         return epProductUnitConsumeStandardService.list(queryWrapper);
     }

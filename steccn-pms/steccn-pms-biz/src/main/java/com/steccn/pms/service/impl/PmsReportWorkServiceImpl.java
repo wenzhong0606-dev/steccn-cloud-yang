@@ -18,6 +18,7 @@ import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
@@ -52,6 +53,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yequan
@@ -98,6 +100,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
     private RemoteStationWarehouseFeignApi remoteStationWarehouseFeignApi;
     @Autowired
     private PmsCompleteStorageService pmsCompleteStorageService;
+    @Autowired
+    private RemoteSpareUnitConvertFeignApi spareUnitConvertFeignApi;
 
 
     @Override
@@ -140,7 +144,6 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         });
         return page;
     }
-
     /**
      * 拼接条件时间
      *
@@ -644,12 +647,70 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         //报工记录关联的生产订单为当前行的生产订单
         //报工记录的时段在当前行的班次时段内
         if(CollUtil.isNotEmpty(sjgDataList)){
-            //获取生产
+            //获取生产订单主键集合
             Set<Long> orderIdSet = sjgDataList.stream().map(EpMeterReadRowDTO::getProduceOrderId).collect(Collectors.toSet());
-
+            List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProduceOrderId, orderIdSet));
+            if(CollUtil.isNotEmpty(dbList)){
+                Map<Long, List<PmsReportWork>> orderMap = dbList.stream().collect(Collectors.groupingBy(PmsReportWork::getProduceOrderId));
+                //获取生产订单集合
+                List<PmsProduceOrder> orderList = produceOrderService.listByIds(orderIdSet);
+                //定义生产订单的所有物料，用于物料的单位转换
+                Set<Long> materialIdSet = Sets.newHashSet();
+                //key-生产订单主键 value-物料主键
+                Map<Long,Long> orderMaterialMap = Maps.newHashMap();
+                orderList.forEach(order ->{
+                      materialIdSet.add(order.getMaterialId());
+                      orderMaterialMap.put(order.getId(),order.getMaterialId());
+                });
+                //获取平方米单位数据字典
+                SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_PFM, SysDictConstant.TYPE_MEASURE_UNIT), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                Map<Long, List<SysSpareUnitConversionVO>> convertMap = FeignOptional.of(() -> spareUnitConvertFeignApi.convert(materialIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                sjgDataList.forEach(ele ->{
+                    //获取订单报工数据集合
+                    List<PmsReportWork> orderRwList = orderMap.getOrDefault(ele.getProduceOrderId(), Lists.newArrayList());
+                    //定义班次开始时间，班次结束时间
+                    LocalDateTime classStart;
+                    LocalDateTime classEnd;
+                    if (ele.getClassId() == 0) {
+                        //早班
+                        classStart = LocalDateUtil.getMorning(ele.getStart());
+                        classEnd = classStart.plusHours(12);
+                    } else {
+                        //晚班
+                        classStart = LocalDateUtil.getNight(ele.getStart());
+                        classEnd = classStart.plusHours(12);
+                    }
+                    LocalDateTime finalClassStart = classStart;
+                    LocalDateTime finalClassEnd = classEnd;
+                    //获取满足条件的报工数据
+                    List<PmsReportWork> passRwList = orderRwList.stream().filter(v -> LocalDateUtil.isRange(v.getStartTime(), finalClassStart, finalClassEnd, true, true)).collect(Collectors.toList());
+                    Set<Long> rwIdSet = Sets.newHashSet();
+                    //定义加工的片数
+                    BigDecimal yieldPs = BigDecimal.ZERO;
+                    for (PmsReportWork pmsReportWork : passRwList) {
+                        rwIdSet.add(pmsReportWork.getId());
+                        //加工数累计
+                        BigDecimalUtil.add(yieldPs, pmsReportWork.getProcessQuantity());
+                    }
+                    //将加工的片数转换成面积
+                    //根据生产订单获取物料
+                    Long materialId = orderMaterialMap.get(ele.getProduceOrderId());
+                    //根据物料获取单位转换
+                    List<SysSpareUnitConversionVO> convertList = convertMap.getOrDefault(materialId, Lists.newArrayList());
+                    if (CollUtil.isNotEmpty(convertList) && Objects.nonNull(sysDictVO)) {
+                        Optional<SysSpareUnitConversionVO> first = convertList.stream().filter(v -> v.getConversionUnitId().equals(sysDictVO.getId())).findFirst();
+                        if (first.isPresent()) {
+                            SysSpareUnitConversionVO unitConversionVO = first.get();
+                            yieldPs = BigDecimalUtil.multiply(yieldPs, unitConversionVO.getConversionQuantity());
+                            yieldPs = BigDecimalUtil.divide(yieldPs, unitConversionVO.getQuantity());
+                        }
+                    }
+                    ele.setYield(yieldPs);
+                    ele.setReportWorkIdSet(rwIdSet);
+                });
+            }
         }
-
-        return null;
+        return sjgDataList;
     }
 
     /**

@@ -545,10 +545,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //报工记录关联的生产订单为当前行的生产订单
                 //报工记录的时段在当前行的班次时段内
                 List<EpMeterReadRowDTO> epMeterReadRowDTOList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-
-
                 //获取报工集合
-                Set<Long> reportWorkIdSet = Sets.newHashSet();
+                Set<Long> reportWorkIdSet = epMeterReadRowDTOList.stream().flatMap(v -> v.getReportWorkIdSet().stream()).collect(Collectors.toSet());
                 //获取每一个报工对应的班组
                 Map<Long, Long> reportMap = FeignOptional.of(() -> remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
