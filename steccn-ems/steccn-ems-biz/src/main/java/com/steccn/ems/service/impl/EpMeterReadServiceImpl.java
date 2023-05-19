@@ -448,7 +448,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 .in(EpMeterReadDistant::getMeterId, meterIdSet)
                 .in(EpMeterReadDistant::getReadDate, dateSet));
         if (CollUtil.isNotEmpty(dbList)) {
-            Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick()));
+            Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() +"_" + v.getProduceOrderId()));
             collect.forEach((k, v) -> {
                 EpMeterReadDistant ele = v.get(0);
                 EpMeterRead model = new EpMeterRead();
@@ -457,6 +457,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 model.setAdminFlag(MpConstant.NO);
                 model.setAdminValue(reduce);
                 model.setReadValue(reduce);
+                model.setReportWorkId(ele.getProduceOrderId());
                 resList.add(model);
             });
         }
@@ -536,6 +537,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     if (sjgLineSet.contains(epPartition.getOfficeId())) {
                         EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
                         BeanUtils.copyProperties(ele, rowDTO);
+                        rowDTO.setProduceOrderId(ele.getReportWorkId());
                         sjgDataList.add(rowDTO);
                     }
                 });

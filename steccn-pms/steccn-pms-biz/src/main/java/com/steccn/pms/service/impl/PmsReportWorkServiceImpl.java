@@ -690,7 +690,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                     for (PmsReportWork pmsReportWork : passRwList) {
                         rwIdSet.add(pmsReportWork.getId());
                         //加工数累计
-                        BigDecimalUtil.add(yieldPs, pmsReportWork.getProcessQuantity());
+                        yieldPs = BigDecimalUtil.add(yieldPs, pmsReportWork.getProcessQuantity());
                     }
                     //将加工的片数转换成面积
                     //根据生产订单获取物料
