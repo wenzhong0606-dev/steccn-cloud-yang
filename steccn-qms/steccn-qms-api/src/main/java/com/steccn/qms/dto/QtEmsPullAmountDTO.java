@@ -1,5 +1,6 @@
 package com.steccn.qms.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -18,7 +19,9 @@ import java.time.LocalDateTime;
 public class QtEmsPullAmountDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("唯一标识")
     private Long uuid;
+
     /**
      * 班次日期
      */

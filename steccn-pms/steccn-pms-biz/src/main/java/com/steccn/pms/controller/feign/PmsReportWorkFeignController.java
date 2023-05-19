@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
+import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.service.PmsReportWorkService;
 import com.steccn.pms.vo.PmsReportWorkVO;
 import io.swagger.annotations.Api;
@@ -40,6 +41,12 @@ public class PmsReportWorkFeignController {
     @PostMapping("/class/group")
     R<Map<Long, Long>> reportWorkClassGroup(@RequestBody Set<Long> reportWorkIdSet) {
         return R.success(pmsReportWorkService.reportWorkClassGroup(reportWorkIdSet));
+    }
+
+    @ApiOperation("获取深加工产线-订单的报工记录")
+    @PostMapping("/sjg/order/rw")
+    R<List<EpMeterReadRowDTO>> sjgOrderRw(@RequestBody List<EpMeterReadRowDTO> sjgDataList){
+        return R.success(pmsReportWorkService.sjgOrderRw(sjgDataList));
     }
 
 }

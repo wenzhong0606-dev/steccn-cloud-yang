@@ -1,6 +1,7 @@
 package com.steccn.qms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -775,7 +776,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         //记录所有的检验项
         Set<Integer> itemIdSet = Sets.newHashSet();
         sourceList.forEach(ele -> itemIdSet.add(ele.getItemId()));
-        Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(itemIdSet));
+        Map<Integer, Integer> originalMap = qtCheckItemService.queryOriginal(itemIdSet);
+        //将检验项替换成原照-屏蔽所有的快照可能
+        sourceList.forEach(ele -> ele.setItemId(originalMap.get(ele.getItemId())));
+        //查询所有原照的检验项
+        Set<Integer> newItemIdSet = Sets.newHashSet();
+        sourceList.forEach(ele -> newItemIdSet.add(ele.getItemId()));
+        Map<Integer, QtCheckItem> itemMap = qtCheckItemService.mapCheckItem(Lists.newArrayList(newItemIdSet));
         //构造idxmap
         Map<Integer,Integer> idxMap = Maps.newHashMap();
         List<String> dynamicHeadList = Lists.newArrayList();
@@ -788,6 +795,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         for (Map.Entry<Integer, QtCheckItem> itemEntry : itemMap.entrySet()) {
             dynamicHeadList.add(itemEntry.getValue().getName());
             idxMap.put(itemEntry.getKey(),idx++);
+            //添加测量单位
             if(Objects.nonNull(itemEntry.getValue().getMeasureUnit())){
                 dictIdSet.add(itemEntry.getValue().getMeasureUnit());
             }
@@ -805,7 +813,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             QtDaySamplingDTO samplingDTO = taskEntry.getValue().get(0);
             QtDaySamplingDataVO data = new QtDaySamplingDataVO();
             BeanUtils.copyProperties(samplingDTO, data);
-            data.setSamplingTime(samplingTime.toLocalTime());
+            //格式化时间 HH:mm
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            String format = dateTimeFormatter.format(samplingTime.toLocalTime());
+            data.setSamplingTime(format);
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
@@ -890,6 +901,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             dayCount = dto.getEndDate().getDayOfMonth() - dto.getStartDate().getDayOfMonth();
         }else {
             dayCount = dto.getEndDate().getMonthValue() - dto.getStartDate().getMonthValue();
+        }
+        //为了进循环,如果是0,那么加1
+        if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())&&dayCount==0){
+            dayCount = 1;
         }
         //如果不是班次相关报表则合并数据
         if(!dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){

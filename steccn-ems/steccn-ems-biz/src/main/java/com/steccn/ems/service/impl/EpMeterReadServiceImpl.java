@@ -7,6 +7,7 @@ import cn.hutool.core.lang.Assert;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -23,10 +24,7 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
-import com.steccn.ems.dto.EpEnergyParamDTO;
-import com.steccn.ems.dto.EpEnergyTreeDTO;
-import com.steccn.ems.dto.EpMeterReadAddDTO;
-import com.steccn.ems.dto.EpMeterReadUpdateDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.mapper.EpMeterOperationRecordMapper;
 import com.steccn.ems.mapper.EpMeterReadMapper;
 import com.steccn.ems.service.*;
@@ -36,7 +34,10 @@ import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.qms.dto.QtEmsPullAmountDTO;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +79,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private EpMeterReadDistantService readDistantService;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -370,8 +373,17 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             //查询全量数据表-自动抄表部分【只需要查询当天】
             dataList.addAll(autoRead(meterPartitionMap.keySet(), dateList));
             if (CollUtil.isNotEmpty(dataList)) {
+                //将dataList的数据全部转化为EpMeterReadRowDTO
+                List<EpMeterReadRowDTO> newDataList = Lists.newArrayList();
+
+                dataList.forEach(ele ->{
+                    EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
+                    BeanUtils.copyProperties(ele, rowDTO);
+                    rowDTO.setProduceOrderId(ele.getReportWorkId());
+                    newDataList.add(rowDTO);
+                });
                 //排序
-                dataList.sort((o1, o2) -> {
+                newDataList.sort((o1, o2) -> {
                     if(Objects.nonNull(o1.getStart()) && Objects.nonNull(o2.getStart())){
                         return o1.getStart().compareTo(o2.getStart());
                     }
@@ -382,9 +394,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 });
 
                 //存放仪表的班次日期的抄表数据
-                Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
+                Map<Integer, Map<LocalDate, List<EpMeterReadRowDTO>>> map = new LinkedHashMap<>();
                 //将数据按照班次日期分组
-                dataList.forEach(ele -> {
+                newDataList.forEach(ele -> {
                     // 2层map的插入，k1和k2相同的元素，存放到集合中
                     MapUtil.biCompute(map, ele.getMeterId(), ele.getReadDate(), ele);
                 });
@@ -450,7 +462,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 .in(EpMeterReadDistant::getMeterId, meterIdSet)
                 .in(EpMeterReadDistant::getReadDate, dateSet));
         if (CollUtil.isNotEmpty(dbList)) {
-            Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick()));
+            Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() +"_" + v.getProduceOrderId()));
             collect.forEach((k, v) -> {
                 EpMeterReadDistant ele = v.get(0);
                 EpMeterRead model = new EpMeterRead();
@@ -459,6 +471,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 model.setAdminFlag(MpConstant.NO);
                 model.setAdminValue(reduce);
                 model.setReadValue(reduce);
+                model.setReportWorkId(ele.getProduceOrderId());
                 resList.add(model);
             });
         }
@@ -491,21 +504,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         });
 
         if (CollUtil.isNotEmpty(dateList) && CollUtil.isNotEmpty(meterPartitionMap)) {
+            //查询全量节点映射关系
+            Map<Long, EpPartition> partitionMap = epPartitionService.listById(childTree.getPartitionIds());
+
             //获取集合最小的日期
             List<LocalDate> sortedDateList = CollectionUtil.sort(dateList, Comparator.comparing(x -> x));
             LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
             sortedDateList.add(0 , minLocalDate);
-
-            //获取所有的产量信息
-            List<EpProduceDetailVO> produceDetailList = epComputeProduceDetailService.getProduceDetailList(minLocalDate, sortedDateList.get(sortedDateList.size() - 1));
-
-            Set<Integer> officeIdSet = produceDetailList.stream().map(v -> v.getOfficeId()).collect(Collectors.toSet());
-
-
-            //根据组织机构id和能源类型查询分区节点
-            Map<Integer, EpInstrumentAccount> epPartitionMap = epPartitionService.listByOfficeId(energyType, officeIdSet);
-            EpInstrumentAccount defaultEpInstrumentAccount = new EpInstrumentAccount();
-
             //查询全量数据表-手动抄表部分【需要多查询一天，用于差值求当前值】
             List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
                     .in(EpMeterRead::getMeterId, meterPartitionMap.keySet())
@@ -516,27 +521,56 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             dataList.addAll(autoRead(meterPartitionMap.keySet(),dateList));
 
             if (CollUtil.isNotEmpty(dataList)) {
-
+                //将dataList的数据全部转化为EpMeterReadRowDTO
+                List<EpMeterReadRowDTO> newDataList = Lists.newArrayList();
                 //获取基片产线的每一行对应的拉引量
+                Set<Integer> jpLineSet = getLine(PmManagerConstant.UROPATAGIA);
+                List<QtEmsPullAmountDTO> jpDataList = Lists.newArrayList();
 
                 //获取深加工产线的每一行对应的产量
-                SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
-                sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
-                sysOfficeTypeKeyDTO.setKey(PmManagerConstant.DEEP_PROCESSING);
-                List<SysOfficeVO> sjgLineList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                Set<Integer> sjgLineSet = getLine(PmManagerConstant.DEEP_PROCESSING);
+                //过滤出所有的深加工节点
+                EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
+                EpPartition defaultPartition = new EpPartition();
+                List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
 
-                log.info("{}", sjgLineList);
+                dataList.forEach(ele -> {
+                    EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
+                    rowDTO.setUuid(IdWorker.getId());
+                    BeanUtils.copyProperties(ele, rowDTO);
+                    rowDTO.setProduceOrderId(ele.getReportWorkId());
+                    EpInstrumentAccount account = meterPartitionMap.getOrDefault(ele.getMeterId(), defaultAccount);
+                    EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
+                    if (sjgLineSet.contains(epPartition.getOfficeId())) {
+                        //如果是深加工节点-需要额外处理
+                        sjgDataList.add(rowDTO);
+                    }else if(jpLineSet.contains(epPartition.getOfficeId())){
+                        //基片节点
+                        jpDataList.add(convertToJpDto(rowDTO));
+                    }
+                    newDataList.add(rowDTO);
+                });
 
-
+                //计算【生产明细表】中深加工产线的每一行对应的深加工产量（即成品玻璃的产量），填入右侧追加的“深加工产量”一列，单位为㎡
+                //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
+                //报工记录关联的生产订单为当前行的生产订单
+                //报工记录的时段在当前行的班次时段内
+                List<EpMeterReadRowDTO> epMeterReadRowDTOList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                Map<Long,EpMeterReadRowDTO> uuidMap = Maps.newHashMap();
+                epMeterReadRowDTOList.forEach(ele -> uuidMap.put(ele.getUuid(),ele));
                 //获取报工集合
-                Set<Long> reportWorkIdSet = Sets.newHashSet();
+                Set<Long> reportWorkIdSet = epMeterReadRowDTOList.stream().flatMap(v -> v.getReportWorkIdSet().stream()).collect(Collectors.toSet());
                 //获取每一个报工对应的班组
                 Map<Long, Long> reportMap = FeignOptional.of(() -> remoteReportWorkFeignApi.reportWorkClassGroup(reportWorkIdSet), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
 
                 //存放仪表的班次日期的抄表数据
-                Map<Integer, Map<LocalDate, List<EpMeterRead>>> map = new LinkedHashMap<>();
+                Map<Integer, Map<LocalDate, List<EpMeterReadRowDTO>>> map = new LinkedHashMap<>();
                 //将数据按照仪表id和班次日期分组
-                dataList.forEach(ele -> {
+                newDataList.forEach(ele -> {
+                    //如果ele的uuid在epMeterReadRowDTOList集合中，则替换掉
+                    if(uuidMap.containsKey(ele.getUuid())){
+                        ele = uuidMap.get(ele.getUuid());
+                    }
                     // 2层map的插入，k1和k2相同的元素，存放到集合中
                     MapUtil.biCompute(map, ele.getMeterId(), ele.getReadDate(), ele);
                 });
@@ -556,12 +590,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             BigDecimal reduce = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getConsume())).map(v -> v.getConsume()).reduce(BigDecimal.ZERO, BigDecimal::add);
                             BeanUtils.copyProperties(epMeterReadAllDataVO, ele);
                             //产量
-                            List<EpProduceDetailVO> productNumObjectList = filterProductNumList(produceDetailList, epPartitionMap, defaultEpInstrumentAccount, classDateEntry, meterEntry, epMeterReadAllDataVO);
-                            if (CollUtil.isNotEmpty(productNumObjectList)) {
-                                BigDecimal yield = productNumObjectList.stream().filter(v -> Objects.nonNull(v.getYield())).map(v -> v.getYield()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                                ele.setProductNum(yield);
-                            }
-
+                            BigDecimal productNum = thickEntry.getValue().stream().filter(v -> Objects.nonNull(v.getProductNum())).map(v -> v.getProductNum()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            ele.setProductNum(productNum);
                             List<Long> reportWorkIdList = Lists.newArrayList();
                             thickEntry.getValue().forEach(te -> {
                                 if (CollUtil.isNotEmpty(te.getReportWorkIdList())) {
@@ -597,6 +627,30 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         });
 
         return gpDataList;
+    }
+
+    /**
+     *
+     * @param rowDTO
+     * @return
+     */
+    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO) {
+        QtEmsPullAmountDTO dto = new QtEmsPullAmountDTO();
+        return null;
+    }
+
+    /**
+     * 获取key过滤后的产线
+     * @param key 关键字
+     * @return
+     */
+    private Set<Integer> getLine(String key) {
+        SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
+        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
+        sysOfficeTypeKeyDTO.setKey(key);
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Set<Integer> resSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return resSet;
     }
 
     /**
@@ -839,19 +893,19 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @param map 元素map
      * @return resList
      */
-    private  List<EpMeterReadAllDataVO> calDiffValue(Map<Integer, EpInstrumentAccount> meterPartitionMap, LocalDate minLocalDate, Map<Integer, Map<LocalDate, List<EpMeterRead>>> map) {
+    private  List<EpMeterReadAllDataVO> calDiffValue(Map<Integer, EpInstrumentAccount> meterPartitionMap, LocalDate minLocalDate, Map<Integer, Map<LocalDate, List<EpMeterReadRowDTO>>> map) {
         EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         //遍历仪表
-        for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> entry : map.entrySet()) {
+        for (Map.Entry<Integer, Map<LocalDate, List<EpMeterReadRowDTO>>> entry : map.entrySet()) {
             //记录每个仪表的数据
             BigDecimal preValue = null;
-            Map<LocalDate, List<EpMeterRead>> childEntry = entry.getValue();
-            for (Map.Entry<LocalDate, List<EpMeterRead>> entry1 : childEntry.entrySet()) {
+            Map<LocalDate, List<EpMeterReadRowDTO>> childEntry = entry.getValue();
+            for (Map.Entry<LocalDate, List<EpMeterReadRowDTO>> entry1 : childEntry.entrySet()) {
                 //获取到班次日期的数据
-                List<EpMeterRead> curEpMeterReadDataList = entry1.getValue();
+                List<EpMeterReadRowDTO> curEpMeterReadDataList = entry1.getValue();
                 if (CollUtil.isNotEmpty(curEpMeterReadDataList)) {
-                    for (EpMeterRead epMeterRead : curEpMeterReadDataList) {
+                    for (EpMeterReadRowDTO epMeterRead : curEpMeterReadDataList) {
                         //对班次和产品厚度进行分组
                         EpMeterReadAllDataVO vo = new EpMeterReadAllDataVO();
                         BeanUtils.copyProperties(epMeterRead, vo);
@@ -861,6 +915,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                            vo.setConsume(epMeterRead.getAdminValue());
                         }else{
                             vo.setConsume(BigDecimalUtil.subtract(epMeterRead.getAdminValue(), preValue));
+                        }
+                        //设置产量
+                        vo.setProductNum(epMeterRead.getYield());
+                        if(CollUtil.isNotEmpty(epMeterRead.getReportWorkIdSet())){
+                            vo.setReportWorkIdList(Lists.newArrayList(epMeterRead.getReportWorkIdSet()));
                         }
                         preValue = epMeterRead.getAdminValue();
                         //最小日期仅仅是为了计算差值，不需要返回

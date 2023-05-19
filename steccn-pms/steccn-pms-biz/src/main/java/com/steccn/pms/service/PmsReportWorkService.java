@@ -125,4 +125,11 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return 是否成功
      */
     Boolean delete(Long id);
+
+    /**
+     * 深加工产线的产量和报工量
+     * @param sjgDataList 深加工产线订单数据
+     * @return list
+     */
+    List<EpMeterReadRowDTO> sjgOrderRw(List<EpMeterReadRowDTO> sjgDataList);
 }
