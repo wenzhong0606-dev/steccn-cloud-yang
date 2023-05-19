@@ -1245,6 +1245,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public Boolean refreshWorkStation() {
+        List<QtCheckTask> list = list(new LambdaQueryWrapper<>());
         return null;
     }
 
