@@ -1006,9 +1006,12 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_4))){
             if(Objects.nonNull(dto.getTimeSpot())&&Objects.nonNull(dto.getProductLineId())){
                 one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
-                        .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
-                        .lt(PmsProduceOrder::getActualEndTime,dto.getTimeSpot())
-                        .gt(PmsProduceOrder::getActualStartTime,dto.getTimeSpot()), false);
+                        .and(wrapper->wrapper.eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                                .lt(PmsProduceOrder::getActualStartTime,dto.getTimeSpot()))
+                        .and(wrapper->wrapper.gt(PmsProduceOrder::getActualEndTime,dto.getTimeSpot())
+                                .or()
+                                .isNull(PmsProduceOrder::getActualEndTime))
+                        , false);
             }else {
                 throw new BusinessException("产线、时间点不能为空");
             }
@@ -1017,10 +1020,8 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             return result;
         }
         result.setCustomerId(one.getCustomerId());
-        Set<Long> idSet = Sets.newHashSet();
-        idSet.add(one.getCustomerId().longValue());
-        Map<Long, String> customerMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        result.setCustomerName(customerMap.get(one.getCustomerId().longValue()));
+        String customerName = FeignOptional.of(() -> remoteOfficeFeign.getNameById(result.getCustomerId()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        result.setCustomerName(customerName);
         return result;
     }
 
