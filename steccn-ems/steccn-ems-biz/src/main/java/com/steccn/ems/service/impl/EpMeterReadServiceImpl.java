@@ -19,6 +19,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
@@ -542,22 +543,34 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     EpInstrumentAccount account = meterPartitionMap.getOrDefault(ele.getMeterId(), defaultAccount);
                     EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
                     if (sjgLineSet.contains(epPartition.getOfficeId())) {
-                        //如果是深加工节点-需要额外处理
+                        //深加工产线节点
                         sjgDataList.add(rowDTO);
-                    }else if(jpLineSet.contains(epPartition.getOfficeId())){
-                        //基片节点
+                    } else if (jpLineSet.contains(epPartition.getOfficeId())) {
+                        //基片产线节点
+                        rowDTO.setProductLineId(epPartition.getOfficeId());
                         jpDataList.add(convertToJpDto(rowDTO));
                     }
                     newDataList.add(rowDTO);
                 });
+
+                //计算【生产明细表】中基片产线的每一行对应的拉引量（从窑炉拉引出的玻璃液的重量），填入右侧追加的“基片拉引量”一列，单位为吨，小数点后最多2位
+                //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 /玻璃片长度) * 生产时长 / 1000000
+                //平均单片掰边重量/平均单片重量/拉引时速：将满足下列条件的巡检任务录入的“单片掰边重量”/“单片重量”/“拉引速度”（需提前配置好“单片掰边重量”/“单片重量”/“拉引速度”检验项）分别取平均值，单位分别为kg、kg、m/h
+                //检验完成时间在当前行的班次时段内（例如2021-09-21白班 8:00:00 ~ 20:00:00）
+                //检验任务的产线为当前行的产线 检验任务的物料为当前行的生产订单中的物料
+                //玻璃片长度：当前行的生产订单中的物料，取其“玻璃片长度”属性的值，单位为mm
+                //生产时长：当前行的本班次生产结束时间 - 当前行的本班次生产开始时间，单位为h
+                List<QtEmsPullAmountDTO> qmsNumList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getEmsPullAmount(new ValidList<>(jpDataList)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+                Map<Long,QtEmsPullAmountDTO> jpUuidMap = Maps.newHashMap();
+                qmsNumList.forEach(ele -> jpUuidMap.put(ele.getUuid(),ele));
 
                 //计算【生产明细表】中深加工产线的每一行对应的深加工产量（即成品玻璃的产量），填入右侧追加的“深加工产量”一列，单位为㎡
                 //深加工产量 = 将满足下列条件的报工记录上报的片数折算成面积，单位为㎡
                 //报工记录关联的生产订单为当前行的生产订单
                 //报工记录的时段在当前行的班次时段内
                 List<EpMeterReadRowDTO> epMeterReadRowDTOList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
-                Map<Long,EpMeterReadRowDTO> uuidMap = Maps.newHashMap();
-                epMeterReadRowDTOList.forEach(ele -> uuidMap.put(ele.getUuid(),ele));
+                Map<Long,EpMeterReadRowDTO> sjgUuidMap = Maps.newHashMap();
+                epMeterReadRowDTOList.forEach(ele -> sjgUuidMap.put(ele.getUuid(),ele));
                 //获取报工集合
                 Set<Long> reportWorkIdSet = epMeterReadRowDTOList.stream().flatMap(v -> v.getReportWorkIdSet().stream()).collect(Collectors.toSet());
                 //获取每一个报工对应的班组
@@ -567,9 +580,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 Map<Integer, Map<LocalDate, List<EpMeterReadRowDTO>>> map = new LinkedHashMap<>();
                 //将数据按照仪表id和班次日期分组
                 newDataList.forEach(ele -> {
-                    //如果ele的uuid在epMeterReadRowDTOList集合中，则替换掉
-                    if(uuidMap.containsKey(ele.getUuid())){
-                        ele = uuidMap.get(ele.getUuid());
+                    if (sjgUuidMap.containsKey(ele.getUuid())) {
+                        //如果ele的uuid在epMeterReadRowDTOList集合中，则替换掉
+                        EpMeterReadRowDTO sjgNum = sjgUuidMap.get(ele.getUuid());
+                        ele.setYield(sjgNum.getYield());
+                        ele.setReportWorkIdSet(sjgNum.getReportWorkIdSet());
+                    } else if (jpUuidMap.containsKey(ele.getUuid())) {
+                        QtEmsPullAmountDTO jpNum = jpUuidMap.get(ele.getUuid());
+                        ele.setYield(jpNum.getPullAmount());
                     }
                     // 2层map的插入，k1和k2相同的元素，存放到集合中
                     MapUtil.biCompute(map, ele.getMeterId(), ele.getReadDate(), ele);
@@ -630,13 +648,18 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     /**
-     *
-     * @param rowDTO
+     * 将EpMeterReadRowDTO 转换为QtEmsPullAmountDTO
+     * @param rowDTO 对象
      * @return
      */
     private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO) {
         QtEmsPullAmountDTO dto = new QtEmsPullAmountDTO();
-        return null;
+        BeanUtils.copyProperties(rowDTO, dto);
+        dto.setClassDate(rowDTO.getReadDate());
+        dto.setClassId(rowDTO.getClassId());
+        dto.setStartTime(rowDTO.getStart());
+        dto.setEndTime(rowDTO.getEnd());
+        return dto;
     }
 
     /**
