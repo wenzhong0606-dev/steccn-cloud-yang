@@ -29,6 +29,6 @@ public interface RemoteCheckTaskDetailFeignApi {
     R<List<QtCheckTaskDetailItemMaterialVO>> getByClassTime(@RequestBody TupleDTO<LocalDateTime,LocalDateTime> tupleDTO);
 
     @ApiOperation("ems获取拉引量")
-    @PostMapping("/ems/getPullAmount")
+    @PostMapping("/feign/qms/task/detail/ems/getPullAmount")
     R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto);
 }
