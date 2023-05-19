@@ -78,7 +78,7 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
     List<QtCheckItemListVO> selectItemList();
 
     /**
-     * 检验项快照
+     * 创建检验项快照
      *
      * @param checkIdList 检验项id集合
      * @return map key为旧检验项id value为新检验项id
@@ -100,4 +100,11 @@ public interface QtCheckItemService extends IService<QtCheckItem> {
      * @return
      */
     Map<Integer,QtCheckItem> mapCheckItem(List<Integer> ids);
+
+    /**
+     * 查询检验项或缺陷项的原照
+     * @param ids 主键集合
+     * @return map
+     */
+    Map<Integer,Integer> queryOriginal(Set<Integer> ids);
 }
