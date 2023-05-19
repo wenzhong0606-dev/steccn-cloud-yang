@@ -93,6 +93,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     Boolean refreshGroupClass();
 
     /**
+     * 刷新工位
+     * @return
+     */
+    Boolean refreshWorkStation();
+
+    /**
      * 通过类型查询任务
      *
      * @return

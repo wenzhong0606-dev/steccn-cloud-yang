@@ -187,7 +187,7 @@ public interface OaInfoService {
      */
     @ApiOperation("根据userId查询考勤组")
     @PostMapping("/feign/oa/user/group")
-    R<Map<Long, List<OaGroupIdAndNameVO>>> getGroupByUser(@RequestBody Set<Long> userId);
+    R<List<OaGroupIdAndNameVO>> getGroupByUser(@RequestBody Set<Long> userId);
 
     /**
      * 根据id查询用户名

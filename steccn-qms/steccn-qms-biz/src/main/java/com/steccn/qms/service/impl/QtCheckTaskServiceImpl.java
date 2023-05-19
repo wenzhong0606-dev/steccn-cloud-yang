@@ -21,6 +21,7 @@ import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -145,6 +146,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final OaInfoService oaInfoService;
 
     private final RemoteMsgFeignApi remoteMsgFeignApi;
+
     /**
      * 新增
      *
@@ -1220,8 +1222,6 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));
         taskList.forEach(tmp->{
             QtCheckTask taskModel = new QtCheckTask();
-            taskModel.setUpdateBy(tmp.getUpdateBy());
-            taskModel.setUpdateTime(tmp.getUpdateTime());
             taskModel.setId(tmp.getId());
             if(tmp.getStartBy()==null){
                 taskModel.setClassGroupName("甲班");
@@ -1229,19 +1229,23 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             }else {
                 Set<Long> idList = Sets.newHashSet();
                 idList.add(tmp.getStartBy());
-                Map<Long, List<OaGroupIdAndNameVO>> groupByUser = oaInfoService.getGroupByUser(idList).getData();
+                List<OaGroupIdAndNameVO> groupByUser = oaInfoService.getGroupByUser(idList).getData();
                 if(CollUtil.isEmpty(groupByUser)){
                     taskModel.setClassGroupName("甲班");
                     taskModel.setClassesId(1);
                 }else {
-                    List<OaGroupIdAndNameVO> oaGroupIdAndNameVOS = groupByUser.get(tmp.getStartBy());
-                    taskModel.setClassGroupId(oaGroupIdAndNameVOS.get(0).getClassGroupId());
-                    taskModel.setClassGroupName(oaGroupIdAndNameVOS.get(0).getClassGroupName());
+                    taskModel.setClassGroupId(groupByUser.get(0).getClassGroupId());
+                    taskModel.setClassGroupName(groupByUser.get(0).getClassGroupName());
                 }
                 updateById(taskModel);
             }
         });
         return true;
+    }
+
+    @Override
+    public Boolean refreshWorkStation() {
+        return null;
     }
 
     @Override
