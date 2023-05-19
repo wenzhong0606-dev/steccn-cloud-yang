@@ -1081,7 +1081,7 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
             for (Map.Entry<Long, Set<Integer>> entry : stationMap.entrySet()) {
                 stationIdSet.addAll(entry.getValue());
             }
-            Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<Integer, List<String>> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             for (Long orderId : orderIdSet) {
                 PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
                 Set<Integer> stationSet = stationMap.get(orderId);
@@ -1089,11 +1089,17 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                 if (CollUtil.isNotEmpty(stationSet)) {
                     for (Integer stationId : stationSet) {
                         if (Objects.nonNull(codeMap.get(stationId))) {
-                            pmReportWorkPreloadDTO.setCode(codeMap.get(stationId));
-                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-                            if (Objects.nonNull(bigDecimal)) {
-                                currentProduction = currentProduction.add(bigDecimal);
+                            List<String> codes = codeMap.get(stationId);
+                            if (CollUtil.isNotEmpty(codes)){
+                                for (String code : codes) {
+                                    pmReportWorkPreloadDTO.setCode(code);
+                                    BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+                                    if (Objects.nonNull(bigDecimal)) {
+                                        currentProduction = currentProduction.add(bigDecimal);
+                                    }
+                                }
                             }
+
                         }
                     }
                 }

@@ -123,17 +123,19 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
     }
 
     @Override
-    public Map<Integer, String> listByStation(Set<Integer> stationIdSet, Integer type) {
-        Map<Integer, String> resMap = Maps.newHashMap();
+    public Map<Integer, List<String>> listByStation(Set<Integer> stationIdSet, Integer type) {
+        Map<Integer, List<String>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(stationIdSet)) {
             List<SysOfficeCollect> dbList = list(new LambdaQueryWrapper<SysOfficeCollect>()
                     .eq(SysOfficeCollect::getOfficeType, 13)
                     .in(SysOfficeCollect::getOfficeId,stationIdSet)
                     .eq(SysOfficeCollect::getType, type));
             if (CollUtil.isNotEmpty(dbList)) {
-               dbList.forEach( collect ->{
-                   resMap.put(collect.getOfficeId(),collect.getCode());
-               });
+                Map<Integer, List<SysOfficeCollect>> map = dbList.stream().collect(Collectors.groupingBy(SysOfficeCollect::getOfficeId));
+                for (Map.Entry<Integer, List<SysOfficeCollect>> integerListEntry : map.entrySet()) {
+                    List<String> collect = integerListEntry.getValue().stream().map(SysOfficeCollect::getCode).collect(Collectors.toList());
+                    resMap.put(integerListEntry.getKey(),collect);
+                }
             }
         }
         return resMap;

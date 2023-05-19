@@ -96,13 +96,21 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
 
     @Override
     public List<DwStationCollectVO> stationInfo(DwStationInfoDTO dto) {
+        List<DwStationCollectVO> resList = Lists.newArrayList();
         //根据条件获取出站采集点的采集数据
         LocalDateTime startTime = dto.getStartTime().minusDays(1);
         LocalDateTime endTime = dto.getEndTime().minusDays(1);
-        List<PmStationCollect> list = list(new LambdaQueryWrapper<PmStationCollect>().eq(PmStationCollect::getCode, dto.getCode())
+        List<PmStationCollect> list = list(new LambdaQueryWrapper<PmStationCollect>().in(PmStationCollect::getCode, dto.getCodeList())
                 .between(PmStationCollect::getRecordTime, startTime, endTime)
                 .orderByDesc(PmStationCollect::getRecordTime));
-        return BeanUtil.copyToList(list,DwStationCollectVO.class);
+        list.forEach( pmStationCollect -> {
+            DwStationCollectVO dwStationCollectVO = new DwStationCollectVO();
+            BeanUtils.copyProperties(pmStationCollect,dwStationCollectVO);
+            dwStationCollectVO.setStationId(dto.getStationId());
+            dwStationCollectVO.setBatchNo(dto.getBatchNo());
+            resList.add(dwStationCollectVO);
+        });
+        return resList;
     }
 
     /**

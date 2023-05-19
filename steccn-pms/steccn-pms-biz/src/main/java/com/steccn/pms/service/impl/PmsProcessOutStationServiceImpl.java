@@ -2,6 +2,7 @@ package com.steccn.pms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,8 +29,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -42,59 +46,77 @@ public class PmsProcessOutStationServiceImpl extends ServiceImpl<PmsProcessOutSt
         implements PmsProcessOutStationService {
 
 
-
     private final RemoteSysOfficeCollectFeignApi remoteSysOfficeCollectFeignApi;
 
     private final RemoteDataPlatformFeignApi remoteDataPlatformFeignApi;
 
-    private final PmsWorkOrderBatchService  pmsWorkOrderBatchService;
+    private final PmsWorkOrderBatchService pmsWorkOrderBatchService;
+
+    private final RemoteOfficeFeign remoteOfficeFeign;
 
     @Override
     public Page<PmsProcessOutStationVO> outPage(PmsProcessOutStationPageDTO dto) {
-        List<PmsProcessOutStationVO> list =  new ArrayList<>();
+        List<PmsProcessOutStationVO> list = new ArrayList<>();
         //获取当前工序的执行工位
-        List<Integer> stationIds = dto.getStationIds();
+        Set<Integer> stationIds = new HashSet<>(dto.getStationIds());
         //获取工位绑定的采集点
-        Map<Integer, String> map = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation((Set<Integer>) stationIds, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        List<DwStationCollectVO> dwStationCollectVOS = new ArrayList<>();
-        for (Integer stationId : stationIds) {
-            if (Objects.nonNull(map.get(stationId))){
-                //获取采集点绑定的数据
-                DwStationInfoDTO dwStationInfoDTO = new DwStationInfoDTO();
-                dwStationInfoDTO.setCode(map.get(stationId));
-                dwStationCollectVOS.addAll(FeignOptional.of(() -> remoteDataPlatformFeignApi.stationInfo(dwStationInfoDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get());
+        Map<Integer, List<String>> map = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIds, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取订单的批次时间
+        Map<Long, List<PmsWorkOrderBatch>> batchMap = pmsWorkOrderBatchService.listByOrderId(Sets.newHashSet(dto.getProduceOrderId()));
+        List<PmsWorkOrderBatch> pmsWorkOrderBatches = batchMap.get(dto.getProduceOrderId());
+        if (CollUtil.isNotEmpty(pmsWorkOrderBatches)) {
+            List<DwStationCollectVO> dwStationCollectVOS = new ArrayList<>();
+            for (PmsWorkOrderBatch pmsWorkOrderBatch : pmsWorkOrderBatches) {
+                for (Integer stationId : stationIds) {
+                    if (Objects.nonNull(map.get(stationId))) {
+                        //获取采集点绑定的数据
+                        DwStationInfoDTO dwStationInfoDTO = new DwStationInfoDTO();
+                        dwStationInfoDTO.setCodeList(map.get(stationId));
+                        dwStationInfoDTO.setStartTime(pmsWorkOrderBatch.getStartTime());
+                        dwStationInfoDTO.setBatchNo(pmsWorkOrderBatch.getCode());
+                        dwStationInfoDTO.setStationId(stationId);
+                        if (Objects.isNull(pmsWorkOrderBatch.getEndTime())) {
+                            //如果当前批次的结束时间为空，那么结束时间为当前时间
+                            dwStationInfoDTO.setEndTime(LocalDateTime.now());
+                        } else {
+                            dwStationInfoDTO.setEndTime(pmsWorkOrderBatch.getEndTime());
+                        }
+                        dwStationCollectVOS.addAll(FeignOptional.of(() -> remoteDataPlatformFeignApi.stationInfo(dwStationInfoDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get());
+                    }
+                }
+            }
+            if (CollUtil.isNotEmpty(dwStationCollectVOS)) {
+                Map<Integer, String> officeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(stationIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                for (DwStationCollectVO dwStationCollectVO : dwStationCollectVOS) {
+                    PmsProcessOutStationVO pmsProcessOutStationVO = new PmsProcessOutStationVO();
+                    pmsProcessOutStationVO.setOutStationTime(dwStationCollectVO.getRecordTime());
+                    pmsProcessOutStationVO.setQuantity(dwStationCollectVO.getValue());
+                    pmsProcessOutStationVO.setBatchNo(dwStationCollectVO.getBatchNo());
+                    pmsProcessOutStationVO.setStation(officeMap.get(dwStationCollectVO.getStationId()));
+                    pmsProcessOutStationVO.setStationId(dwStationCollectVO.getStationId());
+                    list.add(pmsProcessOutStationVO);
+                }
             }
         }
-        if (CollUtil.isNotEmpty(dwStationCollectVOS)){
-            for (DwStationCollectVO dwStationCollectVO : dwStationCollectVOS) {
-                PmsProcessOutStationVO pmsProcessOutStationVO = new PmsProcessOutStationVO();
-                pmsProcessOutStationVO.setOutStationTime(dwStationCollectVO.getRecordTime());
-                pmsProcessOutStationVO.setQuantity(dwStationCollectVO.getValue());
-                pmsProcessOutStationVO.setBatchNo(getBatch(dwStationCollectVO.getRecordTime(),dto.getProduceOrderId()));
-                list.add(pmsProcessOutStationVO);
+        if (CollUtil.isNotEmpty(list)) {
+            //条件过滤
+            if (Objects.nonNull(dto.getStartTime()) && Objects.nonNull(dto.getEndTime())) {
+                LocalDateTime startTime = LocalDateTime.of(dto.getStartTime(), LocalTime.MIN);
+                LocalDateTime endTime = LocalDateTime.of(dto.getEndTime(), LocalTime.MAX);
+                list = list.stream()
+                        .filter(p -> LocalDateUtil.le(startTime, p.getOutStationTime()) && LocalDateUtil.ge(endTime, p.getOutStationTime()))
+                        .collect(Collectors.toList());
+                list = list.stream()
+                        .filter(item -> dto.getBatchNo().contains(item.getBatchNo()))
+                        .collect(Collectors.toList());
+            }else {
+                list.clear();
             }
         }
         return LogicalPageUtil.page(list, dto.getCurrent(), dto.getSize());
     }
 
-    /**
-     * 根据时间获取当前订单的所属批次
-     * @param dateTime
-     * @return
-     */
-    private String getBatch(LocalDateTime dateTime,Long produceOrderId){
-        Map<Long, List<PmsWorkOrderBatch>> batchMap = pmsWorkOrderBatchService.listByOrderId(Sets.newHashSet(produceOrderId));
-        List<PmsWorkOrderBatch> pmsWorkOrderBatches = batchMap.get(produceOrderId);
-        if (CollUtil.isNotEmpty(pmsWorkOrderBatches)){
-            return null;
-        }
-        for (PmsWorkOrderBatch pmsWorkOrderBatch : pmsWorkOrderBatches) {
-            if (LocalDateUtil.le(pmsWorkOrderBatch.getStartTime(),dateTime) && LocalDateUtil.ge(pmsWorkOrderBatch.getEndTime(),dateTime)){
-                return pmsWorkOrderBatch.getCode();
-            }
-        }
-        return null;
-    }
+
 }
 
 
