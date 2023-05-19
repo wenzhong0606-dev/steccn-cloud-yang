@@ -18,6 +18,9 @@ import java.util.Set;
 @ApiModel("能源全量数据表行数据")
 public class EpMeterReadRowDTO implements Serializable {
 
+    @ApiModelProperty("唯一主键")
+    private Long uuid;
+
     @ApiModelProperty("主键")
     private Long id;
 
@@ -44,6 +47,9 @@ public class EpMeterReadRowDTO implements Serializable {
 
     @ApiModelProperty("结束时间")
     private LocalDateTime end;
+
+    @ApiModelProperty("抄表值")
+    private BigDecimal adminValue;
 
     @ApiModelProperty("抄表值")
     private BigDecimal readValue;
