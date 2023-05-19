@@ -52,6 +52,7 @@ import com.steccn.oa.vo.OaEmpVO;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
 import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
+import com.steccn.platform.constant.SysOfficeConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
@@ -157,6 +158,80 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
             Assert.notNull(dto.getSpotTime(),"巡检任务的抽检时间不能为空");
         }
+        //1）仅当生产车间为深加工车间且检验类型为在线检时，默认值为已选中生产产线的“钢化工位”，只读
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                &&dto.getProductWorkshop()!=null
+                &&dto.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+            if(dto.getProductLine()!=null
+                    &&dto.getProductLine().getId()!=null){
+                SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                officeDto.setId(dto.getProductLine().getId());
+                officeDto.setOfficeType(SysOfficeConstant.STATION);
+                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.STELL_STATION)).findFirst().orElse(null);
+                if(Objects.isNull(sysOfficeVO)){
+                    throw new BusinessException("该产线下没有钢化工位");
+                }
+                dto.setStationId(sysOfficeVO.getId().longValue());
+                dto.setStationName(sysOfficeVO.getOfficeName());
+            }
+        }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
+            //2）仅当生产车间为深加工车间且检验类型为首检/巡检时，默认值为已选中生产产线的“下片工位”，只读
+            if(dto.getProductWorkshop()!=null
+                    &&dto.getProductWorkshop().getName().contains(QtManagerConstant.DEEP_OFFICE_NAME)){
+                if(dto.getProductLine()!=null
+                        &&dto.getProductLine().getId()!=null){
+                    SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                    officeDto.setId(dto.getProductLine().getId());
+                    officeDto.setOfficeType(SysOfficeConstant.STATION);
+                    List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                    if(Objects.isNull(sysOfficeVO)){
+                        throw new BusinessException("该产线下没有下片工位");
+                    }
+                    dto.setStationId(sysOfficeVO.getId().longValue());
+                    dto.setStationName(sysOfficeVO.getOfficeName());
+                }
+            }
+        }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
+                &&dto.getProductWorkshop()!=null
+                &&dto.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+            //3）仅当生产车间为基片车间且检验类型为在线检时，默认值为已选中生产产线的“成型工位”，只读
+            if(dto.getProductLine()!=null
+                    &&dto.getProductLine().getId()!=null){
+                SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                officeDto.setId(dto.getProductLine().getId());
+                officeDto.setOfficeType(SysOfficeConstant.STATION);
+                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.FORMING_STATION)).findFirst().orElse(null);
+                if(Objects.isNull(sysOfficeVO)){
+                    throw new BusinessException("该产线下没有成型工位");
+                }
+                dto.setStationId(sysOfficeVO.getId().longValue());
+                dto.setStationName(sysOfficeVO.getOfficeName());
+            }
+
+        }else if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode())
+                &&dto.getProductWorkshop()!=null
+                &&dto.getProductWorkshop().getName().contains(QtManagerConstant.JIPIAN)){
+            //4）仅当生产车间为基片车间且检验类型为化验抽检时，默认值为已选中生产产线的“下片工位”，只读
+            if(dto.getProductLine()!=null
+                    &&dto.getProductLine().getId()!=null){
+                SysOfficeParentDTO officeDto = new SysOfficeParentDTO();
+                officeDto.setId(dto.getProductLine().getId());
+                officeDto.setOfficeType(SysOfficeConstant.STATION);
+                List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
+                if(Objects.isNull(sysOfficeVO)){
+                    throw new BusinessException("该产线下没有成型工位");
+                }
+                dto.setStationId(sysOfficeVO.getId().longValue());
+                dto.setStationName(sysOfficeVO.getOfficeName());
+            }
+        }
+
+
         //首检、在线检、巡检班组必填
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
             ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())

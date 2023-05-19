@@ -802,6 +802,9 @@ public interface QtManagerConstant {
 
     String WHIPPTREE = "-";
 
+    String STELL_STATION = "钢化工位";
+    String DOWN_STATION = "下片工位";
+    String FORMING_STATION = "成型工位";
 
     /**
      * 周枚举
