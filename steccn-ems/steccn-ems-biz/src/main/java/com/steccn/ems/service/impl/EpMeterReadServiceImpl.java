@@ -36,6 +36,8 @@ import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
+import com.steccn.qms.dto.QtEmsPullAmountDTO;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +79,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private EpMeterReadDistantService readDistantService;
     @Autowired
     private RemoteOfficeFeign remoteOfficeFeign;
+    @Autowired
+    private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -520,16 +524,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 //将dataList的数据全部转化为EpMeterReadRowDTO
                 List<EpMeterReadRowDTO> newDataList = Lists.newArrayList();
                 //获取基片产线的每一行对应的拉引量
+                Set<Integer> jpLineSet = getLine(PmManagerConstant.UROPATAGIA);
+                List<QtEmsPullAmountDTO> jpDataList = Lists.newArrayList();
+
                 //获取深加工产线的每一行对应的产量
-                SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
-                sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
-                sysOfficeTypeKeyDTO.setKey(PmManagerConstant.DEEP_PROCESSING);
-                List<SysOfficeVO> sjgLineList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+                Set<Integer> sjgLineSet = getLine(PmManagerConstant.DEEP_PROCESSING);
                 //过滤出所有的深加工节点
-                Set<Integer> sjgLineSet = sjgLineList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
                 EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
                 EpPartition defaultPartition = new EpPartition();
-
                 List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
 
                 dataList.forEach(ele -> {
@@ -539,9 +541,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     rowDTO.setProduceOrderId(ele.getReportWorkId());
                     EpInstrumentAccount account = meterPartitionMap.getOrDefault(ele.getMeterId(), defaultAccount);
                     EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
-                    //如果是深加工节点-需要额外处理
                     if (sjgLineSet.contains(epPartition.getOfficeId())) {
+                        //如果是深加工节点-需要额外处理
                         sjgDataList.add(rowDTO);
+                    }else if(jpLineSet.contains(epPartition.getOfficeId())){
+                        //基片节点
+                        jpDataList.add(convertToJpDto(rowDTO));
                     }
                     newDataList.add(rowDTO);
                 });
@@ -622,6 +627,30 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         });
 
         return gpDataList;
+    }
+
+    /**
+     *
+     * @param rowDTO
+     * @return
+     */
+    private QtEmsPullAmountDTO convertToJpDto(EpMeterReadRowDTO rowDTO) {
+        QtEmsPullAmountDTO dto = new QtEmsPullAmountDTO();
+        return null;
+    }
+
+    /**
+     * 获取key过滤后的产线
+     * @param key 关键字
+     * @return
+     */
+    private Set<Integer> getLine(String key) {
+        SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
+        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
+        sysOfficeTypeKeyDTO.setKey(key);
+        List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Set<Integer> resSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        return resSet;
     }
 
     /**
