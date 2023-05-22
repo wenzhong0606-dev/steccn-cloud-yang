@@ -175,15 +175,19 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //3、组成生料数据
         List<PmsRecipeRawVO> rawVOS = Lists.newArrayList();
         List<PmsRecipeRaw> pmsRecipeRawList = pmsRecipeRawService.list(new LambdaQueryWrapper<PmsRecipeRaw>().eq(PmsRecipeRaw::getRecipeId, pmsRecipe.getId()));
-        pmsRecipeRawList.forEach(tmp -> {
+        BigDecimal dryBasisQuantityAll = BigDecimal.ZERO;
+        for(PmsRecipeRaw tmp:pmsRecipeRawList){
             PmsRecipeRawVO rawTmp = new PmsRecipeRawVO();
             BeanUtil.copyProperties(tmp, rawTmp);
             //便于前端判断
             if (Objects.isNull(rawTmp.getWetBasisWaterRate())) {
                 rawTmp.setWetBasisWaterRate(new BigDecimal(0));
             }
+            //加总干基
+            dryBasisQuantityAll = BigDecimalUtil.add(tmp.getDryBasisQuantity(),dryBasisQuantityAll);
             rawVOS.add(rawTmp);
-        });
+        }
+        pmsRecipeVO.setDryBasisQuantityAll(dryBasisQuantityAll);
         pmsRecipeVO.setRawList(rawVOS);
         //4、处理按钮权限数据
         SteccnUser user = SecurityUtils.getUser();
@@ -203,6 +207,12 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         } else {
             pmsRecipeVO.setButtonAmountAuth(0);
             pmsRecipeVO.setButtonRateAuth(0);
+        }
+        //5、生料占比 历史数据刷为1 - 所属版本的熟料占比
+        if(Objects.isNull(pmsRecipeVO.getClinkerRate())){
+            pmsRecipeVO.setRawRate(new BigDecimal(100));
+        }else {
+            pmsRecipeVO.setRawRate(BigDecimalUtil.subtract(new BigDecimal(100),pmsRecipeVO.getClinkerRate()));
         }
         return pmsRecipeVO;
     }
@@ -314,9 +324,9 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             //熟料占比
             pmsRecipe.setClinkerRate(dto.getClinkerRate());
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(dto.getClinkerRate(), BigDecimal.valueOf(Long.parseLong("100")), 4);
-            //熟料用量=干基用量加总/(1-熟料占比)
+            //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            pmsRecipe.setClinkerQuantity(clinkerQuantityNum);
+            pmsRecipe.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
             //5、处理水份
             //配料含水率
             pmsRecipe.setBatchWaterRate(dto.getBatchWaterRate());
@@ -441,10 +451,10 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                             BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), BigDecimalUtil.divide(newVersion.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6), 6), 4),
                     wetBasisQuantityCount, 4);
             recipeModel.setBatchWaterQuantity(batchWaterQuantity);
-            //熟料用量=干基用量加总/(1-熟料占比)
+            //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            recipeModel.setClinkerQuantity(clinkerQuantityNum);
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
             if (Objects.nonNull(dto.getNote())) {
                 recipeModel.setNote(dto.getNote());
             }
@@ -469,6 +479,26 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         } finally {
             lock.unlock();
         }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean refreshClerkQuantity() {
+        List<PmsRecipe> pmsRecipeList = list();
+        pmsRecipeList.forEach(tmp->{
+            List<PmsRecipeRaw> rawList = pmsRecipeRawService.list(new LambdaQueryWrapper<PmsRecipeRaw>().eq(PmsRecipeRaw::getRecipeId, tmp.getId()));
+            BigDecimal dryBasisQuantityCount = BigDecimal.ZERO;
+            for(PmsRecipeRaw rawTmp:rawList){
+                dryBasisQuantityCount = BigDecimalUtil.add(dryBasisQuantityCount,rawTmp.getDryBasisQuantity());
+            }
+            PmsRecipe recipeModel = new PmsRecipe();
+            BigDecimal clinkerRateNum = BigDecimalUtil.divide(tmp.getClinkerRate(), new BigDecimal(100), 6);
+            BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
+            recipeModel.setId(tmp.getId());
+            updateById(recipeModel);
+        });
         return true;
     }
 

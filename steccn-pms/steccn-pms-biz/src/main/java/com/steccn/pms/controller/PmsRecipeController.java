@@ -54,4 +54,9 @@ public class PmsRecipeController {
     public R<Boolean> rate(@RequestBody PmsWetBasisWaterRateDTO dto) {
         return R.success(pmsRecipeService.publishRate(dto));
     }
+
+    @GetMapping("/refresh")
+    public R<Boolean> refreshClerkQuantity() {
+        return R.success(pmsRecipeService.refreshClerkQuantity());
+    }
 }

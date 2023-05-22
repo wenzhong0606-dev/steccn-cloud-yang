@@ -42,4 +42,10 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     Boolean publishRate(PmsWetBasisWaterRateDTO dto);
+
+    /**
+     * 刷新熟料用量
+     * @return
+     */
+    Boolean refreshClerkQuantity();
 }
