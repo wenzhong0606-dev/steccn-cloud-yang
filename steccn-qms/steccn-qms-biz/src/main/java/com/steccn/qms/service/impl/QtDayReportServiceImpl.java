@@ -171,6 +171,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if (Objects.isNull(o1.getDataSource())) {
                 return 1;
             }
+            if (Objects.isNull(o2.getDataSource())) {
+                return -1;
+            }
             //对比数据来源
             if (!o1.getDataSource().equals(o2.getDataSource())) {
                 return o1.getDataSource() - o2.getDataSource();
