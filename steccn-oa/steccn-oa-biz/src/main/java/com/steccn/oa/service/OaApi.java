@@ -133,6 +133,36 @@ public interface OaApi {
     String getToDoWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
 
     /**
+     * 获取我提交的列表
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getMyWorkflowRequestList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getCreatedWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+
+    /**
+     * 获取我已办的列表
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getHandledWorkflowRequestList4Ofs",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getDoneWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+
+    /**
+     * 获取我驳回的列表
+     * @param headers
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/api/workflow/paService/getBeRejectWorkflowRequestList",headers = {"content-type=application/x-www-form-urlencoded"})
+    @Headers(value = {"content-type=application/x-www-form-urlencoded"})
+    String getRejectedWorkflow(@RequestHeader MultiValueMap<String,String> headers, @RequestBody OaToDoWorkFlowDTO dto);
+
+    /**
      * 获取待办数据数量
      * @param headers
      * @return

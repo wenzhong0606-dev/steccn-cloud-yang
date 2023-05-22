@@ -146,6 +146,24 @@ public class OaController {
         return R.success(oaService.getToDoList(0));
     }
 
+    @ApiOperation(value = "获取我提交的")
+    @GetMapping("/workflow/createList")
+    public R<List<OaToDoWorkflowVO>> getOaCreateList() {
+        return R.success(oaService.getToDoList(3));
+    }
+
+    @ApiOperation(value = "获取我已处理的")
+    @GetMapping("/workflow/doneList")
+    public R<List<OaToDoWorkflowVO>> getOaDoneList() {
+        return R.success(oaService.getToDoList(4));
+    }
+
+    @ApiOperation(value = "获取我驳回的")
+    @GetMapping("/workflow/rejectedList")
+    public R<List<OaToDoWorkflowVO>> getOaRejectedList() {
+        return R.success(oaService.getToDoList(5));
+    }
+
     @ApiOperation(value = "获取待阅列表(消息)")
     @GetMapping("/workflow/toReadList")
     public R<List<OaToDoWorkflowVO>> getOaToReadList() {

@@ -345,27 +345,38 @@ public class OaService {
 
     /**
      * 获取待办数据
-     * @param flag 0待办 1待阅
+     * @param flag 0待办 1待阅 3我提交的
      * @return
      */
     public List<OaToDoWorkflowVO> getToDoList(Integer flag){
         OaToDoWorkFlowDTO dto = new OaToDoWorkFlowDTO();
         dto.setUserId(SecurityUtils.getUser().getUserId().toString());
         dto.setPageNo(OaConstant.YES);
-        //默认8条数据
+        //默认5条数据
         dto.setPageSize(5);
         //待办数据需要修改userId
         MultiValueMap<String, String> headers = this.setUserIdHeaders();
         String result = "";
-        //0为待办列表,1为待阅列表
-        if(flag.equals(0)){
-            result = oaApi.getToDoWorkflow(headers,dto);
-        }else {
-            result = oaApi.getToReadWorkflow(headers,dto);
+        //0为待办列表,1为待阅列表,3已创建列表，4已处理的,5已驳回的
+        switch (flag) {
+            case 0:
+                result = oaApi.getToDoWorkflow(headers,dto);
+                break;
+            case 1:
+                result = oaApi.getToReadWorkflow(headers,dto);
+                break;
+            case 3:
+                result = oaApi.getCreatedWorkflow(headers,dto);
+                break;
+            case 4:
+                result = oaApi.getDoneWorkflow(headers,dto);
+            case 5:
+                result = oaApi.getRejectedWorkflow(headers,dto);
+                break;
         }
         JSONArray arr = JSONArray.parseArray(result);
         List<OaToDoWorkflowVO> vos = arr.toJavaList(OaToDoWorkflowVO.class);
-        //判断是否已读，已读则有operateTime
+        //判断是否已读，已读则有operateTime,并判断时间差
         if(CollUtil.isNotEmpty(vos)){
             vos.forEach(tmp->{
                 //判断是否已读
