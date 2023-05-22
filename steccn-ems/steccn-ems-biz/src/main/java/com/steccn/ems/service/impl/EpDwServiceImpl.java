@@ -225,9 +225,16 @@ public class EpDwServiceImpl implements EpDwService {
             //分解出task
             List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
             for (DwEpEnergyMoneyDTO ele : taskList) {
-                sum ++;
-                moneyPool.submit(() ->{
-                    doMoney(ele);
+                sum++;
+                //防止fegin获取不到当前请求
+                RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+                moneyPool.submit(() -> {
+                    try {
+                        RequestContextHolder.setRequestAttributes(attributes);
+                        doMoney(ele);
+                    } catch (Exception e) {
+                        log.error("计算money异常 {}", e.getLocalizedMessage());
+                    }
                 });
             }
         }
@@ -250,7 +257,8 @@ public class EpDwServiceImpl implements EpDwService {
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //2.获取当前日期的任务
         meterList.forEach(meter -> {
-            RequestAttributes attributes = RequestContextHolder.getRequestAttributes();//防止fegin获取不到当前请求
+            //防止fegin获取不到当前请求
+            RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
             chaoPool.execute(() -> {
                 try {
                     RequestContextHolder.setRequestAttributes(attributes);
