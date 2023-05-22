@@ -542,7 +542,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             String ids = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
             mainDataList.add(new OaWorkFlowNameValueDTO(QtManagerConstant.WORKFLOW_CS, ids));
         }
-
+        Integer requestId;
         if (Objects.nonNull(linkDTO.getId())) {
             //调用OA 提交流程
             OaWorkFlowSubmitParamDTO workFlowSubmitParamDTO = new OaWorkFlowSubmitParamDTO();
@@ -554,6 +554,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             if (!oaWorkflowStatusVO.getCode().equals(PmManagerConstant.WORKFLOW_SUCCESS)) {
                 throw new BusinessException("流程提交失败," + oaWorkflowStatusVO.getErrMsg());
             }
+            requestId = oaWorkflowStatusVO.getRequestId();
         } else {
             workFlowParamDTO.setMainData(mainDataList);
             //新建
@@ -570,6 +571,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
             if (!aBoolean) {
                 throw new BusinessException("调用保存业务数据失败");
             }
+            requestId = oaWorkflowStatusVO.getRequestId();
         }
         //发送消息
         SysMsgSendDTO sysMsgSendDTO = new SysMsgSendDTO();
@@ -580,7 +582,7 @@ public class QtImproveRecordServiceImpl extends ServiceImpl<QtImproveRecordMappe
         QtImproveRecordDetail qtImproveRecordDetail = qtImproveRecordDetailService.getOne(new LambdaQueryWrapper<QtImproveRecordDetail>().eq(QtImproveRecordDetail::getRecordId, record.getId()).eq(QtImproveRecordDetail::getApproverStep, QtManagerConstant.ImproveProgressStatus.D8_APPROVAL_END_PASS.getName()));
         sysMsgSendDTO.setUserList(Sets.newHashSet(qtImproveRecordDetail.getApproverId()));
         SysMsgAdditionDTO sysMsgAdditionDTO = new SysMsgAdditionDTO();
-        sysMsgAdditionDTO.setId(record.getId());
+        sysMsgAdditionDTO.setId(Long.valueOf(requestId));
         sysMsgSendDTO.setAddition(sysMsgAdditionDTO);
         sysMsgSendDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
         //发送消息
