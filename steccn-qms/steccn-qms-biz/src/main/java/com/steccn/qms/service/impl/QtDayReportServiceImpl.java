@@ -171,6 +171,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if (Objects.isNull(o1.getDataSource())) {
                 return 1;
             }
+            if (Objects.isNull(o2.getDataSource())) {
+                return -1;
+            }
             //对比数据来源
             if (!o1.getDataSource().equals(o2.getDataSource())) {
                 return o1.getDataSource() - o2.getDataSource();
@@ -1065,11 +1068,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         dayData = groupByDate.get(dto.getStartDate().plusDays(i));
                     }
                     //获取当前产线
-                    dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
-                    //过滤班次数据
+//                    if(Objects.nonNull(dayData)){
+//                        dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+//                    }
+                    //获取当前产线并过滤班次数据
                     if(Objects.nonNull(dayData)){
-                        dayData = dayData.stream().filter(v->v.getWorkOrder()!=null
-                                &&v.getWorkOrder().equals(className)).collect(Collectors.toList());
+                        dayData = dayData.stream().filter(
+                                v->v.getProductLineName().equals(productLine.getOfficeName())
+                                        &&v.getWorkOrder()!=null &&v.getWorkOrder().equals(className)).collect(Collectors.toList());
                     }
                     //拉引量
                     qtDayReportLossDataPullAmount.setDefectName("拉引量");
@@ -1173,7 +1179,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 tmpDate = dto.getStartDate().plusDays(i);
                             }
                             List<QtChartSubDetailDTO> dayData = groupByDate.get(tmpDate);
-                            dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+                            if(Objects.nonNull(dayData)){
+                                dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+                            }
                             List<String> lineDataTmp = Lists.newArrayList();
                             //早班对象和晚班对象
                             if(CollUtil.isNotEmpty(dayData)){
