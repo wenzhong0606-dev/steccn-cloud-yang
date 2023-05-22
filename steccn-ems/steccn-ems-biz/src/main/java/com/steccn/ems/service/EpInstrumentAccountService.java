@@ -3,10 +3,7 @@ package com.steccn.ems.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.ems.dto.EpInstrumentAccountDTO;
-import com.steccn.ems.dto.EpInstrumentAccountDownloadDTO;
-import com.steccn.ems.dto.EpInstrumentAccountPageDTO;
-import com.steccn.ems.dto.EpInstrumentAccountStatusDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.vo.EpInstrumentAccountPageVO;
 import com.steccn.ems.vo.EpInstrumentAccountVO;
 
@@ -77,4 +74,12 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @param request
      */
 //    void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception;
+
+
+
+    /**
+     * 获取所有的远传仪表
+     * @return
+     */
+    List<EpDwMeterPartitionDTO> meterPartition();
 }

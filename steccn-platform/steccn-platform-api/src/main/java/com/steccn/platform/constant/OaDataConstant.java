@@ -38,6 +38,13 @@ public interface OaDataConstant {
      */
     String WORKFLOW_APPROVE = "审批";
 
+    /**
+     * OA流程节点名称
+     */
+    String WORKFLOW_CREATE = "创建";
+
+
+
 
     @Getter
     @AllArgsConstructor

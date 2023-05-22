@@ -12,6 +12,8 @@ import com.steccn.common.annotation.SysLog;
 import com.steccn.common.constant.LogTypeEnum;
 import com.steccn.common.event.SysLogEvent;
 import com.steccn.platform.dto.SysLogDTO;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -42,15 +44,15 @@ public class SysLogAspect {
     private final ApplicationEventPublisher publisher;
 
     @SneakyThrows
-    @Around("@annotation(sysLog)")
-    public Object around(ProceedingJoinPoint point, SysLog sysLog) {
+    @Around("@annotation(apiOperation)")
+    public Object around(ProceedingJoinPoint point, ApiOperation apiOperation) {
         String strClassName = point.getTarget().getClass().getName();
         String strMethodName = point.getSignature().getName();
 
         log.debug("[类名]:{},[方法]:{}", strClassName, strMethodName);
 
         SysLogDTO logDTO = getSysLog(point.getArgs());
-        logDTO.setTitle(sysLog.value());
+        logDTO.setTitle(apiOperation.value());
         // 发送异步日志事件
         Long startTime = System.currentTimeMillis();
         Object obj;
@@ -81,31 +83,29 @@ public class SysLogAspect {
         if (Objects.nonNull(user)) {
             sysLog.setCreateName(user.getName());
             sysLog.setCreateBy(user.getUserId());
+        } else {
+            sysLog.setCreateName("feign");
+            sysLog.setCreateBy(0L);
         }
         sysLog.setCreateTime(LocalDateTime.now());
         sysLog.setType(LogTypeEnum.NORMAL.getType());
         sysLog.setRemoteAddr(ServletUtil.getClientIP(request));
-        sysLog.setRequestUri(URLUtil.getPath(request.getRequestURI()));
         sysLog.setMethod(request.getMethod());
         sysLog.setUserAgent(request.getHeader("user-agent"));
         sysLog.setParams(JSONUtil.toJsonStr(args));
-        sysLog.setServiceId(getClientId());
+        //确定服务
+        String requestUri = sysLog.getRequestUri();
+        try {
+            sysLog.setRequestUri(URLUtil.getPath(request.getRequestURI()));
+            String[] split = requestUri.split("/");
+            if (split[1].equals("feign")) {
+                sysLog.setServiceId(split[2]);
+            } else {
+                sysLog.setServiceId(split[1]);
+            }
+        } catch (Exception e) {
+            sysLog.setServiceId("none");
+        }
         return sysLog;
     }
-
-
-    /**
-     * 获取客户端
-     *
-     * @return clientId
-     */
-    private String getClientId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof OAuth2Authentication) {
-            OAuth2Authentication auth2Authentication = (OAuth2Authentication) authentication;
-            return auth2Authentication.getOAuth2Request().getClientId();
-        }
-        return null;
-    }
-
 }

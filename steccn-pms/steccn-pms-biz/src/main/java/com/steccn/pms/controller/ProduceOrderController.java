@@ -2,7 +2,9 @@ package com.steccn.pms.controller;
 
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.steccn.common.annotation.SysLog;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.valid.InsertGroup;
 import com.steccn.common.valid.UpdateGroup;
 import com.steccn.common.vo.R;
@@ -18,6 +20,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +45,13 @@ public class ProduceOrderController {
     @SysLog("生产订单新增")
     public R<Boolean> add(@Validated(InsertGroup.class) @RequestBody PmsProduceOrderDTO dto) {
         return R.success(pmsProduceOrderService.add(dto));
+    }
+
+    @ApiOperation("获取订单相关客户")
+    @PostMapping("/customer")
+    @SysLog("获取订单相关客户")
+    public R<CustomerIdAndNameVO> getCustomer(@Validated @RequestBody QmsCustomerDTO dto) {
+        return R.success(pmsProduceOrderService.getCustomer(dto));
     }
 
     @ApiOperation("生产订单分页列表")
@@ -175,6 +186,18 @@ public class ProduceOrderController {
     @GetMapping("/execute/info")
     public R<List<ProduceOrderDataInfoVO>> getExecuteOrderInfo(){
         return R.success(pmsProduceOrderService.getExecuteOrderInfo());
+    }
+
+    @ApiOperation("获取当前班次时间内的生产订单")
+    @GetMapping("/dw/current")
+    public R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestParam("date") LocalDate currentDate) {
+        return R.success(pmsProduceOrderService.currentProduceOrder(currentDate));
+    }
+
+    @ApiOperation("全景追溯")
+    @PostMapping("/panoramic/tracing")
+    public R<Page<PanoramicTracingVO>>  tracing(@RequestBody PanoramicTracingDTO panoramicTracingDTO){
+        return R.success(pmsProduceOrderService.tracing(panoramicTracingDTO));
     }
 
 }

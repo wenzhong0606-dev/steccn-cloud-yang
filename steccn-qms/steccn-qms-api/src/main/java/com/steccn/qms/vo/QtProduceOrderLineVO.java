@@ -56,4 +56,10 @@ public class QtProduceOrderLineVO implements Serializable {
     @ApiModelProperty("生产车间名称")
     private String workshopName;
 
+    @ApiModelProperty("客户主键")
+    private Integer customerId;
+
+    @ApiModelProperty("客户名称")
+    private String customerName;
+
 }

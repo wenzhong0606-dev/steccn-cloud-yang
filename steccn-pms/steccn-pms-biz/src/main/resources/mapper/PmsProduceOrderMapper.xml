@@ -223,4 +223,33 @@
 	        w.end_time &gt;= #{startTime} and w.end_time &lt; #{endTime}
 	        ORDER BY w.end_time DESC LIMIT 1
     </select>
+    <select id="tracing" resultType="com.steccn.pms.vo.PanoramicTracingVO">
+        SELECT
+            a.id as orderId,
+            a.CODE as orderCode,
+            a.material_code,
+            a.material_name,
+            b.CODE AS batchNo,
+            c.case_no
+        FROM
+            pms_produce_order a
+                LEFT JOIN pms_work_order_batch b ON a.id = b.produce_order_id
+                LEFT JOIN pms_complete_storage_info c ON c.batch_no = b.code
+        <where>
+            a.del_flag = 0
+            <if test="dto.code != null and dto.code !='' ">
+                and a.code LIKE CONCAT('%',#{dto.code},'%')
+            </if>
+            <if test="dto.batchNo != null and dto.batchNo !='' ">
+                and b.code LIKE CONCAT('%',#{dto.batchNo},'%')
+            </if>
+            <if test="dto.caseNo != null and dto.caseNo !='' ">
+                and c.case_no LIKE CONCAT('%',#{dto.caseNo},'%')
+            </if>
+            <if test="dto.materialName != null and dto.materialName !='' ">
+                and a.material_name LIKE CONCAT('%',#{dto.materialName},'%')
+                or a.material_code LIKE CONCAT('%',#{dto.materialName},'%')
+            </if>
+        </where>
+    </select>
 </mapper>

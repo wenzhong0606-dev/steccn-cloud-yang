@@ -87,6 +87,12 @@ public interface QtCheckTaskService extends IService<QtCheckTask> {
     Long retask(QtReTaskDTO dto);
 
     /**
+     * 刷新班组
+     * @return
+     */
+    Boolean refreshGroupClass();
+
+    /**
      * 通过类型查询任务
      *
      * @return

@@ -14,6 +14,6 @@ import java.io.Serializable;
 @Data
 public class OaGroupIdAndNameVO implements Serializable {
     private Long userId;
-    private Integer groupId;
-    private String groupName;
+    private Integer classGroupId;
+    private String classGroupName;
 }

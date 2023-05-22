@@ -1,14 +1,15 @@
 package com.steccn.qms.service;
 
 import com.steccn.common.dto.QtLineChartBarDTO;
+import com.steccn.common.dto.ValidList;
+import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.vo.ProducePassRateVO;
-import com.steccn.qms.dto.QtChartParamDTO;
-import com.steccn.qms.dto.QtChartSubDetailDTO;
-import com.steccn.qms.dto.QtTimeDTO;
+import com.steccn.qms.dto.*;
 import com.steccn.qms.vo.QtChartBarVO;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.qms.vo.QtDefectChartVO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -51,19 +52,40 @@ public interface QtChartGenerateService {
      * @param dto
      * @return
      */
-    public List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
+    List<ProducePassRateVO> rListFilter(List<ProducePassRateVO> rList, QtChartParamDTO dto);
 
     /**
      * 生成基片损耗柱状图
      * @param dto
      * @return
      */
-    public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto);
+    QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto);
 
     /**
      * 生成基片损耗饼图
      * @param dto
      * @return
      */
-    public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
+    QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto);
+
+    /**
+     * 计算拉引量
+     * @param classTimeStart
+     * @param classTimeEnd
+     * @return
+     */
+    List<QtPullAmountDTO> calculatePullAmount(LocalDate classTimeStart,LocalDate classTimeEnd);
+
+    /**
+     * 计算拉引量
+     * @return
+     */
+    Boolean calculatePullAmountTask();
+
+    /**
+     * 计算ems拉引量
+     * @param dto
+     * @return
+     */
+    List<QtEmsPullAmountDTO> calculateEmsPullAmount(ValidList<QtEmsPullAmountDTO> dto);
 }

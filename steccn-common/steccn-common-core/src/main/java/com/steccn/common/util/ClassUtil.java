@@ -29,8 +29,8 @@ public class ClassUtil {
     /**
      * 0-早班 1-夜班
      */
-    private static final Integer MORNING = 0;
-    private static final Integer NIGHT = 1;
+    public static final Integer MORNING = 0;
+    public static final Integer NIGHT = 1;
 
 
     /**

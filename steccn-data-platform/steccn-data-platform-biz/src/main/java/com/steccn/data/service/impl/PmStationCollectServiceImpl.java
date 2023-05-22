@@ -1,5 +1,6 @@
 package com.steccn.data.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -11,6 +12,7 @@ import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
 import com.steccn.data.dto.DwStationCollectDTO;
+import com.steccn.data.dto.DwStationInfoDTO;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.service.PmStationCollectService;
 import com.steccn.data.mapper.PmStationCollectMapper;
@@ -83,9 +85,24 @@ public class PmStationCollectServiceImpl extends ServiceImpl<PmStationCollectMap
                 .orderByDesc(PmStationCollect::getRecordTime)
                 .last(MpConstant.STR_LIMIT_1));
         if (Objects.nonNull(start) && Objects.nonNull(end)) {
-            return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            if(start.getValue().compareTo(end.getValue()) > 0){
+                return end.getValue();
+            }else {
+                return BigDecimalUtil.subtract(end.getValue(), start.getValue());
+            }
         }
         return null;
+    }
+
+    @Override
+    public List<DwStationCollectVO> stationInfo(DwStationInfoDTO dto) {
+        //根据条件获取出站采集点的采集数据
+        LocalDateTime startTime = dto.getStartTime().minusDays(1);
+        LocalDateTime endTime = dto.getEndTime().minusDays(1);
+        List<PmStationCollect> list = list(new LambdaQueryWrapper<PmStationCollect>().eq(PmStationCollect::getCode, dto.getCode())
+                .between(PmStationCollect::getRecordTime, startTime, endTime)
+                .orderByDesc(PmStationCollect::getRecordTime));
+        return BeanUtil.copyToList(list,DwStationCollectVO.class);
     }
 
     /**

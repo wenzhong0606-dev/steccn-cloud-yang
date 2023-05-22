@@ -11,21 +11,27 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
+import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.*;
 import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
 import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
+import com.steccn.pms.dto.PmsPullForceEditDTO;
 import com.steccn.pms.dto.ProducePassRateDTO;
 import com.steccn.pms.feign.RemotePassRateFeignApi;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.pms.feign.RemotePullForceFeignApi;
 import com.steccn.pms.vo.PmsProduceOrderVO;
 import com.steccn.pms.vo.ProducePassRateVO;
 import com.steccn.qms.constant.QtManagerConstant;
@@ -78,6 +84,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemotePmsFeignApi remotePmsFeignApi;
 
     private final QtDefectiveReportService qtDefectiveReportService;
+
+    private final RemotePullForceFeignApi remotePullForceFeignApi;
+
+    private final RemoteDictFeignApi remoteDictFeignApi;
     /**
      * 生产基片损耗数据
      *
@@ -167,11 +177,15 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
                     //根据时间排序
                     List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+                    //过滤巡检
+                    List<QtCheckTask> checkTaskPatrolWorkOrderList = entry2.getValue().stream()
+                            .filter(v->v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()))
+                            .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
                     //查看是否是一种物料
                     HashSet<Long> materialIdSet = new HashSet<>();
                     //物料id集合
                     List<Long> materialList = Lists.newArrayList();
-                    checkTaskWorkOrderList.forEach(tmp -> {
+                    checkTaskPatrolWorkOrderList.forEach(tmp -> {
                         materialIdSet.add(tmp.getMaterialId());
                         if (!materialList.contains(tmp.getMaterialId())) {
                             materialList.add(tmp.getMaterialId());
@@ -181,74 +195,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     if (materialIdSet.size() > 1) {
                         flag = false;
                     }
-
-                    //生产时长map
-                    Map<Long, BigDecimal> materialProduceTime = MapUtil.newHashMap();
-                    if (!flag) {
-                        for (int i = 0; i < checkTaskWorkOrderList.size(); i++) {
-                            QtCheckTask tmp = checkTaskWorkOrderList.get(i);
-                            Set<Long> pmsParams = new HashSet<>();
-                            pmsParams.add(tmp.getMaterialId());
-                            R<Map<Long, PmsProduceOrderVO>> mapR = remotePmsFeignApi.listByMaterialIds(pmsParams);
-                            if (mapR.getData() != null) {
-                                Map<Long, PmsProduceOrderVO> mapRData = mapR.getData();
-                                if (mapRData.get(tmp.getMaterialId()) != null) {
-                                    PmsProduceOrderVO pmsProduceOrderVO = mapRData.get(tmp.getMaterialId());
-                                    //若物料后有n+1
-                                    int indexOf = materialList.indexOf(tmp.getMaterialId());
-                                    if (indexOf + 1 != materialList.size() && i + 1 != checkTaskWorkOrderList.size()) {
-                                        //若物料n关联的生产订单开始、结束时间均非空，且物料n关联的最晚生产订单结束时间 <= 物料n+1的最早巡检时间：根据生产订单的开始、结束时间计算班次b的时段内各物料的生产时长，单位为h。例如某白班生产2种物料，物料1关联一个14:34:23结束的生产订单，物料2的巡检从15:00:00开始，则14:34:23 - 8:00:00（减法）为物料1的生产时长，20:00:00 - 14:34:23（减法）为物料2的生产时长
-                                        if (pmsProduceOrderVO.getActualStartTime() != null && pmsProduceOrderVO.getActualEndTime() != null && pmsProduceOrderVO.getActualEndTime().isBefore(checkTaskWorkOrderList.get(i + 1).getFinishedTime())) {
-                                            if (materialProduceTime.get(tmp.getMaterialId()) == null) {
-                                                LocalDateTime pmsTime = pmsProduceOrderVO.getActualEndTime();
-                                                pmsTime.withYear(tmp.getFinishedTime().getYear());
-                                                pmsTime.withMonth(tmp.getFinishedTime().getMonthValue());
-                                                pmsTime.withDayOfMonth(tmp.getFinishedTime().getDayOfMonth());
-                                                LocalDateTime morningTime = LocalDateTime.parse(entry.getKey() + " 08:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                                LocalDateTime eveningTime = LocalDateTime.parse(entry.getKey() + " 20:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                                Duration dr = Duration.between(morningTime, pmsTime);
-                                                Duration dr2 = Duration.between(pmsTime, eveningTime);
-                                                //夜班
-                                                if (entry.getValue().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())) {
-                                                    morningTime = morningTime.plusDays(1);
-                                                    dr = Duration.between(eveningTime, pmsTime);
-                                                    dr2 = Duration.between(pmsTime, morningTime);
-                                                }
-                                                materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
-                                                materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60),4));
-                                            }
-                                        } else {
-                                            //否则，物料n+1的最早巡检时间即为物料n的生产结束时间，统计班次b的时段内各物料的生产时长，单位为h。例如某白班生产2种物料，其关联的生产订单开始、结束时间均为空，14:34:23开始巡检物料2，之前一直巡检物料1，则14:34:23 - 8:00:00（减法）为物料1的生产时长，20:00:00 - 14:34:23（减法）为物料2的生产时长
-                                            LocalDateTime morningTime = LocalDateTime.parse(entry.getKey() + " 08:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                            LocalDateTime eveningTime = LocalDateTime.parse(entry.getKey() + " 20:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                            Duration dr = Duration.between(morningTime, checkTaskWorkOrderList.get(i + 1).getFinishedTime());
-                                            Duration dr2 = Duration.between(checkTaskWorkOrderList.get(i + 1).getFinishedTime(), eveningTime);
-                                            //夜班
-                                            if (entry.getValue().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())) {
-                                                morningTime = morningTime.plusDays(1);
-                                                dr = Duration.between(eveningTime, checkTaskWorkOrderList.get(i + 1).getFinishedTime());
-                                                dr2 = Duration.between(checkTaskWorkOrderList.get(i + 1).getFinishedTime(), morningTime);
-                                            }
-                                            materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
-                                            materialProduceTime.put(checkTaskWorkOrderList.get(i + 1).getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr2.toMinutes())), new BigDecimal(60),4));
-                                        }
-                                    }
-                                } else {
-                                    LocalDateTime morningTime = LocalDateTime.parse(entry.getKey() + " 08:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    LocalDateTime eveningTime = LocalDateTime.parse(entry.getKey() + " 20:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    Duration dr = Duration.between(morningTime, checkTaskWorkOrderList.get(i).getFinishedTime());
-                                    //夜班
-                                    if (entry.getValue().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())) {
-                                        morningTime = morningTime.plusDays(1);
-                                        dr = Duration.between(eveningTime, checkTaskWorkOrderList.get(i + 1).getFinishedTime());
-                                    }
-                                    materialProduceTime.put(tmp.getMaterialId(), BigDecimalUtil.divide(new BigDecimal(Math.abs(dr.toMinutes())), new BigDecimal(60),4));
-                                }
-                            }
-
-                        }
-                    }
-
+                    //计算生产时长
+                    Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList,flag,entry2);
                     //查询单片掰边重量(改成了掰边重量)
                     //把掰边，样品，拉引时速加入
                     List<String> bdlTmp = Lists.newArrayList();
@@ -290,7 +238,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         String productWorkShopName = "";
                         R<SysOfficeVO> parent = remoteOfficeFeign.parent(entry3.getKey());
                         if (parent.getData() != null) {
-                            productWorkShopName = remoteOfficeFeign.parent(entry3.getKey()).getData().getOfficeName();
+                            productWorkShopName = parent.getData().getOfficeName();
                         }
                         //拉引量
                         BigDecimal laQuantity = BigDecimal.ZERO;
@@ -395,7 +343,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
                             BigDecimal glassLength = new BigDecimal(0);
-                            QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
+                            QtMaterial material = qtMaterialService.getById(checkTaskPatrolWorkOrderList.get(0).getMaterialId());
                             if (material.getLengthQuantity() != null) {
                                 glassLength = BigDecimalUtil.add(glassLength, material.getLengthQuantity());
                             }
@@ -413,7 +361,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlass12, new BigDecimal(1000000),4);
+                                //产品改需求，乘以2
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlass12, new BigDecimal(2));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -422,8 +371,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
 //                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
-                                //避免偏差,除以100
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(100),4);
+                                //产品改需求，乘以2
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlassTime, new BigDecimal(2));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -435,7 +384,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量
                             if (flag) {
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multi12, new BigDecimal(1000000),4);
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(2));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -444,7 +394,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
 //                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
-                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(100),4);
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(2));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
 
@@ -608,7 +559,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 chartParam.setProductLineId(entry3.getKey());
                                 List<QtCheckTaskDetailReportVO> qtCheckTaskDetailReportVOS = Lists.newArrayList();
                                 try {
-                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
+//                                    qtCheckTaskDetailReportVOS = qtDefectiveReportService.defectCollect(chartParam);
                                 } catch (Exception e) {
                                     log.error(e.getMessage());
                                 }
@@ -1426,5 +1377,413 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         }
     }
 
+    /**
+     * 计算拉引量
+     * @param classTimeStart
+     * @param classTimeEnd
+     * @return
+     */
+    @Override
+    public List<QtPullAmountDTO> calculatePullAmount(LocalDate classTimeStart,LocalDate classTimeEnd) {
+        List<QtPullAmountDTO> result = Lists.newArrayList();
+        //转时间戳
+        LocalDateTime startTime = classTimeStart.atTime(0, 0, 1);
+        LocalDateTime endTime = classTimeEnd.atTime(23, 59, 59);
+        //查到所有满足的巡检任务
+        LambdaQueryWrapper<QtCheckTask> taskCondition = new LambdaQueryWrapper<QtCheckTask>()
+                //任务完成
+                .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
+                //班次时间范围
+                .between(QtCheckTask::getClassTime, startTime, endTime)
+                //只要巡检
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                //只要基片车间
+                .like(QtCheckTask::getProductLineName, "基片")
+                .orderByAsc(QtCheckTask::getFinishedTime);
+        List<QtCheckTask> taskList = qtCheckTaskService.list(taskCondition);
+        if (CollUtil.isNotEmpty(taskList)) {
+            Set<Long> taskIdList = Sets.newHashSet();
+            for (QtCheckTask tmp : taskList) {
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                tmp.setDate(df.format(tmp.getClassTime()));
+                tmp.setProductLineId(tmp.getProductLine().getId());
+                taskIdList.add(tmp.getId());
+            }
+            //一下获取所有详情数据，便于后续计算
+            List<QtCheckTaskDetail> allTaskDetails = qtCheckTaskDetailService.list(new LambdaQueryWrapper<QtCheckTaskDetail>()
+                    .in(QtCheckTaskDetail::getTaskId, taskIdList));
+            //根据班次日期进行分组
+            Map<String, List<QtCheckTask>> groupByDate = taskList.stream().collect(Collectors.groupingBy(QtCheckTask::getDate));
+            //遍历班次日期
+            for (Map.Entry<String, List<QtCheckTask>> entry : groupByDate.entrySet()) {
+                List<QtCheckTask> checkTaskDateList = entry.getValue();
+                //再根据班次进行分组
+                Map<Integer, List<QtCheckTask>> groupByWorkOrder = checkTaskDateList.stream().collect(Collectors.groupingBy(QtCheckTask::getClassesId));
+                //遍历班次分组
+                for (Map.Entry<Integer, List<QtCheckTask>> entry2 : groupByWorkOrder.entrySet()) {
+                    //根据时间排序
+                    List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+                    //查看是否是一种物料
+                    HashSet<Long> materialIdSet = new HashSet<>();
+                    //物料id集合
+                    List<Long> materialList = Lists.newArrayList();
+                    checkTaskWorkOrderList.forEach(tmp -> {
+                        materialIdSet.add(tmp.getMaterialId());
+                        if (!materialList.contains(tmp.getMaterialId())) {
+                            materialList.add(tmp.getMaterialId());
+                        }
+                    });
+                    Boolean flag = true;
+                    if (materialIdSet.size() > 1) {
+                        flag = false;
+                    }
+                    //计算生产时长
+                    Map<Long, BigDecimal> materialProduceTime = calculateProduceTime(materialList, flag, entry2);
+                    //查询单片掰边重量(改成了掰边重量)
+                    //把掰边，样品，拉引时速加入
+                    List<String> bdlTmp = Lists.newArrayList();
+                    bdlTmp.add("掰边重量");
+                    bdlTmp.add("样品重量");
+                    bdlTmp.add("拉引速度");
+                    List<QtCheckItem> bdlItems = qtCheckItemService.list(new LambdaQueryWrapper<QtCheckItem>()
+                            .in(QtCheckItem::getName, bdlTmp));
+                    List<QtCheckItem> baiItems = bdlItems.stream().filter(v -> v.getName().equals("掰边重量"))
+                            .collect(Collectors.toList());
+                    List<Integer> baiItemIds = new ArrayList<>();
+                    baiItems.forEach(tmp -> {
+                        baiItemIds.add(tmp.getId());
+                    });
+                    //查询单片重量 (生产改成样品重量)
+                    List<QtCheckItem> danItems = bdlItems.stream().filter(v -> v.getName().equals("样品重量"))
+                            .collect(Collectors.toList());
+                    List<Integer> danItemIds = new ArrayList<>();
+                    danItems.forEach(tmp -> {
+                        danItemIds.add(tmp.getId());
+                    });
+                    //查询拉引时速(改成了拉引速度)
+                    List<QtCheckItem> laItems = bdlItems.stream().filter(v -> v.getName().equals("拉引速度"))
+                            .collect(Collectors.toList());
+                    List<Integer> laItemIds = new ArrayList<>();
+                    laItems.forEach(tmp -> {
+                        laItemIds.add(tmp.getId());
+                    });
+                    //根据产线进行分组
+                    Map<Integer, List<QtCheckTask>> groupByProductLine = checkTaskWorkOrderList.stream().collect(Collectors.groupingBy(QtCheckTask::getProductLineId));
+                    for (Map.Entry<Integer, List<QtCheckTask>> entry3 : groupByProductLine.entrySet()) {
+                        QtPullAmountDTO resultTmp = new QtPullAmountDTO();
+                        //产线名字
+                        String productLineName = remoteOfficeFeign.getNameById(entry3.getKey()).getData();
+                        resultTmp.setProductLineId(entry3.getKey());
+                        resultTmp.setProductLineName(productLineName);
+                        //车间名字
+                        String productWorkShopName = "";
+                        R<SysOfficeVO> parent = remoteOfficeFeign.parent(entry3.getKey());
+                        if (parent.getData() != null) {
+                            productWorkShopName = parent.getData().getOfficeName();
+                            resultTmp.setProductWorkShopId(parent.getData().getId());
+                            resultTmp.setProductWorkShopName(productWorkShopName);
+                        }
+                        //拉引量
+                        BigDecimal laQuantity = BigDecimal.ZERO;
+                        //根据物料进行分组
+                        Map<Long, List<QtCheckTask>> groupByMaterial = entry3.getValue().stream().collect(Collectors.groupingBy(QtCheckTask::getMaterialId));
+                        //遍历物料分组
+                        for (Map.Entry<Long, List<QtCheckTask>> materialEntry : groupByMaterial.entrySet()) {
+                            BigDecimal totalBaiItem = new BigDecimal(0);
+                            BigDecimal totalBaiItemCount = new BigDecimal(0);
+                            BigDecimal totalDanItem = new BigDecimal(0);
+                            BigDecimal totalDanItemCount = new BigDecimal(0);
+                            BigDecimal totalLaItem = new BigDecimal(0);
+                            BigDecimal totalLaItemCount = new BigDecimal(0);
+                            //准备产线下taskId
+                            List<QtCheckTask> checkTaskProductLineList = materialEntry.getValue();
+                            List<Long> taskIds = new ArrayList<>();
+                            checkTaskProductLineList.forEach(tmp -> {
+                                taskIds.add(tmp.getId());
+                            });
+                            //获取所有单片掰边重量
+                            List<QtCheckTaskDetail> baiItemDetails = Lists.newArrayList();
+                            if (taskIds.size() > 0 && baiItemIds.size() > 0) {
+                                baiItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
+                                                && baiItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
+                            }
+                            if (CollUtil.isNotEmpty(baiItemDetails)) {
+                                for (QtCheckTaskDetail tmp : baiItemDetails) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                        BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                        totalBaiItem = BigDecimalUtil.add(totalBaiItem, decimalTmp);
+                                        totalBaiItemCount = BigDecimalUtil.add(totalBaiItemCount, new BigDecimal(1));
+                                    }
+                                }
+                            }
+                            //获取所有单片重量
+                            List<QtCheckTaskDetail> danItemDetails = Lists.newArrayList();
+                            if (taskIds.size() > 0 && danItemIds.size() > 0) {
+                                danItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
+                                                && danItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
+                            }
+                            if (CollUtil.isNotEmpty(danItemDetails)) {
+                                for (QtCheckTaskDetail tmp : danItemDetails) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                        //判断是否为数字
+                                        if (RegularUtil.isNum(tmp.getCheckResult())) {
+                                            BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                            totalDanItem = BigDecimalUtil.add(totalDanItem, decimalTmp);
+                                            totalDanItemCount = BigDecimalUtil.add(totalDanItemCount, new BigDecimal(1));
+                                        }
+                                    }
+                                }
+                            }
+                            //获取所有拉引时速
+                            List<QtCheckTaskDetail> laItemDetails = Lists.newArrayList();
+                            if (taskIds.size() > 0 && laItemIds.size() > 0) {
+                                laItemDetails = allTaskDetails.stream().filter(v -> taskIds.contains(v.getTaskId())
+                                                && laItemIds.contains(v.getItemId()))
+                                        .collect(Collectors.toList());
+                            }
+                            if (CollUtil.isNotEmpty(laItemDetails)) {
+                                for (QtCheckTaskDetail tmp : laItemDetails) {
+                                    if (StrUtil.isNotBlank(tmp.getCheckResult())) {
+                                        BigDecimal decimalTmp = new BigDecimal(tmp.getCheckResult());
+                                        totalLaItem = BigDecimalUtil.add(totalLaItem, decimalTmp);
+                                        totalLaItemCount = BigDecimalUtil.add(totalLaItemCount, new BigDecimal(1));
+                                    }
+                                }
+                            }
+                            //平均单片掰边重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片掰边重量”（需提前配置好“单片掰边重量”检验项）取平均值，单位为kg
+                            BigDecimal avgBaiItem = new BigDecimal(0);
+                            if (totalBaiItem.intValue() != 0) {
+                                avgBaiItem = BigDecimalUtil.divide(totalBaiItem, totalBaiItemCount, 4);
+                            }
+                            //平均单片重量：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“单片重量”（需提前配置好“单片重量”检验项）取平均值，单位为kg
+                            BigDecimal avgDanItem = new BigDecimal(0);
+                            if (totalDanItem.intValue() != 0) {
+                                avgDanItem = BigDecimalUtil.divide(totalDanItem, totalDanItemCount, 4);
+                            }
+                            //拉引时速：产线A在班次日期D的班次b时间段内（例如2021-09-21 8:00:00 ~ 20:00:00）所有巡检任务录入的“拉引速度”（需提前配置好“拉引速度”检验项）取平均值，单位为m/h
+                            BigDecimal avgLaItem = new BigDecimal(0);
+                            if (totalDanItem.intValue() != 0) {
+                                avgLaItem = BigDecimalUtil.divide(totalLaItem, totalLaItemCount, 4);
+                            }
+                            //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
+                            BigDecimal glassLength = new BigDecimal(0);
+                            QtMaterial material = qtMaterialService.getById(checkTaskWorkOrderList.get(0).getMaterialId());
+                            if (material.getLengthQuantity() != null) {
+                                glassLength = BigDecimalUtil.add(glassLength, material.getLengthQuantity());
+                            }
 
+                            //拉引时速/玻璃片长度
+                            BigDecimal divideLaGlass = new BigDecimal(0);
+                            if (glassLength.compareTo(BigDecimal.ZERO) > 0) {
+                                divideLaGlass = BigDecimalUtil.divide(avgLaItem, glassLength,4);
+                            }
+                            //拉引量 = (平均单片掰边重量 + 平均单片重量) * （拉引时速 / 玻璃片长度) * 12 / 1000000
+                            //平均单片掰边重量 + 平均单片重量
+                            BigDecimal baiAddDan = BigDecimalUtil.add(avgBaiItem, avgDanItem);
+                            BigDecimal multi = BigDecimalUtil.multiply(baiAddDan, divideLaGlass);
+                            BigDecimal multi12 = BigDecimalUtil.multiply(multi, new BigDecimal(12));
+
+                            //拉引量
+                            if (flag) {
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(2));
+                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
+                            } else {
+                                BigDecimal produceTime = new BigDecimal(6);
+                                if (materialProduceTime.get(materialEntry.getKey()) != null) {
+                                    produceTime = materialProduceTime.get(materialEntry.getKey());
+                                }
+                                BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
+                                //产品改需求，乘以2即可
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(2));
+                                laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
+                            }
+                        }
+                        resultTmp.setPullAmount(laQuantity);
+                        resultTmp.setClassId(entry2.getKey());
+                        resultTmp.setClassDate(LocalDate.parse(entry.getKey(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                        result.add(resultTmp);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Boolean calculatePullAmountTask() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate date = LocalDate.now();
+        List<QtPullAmountDTO> qtPullAmountDTOS = Lists.newArrayList();
+        //如果是早8点则查班次日期为昨天的拉引量
+        if(QtManagerConstant.NUM_8 == now.getHour()){
+            qtPullAmountDTOS = calculatePullAmount(now.toLocalDate().minusDays(1), now.toLocalDate().minusDays(1));
+            date = date.minusDays(1);
+            //拿到晚班数据
+            qtPullAmountDTOS = qtPullAmountDTOS.stream().filter(v->v.getClassId().equals(QtManagerConstant.QtClassesEnum.NIGHT.getCode())).collect(Collectors.toList());
+        }else {
+            qtPullAmountDTOS = calculatePullAmount(now.toLocalDate(), now.toLocalDate());
+            //拿到早班数据
+            qtPullAmountDTOS = qtPullAmountDTOS.stream().filter(v->v.getClassId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())).collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(qtPullAmountDTOS)){
+            ValidList<PmsPullForceEditDTO> dtoList = new ValidList<>();
+            //计算班次
+            String className;
+            if(qtPullAmountDTOS.get(0).getClassId().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                className = QtManagerConstant.QtClassesEnum.DAY.getName();
+            }else {
+                className = QtManagerConstant.QtClassesEnum.NIGHT.getName();
+            }
+            Set<String> nameList = Sets.newHashSet(className);
+            Map<String, Long> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(nameList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            Long classId = classMap.get(className);
+            //输入数据
+            LocalDate finalDate = date;
+            qtPullAmountDTOS.forEach(tmp->{
+                PmsPullForceEditDTO dto = new PmsPullForceEditDTO();
+                dto.setProductLineId(tmp.getProductLineId());
+                dto.setClassesId(classId);
+                dto.setPullForceDate(finalDate);
+                dto.setWorkshopId(tmp.getProductWorkShopId());
+                dto.setQuantity(tmp.getPullAmount());
+                dtoList.add(dto);
+            });
+            Boolean result = FeignOptional.of(() -> remotePullForceFeignApi.edit(dtoList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+            if(result){
+                log.info("载入成功,时间为"+now);
+            }
+        }else {
+            log.info("没有拉引量数据");
+        }
+        return true;
+    }
+
+    @Override
+    public List<QtEmsPullAmountDTO> calculateEmsPullAmount(ValidList<QtEmsPullAmountDTO> dto) {
+        List<QtEmsPullAmountDTO> resultList = dto.getList();
+        //拿到所有班次日期
+        resultList = resultList.stream().sorted(Comparator.comparing(QtEmsPullAmountDTO::getClassDate)).collect(Collectors.toList());
+        LocalDate startDate = resultList.get(0).getClassDate();
+        LocalDate endDate = resultList.get(resultList.size()-1).getClassDate();
+        //拿到所有产线的班次日期
+        List<QtPullAmountDTO> qtPullAmountDTOS = calculatePullAmount(startDate, endDate);
+        resultList.forEach(tmp->{
+            BigDecimal pullAmount = BigDecimal.ZERO;
+            if(tmp.getEndTime().isAfter(tmp.getStartTime())){
+                //12小时做比较
+                BigDecimal hour12 = new BigDecimal(43200);
+                Duration dr = Duration.between(tmp.getStartTime(),tmp.getEndTime());
+                BigDecimal period = new BigDecimal(dr.getSeconds());
+                if(hour12.compareTo(period)==1){
+                    //找到满足条件的产线
+                    QtPullAmountDTO qtPullAmountDTO = qtPullAmountDTOS.stream().filter(v -> v.getClassDate().equals(tmp.getClassDate())
+                            && v.getProductLineId().equals(tmp.getProductLineId())
+                            && v.getClassId().equals(tmp.getClassId())).findFirst().orElse(null);
+                    if(Objects.nonNull(qtPullAmountDTO)){
+                        BigDecimal percent = BigDecimalUtil.divide(period,hour12);
+                        pullAmount = BigDecimalUtil.multiply(qtPullAmountDTO.getPullAmount(),percent);
+                    }
+                }
+            }
+            tmp.setPullAmount(pullAmount);
+        });
+        return resultList;
+    }
+
+    /**
+     * 抽取计算生产时长
+     * @return
+     */
+    private Map<Long, BigDecimal> calculateProduceTime(List<Long> materialList,Boolean flag,Map.Entry<Integer, List<QtCheckTask>> entry2){
+        List<QtCheckTask> checkTaskWorkOrderList = entry2.getValue().stream().filter(v->v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())).sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+        //生产时长map
+        Map<Long, BigDecimal> materialProduceTime = MapUtil.newHashMap();
+        if (!flag) {
+            //保存上一个物料的完成时间
+            LocalDateTime preMaterialTime = LocalDateTime.now().withYear(1997);
+            //算生产时长
+            for(int i = 0; i < materialList.size(); i++){
+                Long materialId = materialList.get(i);
+                //物料n
+                List<QtCheckTask> materialN = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialId)
+                                &&v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()))
+                        .sorted(Comparator.comparing(QtCheckTask::getSpotTime)).collect(Collectors.toList());
+                if(i!=materialList.size()-1){
+                    Set<Long> pmsParams = new HashSet<>();
+                    pmsParams.add(materialId);
+                    pmsParams.add(materialList.get(i+1));
+                    //物料n+1的最早巡检时间
+                    int finalI1 = i;
+                    List<QtCheckTask> materialN1 = checkTaskWorkOrderList.stream().filter(v -> v.getMaterialId().equals(materialList.get(finalI1 +1))
+                                    &&v.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()))
+                            .sorted(Comparator.comparing(QtCheckTask::getFinishedTime)).collect(Collectors.toList());
+                    R<Map<Long, PmsProduceOrderVO>> mapR = remotePmsFeignApi.listByMaterialIds(pmsParams);
+                    if (mapR.getData() != null) {
+                        Map<Long, PmsProduceOrderVO> mapRData = mapR.getData();
+                        PmsProduceOrderVO pmsProduceOrderVO1 = mapRData.get(materialId);
+                        //若物料n关联的生产订单开始、结束时间均非空，且物料n关联的最晚生产订单结束时间 <= 物料n+1的最早巡检时间
+                        if (pmsProduceOrderVO1 != null
+                                && pmsProduceOrderVO1.getActualStartTime()!=null
+                                && pmsProduceOrderVO1.getActualEndTime()!=null
+                                && CollUtil.isNotEmpty(materialN1)
+                                && pmsProduceOrderVO1.getActualEndTime().isBefore(materialN1.get(0).getSpotTime())
+                                && pmsProduceOrderVO1.getActualEndTime().isAfter(materialN.get(materialN.size()-1).getSpotTime())) {
+                            LocalDateTime time = LocalDateTime.now();
+                            if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                                //早班
+                                time = materialN.get(0).getClassTime().withHour(8).withMinute(0).withSecond(0);
+                            }else {
+                                //晚班
+                                time = materialN.get(0).getClassTime().withHour(20).withMinute(0).withSecond(0);
+                            }
+                            //1997则说明前一个物料没有设置时间
+                            if(preMaterialTime.getYear() == 1997){
+                                Duration dr = Duration.between(time,pmsProduceOrderVO1.getActualEndTime());
+                                preMaterialTime = pmsProduceOrderVO1.getActualEndTime();
+                                double hours = dr.toMinutes() / 60.0;
+                                materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
+                            }else {
+                                Duration dr = Duration.between(preMaterialTime,pmsProduceOrderVO1.getActualEndTime());
+                                preMaterialTime = pmsProduceOrderVO1.getActualEndTime();
+                                double hours = dr.toMinutes() / 60.0;
+                                materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
+                            }
+
+                        } else {
+                            //否则，物料n+1的最早巡检时间即为物料n的生产结束时间，统计班次b的时段内各物料的生产时长，单位为h。例如某白班生产2种物料，其关联的生产订单开始、结束时间均为空，14:34:23开始巡检物料2，之前一直巡检物料1，则14:34:23 - 8:00:00（减法）为物料1的生产时长，20:00:00 - 14:34:23（减法）为物料2的生产时长
+                            QtCheckTask materialNTmp = materialN.get(0);
+                            LocalDateTime time = LocalDateTime.now();
+                            if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                                //早班
+                                time = materialNTmp.getClassTime().withHour(8).withMinute(0).withSecond(0);
+                            }else {
+                                //晚班
+                                time = materialNTmp.getClassTime().withHour(20).withMinute(0).withSecond(0);
+                            }
+                            Duration dr = Duration.between(time,materialN1.get(0).getSpotTime());
+                            preMaterialTime = materialN1.get(0).getSpotTime();
+                            double hours = dr.toMinutes() / 60.0;
+                            materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
+                        }
+                    }
+                }else {
+                    LocalDateTime time = LocalDateTime.now();
+                    if(entry2.getKey().equals(QtManagerConstant.QtClassesEnum.DAY.getCode())){
+                        //早班结束时间
+                        time = materialN.get(0).getClassTime().withHour(20).withMinute(0).withSecond(0);
+                    }else {
+                        //晚班结束时间
+                        time = materialN.get(0).getClassTime().withHour(8).withMinute(0).withSecond(0).plusDays(1);
+                    }
+                    Duration dr = Duration.between(preMaterialTime,time);
+                    double hours = dr.toMinutes() / 60.0;
+                    materialProduceTime.put(materialId, new BigDecimal(Math.abs(hours)));
+                }
+            }
+        }
+        return materialProduceTime;
+    }
 }

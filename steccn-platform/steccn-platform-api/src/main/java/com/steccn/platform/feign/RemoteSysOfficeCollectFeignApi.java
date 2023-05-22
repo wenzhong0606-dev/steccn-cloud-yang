@@ -44,4 +44,6 @@ public interface RemoteSysOfficeCollectFeignApi {
     @GetMapping("/feign/platform/sys/office/collect/station/list")
     @ApiOperation("查询工位的进/出站的采集点编码")
     R<Map<Integer,String>> listByStation(@RequestParam("stationIdSet") Set<Integer> stationIdSet, @RequestParam("type") Integer type);
+
+
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,13 +18,14 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
-import com.steccn.common.util.BigDecimalUtil;
-import com.steccn.common.util.WorkLineConvertUtil;
+import com.steccn.common.util.*;
 import com.steccn.common.vo.BaseSelectVO;
+import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.data.dto.PmReportWorkPreloadDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.*;
+import com.steccn.platform.util.LogicalPageUtil;
 import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.platform.vo.SysOfficeVO;
@@ -37,10 +39,12 @@ import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.pqc.math.linearalgebra.BigEndianConversions;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +63,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMapper, PmsProduceOrder> implements PmsProduceOrderService {
 
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
@@ -841,6 +846,75 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
     @Override
+    public List<DwProduceOrderDTO> currentProduceOrder(LocalDate currentDate) {
+        //定义返回集合
+        List<DwProduceOrderDTO> resList = Lists.newArrayList();
+        //获取班次日期-早班和晚班
+        LocalDateTime start = LocalDateUtil.getMorning(currentDate);
+        LocalDateTime end = start.plusDays(1);
+        //查询订单实际结束时间大于当前班次开始时间或者当前还没有结束的生产订单
+        List<PmsProduceOrder> dbList = list(new LambdaQueryWrapper<PmsProduceOrder>().isNotNull(PmsProduceOrder::getActualStartTime).lt(PmsProduceOrder::getActualStartTime, end).and(wr -> {
+            wr.isNull(PmsProduceOrder::getActualEndTime).or().gt(PmsProduceOrder::getActualEndTime, start);
+        }));
+        if (CollUtil.isNotEmpty(dbList)) {
+            //获取物料的信息
+            Set<Long> materialIdSet = dbList.stream().map(PmsProduceOrder::getMaterialId).collect(Collectors.toSet());
+            Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            for (PmsProduceOrder order : dbList) {
+                //1.如果开始时间和结束时间都存在，结束时间大于start，开始时间小于end,共计有六种情况
+                //①结束时间小于end，开始时间小于start        ==> start,结束时间
+                //②结束时间小于end，开始时间等于start        ==> start,结束时间
+                //③结束时间小于end，开始时间大于start        ==> 开始时间,结束时间
+                //④结束时间大于等于end，开始时间小于start     ==> start,end
+                //⑤结束时间大于等于end，开始时间等于start     ==> start,end
+                //⑥结束时间大于等于end，开始时间大于start     ==> 开始时间,end
+
+                //2.如果结束时间为null，则开始时间必须要小于end,共计有三种情况
+                //⑦开始时间小于start    ==> start,end
+                //⑧开始时间等于start    ==> start,end
+                //⑨开始时间大于start    ==> 开始时间,end
+
+                //3.总共分成四种情况
+                //start-结束时间
+                //start-end
+                //开始时间-结束时间
+                //开始时间-end
+                DwProduceOrderDTO orderDTO = new DwProduceOrderDTO();
+                BeanUtil.copyProperties(order, orderDTO);
+                orderDTO.setClassDate(currentDate);
+                orderDTO.setProductLineId(order.getProductionLineId());
+                orderDTO.setProduceOrderId(order.getId());
+                orderDTO.setProduceOrderNo(order.getCode());
+                LocalDateTime tempStart = LocalDateUtil.gt(order.getActualStartTime(),start) ? order.getActualStartTime() : start;
+                LocalDateTime tempEnd = Objects.isNull(order.getActualEndTime()) || LocalDateUtil.ge(order.getActualEndTime(), end) ? end : order.getActualEndTime();
+                orderDTO.setStart(tempStart);
+                orderDTO.setEnd(tempEnd);
+                orderDTO.setThick(materialMap.getOrDefault(orderDTO.getMaterialId(), new EqpSpareVO()).getThickQuantity());
+                //考虑开始时间和结束时间是否跨班次问题，如果跨班次，则基于班次进行分割。如果不跨班次，则直接返回
+                if (!CalculateDateUtil.isSameClassType(tempStart, tempEnd)) {
+                    DwProduceOrderDTO left = new DwProduceOrderDTO();
+                    DwProduceOrderDTO right = new DwProduceOrderDTO();
+                    BeanUtil.copyProperties(orderDTO, left);
+                    BeanUtil.copyProperties(orderDTO, right);
+                    left.setStart(tempStart);
+                    left.setEnd(LocalDateUtil.getNight(currentDate));
+                    left.setClassId(ClassUtil.MORNING);
+                    resList.add(left);
+                    right.setStart(LocalDateUtil.getNight(currentDate));
+                    right.setEnd(tempEnd);
+                    right.setClassId(ClassUtil.NIGHT);
+                    resList.add(right);
+                } else {
+                    QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(start);
+                    orderDTO.setClassId(qtTaskClassCalculate.getClassType());
+                    resList.add(orderDTO);
+                }
+            }
+        }
+        return resList;
+    }
+
+    @Override
     public List<ProduceOrderDataInfoVO> getExecuteOrderInfo() {
         //1.获取16条产线的信息
         SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
@@ -896,6 +970,98 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
         return infoVOList;
     }
 
+    @Override
+    public Page<PanoramicTracingVO> tracing(PanoramicTracingDTO panoramicTracingDTO) {
+        //查询生产订单数据
+        List<PanoramicTracingVO> tracingVOList = baseMapper.tracing(panoramicTracingDTO);
+
+        //排序
+        tracingVOList.sort(Comparator.comparing(PanoramicTracingVO::getOrderCode, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getBatchNo, Comparator.nullsFirst(String::compareTo)).reversed()
+                .thenComparing(PanoramicTracingVO::getCaseNo, Comparator.nullsFirst(String::compareTo)).reversed());
+        //逻辑分页
+        return LogicalPageUtil.page(tracingVOList, panoramicTracingDTO.getCurrent(), panoramicTracingDTO.getSize());
+    }
+
+    @Override
+    public CustomerIdAndNameVO getCustomer(QmsCustomerDTO dto) {
+        CustomerIdAndNameVO result = new CustomerIdAndNameVO();
+        PmsProduceOrder one = new PmsProduceOrder();
+        if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_2))){
+            //2）仅当手动输入生产订单号后校验为有效单号且该订单上的客户非空，预填该客户（若字段已填值，覆盖已填值）
+            if(StrUtil.isNotBlank(dto.getProductOrder())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getCode, dto.getProductOrder()), false);
+            }else {
+                throw new BusinessException("生产订单不能为空");
+            }
+        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_3))){
+            //3）仅当生产产线的值更新且值非空且检验类型为首检、巡检时，查询生产管理系统当前产线、当前时间执行中的生产订单的“客户”属性，若非空，系统自动带出该值（若字段已填值，覆盖已填值)
+            if(Objects.nonNull(dto.getProductLineId())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                        .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                        .eq(PmsProduceOrder::getState,PmManagerConstant.OrderStateEnum.TWO.getCode()), false);
+            }else {
+                throw new BusinessException("产线不能为空");
+            }
+        }else if(dto.getType().equals(Integer.parseInt(PmManagerConstant.NUM_4))){
+            if(Objects.nonNull(dto.getTimeSpot())&&Objects.nonNull(dto.getProductLineId())){
+                one = getOne(new LambdaQueryWrapper<PmsProduceOrder>()
+                        .eq(PmsProduceOrder::getProductionLineId, dto.getProductLineId())
+                        .lt(PmsProduceOrder::getActualEndTime,dto.getTimeSpot())
+                        .gt(PmsProduceOrder::getActualStartTime,dto.getTimeSpot()), false);
+            }else {
+                throw new BusinessException("产线、时间点不能为空");
+            }
+        }
+        if(Objects.isNull(one) || one.getCustomerId()==null){
+            return result;
+        }
+        result.setCustomerId(one.getCustomerId());
+        Set<Long> idSet = Sets.newHashSet();
+        idSet.add(one.getCustomerId().longValue());
+        Map<Long, String> customerMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(idSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        result.setCustomerName(customerMap.get(one.getCustomerId().longValue()));
+        return result;
+    }
+
+
+//    /**
+//     * 处理订单的当前产量
+//     *
+//     * @param orderIdSet
+//     * @return
+//     */
+//    private Map<Long, BigDecimal> getCurrentProduction(Set<Long> orderIdSet) {
+//        Map<Long, BigDecimal> resMap = Maps.newHashMap();
+//        if (CollUtil.isNotEmpty(orderIdSet)) {
+//            //获取订单的执行工位
+//            Map<Long, Set<Integer>> stationMap = getStation(orderIdSet);
+//            //获取订单的批次时间
+//            Map<Long, PmReportWorkPreloadDTO> orderDateMap = getOrderDate(orderIdSet);
+//            //获取工位绑定的的采集点
+//            Set<Integer> stationIdSet = stationMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+//            Map<Integer, String> codeMap = FeignOptional.of(() -> remoteSysOfficeCollectFeignApi.listByStation(stationIdSet, 1), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+//            resMap = orderIdSet.stream().collect(Collectors.toMap(orderId -> orderId, orderId -> {
+//                PmReportWorkPreloadDTO pmReportWorkPreloadDTO = orderDateMap.get(orderId);
+//                Set<Integer> stationSet = stationMap.get(orderId);
+//                BigDecimal currentProduction = BigDecimal.ZERO;
+//                if (CollUtil.isNotEmpty(stationSet)) {
+//                    currentProduction = stationSet.stream()
+//                            .map(stationId -> codeMap.get(stationId))
+//                            .filter(Objects::nonNull)
+//                            .map(code -> {
+//                                pmReportWorkPreloadDTO.setCode(code);
+//                                return FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+//                            })
+//                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+//                }
+//                return currentProduction;
+//            }));
+//        }
+//        return resMap;
+//    }
+
+
 
     /**
      * 处理订单的当前产量
@@ -924,7 +1090,10 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
                     for (Integer stationId : stationSet) {
                         if (Objects.nonNull(codeMap.get(stationId))) {
                             pmReportWorkPreloadDTO.setCode(codeMap.get(stationId));
-                            currentProduction.add(FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get());
+                            BigDecimal bigDecimal = FeignOptional.of(() -> remoteDataPlatformFeignApi.preload(pmReportWorkPreloadDTO), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+                            if (Objects.nonNull(bigDecimal)) {
+                                currentProduction = currentProduction.add(bigDecimal);
+                            }
                         }
                     }
                 }
@@ -935,32 +1104,35 @@ public class PmsProduceOrderServiceImpl extends ServiceImpl<PmsProduceOrderMappe
     }
 
 
+
     /**
-     * 获取订单最后一个工序的执行工位
-     *
-     * @param orderIdSet
-     * @return
+     * 根据订单ID集合获取工位信息:获取订单最后一个工序的执行工位(20230511改为取下片工序)
+     * @param orderIdSet 订单ID集合
+     * @return 工位信息Map，key为订单ID，value为工位ID集合
      */
     private Map<Long, Set<Integer>> getStation(Set<Long> orderIdSet) {
-        Map<Long, Set<Integer>> map = Maps.newHashMap();
-        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(orderIdSet);
-        if (CollUtil.isNotEmpty(craftMap)) {
-            for (Map.Entry<Long, List<PmsProduceOrderCraftVO>> entry : craftMap.entrySet()) {
-                List<PmsProduceOrderCraftVO> value = entry.getValue();
-                if (CollUtil.isNotEmpty(value)) {
-                    List<PmsProduceOrderCraftVO> orderCraftVOList = value.stream().sorted(Comparator.comparing(PmsProduceOrderCraftVO::getSort).reversed()).collect(Collectors.toList());
-                    PmsProduceOrderCraftVO pmsProduceOrderCraftVO = orderCraftVOList.get(0);
-                    List<PmsWorkOrderCraftStationVO> stationList = pmsProduceOrderCraftVO.getStationList();
-                    Set<Integer> stationIdSet = Sets.newHashSet();
-                    if (CollUtil.isNotEmpty(stationList)) {
-                        stationList.forEach(station -> stationIdSet.add(station.getExecuteStationId().intValue()));
-                    }
-                    map.put(entry.getKey(), stationIdSet);
+        Map<Long, Set<Integer>> map = new HashMap<>(); // 创建一个Map对象，用于存储订单ID和对应的工位ID集合
+        Map<Long, List<PmsProduceOrderCraftVO>> craftMap = pmsProduceOrderCraftService.crafts(orderIdSet); // 调用服务获取订单ID和对应的工艺信息
+        if (CollUtil.isNotEmpty(craftMap)) { // 判断工艺信息是否为空
+            for (Map.Entry<Long, List<PmsProduceOrderCraftVO>> entry : craftMap.entrySet()) { // 遍历工艺信息Map
+                List<PmsProduceOrderCraftVO> value = entry.getValue(); // 获取工艺信息列表
+                if (CollUtil.isNotEmpty(value)) { // 判断工艺信息列表是否为空
+                    Optional<PmsProduceOrderCraftVO> result = value.stream() // 通过流处理获取工艺信息列表中的第一个符合条件的工艺信息
+                            .filter(item -> PmManagerConstant.XPGX.equals(item.getCode()))
+                            .findFirst();
+                    result.ifPresent(pmsProduceOrderCraftVO -> { // 如果存在符合条件的工艺信息，则将其对应的工位ID集合存入Map中
+                        Set<Integer> stationIdSet = pmsProduceOrderCraftVO.getStationList().stream()
+                                .map(PmsWorkOrderCraftStationVO::getExecuteStationId)
+                                .map(Long::intValue)
+                                .collect(Collectors.toSet());
+                        map.put(entry.getKey(), stationIdSet);
+                    });
                 }
             }
         }
-        return map;
+        return map; // 返回工位信息Map
     }
+
 
 
     /**

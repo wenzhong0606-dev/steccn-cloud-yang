@@ -299,7 +299,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             QtManagerConstant.QtGranularityEnum granularityEnum = QtManagerConstant.QtGranularityEnum.getByName(q.getGranularity());
             Assert.notNull(granularityEnum,"粒度不存在");
 
-            if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.equals(q.getCheckType())){
+            if(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode().equals(q.getCheckType())){
                 //来料检
                 incomingCheck(q, qtReportChartVO, itemIds,granularityEnum);
             }else{
@@ -1274,7 +1274,10 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
         itemIds.add(report.getCheckItemId());
 
         //根据检验项里面计量id去数据字典dict数据库获取计量单位名称
-        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(qtCheckItem.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        SysDictVO sysDictVO = null;
+        if(Objects.nonNull(qtCheckItem.getMeasureUnit())){
+            sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.get(qtCheckItem.getMeasureUnit()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
         //获取单位名称
         String measureUnitName = Objects.nonNull(sysDictVO) ? sysDictVO.getName() : Strings.EMPTY;
 
@@ -1328,6 +1331,7 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
             List<QtIncomingCheckDTO> conditionDataList = dataList.stream()
                     .filter(v -> LocalDateUtil.isRange(v.getSamplingTime(), start, end, true, false)).collect(Collectors.toList());
             //取平均值
+            conditionDataList = conditionDataList.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
             BigDecimal reduce = conditionDataList.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             //设置返回数据类型对象
@@ -1595,14 +1599,15 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
                 List<LocalDateTime> samplingTimeArray = sourceCheck.getSamplingTimeArray();
                 StringBuilder sb = new StringBuilder();
                 for (LocalDateTime localDateTime : samplingTimeArray) {
-                    sb.append(LocalDateUtil.format(localDateTime, DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+                    sb.append(LocalDateUtil.format(localDateTime, DatePattern.NORM_DATE_PATTERN));
                     sb.append(",");
                 }
                 taskVO.setFinishedTime(sb.substring(0, sb.length() - 1));
                 taskVO.setWorkshop(sourceCheck.getMaterialWorkshop());
                 taskVO.setSupplier(sourceCheck.getSupplier());
                 //平均值
-                BigDecimal reduce = value.stream().filter(v -> Objects.nonNull(v.getCheckResult())).map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                value = value.stream().filter(v -> StrUtil.isNotBlank(v.getCheckResult())).collect(Collectors.toList());
+                BigDecimal reduce = value.stream().map(v -> new BigDecimal(v.getCheckResult())).reduce(BigDecimal.ZERO, BigDecimal::add);
                 taskVO.setCheckResult(BigDecimalUtil.format(BigDecimalUtil.divide(reduce, BigDecimal.valueOf(value.size()))));
                 taskVO.setId(sourceCheck.getTaskId());
                 taskVO.setCode(sourceCheck.getTaskCode());
@@ -1681,6 +1686,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @return
      */
     public static boolean isFloatNumber(String str) {
+        if(StrUtil.isBlank(str)){
+            return Boolean.FALSE;
+        }
         Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_FLOATING_POINT_NUMBER);
         Matcher num = pattern.matcher(str);
         if (!num.matches()) {
@@ -1696,6 +1704,9 @@ public class QtReportServiceImpl extends ServiceImpl<QtReportMapper, QtReport>
      * @return
      */
     public static boolean isNumber(String str) {
+        if(StrUtil.isBlank(str)){
+            return Boolean.FALSE;
+        }
         Pattern pattern = Pattern.compile(QtManagerConstant.REGULAR_NON_NUMBER);
         Matcher num = pattern.matcher(str);
         if (!num.matches()) {

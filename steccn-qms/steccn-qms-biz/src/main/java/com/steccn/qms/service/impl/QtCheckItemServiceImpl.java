@@ -475,6 +475,27 @@ public class QtCheckItemServiceImpl extends ServiceImpl<QtCheckItemMapper, QtChe
         return resMap;
     }
 
+    @Override
+    public Map<Integer, Integer> queryOriginal(Set<Integer> ids) {
+        Map<Integer, Integer> resMap = Maps.newHashMap();
+        //如果参数不为空
+        if (CollUtil.isNotEmpty(ids)) {
+            //查询所有的数据
+            List<QtCheckItem> dbList = listByIds(ids);
+            if (CollUtil.isNotEmpty(dbList)) {
+                Set<String> codeSet = dbList.stream().map(QtCheckItem::getCode).collect(Collectors.toSet());
+                List<QtCheckItem> originalList = list(new LambdaQueryWrapper<QtCheckItem>().in(QtCheckItem::getCode, codeSet).eq(QtCheckItem::getShowFlag, MpConstant.YES));
+                Map<String, QtCheckItem> originalMap = Maps.newHashMap();
+                if (CollUtil.isNotEmpty(originalList)) {
+                    originalList.forEach(item -> originalMap.put(item.getCode(), item));
+                }
+                QtCheckItem defaultQtCheckItem = new QtCheckItem();
+                dbList.forEach(ele -> resMap.put(ele.getId(), originalMap.getOrDefault(ele.getCode(), defaultQtCheckItem).getId()));
+            }
+        }
+        return resMap;
+    }
+
     /**
      * 当前最大的code值
      *

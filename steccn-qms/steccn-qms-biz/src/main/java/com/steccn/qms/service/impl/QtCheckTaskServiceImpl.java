@@ -45,10 +45,17 @@ import com.steccn.common.util.StackGraphUtil;
 import com.steccn.common.vo.BaseSelectVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaHrmDTO;
+import com.steccn.oa.dto.OaRosterRecordDTO;import com.steccn.oa.dto.OaUserIdAndName;
+import com.steccn.oa.feign.OaInfoService;
+import com.steccn.oa.vo.OaEmpVO;
+import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaRosterRecordVO;
 import com.steccn.platform.constant.SysMsgConstant;
-import com.steccn.platform.dto.SysOfficeDTO;
+import com.steccn.platform.dto.SysMsgSendDTO;import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.dto.SysOfficeParentDTO;
 import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
+import com.steccn.platform.feign.RemoteMsgFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
 import com.steccn.platform.util.LogicalPageUtil;
@@ -132,9 +139,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     private final QtCheckTaskDestoryInfoMapper qtCheckTaskDestoryInfoMapper;
 
     private final RemoteSpareFeignApi remoteSpareFeignApi;
-
     private final RemoteWsFeignApi remoteWsFeignApi;
 
+    private final OaInfoService oaInfoService;
+
+    private final RemoteMsgFeignApi remoteMsgFeignApi;
     /**
      * 新增
      *
@@ -147,6 +156,13 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         //巡检抽检时间必填
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
             Assert.notNull(dto.getSpotTime(),"巡检任务的抽检时间不能为空");
+        }
+        //首检、在线检、巡检班组必填
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+            ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+            ||dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())){
+            Assert.notNull(dto.getClassGroupId(),"首检、在线检、巡检班组不能为空");
+            Assert.notNull(dto.getClassGroupName(),"首检、在线检、巡检班组不能为空");
         }
         QtCheckTask qtCheckTask = new QtCheckTask();
         BeanUtils.copyProperties(dto, qtCheckTask);
@@ -1007,6 +1023,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
             msgPushDTO.setType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             msgPushDTO.setMsgType(WebsocketConstant.WsPushTypeEnum.SPOT_CHECK.getType());
             FeignOptional.of(() -> remoteWsFeignApi.pushRefreshMsg(msgPushDTO), FeignConstant.STECCN_WEBSOCKET_SERVICE_NAME).get();
+            sendMessage();
         }
         return updateById(taskModel);
     }
@@ -1062,6 +1079,11 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         QtTaskClassCalculate taskClassCalculate = CalculateDateUtil.calculateClassTime(qtCheckTask.getFinishedTime());
         qtCheckTask.setClassesId(taskClassCalculate.getClassType());
         qtCheckTask.setClassTime(taskClassCalculate.getClassDate());
+        //配料抽检任务完成,发送消息给岗位为"配料工"的当前班次人员;
+        QtCheckTask task = getById(dto.getId());
+        if (QtManagerConstant.NUM_7.equals(task.getTaskType())){
+            sendMessage();
+        }
         return updateById(qtCheckTask);
     }
 
@@ -1115,6 +1137,39 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean refreshGroupClass() {
+        List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
+                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));
+        taskList.forEach(tmp->{
+            QtCheckTask taskModel = new QtCheckTask();
+            taskModel.setUpdateBy(tmp.getUpdateBy());
+            taskModel.setUpdateTime(tmp.getUpdateTime());
+            taskModel.setId(tmp.getId());
+            if(tmp.getStartBy()==null){
+                taskModel.setClassGroupName("甲班");
+                taskModel.setClassesId(1);
+            }else {
+                Set<Long> idList = Sets.newHashSet();
+                idList.add(tmp.getStartBy());
+                Map<Long, List<OaGroupIdAndNameVO>> groupByUser = oaInfoService.getGroupByUser(idList).getData();
+                if(CollUtil.isEmpty(groupByUser)){
+                    taskModel.setClassGroupName("甲班");
+                    taskModel.setClassesId(1);
+                }else {
+                    List<OaGroupIdAndNameVO> oaGroupIdAndNameVOS = groupByUser.get(tmp.getStartBy());
+                    taskModel.setClassGroupId(oaGroupIdAndNameVOS.get(0).getClassGroupId());
+                    taskModel.setClassGroupName(oaGroupIdAndNameVOS.get(0).getClassGroupName());
+                }
+                updateById(taskModel);
+            }
+        });
+        return true;
+    }
+
+    @Override
     public List<QtCheckTaskTypeCountVO> countTaskByType() {
         List<QtCheckTaskTypeCountVO> vos = Lists.newArrayList();
         //检验方案编码:来料检1/首检2/在线检3/巡检4/出货检5/化验抽检6/配料抽检7
@@ -1157,7 +1212,7 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                         QtCheckTask::getCode,QtCheckTask::getProductWorkshop,QtCheckTask::getStartBy,QtCheckTask::getStartName,
                         QtCheckTask::getCancelBy,QtCheckTask::getCancelName,QtCheckTask::getFinishedBy,QtCheckTask::getFinishedName,
                         QtCheckTask::getCancelTime,QtCheckTask::getSendOrder,QtCheckTask::getDefectNum,QtCheckTask::getClassesId,QtCheckTask::getStationId,
-                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime)
+                        QtCheckTask::getClassTime,QtCheckTask::getSpotTime,QtCheckTask::getClassGroupId,QtCheckTask::getClassGroupName)
                 //关联表映射
                 .selectAs(QtMaterial::getName, QtCheckTaskListVO::getMaterialName)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
@@ -1427,91 +1482,92 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     @Override
     public Page<QtCheckProduceTaskVO> pageProductOrder(QtCheckaProductTaskListDTO dto) {
-        if (dto.getProductOrder() == null) {
-            throw new BusinessException("生产订单号不能为空");
-        }
-        List checkTypeCodeList = new ArrayList<>();
-        //把检验类型为在线检,巡检,首检,化验抽检四种检验类型放入检查集合中
-        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode());
-        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode());
-        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode());
-        checkTypeCodeList.add(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode());
+        Objects.requireNonNull(dto.getProductOrder(), "生产订单号不能为空");
+        List<Long> stationIds = dto.getStationIds();
+        List<Integer> checkTypeCodeList = Arrays.asList(
+                QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode(),
+                QtManagerConstant.QtCheckTaskTypeEnum.CHEMICAL.getCode(),
+                QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode(),
+                QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode()
+        );
         MPJLambdaWrapper<QtCheckTask> productOrder = new MPJLambdaWrapper<QtCheckTask>()
                 .selectAll(QtCheckTask.class)
-                //关联复检表
                 .leftJoin(QtRecheckTask.class, QtRecheckTask::getRecheckId, QtCheckTask::getId)
-                //关联物料表
                 .leftJoin(QtMaterial.class, QtMaterial::getId, QtCheckTask::getMaterialId)
                 .selectAs(QtRecheckTask::getOriginalCode, QtCheckTaskListVO::getOriginalTaskCode)
-                .selectAs(QtMaterial::getName,QtCheckTask::getMaterialName)
+                .selectAs(QtMaterial::getName, QtCheckTask::getMaterialName)
                 .eq(QtCheckTask::getProductOrder, dto.getProductOrder())
-                .in(QtCheckTask::getTaskType, checkTypeCodeList);
-        if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS.equals(dto.getSortField())) {
-            if (dto.getAscFlag()) {
-                productOrder.last("ORDER BY FIELD(t.status,0,1,4,2,3)");
-            } else {
-                productOrder.last("ORDER BY FIELD(t.status,3,2,4,1,0)");
-            }
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME.equals(dto.getSortField())) {
-            if (dto.getAscFlag()) {
-                productOrder.last("ORDER BY CONVERT(materialName using gbk) ASC");
-            } else {
-                productOrder.last("ORDER BY CONVERT(materialName using gbk) DESC");
-            }
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getArrivalTime);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME.equals(dto.getSortField())) {
-            if (dto.getAscFlag()) {
-                productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) ASC");
-            } else {
-                productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) DESC");
-            }
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getProductOrder);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH.equals(dto.getSortField())) {
-            if (dto.getAscFlag()) {
-                productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) ASC");
-            } else {
-                productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) DESC");
-            }
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getDefectStartTime);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtRecheckTask::getOriginalCode);
-        } else if (QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME.equals(dto.getSortField())) {
-            productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
-        } else {
-            //默认按照创建时间降序
-            productOrder.orderByDesc(true, QtCheckTask::getCreateTime);
-        }
-        //配置分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
-        //查询分页数据
-        IPage<QtCheckTask> resPage = page(page, productOrder);
-        //拷贝page信息
-        BeanUtils.copyProperties(resPage, page);
-        //处理返回数据
-        Page produceTaskpage = new Page<>(dto.getCurrent(), dto.getSize());
-        List<QtCheckProduceTaskVO> resRecords = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(resPage.getRecords())) {
-            for (QtCheckTask qtCheckTask : resPage.getRecords()) {
-                QtCheckProduceTaskVO vo = new QtCheckProduceTaskVO();
-                BeanUtils.copyProperties(qtCheckTask, vo);
-                //不是在线检 缺陷记录开始与结束时间置空
-                if(qtCheckTask.getTaskType() != QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) {
-                    vo.setDefectStartTime(null);
-                    vo.setDefectEndTime(null);
-                }
-                resRecords.add(vo);
+                .in(QtCheckTask::getTaskType, checkTypeCodeList)
+                .and(wrapper -> wrapper.apply("JSON_CONTAINS(station, CAST(JSON_ARRAY({0}) AS JSON), '$[*].id')", stationIds));
+        if (Objects.nonNull(dto.getSortField())) {
+            switch (dto.getSortField()) {
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CODE:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCode);
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_STATUS:
+                    if (dto.getAscFlag()) {
+                        productOrder.last("ORDER BY FIELD(t.status,0,1,4,2,3)");
+                    } else {
+                        productOrder.last("ORDER BY FIELD(t.status,3,2,4,1,0)");
+                    }
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_MATERIAL_NAME:
+                    if (dto.getAscFlag()) {
+                        productOrder.last("ORDER BY CONVERT(materialName using gbk) ASC");
+                    } else {
+                        productOrder.last("ORDER BY CONVERT(materialName using gbk) DESC");
+                    }
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_ARRIVAL_TIME:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getArrivalTime);
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_SUPPLIER_NAME:
+                    if (dto.getAscFlag()) {
+                        productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) ASC");
+                    } else {
+                        productOrder.last("ORDER BY CONVERT(t.supplier ->> '$.name' using gbk) DESC");
+                    }
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_ORDER:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getProductOrder);
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_PRODUCT_BATCH:
+                    if (dto.getAscFlag()) {
+                        productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) ASC");
+                    } else {
+                        productOrder.last("ORDER BY CONVERT(t.product_batch using gbk) DESC");
+                    }
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_START_TIME:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getDefectStartTime);
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_DEFECT_ORIGINAL_CODE:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtRecheckTask::getOriginalCode);
+                    break;
+                case QtManagerConstant.QT_CHECK_TASK_SORT_FIELD_CREATE_TIME:
+                    productOrder.orderBy(true, dto.getAscFlag(), QtCheckTask::getCreateTime);
+                    break;
+                default:
+                    productOrder.orderByDesc(true, QtCheckTask::getCreateTime);
+                    break;
             }
         }
-        //设置数据
+        Page<QtCheckTask> resPage = page(new Page<>(dto.getCurrent(), dto.getSize()), productOrder);
+        List<QtCheckProduceTaskVO> resRecords = resPage.getRecords().stream().map(qtCheckTask -> {
+            QtCheckProduceTaskVO vo = new QtCheckProduceTaskVO();
+            BeanUtils.copyProperties(qtCheckTask, vo);
+            if (qtCheckTask.getTaskType() != QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()) {
+                vo.setDefectStartTime(null);
+                vo.setDefectEndTime(null);
+            }
+            return vo;
+        }).collect(Collectors.toList());
+        Page<QtCheckProduceTaskVO> produceTaskpage = new Page<>(dto.getCurrent(), dto.getSize());
         produceTaskpage.setRecords(resRecords);
         produceTaskpage.setTotal(resPage.getTotal());
         return produceTaskpage;
     }
+
 
     /**
      * 深加工/基片巡检合格率趋势明细分页表
@@ -3098,6 +3154,54 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         return list;
     }
 
+
+    protected void sendMessage() {
+        Set<Long> longIds = Sets.newHashSet();
+        //发送给配料工
+        QtTaskClassCalculate qtTaskClassCalculate = CalculateDateUtil.calculateClassTime(LocalDateTime.now());
+        OaRosterRecordDTO rosterDto = new OaRosterRecordDTO();
+        rosterDto.setStartdate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setEnddate(qtTaskClassCalculate.getClassDate().toLocalDate().toString());
+        rosterDto.setJobtitle(PmManagerConstant.BATCHER_ID);
+        List<OaRosterRecordVO> oaRosterRecordVOS = FeignOptional.of(() -> oaInfoService.getRosterRecord(rosterDto), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        //过滤当前班次
+        String classStr = "";
+        if (qtTaskClassCalculate.getClassType().equals(0)) {
+            classStr = "早班";
+        } else {
+            classStr = "晚班";
+        }
+        String finalClassStr = classStr;
+        oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(oaRosterRecordVOS)) {
+            List<String> workCodes = Lists.newArrayList();
+            oaRosterRecordVOS.forEach(tmp -> {
+                workCodes.add(tmp.getWorkcode());
+            });
+            //找到配料工id
+            if (CollUtil.isNotEmpty(workCodes)) {
+                List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getInfoByWorkCode(workCodes), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+                if (CollUtil.isNotEmpty(oaUserIdAndNames)) {
+                    oaUserIdAndNames.forEach(tmp -> {
+                        longIds.add(tmp.getId().longValue());
+                    });
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(longIds)) {
+            SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
+            sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getCode());
+            sysMsgDTO.setTitle(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTitle());
+            sysMsgDTO.setWarnFlag(SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getWarnFlag());
+            //不给自己发消息
+//            longIds.remove(SecurityUtils.getUser().getUserId());
+            sysMsgDTO.setUserList(longIds);
+            String content = SysMsgConstant.MsgTypeEnum.BATCH_CHECK_UPDATE.getTemplate();
+            sysMsgDTO.setContent(String.format(content, SecurityUtils.getUser().getName()));
+            sysMsgDTO.setPushType(WebsocketConstant.WsPushTypeEnum.MSG_SYS_REMIND.getType());
+            FeignOptional.of(() -> remoteMsgFeignApi.sendMsg(sysMsgDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        }
+    }
 }
 
 

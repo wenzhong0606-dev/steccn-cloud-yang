@@ -173,22 +173,24 @@ public class QtDefectProductServiceImpl extends ServiceImpl<QtDefectProductMappe
                 between.orderBy(Boolean.TRUE, dto.getAscFlag(), QtDefectProduct::getStatus);
             }
         }
-
-        //判断当前用户的角色是否是客诉管理员
+        //2.定义分页对象
+        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+        //判断当前用户的角色是否是否是合格品管理员
         MessScopeVO role = remoteMesFeignApi.getRole(SecurityUtils.getUser().getName());
         if (CollUtil.isNotEmpty(role.getStringList())) {
             if (!role.getStringList().contains(QtManagerConstant.DEFECT_PRODUCT_MANAGER)) {
-                //不是整改管理员
+                //不是不合格品管理员
                 between.in(QtDefectProduct::getId, getUserAuthData());
             }
         } else {
             Set<Long> userAuthData = getUserAuthData();
             if (CollUtil.isNotEmpty(userAuthData)) {
                 between.in(QtDefectProduct::getId, userAuthData);
+            }else {
+              return page;
             }
         }
-        //2.定义分页对象
-        Page page = new Page<>(dto.getCurrent(), dto.getSize());
+
         //3.查询分页数据
         IPage resPage = page(page, between);
         //4.拷贝page信息

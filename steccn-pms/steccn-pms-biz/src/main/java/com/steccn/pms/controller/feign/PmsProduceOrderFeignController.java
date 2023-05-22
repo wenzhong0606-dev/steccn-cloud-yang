@@ -5,6 +5,7 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.domain.PmsWorkOrderBatch;
 import com.steccn.pms.dto.DwCurrentReportWorkDTO;
+import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.PmsProduceOrderDTO;
 import com.steccn.pms.service.PmsProduceOrderService;
 import com.steccn.pms.service.PmsWorkOrderBatchService;
@@ -51,6 +52,16 @@ public class PmsProduceOrderFeignController {
             return R.success(Lists.newArrayList());
         }
         return R.success(pmsProduceOrderService.currentDateReportWork(currentDate));
+    }
+
+    @ApiOperation("获取当前班次时间内的生产订单")
+    @PostMapping("/dw/current")
+    public R<List<DwProduceOrderDTO>> currentProduceOrder(@RequestBody TupleDTO<LocalDate, LocalDate> tupleDTO) {
+        LocalDate currentDate = tupleDTO.getField1();
+        if(Objects.isNull(currentDate)){
+            return R.success(Lists.newArrayList());
+        }
+        return R.success(pmsProduceOrderService.currentProduceOrder(currentDate));
     }
 
     @PostMapping("/line/ids")

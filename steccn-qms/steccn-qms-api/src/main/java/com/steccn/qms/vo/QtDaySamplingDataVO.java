@@ -27,7 +27,7 @@ public class QtDaySamplingDataVO implements Serializable {
     private Long taskId;
 
     @ApiModelProperty("取样日时间")
-    private LocalTime samplingTime;
+    private String samplingTime;
 
     @ApiModelProperty("配料附数")
     private Integer ingredientNum;
