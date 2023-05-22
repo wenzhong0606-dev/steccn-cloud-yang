@@ -35,4 +35,9 @@ public class EpDwController {
         return R.success(epDwService.electricMoney(date));
     }
 
+    @GetMapping("/meter/chao")
+    @ApiOperation(value = "抄表")
+    public R<Boolean> meterChao(@RequestParam("date") LocalDate date) {
+        return R.success(epDwService.read(date));
+    }
 }

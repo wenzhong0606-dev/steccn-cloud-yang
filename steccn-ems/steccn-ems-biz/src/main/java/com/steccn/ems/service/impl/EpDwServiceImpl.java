@@ -6,6 +6,7 @@ import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.data.dto.DwConditionDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
@@ -14,6 +15,7 @@ import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyMoney;
+import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpMeterReadDistant;
 import com.steccn.ems.domain.EpTaskExecute;
 import com.steccn.ems.dto.DwEpEnergyMoneyDTO;
@@ -29,6 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -58,11 +63,18 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpPartitionService epPartitionService;
     private final EpTaskExecuteService epTaskExecuteService;
     private final RemoteOfficeFeign remoteOfficeFeign;
+    private final EpMeterReadService epMeterReadService;
 
     private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
 
-    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
+    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
+
+    /**
+     * 用于抄表
+     */
+    private final ThreadPoolExecutor chaoPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
 
 
@@ -230,6 +242,62 @@ public class EpDwServiceImpl implements EpDwService {
         oldTask.setTaskFlag(EpManagerConstant.TaskFlagEnum.NOT_START.getCode());
         epTaskExecuteService.saveOrUpdate(oldTask);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean read(LocalDate date) {
+        //1.获取所有的远传仪表+挂载的分区节点
+        List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
+        //2.获取当前日期的任务
+        meterList.forEach(meter -> {
+            RequestAttributes attributes = RequestContextHolder.getRequestAttributes();//防止fegin获取不到当前请求
+            chaoPool.execute(() -> {
+                try {
+                    RequestContextHolder.setRequestAttributes(attributes);
+                    saveReadMeter(date, meter);
+                } catch (Exception e) {
+                    log.error("插入抄表数据失败 {}", e.getLocalizedMessage());
+                }
+            });
+        });
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 插入抄表数据
+     * @param date
+     * @param meter
+     * @return
+     */
+    private boolean saveReadMeter(LocalDate date, EpDwMeterPartitionDTO meter) {
+        //避免重复插入
+        EpMeterRead one = epMeterReadService.getOne(new LambdaQueryWrapper<EpMeterRead>()
+                .eq(EpMeterRead::getMeterId, meter.getMeterId())
+                .eq(EpMeterRead::getReadDate, date)
+                .eq(EpMeterRead::getDistantMapCode, meter.getDistantMapCode())
+                .last(MpConstant.STR_LIMIT_1));
+        if (Objects.nonNull(one)) {
+            log.info("远传仪表{} 抄表数据已插入", one.getDistantMapCode());
+            return Boolean.TRUE;
+        }
+        DwMeterReadDTO end = new DwMeterReadDTO();
+        end.setCode(meter.getDistantMapCode());
+        end.setRecordTime(LocalDateUtil.getMorning(date));
+        DwEpMeterCollectVO endVo = FeignOptional.of(() -> remoteDataPlatformFeignApi.meterRead(end), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+
+        if (Objects.nonNull(endVo)) {
+            EpMeterRead ele = new EpMeterRead();
+            ele.setAdminValue(endVo.getValue());
+            ele.setReadValue(endVo.getValue());
+            ele.setAdminFlag(MpConstant.NO);
+            ele.setStart(endVo.getRecordTime());
+            ele.setEnd(end.getRecordTime());
+            ele.setReadDate(date);
+            ele.setMeterId(meter.getMeterId());
+            ele.setDistantMapCode(meter.getDistantMapCode());
+            return epMeterReadService.save(ele);
+        }
+        return Boolean.FALSE;
     }
 
     /**
