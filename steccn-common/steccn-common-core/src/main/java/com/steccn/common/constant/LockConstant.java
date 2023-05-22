@@ -28,6 +28,11 @@ public interface LockConstant {
      */
     String READ_CORRECT_SCHEDULED_TASK = "READ_CORRECT_SCHEDULED_TASK";
 
+    /**
+     * 冲销出库
+     */
+    String WMS_CHARGE_AGAINST ="WMS_CHARGE_AGAINST";
+
 
     /**
      * 仪表读数归档 电费归档

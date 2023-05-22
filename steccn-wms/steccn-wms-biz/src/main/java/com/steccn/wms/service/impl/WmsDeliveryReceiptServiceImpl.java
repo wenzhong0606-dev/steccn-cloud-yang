@@ -418,6 +418,27 @@ public class WmsDeliveryReceiptServiceImpl extends ServiceImpl<WmsDeliveryReceip
         return R.success(result);
     }
 
+    @Override
+    public Boolean chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO) {
+        //生成出库单并自动确认
+        WmsDeliveryReceipt wmsDeliveryReceipt = new WmsDeliveryReceipt();
+        BeanUtil.copyProperties(wmsDeliveryReceiptDTO,wmsDeliveryReceipt);
+        wmsDeliveryReceipt.setCode(WmsCodeUtil.getProduceOrderCode(WmsCodeUtil.PREFIX_WMS_DELIVERY_RECEIPT, WmsCodeUtil.NUM_BIT_4, currentMaxCode()));
+        wmsDeliveryReceipt.setStatus(WmsManagerConstant.OrderStateEnum.ONE.getCode());
+        wmsDeliveryReceipt.setAffirmName(SecurityUtils.getUser().getName());
+        wmsDeliveryReceipt.setAffirmTime(LocalDateTime.now());
+        save(wmsDeliveryReceipt);
+        List<WmsDeliveryReceiptInfo> list = Lists.newArrayList();
+        wmsDeliveryReceiptDTO.getList().forEach(info ->{
+            WmsDeliveryReceiptInfo wmsDeliveryReceiptInfo = new WmsDeliveryReceiptInfo();
+            BeanUtil.copyProperties(info,wmsDeliveryReceiptInfo);
+            wmsDeliveryReceiptInfo.setDeliveryReceiptId(wmsDeliveryReceipt.getId());
+            list.add(wmsDeliveryReceiptInfo);
+        });
+        wmsDeliveryReceiptInfoService.saveBatch(list);
+        return true;
+    }
+
     /**
      * 当前最大的code值
      *

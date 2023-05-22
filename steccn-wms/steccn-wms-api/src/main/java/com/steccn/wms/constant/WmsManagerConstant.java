@@ -13,10 +13,13 @@ public interface WmsManagerConstant {
      */
     String CODE_ONE = "1";
 
+    String CODE_TWO = "2";
+
     /**
      * 采购类型
      */
     String WAREHOUSING_TYPE = "warehousing_type";
+
 
     /**
      * 是否
