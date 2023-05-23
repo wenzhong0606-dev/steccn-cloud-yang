@@ -436,19 +436,25 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Set<Long> partitionIdSet = gpDataList.stream().map(EpMeterReadAllDataVO::getOfficeId).collect(Collectors.toSet());
         Map<Long, EpPartition> epPartitionMap = epPartitionService.listById(partitionIdSet);
 
+        List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
+        Set<Long> targetIdSet = Sets.newHashSet(energyParamDTO.getPartitionId());
+
         //将全量数据表的厚度为空的都设置成-1
         gpDataList.forEach(ele -> {
-            if(Objects.isNull(ele.getThick())){
-                ele.setThick(new BigDecimal("-1"));
+            if(targetIdSet.contains(ele.getOfficeId())){
+                if(Objects.isNull(ele.getThick())){
+                    ele.setThick(new BigDecimal("-1"));
+                }
+                //设置组织机构id
+                EpPartition epPartition = epPartitionMap.get(ele.getOfficeId());
+                if(Objects.nonNull(epPartition)){
+                    ele.setSysOfficeId(epPartition.getOfficeId());
+                }
+                ele.setEnergyType(energyType);
+                resList.add(ele);
             }
-            //设置组织机构id
-            EpPartition epPartition = epPartitionMap.get(ele.getOfficeId());
-            if(Objects.nonNull(epPartition)){
-                ele.setSysOfficeId(epPartition.getOfficeId());
-            }
-            ele.setEnergyType(energyType);
         });
-        return gpDataList;
+        return resList;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.steccn.ems.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -34,6 +35,7 @@ public class EpMeterReadAllDataVO implements Serializable {
     private String officeName;
 
     @ApiModelProperty("抄表日期")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate readDate;
 
     @ApiModelProperty("班次id 0早班 1晚班")
