@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.RandomUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -54,6 +53,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -346,31 +346,37 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
         SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
         Assert.notNull(energyType, "能源类型不能为空");
+        Assert.notEmpty(dateSet, "日期筛选不可以为空");
         //获取生产明细样例表
         List<DwProduceOrderDTO> orderDetailList = Lists.newArrayList();
         dateSet.forEach(ele -> orderDetailList.addAll(FeignOptional.of(() -> remotePmsFeignApi.currentProduceOrder(new TupleDTO<>(ele, ele)), FeignConstant.STECCN_PMS_SERVICE_NAME).get()));
         //获取能耗分区所有的节点
         EpEnergyTreeDTO tree = tree(energyType, partitionIdList);
         //查询该能源树下每个节点关联的仪表
-        Map<Long, EpInstrumentAccount> nodeLinkMeterMap = queryNodeLinkMeter(energyType);
+        Map<Long, EpInstrumentAccount> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
         //查询这个班次日期 所有节点的抄表能耗【上一次抄表与当前次抄表的差值】和远传仪表耗能,用于填充二维表格的数据
-
-        Set<Integer> meterIdSet = Sets.newHashSet();
-        tree.getPartitionIds().forEach(ele -> {
-            EpInstrumentAccount account = nodeLinkMeterMap.get(ele);
-            if (Objects.nonNull(account)) {
-                meterIdSet.add(account.getId());
+        Set<Integer> remoteMeterIdSet = Sets.newHashSet();
+        Set<Integer> handMeterIdSet = Sets.newHashSet();
+        for (EpInstrumentAccount account : nodeLinkMeterMap.values()) {
+            if (account.getEntityTable() == 0) {
+                remoteMeterIdSet.add(account.getId());
+            } else if (account.getEntityTable() == 1) {
+                handMeterIdSet.add(account.getId());
             }
-        });
+        }
+        //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  2是全部是虚拟
+        Map<Long,Integer> childTypeMap = epPartitionService.childTypeMap(energyType);
+
+
         //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
-        Map<String, BigDecimal> remoteDataMap = remoteRead(meterIdSet, dateSet);
+        Map<String, BigDecimal> remoteDataMap = remoteRead(remoteMeterIdSet, dateSet);
         //获取手动抄表的数据 key => 仪表id + "_" + 班次日期  value => 读数
-        Map<String,BigDecimal> handReadDataMap = handRead(meterIdSet,dateSet);
+        Map<String, BigDecimal> handReadDataMap = handRead(handMeterIdSet, dateSet);
 
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
         //如果厚度集合不包含无厚度，则加入无厚度
-        if(!thickList.contains(new BigDecimal("-1"))){
+        if (!thickList.contains(new BigDecimal("-1"))) {
             thickList.add(new BigDecimal("-1"));
         }
         List<EpEnergyConsumeDTO> rowList = Lists.newArrayList();
@@ -378,7 +384,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Lists.newArrayList(0, 1, -1).forEach(b -> {
                 thickList.forEach(c -> {
                     Map<Long, BigDecimal> consumeMap = Maps.newHashMap();
-                    nodeLinkMeterMap.forEach((k, v) -> consumeMap.put(k, remoteDataMap.get(v.getId() +"_" + a + "_" + b + "_" + c)));
+                    nodeLinkMeterMap.forEach((k, v) -> {
+                        if (v.getEntityTable() == 0) {
+                            consumeMap.put(k, remoteDataMap.get(v.getId() + "_" + a + "_" + b + "_" + c));
+                        } else if (v.getEntityTable() == 1 && b == -1) {
+                            //表读数来自人工抄表，每天抄一次）：仅统计每日能耗（类型II）
+                            consumeMap.put(k, handReadDataMap.get(v.getId() + "_" + a));
+                        }
+                    });
                     EpEnergyConsumeDTO row = new EpEnergyConsumeDTO();
                     row.setReadDate(a);
                     row.setClassId(b);
@@ -388,20 +401,55 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 });
             });
         });
-
-        log.info("rowList -> {}", rowList);
+        //最后将全量数据表的map转换为有用的list集合 对外输出-根据需要的节点过滤
 
         return Lists.newArrayList();
     }
 
     /**
      * 获取手动抄表的数据
-     * @param meterIdSet 仪表id集合
+     * @param meterIdSet 远传仪表id集合
      * @param dateSet 日期集合
      * @return
      */
     private Map<String, BigDecimal> handRead(Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
-        return Maps.newHashMap();
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+
+        //获取当前日期最小日期的前一天，用于求差值
+        List<LocalDate> sortedDateList = CollectionUtil.sort(dateSet, Comparator.comparing(x -> x));
+        LocalDate minLocalDate = sortedDateList.get(0).minusDays(1);
+        sortedDateList.add(minLocalDate);
+
+        //查询全量数据表-手动抄表部分【需要查询前一天，涉及差值求当前值】
+        List<EpMeterRead> dataList = list(new LambdaQueryWrapper<EpMeterRead>()
+                .in(EpMeterRead::getMeterId, meterIdSet)
+                .in(EpMeterRead::getReadDate, sortedDateList));
+        if (CollUtil.isNotEmpty(dataList)) {
+            //手抄仪表，根据班次日期+仪表id排序
+            List<EpMeterRead> sortDataList = dataList.stream().sorted(Comparator.comparing(EpMeterRead::getReadDate).thenComparing(EpMeterRead::getMeterId)).collect(Collectors.toList());
+            //求手抄仪表的差值
+            //存放仪表的班次日期的抄表数据
+            Map<Integer, Map<LocalDate, List<EpMeterRead>>> groupMap = new LinkedHashMap<>();
+            //将数据按照班次日期分组
+            sortDataList.forEach(ele -> {
+                // 2层map的插入，k1和k2相同的元素，存放到集合中
+                MapUtil.biCompute(groupMap, ele.getMeterId(), ele.getReadDate(), ele);
+            });
+
+            BigDecimal preValue;
+            for (Map.Entry<Integer, Map<LocalDate, List<EpMeterRead>>> meterEntry : groupMap.entrySet()) {
+                preValue = BigDecimal.ZERO;
+                for (Map.Entry<LocalDate, List<EpMeterRead>> dateEntry : meterEntry.getValue().entrySet()) {
+                    //手动抄表 一天一条,去取最后一条
+                    BigDecimal curValue = dateEntry.getValue().get(dateEntry.getValue().size() - 1).getAdminValue();
+                    if (!dateEntry.getKey().isEqual(minLocalDate)) {
+                        resMap.put(meterEntry.getKey() + "_" + dateEntry.getKey(), BigDecimalUtil.subtract(curValue, preValue));
+                    }
+                    preValue = curValue;
+                }
+            }
+        }
+        return resMap;
     }
 
     /**
@@ -415,24 +463,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         energyParamDTO.setPartitionId(partitionIdList);
         energyParamDTO.setType(energyType);
         return epPartitionService.getChildTree(energyParamDTO);
-    }
-
-    /**
-     * 查询该能源类型 树上每个节点关联的仪表
-     * @param energyType 能源类型
-     * @return map
-     */
-    private Map<Long, EpInstrumentAccount> queryNodeLinkMeter(Integer energyType) {
-        List<EpInstrumentAccount> accountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
-                .eq(EpInstrumentAccount::getMeterType, energyType)
-                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode, EpInstrumentAccount::getEntityTable));
-        SteccnTableAssertUtil.notEmpty(accountList, "组织机构暂未关联仪表");
-        //获取仪表id集合
-        Map<Long, EpInstrumentAccount> resMap = Maps.newHashMap();
-        accountList.forEach(ele -> {
-            resMap.put(ele.getPartitionNode(), ele);
-        });
-        return resMap;
     }
 
 

@@ -121,4 +121,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> allPartitionNameMap(Integer energyType, Set<Long> keySet);
+
+    /**
+     * 获取所有节点的孩子仪表的类型
+     * @param energyType 能源类型
+     * @return
+     */
+    Map<Long, Integer> childTypeMap(Integer energyType);
 }

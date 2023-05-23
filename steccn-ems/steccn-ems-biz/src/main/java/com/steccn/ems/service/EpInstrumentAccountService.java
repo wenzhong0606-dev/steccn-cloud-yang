@@ -1,6 +1,9 @@
 package com.steccn.ems.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Maps;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.ems.dto.*;
@@ -75,11 +78,11 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      */
 //    void downloadSubstrate(HttpServletResponse response, HttpServletRequest request)throws Exception;
 
-
-
     /**
-     * 获取所有的远传仪表
+     * 查询节点关联仪表
+     * @param energyType 能源类型
      * @return
      */
-    List<EpDwMeterPartitionDTO> meterPartition();
+    Map<Long, EpInstrumentAccount> queryNodeLinkMeter(Integer energyType);
+
 }

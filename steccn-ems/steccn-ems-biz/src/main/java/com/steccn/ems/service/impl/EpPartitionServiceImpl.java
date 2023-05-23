@@ -66,7 +66,10 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         } else {
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
         }
-            //根据传过来的能源类型先获取数据库的全量数据
+
+        //查询所有的仪表
+        Map<Long, EpInstrumentAccount> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
+        //根据传过来的能源类型先获取数据库的全量数据
         List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
                 .eq(EpPartition::getDelFlag,MpConstant.NO));
 
@@ -74,6 +77,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
+            epPartitionVOS.forEach(ele -> ele.setEntityTable(nodeLinkMeterMap.getOrDefault(ele.getId(),new EpInstrumentAccount()).getEntityTable()));
+
             //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
             List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
             rootVOList = searchRoot(epPartitionVOS);
@@ -111,6 +116,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 epPartitionVO.setParentId(root.getId());
                 epPartitionVO.setParentOfficeId(root.getOfficeId());
                 epPartitionVO.setParentOfficeName(root.getOfficeName());
+                epPartitionVO.setEntityTable(epPartitionVO.getEntityTable());
                 if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(epPartitionVO.getId())){
                     epPartitionVO.setIsLinkTable(MpConstant.YES);
                 }else {
@@ -558,6 +564,72 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         });
         return resMap;
+    }
+
+    @Override
+    public Map<Long, Integer> childTypeMap(Integer energyType) {
+        Map<Long, Integer> resMap = Maps.newHashMap();
+        //获取能源的分区树
+        EpPartitionNameListVO partitionTree = this.getEpEnergyTypeVOList(energyType);
+        if(CollUtil.isNotEmpty(partitionTree.getEpPartitionVOList())){
+            //根节点
+            EpPartitionVO root = partitionTree.getEpPartitionVOList().get(0);
+            //获取所有的孩子节点
+            List<EpPartitionVO> allNodeList =  getChildren(root);
+            allNodeList.add(root);
+
+            //获取孩子节点的类型
+            for (EpPartitionVO node : allNodeList) {
+                Integer type = childType(node);
+                resMap.put(node.getId(), type);
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取当前节点的所有孩子节点
+     * @param cur
+     * @return
+     */
+    List<EpPartitionVO> getChildren(EpPartitionVO cur){
+        List<EpPartitionVO> nodeList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(cur.getChildren())){
+            for (EpPartitionVO child : cur.getChildren()) {
+                nodeList.add(child);
+                nodeList.addAll(getChildren(child));
+            }
+        }
+        return nodeList;
+    }
+
+    /**
+     * 当前节点 孩子节点的类型
+     * @param cur 当前节点
+     * @return
+     */
+    private Integer childType(EpPartitionVO cur) {
+        if (Objects.nonNull(cur.getEntityTable()) && cur.getEntityTable() == 0) {
+            return 0;
+        } else if (Objects.nonNull(cur.getEntityTable()) && cur.getEntityTable() == 1) {
+            return 1;
+        }
+        List<EpPartitionVO> children = cur.getChildren();
+        List<Integer> typeList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(children)) {
+            for (EpPartitionVO child : children) {
+                typeList.add(childType(child));
+            }
+        }
+        //①typeList为空，或者孩子都为空 ， 返回null
+        //②孩子空 + 0  返回0
+        //③孩子空 + 0 + 1 返回1
+        if (typeList.contains(1)) {
+            return 1;
+        } else if (typeList.contains(0)) {
+            return 0;
+        }
+        return null;
     }
 
     /**
