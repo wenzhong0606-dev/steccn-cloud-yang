@@ -160,6 +160,10 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())){
             Assert.notNull(dto.getSpotTime(),"巡检任务的抽检时间不能为空");
         }
+        //来料检到货日期为必填
+        if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.INCOMING.getCode())){
+            Assert.notNull(dto.getArrivalTime(),"来料检任务到货日期不能为空");
+        }
         //1）仅当生产车间为深加工车间且检验类型为在线检时，默认值为已选中生产产线的“钢化工位”，只读
         if(dto.getTaskType().equals(QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())
                 &&dto.getProductWorkshop()!=null

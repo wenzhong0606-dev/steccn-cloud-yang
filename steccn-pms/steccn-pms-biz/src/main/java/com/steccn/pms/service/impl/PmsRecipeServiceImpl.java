@@ -184,7 +184,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 rawTmp.setWetBasisWaterRate(new BigDecimal(0));
             }
             //加总干基
-            dryBasisQuantityAll = BigDecimalUtil.add(tmp.getDryBasisQuantity(),dryBasisQuantityAll);
+            dryBasisQuantityAll = BigDecimalUtil.add(tmp.getDryBasisQuantity(),dryBasisQuantityAll,4);
             rawVOS.add(rawTmp);
         }
         pmsRecipeVO.setDryBasisQuantityAll(dryBasisQuantityAll);
@@ -326,7 +326,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(dto.getClinkerRate(), BigDecimal.valueOf(Long.parseLong("100")), 4);
             //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            pmsRecipe.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
+            pmsRecipe.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
             //5、处理水份
             //配料含水率
             pmsRecipe.setBatchWaterRate(dto.getBatchWaterRate());
@@ -459,7 +459,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
             if (Objects.nonNull(dto.getNote())) {
                 recipeModel.setNote(dto.getNote());
             }
@@ -510,7 +510,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             PmsRecipe recipeModel = new PmsRecipe();
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(tmp.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
             recipeModel.setBatchWaterQuantity(batchWaterQuantity);
             recipeModel.setId(tmp.getId());
             updateById(recipeModel);
