@@ -125,8 +125,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         LambdaQueryWrapper<QtCheckTask> onlineTaskCondition1 = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                //完成时间范围
-                .between(QtCheckTask::getDefectStartTime, onlineStartTime, onlineEndTime)
+                //缺陷记录时段在范围内
+                .ge(QtCheckTask::getDefectStartTime, onlineStartTime)
+                .le(QtCheckTask::getDefectEndTime, onlineEndTime)
+//                .between(QtCheckTask::getDefectStartTime, onlineStartTime, onlineEndTime)
                 //只要基片车间
                 .like(QtCheckTask::getProductLineName, "基片")
                 //班次
@@ -470,16 +472,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 Integer res = 1;
                                                 if (numTmp.getDefectNum() != null) {
                                                     res = numTmp.getDefectNum();
+                                                    defectCounts.put(numTmp.getDefectName(), res);
                                                 }
-                                                defectCounts.put(numTmp.getDefectName(), res);
                                             } else {
                                                 Integer res = 1;
                                                 if (numTmp.getDefectNum() != null) {
                                                     res = numTmp.getDefectNum();
+                                                    Integer i = defectCounts.get(numTmp.getDefectName());
+                                                    i = i + res;
+                                                    defectCounts.put(numTmp.getDefectName(), i);
                                                 }
-                                                Integer i = defectCounts.get(numTmp.getDefectName());
-                                                i = i + res;
-                                                defectCounts.put(numTmp.getDefectName(), i);
                                             }
                                         }
                                     }
