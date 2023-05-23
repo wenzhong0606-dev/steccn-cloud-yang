@@ -382,16 +382,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //准备数据
         List<EpPartitionVO> childTree = Lists.newArrayList();
         if(CollUtil.isNotEmpty(treeList)){
+            //查询每个节点的孩子节点
             dto.getPartitionId().forEach(partitionTmp -> {
                 //过滤子树信息
                 EpPartitionVO resTmp = new EpPartitionVO();
                 EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
                 childTree.add(child);
             });
-            for(EpPartitionVO tmp:childTree){
-                tmp = setTreeDetail(tmp);
+
+            //获取每一个节点上挂的仪表
+            Map<Long, EpInstrumentAccount> meterMap = Maps.newHashMap();
+            List<EpInstrumentAccount> meterList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>().eq(EpInstrumentAccount::getMeterType, dto.getType()));
+            if (CollUtil.isNotEmpty(meterList)) {
+                meterList.forEach(ele -> meterMap.put(ele.getPartitionNode(), ele));
+            }
+            for (EpPartitionVO tmp : childTree) {
+                tmp = setTreeDetail(tmp, meterMap);
                 Set<Long> partitionTmp = Sets.newHashSet();
-                partitionTmp = getRealMeter(tmp,partitionTmp);
+                partitionTmp = getRealMeter(tmp, partitionTmp);
                 partitionIdResult.addAll(partitionTmp);
             }
         }
@@ -785,28 +793,26 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param vo
      * @return
      */
-    private EpPartitionVO setTreeDetail(EpPartitionVO vo){
-        if(CollUtil.isEmpty(vo.getChildren())){
+    private EpPartitionVO setTreeDetail(EpPartitionVO vo, Map<Long, EpInstrumentAccount> meterMap) {
+        if (CollUtil.isEmpty(vo.getChildren())) {
             //获取表详情
-            EpInstrumentAccount meter = epInstrumentAccountService.getOne(new LambdaQueryWrapper<EpInstrumentAccount>().
-                    eq(EpInstrumentAccount::getPartitionNode,vo.getId()),false);
-            if(meter != null){
+            EpInstrumentAccount meter = meterMap.get(vo.getId());
+            if (meter != null) {
                 vo.setEntityTable(meter.getEntityTable());
                 vo.setMeterStatus(meter.getStatus());
                 vo.setMeterId(meter.getId());
             }
             return vo;
         }
-        for(int i = 0; i < vo.getChildren().size(); i++){
+        for (int i = 0; i < vo.getChildren().size(); i++) {
             //获取表详情
-            EpInstrumentAccount meter = epInstrumentAccountService.getOne(new LambdaQueryWrapper<EpInstrumentAccount>().
-                    eq(EpInstrumentAccount::getPartitionNode,vo.getId()),false);
-            if(meter != null){
+            EpInstrumentAccount meter = meterMap.get(vo.getId());
+            if (meter != null) {
                 vo.setEntityTable(meter.getEntityTable());
                 vo.setMeterStatus(meter.getStatus());
                 vo.setMeterId(meter.getId());
             }
-            this.setTreeDetail(vo.getChildren().get(i));
+            this.setTreeDetail(vo.getChildren().get(i), meterMap);
         }
         return vo;
     }
