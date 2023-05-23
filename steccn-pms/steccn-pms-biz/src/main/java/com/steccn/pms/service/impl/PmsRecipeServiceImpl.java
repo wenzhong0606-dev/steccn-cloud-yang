@@ -418,6 +418,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 //湿基用量 湿基用量=干基用量/(1-湿基含水率)
                 BigDecimal wetBasisQuantity = BigDecimalUtil.divide(tmp.getDryBasisQuantity(),
                         BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), wetBasisWaterRateNum, 6), 4);
+                wetBasisQuantity = BigDecimalUtil.add(wetBasisQuantityCount,wetBasisQuantity,4);
                 pmsRecipeRawModel.setWetBasisQuantity(wetBasisQuantity);
                 pmsRecipeRawModelList.add(pmsRecipeRawModel);
             }
@@ -446,10 +447,14 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             }
             recipeModel.setVersion(version.toString());
             //加水量=干基用量加总/(1-配合料含水率) - 湿基用量加总
-            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
-                    BigDecimalUtil.divide(dryBasisQuantityCount,
-                            BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), BigDecimalUtil.divide(newVersion.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6), 6), 4),
-                    wetBasisQuantityCount, 4);
+            //配料含水率
+            BigDecimal oneStep = BigDecimalUtil.divide(newVersion.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6);
+            //1-配料含水率
+            BigDecimal twoStep = BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),oneStep,6);
+            //干基用量加总/(1-配合料含水率)
+            BigDecimal threeStep = BigDecimalUtil.divide(dryBasisQuantityCount,twoStep,4);
+            //干基用量加总/(1-配合料含水率) - 湿基用量加总
+            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(threeStep,wetBasisQuantityCount,4);
             recipeModel.setBatchWaterQuantity(batchWaterQuantity);
             //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(), new BigDecimal(100), 6);
@@ -489,13 +494,24 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         pmsRecipeList.forEach(tmp->{
             List<PmsRecipeRaw> rawList = pmsRecipeRawService.list(new LambdaQueryWrapper<PmsRecipeRaw>().eq(PmsRecipeRaw::getRecipeId, tmp.getId()));
             BigDecimal dryBasisQuantityCount = BigDecimal.ZERO;
+            BigDecimal wetBasisQuantityCount = BigDecimal.ZERO;
             for(PmsRecipeRaw rawTmp:rawList){
                 dryBasisQuantityCount = BigDecimalUtil.add(dryBasisQuantityCount,rawTmp.getDryBasisQuantity());
+                //湿基含水率
+                BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(rawTmp.getWetBasisWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6);
+                BigDecimal wetBasisQuantity = BigDecimalUtil.divide(rawTmp.getDryBasisQuantity(),
+                        BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), wetBasisWaterRateNum, 6), 4);
+                wetBasisQuantityCount =  BigDecimalUtil.add(wetBasisQuantityCount,wetBasisQuantity,4);
             }
+            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
+                    BigDecimalUtil.divide(dryBasisQuantityCount,
+                            BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), BigDecimalUtil.divide(tmp.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6), 6), 4),
+                    wetBasisQuantityCount, 4);
             PmsRecipe recipeModel = new PmsRecipe();
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(tmp.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
             recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount));
+            recipeModel.setBatchWaterQuantity(batchWaterQuantity);
             recipeModel.setId(tmp.getId());
             updateById(recipeModel);
         });
