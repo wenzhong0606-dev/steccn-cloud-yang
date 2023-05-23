@@ -34,6 +34,10 @@ public interface RemoteSpareFeignApi {
     @ApiOperation("根据名称编码查询备件信息")
     R<EqpSpareVO> getByCode(@RequestParam("code") String code);
 
+    @GetMapping("/feign/platform/eqpSpare/getByName")
+    @ApiOperation("根据名称查询备件信息")
+    R<EqpSpareVO> getByName(@RequestParam("name") String name);
+
     @RequestMapping("/feign/platform/eqpSpare/listByCode")
     @ApiOperation("根据code查询备件的信息")
     R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList);

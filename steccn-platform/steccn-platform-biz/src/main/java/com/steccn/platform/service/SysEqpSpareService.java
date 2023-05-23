@@ -113,6 +113,13 @@ public interface SysEqpSpareService extends IService<SysEqpSpare> {
      */
     EqpSpareVO get(Long id);
 
+    /**
+     * 根据名字获取信息
+     * @param name
+     * @return
+     */
+    EqpSpareVO getByName(String name);
+
 
     /**
      * 保存备件信息

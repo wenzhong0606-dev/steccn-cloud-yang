@@ -52,6 +52,12 @@ public class EqpSpareFeignController {
         return R.success(eqpSpareService.getByCode(code));
     }
 
+    @ApiOperation("根据物料名字查询")
+    @GetMapping("/getByName")
+    public R<EqpSpareVO> getByName(@RequestParam("name") String name) {
+        return R.success(eqpSpareService.getByName(name));
+    }
+
     @RequestMapping("/listByCode")
     @ApiOperation("根据code查询备件的数据")
     public R<Map<String, EqpSpareVO>> listByCode(@RequestBody List<String> codeList) {

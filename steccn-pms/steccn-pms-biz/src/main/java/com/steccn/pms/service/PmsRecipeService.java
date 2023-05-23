@@ -9,6 +9,7 @@ import com.steccn.pms.dto.PmsRecipeRawDTO;
 import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
+import com.steccn.pms.vo.QmsRecipePreFillVO;
 
 /**
 * @author yequan
@@ -48,4 +49,10 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     Boolean refreshClerkQuantity();
+
+    /**
+     * 质量预填
+     * @return
+     */
+    QmsRecipePreFillVO qmsPreFill();
 }

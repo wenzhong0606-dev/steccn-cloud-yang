@@ -261,6 +261,16 @@ public class SysEqpSpareServiceImpl extends ServiceImpl<SysEqpSpareMapper, SysEq
     }
 
     @Override
+    public EqpSpareVO getByName(String name) {
+        SysEqpSpare one = getOne(new LambdaQueryWrapper<SysEqpSpare>().eq(SysEqpSpare::getName, name), false);
+        EqpSpareVO vo = new EqpSpareVO();
+        if(Objects.nonNull(one)){
+            BeanUtil.copyProperties(one, vo);
+        }
+        return vo;
+    }
+
+    @Override
     public Boolean saveSpare(EqpSpareDto eqpSpareDto) {
         SysEqpSpare sysEqpSpare = new SysEqpSpare();
         BeanUtil.copyProperties(eqpSpareDto,sysEqpSpare);

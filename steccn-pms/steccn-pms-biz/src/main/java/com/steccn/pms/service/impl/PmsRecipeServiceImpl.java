@@ -32,6 +32,8 @@ import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsRecipe;
@@ -43,10 +45,7 @@ import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.PmsRecipeRawService;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.mapper.PmsRecipeMapper;
-import com.steccn.pms.vo.MessScopeVO;
-import com.steccn.pms.vo.PmsRecipeRawVO;
-import com.steccn.pms.vo.PmsRecipeVO;
-import com.steccn.pms.vo.PmsRecipeVerHisVO;
+import com.steccn.pms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
@@ -88,6 +87,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     private final RedissonClient redissonClient;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
      * 获取配方单详情
@@ -516,6 +517,35 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             updateById(recipeModel);
         });
         return true;
+    }
+
+    @Override
+    public QmsRecipePreFillVO qmsPreFill() {
+        //先获取最新版本信息
+        QmsRecipePreFillVO vo = new QmsRecipePreFillVO();
+        //1、获取最新版本号
+        PmsRecipe newVersion = getOne(new LambdaQueryWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime).last("LIMIT 1"), false);
+        vo.setVersion(newVersion.getVersion());
+        //2、获取石英石（低铁硅砂）
+        PmsRecipeRaw pmsRecipeRaw = pmsRecipeRawService.getOne(new LambdaQueryWrapper<PmsRecipeRaw>()
+                .eq(PmsRecipeRaw::getRecipeId, newVersion.getId())
+                .eq(PmsRecipeRaw::getMaterialName, "石英石（低铁硅砂）")
+                .last("LIMIT 1"));
+        if(Objects.nonNull(pmsRecipeRaw)){
+            //干基字段预填值为：当前配方中石英石（低铁硅砂）的干基用量值 / 2（小数点后最多保留2位，若取不到值则不预填）
+            if(Objects.nonNull(pmsRecipeRaw.getDryBasisQuantity())){
+                vo.setDryBasisQuantity(BigDecimalUtil.divide(pmsRecipeRaw.getDryBasisQuantity(),new BigDecimal(2),2));
+            }
+            //仅当干基和水份字段的值均非空时，湿基字段预填值：干基 / (1 - 水份)（水份是百分数、小数点后最多保留2位，若取不到值则不预填）
+            if(Objects.nonNull(pmsRecipeRaw.getDryBasisQuantity())&&Objects.nonNull(pmsRecipeRaw.getWetBasisWaterRate())){
+                //百分比除以100
+                BigDecimal stepOne = BigDecimalUtil.divide(pmsRecipeRaw.getWetBasisWaterRate(),new BigDecimal(100),6);
+                //1 - 水份
+                BigDecimal stepTwo = BigDecimalUtil.subtract(new BigDecimal(1),stepOne,6);
+                vo.setWetBasisQuantity(BigDecimalUtil.divide(pmsRecipeRaw.getWetBasisQuantity(),stepTwo,2));
+            }
+        }
+        return vo;
     }
 
     /**
