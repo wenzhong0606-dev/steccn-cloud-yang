@@ -170,6 +170,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 officeDto.setId(dto.getProductLine().getId());
                 officeDto.setOfficeType(SysOfficeConstant.STATION);
                 List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(CollUtil.isEmpty(sysOfficeVOS)){
+                    throw new BusinessException("该产线下没有工位");
+                }
                 SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.STELL_STATION)).findFirst().orElse(null);
                 if(Objects.isNull(sysOfficeVO)){
                     throw new BusinessException("该产线下没有钢化工位");
@@ -188,6 +191,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                     officeDto.setId(dto.getProductLine().getId());
                     officeDto.setOfficeType(SysOfficeConstant.STATION);
                     List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                    if(CollUtil.isEmpty(sysOfficeVOS)){
+                        throw new BusinessException("该产线下没有工位");
+                    }
                     SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
                     if(Objects.isNull(sysOfficeVO)){
                         throw new BusinessException("该产线下没有下片工位");
@@ -206,6 +212,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 officeDto.setId(dto.getProductLine().getId());
                 officeDto.setOfficeType(SysOfficeConstant.STATION);
                 List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(CollUtil.isEmpty(sysOfficeVOS)){
+                    throw new BusinessException("该产线下没有工位");
+                }
                 SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.FORMING_STATION)).findFirst().orElse(null);
                 if(Objects.isNull(sysOfficeVO)){
                     throw new BusinessException("该产线下没有成型工位");
@@ -224,6 +233,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                 officeDto.setId(dto.getProductLine().getId());
                 officeDto.setOfficeType(SysOfficeConstant.STATION);
                 List<SysOfficeVO> sysOfficeVOS = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(officeDto), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+                if(CollUtil.isEmpty(sysOfficeVOS)){
+                    throw new BusinessException("该产线下没有工位");
+                }
                 SysOfficeVO sysOfficeVO = sysOfficeVOS.stream().filter(v -> v.getOfficeName().equals(QtManagerConstant.DOWN_STATION)).findFirst().orElse(null);
                 if(Objects.isNull(sysOfficeVO)){
                     throw new BusinessException("该产线下没有成型工位");
