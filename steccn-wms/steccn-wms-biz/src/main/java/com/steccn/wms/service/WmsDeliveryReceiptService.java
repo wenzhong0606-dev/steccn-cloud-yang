@@ -97,5 +97,5 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @param wmsDeliveryReceiptDTO
      * @return
      */
-    Boolean chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
+    WmsDeliveryReceiptDTO chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName);
 }

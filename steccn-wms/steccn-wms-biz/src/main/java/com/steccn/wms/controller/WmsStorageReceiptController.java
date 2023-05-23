@@ -74,7 +74,7 @@ public class WmsStorageReceiptController {
     @ApiOperation("冲销")
     @PostMapping("/charge/against")
     public R<Boolean> chargeAgainst(@ApiParam("入库单id") @RequestParam("id") Long id){
-        return R.success(wmsStorageReceiptService.chargeAgainst(id));
+        return R.success(wmsStorageReceiptService.chargeAgainstById(id));
     }
 
     @ApiOperation("入库凭证确认")

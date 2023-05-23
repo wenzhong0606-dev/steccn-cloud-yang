@@ -78,6 +78,7 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
 
     private final WmsDeliveryReceiptService wmsDeliveryReceiptService;
 
+
     @Override
     public Page<WmsStorageReceiptVO> pageList(WmsStorageReceiptPageDTO dto) {
         //1.处理筛选条件时间格式
@@ -532,9 +533,30 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
      * @return
      */
     @Override
-    public Boolean chargeAgainst(Long id) {
+    public Boolean chargeAgainstById(Long id) {
+        WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = chargeAgainst(id, SecurityUtils.getUser().getName());
+        WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
+        //查询该入库单是否在生产入库单中存在，如果存在,则创建对应的出库单
+        Boolean aBoolean = FeignOptional.of(() -> remoteCompleteStorageFeignApi.getCompleteStorageByCode(wmsStorageReceiptVO.getCode()), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        if (aBoolean){
+            //在pms中创建对应的出库单
+            wmsDeliveryReceiptDTO.setChargeAgainstCode(wmsStorageReceiptVO.getCode());
+
+        }
+        return true;
+    }
+
+    @Override
+    public WmsDeliveryReceiptDTO chargeAgainstByCode(String code, String userName) {
+        WmsStorageReceipt wmsStorageReceipt = getOne(new LambdaQueryWrapper<WmsStorageReceipt>().eq(WmsStorageReceipt::getCode, code));
+        Assert.isTrue(Objects.nonNull(wmsStorageReceipt), "单据不存在");
+        return chargeAgainst(wmsStorageReceipt.getId(), userName);
+    }
+
+    WmsDeliveryReceiptDTO chargeAgainst(Long id, String userName) {
         RLock lock = redissonClient.getLock(LockConstant.WMS_CHARGE_AGAINST);
         lock.lock();
+        WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO1 = new WmsDeliveryReceiptDTO();
         try {
             // 获取当前入库单明细
             WmsStorageReceiptVO wmsStorageReceiptVO = get(id);
@@ -582,14 +604,18 @@ public class WmsStorageReceiptServiceImpl extends ServiceImpl<WmsStorageReceiptM
                 }
                 wmsDeliveryReceiptDTO.setList(infoDTOList);
                 //生成出库单并自动确认
-                wmsDeliveryReceiptService.chargeAgainst(wmsDeliveryReceiptDTO);
+                wmsDeliveryReceiptDTO1 = wmsDeliveryReceiptService.chargeAgainst(wmsDeliveryReceiptDTO, userName);
                 //扣除库存
                 wmsInventoryService.deduct(wmsInventoryList);
+                //修改入库单状态为已冲销
+                WmsStorageReceipt receipt = getById(id);
+                receipt.setStatus(WmsManagerConstant.OrderStateEnum.FIVE.getCode());
+                updateById(receipt);
             }
-            return true;
         } finally {
             lock.unlock();
         }
+        return wmsDeliveryReceiptDTO1;
     }
 
 

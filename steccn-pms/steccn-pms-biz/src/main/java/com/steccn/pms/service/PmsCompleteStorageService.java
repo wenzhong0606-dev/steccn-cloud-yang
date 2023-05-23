@@ -11,6 +11,7 @@ import com.steccn.pms.dto.*;
 import com.steccn.pms.vo.CompleteStorageListVO;
 import com.steccn.pms.vo.CompleteStoragePageVO;
 import com.steccn.pms.vo.PmsCompleteStorageVO;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 
 import java.util.List;
 import java.util.Set;
@@ -90,4 +91,29 @@ public interface PmsCompleteStorageService extends IService<PmsCompleteStorage> 
      * @return 入库单id
      */
     Long generateByDelivery(ProcessReportWorkSubmitDTO dto, List<PmsCompleteDeliveryInfo> infoList);
+
+
+    /**
+     * 生产入库冲销
+     * @param id
+     * @return
+     */
+    Boolean chargeAgainst(Long id);
+
+    /**
+     * 根据入库单编码查询是否存在生产入库凭证
+     * @param code
+     * @return
+     */
+    Boolean getCompleteStorageByCode(String code);
+
+
+    /**
+     * 根据wms 的出库单创建对应的出库单以及修改入库单的状态
+     * @param wmsDeliveryReceiptDTO
+     * @return
+     */
+    Boolean wmsChargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
+
+
 }

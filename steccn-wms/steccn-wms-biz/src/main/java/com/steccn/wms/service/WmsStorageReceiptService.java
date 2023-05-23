@@ -5,6 +5,7 @@ import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
@@ -82,5 +83,13 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @param id
      * @return
      */
-    Boolean chargeAgainst(Long id);
+    Boolean chargeAgainstById(Long id);
+
+
+    /**
+     * 冲销
+     * @param code
+     * @return
+     */
+    WmsDeliveryReceiptDTO chargeAgainstByCode(String code,String userName);
 }
