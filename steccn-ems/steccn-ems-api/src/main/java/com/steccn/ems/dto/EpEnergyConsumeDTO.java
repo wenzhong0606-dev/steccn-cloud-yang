@@ -28,5 +28,5 @@ public class EpEnergyConsumeDTO implements Serializable {
     private BigDecimal thick;
 
     @ApiModelProperty("能耗map")
-    private Map<Integer, BigDecimal> consumeMap;
+    private Map<Long, BigDecimal> consumeMap;
 }

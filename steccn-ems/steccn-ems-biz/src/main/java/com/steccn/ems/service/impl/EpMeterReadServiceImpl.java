@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.RandomUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,6 +20,7 @@ import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -35,7 +37,9 @@ import com.steccn.platform.dto.SysOfficeTypeKeyDTO;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
+import com.steccn.pms.feign.RemotePmsFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import com.steccn.qms.dto.QtEmsPullAmountDTO;
 import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
@@ -82,6 +86,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     private RemoteOfficeFeign remoteOfficeFeign;
     @Autowired
     private RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
+    @Autowired
+    private RemotePmsFeignApi remotePmsFeignApi;
 
     @Override
     public EpMeterReadVO list(String readMonth, Integer meterType) {
@@ -337,7 +343,128 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     }
 
     @Override
-    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
+    public List<EpMeterReadAllDataVO> classDateAllData(Set<LocalDate> dateSet, Integer energyType, List<Long> partitionIdList) {
+        SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
+        Assert.notNull(energyType, "能源类型不能为空");
+        //获取生产明细样例表
+        List<DwProduceOrderDTO> orderDetailList = Lists.newArrayList();
+        dateSet.forEach(ele -> orderDetailList.addAll(FeignOptional.of(() -> remotePmsFeignApi.currentProduceOrder(new TupleDTO<>(ele, ele)), FeignConstant.STECCN_PMS_SERVICE_NAME).get()));
+        //获取能耗分区所有的节点
+        EpEnergyTreeDTO tree = tree(energyType, partitionIdList);
+        //查询该能源树下每个节点关联的仪表
+        Map<Long, EpInstrumentAccount> nodeLinkMeterMap = queryNodeLinkMeter(energyType);
+        //查询这个班次日期 所有节点的抄表能耗【上一次抄表与当前次抄表的差值】和远传仪表耗能,用于填充二维表格的数据
+
+        Set<Integer> meterIdSet = Sets.newHashSet();
+        tree.getPartitionIds().forEach(ele -> {
+            EpInstrumentAccount account = nodeLinkMeterMap.get(ele);
+            if (Objects.nonNull(account)) {
+                meterIdSet.add(account.getId());
+            }
+        });
+        //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
+        Map<String, BigDecimal> remoteDataMap = remoteRead(meterIdSet, dateSet);
+        //获取手动抄表的数据 key => 仪表id + "_" + 班次日期  value => 读数
+        Map<String,BigDecimal> handReadDataMap = handRead(meterIdSet,dateSet);
+
+        //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
+        List<BigDecimal> thickList = orderDetailList.stream().map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
+        //如果厚度集合不包含无厚度，则加入无厚度
+        if(!thickList.contains(new BigDecimal("-1"))){
+            thickList.add(new BigDecimal("-1"));
+        }
+        List<EpEnergyConsumeDTO> rowList = Lists.newArrayList();
+        dateSet.forEach(a -> {
+            Lists.newArrayList(0, 1, -1).forEach(b -> {
+                thickList.forEach(c -> {
+                    Map<Long, BigDecimal> consumeMap = Maps.newHashMap();
+                    nodeLinkMeterMap.forEach((k, v) -> consumeMap.put(k, remoteDataMap.get(v.getId() +"_" + a + "_" + b + "_" + c)));
+                    EpEnergyConsumeDTO row = new EpEnergyConsumeDTO();
+                    row.setReadDate(a);
+                    row.setClassId(b);
+                    row.setThick(c);
+                    row.setConsumeMap(consumeMap);
+                    rowList.add(row);
+                });
+            });
+        });
+
+        log.info("rowList -> {}", rowList);
+
+        return Lists.newArrayList();
+    }
+
+    /**
+     * 获取手动抄表的数据
+     * @param meterIdSet 仪表id集合
+     * @param dateSet 日期集合
+     * @return
+     */
+    private Map<String, BigDecimal> handRead(Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
+        return Maps.newHashMap();
+    }
+
+    /**
+     * 获取能源类型对应的能耗分区树
+     * @param energyType 能源类型
+     * @param partitionIdList 分区节点的集合
+     * @return
+     */
+    private EpEnergyTreeDTO tree(Integer energyType, List<Long> partitionIdList){
+        EpEnergyParamDTO energyParamDTO = new EpEnergyParamDTO();
+        energyParamDTO.setPartitionId(partitionIdList);
+        energyParamDTO.setType(energyType);
+        return epPartitionService.getChildTree(energyParamDTO);
+    }
+
+    /**
+     * 查询该能源类型 树上每个节点关联的仪表
+     * @param energyType 能源类型
+     * @return map
+     */
+    private Map<Long, EpInstrumentAccount> queryNodeLinkMeter(Integer energyType) {
+        List<EpInstrumentAccount> accountList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getMeterType, energyType)
+                .select(EpInstrumentAccount::getId, EpInstrumentAccount::getPartitionNode, EpInstrumentAccount::getEntityTable));
+        SteccnTableAssertUtil.notEmpty(accountList, "组织机构暂未关联仪表");
+        //获取仪表id集合
+        Map<Long, EpInstrumentAccount> resMap = Maps.newHashMap();
+        accountList.forEach(ele -> {
+            resMap.put(ele.getPartitionNode(), ele);
+        });
+        return resMap;
+    }
+
+
+    /**
+     * 抄表的读数
+     * @param meterIdSet 仪表集合
+     * @param dateSet 日期集合
+     * @return list
+     */
+    public Map<String,BigDecimal> remoteRead(Set<Integer> meterIdSet, Set<LocalDate> dateSet) {
+        Map<String,BigDecimal> resMap = Maps.newHashMap();
+        List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
+                .in(EpMeterReadDistant::getMeterId, meterIdSet)
+                .in(EpMeterReadDistant::getReadDate, dateSet));
+        if (CollUtil.isNotEmpty(dbList)) {
+            Map<String, List<EpMeterReadDistant>> groupData = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getReadDate() + "_"+ v.getClassId() + "_" + v.getThick()));
+            groupData.forEach((k, v) -> {
+                BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                resMap.put(k, reduce);
+            });
+        }
+        return resMap;
+    }
+
+    /**
+     * 老的-全量数据表的逻辑
+     * @param dateList 日期集合
+     * @param energyType 能源类型
+     * @param partitionIdList 所需节点集合
+     * @return
+     */
+    public List<EpMeterReadAllDataVO> classDateAllData1(Set<LocalDate> dateList, Integer energyType, List<Long> partitionIdList) {
         SteccnTableAssertUtil.notEmpty(partitionIdList, "组织机构不能为空");
         Assert.notNull(energyType, "能源类型不能为空");
         List<EpMeterReadAllDataVO> gpDataList = Lists.newArrayList();
