@@ -192,7 +192,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             partitionInstrumentVOList.put(s.getPartitionNode(), s);
             distantMapCodeSet.add(s.getDistantMapCode());
         });
-        Map<String, LocalDateTime> lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantMapCodeSet), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        //避免dataplatform服务不可用
+        Map<String, LocalDateTime> lastReadTimeMap;
+        try {
+            lastReadTimeMap = FeignOptional.of(() -> remoteDataPlatformFeignApi.lastReadTime(distantMapCodeSet), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        }catch (Exception e){
+            log.error("{}",e.getLocalizedMessage());
+            lastReadTimeMap = Maps.newHashMap();
+        }
 
         //查询所有非远传仪表编码的最近抄表时间
         Set<Integer> meterIdSet = instrumentAccountVOS.stream().filter(v -> EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(v.getEntityTable()))
@@ -209,6 +216,7 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         //查询allPartitionNodeName
         Map<Long, String> allPartitionNameMap = epPartitionService.allPartitionNameMap(dto.getEnergyId(), partitionInstrumentVOList.keySet());
         //遍历集合插入数据
+        Map<String, LocalDateTime> finalLastReadTimeMap = lastReadTimeMap;
         instrumentAccountVOS.forEach(s -> {
             if (CollUtil.isNotEmpty(dictMap) && Objects.nonNull(s.getSite())) {
                 s.setSiteName(dictMap.get(s.getSite()));
@@ -220,14 +228,14 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
             //设置最后抄表时间
             if (EpManagerConstant.InstrumentType.REMOTE.getCode().equals(s.getEntityTable())) {
                 //远传仪表-从数仓获取
-                s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), lastReadTimeMap));
+                s.setLastReadingTime(getLastReadTime(s.getDistantMapCode(), finalLastReadTimeMap));
             } else if (EpManagerConstant.InstrumentType.NON_REMOTE.getCode().equals(s.getEntityTable())) {
                 //非远传仪表-从抄表管理获取
                 s.setLastReadingTime(readTimeMap.get(s.getId()));
             } else if (EpManagerConstant.InstrumentType.VIRTUAL.getCode().equals(s.getEntityTable())) {
                 //虚拟仪表的最后抄表时间：所有下一级子表的最后抄表时间中最早的一个【下一级子表中最后抄表时间为空，则当前虚拟仪表的最后抄表时间也为空】
                 List<EpPartitionVO> partitionChildrenList = partitionLinkChildMap.get(s.getPartitionNode());
-                LocalDateTime vmLastTime = findVMLastTime(partitionLinkChildMap, partitionChildrenList, lastReadTimeMap, readTimeMap);
+                LocalDateTime vmLastTime = findVMLastTime(partitionLinkChildMap, partitionChildrenList, finalLastReadTimeMap, readTimeMap);
                 s.setLastReadingTime(vmLastTime);
             }
         });
