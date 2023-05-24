@@ -1168,7 +1168,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 Map<String, BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
                 Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, false);
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
-                List<String> legend = Lists.newArrayList();
+                List<BigDecimal> legend = Lists.newArrayList();
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
@@ -1185,7 +1185,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
                     sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
-                    legend.add(new DecimalFormat("0.0%").format(sunRate));
+                    legend.add(sunRate);
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
                 resultDTO.setLegend(legend);
@@ -1201,7 +1201,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //所有的柱子
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
                 //折线图
-                List<String> legend = Lists.newArrayList();
+                List<BigDecimal> legend = Lists.newArrayList();
                 //根据损耗重量分组
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //拿到损耗原因的所有值
@@ -1262,7 +1262,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         graphDTO.setData(tupleDTOList);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        legend.add(sunRate);
                     }
 
                     //按照车间堆叠
@@ -1291,7 +1291,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         graphDTO.setData(tupleDTOList);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        legend.add(sunRate);
                     }
 
                     //按照产线堆叠
@@ -1320,7 +1320,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        legend.add(sunRate);
                     }
                     stackGraphDTOS.add(graphDTO);
 
