@@ -353,20 +353,22 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取能耗分区所有的节点
         EpEnergyTreeDTO tree = tree(energyType, partitionIdList);
         //查询该能源树下每个节点关联的仪表
-        Map<Long, EpInstrumentAccount> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
         //查询这个班次日期 所有节点的抄表能耗【上一次抄表与当前次抄表的差值】和远传仪表耗能,用于填充二维表格的数据
         Set<Integer> remoteMeterIdSet = Sets.newHashSet();
         Set<Integer> handMeterIdSet = Sets.newHashSet();
-        for (EpInstrumentAccount account : nodeLinkMeterMap.values()) {
+        for (EpInstrumentAccountDTO account : nodeLinkMeterMap.values()) {
             if (account.getEntityTable() == 0) {
                 remoteMeterIdSet.add(account.getId());
             } else if (account.getEntityTable() == 1) {
                 handMeterIdSet.add(account.getId());
             }
         }
-        //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  2是全部是虚拟
-        Map<Long,Integer> childTypeMap = epPartitionService.childTypeMap(energyType);
-
+        //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
+        long l = System.currentTimeMillis();
+        Map<Long, EpChildTypeDTO> childTypeMap = epPartitionService.childTypeMap(energyType);
+        childTypeMap.forEach((k, v) -> v.setAccount(nodeLinkMeterMap.get(k)));
+        log.info("总的花费时间 {}", (System.currentTimeMillis() - l));
 
         //获取远传仪表的数据 key => 仪表id + "_" + 班次日期 +"_" + 班次id + "_" + 厚度 value => 读数
         Map<String, BigDecimal> remoteDataMap = remoteRead(remoteMeterIdSet, dateSet);
@@ -384,12 +386,19 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             Lists.newArrayList(0, 1, -1).forEach(b -> {
                 thickList.forEach(c -> {
                     Map<Long, BigDecimal> consumeMap = Maps.newHashMap();
-                    nodeLinkMeterMap.forEach((k, v) -> {
-                        if (v.getEntityTable() == 0) {
-                            consumeMap.put(k, remoteDataMap.get(v.getId() + "_" + a + "_" + b + "_" + c));
-                        } else if (v.getEntityTable() == 1 && b == -1) {
-                            //表读数来自人工抄表，每天抄一次）：仅统计每日能耗（类型II）
-                            consumeMap.put(k, handReadDataMap.get(v.getId() + "_" + a));
+                    childTypeMap.forEach((k, v) -> {
+                        EpInstrumentAccountDTO account = v.getAccount();
+                        if(Objects.nonNull(account) && Objects.nonNull(account.getEntityTable())){
+                            if (account.getEntityTable() == 0) {
+                                //远传仪表
+                                consumeMap.put(k, remoteDataMap.get(account.getId() + "_" + a + "_" + b + "_" + c));
+                            } else if (account.getEntityTable() == 1 && b == -1) {
+                                //表读数来自人工抄表，每天抄一次）：仅统计每日能耗（类型II）
+                                consumeMap.put(k, handReadDataMap.get(account.getId() + "_" + a));
+                            }else if(v.getAccount().getEntityTable() == 2){
+                                //虚拟仪表
+
+                            }
                         }
                     });
                     EpEnergyConsumeDTO row = new EpEnergyConsumeDTO();

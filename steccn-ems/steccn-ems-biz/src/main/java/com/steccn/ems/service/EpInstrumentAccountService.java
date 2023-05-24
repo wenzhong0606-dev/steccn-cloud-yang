@@ -83,6 +83,6 @@ public interface EpInstrumentAccountService extends IService<EpInstrumentAccount
      * @param energyType 能源类型
      * @return
      */
-    Map<Long, EpInstrumentAccount> queryNodeLinkMeter(Integer energyType);
+    Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeter(Integer energyType);
 
 }

@@ -3,10 +3,7 @@ package com.steccn.ems.service;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.ems.dto.EpEnergyParamDTO;
-import com.steccn.ems.dto.EpEnergyTreeDTO;
-import com.steccn.ems.dto.EpPartitionChildTypeDTO;
-import com.steccn.ems.dto.EpPartitionDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
@@ -127,5 +124,5 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @param energyType 能源类型
      * @return
      */
-    Map<Long, Integer> childTypeMap(Integer energyType);
+    Map<Long, EpChildTypeDTO> childTypeMap(Integer energyType);
 }

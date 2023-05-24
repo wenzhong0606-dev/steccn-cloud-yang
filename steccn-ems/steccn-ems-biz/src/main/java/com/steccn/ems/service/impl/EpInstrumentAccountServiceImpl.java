@@ -437,15 +437,17 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     }
 
     @Override
-    public Map<Long, EpInstrumentAccount> queryNodeLinkMeter(Integer energyType) {
+    public Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeter(Integer energyType) {
         List<EpInstrumentAccount> accountList = list(new LambdaQueryWrapper<EpInstrumentAccount>()
                 .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
                 .eq(EpInstrumentAccount::getMeterType, energyType));
         //获取仪表id集合
-        Map<Long, EpInstrumentAccount> resMap = Maps.newHashMap();
+        Map<Long, EpInstrumentAccountDTO> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(accountList)) {
             accountList.forEach(ele -> {
-                resMap.put(ele.getPartitionNode(), ele);
+                EpInstrumentAccountDTO accountDTO = new EpInstrumentAccountDTO();
+                BeanUtils.copyProperties(ele, accountDTO);
+                resMap.put(ele.getPartitionNode(), accountDTO);
             });
         }
         return resMap;
