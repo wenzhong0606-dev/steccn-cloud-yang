@@ -529,7 +529,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //2、获取石英石（低铁硅砂）
         PmsRecipeRaw pmsRecipeRaw = pmsRecipeRawService.getOne(new LambdaQueryWrapper<PmsRecipeRaw>()
                 .eq(PmsRecipeRaw::getRecipeId, newVersion.getId())
-                .eq(PmsRecipeRaw::getMaterialName, "石英石（低铁硅砂）")
+                .eq(PmsRecipeRaw::getMaterialName, "石英砂（低铁硅砂）")
                 .last("LIMIT 1"));
         if(Objects.nonNull(pmsRecipeRaw)){
             //干基字段预填值为：当前配方中石英石（低铁硅砂）的干基用量值 / 2（小数点后最多保留2位，若取不到值则不预填）
