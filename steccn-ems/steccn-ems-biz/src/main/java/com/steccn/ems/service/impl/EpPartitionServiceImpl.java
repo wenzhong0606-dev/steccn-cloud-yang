@@ -585,9 +585,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 Integer type = childType(node);
                 EpChildTypeDTO epChildTypeDTO = new EpChildTypeDTO();
                 epChildTypeDTO.setType(type);
-                List<EpPartitionVO> childrenList = getChildren(node);
-                Set<Long> kidIdSet = childrenList.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
-                epChildTypeDTO.setChildren(kidIdSet);
+                List<EpPartitionVO> childrenList = node.getChildren();
+                if(CollUtil.isNotEmpty(childrenList)){
+                    Set<Long> kidIdSet = childrenList.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
+                    epChildTypeDTO.setChildren(kidIdSet);
+                }
                 resMap.put(node.getId(), epChildTypeDTO);
             }
         }
@@ -614,7 +616,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     /**
      * 当前节点 孩子节点的类型
      * @param cur 当前节点
-     * @return
+     * @return  0 ， 1 ， 2 ,null
      */
     private Integer childType(EpPartitionVO cur) {
         if (Objects.nonNull(cur.getEntityTable()) && cur.getEntityTable() == 0) {
@@ -630,9 +632,16 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
             }
         }
         //①typeList为空，或者孩子都为空 ， 返回null
-        //②孩子空 + 0  返回0
-        //③孩子空 + 0 + 1 返回1
-        if (typeList.contains(1)) {
+        //②孩子空 + 0 返回0
+        //③孩子空 + 1 返回1
+        //④孩子空 +0 + 1 返回2
+        //⑤孩子有2 返回2
+        typeList = typeList.stream().filter(v -> Objects.nonNull(v)).collect(Collectors.toList());
+        if(typeList.contains(2)){
+            return 2;
+        } else if (typeList.contains(1) && typeList.contains(0)) {
+            return 2;
+        } else if (typeList.contains(1)) {
             return 1;
         } else if (typeList.contains(0)) {
             return 0;

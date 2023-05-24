@@ -18,7 +18,7 @@ public class EpChildTypeDTO implements Serializable {
     @ApiModelProperty("虚拟节点孩子类型")
     private Integer type;
 
-    @ApiModelProperty("虚拟节点的孩子")
+    @ApiModelProperty("直接孩子节点")
     private Set<Long> children;
 
     @ApiModelProperty("当前节点关联的仪表")

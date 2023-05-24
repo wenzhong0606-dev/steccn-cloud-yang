@@ -2,7 +2,10 @@ package com.steccn.ems.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,6 +18,8 @@ import java.util.Map;
  */
 @Data
 @ApiModel("能耗全量数据表")
+@AllArgsConstructor
+@NoArgsConstructor
 public class EpEnergyConsumeDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
