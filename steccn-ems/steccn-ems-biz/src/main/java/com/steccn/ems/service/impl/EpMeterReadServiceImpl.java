@@ -397,7 +397,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 consumeMap.put(k, handReadDataMap.get(account.getId() + "_" + a));
                             }else if(v.getAccount().getEntityTable() == 2){
                                 //虚拟仪表
+                                if(Objects.nonNull(v.getType()) && v.getType() == 0){
+                                    //统计能耗考虑班次、产品厚度（类型I）
+                                    v.getChildren().forEach(ele ->{
+                                        BigDecimal bigDecimal = consumeMap.get(ele);
 
+                                    });
+                                }
                             }
                         }
                     });
