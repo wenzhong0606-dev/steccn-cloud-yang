@@ -125,8 +125,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
         LambdaQueryWrapper<QtCheckTask> onlineTaskCondition1 = new LambdaQueryWrapper<QtCheckTask>()
                 //任务完成
                 .eq(QtCheckTask::getStatus, QtManagerConstant.QtCheckTaskStatusEnum.FINISHED.getCode())
-                //完成时间范围
-                .between(QtCheckTask::getDefectStartTime, onlineStartTime, onlineEndTime)
+                //缺陷记录时段在范围内
+                .ge(QtCheckTask::getDefectStartTime, onlineStartTime)
+                .le(QtCheckTask::getDefectEndTime, onlineEndTime)
+//                .between(QtCheckTask::getDefectStartTime, onlineStartTime, onlineEndTime)
                 //只要基片车间
                 .like(QtCheckTask::getProductLineName, "基片")
                 //班次
@@ -343,7 +345,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
                             BigDecimal glassLength = new BigDecimal(0);
-                            QtMaterial material = qtMaterialService.getById(checkTaskPatrolWorkOrderList.get(0).getMaterialId());
+                            QtMaterial material = new QtMaterial();
+                            if(CollUtil.isNotEmpty(checkTaskPatrolWorkOrderList)){
+                                material = qtMaterialService.getById(checkTaskPatrolWorkOrderList.get(0).getMaterialId());
+                            }
                             if (material.getLengthQuantity() != null) {
                                 glassLength = BigDecimalUtil.add(glassLength, material.getLengthQuantity());
                             }
@@ -361,8 +366,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             BigDecimal laDivideGlass = BigDecimalUtil.multiply(avgBaiItem, divideLaGlass);
                             if (flag) {
                                 BigDecimal laMultiplyGlass12 = BigDecimalUtil.multiply(laDivideGlass, new BigDecimal(12));
-                                //产品改需求，乘以2
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlass12, new BigDecimal(2));
+                                //产品改需求，不变
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlass12, new BigDecimal(1));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -371,8 +376,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 BigDecimal laMultiplyGlassTime = BigDecimalUtil.multiply(laDivideGlass, produceTime);
 //                                BigDecimal oneBaiLossWeight = BigDecimalUtil.divide(laMultiplyGlassTime, new BigDecimal(1000000),4);
-                                //产品改需求，乘以2
-                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlassTime, new BigDecimal(2));
+                                //产品改需求，不变
+                                BigDecimal oneBaiLossWeight = BigDecimalUtil.multiply(laMultiplyGlassTime, new BigDecimal(1));
                                 baiLossWeight = BigDecimalUtil.add(baiLossWeight, oneBaiLossWeight);
                             }
 
@@ -384,8 +389,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 
                             //拉引量
                             if (flag) {
-                                //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(2));
+                                //产品改需求，不变
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multi12, new BigDecimal(1));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             } else {
                                 BigDecimal produceTime = new BigDecimal(6);
@@ -395,7 +400,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal multiProduceTime = BigDecimalUtil.multiply(multi, produceTime);
 //                                BigDecimal laQuantityOne = BigDecimalUtil.divide(multiProduceTime, new BigDecimal(1000000),4);
                                 //产品改需求，乘以2即可
-                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(2));
+                                BigDecimal laQuantityOne = BigDecimalUtil.multiply(multiProduceTime, new BigDecimal(1));
                                 laQuantity = BigDecimalUtil.add(laQuantityOne, laQuantity);
                             }
 
@@ -470,16 +475,16 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                                 Integer res = 1;
                                                 if (numTmp.getDefectNum() != null) {
                                                     res = numTmp.getDefectNum();
+                                                    defectCounts.put(numTmp.getDefectName(), res);
                                                 }
-                                                defectCounts.put(numTmp.getDefectName(), res);
                                             } else {
                                                 Integer res = 1;
                                                 if (numTmp.getDefectNum() != null) {
                                                     res = numTmp.getDefectNum();
+                                                    Integer i = defectCounts.get(numTmp.getDefectName());
+                                                    i = i + res;
+                                                    defectCounts.put(numTmp.getDefectName(), i);
                                                 }
-                                                Integer i = defectCounts.get(numTmp.getDefectName());
-                                                i = i + res;
-                                                defectCounts.put(numTmp.getDefectName(), i);
                                             }
                                         }
                                     }
@@ -1139,18 +1144,31 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
-        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
-        BigDecimal laAmount = BigDecimal.ZERO;
-        for (QtChartSubDetailDTO tmp : data) {
-            laAmount = BigDecimalUtil.add(laAmount, tmp.getPullAmount());
+        //过滤班次
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
         }
+        //过滤车间
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductWorkShopName())).collect(Collectors.toList());
+        }
+        //过滤产线
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        }
+        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
+        //stream流合并所有名字相同值的拉引量
+        Map<String, BigDecimal> laAmountMap = data.stream().collect(Collectors.groupingBy(
+                QtChartSubDetailDTO::getReason,
+                Collectors.reducing(BigDecimal.ZERO, QtChartSubDetailDTO::getPullAmount, BigDecimal::add)
+        ));
         if (CollUtil.isNotEmpty(data)) {
             //若对比维度为空
             if (dto.getCompare() == null) {
                 Map<String, BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
                 Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, false);
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
-                List<String> legend = Lists.newArrayList();
+                List<BigDecimal> legend = Lists.newArrayList();
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
@@ -1166,8 +1184,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     stackGraphDTOS.add(graphDTO);
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
-                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
-                    legend.add(new DecimalFormat("0.0%").format(sunRate));
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
+                    legend.add(sunRate);
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
                 resultDTO.setLegend(legend);
@@ -1183,7 +1201,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //所有的柱子
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
                 //折线图
-                List<String> legend = Lists.newArrayList();
+                List<BigDecimal> legend = Lists.newArrayList();
                 //根据损耗重量分组
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //拿到损耗原因的所有值
@@ -1243,8 +1261,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         tupleDTOList.add(tupleDTOWAN);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        legend.add(sunRate);
                     }
 
                     //按照车间堆叠
@@ -1272,8 +1290,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        legend.add(sunRate);
                     }
 
                     //按照产线堆叠
@@ -1301,8 +1319,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             graphDTO.setData(tupleDTOList);
                         }
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
-                        legend.add(new DecimalFormat("0.0%").format(sunRate));
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
+                        legend.add(sunRate);
                     }
                     stackGraphDTOS.add(graphDTO);
 
@@ -1326,6 +1344,18 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        //过滤班次
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
+        }
+        //过滤车间
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductWorkShopName())).collect(Collectors.toList());
+        }
+        //过滤产线
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        }
         SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         QtChartPieVO result = new QtChartPieVO();
         List<QtChartPieValueVO<BigDecimal>> pieList = new ArrayList<>();
