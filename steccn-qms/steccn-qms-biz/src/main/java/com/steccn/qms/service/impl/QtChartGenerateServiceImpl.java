@@ -345,7 +345,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             }
                             //玻璃片长度：巡检任务中物料的“玻璃片长度”属性（取自物料主数据），单位为mm
                             BigDecimal glassLength = new BigDecimal(0);
-                            QtMaterial material = qtMaterialService.getById(checkTaskPatrolWorkOrderList.get(0).getMaterialId());
+                            QtMaterial material = new QtMaterial();
+                            if(CollUtil.isNotEmpty(checkTaskPatrolWorkOrderList)){
+                                material = qtMaterialService.getById(checkTaskPatrolWorkOrderList.get(0).getMaterialId());
+                            }
                             if (material.getLengthQuantity() != null) {
                                 glassLength = BigDecimalUtil.add(glassLength, material.getLengthQuantity());
                             }
@@ -1141,11 +1144,24 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
-        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
-        BigDecimal laAmount = BigDecimal.ZERO;
-        for (QtChartSubDetailDTO tmp : data) {
-            laAmount = BigDecimalUtil.add(laAmount, tmp.getPullAmount());
+        //过滤班次
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
         }
+        //过滤车间
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductWorkShopName())).collect(Collectors.toList());
+        }
+        //过滤产线
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        }
+        SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
+        //stream流合并所有名字相同值的拉引量
+        Map<String, BigDecimal> laAmountMap = data.stream().collect(Collectors.groupingBy(
+                QtChartSubDetailDTO::getReason,
+                Collectors.reducing(BigDecimal.ZERO, QtChartSubDetailDTO::getPullAmount, BigDecimal::add)
+        ));
         if (CollUtil.isNotEmpty(data)) {
             //若对比维度为空
             if (dto.getCompare() == null) {
@@ -1168,7 +1184,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     stackGraphDTOS.add(graphDTO);
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
-                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmount,4);
+                    sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
                     legend.add(new DecimalFormat("0.0%").format(sunRate));
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
@@ -1245,7 +1261,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         tupleDTOList.add(tupleDTOWAN);
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
 
@@ -1274,7 +1290,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         graphDTO.setData(tupleDTOList);
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
 
@@ -1303,7 +1319,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                             graphDTO.setData(tupleDTOList);
                         }
                         //算折线图
-                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount, laAmount,4);
+                        BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
                         legend.add(new DecimalFormat("0.0%").format(sunRate));
                     }
                     stackGraphDTOS.add(graphDTO);
@@ -1328,6 +1344,18 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtChartPieVO generateSubstratePieLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        //过滤班次
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
+        }
+        //过滤车间
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORKSHOP.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductWorkShopName())).collect(Collectors.toList());
+        }
+        //过滤产线
+        if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.PRODUCTLINE.getCode())){
+            data = data.stream().filter(v->dto.getFilters().contains(v.getProductLineName())).collect(Collectors.toList());
+        }
         SteccnTableAssertUtil.notEmpty(data, "数据为空，暂无报表");
         QtChartPieVO result = new QtChartPieVO();
         List<QtChartPieValueVO<BigDecimal>> pieList = new ArrayList<>();
