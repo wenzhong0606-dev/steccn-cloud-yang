@@ -608,7 +608,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 point = 2;
                             }
-                            //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
+                            //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000 /2
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
                             //计算缺陷项Q的损耗重量
                             for (Map.Entry<String, Integer> defectEntry : defectCounts.entrySet()) {
@@ -617,7 +617,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal multiplyRes = BigDecimalUtil.multiply(BigDecimal.valueOf(defectEntry.getValue()), avgDanItem);
                                 //缺陷项q导致损耗重量
                                 BigDecimal defectResultData = BigDecimalUtil.divide(multiplyRes, new BigDecimal(1000),4);
-
+                                //产品需求多除以2
+                                defectResultData = BigDecimalUtil.divide(defectResultData,new BigDecimal(2),4);
                                 //把缺陷项q的损耗重量放入全量数据中
                                 if (defectLossWeightMap.get(defectEntry.getKey()) == null) {
                                     defectLossWeightMap.put(defectEntry.getKey(), defectResultData);
