@@ -659,8 +659,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
 //                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
-                                    //数据不对，修改精度
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(100),4);
+                                    //落版原因，产品改需求不需要除法
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1),4);
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
