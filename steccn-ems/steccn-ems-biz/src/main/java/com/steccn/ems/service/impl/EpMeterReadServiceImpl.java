@@ -598,6 +598,45 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取生产明细样例表
         List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet);
 
+        //获取所有节点挂载的仪表
+        Map<Long, EpInstrumentAccount> accountMap = epInstrumentAccountService.listById(nodeLinkMeterMap.keySet());
+        EpInstrumentAccount defaultAccount = new EpInstrumentAccount();
+        //获取所有节点的具体信息
+        Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
+        EpPartition defaultPartition = new EpPartition();
+        //获取深加工产线和基片产线
+        Set<Integer> jpLineSet = getLine(PmManagerConstant.UROPATAGIA);
+        Set<Integer> sjgLineSet = getLine(PmManagerConstant.DEEP_PROCESSING);
+        //获取深加工产线和基片产线的每一行对应的产量
+        List<QtEmsPullAmountDTO> jpDataList = Lists.newArrayList();
+        List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
+        //获取产量-区分深加工和基片车间
+        orderList.forEach(ele -> {
+            EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
+            rowDTO.setUuid(IdWorker.getId());
+            BeanUtils.copyProperties(ele, rowDTO);
+            EpInstrumentAccount account = accountMap.getOrDefault(ele.getMeterId(), defaultAccount);
+            EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
+            if (sjgLineSet.contains(epPartition.getOfficeId())) {
+                //深加工产线节点
+                sjgDataList.add(rowDTO);
+            } else if (jpLineSet.contains(epPartition.getOfficeId())) {
+                //基片产线节点
+                rowDTO.setProductLineId(epPartition.getOfficeId());
+                jpDataList.add(convertToJpDto(rowDTO));
+            }
+        });
+        //获取基片和深加工的产量
+        List<QtEmsPullAmountDTO> jpNumList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getEmsPullAmount(new ValidList<>(jpDataList)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        Map<Long,QtEmsPullAmountDTO> jpUuidMap = Maps.newHashMap();
+        jpNumList.forEach(ele -> jpUuidMap.put(ele.getUuid(),ele));
+        List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
+        Map<Long,EpMeterReadRowDTO> sjgUuidMap = Maps.newHashMap();
+        sjgNumList.forEach(ele -> sjgUuidMap.put(ele.getUuid(),ele));
+
+        log.info("{}", jpNumList);
+        log.info("{}", sjgNumList);
+
 
 
         return Lists.newArrayList();
