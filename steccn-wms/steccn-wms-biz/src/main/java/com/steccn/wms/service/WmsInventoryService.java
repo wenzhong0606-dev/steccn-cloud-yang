@@ -154,6 +154,13 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      */
     Map<Long, MaterialInventoryDTO> materialInventory(Set<Long> materialIds);
 
+    /**
+     * 获取物料在库存中的库存数量
+     * @param materialIds
+     * @return
+     */
+    Map<Long,List<WmsInventory>> inventoryMap(Set<Long> materialIds);
+
 
     /**
      * 根据需求数量返回库存数量信息
@@ -185,4 +192,12 @@ public interface WmsInventoryService extends IService<WmsInventory> {
      * @return
      */
     Map<Integer,List<WmsStockInventoryDTO>> materialByWarehouse(Set<Integer> set);
+
+
+    /**
+     * 扣除库存
+     * @param wmsInventoryList
+     * @return
+     */
+    Boolean deduct(List<WmsInventory> wmsInventoryList);
 }

@@ -8,10 +8,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 类说明
@@ -33,5 +30,11 @@ public class PmsCompleteStorageFeignController {
     @SysLog("complete")
     public R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto) {
         return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
+    }
+
+    @GetMapping("/code")
+    @ApiOperation("根据仓储入库单号查询入库凭证是否存在")
+    public R<Boolean> getCompleteStorageByCode(@RequestParam("code")String code){
+        return R.success(pmsCompleteStorageService.getCompleteStorageByCode(code));
     }
 }
