@@ -16,6 +16,7 @@ import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpEnergyMoney;
+import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.domain.EpMeterReadDistant;
 import com.steccn.ems.domain.EpTaskExecute;
 import com.steccn.ems.dto.DwEpEnergyMoneyDTO;
@@ -24,22 +25,24 @@ import com.steccn.ems.dto.EpDwMeterPartitionDTO;
 import com.steccn.ems.mapper.EpInstrumentAccountMapper;
 import com.steccn.ems.service.*;
 import com.steccn.platform.feign.RemoteOfficeFeign;
+import com.steccn.pms.dto.DwCurrentReportWorkDTO;
 import com.steccn.pms.dto.DwProduceOrderDTO;
 import com.steccn.pms.feign.RemotePmsFeignApi;
+import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,7 +111,7 @@ public class EpDwServiceImpl implements EpDwService {
                 .eq(EpMeterRead::getReadDate, task.getReadDate())
                 .eq(Objects.nonNull(task.getClassId()), EpMeterRead::getClassId, task.getClassId())
                 .eq(Objects.nonNull(task.getThick()), EpMeterRead::getThick, task.getThick())
-                .eq(Objects.nonNull(task.getReportWorkId()), EpMeterRead::getReportWorkId, task.getReportWorkId())
+//                .eq(Objects.nonNull(task.getReportWorkId()), EpMeterRead::getReportWorkId, task.getReportWorkId())
                 .eq(EpMeterRead::getStart, task.getStart())
                 .eq(EpMeterRead::getEnd, task.getEnd()));
         if (count > 0) {
@@ -416,7 +419,7 @@ public class EpDwServiceImpl implements EpDwService {
         dwConditionDTO.setReadDate(readDate);
         dwConditionDTO.setStart(start);
         dwConditionDTO.setEnd(end);
-        dwConditionDTO.setReportWorkId(null);
+//        dwConditionDTO.setReportWorkId(null);
         dwConditionDTO.setThick(null);
         dwConditionDTO.setClassId(classId);
         return dwConditionDTO;
@@ -436,7 +439,7 @@ public class EpDwServiceImpl implements EpDwService {
         dwConditionDTO.setReadDate(data.getClassDate());
         dwConditionDTO.setClassId(data.getClassId());
         dwConditionDTO.setThick(data.getThick());
-        dwConditionDTO.setReportWorkId(data.getReportWorkId());
+//        dwConditionDTO.setReportWorkId(data.getReportWorkId());
         dwConditionDTO.setStart(data.getStart());
         dwConditionDTO.setEnd(data.getEnd());
         return dwConditionDTO;
