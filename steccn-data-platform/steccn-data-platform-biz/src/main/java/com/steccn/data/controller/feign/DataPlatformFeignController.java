@@ -15,8 +15,10 @@ import com.steccn.data.vo.DwStationCollectVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,6 +44,12 @@ public class DataPlatformFeignController {
     @ApiOperation(value = "数仓条件列表")
     public R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto) {
         return R.success(epMeterCollectService.meterRead(dto));
+    }
+
+    @PostMapping("/meter/read/seValue")
+    @ApiOperation("能源绩效系统-抄表归档-差值")
+    R<List<BigDecimal>> seValue(@RequestBody TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO) {
+        return R.success(epMeterCollectService.seValue(tripleDTO));
     }
 
     @PostMapping("/meter/last/read/time")

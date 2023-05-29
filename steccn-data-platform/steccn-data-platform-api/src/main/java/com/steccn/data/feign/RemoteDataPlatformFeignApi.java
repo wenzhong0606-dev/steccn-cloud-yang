@@ -35,6 +35,10 @@ public interface RemoteDataPlatformFeignApi {
     @ApiOperation("能源绩效系统-抄表归档")
     R<DwEpMeterCollectVO> meterRead(@RequestBody DwMeterReadDTO dto);
 
+    @PostMapping("/feign/data/warehouse/meter/read/seValue")
+    @ApiOperation("能源绩效系统-抄表归档-同一个code的2个值")
+    R<List<BigDecimal>> seValue(@RequestBody TripleDTO<String,LocalDateTime,LocalDateTime> tripleDTO);
+
     /**
      * 生产管理-进出站计数归档
      *

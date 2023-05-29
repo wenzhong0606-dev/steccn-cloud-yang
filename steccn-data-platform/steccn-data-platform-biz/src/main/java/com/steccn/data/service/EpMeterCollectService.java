@@ -1,11 +1,12 @@
 package com.steccn.data.service;
 
-import com.steccn.common.constant.ResultCode;
-import com.steccn.data.domain.EpMeterCollect;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.data.vo.DwEpMeterCollectVO;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.dto.DwMeterReadDTO;
+import com.steccn.data.vo.DwEpMeterCollectVO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -48,4 +49,11 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     Boolean refreshLastReadTime(LocalDateTime curTime);
+
+    /**
+     * 获取仪表2个时间点的差值
+     * @param tripleDTO 参数
+     * @return
+     */
+    List<BigDecimal> seValue(TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO);
 }
