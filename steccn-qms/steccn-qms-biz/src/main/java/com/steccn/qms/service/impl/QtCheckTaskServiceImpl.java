@@ -899,7 +899,9 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
                                 }
                             }else if (QtManagerConstant.INGREDIENTNUM.equals(sampleInfo.getId())) {
                                 if (StringUtils.isNotBlank(entry.getKey())) {
-                                    objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
+                                    if(StringUtils.isNotBlank(entry.getValue())){
+                                        objectMap.get(entry.getKey()).setIngredientNum(Integer.valueOf(entry.getValue()));
+                                    }
                                 }
                             }else if (QtManagerConstant.SAMPLINGTIMEMIX.equals(sampleInfo.getId())) {
                                 //配料抽检专用localDateTime
