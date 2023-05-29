@@ -1,6 +1,7 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,25 +12,30 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
 import com.steccn.platform.feign.RemoteSpareFeignApi;
-import com.steccn.pms.domain.PmsCompleteDelivery;
-import com.steccn.pms.domain.PmsCompleteDeliveryInfo;
-import com.steccn.pms.domain.PmsProduceOrderCraft;
-import com.steccn.pms.domain.PmsWorkOrderBom;
+import com.steccn.platform.vo.SysDictVO;
+import com.steccn.pms.constant.PmManagerConstant;
+import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
 import com.steccn.pms.service.*;
 import com.steccn.pms.mapper.PmsCompleteDeliveryMapper;
+import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,8 +45,7 @@ import java.util.stream.Collectors;
  * @createDate 2022-09-28 15:18:51
  */
 @Service
-public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliveryMapper, PmsCompleteDelivery>
-        implements PmsCompleteDeliveryService {
+public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliveryMapper, PmsCompleteDelivery> implements PmsCompleteDeliveryService {
 
 
     @Autowired
@@ -95,19 +100,17 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             Map<Long, PmsProduceOrderCraftVO> processMap = pmsProduceOrderCraftService.listById(processIds);
             PmsProduceOrderCraftVO defaultCraftVO = new PmsProduceOrderCraftVO();
             if (CollUtil.isNotEmpty(records)) {
-                records.forEach(
-                        pmsCompleteDeliveryVO -> {
-                            PmsProduceOrderCraftVO pmsProduceOrderCraftVO = processMap.getOrDefault(pmsCompleteDeliveryVO.getProcessId(), defaultCraftVO);
-                            //处理单位数据
-                            pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
-                            pmsCompleteDeliveryVO.setTypeName(dictData.get(pmsCompleteDeliveryVO.getTypeId()));
-                            //处理工序数据
-                            pmsCompleteDeliveryVO.setProcessName(pmsProduceOrderCraftVO.getName());
-                            //处理仓库货架信息
-                            pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
-                            pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
-                        }
-                );
+                records.forEach(pmsCompleteDeliveryVO -> {
+                    PmsProduceOrderCraftVO pmsProduceOrderCraftVO = processMap.getOrDefault(pmsCompleteDeliveryVO.getProcessId(), defaultCraftVO);
+                    //处理单位数据
+                    pmsCompleteDeliveryVO.setUnit(dictData.get(pmsCompleteDeliveryVO.getUnitId()));
+                    pmsCompleteDeliveryVO.setTypeName(dictData.get(pmsCompleteDeliveryVO.getTypeId()));
+                    //处理工序数据
+                    pmsCompleteDeliveryVO.setProcessName(pmsProduceOrderCraftVO.getName());
+                    //处理仓库货架信息
+                    pmsCompleteDeliveryVO.setWarehouseName(officeMapData.get(pmsCompleteDeliveryVO.getWarehouseId()));
+                    pmsCompleteDeliveryVO.setShelfName(officeMapData.get(pmsCompleteDeliveryVO.getShelfId()));
+                });
             }
         }
         return page;
@@ -162,10 +165,7 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                         for (ProduceOrderProcessNumVO materialVO : processEntry.getValue()) {
                             materialResMap.put(materialVO.getMaterialId(), materialVO);
                             //基于生产订单的bom去查询计划数量
-                            PmsWorkOrderBom one = pmsWorkOrderBomService.getOne(new LambdaQueryWrapper<PmsWorkOrderBom>()
-                                    .eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey())
-                                    .eq(Objects.nonNull(craftMap.get(processEntry.getKey())), PmsWorkOrderBom::getProcessId, craftMap.get(processEntry.getKey()).getProcessId())
-                                    .eq(PmsWorkOrderBom::getModuleId, materialVO.getMaterialId()), false);
+                            PmsWorkOrderBom one = pmsWorkOrderBomService.getOne(new LambdaQueryWrapper<PmsWorkOrderBom>().eq(PmsWorkOrderBom::getWorkProduceId, produceOrderEntry.getKey()).eq(Objects.nonNull(craftMap.get(processEntry.getKey())), PmsWorkOrderBom::getProcessId, craftMap.get(processEntry.getKey()).getProcessId()).eq(PmsWorkOrderBom::getModuleId, materialVO.getMaterialId()), false);
                             if (Objects.nonNull(one) && Objects.nonNull(one.getQuantity())) {
                                 materialVO.setAvaQuantity(one.getQuantity());
                             } else {
@@ -220,9 +220,9 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
                 Set<Integer> organIdSet = Sets.newHashSet();
                 Set<Long> dictIdSet = Sets.newHashSet();
                 dbList.forEach(ele -> {
-                      organIdSet.add(ele.getWarehouseId());
-                      organIdSet.add(ele.getShelfId());
-                      dictIdSet.add(ele.getUnitId());
+                    organIdSet.add(ele.getWarehouseId());
+                    organIdSet.add(ele.getShelfId());
+                    dictIdSet.add(ele.getUnitId());
                 });
                 Map<Long, String> dictMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(dictIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
                 Map<Integer, String> organMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(organIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
@@ -242,6 +242,49 @@ public class PmsCompleteDeliveryServiceImpl extends ServiceImpl<PmsCompleteDeliv
             }
         }
         return resList;
+    }
+
+    @Override
+    public Boolean generateOrderByCompleteStorage(PmsCompleteDelivery pmsCompleteDelivery, WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO) {
+        pmsCompleteDelivery.setId(IdUtil.getSnowflake().nextId());
+        pmsCompleteDelivery.setCode(maxOutVouchCode());
+        pmsCompleteDelivery.setState(PmManagerConstant.InVouchEnum.FINISH.getCode());
+        pmsCompleteDelivery.setDeliveryTime(LocalDateTime.now());
+        SysDictVO sysDictVO = FeignOptional.of(() -> remoteDictFeignApi.getByCode(SysDictConstant.CODE_4, SysDictConstant.TYPE_OUTBOUND_TYPE), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        pmsCompleteDelivery.setTypeId(sysDictVO.getId());
+        if (CollUtil.isNotEmpty(wmsDeliveryReceiptDTO.getList())) {
+            List<PmsCompleteDeliveryInfo> infoList = Lists.newArrayList();
+            wmsDeliveryReceiptDTO.getList().forEach(info -> {
+                PmsCompleteDeliveryInfo deliveryInfo = new PmsCompleteDeliveryInfo();
+                BeanUtils.copyProperties(info, deliveryInfo);
+                deliveryInfo.setCompleteDeliveryId(pmsCompleteDelivery.getId());
+                deliveryInfo.setBatchNo(info.getBatch());
+                infoList.add(deliveryInfo);
+            });
+            pmsCompleteDeliveryInfoService.saveBatch(infoList);
+        }
+        return save(pmsCompleteDelivery);
+    }
+
+
+    /**
+     * 最大出库code
+     *
+     * @return
+     */
+    private String maxOutVouchCode() {
+        String prefix = PmsCodeUtil.PREFIX_SO + LocalDate.now().toString().replaceAll(PmsCodeUtil.SHORT_LINE, Strings.EMPTY) + PmsCodeUtil.SHORT_LINE;
+        PmsCompleteDelivery one = getOne(new LambdaQueryWrapper<PmsCompleteDelivery>().likeRight(PmsCompleteDelivery::getCode, prefix).orderByDesc(PmsCompleteDelivery::getCode).last(MpConstant.STR_LIMIT_1));
+        long currentMax = PmsCodeUtil.DEFAULT_PADDING;
+        if (Objects.nonNull(one)) {
+            String substring = one.getCode().substring(one.getCode().length() - PmsCodeUtil.NUM_BIT_4);
+            try {
+                currentMax = Long.parseLong(substring);
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage());
+            }
+        }
+        return PmsCodeUtil.getNextCode(prefix, PmsCodeUtil.NUM_BIT_4, currentMax);
     }
 }
 

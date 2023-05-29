@@ -342,7 +342,7 @@ public interface PmManagerConstant {
     @Getter
     @AllArgsConstructor
     enum InVouchEnum {
-        CREATE(0, "已创建"), FINISH(1, "已完成");
+        CREATE(0, "已创建"), FINISH(1, "已完成"),CHARGE(2,"已冲销");
 
         private final Integer code;
 

@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
@@ -29,10 +30,12 @@ import com.steccn.pms.mapper.PmsCompleteStorageMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.util.PmsCodeUtil;
 import com.steccn.pms.vo.*;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptInfoDTO;
 import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import com.steccn.wms.feign.RemoteWmsShelfStrategyFeignApi;
+import com.steccn.wms.feign.RemoteWmsStorageReceiptFeignApi;
 import com.steccn.wms.vo.WmsMaterialShelfUpVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -79,7 +82,11 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     private RemoteWmsShelfStrategyFeignApi remoteWmsShelfStrategyFeignApi;
     @Autowired
     private RedissonClient redissonClient;
+    @Autowired
+    private RemoteWmsStorageReceiptFeignApi remoteWmsStorageReceiptFeignApi;
 
+    @Autowired
+    private PmsCompleteDeliveryService pmsCompleteDeliveryService;
 
     @Override
     public CompleteStorageScanDTO scan(Integer warehouseId, String caseNo) {
@@ -145,7 +152,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         try {
             //校验一箱货只能存在于一个入库单中
             Set<String> caseNoSet = dtoList.stream().map(CompleteStorageScanDTO::getCaseNo).collect(Collectors.toSet());
-            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(),caseNoSet), "部分箱已生成入库单了");
+            Assert.isFalse(completeStorageInfoService.existCaseNo(sysDictVO.getId(), caseNoSet), "部分箱已生成入库单了");
             //校验生产订单的产线是否相同不同，不可以创建入库单
             Set<Long> orderSet = dtoList.stream().map(CompleteStorageScanDTO::getProduceOrderId).collect(Collectors.toSet());
             List<PmsProduceOrder> list = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
@@ -310,7 +317,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             storageSet.add(pbp.getWarehouseId());
             storageSet.add(pbp.getShelfId());
         }
-        Map<Integer, String> sysOfficeMap = FeignOptional.of(()->remoteOfficeFeign.listByIdCh(storageSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, String> sysOfficeMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(storageSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         List<PmsProduceOrder> pmsProduceOrders = pmsProduceOrderService.listByIds(orderSet);
         Map<Long, PmsProduceOrder> resMap = Maps.newHashMap();
@@ -463,8 +470,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long generateByDelivery(ProcessReportWorkSubmitDTO dto, List<PmsCompleteDeliveryInfo> infoList) {
-        if(Objects.isNull(dto) || CollUtil.isEmpty(infoList)){
-           return null;
+        if (Objects.isNull(dto) || CollUtil.isEmpty(infoList)) {
+            return null;
         }
         //分布式锁 ，保证最大入库单号
         //加锁
@@ -490,7 +497,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             BigDecimal sumQuantity = BigDecimal.ZERO;
             //获取仓库的名称
             Set<Integer> organSet = Sets.newHashSet();
-            infoList.forEach(ele ->{
+            infoList.forEach(ele -> {
                 organSet.add(ele.getShelfId());
                 organSet.add(ele.getWarehouseId());
             });
@@ -530,13 +537,58 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             receiptDTO.setList(receiptInfoList);
             receiptDTO.setSourceType(PmManagerConstant.OrderStateEnum.ZERO.getCode());
             remoteWmsInventoryFeignApi.generateInStorageVoucher(receiptDTO);
-        }catch (Exception e){
-            log.error("生成入库单[冲销入库]失败 -> {}",e.getLocalizedMessage());
+        } catch (Exception e) {
+            log.error("生成入库单[冲销入库]失败 -> {}", e.getLocalizedMessage());
             throw new BusinessException("生成入库单失败");
-        }finally {
+        } finally {
             lock.unlock();
         }
         return model.getId();
+    }
+
+    /**
+     * 生产 -冲销入库
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public Boolean chargeAgainst(Long id) {
+        //获取生产入库单信息
+        PmsCompleteStorage pmsCompleteStorage = getById(id);
+        //校验状态
+        Assert.isTrue(PmManagerConstant.InVouchEnum.FINISH.getCode().equals(pmsCompleteStorage.getState()), "当前状态不可冲销");
+        //调用仓储冲销功能
+        WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO = FeignOptional.of(() -> remoteWmsStorageReceiptFeignApi.chargeAgainstByCode(pmsCompleteStorage.getCode(), SecurityUtils.getUser().getName()), FeignConstant.STECCN_WMS_SERVICE_NAME).get();
+        if (Objects.nonNull(wmsDeliveryReceiptDTO)) {
+            //生成出库单
+            PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
+            pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
+            pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery, wmsDeliveryReceiptDTO);
+        }
+        //修改入库单状态为已冲销
+        pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CHARGE.getCode());
+        return updateById(pmsCompleteStorage);
+    }
+
+    @Override
+    public Boolean getCompleteStorageByCode(String code) {
+        List<PmsCompleteStorage> list = list(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, code));
+        if (CollUtil.isNotEmpty(list)){
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean wmsChargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO) {
+        PmsCompleteStorage storage = getOne(new LambdaQueryWrapper<PmsCompleteStorage>().eq(PmsCompleteStorage::getInStorageVoucher, wmsDeliveryReceiptDTO.getChargeAgainstCode()));
+        storage.setState(PmManagerConstant.InVouchEnum.CHARGE.getCode());
+        updateById(storage);
+        //创建对应的出库单
+        PmsCompleteDelivery pmsCompleteDelivery = new PmsCompleteDelivery();
+        pmsCompleteDelivery.setOutStorageVoucher(wmsDeliveryReceiptDTO.getCode());
+        return pmsCompleteDeliveryService.generateOrderByCompleteStorage(pmsCompleteDelivery,wmsDeliveryReceiptDTO);
     }
 
     /**

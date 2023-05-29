@@ -3,12 +3,15 @@ package com.steccn.pms.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.steccn.pms.domain.PmsCompleteDelivery;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteDeliveryDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.dto.ProcessReportWorkMaterialListDTO;
 import com.steccn.pms.vo.PmsCompleteDeliveryVO;
 import com.steccn.pms.vo.ProduceOrderProcessNumVO;
 import com.steccn.pms.vo.SubstrateIngredientVO;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
+import com.steccn.wms.dto.WmsDeliveryReceiptInfoDTO;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -67,4 +70,12 @@ public interface PmsCompleteDeliveryService extends IService<PmsCompleteDelivery
      * @return
      */
     List<ProcessReportWorkMaterialListDTO> getMaterialConsume(Long id);
+
+    /**
+     * 生成生产出库单根据入库单单信息
+     * @param pmsCompleteDelivery
+     * @param wmsDeliveryReceiptDTO
+     * @return
+     */
+    Boolean generateOrderByCompleteStorage(PmsCompleteDelivery pmsCompleteDelivery, WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO);
 }
