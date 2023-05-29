@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.steccn.hikvision.api.VideoApi;
 import com.steccn.hikvision.entity.Cameras;
 import com.steccn.hikvision.entity.HikvisionR;
+import com.steccn.hikvision.entity.PreviewURLs;
 import com.steccn.hikvision.service.HikvisionService;
 import com.steccn.hikvision.vo.CameraVO;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,31 @@ public class HikvisionServiceImpl implements HikvisionService {
     }
 
     /**
+     * 获取视频预览流
+     * @param cameraIndexCode
+     * @param protocol
+     * @return
+     */
+    @Override
+    public String previewUrl(String cameraIndexCode, String protocol) {
+        VideoApi videoApi = new VideoApi();
+        PreviewURLs previewURLs = new PreviewURLs();
+        previewURLs.setCameraIndexCode(cameraIndexCode);
+        previewURLs.setProtocol(protocol);
+        previewURLs.setExpand("transcode=0");
+        previewURLs.setStreamform("ps");
+        String url = videoApi.P(previewURLs);
+        return JSONObject.parseObject(url).toJSONString();
+    }
+
+    /**
      * 将 CameraVO 列表转换为树形结构
      * @param cameraList CameraVO 列表
      * @return 树形结构
      */
     public static List<CameraVO> convertToTree(List<CameraVO> cameraList) {
+        long id = 1L;
+
         // 创建根节点
         CameraVO root = new CameraVO();
         root.setRegionPathName("/");
@@ -58,6 +79,7 @@ public class HikvisionServiceImpl implements HikvisionService {
 
         // 遍历 CameraVO 列表，将每个节点添加到对应的父节点下
         for (CameraVO camera : cameraList) {
+            camera.setId(id++);
             String pathName = camera.getRegionPathName();
             String[] pathArr = pathName.split("/");
             String parentPath = "/";
@@ -71,8 +93,10 @@ public class HikvisionServiceImpl implements HikvisionService {
                     parent = map.get(parentPath);
                 } else {
                     CameraVO parentNode = new CameraVO();
+                    parentNode.setId(id++);
                     parentNode.setRegionPathName(parentPath);
                     parentNode.setRegionName(path);
+                    parentNode.setName(path);
                     parentNode.setChildren(new ArrayList<>());
                     parent.getChildren().add(parentNode);
                     map.put(parentPath, parentNode);

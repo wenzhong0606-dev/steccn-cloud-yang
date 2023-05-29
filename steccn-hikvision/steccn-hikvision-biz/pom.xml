@@ -69,6 +69,12 @@
             <artifactId>validation-api</artifactId>
         </dependency>
 
+        <!--导入mysql驱动-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>com.steccn</groupId>

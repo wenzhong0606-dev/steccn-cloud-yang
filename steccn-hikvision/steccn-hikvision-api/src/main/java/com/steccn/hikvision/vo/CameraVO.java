@@ -12,6 +12,11 @@ import java.util.List;
 @Data
 public class CameraVO {
 
+    /**
+     * 序号
+     */
+    private Long id;
+
 
     /**
      * 唯一编码
@@ -34,6 +39,21 @@ public class CameraVO {
      * 父级资源编号
      */
     private String parentIndexCode;
+
+    /**
+     * 资源名称
+     */
+    private String name;
+
+    /**
+     * 资源类型，carera:监控点
+     */
+    private String resourceType;
+
+    /**
+     * 监控点类型
+     */
+    private Integer cameraType;
 
     private List<CameraVO> children;
     public CameraVO() {
