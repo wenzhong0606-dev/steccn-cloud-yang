@@ -612,6 +612,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         List<EpMeterReadRowDTO> sjgDataList = Lists.newArrayList();
         //获取产量-区分深加工和基片车间
         Map<Long, EpMeterReadRowDTO> orderMap = Maps.newHashMap();
+        //因为同一时间 一条产线上 生产订单只会存在一个
+        List<EpMeterReadRowDTO> orderRowList = Lists.newArrayList();
         orderList.forEach(ele -> {
             EpMeterReadRowDTO rowDTO = new EpMeterReadRowDTO();
             rowDTO.setUuid(IdWorker.getId());
@@ -627,6 +629,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 jpDataList.add(convertToJpDto(rowDTO));
             }
             orderMap.put(rowDTO.getUuid(),rowDTO);
+            orderRowList.add(rowDTO);
         });
         //获取基片和深加工的产量
         List<QtEmsPullAmountDTO> jpNumList = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.getEmsPullAmount(new ValidList<>(jpDataList)), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
@@ -639,37 +642,39 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
         });
-        log.info("{}", jpNumList);
-        log.info("{}", sjgNumList);
-
-        //获取所有产线的孩子节点 产量等于自己
-//        epPartitionService.getAllChildrenById()
 
         //构建产量的全量数据表
         for (EpEnergyConsumeDTO consumeDTO : consumeTable) {
+            //构建单耗map
             Map<Long, BigDecimal> unitMap = Maps.newLinkedHashMap();
-            for (EpMeterReadDistantDTO order : orderList) {
+            consumeDTO.setUnitMap(unitMap);
+            //过滤出相同的班次日期，相同班次，相同厚度的订单
+            List<EpMeterReadRowDTO> filterOrderList = orderRowList.stream().filter(v -> {
+                return v.getReadDate().equals(consumeDTO.getReadDate()) &&
+                        Objects.equals(v.getClassId(), consumeDTO.getClassId()) &&
+                        Objects.equals(v.getThick(), consumeDTO.getThick());
+            }).collect(Collectors.toList());
+
+            for (EpMeterReadRowDTO order : filterOrderList) {
                 //获取产线
                 Long nodeId = meterNodeMap.get(order.getMeterId());
                 EpPartition epPartition = partitionMap.getOrDefault(nodeId, defaultPartition);
-                if(sjgLineSet.contains(epPartition.getOfficeId())){
+                if (sjgLineSet.contains(epPartition.getOfficeId())) {
                     //深加工产线
-                    List<EpPartitionVO> children = epPartitionService.getAllChildrenById(epPartition.getId());
-                    Set<Long> collect = children.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
-
-                }
-
-                if(jpLineSet.contains(epPartition.getOfficeId())){
+                    List<EpPartitionVO> sjgChildren = epPartitionService.getAllChildrenById(epPartition.getId());
+                    //深加工产线的所有孩子
+                    Set<Long> sjgChildrenSet = sjgChildren.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
+                    sjgChildrenSet.forEach(ele -> unitMap.put(ele, BigDecimalUtil.add(unitMap.get(ele), order.getYield())));
+                } else if (jpLineSet.contains(epPartition.getOfficeId())) {
                     //基片产线
-
+                    List<EpPartitionVO> jpChildren = epPartitionService.getAllChildrenById(epPartition.getId());
+                    //基片产线的所有孩子
+                    Set<Long> jpChildrenSet = jpChildren.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
+                    //获取产线的常量
+                    jpChildrenSet.forEach(ele -> unitMap.put(ele, BigDecimalUtil.add(unitMap.get(ele), order.getYield())));
                 }
             }
         }
-
-
-
-
-
 
         return Lists.newArrayList();
     }
@@ -867,9 +872,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      */
     private Set<Integer> getLine(String key) {
         SysOfficeTypeKeyDTO sysOfficeTypeKeyDTO = new SysOfficeTypeKeyDTO();
-        //查询产线--正式使用
-//        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
-        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.WORKSHOP));
+        sysOfficeTypeKeyDTO.setType(Lists.newArrayList(SysOfficeConstant.PRODUCT_LINE));
         sysOfficeTypeKeyDTO.setKey(key);
         List<SysOfficeVO> sysOfficeVOList = FeignOptional.of(() -> remoteOfficeFeign.getListByTypeAndKey(sysOfficeTypeKeyDTO), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         Set<Integer> resSet = sysOfficeVOList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
