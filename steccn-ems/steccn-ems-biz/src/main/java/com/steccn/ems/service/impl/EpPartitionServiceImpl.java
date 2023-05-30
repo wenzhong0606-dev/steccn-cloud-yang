@@ -671,9 +671,25 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public List<EpPartitionVO> getAllChildrenById(Long partitionId) {
+        List<EpPartitionVO> resList = null;
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionId));
-        List<EpPartitionVO> epPartitionVOList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
-        return epPartitionVOList;
+        if (Objects.nonNull(epPartitions)) {
+            resList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        }
+        return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public Map<Long, List<EpPartitionVO>> getAllChildren(Set<Long> partitionIdSet) {
+        Map<Long, List<EpPartitionVO>> resMap = null;
+        if (CollUtil.isNotEmpty(partitionIdSet)) {
+            List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getParentId, partitionIdSet));
+            if (Objects.nonNull(dbList)) {
+                List<EpPartitionVO> voList = BeanUtil.copyToList(dbList, EpPartitionVO.class);
+                resMap = voList.stream().collect(Collectors.groupingBy(EpPartitionVO::getParentId));
+            }
+        }
+        return Objects.nonNull(resMap) ? resMap : Maps.newHashMap();
     }
 
     @Override

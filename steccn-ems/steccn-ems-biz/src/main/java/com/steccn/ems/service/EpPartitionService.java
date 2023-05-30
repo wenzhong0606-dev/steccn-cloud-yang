@@ -97,6 +97,13 @@ public interface EpPartitionService extends IService<EpPartition> {
     List<EpPartitionVO> getAllChildrenById (Long partitionId);
 
     /**
+     * 获取直接孩子
+     * @param partitionIdSet 节点集合
+     * @return map
+     */
+    Map<Long,List<EpPartitionVO>> getAllChildren(Set<Long> partitionIdSet);
+
+    /**
      * 根据能耗类型查询能耗分区树根节点
      * @param energyType 能耗类型
      * @return
