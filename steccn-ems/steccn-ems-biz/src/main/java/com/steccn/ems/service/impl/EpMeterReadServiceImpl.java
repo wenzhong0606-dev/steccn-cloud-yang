@@ -655,10 +655,14 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         Objects.equals(v.getThick(), consumeDTO.getThick());
             }).collect(Collectors.toList());
 
+            //遍历应该考虑从下向上遍历--参考能耗全量数据表
+
+
             for (EpMeterReadRowDTO order : filterOrderList) {
                 //获取产线
                 Long nodeId = meterNodeMap.get(order.getMeterId());
                 EpPartition epPartition = partitionMap.getOrDefault(nodeId, defaultPartition);
+                //若空格所在列的节点是产线节点L或L的下级节点，则查询条件为“产线 = L”
                 if (sjgLineSet.contains(epPartition.getOfficeId())) {
                     //深加工产线
                     List<EpPartitionVO> sjgChildren = epPartitionService.getAllChildrenById(epPartition.getId());
