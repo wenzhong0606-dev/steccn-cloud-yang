@@ -9,12 +9,13 @@ import com.steccn.pms.dto.PmsRecipeRawDTO;
 import com.steccn.pms.dto.PmsWetBasisWaterRateDTO;
 import com.steccn.pms.vo.PmsRecipeVO;
 import com.steccn.pms.vo.PmsRecipeVerHisVO;
+import com.steccn.pms.vo.QmsRecipePreFillVO;
 
 /**
-* @author yequan
-* @description 针对表【pms_recipe(配方表)】的数据库操作Service
-* @createDate 2023-02-16 10:58:09
-*/
+ * @author yequan
+ * @description 针对表【pms_recipe(配方表)】的数据库操作Service
+ * @createDate 2023-02-16 10:58:09
+ */
 public interface PmsRecipeService extends IService<PmsRecipe> {
     /**
      * 获取配方单详情
@@ -42,4 +43,16 @@ public interface PmsRecipeService extends IService<PmsRecipe> {
      * @return
      */
     Boolean publishRate(PmsWetBasisWaterRateDTO dto);
+
+    /**
+     * 刷新熟料用量
+     * @return
+     */
+    Boolean refreshClerkQuantity();
+
+    /**
+     * 质量预填
+     * @return
+     */
+    QmsRecipePreFillVO qmsPreFill();
 }

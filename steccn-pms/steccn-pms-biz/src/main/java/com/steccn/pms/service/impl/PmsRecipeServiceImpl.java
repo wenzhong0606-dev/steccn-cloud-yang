@@ -32,6 +32,8 @@ import com.steccn.platform.constant.SysMsgConstant;
 import com.steccn.platform.dto.SysMsgSendDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteMsgFeignApi;
+import com.steccn.platform.feign.RemoteSpareFeignApi;
+import com.steccn.platform.vo.EqpSpareVO;
 import com.steccn.platform.vo.SysDictVO;
 import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.domain.PmsRecipe;
@@ -43,10 +45,7 @@ import com.steccn.pms.feign.RemoteMessFeignApi;
 import com.steccn.pms.service.PmsRecipeRawService;
 import com.steccn.pms.service.PmsRecipeService;
 import com.steccn.pms.mapper.PmsRecipeMapper;
-import com.steccn.pms.vo.MessScopeVO;
-import com.steccn.pms.vo.PmsRecipeRawVO;
-import com.steccn.pms.vo.PmsRecipeVO;
-import com.steccn.pms.vo.PmsRecipeVerHisVO;
+import com.steccn.pms.vo.*;
 import com.steccn.websocket.constant.WebsocketConstant;
 import com.steccn.websocket.dto.MsgPushDTO;
 import com.steccn.websocket.feign.RemoteWsFeignApi;
@@ -88,6 +87,8 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
     private final RemoteMsgFeignApi remoteMsgFeignApi;
 
     private final RedissonClient redissonClient;
+
+    private final RemoteSpareFeignApi remoteSpareFeignApi;
 
     /**
      * 获取配方单详情
@@ -175,15 +176,19 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //3、组成生料数据
         List<PmsRecipeRawVO> rawVOS = Lists.newArrayList();
         List<PmsRecipeRaw> pmsRecipeRawList = pmsRecipeRawService.list(new LambdaQueryWrapper<PmsRecipeRaw>().eq(PmsRecipeRaw::getRecipeId, pmsRecipe.getId()));
-        pmsRecipeRawList.forEach(tmp -> {
+        BigDecimal dryBasisQuantityAll = BigDecimal.ZERO;
+        for(PmsRecipeRaw tmp:pmsRecipeRawList){
             PmsRecipeRawVO rawTmp = new PmsRecipeRawVO();
             BeanUtil.copyProperties(tmp, rawTmp);
             //便于前端判断
             if (Objects.isNull(rawTmp.getWetBasisWaterRate())) {
                 rawTmp.setWetBasisWaterRate(new BigDecimal(0));
             }
+            //加总干基
+            dryBasisQuantityAll = BigDecimalUtil.add(tmp.getDryBasisQuantity(),dryBasisQuantityAll,4);
             rawVOS.add(rawTmp);
-        });
+        }
+        pmsRecipeVO.setDryBasisQuantityAll(dryBasisQuantityAll);
         pmsRecipeVO.setRawList(rawVOS);
         //4、处理按钮权限数据
         SteccnUser user = SecurityUtils.getUser();
@@ -203,6 +208,12 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         } else {
             pmsRecipeVO.setButtonAmountAuth(0);
             pmsRecipeVO.setButtonRateAuth(0);
+        }
+        //5、生料占比 历史数据刷为1 - 所属版本的熟料占比
+        if(Objects.isNull(pmsRecipeVO.getClinkerRate())){
+            pmsRecipeVO.setRawRate(new BigDecimal(100));
+        }else {
+            pmsRecipeVO.setRawRate(BigDecimalUtil.subtract(new BigDecimal(100),pmsRecipeVO.getClinkerRate()));
         }
         return pmsRecipeVO;
     }
@@ -314,9 +325,9 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             //熟料占比
             pmsRecipe.setClinkerRate(dto.getClinkerRate());
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(dto.getClinkerRate(), BigDecimal.valueOf(Long.parseLong("100")), 4);
-            //熟料用量=干基用量加总/(1-熟料占比)
+            //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            pmsRecipe.setClinkerQuantity(clinkerQuantityNum);
+            pmsRecipe.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
             //5、处理水份
             //配料含水率
             pmsRecipe.setBatchWaterRate(dto.getBatchWaterRate());
@@ -408,6 +419,7 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 //湿基用量 湿基用量=干基用量/(1-湿基含水率)
                 BigDecimal wetBasisQuantity = BigDecimalUtil.divide(tmp.getDryBasisQuantity(),
                         BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), wetBasisWaterRateNum, 6), 4);
+                wetBasisQuantity = BigDecimalUtil.add(wetBasisQuantityCount,wetBasisQuantity,4);
                 pmsRecipeRawModel.setWetBasisQuantity(wetBasisQuantity);
                 pmsRecipeRawModelList.add(pmsRecipeRawModel);
             }
@@ -436,15 +448,19 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             }
             recipeModel.setVersion(version.toString());
             //加水量=干基用量加总/(1-配合料含水率) - 湿基用量加总
-            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
-                    BigDecimalUtil.divide(dryBasisQuantityCount,
-                            BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), BigDecimalUtil.divide(newVersion.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6), 6), 4),
-                    wetBasisQuantityCount, 4);
+            //配料含水率
+            BigDecimal oneStep = BigDecimalUtil.divide(newVersion.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6);
+            //1-配料含水率
+            BigDecimal twoStep = BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")),oneStep,6);
+            //干基用量加总/(1-配合料含水率)
+            BigDecimal threeStep = BigDecimalUtil.divide(dryBasisQuantityCount,twoStep,4);
+            //干基用量加总/(1-配合料含水率) - 湿基用量加总
+            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(threeStep,wetBasisQuantityCount,4);
             recipeModel.setBatchWaterQuantity(batchWaterQuantity);
-            //熟料用量=干基用量加总/(1-熟料占比)
+            //熟料用量=干基用量加总/(1-熟料占比)- 干基用量加总
             BigDecimal clinkerRateNum = BigDecimalUtil.divide(newVersion.getClinkerRate(), new BigDecimal(100), 6);
             BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
-            recipeModel.setClinkerQuantity(clinkerQuantityNum);
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
             if (Objects.nonNull(dto.getNote())) {
                 recipeModel.setNote(dto.getNote());
             }
@@ -470,6 +486,66 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
             lock.unlock();
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean refreshClerkQuantity() {
+        List<PmsRecipe> pmsRecipeList = list();
+        pmsRecipeList.forEach(tmp->{
+            List<PmsRecipeRaw> rawList = pmsRecipeRawService.list(new LambdaQueryWrapper<PmsRecipeRaw>().eq(PmsRecipeRaw::getRecipeId, tmp.getId()));
+            BigDecimal dryBasisQuantityCount = BigDecimal.ZERO;
+            BigDecimal wetBasisQuantityCount = BigDecimal.ZERO;
+            for(PmsRecipeRaw rawTmp:rawList){
+                dryBasisQuantityCount = BigDecimalUtil.add(dryBasisQuantityCount,rawTmp.getDryBasisQuantity());
+                //湿基含水率
+                BigDecimal wetBasisWaterRateNum = BigDecimalUtil.divide(rawTmp.getWetBasisWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6);
+                BigDecimal wetBasisQuantity = BigDecimalUtil.divide(rawTmp.getDryBasisQuantity(),
+                        BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), wetBasisWaterRateNum, 6), 4);
+                wetBasisQuantityCount =  BigDecimalUtil.add(wetBasisQuantityCount,wetBasisQuantity,4);
+            }
+            BigDecimal batchWaterQuantity = BigDecimalUtil.subtract(
+                    BigDecimalUtil.divide(dryBasisQuantityCount,
+                            BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), BigDecimalUtil.divide(tmp.getBatchWaterRate(), BigDecimal.valueOf(Long.parseLong("100")), 6), 6), 4),
+                    wetBasisQuantityCount, 4);
+            PmsRecipe recipeModel = new PmsRecipe();
+            BigDecimal clinkerRateNum = BigDecimalUtil.divide(tmp.getClinkerRate(), new BigDecimal(100), 6);
+            BigDecimal clinkerQuantityNum = BigDecimalUtil.divide(dryBasisQuantityCount, BigDecimalUtil.subtract(BigDecimal.valueOf(Long.parseLong("1")), clinkerRateNum, 6), 4);
+            recipeModel.setClinkerQuantity(BigDecimalUtil.subtract(clinkerQuantityNum,dryBasisQuantityCount,4));
+            recipeModel.setBatchWaterQuantity(batchWaterQuantity);
+            recipeModel.setId(tmp.getId());
+            updateById(recipeModel);
+        });
+        return true;
+    }
+
+    @Override
+    public QmsRecipePreFillVO qmsPreFill() {
+        //先获取最新版本信息
+        QmsRecipePreFillVO vo = new QmsRecipePreFillVO();
+        //1、获取最新版本号
+        PmsRecipe newVersion = getOne(new LambdaQueryWrapper<PmsRecipe>().orderByDesc(PmsRecipe::getCreateTime).last("LIMIT 1"), false);
+        vo.setVersion(newVersion.getVersion());
+        //2、获取石英石（低铁硅砂）
+        PmsRecipeRaw pmsRecipeRaw = pmsRecipeRawService.getOne(new LambdaQueryWrapper<PmsRecipeRaw>()
+                .eq(PmsRecipeRaw::getRecipeId, newVersion.getId())
+                .eq(PmsRecipeRaw::getMaterialName, "石英砂（低铁硅砂）")
+                .last("LIMIT 1"));
+        if(Objects.nonNull(pmsRecipeRaw)){
+            //干基字段预填值为：当前配方中石英石（低铁硅砂）的干基用量值 / 2（小数点后最多保留2位，若取不到值则不预填）
+            if(Objects.nonNull(pmsRecipeRaw.getDryBasisQuantity())){
+                vo.setDryBasisQuantity(BigDecimalUtil.divide(pmsRecipeRaw.getDryBasisQuantity(),new BigDecimal(2),2));
+            }
+            //仅当干基和水份字段的值均非空时，湿基字段预填值：干基 / (1 - 水份)（水份是百分数、小数点后最多保留2位，若取不到值则不预填）
+            if(Objects.nonNull(pmsRecipeRaw.getDryBasisQuantity())&&Objects.nonNull(pmsRecipeRaw.getWetBasisWaterRate())){
+                //百分比除以100
+                BigDecimal stepOne = BigDecimalUtil.divide(pmsRecipeRaw.getWetBasisWaterRate(),new BigDecimal(100),6);
+                //1 - 水份
+                BigDecimal stepTwo = BigDecimalUtil.subtract(new BigDecimal(1),stepOne,6);
+                vo.setWetBasisQuantity(BigDecimalUtil.divide(pmsRecipeRaw.getWetBasisQuantity(),stepTwo,2));
+            }
+        }
+        return vo;
     }
 
     /**

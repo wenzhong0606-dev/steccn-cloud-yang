@@ -59,6 +59,16 @@ public class PmsRecipeVO implements Serializable {
     private BigDecimal clinkerQuantity;
 
     /**
+     * 生料占比
+     */
+    private BigDecimal rawRate;
+
+    /**
+     * 生料用量小计
+     */
+    private BigDecimal dryBasisQuantityAll;
+
+    /**
      * 熟料单位
      */
     @JsonIgnore
