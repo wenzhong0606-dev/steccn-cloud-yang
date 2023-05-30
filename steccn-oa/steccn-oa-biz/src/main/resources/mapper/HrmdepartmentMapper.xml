@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.HrmdepartmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.Hrmdepartment">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="departmentmark" column="DEPARTMENTMARK" jdbcType="VARCHAR"/>
+            <result property="departmentname" column="DEPARTMENTNAME" jdbcType="VARCHAR"/>
+            <result property="subcompanyid1" column="SUBCOMPANYID1" jdbcType="INTEGER"/>
+            <result property="supdepid" column="SUPDEPID" jdbcType="INTEGER"/>
+            <result property="allsupdepid" column="ALLSUPDEPID" jdbcType="VARCHAR"/>
+            <result property="canceled" column="CANCELED" jdbcType="CHAR"/>
+            <result property="departmentcode" column="DEPARTMENTCODE" jdbcType="VARCHAR"/>
+            <result property="coadjutant" column="COADJUTANT" jdbcType="INTEGER"/>
+            <result property="zzjgbmfzr" column="ZZJGBMFZR" jdbcType="VARCHAR"/>
+            <result property="zzjgbmfgld" column="ZZJGBMFGLD" jdbcType="VARCHAR"/>
+            <result property="jzglbmfzr" column="JZGLBMFZR" jdbcType="VARCHAR"/>
+            <result property="jzglbmfgld" column="JZGLBMFGLD" jdbcType="VARCHAR"/>
+            <result property="bmfzr" column="BMFZR" jdbcType="VARCHAR"/>
+            <result property="bmfgld" column="BMFGLD" jdbcType="VARCHAR"/>
+            <result property="outkey" column="OUTKEY" jdbcType="VARCHAR"/>
+            <result property="budgetatuomoveorder" column="BUDGETATUOMOVEORDER" jdbcType="INTEGER"/>
+            <result property="ecologyPinyinSearch" column="ECOLOGY_PINYIN_SEARCH" jdbcType="VARCHAR"/>
+            <result property="tlevel" column="TLEVEL" jdbcType="INTEGER"/>
+            <result property="created" column="created" jdbcType="TIMESTAMP"/>
+            <result property="creater" column="creater" jdbcType="INTEGER"/>
+            <result property="modified" column="modified" jdbcType="TIMESTAMP"/>
+            <result property="modifier" column="modifier" jdbcType="INTEGER"/>
+            <result property="uuid" column="uuid" jdbcType="VARCHAR"/>
+            <result property="showorder" column="showorder" jdbcType="DOUBLE"/>
+            <result property="showorderoftree" column="showOrderOfTree" jdbcType="INTEGER"/>
+            <result property="tenantKey" column="tenant_key" jdbcType="VARCHAR"/>
+            <result property="depSyncTime" column="dep_sync_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,DEPARTMENTMARK,DEPARTMENTNAME,
+        SUBCOMPANYID1,SUPDEPID,ALLSUPDEPID,
+        CANCELED,DEPARTMENTCODE,COADJUTANT,
+        ZZJGBMFZR,ZZJGBMFGLD,JZGLBMFZR,
+        JZGLBMFGLD,BMFZR,BMFGLD,
+        OUTKEY,BUDGETATUOMOVEORDER,ECOLOGY_PINYIN_SEARCH,
+        TLEVEL,created,creater,
+        modified,modifier,uuid,
+        showorder,showOrderOfTree,tenant_key,
+        dep_sync_time
+    </sql>
+</mapper>

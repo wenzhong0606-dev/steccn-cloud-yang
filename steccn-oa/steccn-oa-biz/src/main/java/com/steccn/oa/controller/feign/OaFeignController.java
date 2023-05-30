@@ -5,11 +5,10 @@ import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
 import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
-import com.steccn.oa.service.HrmresourceService;
-import com.steccn.oa.service.KqGroupmemberService;
-import com.steccn.oa.service.OaService;
-import com.steccn.oa.service.WorkflowCurrentoperatorService;
+import com.steccn.oa.service.*;
+import com.steccn.oa.vo.OaDepartmentVO;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
+import com.steccn.oa.vo.OaJobTitleVO;
 import com.steccn.oa.vo.OaSaveDocVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,6 +40,10 @@ public class OaFeignController {
     private final KqGroupmemberService kqGroupmemberService;
 
     private final OaService oaService;
+
+    private final HrmdepartmentService hrmdepartmentService;
+
+    private final HrmjobtitlesService hrmjobtitlesService;
 
     @PostMapping("/user/ch")
     @ApiOperation("根据主键id查询oa用户的中文名称")
@@ -75,4 +78,15 @@ public class OaFeignController {
         return R.success(oaService.saveDoc(url,docName));
     }
 
+    @ApiOperation("根据部门id获取信息")
+    @GetMapping("/department/info")
+    public R<OaDepartmentVO> getDepartmentInfoById(@RequestParam("id") Integer id){
+        return R.success(hrmdepartmentService.getOaDepartmentById(id));
+    }
+
+    @ApiOperation("根据岗位id获取岗位信息")
+    @GetMapping("/jobTitle/info")
+    public R<OaJobTitleVO> getJobInfoById(@RequestParam("id") Integer id){
+        return R.success(hrmjobtitlesService.getJobInfoById(id));
+    }
 }
