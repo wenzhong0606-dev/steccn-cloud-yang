@@ -28,6 +28,7 @@
         <module>steccn-flink-cdc</module>
         <module>steccn-data-platform-come</module>
         <module>steccn-handle-data</module>
+        <module>steccn-hikvision</module>
     </modules>
 
     <properties>
@@ -159,6 +160,18 @@
             <dependency>
                 <groupId>com.steccn</groupId>
                 <artifactId>steccn-platform-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!-- steccn-hikvision-biz-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-hikvision-biz</artifactId>
+                <version>${steccn-cloud.version}</version>
+            </dependency>
+            <!-- steccn-hikvision-api-->
+            <dependency>
+                <groupId>com.steccn</groupId>
+                <artifactId>steccn-hikvision-api</artifactId>
                 <version>${steccn-cloud.version}</version>
             </dependency>
 

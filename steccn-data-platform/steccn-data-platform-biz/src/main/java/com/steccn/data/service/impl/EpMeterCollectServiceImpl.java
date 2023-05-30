@@ -9,6 +9,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
@@ -113,5 +115,30 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
             });
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BigDecimal> seValue(TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO) {
+        String code = tripleDTO.getField1();
+        LocalDateTime start = tripleDTO.getField2();
+        LocalDateTime end = tripleDTO.getField3();
+
+        EpMeterCollect first = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, code)
+                .between(EpMeterCollect::getRecordTime, LocalDateTime.of(start.toLocalDate(), LocalTime.MIN), start)
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+        EpMeterCollect second = getOne(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, code)
+                .between(EpMeterCollect::getRecordTime, LocalDateTime.of(end.toLocalDate(), LocalTime.MIN), end)
+                .orderByDesc(EpMeterCollect::getRecordTime)
+                .last(MpConstant.STR_LIMIT_1));
+
+        BigDecimal value1 = Objects.nonNull(first) ? first.getValue() : BigDecimal.ZERO;
+        BigDecimal value2 = Objects.nonNull(second) ? second.getValue() : value1;
+        List<BigDecimal> resList = new ArrayList<>();
+        resList.add(value1);
+        resList.add(value2);
+        return resList;
     }
 }

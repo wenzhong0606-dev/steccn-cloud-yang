@@ -823,8 +823,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
-            int sum = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
-            data.setIngredientNum(sum);
+            List<QtDaySamplingDTO> ingredientList = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).collect(Collectors.toList());
+            if(CollUtil.isEmpty(ingredientList)){
+                data.setIngredientNum(null);
+            }else{
+                int sum = ingredientList.stream().mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
+                data.setIngredientNum(sum);
+            }
             dataList.add(data);
             List<String> itemList = new ArrayList<>();
             for (int i = 0; i < idx; i++) {

@@ -23,7 +23,7 @@ public class WmsStorageReceiptVO {
     private String code;
 
     @ApiModelProperty("状态")
-    private String status;
+    private Integer status;
 
     @ApiModelProperty("类型")
     private Long type;

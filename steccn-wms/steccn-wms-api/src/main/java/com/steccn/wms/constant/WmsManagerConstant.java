@@ -13,10 +13,13 @@ public interface WmsManagerConstant {
      */
     String CODE_ONE = "1";
 
+    String CODE_TWO = "2";
+
     /**
      * 采购类型
      */
     String WAREHOUSING_TYPE = "warehousing_type";
+
 
     /**
      * 是否
@@ -59,7 +62,8 @@ public interface WmsManagerConstant {
         ONE(1, "已确认"),
         TWO(2, "部分确认"),
         THREE(3, "已完成"),
-        FOUR(4, "已删除");
+        FOUR(4, "已删除"),
+        FIVE(5,"已冲销");
 
         private final Integer code;
 

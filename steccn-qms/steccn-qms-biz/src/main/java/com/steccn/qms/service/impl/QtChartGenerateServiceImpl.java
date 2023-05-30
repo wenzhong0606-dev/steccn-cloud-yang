@@ -608,7 +608,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 }
                                 point = 2;
                             }
-                            //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000
+                            //缺陷项q导致损耗重量 = 缺陷项q的数量 * 平均单片重量 / 1000 /2
                             //缺陷项q的数量：缺陷记录时段在班次日期D班次b的时段内、产线A的所有已完成在线检任务记录的缺陷项q数量加总 + 检验完成时间在班次日期D班次b的时段内产线A的所有巡检任务中人工选择“次”后关联缺陷项q的数量加总 + 在班次日期D班次b的时段内产线A的检验设备上报的缺陷项q总数
                             //计算缺陷项Q的损耗重量
                             for (Map.Entry<String, Integer> defectEntry : defectCounts.entrySet()) {
@@ -617,7 +617,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                 BigDecimal multiplyRes = BigDecimalUtil.multiply(BigDecimal.valueOf(defectEntry.getValue()), avgDanItem);
                                 //缺陷项q导致损耗重量
                                 BigDecimal defectResultData = BigDecimalUtil.divide(multiplyRes, new BigDecimal(1000),4);
-
+                                //产品需求多除以2
+                                defectResultData = BigDecimalUtil.divide(defectResultData,new BigDecimal(2),4);
                                 //把缺陷项q的损耗重量放入全量数据中
                                 if (defectLossWeightMap.get(defectEntry.getKey()) == null) {
                                     defectLossWeightMap.put(defectEntry.getKey(), defectResultData);
@@ -659,8 +660,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                                     BigDecimal thirdStep = BigDecimalUtil.multiply(secondStep, avgDanItem);
                                     //r导致的落板时长 * 拉引时速 / 玻璃片长度 * 平均单片重量 / 1000000
 //                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1000000),4);
-                                    //数据不对，修改精度
-                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(100),4);
+                                    //落版原因，产品改需求不需要除法
+                                    BigDecimal reasonResult = BigDecimalUtil.divide(thirdStep, new BigDecimal(1),4);
                                     if (StrUtil.isBlank(info.getDestoryReason())) {
                                         info.setDestoryReason("");
                                     }
@@ -1168,7 +1169,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 Map<String, BigDecimal> groupByReason = data.stream().collect(Collectors.groupingBy(QtChartSubDetailDTO::getReason, CollectorsUtil.summingBigDecimal(QtChartSubDetailDTO::getLossWeight)));
                 Map<String, BigDecimal> orderByLossWeight = MapUtil.sortByValue(groupByReason, false);
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
-                List<BigDecimal> legend = Lists.newArrayList();
+                List<String> legend = Lists.newArrayList();
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //一根柱子
                     StackGraphDTO graphDTO = new StackGraphDTO();
@@ -1185,7 +1186,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                     //算折线图
                     BigDecimal sunRate = BigDecimal.ZERO;
                     sunRate = BigDecimalUtil.divide(reasonEntry.getValue(), laAmountMap.get(reasonEntry.getValue()),6);
-                    legend.add(sunRate);
+                    legend.add(sunRate.toString());
                 }
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
                 resultDTO.setLegend(legend);
@@ -1201,7 +1202,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 //所有的柱子
                 List<StackGraphDTO<String, BigDecimal>> stackGraphDTOS = new ArrayList<>();
                 //折线图
-                List<BigDecimal> legend = Lists.newArrayList();
+                List<String> legend = Lists.newArrayList();
                 //根据损耗重量分组
                 for (Map.Entry<String, BigDecimal> reasonEntry : orderByLossWeight.entrySet()) {
                     //拿到损耗原因的所有值
@@ -1262,7 +1263,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         graphDTO.setData(tupleDTOList);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(sunRate);
+                        legend.add(sunRate.toString());
                     }
 
                     //按照车间堆叠
@@ -1291,7 +1292,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         graphDTO.setData(tupleDTOList);
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(sunRate);
+                        legend.add(sunRate.toString());
                     }
 
                     //按照产线堆叠
@@ -1320,7 +1321,7 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                         }
                         //算折线图
                         BigDecimal sunRate = BigDecimalUtil.divide(sunAmount,laAmountMap.get(reasonEntry.getKey()),6);
-                        legend.add(sunRate);
+                        legend.add(sunRate.toString());
                     }
                     stackGraphDTOS.add(graphDTO);
 
