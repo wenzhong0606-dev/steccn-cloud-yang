@@ -15,6 +15,8 @@ import lombok.Data;
 @ApiModel("完工入库信息DTO")
 public class PmsCompleteStorageDTO extends BasePageDTO {
 
+    private Long id;
+
     @ApiModelProperty("订单id")
     private Long produceOrderId;
 

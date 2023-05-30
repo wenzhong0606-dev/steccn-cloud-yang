@@ -2,6 +2,7 @@ package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.domain.WmsInventory;
 import com.steccn.wms.dto.StockInfoDTO;
 import com.steccn.common.vo.R;
 import com.steccn.wms.domain.WmsDeliveryReceipt;
@@ -10,6 +11,7 @@ import com.steccn.wms.dto.WmsDeliveryReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
 import com.steccn.wms.vo.WmsScanInventoryVO;
 
+import java.util.List;
 import java.util.Map;
 
 import java.util.Map;
@@ -88,4 +90,12 @@ public interface WmsDeliveryReceiptService extends IService<WmsDeliveryReceipt> 
      * @return
      */
     R<String> scanDeliveryReceipt( Map<String, Object> paramMap);
+
+
+    /**
+     *  冲销出库
+     * @param wmsDeliveryReceiptDTO
+     * @return
+     */
+    WmsDeliveryReceiptDTO chargeAgainst(WmsDeliveryReceiptDTO wmsDeliveryReceiptDTO,String userName);
 }

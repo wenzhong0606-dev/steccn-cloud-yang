@@ -71,6 +71,12 @@ public class WmsStorageReceiptController {
         return R.success(wmsStorageReceiptService.affirm(dto.getId()));
     }
 
+    @ApiOperation("冲销")
+    @PostMapping("/charge/against")
+    public R<Boolean> chargeAgainst(@RequestBody WmsStorageReceiptDTO dto){
+        return R.success(wmsStorageReceiptService.chargeAgainstById(dto.getId()));
+    }
+
     @ApiOperation("入库凭证确认")
     @PutMapping("/affirm/code")
     @SysLog("入库凭证确认")

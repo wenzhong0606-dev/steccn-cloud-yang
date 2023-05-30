@@ -383,6 +383,18 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
     }
 
     @Override
+    public Map<Long, List<WmsInventory>> inventoryMap(Set<Long> materialIds) {
+        Map<Long, List<WmsInventory>> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(materialIds)){
+            List<WmsInventory> list = list(new LambdaQueryWrapper<WmsInventory>().in(WmsInventory::getMaterialId, materialIds));
+            if (CollUtil.isNotEmpty(list)) {
+                map = list.stream().collect(Collectors.groupingBy(WmsInventory::getMaterialId));
+            }
+        }
+        return map;
+    }
+
+    @Override
     public List<WmsStockInventoryDTO> materialConsume(List<MaterialStorageInfoDTO> list) {
 //        //定义集合
 //        //批量查询物料在库存中的存量
@@ -502,6 +514,11 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
             }
         }
         return res;
+    }
+
+    @Override
+    public Boolean deduct(List<WmsInventory> wmsInventoryList) {
+      return updateBatchById(wmsInventoryList);
     }
 
 
