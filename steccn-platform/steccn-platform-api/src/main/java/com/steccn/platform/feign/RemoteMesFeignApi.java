@@ -1,5 +1,6 @@
 package com.steccn.platform.feign;
 
+import com.steccn.platform.dto.MesUserDTO;
 import com.steccn.platform.vo.MesClassificationVO;
 import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -29,4 +30,15 @@ public interface RemoteMesFeignApi {
     @Headers(value = {"content-type=application/json"})
     @ResponseBody
     Map<String,String> getClassInfoById(@RequestBody Set<String> classIds);
+
+    /**
+     * 根据分类id查询分类信息
+     *
+     * @param classIds
+     * @return
+     */
+    @PostMapping(value = "/web/sys/empUser/save?isNewRecord=true&op=add")
+    @Headers(value = {"content-type=application/json"})
+    @ResponseBody
+    Map<String,String> saveUser(@RequestBody MesUserDTO mesUserDTO);
 }
