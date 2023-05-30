@@ -57,7 +57,8 @@
             <foreach collection="materialSet" item="id"  open="(" close=")" separator=",">
                 #{id}
             </foreach>
-            AND DATE_FORMAT( si.create_time, '%Y-%m-%d' ) = #{date}
+        AND si.create_time &gt;= #{start}
+        AND si.create_time &lt;= #{end}
         GROUP BY
             pbp.material_id,pbp.classes_id
 
