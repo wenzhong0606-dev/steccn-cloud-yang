@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 public interface CdcConstant {
 
     String UNALLOCATED_DEPARTMENT_CODE = "Unallocated";
+    String UNALLOCATED_DEPARTMENT_NAME = "待分配部门";
     Integer NUM_2 = 2;
+    Integer NUM_5 = 5;
     String JOB_TITLE_RONGHUA = "熔化班长";
     /**
      * 部门映射

@@ -16,4 +16,6 @@ public class MesUserDTO implements Serializable {
     private String userName;
     private String userRoleString;
     private String userType;
+    private MesEmployeeDTO mesEmployeeDTO;
+    private Boolean isNewRecord;
 }

@@ -1,5 +1,6 @@
 package com.steccn.platform.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.io.Serializable;
  * @date 2023/05/30
  */
 @Data
+@AllArgsConstructor
 public class MesCompanyDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
