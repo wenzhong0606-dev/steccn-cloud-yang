@@ -665,11 +665,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         jpNumList.forEach(ele -> {
             EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             jpRowDTO.setYield(ele.getPullAmount());
+            //test
+            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"),new BigDecimal("100")),2));
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
+            //test
+            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"),new BigDecimal("100")),2));
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
