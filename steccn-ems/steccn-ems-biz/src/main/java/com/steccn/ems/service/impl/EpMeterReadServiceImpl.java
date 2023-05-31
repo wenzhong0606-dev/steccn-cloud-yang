@@ -19,7 +19,6 @@ import com.steccn.authserver.util.SecurityUtils;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.authserver.util.SteccnUser;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
@@ -54,7 +53,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -654,13 +652,18 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //考虑性能优化
         Map<Long, List<EpPartitionVO>> allChildren = epPartitionService.getAllChildren(nodeLinkMeterMap.keySet());
 
+        //获取所有产线的父节点-不包含父节点
+        Map<Long,Set<Long>> lineParentMap =  getLineParentMap(partitionMap.values(),jpLineSet,sjgLineSet);
+        root(partitionMap.values());
+        Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
+
         //保存所有的unitMap
         Map<String, Map<Long, BigDecimal>> unitMapCol = Maps.newHashMap();
         //构建产量的全量数据表
         for (EpEnergyConsumeDTO consumeDTO : consumeTable) {
             //构建单耗map
             Map<Long, BigDecimal> unitMap = Maps.newLinkedHashMap();
-            consumeDTO.setUnitMap(unitMap);
+            consumeDTO.setYieldMap(unitMap);
             unitMapCol.put(consumeDTO.getReadDate() + "_" + consumeDTO.getClassId() + "_" + consumeDTO.getThick(), unitMap);
             //遍历应该考虑从下向上遍历--参考能耗全量数据表
             childTypeMap.forEach((k,v) ->{
@@ -683,7 +686,12 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                         //若空格所在列的节点是产线节点的上级节点，则查询条件为“产线 = 该上级节点以下所有产线节点”
                         BigDecimal workShopYieldSum = orderRowList.stream().filter(ele -> childrenOfficeSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
                         unitMap.put(epPartition.getId(), workShopYieldSum);
-                    }else if(noThickAndClass(consumeDTO.getClassId(),consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())){
+                    }else if(Boolean.TRUE){
+                        //如果是基片制造部和深加工制造部
+                        log.info("xxx{}");
+
+
+                    } else if(noThickAndClass(consumeDTO.getClassId(),consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())){
                         //对于班次、产品厚度均为“无”的行，值为“-”的单元格K填入日产量t：
                         BigDecimal tempSum = null;
                         for (Map.Entry<String, Map<Long, BigDecimal>> entry : unitMapCol.entrySet()) {
@@ -694,10 +702,86 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
             });
         }
-
+        //遍历集合
+        consumeTable.forEach(ele -> {
+            Map<Long, BigDecimal> consumeMap = ele.getConsumeMap();
+            Map<Long, BigDecimal> yieldMap = ele.getYieldMap();
+            Map<Long,BigDecimal> unitMap = Maps.newHashMap();
+            ele.setUnitMap(unitMap);
+            consumeMap.forEach((k,consume) ->{
+                BigDecimal yield = yieldMap.get(k);
+                BigDecimal unit = BigDecimalUtil.divide(consume, yield);
+                unitMap.put(k, unit);
+            });
+        });
         return Lists.newArrayList();
     }
 
+    /**
+     * 获取节点的产线孩子
+     * @param lineParentMap
+     * @return
+     */
+    private Map<Long, Set<Long>> getLineChildrenMap(Map<Long, Set<Long>> lineParentMap) {
+        Map<Long, Set<Long>> resMap = Maps.newHashMap();
+        //遍历所有的产线父节点
+        for (Map.Entry<Long, Set<Long>> entry : lineParentMap.entrySet()) {
+            for (Long parent : entry.getValue()) {
+                MapUtil.computeSet(resMap, parent, entry.getKey());
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取根节点
+     *
+     * @param nodeList 所有节点
+     * @return
+     */
+    private EpPartition root(Collection<EpPartition> nodeList) {
+        Optional<EpPartition> first = nodeList.stream().filter(v -> Objects.isNull(v.getParentId())).findFirst();
+        return first.get();
+    }
+    
+
+    /**
+     * 获取产线节点的父节点
+     * @param nodeList 所有的树上节点
+     * @param jpLineSet 基片产线节点
+     * @param sjgLineSet 深加工产线节点
+     * @return map
+     */
+    private Map<Long, Set<Long>> getLineParentMap(Collection<EpPartition> nodeList, Set<Integer> jpLineSet, Set<Integer> sjgLineSet) {
+        Set<Integer> lineOfficeIdSet = Sets.newHashSet();
+        Map<Long, Set<Long>> resMap = Maps.newHashMap();
+        lineOfficeIdSet.addAll(jpLineSet);
+        lineOfficeIdSet.addAll(sjgLineSet);
+        //获取产线节点的集合
+        List<EpPartition> lineSet = nodeList.stream().filter(v -> lineOfficeIdSet.contains(v.getOfficeId())).collect(Collectors.toList());
+
+        for (EpPartition line : lineSet) {
+            resMap.put(line.getId(), parentLine(Sets.newHashSet(line.getParentId()), nodeList));
+        }
+        return resMap;
+    }
+
+    /**
+     * 产线父节点
+     * @param parentIdSet 当前节点id集合
+     * @param nodeList
+     * @return
+     */
+    public Set<Long> parentLine(Set<Long> parentIdSet, Collection<EpPartition> nodeList) {
+        Set<Long> resSet = Sets.newHashSet();
+        if (CollUtil.isNotEmpty(parentIdSet)) {
+            List<EpPartition> parentList = nodeList.stream().filter(v -> parentIdSet.contains(v.getId())).collect(Collectors.toList());
+            Set<Long> currentIdSet = parentList.stream().map(EpPartition::getId).collect(Collectors.toSet());
+            resSet.addAll(currentIdSet);
+            resSet.addAll(parentLine(parentList.stream().map(EpPartition::getParentId).collect(Collectors.toSet()), nodeList));
+        }
+        return resSet;
+    }
 
     /**
      * 没有厚度和班次

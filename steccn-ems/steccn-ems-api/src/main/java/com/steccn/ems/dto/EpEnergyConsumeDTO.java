@@ -35,6 +35,9 @@ public class EpEnergyConsumeDTO implements Serializable {
     @ApiModelProperty("能耗map")
     private Map<Long, BigDecimal> consumeMap;
 
+    @ApiModelProperty("产量map")
+    private Map<Long, BigDecimal> yieldMap;
+
     @ApiModelProperty("单耗map")
     private Map<Long, BigDecimal> unitMap;
 
