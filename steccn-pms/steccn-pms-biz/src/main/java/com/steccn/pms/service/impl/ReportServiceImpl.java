@@ -82,7 +82,11 @@ public class ReportServiceImpl implements ReportService {
 
         SubstrateDayReportVO vo = new SubstrateDayReportVO();
         //查询所有数据
-        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
+
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getDate());
+        LocalDateTime end = start.plusDays(1);
+
+        List<SubstrateDataListVO> rowDataList = pmsReportWorkMapper.substrateReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), start, end);
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
         rowDataList = rowDataList.stream().filter(v -> Objects.nonNull(v.getMaterialId()) && Objects.nonNull(v.getClassesId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
@@ -597,8 +601,11 @@ public class ReportServiceImpl implements ReportService {
         FurtherProduceReportVO vo = new FurtherProduceReportVO();
         vo.setSpecsNum(PmReportConstant.TYPE_3);
 
+        LocalDateTime start = LocalDateUtil.getMorning(dto.getDate());
+        LocalDateTime end = start.plusDays(1);
+
         //根据产线去查询所有订单的工序分组，用于表头
-        List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
+        List<FurtherProduceReportDataVO> dataList = pmsReportWorkMapper.furtherProduceReport(dto.getProductLineIdList(), dto.getClassGroupIdList(), start, end);
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());

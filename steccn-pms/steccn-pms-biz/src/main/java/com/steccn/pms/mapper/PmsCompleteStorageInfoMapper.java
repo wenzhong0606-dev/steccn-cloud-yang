@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public interface PmsCompleteStorageInfoMapper extends BaseMapper<PmsCompleteStor
      * @param date        指定日期
      * @return
      */
-    List<FurtherProduceReportDataVO> materialList(@Param("materialSet") Set<Long> materialSet, @Param("date") LocalDate date);
+    List<FurtherProduceReportDataVO> materialList(@Param("materialSet") Set<Long> materialSet, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     /**
      * 同一类型下，是否存在箱号
