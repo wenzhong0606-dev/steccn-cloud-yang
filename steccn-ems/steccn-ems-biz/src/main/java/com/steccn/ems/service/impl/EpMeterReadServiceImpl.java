@@ -367,10 +367,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取生产明细样例表
         List<DwProduceOrderDTO> orderDetailList = Lists.newArrayList();
         //根据时间获取订单
-        List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
-                .in(EpMeterReadDistant::getReadDate, dateSet).in(EpMeterReadDistant::getMeterId,nodeLinkMeterMap.keySet()));
-        if(CollUtil.isNotEmpty(dbList)){
-            dbList.forEach(ele -> {
+        List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet,nodeLinkMeterMap.values());
+        if(CollUtil.isNotEmpty(orderList)){
+            orderList.forEach(ele -> {
                 DwProduceOrderDTO dwProduceOrderDTO = new DwProduceOrderDTO();
                 BeanUtils.copyProperties(ele,dwProduceOrderDTO);
                 orderDetailList.add(dwProduceOrderDTO);
@@ -578,11 +577,13 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     /**
      * 获取远传仪表编码集合
      * @param dateSet 日期集合
+     * @param meterIdSet 仪表id集合
      * @return list
      */
-    public List<EpMeterReadDistantDTO> orderDetail(Set<LocalDate> dateSet) {
+    public List<EpMeterReadDistantDTO> orderDetail(Set<LocalDate> dateSet, Collection<EpInstrumentAccountDTO> meterIdSet) {
         List<EpMeterReadDistantDTO> resList = Lists.newArrayList();
         List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
+                        .in(EpMeterReadDistant::getMeterId,meterIdSet.stream().map(EpInstrumentAccountDTO::getId).collect(Collectors.toSet()))
                 .in(EpMeterReadDistant::getReadDate, dateSet));
         if (CollUtil.isNotEmpty(dbList)) {
             Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() + "_" + v.getProduceOrderId()));
@@ -627,7 +628,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //查询能耗的全量数据表
         List<EpEnergyConsumeDTO> consumeTable = consumeTable(dateSet, energyType, nodeLinkMeterMap);
         //获取生产明细样例表
-        List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet);
+        List<EpMeterReadDistantDTO> orderList = orderDetail(dateSet,nodeLinkMeterMap.values());
 
         //获取所有节点的具体信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
@@ -664,11 +665,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         jpNumList.forEach(ele -> {
             EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             jpRowDTO.setYield(ele.getPullAmount());
+            //test
+            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"),new BigDecimal("100")),2));
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
+            //test
+            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"),new BigDecimal("100")),2));
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
