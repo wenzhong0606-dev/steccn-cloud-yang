@@ -471,6 +471,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         EpPartition defaultNode = new EpPartition();
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         for (EpEnergyConsumeDTO row : rowList) {
+            Map<Long, BigDecimal> yieldMap = row.getYieldMap();
             row.getConsumeMap().forEach((key, value) -> {
                 EpMeterReadAllDataVO resVo = new EpMeterReadAllDataVO();
                 resVo.setReadDate(row.getReadDate());
@@ -485,6 +486,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     EpPartition epPartition = epPartitionMap.getOrDefault(key, defaultNode);
                     resVo.setSysOfficeId(epPartition.getOfficeId());
                     resVo.setOfficeName(epPartition.getOfficeName());
+                    resVo.setProductNum(yieldMap.get(key));
                     resList.add(resVo);
                 }
             });
@@ -626,7 +628,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 rowDTO.setProductLineId(epPartition.getOfficeId());
                 jpDataList.add(convertToJpDto(rowDTO));
             }
-            orderMap.put(rowDTO.getUuid(),rowDTO);
+            orderMap.put(rowDTO.getUuid(), rowDTO);
             orderRowList.add(rowDTO);
         });
         //获取基片和深加工的产量
@@ -634,15 +636,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         jpNumList.forEach(ele -> {
             EpMeterReadRowDTO jpRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             jpRowDTO.setYield(ele.getPullAmount());
-            //test数据
-            jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(),2));
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
             EpMeterReadRowDTO sjgRowDTO = orderMap.getOrDefault(ele.getUuid(), new EpMeterReadRowDTO());
             sjgRowDTO.setYield(ele.getYield());
-            //test数据
-            sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(),2));
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
@@ -653,9 +651,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         Map<Long, List<EpPartitionVO>> allChildren = epPartitionService.getAllChildren(nodeLinkMeterMap.keySet());
 
         //获取所有产线的父节点-不包含父节点
-        Map<Long,Set<Long>> lineParentMap =  getLineParentMap(partitionMap.values(),jpLineSet,sjgLineSet);
-        root(partitionMap.values());
+        Map<Long, Set<Long>> lineParentMap = getLineParentMap(partitionMap.values(), jpLineSet, sjgLineSet);
+        EpPartition root = root(partitionMap.values());
+        //获取父节点的产线孩子节点-不含有根节点
         Map<Long, Set<Long>> lineChildrenMap = getLineChildrenMap(lineParentMap);
+        lineChildrenMap.remove(root.getId());
 
         //保存所有的unitMap
         Map<String, Map<Long, BigDecimal>> unitMapCol = Maps.newHashMap();
@@ -666,14 +666,11 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             consumeDTO.setYieldMap(unitMap);
             unitMapCol.put(consumeDTO.getReadDate() + "_" + consumeDTO.getClassId() + "_" + consumeDTO.getThick(), unitMap);
             //遍历应该考虑从下向上遍历--参考能耗全量数据表
-            childTypeMap.forEach((k,v) ->{
+            childTypeMap.forEach((k, v) -> {
                 EpInstrumentAccountDTO account = v.getAccount();
                 //保证当前节点
                 if (Objects.nonNull(account) && Objects.nonNull(account.getEntityTable())) {
                     EpPartition epPartition = partitionMap.getOrDefault(account.getPartitionNode(), defaultPartition);
-                    //获取当前节点的所有孩子节点
-                    Set<Long> childrenIdSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
-                    Set<Integer> childrenOfficeSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getOfficeId).collect(Collectors.toSet());
                     if (!noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && (sjgLineSet.contains(epPartition.getOfficeId()) || jpLineSet.contains(epPartition.getOfficeId()))) {
                         //若空格所在列的节点是产线节点L或L的下级节点，则查询条件为“产线 = L”
                         //过滤出相同的班次日期，相同班次，相同厚度的订单
@@ -681,17 +678,19 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                                 Objects.equals(ele.getClassId(), consumeDTO.getClassId()) &&
                                 Objects.equals(ele.getThick(), consumeDTO.getThick())).filter(ele -> epPartition.getOfficeId().equals(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
                         unitMap.put(epPartition.getId(), yieldSum);
+                        //获取当前节点的所有孩子节点
+                        Set<Long> childrenIdSet = allChildren.getOrDefault(epPartition.getId(), Lists.newArrayList()).stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
                         childrenIdSet.forEach(ele -> unitMap.put(ele, BigDecimalUtil.add(unitMap.get(ele), yieldSum)));
-                    } else if(CollUtil.isNotEmpty(childrenOfficeSet) && noThickAndClass(consumeDTO.getClassId(),consumeDTO.getThick()) && (jpLineSet.containsAll(childrenOfficeSet) || sjgLineSet.containsAll(childrenOfficeSet))){
+                    } else if (noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && lineChildrenMap.containsKey(account.getPartitionNode())) {
                         //若空格所在列的节点是产线节点的上级节点，则查询条件为“产线 = 该上级节点以下所有产线节点”
-                        BigDecimal workShopYieldSum = orderRowList.stream().filter(ele -> childrenOfficeSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                        Set<Long> lineIdSet = lineChildrenMap.get(account.getPartitionNode());
+                        Set<Integer> officeIdSet = Sets.newHashSet();
+                        lineIdSet.forEach(ele -> {
+                            officeIdSet.add(partitionMap.get(ele).getOfficeId());
+                        });
+                        BigDecimal workShopYieldSum = orderRowList.stream().filter(ele -> officeIdSet.contains(ele.getProductLineId())).map(ele -> ele.getYield()).filter(ele -> Objects.nonNull(ele)).reduce(BigDecimal.ZERO, BigDecimal::add);
                         unitMap.put(epPartition.getId(), workShopYieldSum);
-                    }else if(Boolean.TRUE){
-                        //如果是基片制造部和深加工制造部
-                        log.info("xxx{}");
-
-
-                    } else if(noThickAndClass(consumeDTO.getClassId(),consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())){
+                    } else if (noThickAndClass(consumeDTO.getClassId(), consumeDTO.getThick()) && !unitMap.containsKey(epPartition.getId())) {
                         //对于班次、产品厚度均为“无”的行，值为“-”的单元格K填入日产量t：
                         BigDecimal tempSum = null;
                         for (Map.Entry<String, Map<Long, BigDecimal>> entry : unitMapCol.entrySet()) {
@@ -702,19 +701,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 }
             });
         }
-        //遍历集合
-        consumeTable.forEach(ele -> {
-            Map<Long, BigDecimal> consumeMap = ele.getConsumeMap();
-            Map<Long, BigDecimal> yieldMap = ele.getYieldMap();
-            Map<Long,BigDecimal> unitMap = Maps.newHashMap();
-            ele.setUnitMap(unitMap);
-            consumeMap.forEach((k,consume) ->{
-                BigDecimal yield = yieldMap.get(k);
-                BigDecimal unit = BigDecimalUtil.divide(consume, yield);
-                unitMap.put(k, unit);
-            });
-        });
-        return Lists.newArrayList();
+        return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable);
     }
 
     /**
