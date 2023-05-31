@@ -530,8 +530,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-
+        List<EpMeterReadAllDataVO> classDateAllData = null;
+        if (dto.getEnergyType() != 5) {
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else {
+            //燃料(气+油)的单耗
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+        }
         classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 

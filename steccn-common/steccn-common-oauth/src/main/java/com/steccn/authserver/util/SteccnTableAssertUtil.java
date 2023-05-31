@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.steccn.authserver.exception.SteccnChartException;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -74,5 +75,23 @@ public class SteccnTableAssertUtil {
             throw errorSupplier.get();
         }
         return collection;
+    }
+
+    /**
+     * map不能为空
+     * @param map
+     * @param errorMsgTemplate
+     * @param params
+     * @param <K>
+     * @param <V>
+     * @param <T>
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public static <K, V, T extends Map<K, V>> T notEmpty(T map, String errorMsgTemplate, Object... params) throws IllegalArgumentException {
+        if (CollUtil.isEmpty(map)) {
+            throw new SteccnChartException(StrUtil.format(errorMsgTemplate, params));
+        }
+        return map;
     }
 }
