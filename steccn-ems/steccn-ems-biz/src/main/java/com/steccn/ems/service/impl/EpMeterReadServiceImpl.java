@@ -583,7 +583,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
     public List<EpMeterReadDistantDTO> orderDetail(Set<LocalDate> dateSet, Collection<EpInstrumentAccountDTO> meterIdSet) {
         List<EpMeterReadDistantDTO> resList = Lists.newArrayList();
         List<EpMeterReadDistant> dbList = readDistantService.list(new LambdaQueryWrapper<EpMeterReadDistant>()
-                        .in(EpMeterReadDistant::getMeterId,meterIdSet)
+                        .in(EpMeterReadDistant::getMeterId,meterIdSet.stream().map(EpInstrumentAccountDTO::getId).collect(Collectors.toSet()))
                 .in(EpMeterReadDistant::getReadDate, dateSet));
         if (CollUtil.isNotEmpty(dbList)) {
             Map<String, List<EpMeterReadDistant>> collect = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getClassId() + "_" + v.getThick() + "_" + v.getProduceOrderId()));
