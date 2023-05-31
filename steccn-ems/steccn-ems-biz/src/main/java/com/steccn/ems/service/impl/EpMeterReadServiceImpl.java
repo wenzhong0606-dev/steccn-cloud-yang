@@ -481,7 +481,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         EpPartition defaultNode = new EpPartition();
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         for (EpEnergyConsumeDTO row : rowList) {
-            Map<Long, BigDecimal> yieldMap = row.getYieldMap();
+            Map<Long, BigDecimal> yieldMap = Objects.isNull(row.getYieldMap()) ? Maps.newHashMap() : row.getYieldMap();
             row.getConsumeMap().forEach((key, value) -> {
                 EpMeterReadAllDataVO resVo = new EpMeterReadAllDataVO();
                 resVo.setReadDate(row.getReadDate());
