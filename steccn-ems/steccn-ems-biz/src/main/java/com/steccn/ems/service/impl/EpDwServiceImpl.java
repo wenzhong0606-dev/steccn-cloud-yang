@@ -39,10 +39,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,19 +62,6 @@ public class EpDwServiceImpl implements EpDwService {
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final EpMeterReadService epMeterReadService;
 
-    private final ThreadPoolExecutor moneyPool = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
-
-    private final ThreadPoolExecutor readPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
-
-    /**
-     * 用于抄表
-     */
-    private final ThreadPoolExecutor chaoPool = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), Executors.defaultThreadFactory());
-
-
     @Override
     public Boolean meterRead(LocalDate date) {
         //1.获取所有的远传仪表+挂载的分区节点
@@ -91,6 +75,8 @@ public class EpDwServiceImpl implements EpDwService {
         //5.查询所有仪表的产线父节点
         Set<Integer> officeIdSet = meterList.stream().map(EpDwMeterPartitionDTO::getOfficeId).collect(Collectors.toSet());
         Map<Integer, Integer> lineMap = FeignOptional.of(() -> remoteOfficeFeign.parentLine(officeIdSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //防止fegin获取不到当前请求
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         //6.遍历所有的远传仪表
         for (EpDwMeterPartitionDTO meter : meterList) {
             //一开始 应该划分好任务，然后插入数据库中，加上标识
@@ -98,8 +84,9 @@ public class EpDwServiceImpl implements EpDwService {
             //避免重复执行
             List<DwConditionDTO> taskList = read(date, meter, otherPartitionNodeSet, produceOrderList, lineMap);
             for (DwConditionDTO task : taskList) {
-                readPool.submit(() -> {
+                CompletableFuture.runAsync(() ->{
                     try {
+                        RequestContextHolder.setRequestAttributes(attributes);
                         //执行任务
                         doMeterRead(task);
                     }catch (Exception e){
@@ -221,20 +208,21 @@ public class EpDwServiceImpl implements EpDwService {
         //当前有效的计划
         List<EpDwEnergyPricePlanDTO> priceList = epEnergyPricePlanService.currentValidPlan(date);
         Integer sum = 0 ;
+        //防止fegin获取不到当前请求
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         for (EpDwMeterPartitionDTO meter : meterList) {
             //分解出task
             List<DwEpEnergyMoneyDTO> taskList = moneyTask(date, meter, priceList);
             for (DwEpEnergyMoneyDTO ele : taskList) {
                 sum++;
-                //防止fegin获取不到当前请求
-                RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-                moneyPool.submit(() -> {
+                CompletableFuture.runAsync(() ->{
                     try {
                         RequestContextHolder.setRequestAttributes(attributes);
                         doMoney(ele);
                     } catch (Exception e) {
                         log.error("计算money异常 {}", e.getLocalizedMessage());
                     }
+
                 });
             }
         }
@@ -256,10 +244,10 @@ public class EpDwServiceImpl implements EpDwService {
         //1.获取所有的远传仪表+挂载的分区节点
         List<EpDwMeterPartitionDTO> meterList = epInstrumentAccountMapper.meterPartition();
         //2.获取当前日期的任务
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         meterList.forEach(meter -> {
             //防止fegin获取不到当前请求
-            RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-            chaoPool.execute(() -> {
+            CompletableFuture.runAsync(() ->{
                 try {
                     RequestContextHolder.setRequestAttributes(attributes);
                     saveReadMeter(date, meter);
