@@ -144,4 +144,27 @@ public class DwSyncTask {
         }
     }
 
+    /**
+     * 表读数-用于抄表管理
+     */
+    @Async
+    @Scheduled(cron = "0 5 8 * * ?")
+    public void read() {
+        RLock lock = redissonClient.getLock(LockConstant.DW_READ_SCHEDULED_TASK);
+        boolean b = lock.tryLock();
+        if (!b) {
+            log.info("表读数同步获取锁失败");
+            return;
+        }
+        log.info("表读数同步");
+        try {
+            epDwService.read(LocalDate.now().minusDays(1));
+        } catch (Exception e) {
+            log.error("表读数同步-异常", e);
+        } finally {
+            log.info("表读数同步-结束");
+            lock.unlock();
+        }
+    }
+
 }

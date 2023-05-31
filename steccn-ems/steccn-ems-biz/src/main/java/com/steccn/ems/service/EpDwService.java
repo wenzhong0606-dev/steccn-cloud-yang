@@ -23,4 +23,11 @@ public interface EpDwService {
      * @return 是否成功
      */
     Boolean electricMoney(LocalDate date);
+
+    /**
+     * 抄表读数
+     * @param date 上一个班次日期
+     * @return 是否成功
+     */
+    Boolean read(LocalDate date);
 }

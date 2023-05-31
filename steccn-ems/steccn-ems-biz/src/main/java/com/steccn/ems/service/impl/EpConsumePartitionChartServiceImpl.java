@@ -5,6 +5,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.util.MapUtils;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -80,7 +81,11 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
+
+        long startTemp = System.currentTimeMillis();
         List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllData(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        log.info("获取全量数据表耗时:{} ms", System.currentTimeMillis() - startTemp);
+        log.info("获取全量数据表数据 {}", JSON.toJSONString(classDateAllData));
 
         classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
@@ -525,8 +530,13 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         List<TupleDTO<LocalDate, Integer>> tupleDTOS = ClassUtil.classRange(start, end);
         //获取全量数据表
         Set<LocalDate> dateSet = tupleDTOS.stream().map(v -> v.getField1()).collect(Collectors.toSet());
-        List<EpMeterReadAllDataVO> classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
-
+        List<EpMeterReadAllDataVO> classDateAllData = null;
+        if (dto.getEnergyType() != 5) {
+            classDateAllData = epMeterReadService.classDateAllDataUnit(dateSet, dto.getEnergyType(), dto.getPartitionIdList());
+        } else {
+            //燃料(气+油)的单耗
+            classDateAllData = epMeterReadService.kcalDataUnit(dateSet, dto.getPartitionIdList());
+        }
         classDateAllData = classDateAllData.stream().filter(v -> dto.getPartitionIdList().contains(v.getOfficeId())).collect(Collectors.toList());
         SteccnTableAssertUtil.notEmpty(classDateAllData, "全量数据表为空");
 
@@ -1342,8 +1352,8 @@ public class EpConsumePartitionChartServiceImpl implements EpConsumePartitionCha
         queryWrapper.eq(EpProductUnitConsumeStandard::getEnergyType, dto.getEnergyType());
         if (dto.getThick().contains(BigDecimal.valueOf(-1))) {
             queryWrapper.isNull(EpProductUnitConsumeStandard::getProductThick);
-        } else {
-            queryWrapper.eq(EpProductUnitConsumeStandard::getProductThick, sysDictVO.getId());
+        } else if(Objects.nonNull(sysDictVO)){
+            queryWrapper.eq(Objects.nonNull(sysDictVO.getId()), EpProductUnitConsumeStandard::getProductThick, sysDictVO.getId());
         }
         return epProductUnitConsumeStandardService.list(queryWrapper);
     }

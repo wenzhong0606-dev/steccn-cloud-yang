@@ -13,6 +13,7 @@ import com.google.common.collect.Sets;
 import com.steccn.authserver.config.FeignConfig;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
+import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
@@ -444,15 +445,20 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
     }
 
     @Override
-    public List<EpDwMeterPartitionDTO> meterPartition() {
-        //1.获取所有的远传仪表
-        List<EpDwMeterPartitionDTO> dbList = this.baseMapper.meterPartition();
-        //2.如果仪表集合不为空
-        if(CollUtil.isNotEmpty(dbList)){
-            //获取所有的组织机构id
-            Set<Integer> officeIdSet = dbList.stream().map(EpDwMeterPartitionDTO::getOfficeId).collect(Collectors.toSet());
+    public Map<Long, EpInstrumentAccountDTO> queryNodeLinkMeter(Integer energyType) {
+        List<EpInstrumentAccount> accountList = list(new LambdaQueryWrapper<EpInstrumentAccount>()
+                .eq(EpInstrumentAccount::getShowFlag, MpConstant.YES)
+                .eq(EpInstrumentAccount::getMeterType, energyType));
+        //获取仪表id集合
+        Map<Long, EpInstrumentAccountDTO> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(accountList)) {
+            accountList.forEach(ele -> {
+                EpInstrumentAccountDTO accountDTO = new EpInstrumentAccountDTO();
+                BeanUtils.copyProperties(ele, accountDTO);
+                resMap.put(ele.getPartitionNode(), accountDTO);
+            });
         }
-        return null;
+        return resMap;
     }
 
     /**
@@ -515,45 +521,6 @@ public class EpInstrumentAccountServiceImpl extends ServiceImpl<EpInstrumentAcco
         List<EpInstrumentAccountPageVO> voList = new ArrayList<>();
 
         if (CollUtil.isNotEmpty(haveDataList)) {
-//            for (int i = 0; i < list.size(); i++) {
-//                if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_DISTANT_MAPCODE.equals(sort)){
-//                    names.add(list.get(i).getDistantMapCode()+i);
-//                    map.put(list.get(i).getDistantMapCode()+i, list.get(i));
-//                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_METER_NAME.equals(sort)){
-//                    names.add(list.get(i).getMeterName());
-//                    map.put(list.get(i).getMeterName(),list.get(i));
-//                }else if (EpManagerConstant.EP_INSTRUMENT_ACCOUNT_SORT_FIELD_SITE_NAME.equals(sort)){
-//                    names.add(list.get(i).getSiteName()+i);
-//                    map.put(list.get(i).getSiteName()+i,list.get(i));
-//                }
-//            }
-//            if (isOrder){
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key1.compareTo(key2);
-//                    }
-//                });
-//            }else {
-//                Collections.sort(names, new Comparator<String>() {
-//                    Collator collator = Collator.getInstance(Locale.CHINA);
-//                    @Override
-//                    public int compare(String o1, String o2) {
-//                        CollationKey key1 = collator.getCollationKey(o1);
-//                        CollationKey key2 = collator.getCollationKey(o2);
-//                        return key2.compareTo(key1);
-//                    }
-//                });
-//            }
-//            for (String name : names) {
-//                if (map.containsKey(name)) {
-//                    voList.add(map.get(name));
-//                }
-//            }
             getSort(haveDataList, isOrder, sort);
             haveDataList.forEach(s -> {
                 voList.add(s);

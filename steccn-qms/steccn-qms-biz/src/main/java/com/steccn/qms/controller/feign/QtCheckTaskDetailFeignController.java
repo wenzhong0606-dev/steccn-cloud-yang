@@ -1,6 +1,8 @@
 package com.steccn.qms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.google.common.collect.Lists;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.vo.R;
@@ -43,7 +45,10 @@ public class QtCheckTaskDetailFeignController {
 
     @ApiOperation("ems获取拉引量")
     @PostMapping("/ems/getPullAmount")
-    public R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody @Valid ValidList<QtEmsPullAmountDTO> dto){
+    public R<List<QtEmsPullAmountDTO>> getEmsPullAmount(@RequestBody ValidList<QtEmsPullAmountDTO> dto){
+        if(CollUtil.isEmpty(dto.getList())){
+            return R.success(Lists.newArrayList());
+        }
         return R.success(qtChartGenerateService.calculateEmsPullAmount(dto));
     }
 }
