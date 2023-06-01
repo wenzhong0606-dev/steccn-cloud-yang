@@ -49,4 +49,7 @@ public class WmsDeliveryReceiptDTO {
 
     @ApiModelProperty("明细集合")
     private List<WmsDeliveryReceiptInfoDTO> list;
+
+    @ApiModelProperty("冲销入库单code")
+    private String chargeAgainstCode;
 }

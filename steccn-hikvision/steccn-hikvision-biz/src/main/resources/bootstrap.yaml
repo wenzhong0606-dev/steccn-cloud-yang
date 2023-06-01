@@ -1,0 +1,18 @@
+server:
+  port: 9550
+spring:
+  application:
+    name: steccn-hikvision
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.1.103.235:8848
+        namespace: steccn_test_ml
+      config:
+        server-addr: 10.1.103.235:8848
+        file-extension: yaml
+        shared-configs:
+          - data-id: application.yaml
+            refresh: true
+        namespace: steccn_test_ml
+

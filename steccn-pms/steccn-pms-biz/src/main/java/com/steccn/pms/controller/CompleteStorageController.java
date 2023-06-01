@@ -80,4 +80,17 @@ public class CompleteStorageController {
     public R<Boolean> completeStorageReviseStatue(@RequestBody PmsCompleteStorageDTO dto) {
         return pmsCompleteStorageService.completeStorageReviseStatue(dto.getCode(),dto.getConfirmName());
     }
+
+
+    /**
+     * 生产-入库冲销
+     * @param
+     * @return
+     */
+    @PostMapping("/charge/against")
+    @ApiOperation("生产-冲销入库")
+    @SysLog("chargeAgainst")
+    public R<Boolean> chargeAgainst(@RequestBody PmsCompleteStorageDTO dto){
+        return R.success(pmsCompleteStorageService.chargeAgainst(dto.getId()));
+    }
 }

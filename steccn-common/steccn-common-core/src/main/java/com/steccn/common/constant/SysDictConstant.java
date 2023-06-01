@@ -32,5 +32,8 @@ public interface SysDictConstant {
     String CODE_0 = "0";
     String CODE_1 = "1";
     String CODE_2 ="2";
+
+    String CODE_4 ="4";
+
     String CODE_PFM = "m²";
 }

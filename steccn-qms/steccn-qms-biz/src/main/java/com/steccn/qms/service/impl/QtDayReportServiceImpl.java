@@ -171,6 +171,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             if (Objects.isNull(o1.getDataSource())) {
                 return 1;
             }
+            if (Objects.isNull(o2.getDataSource())) {
+                return -1;
+            }
             //对比数据来源
             if (!o1.getDataSource().equals(o2.getDataSource())) {
                 return o1.getDataSource() - o2.getDataSource();
@@ -820,8 +823,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             data.setClassId(ClassUtil.classAndDate(samplingTime).getField2());
             data.setClassName(QtManagerConstant.QtClassesEnum.code(data.getClassId()).getName());
             //配料付数
-            int sum = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
-            data.setIngredientNum(sum);
+            List<QtDaySamplingDTO> ingredientList = taskEntry.getValue().stream().filter(v -> Objects.nonNull(v.getIngredientNum())).collect(Collectors.toList());
+            if(CollUtil.isEmpty(ingredientList)){
+                data.setIngredientNum(null);
+            }else{
+                int sum = ingredientList.stream().mapToInt(QtDaySamplingDTO::getIngredientNum).sum();
+                data.setIngredientNum(sum);
+            }
             dataList.add(data);
             List<String> itemList = new ArrayList<>();
             for (int i = 0; i < idx; i++) {
@@ -903,15 +911,15 @@ public class QtDayReportServiceImpl implements QtDayReportService {
             dayCount = dto.getEndDate().getMonthValue() - dto.getStartDate().getMonthValue();
         }
         //为了进循环,如果是0,那么加1
-        if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())&&dayCount==0){
-            dayCount = 1;
-        }
+//        if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())&&dayCount==0){
+//            dayCount = 1;
+//        }
         //如果不是班次相关报表则合并数据
         if(!dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
             //如果是月报表则把所有月份相同的数据聚合
             //1、修改值日期相同的归到同一个月份
             if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
-                for(int i = 0; i < dayCount; i++){
+                for(int i = 0; i <= dayCount; i++){
                     LocalDate start = dto.getStartDate().plusMonths(i);
                     allData.stream()
                             .filter(v->v.getWorkOrderDate()!=null
@@ -935,6 +943,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                     .values()
                     .stream()
                     .collect(Collectors.toList());
+            //把只有晚班的数据也调成早班
+            allData = allData.stream().map(tmp->{
+                if (!tmp.getWorkOrder().equals(QtManagerConstant.QtClassesEnum.DAY.getName())) {
+                    tmp.setWorkOrder(QtManagerConstant.QtClassesEnum.DAY.getName());
+                }
+                return tmp;
+            }).collect(Collectors.toList());
         }
         //判空
         SteccnTableAssertUtil.notEmpty(allData, "损耗数据为空");
@@ -990,12 +1005,12 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         head.add("重量(吨)");
         head.add("损耗率");
         if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
-            for(int i = 0; i < dayCount; i++){
+            for(int i = 0; i <= dayCount; i++){
                 int day = dto.getStartDate().getDayOfMonth() + i;
                 module.add(new BaseReportHeaderVO(dto.getStartDate().getMonthValue() + "月" + day + "日",head));
             }
         }else {
-            for(int i = 0; i < dayCount; i++){
+            for(int i = 0; i <= dayCount; i++){
                 int month = dto.getStartDate().getMonthValue() + i;
                 module.add(new BaseReportHeaderVO(dto.getStartDate().getYear() + "年" + month + "月",head));
             }
@@ -1056,7 +1071,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 //根据日期
                 //表示该产线是否有数据
                 Boolean haveData = false;
-                for(int i = 0; i < dayCount; i++){
+                for(int i = 0; i <= dayCount; i++){
                     List<QtChartSubDetailDTO> dayData = Lists.newArrayList();
                     //月报表则累加月份
                     if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
@@ -1065,11 +1080,14 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         dayData = groupByDate.get(dto.getStartDate().plusDays(i));
                     }
                     //获取当前产线
-                    dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
-                    //过滤班次数据
+//                    if(Objects.nonNull(dayData)){
+//                        dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+//                    }
+                    //获取当前产线并过滤班次数据
                     if(Objects.nonNull(dayData)){
-                        dayData = dayData.stream().filter(v->v.getWorkOrder()!=null
-                                &&v.getWorkOrder().equals(className)).collect(Collectors.toList());
+                        dayData = dayData.stream().filter(
+                                v->v.getProductLineName().equals(productLine.getOfficeName())
+                                        &&v.getWorkOrder()!=null &&v.getWorkOrder().equals(className)).collect(Collectors.toList());
                     }
                     //拉引量
                     qtDayReportLossDataPullAmount.setDefectName("拉引量");
@@ -1165,7 +1183,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                         //动态数据
                         List<FurtherValueStrVO> moduleTmp = Lists.newArrayList();
                         BigDecimal lossAmountAll = BigDecimal.ZERO;
-                        for(int i = 0; i < dayCount; i++){
+                        for(int i = 0; i <= dayCount; i++){
                             LocalDate tmpDate;
                             if(dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
                                 tmpDate = dto.getStartDate().plusMonths(i);
@@ -1173,7 +1191,9 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                                 tmpDate = dto.getStartDate().plusDays(i);
                             }
                             List<QtChartSubDetailDTO> dayData = groupByDate.get(tmpDate);
-                            dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+                            if(Objects.nonNull(dayData)){
+                                dayData = dayData.stream().filter(v->v.getProductLineName().equals(productLine.getOfficeName())).collect(Collectors.toList());
+                            }
                             List<String> lineDataTmp = Lists.newArrayList();
                             //早班对象和晚班对象
                             if(CollUtil.isNotEmpty(dayData)){

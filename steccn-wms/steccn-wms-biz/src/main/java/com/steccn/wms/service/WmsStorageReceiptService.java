@@ -1,9 +1,11 @@
 package com.steccn.wms.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.pms.dto.PmExcelDTO;
 import com.steccn.wms.domain.WmsStorageReceipt;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.wms.dto.WmsDeliveryReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptDTO;
 import com.steccn.wms.dto.WmsStorageReceiptPageDTO;
 import com.steccn.wms.vo.WmsDeliveryReceiptVO;
@@ -74,4 +76,20 @@ public interface WmsStorageReceiptService extends IService<WmsStorageReceipt> {
      * @throws IOException
      */
     Boolean excelImportData(PmExcelDTO dto) throws IOException;
+
+
+    /**
+     * 冲销
+     * @param id
+     * @return
+     */
+    Boolean chargeAgainstById(Long id);
+
+
+    /**
+     * 冲销
+     * @param code
+     * @return
+     */
+    WmsDeliveryReceiptDTO chargeAgainstByCode(String code,String userName);
 }

@@ -39,7 +39,7 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @param date              指定日期
      * @return list
      */
-    List<SubstrateDataListVO> substrateReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+    List<SubstrateDataListVO> substrateReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     /**
      * 根据指定日期和产线获取产量
@@ -67,7 +67,7 @@ public interface PmsReportWorkMapper extends BaseMapper<PmsReportWork> {
      * @param date              指定日期
      * @return list
      */
-    List<FurtherProduceReportDataVO> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("date") LocalDate date);
+    List<FurtherProduceReportDataVO> furtherProduceReport(@Param("productLineIdList") List<Integer> productLineIdList, @Param("classesIdList") List<Long> classesIdList, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 
     /**

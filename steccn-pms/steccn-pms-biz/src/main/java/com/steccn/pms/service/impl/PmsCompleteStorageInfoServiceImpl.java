@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Maps;
 import com.steccn.authserver.exception.BusinessException;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.pms.domain.PmsCompleteStorageInfo;
 import com.steccn.pms.dto.PmsCompleteStorageDTO;
 import com.steccn.pms.dto.PmsCompleteStorageNumDTO;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +81,11 @@ public class PmsCompleteStorageInfoServiceImpl extends ServiceImpl<PmsCompleteSt
     public Map<Long, Map<Long, BigDecimal>> materialMap(Set<Long> materialSet, LocalDate date) {
         Map<Long, Map<Long, BigDecimal>> resMap = Maps.newHashMap();
         if (CollUtil.isNotEmpty(materialSet) && Objects.nonNull(date)) {
-            List<FurtherProduceReportDataVO> resList = this.baseMapper.materialList(materialSet, date);
+
+            LocalDateTime start = LocalDateUtil.getMorning(date);
+            LocalDateTime end = start.plusDays(1);
+
+            List<FurtherProduceReportDataVO> resList = this.baseMapper.materialList(materialSet, start, end);
             if (CollUtil.isNotEmpty(resList)) {
                 resList.forEach(ele -> {
                     if (resMap.containsKey(ele.getMaterialId())) {

@@ -51,7 +51,7 @@ public class SysOfficeCollectServiceImpl extends ServiceImpl<SysOfficeCollectMap
     public Page pageList(SysOfficeCollectPageDTO dto) {
         //查询条件
         LambdaQueryWrapper<SysOfficeCollect> condition = new LambdaQueryWrapper<SysOfficeCollect>()
-                .eq(Objects.nonNull(dto.getOfficeType()), SysOfficeCollect::getOfficeType, dto.getOfficeType())
+//                .eq(Objects.nonNull(dto.getOfficeType()), SysOfficeCollect::getOfficeType, dto.getOfficeType())
                 .eq(Objects.nonNull(dto.getOfficeId()), SysOfficeCollect::getOfficeId, dto.getOfficeId())
                 .eq(StringUtils.isNotBlank(dto.getCode()), SysOfficeCollect::getCode, dto.getCode())
                 .eq(StringUtils.isNotBlank(dto.getName()), SysOfficeCollect::getName, dto.getName())
