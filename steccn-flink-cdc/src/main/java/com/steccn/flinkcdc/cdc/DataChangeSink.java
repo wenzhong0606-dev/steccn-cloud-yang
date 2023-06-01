@@ -2,6 +2,7 @@ package com.steccn.flinkcdc.cdc;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
+import com.steccn.flinkcdc.constant.CdcConstant;
 import com.steccn.flinkcdc.dto.DataChangeDTO;
 import com.steccn.flinkcdc.service.HrmresourceService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +27,11 @@ public class DataChangeSink implements SinkFunction<DataChangeDTO> {
         //  The object probably contains or references non serializable fields.)，
         // 所以使用SpringUtil 获取需要的 bean，比如获取 extends ElasticsearchRepository<T, ID>的接口如下所示，
         // 然后就可以使用封装的方法进行增删改操作了
-        String data = dataChangeInfo.getData();
 //        log.info("########data={}",data);
 //        SystemDept systemDept = JSONObject.parseObject(data, SystemDept.class);
 //        SystemDeptRepository bean = SpringUtil.getBean(SystemDeptRepository.class);
-        HrmresourceService bean = SpringUtil.getBean(HrmresourceService.class);
-        bean.handleData(dataChangeInfo);
+        HrmresourceService dataBean = SpringUtil.getBean(HrmresourceService.class);
+        dataBean.handleData(operatorType,dataChangeInfo);
         // 初始化/新增/修改（非逻辑删除）
 //        bean.save(systemDept);
         // 删除/修改（逻辑删除）

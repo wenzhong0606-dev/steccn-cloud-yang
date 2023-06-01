@@ -207,4 +207,11 @@ public interface OaInfoService {
     @GetMapping("/feign/oa/workflow/saveDoc")
     R<OaSaveDocVO> saveDoc(@RequestParam("url") String url,@RequestParam("docName") String docName);
 
+    @ApiOperation("根据部门id获取信息")
+    @GetMapping("/department/info")
+    R<OaDepartmentVO> getDepartmentInfoById(@RequestParam("id") Integer id);
+
+    @ApiOperation("根据岗位id获取岗位信息")
+    @GetMapping("/jobTitle/info")
+    R<OaJobTitleVO> getJobInfoById(@RequestParam("id") Integer id);
 }

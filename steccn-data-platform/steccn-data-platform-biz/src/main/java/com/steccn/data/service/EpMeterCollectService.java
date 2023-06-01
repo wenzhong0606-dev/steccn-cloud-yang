@@ -3,9 +3,8 @@ package com.steccn.data.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.common.dto.TripleDTO;
 import com.steccn.data.domain.EpMeterCollect;
-import com.steccn.data.dto.DwMeterReadDTO;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.data.dto.DwMeterReadDiffDTO;
+import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 
 import java.math.BigDecimal;

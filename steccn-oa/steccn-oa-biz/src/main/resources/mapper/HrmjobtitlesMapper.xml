@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.HrmjobtitlesMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.Hrmjobtitles">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="jobtitlemark" column="JOBTITLEMARK" jdbcType="VARCHAR"/>
+            <result property="jobtitlename" column="JOBTITLENAME" jdbcType="VARCHAR"/>
+            <result property="jobtitleremark" column="JOBTITLEREMARK" jdbcType="VARCHAR"/>
+            <result property="jobactivityid" column="JOBACTIVITYID" jdbcType="INTEGER"/>
+            <result property="jobdepartmentid" column="JOBDEPARTMENTID" jdbcType="INTEGER"/>
+            <result property="jobresponsibility" column="JOBRESPONSIBILITY" jdbcType="VARCHAR"/>
+            <result property="jobcompetency" column="JOBCOMPETENCY" jdbcType="VARCHAR"/>
+            <result property="jobdoc" column="JOBDOC" jdbcType="INTEGER"/>
+            <result property="jobtitlecode" column="JOBTITLECODE" jdbcType="VARCHAR"/>
+            <result property="outkey" column="OUTKEY" jdbcType="VARCHAR"/>
+            <result property="ecologyPinyinSearch" column="ECOLOGY_PINYIN_SEARCH" jdbcType="VARCHAR"/>
+            <result property="created" column="created" jdbcType="TIMESTAMP"/>
+            <result property="creater" column="creater" jdbcType="INTEGER"/>
+            <result property="modified" column="modified" jdbcType="TIMESTAMP"/>
+            <result property="modifier" column="modifier" jdbcType="INTEGER"/>
+            <result property="uuid" column="uuid" jdbcType="VARCHAR"/>
+            <result property="canceled" column="canceled" jdbcType="CHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,JOBTITLEMARK,JOBTITLENAME,
+        JOBTITLEREMARK,JOBACTIVITYID,JOBDEPARTMENTID,
+        JOBRESPONSIBILITY,JOBCOMPETENCY,JOBDOC,
+        JOBTITLECODE,OUTKEY,ECOLOGY_PINYIN_SEARCH,
+        created,creater,modified,
+        modifier,uuid,canceled
+    </sql>
+</mapper>

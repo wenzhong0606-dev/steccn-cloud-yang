@@ -1,43 +1,78 @@
-//package com.steccn.flinkcdc.constant;
-//
-//import com.steccn.flinkcdc.config.DatasourceConfig;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
-//
-///**
-// * 类说明
-// *
-// * @author AndrewLuo
-// * @date 2023/05/25
-// */
-//public class CdcConstant {
-//    /**
-//     * dataBase1常量
-//     */
-//    public static final String DATASOURCE1_HOSTNAME =Datasource1ConfigHelper.DATASOURCE1_HOSTNAME;
-//    public static final String DATASOURCE1_PORT =Datasource1ConfigHelper.DATASOURCE1_PORT;
-//    public static final String DATASOURCE1_DATABASE_LIST =Datasource1ConfigHelper.DATASOURCE1_DATABASE_LIST;
-//    public static final String DATASOURCE1_TABLE_LIST =Datasource1ConfigHelper.DATASOURCE1_TABLE_LIST;
-//    public static final String DATASOURCE1_USERNAME =Datasource1ConfigHelper.DATASOURCE1_USERNAME;
-//    public static final String DATASOURCE1_PASSWORD =Datasource1ConfigHelper.DATASOURCE1_PASSWORD;
-//
-//}
-//@Component
-//class Datasource1ConfigHelper{
-//    static String DATASOURCE1_HOSTNAME;
-//    static String DATASOURCE1_PORT;
-//    static String DATASOURCE1_DATABASE_LIST;
-//    static String DATASOURCE1_TABLE_LIST;
-//    static String DATASOURCE1_USERNAME;
-//    static String DATASOURCE1_PASSWORD;
-//
-//    @Autowired
-//    public void setOaConfig(DatasourceConfig config){
-//        DATASOURCE1_HOSTNAME = config.getHostname();
-//        DATASOURCE1_PORT = config.getPort();
-//        DATASOURCE1_DATABASE_LIST = config.getDatabaseList();
-//        DATASOURCE1_TABLE_LIST = config.getTableList();
-//        DATASOURCE1_USERNAME = config.getUsername();
-//        DATASOURCE1_PASSWORD = config.getPassword();
-//    }
-//}
+package com.steccn.flinkcdc.constant;
+
+import com.steccn.flinkcdc.config.DatasourceConfig;
+import com.steccn.oa.constant.OaManagerConstant;
+import io.swagger.models.auth.In;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * 类说明
+ *
+ * @author AndrewLuo
+ * @date 2023/05/25
+ */
+public interface CdcConstant {
+
+    String UNALLOCATED_DEPARTMENT_CODE = "Unallocated";
+    String UNALLOCATED_DEPARTMENT_NAME = "待分配部门";
+    Integer NUM_2 = 2;
+    Integer NUM_5 = 5;
+    String JOB_TITLE_RONGHUA = "熔化班长";
+    /**
+     * 部门映射
+     */
+    @Getter
+    @AllArgsConstructor
+    enum OaMesDepartmentMapping {
+        A("基片二车间", "基片二车间"),
+        B("公司领导", "总经办"),
+        C("行政人事部", "行政人事部"),
+        D("财务部", "财务部"),
+        E("销售部","销售部"),
+        F("采购部","采购部"),
+        G("安全环保部","安全环保部"),
+        H("品质管理部","品质管理部"),
+        I("技术中心","技术中心"),
+        J("生产部","生产部"),
+        K("原料车间","原料车间"),
+        L("基片一车间","基片一车间"),
+        M("基片二车间-熔化班长", "基片二车间熔化班长"),
+        N("基片制造部","基片制造部"),
+        O("深加工一车间","深加工一车间"),
+        P("深加工二车间","深加工二车间"),
+        Q("深加工三车间","深加工三车间"),
+        R("深加工制造部","深加工制造部"),
+        S("设备动力部","设备动力部"),
+        T("上海凯盛节能-软件开发","软件开发");
+
+
+        private String oaName;
+        private String mesName;
+
+        public static String getMesNameByOaName(String oaName) {
+            for (CdcConstant.OaMesDepartmentMapping value : CdcConstant.OaMesDepartmentMapping.values()) {
+                if (value.getOaName().equals(oaName)) {
+                    return value.getMesName();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 操作类型
+     */
+    @Getter
+    @AllArgsConstructor
+    enum OperateType{
+        INITIAL(0,"初始化"),
+        INSERT(1,"新增"),
+        UPDATE(2, "修改"),
+        DELETE(3, "删除");
+        private Integer num;
+        private String type;
+    }
+}
