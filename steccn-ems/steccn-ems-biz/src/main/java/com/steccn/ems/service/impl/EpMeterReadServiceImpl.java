@@ -197,6 +197,130 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         return eqMeterReadVO;
     }
 
+    @Override
+    public EpMeterReadVO kvDay(String readMonth, Integer meterType) {
+        //当前时间
+        LocalDateTime now = LocalDateTime.now();
+        //当前日期
+        LocalDate currentLocalDate = now.toLocalDate();
+        //当前时间
+        LocalTime currentTime = now.toLocalTime();
+        LocalTime localTime = LocalTime.of(9, 0, 0);
+        LocalDate selectMonth = LocalDate.parse(readMonth + "-01", DatePattern.NORM_DATE_FORMATTER);
+        //查询的第一天
+        LocalDate firstDayOfMonth = selectMonth.with(TemporalAdjusters.firstDayOfMonth()).minusDays(1);
+
+        //多获取一天的数据-用于计算差值
+        firstDayOfMonth = firstDayOfMonth.minusDays(1);
+
+        //查询的最后一天
+        LocalDate endDay = currentLocalDate;
+        //获取需要查询的日期
+        List<LocalDate> localDateList;
+        //如果查询的月份是当月
+        if (selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+            if (currentTime.isBefore(localTime)) {
+                endDay = currentLocalDate.minusDays(1);
+            }
+            localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
+        } else {
+            endDay = selectMonth.with(TemporalAdjusters.lastDayOfMonth()).plusDays(1);
+            localDateList = LocalDateUtil.getLocalDateByStartEndDate(firstDayOfMonth, endDay);
+        }
+
+        //获取抄表值
+        List<MeterReadMapperVO> meterReadMapperVOList = getMeterReadMapperVOList(meterType, firstDayOfMonth, endDay);
+        Map<String, List<MeterReadMapperVO>> groupBy = meterReadMapperVOList
+                .stream()
+                .collect(Collectors.groupingBy(meterReadMapperVO -> meterReadMapperVO.getParentId()
+                        + "," + meterReadMapperVO.getMeterId() + "," + meterReadMapperVO.getMeterName() + ","
+                        + meterReadMapperVO.getPartitionId() + "," + meterReadMapperVO.getOfficeName() + ","
+                        + meterReadMapperVO.getEntityTable()));
+
+        List<MeterReadListVO> meterReadListVOList = new ArrayList<>();
+        for (Map.Entry<String, List<MeterReadMapperVO>> entry : groupBy.entrySet()) {
+            MeterReadListVO meterReadListVO = new MeterReadListVO();
+            String[] keys = entry.getKey().split(",");
+            if (StringUtils.isNotBlank(keys[0]) && !"null".equals(keys[0])) {
+                meterReadListVO.setParentId(Long.parseLong(keys[0]));
+            }
+            if (StringUtils.isNotBlank(keys[1]) && !"null".equals(keys[1])) {
+                meterReadListVO.setMeterId(Integer.parseInt(keys[1]));
+                meterReadListVO.setIsBindingMeter(1);
+            } else {
+                meterReadListVO.setIsBindingMeter(0);
+            }
+            if (StringUtils.isNotBlank(keys[3]) && !"null".equals(keys[3])) {
+                meterReadListVO.setPartitionNode(Long.parseLong(keys[3]));
+            }
+            if (StringUtils.isNotBlank(keys[5]) && !"null".equals(keys[5])) {
+                meterReadListVO.setEntityTable(Integer.parseInt(keys[5]));
+            }
+            meterReadListVO.setMeterStatus(entry.getValue().get(0).getStatus());
+            meterReadListVO.setMeterName("null".equals(keys[2])? null : keys[2]);
+            meterReadListVO.setPartitionNodeName(keys[4]);
+
+            List<ReadValueListVO> readValueListVOList = new ArrayList<>();
+            BigDecimal preReadValue = null;
+            BigDecimal currentValue = null;
+            for (LocalDate localDate : localDateList) {
+                List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
+                ReadValueListVO readValueListVO = new ReadValueListVO();
+                if (CollectionUtils.isNotEmpty(filterList)) {
+                    //如果是远传仪表，仅仅获取第一天
+                    if (meterReadListVO.getEntityTable().equals(EpManagerConstant.InstrumentType.REMOTE.getCode())) {
+                        Optional<MeterReadMapperVO> maxRemoteValueOp = filterList.stream().filter(meterReadMapperVO -> Objects.nonNull(meterReadMapperVO.getEndTime())).sorted(Comparator.comparing(MeterReadMapperVO::getEndTime).reversed()).findFirst();
+                        if (maxRemoteValueOp.isPresent()) {
+                            currentValue = maxRemoteValueOp.get().getAdminValue();
+                        }
+                    } else {
+                        //普通仪表，只有一天的数据
+                        currentValue = filterList.get(0).getAdminValue();
+                    }
+                }
+                BigDecimal subtract = BigDecimalUtil.subtract(currentValue, preReadValue);
+                if(BigDecimalUtil.ge(subtract,BigDecimal.ZERO)){
+                    readValueListVO.setReadValue(subtract);
+                }
+                preReadValue = currentValue;
+                //多获取一天的数据 仅仅用于做差值
+                if(!localDate.isEqual(firstDayOfMonth)){
+                    readValueListVO.setEntityTable(meterReadListVO.getEntityTable());
+                    readValueListVO.setReadDate(localDate);
+                    readValueListVO.setMeterId(meterReadListVO.getMeterId());
+                    readValueListVOList.add(readValueListVO);
+                }
+            }
+            meterReadListVO.setReadValueList(readValueListVOList);
+            meterReadListVOList.add(meterReadListVO);
+        }
+        List<MeterReadListVO> meterReadListVOList1 = meterReadListVOList.stream().filter(meterReadMapperVO -> Objects.isNull(meterReadMapperVO.getParentId())).peek(
+                meterReadListVO -> {
+
+                    meterReadListVO.setMeterReadListVOList(recursion(meterReadListVOList, meterReadListVO.getPartitionNode()));
+                    //如果是虚拟仪表
+                    if (Objects.equals(meterReadListVO.getEntityTable(),2)) {
+                        for (int i = 0; i < meterReadListVO.getReadValueList().size(); i++) {
+                            int finalI = i;
+                            List<List<ReadValueListVO>> readValueAllList = new ArrayList<>();
+                            reduceRecursion(meterReadListVO.getMeterReadListVOList(),readValueAllList);
+                            BigDecimal sumReduce = readValueAllList.stream().filter(v -> Objects.nonNull(v.get(finalI).getReadValue()) && !v.get(finalI).getEntityTable().equals(2)).map(v -> v.get(finalI).getReadValue()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
+                        }
+                    }
+                }
+        ).collect(Collectors.toList());
+
+        EpMeterReadVO eqMeterReadVO = new EpMeterReadVO();
+        localDateList.remove(0);
+        if (!selectMonth.getMonth().equals(currentLocalDate.getMonth())) {
+            localDateList.remove(localDateList.size() - 1);
+        }
+        eqMeterReadVO.setLabelList(localDateList);
+        eqMeterReadVO.setMeterReadListVOList(meterReadListVOList1);
+        return eqMeterReadVO;
+    }
+
     private void reduceRecursion(List<MeterReadListVO> meterReadListVOList, List<List<ReadValueListVO>> readValueAllList) {
         for (MeterReadListVO meterReadListVO : meterReadListVOList) {
             reduceRecursion(meterReadListVO.getMeterReadListVOList(), readValueAllList);
@@ -498,6 +622,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     resVo.setSysOfficeId(epPartition.getOfficeId());
                     resVo.setOfficeName(epPartition.getOfficeName());
                     resVo.setProductNum(yieldMap.get(key));
+                    //设置班组
+
                     resList.add(resVo);
                 }
             });

@@ -1,6 +1,7 @@
 package com.steccn.ems.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.ems.domain.EpMeterRead;
 import com.steccn.ems.dto.EpMeterReadAddDTO;
 import com.steccn.ems.dto.EpMeterReadUpdateDTO;
@@ -82,4 +83,12 @@ public interface EpMeterReadService extends IService<EpMeterRead> {
      * @return list
      */
     List<EpMeterReadAllDataVO> kcalDataUnit(Set<LocalDate> dateSet, List<Long> partitionIdList);
+
+    /**
+     * 35kV开关站日报表
+     * @param readMonth 月份
+     * @param energyType 能源类型
+     * @return
+     */
+    EpMeterReadVO kvDay(String readMonth, Integer energyType);
 }
