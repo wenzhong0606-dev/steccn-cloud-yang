@@ -10,10 +10,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
+import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
+import com.steccn.oa.domain.Hrmjobtitles;
+import com.steccn.oa.domain.Hrmresource;
 import com.steccn.oa.domain.KqGroup;
 import com.steccn.oa.domain.KqGroupmember;
 import com.steccn.oa.dto.OaGroupDTO;
+import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.mapper.KqGroupMapper;
 import com.steccn.oa.service.KqGroupService;
 import com.steccn.oa.service.KqGroupmemberService;
@@ -26,6 +30,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
 * @author Admin
@@ -97,6 +103,29 @@ public class KqGroupmemberServiceImpl extends ServiceImpl<KqGroupmemberMapper, K
         //修改有映射关系
         result = changeGroupRelation(result);
         return result;
+    }
+
+    @Override
+    public Map<Integer, OaGroupLeaderDTO> getLeaderByGroupId(Set<Integer> groupIds) {
+        Map<Integer, OaGroupLeaderDTO> resultMap = MapUtil.newHashMap();
+        if(CollUtil.isEmpty(groupIds)){
+            return resultMap;
+        }
+        MPJLambdaWrapper mpjLambdaWrapper = new MPJLambdaWrapper<OaGroupLeaderDTO>()
+                .selectAs(Hrmresource::getId,OaGroupLeaderDTO::getUserId)
+                .selectAs(Hrmresource::getLastname,OaGroupLeaderDTO::getName)
+                .selectAs(KqGroupmember::getGroupid,OaGroupLeaderDTO::getGroupId)
+                .leftJoin(Hrmresource.class,Hrmresource::getId,KqGroupmember::getTypevalue)
+                .leftJoin(Hrmjobtitles.class,Hrmjobtitles::getId,Hrmresource::getJobtitle)
+                .isNull(KqGroupmember::getIsdelete)
+                .in(KqGroupmember::getGroupid,groupIds)
+                .like(Hrmjobtitles::getJobtitlename, OaConstant.GROUP_LEADER);
+        List<OaGroupLeaderDTO> result = kqGroupmemberMapper.selectJoinList(OaGroupLeaderDTO.class,mpjLambdaWrapper);
+        if(CollUtil.isNotEmpty(result)){
+            //根据groupId转换成map
+            resultMap = result.stream().collect(Collectors.toMap(OaGroupLeaderDTO::getGroupId, Function.identity(), (key1, key2) -> key2));
+        }
+        return resultMap;
     }
 
 

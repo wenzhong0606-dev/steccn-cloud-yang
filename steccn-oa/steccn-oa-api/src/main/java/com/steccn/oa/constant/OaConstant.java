@@ -71,6 +71,9 @@ public class OaConstant {
     public static final String ONE = "1";
     public static final String TWO = "2";
     public static final int SIXTY = 60;
+
+
+    public static final String GROUP_LEADER = "班长";
 }
 
 /**

@@ -2,6 +2,8 @@ package com.steccn.oa.service;
 
 import com.steccn.oa.domain.KqGroupmember;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.oa.dto.OaGroupLeaderDTO;
+import com.steccn.oa.dto.OaUserIdAndName;
 import com.steccn.oa.vo.OaGroupIdAndNameVO;
 
 import java.util.List;
@@ -33,4 +35,11 @@ public interface KqGroupmemberService extends IService<KqGroupmember> {
      * @return
      */
     List<OaGroupIdAndNameVO> getABCGroup();
+
+    /**
+     * 根据班组id获取班组长
+     * @param groupIds
+     * @return
+     */
+    Map<Integer, OaGroupLeaderDTO> getLeaderByGroupId(Set<Integer> groupIds);
 }
