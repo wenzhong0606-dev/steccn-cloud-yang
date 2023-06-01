@@ -2,6 +2,7 @@ package com.steccn.ems.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
@@ -25,7 +26,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -58,44 +61,53 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpEnergyTypeVO> energyTypeList = epEnergyTypeService.getEpEnergyTypeVOList();
         Optional<EpEnergyTypeVO> first = energyTypeList.stream().filter(v -> v.getId() == 4).findFirst();
         //获取数据
-        EpDayReportCountRowVO oilRow = consumeRow(first.get(), start, end, Lists.newArrayList(new TupleDTO<>(23L, "基片")));
-        resVo.setDataList(Lists.newArrayList(oilRow));
+        List<EpDayReportCountRowVO> oilRow = consumeRow(first.get(), start, end, Lists.newArrayList(new TupleDTO<>(23L, "基片"), new TupleDTO<>(24L, "基片")));
+        List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
+        dataList.addAll(oilRow);
+        resVo.setDataList(dataList);
         return resVo;
     }
 
     /**
      * 获取能耗行
+     *
      * @param energyType
      * @param start
      * @param end
      * @param partitionList
      * @return
      */
-    private EpDayReportCountRowVO consumeRow(EpEnergyTypeVO energyType, LocalDate start, LocalDate end, List<TupleDTO<Long,String>> partitionList) {
-        EpTableDTO oilEpTableDTO = new EpTableDTO();
-        oilEpTableDTO.setEnergyType(energyType.getId());
-        oilEpTableDTO.setStart(start);
-        oilEpTableDTO.setEnd(end);
-        oilEpTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO energyType, LocalDate start, LocalDate end, List<TupleDTO<Long, String>> partitionList) {
+        EpTableDTO epTableDTO = new EpTableDTO();
+        epTableDTO.setEnergyType(energyType.getId());
+        epTableDTO.setStart(start);
+        epTableDTO.setEnd(end);
+        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
         List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
-        oilEpTableDTO.setPartitionIdList(partitionIdList);
-        oilEpTableDTO.setThick(Lists.newArrayList(BigDecimal.valueOf(-1.0)));
-        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> oilEpChart = epConsumePartitionChartService.consumePartitionContrast(oilEpTableDTO);
+        epTableDTO.setPartitionIdList(partitionIdList);
+        epTableDTO.setThick(Lists.newArrayList(BigDecimal.valueOf(-1.0)));
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> oilEpChart = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
         List<BigDecimal> data = oilEpChart.getSeriesDataVO().get(0).getData();
+        List<EpDayReportCountRowVO> rowList = Lists.newArrayList();
 
-        EpDayReportCountRowVO oilRow = new EpDayReportCountRowVO();
-        List<String> oilConsumeList = Lists.newArrayList();
-        BigDecimal sum = null;
-        for (BigDecimal ele : data) {
-            oilConsumeList.add(BigDecimalUtil.format(ele));
-            sum = BigDecimalUtil.add(sum, ele);
+        for (int i = 0; i < partitionList.size(); i++) {
+            EpDayReportCountRowVO row = new EpDayReportCountRowVO();
+            List<String> oilConsumeList = Lists.newArrayList();
+            BigDecimal sum = null;
+            for (int j = i; j < data.size(); j += partitionIdList.size()) {
+                BigDecimal ele = data.get(j);
+                oilConsumeList.add(BigDecimalUtil.format(ele));
+                sum = BigDecimalUtil.add(sum, ele);
+
+            }
+            row.setConsumeList(oilConsumeList);
+            row.setEnergyType(energyType.getName());
+            row.setUnit(energyType.getMeasureUnitName());
+            row.setDepartmentName(partitionList.get(i).getField2());
+            row.setSumStr(BigDecimalUtil.format(sum));
+            rowList.add(row);
         }
-        oilRow.setConsumeList(oilConsumeList);
-        oilRow.setEnergyType(energyType.getName());
-        oilRow.setUnit(energyType.getMeasureUnitName());
-        oilRow.setDepartmentName("基片");
-        oilRow.setSumStr(BigDecimalUtil.format(sum));
-        return oilRow;
+        return rowList;
     }
 
     /**
