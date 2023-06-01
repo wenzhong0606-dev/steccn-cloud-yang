@@ -262,6 +262,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             BigDecimal preReadValue = null;
             BigDecimal currentValue = null;
+            BigDecimal sum = null;
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
@@ -280,6 +281,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 BigDecimal subtract = BigDecimalUtil.subtract(currentValue, preReadValue);
                 if(BigDecimalUtil.ge(subtract,BigDecimal.ZERO)){
                     readValueListVO.setReadValue(subtract);
+                    sum = BigDecimalUtil.add(sum, subtract);
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
@@ -290,6 +292,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     readValueListVOList.add(readValueListVO);
                 }
             }
+            meterReadListVO.setSum(sum);
             meterReadListVO.setReadValueList(readValueListVOList);
             meterReadListVOList.add(meterReadListVO);
         }
@@ -307,6 +310,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
 
@@ -1066,6 +1072,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
     }
