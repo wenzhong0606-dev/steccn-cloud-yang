@@ -616,7 +616,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取每个节点的office信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
         List<EpEnergyConsumeDTO> consumeTable = unitTable(dateSet, energyType, nodeLinkMeterMap);
-        log.info("单耗二维表格 -> {}", consumeTable);
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable);
     }
 
@@ -674,7 +673,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             jpRowDTO.setYield(ele.getPullAmount());
             //test11
             jpRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
-            log.info("产量{}随机值 -> {} ", ele.getUuid(), jpRowDTO.getYield());
         });
         List<EpMeterReadRowDTO> sjgNumList = FeignOptional.of(() -> remoteReportWorkFeignApi.sjgOrderRw(sjgDataList), FeignConstant.STECCN_PMS_SERVICE_NAME).get();
         sjgNumList.forEach(ele -> {
@@ -682,7 +680,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             sjgRowDTO.setYield(ele.getYield());
             //test11
             sjgRowDTO.setYield(BigDecimalUtil.setScale(RandomUtil.randomBigDecimal(new BigDecimal("10"), new BigDecimal("100")), 2));
-            log.info("产量{}随机值 -> {} ", ele.getUuid(), sjgRowDTO.getYield());
         });
 
         //查询虚拟仪表的孩子是什么仪表，返回map key => 虚拟仪表节点，0全部是远传 1是机械+远传或者全是机械  null 是没有孩子仪表
