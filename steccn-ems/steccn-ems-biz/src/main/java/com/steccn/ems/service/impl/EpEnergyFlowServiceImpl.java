@@ -137,8 +137,6 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
             }
             resultMap.put(headData.get(i),numRes);
         }
-//        EpPartitionNameListVO epEnergyTypeVOList = epPartitionService.getEpEnergyTypeVOList(dto.getEnergyTypeId());
-//        List<EpPartitionVO> epPartitionVOList = epEnergyTypeVOList.getEpPartitionVOList();
         //一把拉出所有的树状数据
         List<EpPartition> epPartitionList = epPartitionService.list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, dto.getEnergyTypeId()));
         //获取三层节点
@@ -176,56 +174,6 @@ public class EpEnergyFlowServiceImpl implements EpEnergyFlowService {
         });
         result.setData(resultData);
         result.setLinks(links);
-        //找到根节点
-//        EpPartition rootPartition = epPartitionService.getOne(new LambdaQueryWrapper<EpPartition>()
-//                .eq(EpPartition::getType,dto.getEnergyTypeId())
-//                .isNull(EpPartition::getParentId),false);
-//        ParentTupleDTO<String, BigDecimal> root = new ParentTupleDTO<>();
-//        root.setField1(rootPartition.getOfficeName());
-//        if(resultMap.containsKey(rootPartition.getOfficeName())){
-//            root.setField2(resultMap.get(rootPartition.getOfficeName()));
-//        }else {
-//            root.setField2(BigDecimal.ZERO);
-//        }
-//        List<ParentTupleDTO<String, BigDecimal>> resultList = new ArrayList<>();
-//        List<EpPartition> partitionResult = new ArrayList<>();
-//        //双循环获取树状数据
-//        for(EpPartition partitionTmp:epPartitionList){
-//            ParentTupleDTO<String, BigDecimal> dataPartitionTmp = new ParentTupleDTO<>();
-//            if(partitionTmp.getParentId()==null){
-//                ParentTupleDTO<String, BigDecimal> rootTmp = new ParentTupleDTO<>();
-//                rootTmp.setField1(partitionTmp.getOfficeName());
-//                if(resultMap.containsKey(partitionTmp.getOfficeName())){
-//                    rootTmp.setField2(resultMap.get(partitionTmp.getOfficeName()));
-//                }else {
-//                    rootTmp.setField2(BigDecimal.ZERO);
-//                }
-//                resultList.add(rootTmp);
-//                partitionResult.add(partitionTmp);
-//            }
-//            for(EpPartition child:epPartitionList){
-//                ParentTupleDTO<String, BigDecimal> childTmp = new ParentTupleDTO<>();
-//                if(child.getParentId().equals(partitionTmp.getId())){
-//                    List<EpPartition> children = partitionTmp.getChildren();
-//                    List<ParentTupleDTO<String, BigDecimal>> childrenResult = new ArrayList<>();
-//                    if(children == null){
-//                        children = new ArrayList<>();
-//                        childrenResult = new ArrayList<>();
-//                        partitionTmp.setChildren(children);
-//                        dataPartitionTmp.setChildren(childrenResult);
-//                    }
-//                    children.add(child);
-//                    childTmp.setField1(child.getOfficeName());
-//                    if(resultMap.containsKey(child.getOfficeName())){
-//                        childTmp.setField2(resultMap.get(child.getOfficeName()));
-//                    }else {
-//                        childTmp.setField2(BigDecimal.ZERO);
-//                    }
-//                    childrenResult.add(childTmp);
-//                }
-//            }
-//        }
-//        root = resultList.get(0);
         return result;
     }
 

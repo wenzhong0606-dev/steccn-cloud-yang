@@ -35,4 +35,5 @@ public interface SysDictConstant {
 
     String CODE_4 ="4";
 
+    String CODE_PFM = "m²";
 }

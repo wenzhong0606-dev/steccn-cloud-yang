@@ -3,10 +3,7 @@ package com.steccn.ems.service;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.steccn.ems.dto.EpEnergyParamDTO;
-import com.steccn.ems.dto.EpEnergyTreeDTO;
-import com.steccn.ems.dto.EpPartitionChildTypeDTO;
-import com.steccn.ems.dto.EpPartitionDTO;
+import com.steccn.ems.dto.*;
 import com.steccn.ems.vo.EpPartitionNameListVO;
 import com.steccn.ems.vo.EpPartitionParentVO;
 import com.steccn.ems.vo.EpPartitionVO;
@@ -100,6 +97,13 @@ public interface EpPartitionService extends IService<EpPartition> {
     List<EpPartitionVO> getAllChildrenById (Long partitionId);
 
     /**
+     * 获取直接孩子
+     * @param partitionIdSet 节点集合
+     * @return map
+     */
+    Map<Long,List<EpPartitionVO>> getAllChildren(Set<Long> partitionIdSet);
+
+    /**
      * 根据能耗类型查询能耗分区树根节点
      * @param energyType 能耗类型
      * @return
@@ -121,4 +125,11 @@ public interface EpPartitionService extends IService<EpPartition> {
      * @return map
      */
     Map<Long, String> allPartitionNameMap(Integer energyType, Set<Long> keySet);
+
+    /**
+     * 获取所有节点的孩子仪表的类型
+     * @param energyType 能源类型
+     * @return
+     */
+    Map<Long, EpChildTypeDTO> childTypeMap(Integer energyType);
 }

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author yequan
  * @desc 三元组
@@ -14,7 +16,7 @@ import lombok.NoArgsConstructor;
 @ApiModel("三元组")
 @NoArgsConstructor
 @AllArgsConstructor
-public class TripleDTO<E1, E2, E3> extends TupleDTO<E1, E2> {
+public class TripleDTO<E1, E2, E3> extends TupleDTO<E1, E2> implements Serializable {
 
     @ApiModelProperty("属性3")
     private E3 field3;

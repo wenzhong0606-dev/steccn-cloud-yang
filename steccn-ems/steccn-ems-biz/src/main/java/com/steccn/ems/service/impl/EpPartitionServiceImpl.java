@@ -66,7 +66,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         } else {
             epPartitionNameListVO.setName(EpManagerConstant.EnergyPartitioningTree.ENERGY_PARTITION.getName());
         }
-            //根据传过来的能源类型先获取数据库的全量数据
+
+        //查询所有的仪表
+        Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap = epInstrumentAccountService.queryNodeLinkMeter(energyType);
+        EpInstrumentAccountDTO defaultEpInstrumentAccountDTO = new EpInstrumentAccountDTO();
+        //根据传过来的能源类型先获取数据库的全量数据
         List<EpPartition> dataList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType)
                 .eq(EpPartition::getDelFlag,MpConstant.NO));
 
@@ -74,6 +78,8 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         if (CollUtil.isNotEmpty(dataList)) {
             //复制结果到新的集合
             List<EpPartitionVO> epPartitionVOS = BeanUtil.copyToList(dataList, EpPartitionVO.class);
+            epPartitionVOS.forEach(ele -> ele.setEntityTable(nodeLinkMeterMap.getOrDefault(ele.getId(), defaultEpInstrumentAccountDTO).getEntityTable()));
+
             //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
             List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
             rootVOList = searchRoot(epPartitionVOS);
@@ -111,6 +117,7 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 epPartitionVO.setParentId(root.getId());
                 epPartitionVO.setParentOfficeId(root.getOfficeId());
                 epPartitionVO.setParentOfficeName(root.getOfficeName());
+                epPartitionVO.setEntityTable(epPartitionVO.getEntityTable());
                 if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(epPartitionVO.getId())){
                     epPartitionVO.setIsLinkTable(MpConstant.YES);
                 }else {
@@ -382,16 +389,24 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         //准备数据
         List<EpPartitionVO> childTree = Lists.newArrayList();
         if(CollUtil.isNotEmpty(treeList)){
+            //查询每个节点的孩子节点
             dto.getPartitionId().forEach(partitionTmp -> {
                 //过滤子树信息
                 EpPartitionVO resTmp = new EpPartitionVO();
                 EpPartitionVO child = getChild(treeList.get(0), partitionTmp,resTmp);
                 childTree.add(child);
             });
-            for(EpPartitionVO tmp:childTree){
-                tmp = setTreeDetail(tmp);
+
+            //获取每一个节点上挂的仪表
+            Map<Long, EpInstrumentAccount> meterMap = Maps.newHashMap();
+            List<EpInstrumentAccount> meterList = epInstrumentAccountService.list(new LambdaQueryWrapper<EpInstrumentAccount>().eq(EpInstrumentAccount::getMeterType, dto.getType()));
+            if (CollUtil.isNotEmpty(meterList)) {
+                meterList.forEach(ele -> meterMap.put(ele.getPartitionNode(), ele));
+            }
+            for (EpPartitionVO tmp : childTree) {
+                tmp = setTreeDetail(tmp, meterMap);
                 Set<Long> partitionTmp = Sets.newHashSet();
-                partitionTmp = getRealMeter(tmp,partitionTmp);
+                partitionTmp = getRealMeter(tmp, partitionTmp);
                 partitionIdResult.addAll(partitionTmp);
             }
         }
@@ -552,6 +567,88 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Long, EpChildTypeDTO> childTypeMap(Integer energyType) {
+        //保证有序
+        Map<Long, EpChildTypeDTO> resMap = Maps.newLinkedHashMap();
+        //获取能源的分区树
+        EpPartitionNameListVO partitionTree = this.getEpEnergyTypeVOList(energyType);
+        if (CollUtil.isNotEmpty(partitionTree.getEpPartitionVOList())) {
+            //根节点
+            EpPartitionVO root = partitionTree.getEpPartitionVOList().get(0);
+            //获取所有的孩子节点
+            List<EpPartitionVO> allNodeList = getChildren(root);
+            allNodeList.add(root);
+
+            //获取孩子节点的类型
+            for (EpPartitionVO node : allNodeList) {
+                Integer type = childType(node);
+                EpChildTypeDTO epChildTypeDTO = new EpChildTypeDTO();
+                epChildTypeDTO.setType(type);
+                List<EpPartitionVO> childrenList = node.getChildren();
+                if(CollUtil.isNotEmpty(childrenList)){
+                    Set<Long> kidIdSet = childrenList.stream().map(EpPartitionVO::getId).collect(Collectors.toSet());
+                    epChildTypeDTO.setChildren(kidIdSet);
+                }
+                resMap.put(node.getId(), epChildTypeDTO);
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取当前节点的所有孩子节点
+     * @param cur
+     * @return
+     */
+    List<EpPartitionVO> getChildren(EpPartitionVO cur){
+        List<EpPartitionVO> nodeList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(cur.getChildren())){
+            for (EpPartitionVO child : cur.getChildren()) {
+                //先添加所有孩子，再添加自己，如此可以保证 底层节点在下面
+                nodeList.addAll(getChildren(child));
+                nodeList.add(child);
+            }
+        }
+        return nodeList;
+    }
+
+    /**
+     * 当前节点 孩子节点的类型
+     * @param cur 当前节点
+     * @return  0 ， 1 ， 2 ,null
+     */
+    private Integer childType(EpPartitionVO cur) {
+        if (Objects.nonNull(cur.getEntityTable()) && cur.getEntityTable() == 0) {
+            return 0;
+        } else if (Objects.nonNull(cur.getEntityTable()) && cur.getEntityTable() == 1) {
+            return 1;
+        }
+        List<EpPartitionVO> children = cur.getChildren();
+        List<Integer> typeList = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(children)) {
+            for (EpPartitionVO child : children) {
+                typeList.add(childType(child));
+            }
+        }
+        //①typeList为空，或者孩子都为空 ， 返回null
+        //②孩子空 + 0 返回0
+        //③孩子空 + 1 返回1
+        //④孩子空 +0 + 1 返回2
+        //⑤孩子有2 返回2
+        typeList = typeList.stream().filter(v -> Objects.nonNull(v)).collect(Collectors.toList());
+        if(typeList.contains(2)){
+            return 2;
+        } else if (typeList.contains(1) && typeList.contains(0)) {
+            return 2;
+        } else if (typeList.contains(1)) {
+            return 1;
+        } else if (typeList.contains(0)) {
+            return 0;
+        }
+        return null;
+    }
+
     /**
      * 获取节点的全路径
      * @param epPartitionMap
@@ -574,9 +671,25 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
 
     @Override
     public List<EpPartitionVO> getAllChildrenById(Long partitionId) {
+        List<EpPartitionVO> resList = null;
         List<EpPartition> epPartitions = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getParentId, partitionId));
-        List<EpPartitionVO> epPartitionVOList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
-        return epPartitionVOList;
+        if (Objects.nonNull(epPartitions)) {
+            resList = BeanUtil.copyToList(epPartitions, EpPartitionVO.class);
+        }
+        return Objects.isNull(resList) ? Lists.newArrayList() : resList;
+    }
+
+    @Override
+    public Map<Long, List<EpPartitionVO>> getAllChildren(Set<Long> partitionIdSet) {
+        Map<Long, List<EpPartitionVO>> resMap = null;
+        if (CollUtil.isNotEmpty(partitionIdSet)) {
+            List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().in(EpPartition::getParentId, partitionIdSet));
+            if (Objects.nonNull(dbList)) {
+                List<EpPartitionVO> voList = BeanUtil.copyToList(dbList, EpPartitionVO.class);
+                resMap = voList.stream().collect(Collectors.groupingBy(EpPartitionVO::getParentId));
+            }
+        }
+        return Objects.nonNull(resMap) ? resMap : Maps.newHashMap();
     }
 
     @Override
@@ -785,28 +898,26 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param vo
      * @return
      */
-    private EpPartitionVO setTreeDetail(EpPartitionVO vo){
-        if(CollUtil.isEmpty(vo.getChildren())){
+    private EpPartitionVO setTreeDetail(EpPartitionVO vo, Map<Long, EpInstrumentAccount> meterMap) {
+        if (CollUtil.isEmpty(vo.getChildren())) {
             //获取表详情
-            EpInstrumentAccount meter = epInstrumentAccountService.getOne(new LambdaQueryWrapper<EpInstrumentAccount>().
-                    eq(EpInstrumentAccount::getPartitionNode,vo.getId()),false);
-            if(meter != null){
+            EpInstrumentAccount meter = meterMap.get(vo.getId());
+            if (meter != null) {
                 vo.setEntityTable(meter.getEntityTable());
                 vo.setMeterStatus(meter.getStatus());
                 vo.setMeterId(meter.getId());
             }
             return vo;
         }
-        for(int i = 0; i < vo.getChildren().size(); i++){
+        for (int i = 0; i < vo.getChildren().size(); i++) {
             //获取表详情
-            EpInstrumentAccount meter = epInstrumentAccountService.getOne(new LambdaQueryWrapper<EpInstrumentAccount>().
-                    eq(EpInstrumentAccount::getPartitionNode,vo.getId()),false);
-            if(meter != null){
+            EpInstrumentAccount meter = meterMap.get(vo.getId());
+            if (meter != null) {
                 vo.setEntityTable(meter.getEntityTable());
                 vo.setMeterStatus(meter.getStatus());
                 vo.setMeterId(meter.getId());
             }
-            this.setTreeDetail(vo.getChildren().get(i));
+            this.setTreeDetail(vo.getChildren().get(i), meterMap);
         }
         return vo;
     }
