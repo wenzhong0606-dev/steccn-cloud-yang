@@ -271,4 +271,10 @@ public class OaController {
     public R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds){
         return R.success(kqGroupmemberService.getLeaderByGroupId(groupIds));
     }
+
+    @ApiOperation("获取新闻信息")
+    @GetMapping("/news/info")
+    public R<List<OaNewsVO>> getOaNewsInfo(){
+        return R.success(oaService.getNewsInfo());
+    }
 }

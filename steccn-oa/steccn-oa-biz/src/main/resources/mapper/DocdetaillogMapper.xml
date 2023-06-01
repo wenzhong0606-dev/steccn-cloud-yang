@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.steccn.oa.mapper.DocdetaillogMapper">
+
+    <resultMap id="BaseResultMap" type="com.steccn.oa.domain.Docdetaillog">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="docid" column="DOCID" jdbcType="INTEGER"/>
+            <result property="docsubject" column="DOCSUBJECT" jdbcType="VARCHAR"/>
+            <result property="doccreater" column="DOCCREATER" jdbcType="INTEGER"/>
+            <result property="operatetype" column="OPERATETYPE" jdbcType="VARCHAR"/>
+            <result property="operatedesc" column="OPERATEDESC" jdbcType="VARCHAR"/>
+            <result property="operateuserid" column="OPERATEUSERID" jdbcType="INTEGER"/>
+            <result property="operatedate" column="OPERATEDATE" jdbcType="CHAR"/>
+            <result property="operatetime" column="OPERATETIME" jdbcType="CHAR"/>
+            <result property="clientaddress" column="clientaddress" jdbcType="VARCHAR"/>
+            <result property="usertype" column="USERTYPE" jdbcType="CHAR"/>
+            <result property="creatertype" column="CREATERTYPE" jdbcType="CHAR"/>
+            <result property="operateitem" column="OPERATEITEM" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,DOCID,DOCSUBJECT,
+        DOCCREATER,OPERATETYPE,OPERATEDESC,
+        OPERATEUSERID,OPERATEDATE,OPERATETIME,
+        clientaddress,USERTYPE,CREATERTYPE,
+        OPERATEITEM
+    </sql>
+</mapper>

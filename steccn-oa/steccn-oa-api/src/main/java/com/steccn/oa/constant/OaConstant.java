@@ -44,6 +44,7 @@ public class OaConstant {
     public static final String OA_JSON_GROUPITEM3 = "groupitem3";
     public static final String OA_JSON_VALUE = "value";
     public static final String OA_JSON_ITEMS = "items";
+    public static final String OA_JSON_IMPORTDOCID = "importdocid";
 
 
     /**
