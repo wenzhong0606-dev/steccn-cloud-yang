@@ -67,6 +67,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //计算电耗
 
+        //计算余热发电
+
+
 
         Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
         //获取用油量数据

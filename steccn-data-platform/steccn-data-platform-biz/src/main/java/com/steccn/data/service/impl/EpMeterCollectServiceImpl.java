@@ -2,6 +2,7 @@ package com.steccn.data.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,8 +10,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.BigDecimalUtil;
+import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.SplitListUtil;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.domain.PmStationCollect;
@@ -20,6 +23,7 @@ import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
+import com.steccn.qms.util.ShardTimeUtil;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -140,5 +144,10 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         resList.add(value1);
         resList.add(value2);
         return resList;
+    }
+
+    @Override
+    public List<BigDecimal> heatPower(LocalDate start, LocalDate end) {
+        return null;
     }
 }
