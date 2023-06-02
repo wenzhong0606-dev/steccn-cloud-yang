@@ -528,7 +528,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
         //如果厚度集合不包含无厚度，则加入无厚度
-        BigDecimal noThick = new BigDecimal("-1");
+        BigDecimal noThick = BigDecimalUtil.MINUS_ONE;
         if (!thickList.contains(noThick)) {
             thickList.add(noThick);
         }

@@ -28,6 +28,7 @@ public class BigDecimalUtil {
 
     public static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     public static final BigDecimal THOUSAND = BigDecimal.valueOf(1000);
+    public static final BigDecimal MINUS_ONE = new BigDecimal("-1");
 
     /**
      * 格式化val 指定scale
@@ -51,7 +52,7 @@ public class BigDecimalUtil {
      * @param val2 val2
      * @return 和
      */
-    public static BigDecimal add(BigDecimal val1, BigDecimal val2,int scale) {
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2, int scale) {
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
@@ -65,11 +66,12 @@ public class BigDecimalUtil {
 
     /**
      * 将val1 + val2
+     *
      * @param val1
      * @param val2
      * @return 和
      */
-    public static BigDecimal add(BigDecimal val1, BigDecimal val2){
+    public static BigDecimal add(BigDecimal val1, BigDecimal val2) {
         return add(val1, val2, DEFAULT_SCALE);
     }
 
@@ -86,6 +88,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 > val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -96,6 +99,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 >= val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -106,6 +110,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 < val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -116,6 +121,7 @@ public class BigDecimalUtil {
 
     /**
      * val1 <= val2 ? true : false
+     *
      * @param val1
      * @param val2
      * @return
@@ -127,6 +133,7 @@ public class BigDecimalUtil {
     /**
      * 如果equalsFlag == false left > right
      * 如果equalsFlag == true  left >= right
+     *
      * @param left
      * @param right
      * @param equalsFlag
