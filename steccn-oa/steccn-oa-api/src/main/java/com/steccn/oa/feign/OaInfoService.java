@@ -208,7 +208,7 @@ public interface OaInfoService {
     R<OaSaveDocVO> saveDoc(@RequestParam("url") String url,@RequestParam("docName") String docName);
 
     @ApiOperation("根据部门id获取信息")
-    @GetMapping("/department/info")
+    @GetMapping("/feign/oa/department/info")
     R<OaDepartmentVO> getDepartmentInfoById(@RequestParam("id") Integer id);
 
     @ApiOperation("根据岗位id获取岗位信息")

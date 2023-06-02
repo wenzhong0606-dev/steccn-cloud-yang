@@ -153,11 +153,6 @@ public class Hrmdepartment implements Serializable {
      */
     private String tenantKey;
 
-    /**
-     * 
-     */
-    private LocalDateTime depSyncTime;
-
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
