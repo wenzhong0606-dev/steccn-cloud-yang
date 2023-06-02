@@ -312,4 +312,14 @@ public interface EpManagerConstant {
     }
 
 
+    /**
+     * 默认能源 电，水，天燃气，燃料油，燃料(气+油)
+     */
+    Integer ENERGY_ELECTRIC= 1;
+    Integer ENERGY_WATER= 2;
+    Integer ENERGY_GAS= 3;
+    Integer ENERGY_OIL= 4;
+    Integer ENERGY_GAS_OIL= 5;
+
+
 }

@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
@@ -596,6 +597,34 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         return resMap;
     }
 
+    @Override
+    public Map<Integer, List<TupleDTO<Long, String>>> dayReportCountDefaultNode() {
+        Map<Integer, List<TupleDTO<Long, String>>> resMap = Maps.newHashMap();
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, Arrays.asList("中国建材桐城新能源材料有限公司", "基片制造部", "深加工制造部", "基片一车间")));
+        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, Arrays.asList("基片一车间")));
+        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, Arrays.asList("基片一车间")));
+        return resMap;
+    }
+
+    /**
+     * 根据officeName获取指定能源类型的节点id和节点名称
+     *
+     * @param energyType     能源类型
+     * @param officeNameList 组织结构名称集合
+     * @return
+     */
+    private List<TupleDTO<Long, String>> queryNodeByNameList(Integer energyType, List<String> officeNameList) {
+        List<TupleDTO<Long, String>> resList = Lists.newArrayList();
+        List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeName, officeNameList));
+        if (CollUtil.isNotEmpty(dbList)) {
+            for (EpPartition epPartition : dbList) {
+                resList.add(new TupleDTO<>(epPartition.getId(), epPartition.getOfficeName()));
+            }
+        }
+        return resList;
+    }
+
+
     /**
      * 获取当前节点的所有孩子节点
      * @param cur
@@ -778,70 +807,6 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
         }
         return resMap;
     }
-
-    /**
-     * 根据全量数据递归构造一棵树
-     * @param dataList
-     * @return
-     */
-//    private List<EpPartitionVO> recursiveTree(List<EpPartition> dataList,Integer energyType){
-//        //定义返回数据集合
-//        List<EpPartitionVO> epPartitionVOS = Lists.newArrayList();
-//        //根据能源类型去仪表里面查询所有的可展示的仪表判断是否绑定所属分区节点
-//        List<Long> partitionNodes = epInstrumentAccountService.getPartitionNodes(energyType);
-//        //获取所有根节点
-//        List<EpPartition> rootList = dataList.stream().filter(v -> Objects.isNull(v.getParentId())).collect(Collectors.toList());
-//        if (CollUtil.isNotEmpty(rootList)){
-//            rootList.sort(Comparator.comparing(EpPartition::getSort));
-//            //把根节点从全量数据集合中删除
-//            dataList.removeAll(rootList);
-//            //遍历根节点
-//            for (EpPartition root : rootList) {
-//                EpPartitionVO parent = new EpPartitionVO();
-//                BeanUtils.copyProperties(root,parent);
-//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(root.getId())){
-//                    parent.setIsLinkTable(MpConstant.YES);
-//                }else {
-//                    parent.setIsLinkTable(MpConstant.NO);
-//                }
-//                epPartitionVOS.add(parent);
-//                //查询vo的子级,并将子级放到vo
-//                searchSysDictCh(parent, dataList,partitionNodes);
-//
-//            }
-//        }
-//        return epPartitionVOS;
-//    }
-
-    /**
-     * 递归查询
-     * @param parentVO
-     * @param dataList
-     */
-//    private void searchSysDictCh(EpPartitionVO parentVO, List<EpPartition> dataList,List<Long> partitionNodes) {
-//        //获取当前节点的子级
-//        List<EpPartition> children = dataList.stream().filter(v -> Objects.nonNull(parentVO.getId())
-//                && parentVO.getId() .equals(v.getParentId()) ).collect(Collectors.toList());
-//        if (CollUtil.isNotEmpty(children)){
-//            children.sort(Comparator.comparing(EpPartition::getSort));
-//            List<EpPartitionVO> childrenVoList = BeanUtil.copyToList(children, EpPartitionVO.class);
-//            childrenVoList.forEach(v->{
-//                if (CollUtil.isNotEmpty(partitionNodes)&&partitionNodes.contains(v.getId())){
-//                    v.setIsLinkTable(MpConstant.YES);
-//                }else {
-//                    v.setIsLinkTable(MpConstant.NO);
-//                }
-//            });
-//            //父亲结点挂孩子
-//            parentVO.setChildren(childrenVoList);
-//            //从集合中删除孩子
-//            dataList.removeAll(children);
-//            //孩子结点继续去挂自己的孩子
-//            for (EpPartitionVO item : childrenVoList) {
-//                searchSysDictCh(item, dataList,partitionNodes);
-//            }
-//        }
-//    }
 
     /**
      * 获取子树
