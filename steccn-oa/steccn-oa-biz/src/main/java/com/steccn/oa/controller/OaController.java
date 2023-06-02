@@ -265,4 +265,16 @@ public class OaController {
     public R<OaAttendanceVO> getMyAttendance(){
         return R.success(oaService.getMyAttendance());
     }
+
+    @ApiOperation("获取班组长信息")
+    @PostMapping("/group/leader")
+    public R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds){
+        return R.success(kqGroupmemberService.getLeaderByGroupId(groupIds));
+    }
+
+    @ApiOperation("获取新闻信息")
+    @GetMapping("/news/info")
+    public R<List<OaNewsVO>> getOaNewsInfo(){
+        return R.success(oaService.getNewsInfo());
+    }
 }

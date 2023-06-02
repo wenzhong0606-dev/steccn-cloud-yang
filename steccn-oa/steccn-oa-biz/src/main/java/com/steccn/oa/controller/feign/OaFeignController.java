@@ -3,6 +3,7 @@ package com.steccn.oa.controller.feign;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Maps;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaGroupLeaderDTO;
 import com.steccn.oa.dto.OaOperatorParamDTO;
 import com.steccn.oa.dto.OaWorkFlowOperatorDTO;
 import com.steccn.oa.service.*;
@@ -88,5 +89,11 @@ public class OaFeignController {
     @GetMapping("/jobTitle/info")
     public R<OaJobTitleVO> getJobInfoById(@RequestParam("id") Integer id){
         return R.success(hrmjobtitlesService.getJobInfoById(id));
+    }
+
+    @ApiOperation("获取班组长信息")
+    @PostMapping("/group/leader")
+    public R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds){
+        return R.success(kqGroupmemberService.getLeaderByGroupId(groupIds));
     }
 }

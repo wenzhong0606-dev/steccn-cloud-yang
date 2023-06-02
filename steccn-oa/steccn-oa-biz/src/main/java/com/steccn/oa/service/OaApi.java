@@ -293,4 +293,23 @@ public interface OaApi {
     @Headers(value = {"content-type=application/x-www-form-urlencoded"})
     @ResponseBody
     String getMyAttendance(@RequestHeader MultiValueMap<String,String> headers,@RequestBody OaAttendanceDTO dto);
+
+    /**
+     * 获取OA公司下级数据
+     * @param headers 传参需要放入header中
+     * @return
+     */
+    @GetMapping(value = "/api/doc/console/news/table")
+    @ResponseBody
+    String getNewList(@RequestHeader MultiValueMap<String,String> headers);
+
+    /**
+     * 每个新闻的具体信息
+     * @param headers 请求头
+     * @param id 具体id
+     * @return
+     */
+    @GetMapping(value = "/api/doc/console/news/info")
+    @ResponseBody
+    String getNewInfo(@RequestHeader MultiValueMap<String,String> headers,@RequestParam("id") Integer id);
 }

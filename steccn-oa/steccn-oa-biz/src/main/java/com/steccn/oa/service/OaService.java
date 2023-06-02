@@ -8,6 +8,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.SecurityUtils;
@@ -17,6 +18,7 @@ import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.oa.constant.OaConstant;
 import com.steccn.oa.constant.OaManagerConstant;
+import com.steccn.oa.domain.Docdetaillog;
 import com.steccn.oa.dto.*;
 import com.steccn.oa.mapper.OaWorkflowDeleteDetailMapper;
 import com.steccn.oa.vo.*;
@@ -35,6 +37,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import weaver.rsa.security.RSA;
 
+import javax.print.Doc;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -62,6 +65,7 @@ public class OaService {
     private final OaTokenService oaTokenService;
 	private final HrmresourceService hrmresourceService;
     private final OaWorkflowDeleteDetailMapper oaWorkflowDeleteDetailMapper;
+    private final DocdetaillogService docdetaillogService;
     /**
      * 防止因为webflux产生的返回值报错
      * @param converters
@@ -687,6 +691,47 @@ public class OaService {
         chart.setData(data);
         vo.setChart(chart);
         return vo;
+    }
+
+    public List<OaNewsVO> getNewsInfo(){
+        List<OaNewsVO> oaNewsVOS = Lists.newArrayList();
+        MultiValueMap<String, String> headers = this.setHeaders();
+        //1、先获取新闻列表的sessionKey
+        String newList = oaApi.getNewList(headers);
+        String sessionKey = JSONObject.parseObject(newList).getString(OaConstant.OA_SESSION_KEY);
+        OaDataKeyDTO dataKeyDTO = new OaDataKeyDTO();
+        dataKeyDTO.setDataKey(sessionKey);
+        dataKeyDTO.setCurrent(1);
+        dataKeyDTO.setPageSize(6);
+        String dataBySessionKey = oaApi.getDataBySessionKey(headers, dataKeyDTO);
+        List<OaNewsListDTO> oaNewsListDTOS = JSONObject.parseObject(dataBySessionKey).getJSONArray(OaConstant.OA_JSON_DATAS).toJavaList(OaNewsListDTO.class);
+        //2、遍历获取每个页面的doc
+        if(CollUtil.isNotEmpty(oaNewsListDTOS)){
+            oaNewsListDTOS.forEach(tmp -> {
+                OaNewsVO oaNewsVO = new OaNewsVO();
+                oaNewsVO.setNewsId(tmp.getId());
+                oaNewsVO.setNewsName(tmp.getFrontpagename());
+                //3、获取docId对应的时间
+                String newInfo = oaApi.getNewInfo(headers, tmp.getId());
+                String docIdStr = JSONObject.parseObject(newInfo).getJSONObject(OaConstant.OA_JSON_DATA).getString(OaConstant.OA_JSON_IMPORTDOCID);
+                if(StrUtil.isNotBlank(docIdStr)){
+                    String[] split = docIdStr.split(",");
+                    String docId = split[0];
+                    //获取文档最新操作时间
+                    Docdetaillog docdetaillog = docdetaillogService.getOne(new LambdaQueryWrapper<Docdetaillog>()
+                            .select(Docdetaillog::getOperatedate)
+                            .eq(Docdetaillog::getDocid, docId)
+                            .orderByDesc(Docdetaillog::getOperatedate)
+                            .last("LIMIT 1"));
+                    if(Objects.nonNull(docdetaillog)){
+                        String[] dateSplit = docdetaillog.getOperatedate().split("-");
+                        oaNewsVO.setCreateTime(dateSplit[1]+"-"+dateSplit[2]);
+                    }
+                }
+                oaNewsVOS.add(oaNewsVO);
+            });
+        }
+        return oaNewsVOS;
     }
 
     /**

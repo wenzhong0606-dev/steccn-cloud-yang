@@ -44,6 +44,7 @@ public class OaConstant {
     public static final String OA_JSON_GROUPITEM3 = "groupitem3";
     public static final String OA_JSON_VALUE = "value";
     public static final String OA_JSON_ITEMS = "items";
+    public static final String OA_JSON_IMPORTDOCID = "importdocid";
 
 
     /**
@@ -71,6 +72,9 @@ public class OaConstant {
     public static final String ONE = "1";
     public static final String TWO = "2";
     public static final int SIXTY = 60;
+
+
+    public static final String GROUP_LEADER = "班长";
 }
 
 /**

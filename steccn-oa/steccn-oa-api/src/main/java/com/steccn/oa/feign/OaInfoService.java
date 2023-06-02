@@ -214,4 +214,8 @@ public interface OaInfoService {
     @ApiOperation("根据岗位id获取岗位信息")
     @GetMapping("/jobTitle/info")
     R<OaJobTitleVO> getJobInfoById(@RequestParam("id") Integer id);
+
+    @ApiOperation("获取班组长信息")
+    @PostMapping("/feign/oa/group/leader")
+    R<Map<Integer,OaGroupLeaderDTO>> getLeaderInfoByGroup(@RequestBody Set<Integer> groupIds);
 }
