@@ -1,10 +1,11 @@
-package com.steccn.ems.dto;
+package com.steccn.ems.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -27,9 +28,9 @@ public class EpDayReportCountRowVO implements Serializable {
     private String departmentName;
 
     @ApiModelProperty("能耗")
-    private List<String> consumeList;
+    private List<BigDecimal> consumeList;
 
     @ApiModelProperty("总计")
-    private String sumStr;
+    private BigDecimal sumStr;
 
 }

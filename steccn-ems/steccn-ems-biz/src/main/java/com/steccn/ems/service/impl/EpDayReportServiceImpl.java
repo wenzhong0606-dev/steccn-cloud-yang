@@ -9,8 +9,9 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.dto.EpDayReportCountRowVO;
-import com.steccn.ems.dto.EpDayReportCountVO;
+import com.steccn.ems.vo.EpDayReportCountHeadVO;
+import com.steccn.ems.vo.EpDayReportCountRowVO;
+import com.steccn.ems.vo.EpDayReportCountVO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.EpEnergyTypeVO;
@@ -18,6 +19,7 @@ import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,6 +64,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //获取指定的组织结构名称和主键
         Map<Integer, List<TupleDTO<Long, String>>> defaultNodeMap = epPartitionService.dayReportCountDefaultNode();
+
+        //计算电耗
+
 
         Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
         //获取用油量数据
@@ -126,11 +131,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         for (int i = 0; i < partitionList.size(); i++) {
             count = 0;
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
-            List<String> consumeList = Lists.newArrayList();
+            List<BigDecimal> consumeList = Lists.newArrayList();
             BigDecimal sum = null;
             for (int j = i; j < data.size(); j += partitionIdList.size()) {
                 BigDecimal ele = data.get(j);
-                consumeList.add(BigDecimalUtil.format(ele));
+                consumeList.add(ele);
                 //列合计
                 if (count > sumList.size() - 1) {
                     sumList.add(count, BigDecimal.ZERO);
@@ -143,7 +148,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName(partitionList.get(i).getField2());
-            row.setSumStr(BigDecimalUtil.format(sum));
+            row.setSumStr(sum);
             rowList.add(row);
             //合计行总计
             total = BigDecimalUtil.add(total, sum);
@@ -153,13 +158,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //如果超过一行，则添加一个合计行
         if (partitionIdList.size() > 1) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
-            List<String> sumStrList = Lists.newArrayList();
-            sumList.forEach(ele -> sumStrList.add(BigDecimalUtil.format(ele)));
+            List<BigDecimal> sumStrList = Lists.newArrayList();
+            sumList.forEach(ele -> sumStrList.add(ele));
             row.setConsumeList(sumStrList);
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName("合计");
-            row.setSumStr(BigDecimalUtil.format(total));
+            row.setSumStr(total);
             rowList.add(row);
         }
 
@@ -173,10 +178,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param end   结束时间
      * @return
      */
-    private EpDayReportCountRowVO countHead(LocalDate start, LocalDate end) {
+    private EpDayReportCountHeadVO countHead(LocalDate start, LocalDate end) {
         //获取一个月的所有日期
         List<LocalDate> dateList = LocalDateUtil.getLocalDateByStartEndDate(start, end);
-        EpDayReportCountRowVO head = new EpDayReportCountRowVO();
+        EpDayReportCountHeadVO head = new EpDayReportCountHeadVO();
         head.setEnergyType("能源类型");
         head.setUnit("单位");
         head.setDepartmentName("部门");
