@@ -147,7 +147,11 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     }
 
     @Override
-    public List<BigDecimal> heatPower(LocalDate start, LocalDate end) {
+    public List<BigDecimal> heatPower(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = LocalDateUtil.getMorning(startDate);
+        LocalDateTime end = LocalDateUtil.getMorning(endDate.plusDays(1));
+        List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
+
         return null;
     }
 }
