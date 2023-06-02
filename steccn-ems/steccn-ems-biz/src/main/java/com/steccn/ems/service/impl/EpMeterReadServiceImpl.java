@@ -263,6 +263,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
             List<ReadValueListVO> readValueListVOList = new ArrayList<>();
             BigDecimal preReadValue = null;
             BigDecimal currentValue = null;
+            BigDecimal sum = null;
             for (LocalDate localDate : localDateList) {
                 List<MeterReadMapperVO> filterList = entry.getValue().stream().filter(meterReadMapperVO -> Objects.equals(meterReadMapperVO.getReadDate(), localDate)).collect(Collectors.toList());
                 ReadValueListVO readValueListVO = new ReadValueListVO();
@@ -281,6 +282,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                 BigDecimal subtract = BigDecimalUtil.subtract(currentValue, preReadValue);
                 if(BigDecimalUtil.ge(subtract,BigDecimal.ZERO)){
                     readValueListVO.setReadValue(subtract);
+                    sum = BigDecimalUtil.add(sum, subtract);
                 }
                 preReadValue = currentValue;
                 //多获取一天的数据 仅仅用于做差值
@@ -291,6 +293,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     readValueListVOList.add(readValueListVO);
                 }
             }
+            meterReadListVO.setSum(sum);
             meterReadListVO.setReadValueList(readValueListVOList);
             meterReadListVOList.add(meterReadListVO);
         }
@@ -308,6 +311,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
 
@@ -524,7 +530,7 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //构建能耗分区树二维表格【班次日期，班次，产品厚度，xxx节点，yyy节点....】
         List<BigDecimal> thickList = orderDetailList.stream().filter(v -> Objects.nonNull(v.getThick())).map(DwProduceOrderDTO::getThick).distinct().sorted().collect(Collectors.toList());
         //如果厚度集合不包含无厚度，则加入无厚度
-        BigDecimal noThick = new BigDecimal("-1");
+        BigDecimal noThick = BigDecimalUtil.MINUS_ONE;
         if (!thickList.contains(noThick)) {
             thickList.add(noThick);
         }
@@ -1078,6 +1084,9 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                             meterReadListVO.getReadValueList().get(i).setReadValue(sumReduce);
                         }
                     }
+                    //求和
+                    BigDecimal sum = meterReadListVO.getReadValueList().stream().filter(v -> Objects.nonNull(v.getReadValue())).map(ReadValueListVO::getReadValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    meterReadListVO.setSum(sum);
                 }
         ).collect(Collectors.toList());
     }

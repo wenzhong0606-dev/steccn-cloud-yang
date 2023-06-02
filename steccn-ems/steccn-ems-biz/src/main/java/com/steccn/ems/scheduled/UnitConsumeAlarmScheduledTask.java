@@ -4,6 +4,7 @@ import cn.hutool.core.date.DatePattern;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.steccn.authserver.exception.SteccnChartException;
+import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.RegularUtil;
 import com.steccn.common.vo.EpChartGraphVO;
@@ -58,7 +59,7 @@ public class UnitConsumeAlarmScheduledTask {
         for (SysDictVO sysDictVO : thickVOList) {
             thickList.add(RegularUtil.extractValue(sysDictVO.getCode(), null, (x) -> new BigDecimal(x)));
         }
-        thickList.add(BigDecimal.valueOf(-1));
+        thickList.add(BigDecimalUtil.MINUS_ONE);
         for (int i = 1; i < 6; i++) {
             try {
                 if (i == 1) {

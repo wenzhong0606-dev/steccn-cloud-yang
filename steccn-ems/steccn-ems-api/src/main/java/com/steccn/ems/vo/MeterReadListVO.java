@@ -1,7 +1,9 @@
 package com.steccn.ems.vo;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -15,6 +17,10 @@ public class MeterReadListVO {
     private Long partitionNode;
     private String partitionNodeName;
     private Long parentId;
+
+    @ApiModelProperty("合计")
+    private BigDecimal sum;
+
     /**
      * 是否绑定仪表 0否，1是
      */
