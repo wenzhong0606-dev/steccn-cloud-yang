@@ -725,7 +725,7 @@ public class OaService {
                             .last("LIMIT 1"));
                     if(Objects.nonNull(docdetaillog)){
                         String[] dateSplit = docdetaillog.getOperatedate().split("-");
-                        oaNewsVO.setCreateTime(dateSplit[1]+dateSplit[2]);
+                        oaNewsVO.setCreateTime(dateSplit[1]+"-"+dateSplit[2]);
                     }
                 }
                 oaNewsVOS.add(oaNewsVO);
