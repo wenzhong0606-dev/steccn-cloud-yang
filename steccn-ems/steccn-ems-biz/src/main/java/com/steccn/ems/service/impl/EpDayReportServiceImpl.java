@@ -9,15 +9,17 @@ import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.dto.EpDayReportCountRowVO;
-import com.steccn.ems.dto.EpDayReportCountVO;
 import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.*;
+import com.steccn.ems.vo.EpDayReportCountHeadVO;
+import com.steccn.ems.vo.EpDayReportCountRowVO;
+import com.steccn.ems.vo.EpDayReportCountVO;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,10 +43,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpEnergyTypeService epEnergyTypeService;
     private final EpMeterReadDistantService epMeterReadDistantService;
     private final EpPartitionService epPartitionService;
+    private final EpHeatPowerService epHeatPowerService;
 
     @Override
     public EpDayReportCountVO count(LocalDate start) {
+
         EpDayReportCountVO resVo = new EpDayReportCountVO();
+        List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
         LocalDateTime endLdt = LocalDateUtil.getLastDayOfMonthStr(start);
         LocalDate end = endLdt.toLocalDate();
@@ -63,24 +68,74 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取指定的组织结构名称和主键
         Map<Integer, List<TupleDTO<Long, String>>> defaultNodeMap = epPartitionService.dayReportCountDefaultNode();
 
-        Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
-        //获取用油量数据
-        List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
+        //计算电耗
+        Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
+        List<EpDayReportCountRowVO> elecList = calElec(eleOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC), allThickList);
 
-        //获取用气量
-        Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
-        List<EpDayReportCountRowVO> gasRowList = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
+        //计算余热发电
+        List<BigDecimal> heatPowerList = epHeatPowerService.heatPower(start, end);
+        //获取能源类型
+        EpEnergyTypeVO eleEnergy = eleOp.get();
+        EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
+        heatPowerRow.setConsumeList(heatPowerList);
+        heatPowerRow.setEnergyType(eleEnergy.getName());
+        heatPowerRow.setDepartmentName("余热发电");
+        heatPowerRow.setUnit(eleEnergy.getMeasureUnitName());
+        BigDecimal reduce = heatPowerList.stream().filter(v -> Objects.nonNull(v)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        heatPowerRow.setSumStr(BigDecimalUtil.setScale(reduce, 0));
+        dataList.add(heatPowerRow);
 
-        //获取用气量
-        Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
-        List<EpDayReportCountRowVO> waterRowList = consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
+        try {
+            //获取用油量数据
+            Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
+            dataList.addAll(oilRowList);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
+        try {
+            //获取用气量
+            Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> gasRowList = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
+            dataList.addAll(gasRowList);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
+        try {
+            //获取用水量
+            Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> waterRowList = consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
+            dataList.addAll(waterRowList);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
 
-        List<EpDayReportCountRowVO> dataList = Lists.newArrayList();
-        dataList.addAll(waterRowList);
-        dataList.addAll(gasRowList);
-        dataList.addAll(oilRowList);
         resVo.setDataList(dataList);
         return resVo;
+    }
+
+    /**
+     * 计算电
+     *
+     * @param epEnergy      能源类型
+     * @param start         开始日期
+     * @param end           结束日期
+     * @param partitionList 所有节点的集合
+     * @param thickList     所有厚度集合
+     * @return
+     */
+    private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TupleDTO<Long, String>> partitionList, List<BigDecimal> thickList) {
+        EpTableDTO epTableDTO = new EpTableDTO();
+        epTableDTO.setEnergyType(epEnergy.getId());
+        epTableDTO.setStart(start);
+        epTableDTO.setEnd(end);
+        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
+        epTableDTO.setPartitionIdList(partitionIdList);
+        epTableDTO.setThick(thickList);
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> epChart = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
+        log.info("{}", epChart);
+        return null;
     }
 
     /**
@@ -126,11 +181,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         for (int i = 0; i < partitionList.size(); i++) {
             count = 0;
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
-            List<String> consumeList = Lists.newArrayList();
+            List<BigDecimal> consumeList = Lists.newArrayList();
             BigDecimal sum = null;
             for (int j = i; j < data.size(); j += partitionIdList.size()) {
                 BigDecimal ele = data.get(j);
-                consumeList.add(BigDecimalUtil.format(ele));
+                consumeList.add(ele);
                 //列合计
                 if (count > sumList.size() - 1) {
                     sumList.add(count, BigDecimal.ZERO);
@@ -143,7 +198,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName(partitionList.get(i).getField2());
-            row.setSumStr(BigDecimalUtil.format(sum));
+            row.setSumStr(sum);
             rowList.add(row);
             //合计行总计
             total = BigDecimalUtil.add(total, sum);
@@ -153,13 +208,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //如果超过一行，则添加一个合计行
         if (partitionIdList.size() > 1) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
-            List<String> sumStrList = Lists.newArrayList();
-            sumList.forEach(ele -> sumStrList.add(BigDecimalUtil.format(ele)));
+            List<BigDecimal> sumStrList = Lists.newArrayList();
+            sumList.forEach(ele -> sumStrList.add(ele));
             row.setConsumeList(sumStrList);
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName("合计");
-            row.setSumStr(BigDecimalUtil.format(total));
+            row.setSumStr(total);
             rowList.add(row);
         }
 
@@ -173,10 +228,10 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param end   结束时间
      * @return
      */
-    private EpDayReportCountRowVO countHead(LocalDate start, LocalDate end) {
+    private EpDayReportCountHeadVO countHead(LocalDate start, LocalDate end) {
         //获取一个月的所有日期
         List<LocalDate> dateList = LocalDateUtil.getLocalDateByStartEndDate(start, end);
-        EpDayReportCountRowVO head = new EpDayReportCountRowVO();
+        EpDayReportCountHeadVO head = new EpDayReportCountHeadVO();
         head.setEnergyType("能源类型");
         head.setUnit("单位");
         head.setDepartmentName("部门");

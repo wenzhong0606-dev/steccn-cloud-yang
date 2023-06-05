@@ -1,13 +1,16 @@
 package com.steccn.data.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.data.domain.EpMeterCollect;
 import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -64,4 +67,11 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
      * @return
      */
     List<BigDecimal> seValue(TripleDTO<String, LocalDateTime, LocalDateTime> tripleDTO);
+
+    /**
+     * 计算余热发电
+     * @param date 班次日期
+     * @return
+     */
+    BigDecimal heatPower(LocalDate date);
 }

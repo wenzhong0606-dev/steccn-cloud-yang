@@ -1,4 +1,4 @@
-package com.steccn.ems.dto;
+package com.steccn.ems.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -19,7 +19,7 @@ public class EpDayReportCountVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("表头")
-    private EpDayReportCountRowVO head;
+    private EpDayReportCountHeadVO head;
 
     @ApiModelProperty("数据汇总")
     private List<EpDayReportCountRowVO> dataList;

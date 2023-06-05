@@ -2,6 +2,7 @@ package com.steccn.data.feign;
 
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TripleDTO;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.data.dto.*;
 import com.steccn.data.vo.DwDefectCollectVO;
@@ -12,6 +13,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +105,15 @@ public interface RemoteDataPlatformFeignApi {
     @PostMapping("/feign/data/warehouse/psc/deal/data")
     @ApiOperation("迁移数据")
     R<Boolean> pmStationCollectDealData(@RequestBody List<PmStationCollectDTO> list);
+
+    /**
+     * 计算余热发电
+     * @param date 班次日期
+     * @return
+     */
+    @PostMapping("/feign/data/warehouse/heat/power")
+    @ApiOperation("计算余热发电")
+    R<BigDecimal> heatPower(@RequestBody LocalDate date);
 
     @PostMapping("/feign/data/warehouse/station/info")
     @ApiOperation("生产管理-进出站计数信息")

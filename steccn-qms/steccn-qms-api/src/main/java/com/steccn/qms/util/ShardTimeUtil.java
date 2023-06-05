@@ -1,7 +1,10 @@
 package com.steccn.qms.util;
 
+import com.google.common.collect.Lists;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.LocalDateUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -211,5 +214,24 @@ public class ShardTimeUtil {
             }
         }
         return listDate;
+    }
+
+
+    /**
+     * 根据开始时间和结束时间分片
+     *
+     * @param start 开始时间
+     * @param end   结束时间
+     * @param intervalSeconds 步长 ，单位秒
+     * @return 分片
+     */
+    public static List<LocalDateTime> shard(LocalDateTime start, LocalDateTime end, int intervalSeconds) {
+        List<LocalDateTime> resList = Lists.newArrayList();
+        while (start.isBefore(end) || start.isEqual(end)) {
+            LocalDateTime resStart = LocalDateTime.from(start);
+            start = start.plusSeconds(intervalSeconds);
+            resList.add(resStart);
+        }
+        return resList;
     }
 }
