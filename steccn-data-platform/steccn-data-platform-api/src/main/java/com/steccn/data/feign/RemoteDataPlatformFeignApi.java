@@ -108,11 +108,11 @@ public interface RemoteDataPlatformFeignApi {
 
     /**
      * 计算余热发电
-     * @param tupleDTO
+     * @param date 班次日期
      * @return
      */
     @PostMapping("/feign/data/warehouse/heat/power")
     @ApiOperation("计算余热发电")
-    R<List<BigDecimal>> heatPower(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO);
+    R<BigDecimal> heatPower(@RequestBody LocalDate date);
 
 }

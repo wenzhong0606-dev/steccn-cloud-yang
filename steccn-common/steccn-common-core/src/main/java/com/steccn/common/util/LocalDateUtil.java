@@ -343,12 +343,32 @@ public class LocalDateUtil {
     }
 
     /**
+     * 大于的判断
+     * @param left 左侧的数
+     * @param right 右侧的数
+     * @return 是否大于的结果
+     */
+    public static Boolean gt(LocalDate left, LocalDate right) {
+        return greaterMeta(left, right, Boolean.FALSE);
+    }
+
+    /**
      * 小于的判断
      * @param left 左侧的数
      * @param right 右侧的数
      * @return 是否小于的结果
      */
     public static Boolean lt(LocalDateTime left, LocalDateTime right) {
+        return greaterMeta(right, left, Boolean.FALSE);
+    }
+
+    /**
+     * 小于的判断
+     * @param left 左侧的数
+     * @param right 右侧的数
+     * @return 是否小于的结果
+     */
+    public static Boolean lt(LocalDate left, LocalDate right) {
         return greaterMeta(right, left, Boolean.FALSE);
     }
 
@@ -362,6 +382,17 @@ public class LocalDateUtil {
         return greaterMeta(right, left, Boolean.TRUE);
     }
 
+
+    /**
+     * 小于等于的判断
+     * @param left 左侧的数
+     * @param right 右侧的数
+     * @return 是否小于的结果
+     */
+    public static Boolean le(LocalDate left, LocalDate right) {
+        return greaterMeta(right, left, Boolean.TRUE);
+    }
+
     /**
      * 大于等于的判断
      * @param left 左侧的数
@@ -369,6 +400,17 @@ public class LocalDateUtil {
      * @return 是否大于等于的结果
      */
     public static Boolean ge(LocalDateTime left, LocalDateTime right) {
+        return greaterMeta(left, right, Boolean.TRUE);
+    }
+
+
+    /**
+     * 大于等于的判断
+     * @param left 左侧的数
+     * @param right 右侧的数
+     * @return 是否大于等于的结果
+     */
+    public static Boolean ge(LocalDate left, LocalDate right) {
         return greaterMeta(left, right, Boolean.TRUE);
     }
 
@@ -380,6 +422,20 @@ public class LocalDateUtil {
      * @return 是否大于【等于】的结果
      */
     public static Boolean greaterMeta(LocalDateTime left, LocalDateTime right, boolean equalsFlag) {
+        Assert.notNull(left, "时间不能为空");
+        Assert.notNull(right, "时间不能为空");
+        return left.isAfter(right) || (equalsFlag && left.isEqual(right));
+    }
+
+
+    /**
+     * 大于【等于】的判断
+     * @param left 左侧的数
+     * @param right 右侧的数
+     * @param equalsFlag 是否等于
+     * @return 是否大于【等于】的结果
+     */
+    public static Boolean greaterMeta(LocalDate left, LocalDate right, boolean equalsFlag) {
         Assert.notNull(left, "时间不能为空");
         Assert.notNull(right, "时间不能为空");
         return left.isAfter(right) || (equalsFlag && left.isEqual(right));

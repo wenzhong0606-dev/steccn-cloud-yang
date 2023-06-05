@@ -46,7 +46,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final EpEnergyTypeService epEnergyTypeService;
     private final EpMeterReadDistantService epMeterReadDistantService;
     private final EpPartitionService epPartitionService;
-    private final RemoteDataPlatformFeignApi dataPlatformFeignApi;
+    private final EpHeatPowerService epHeatPowerService;
 
     @Override
     public EpDayReportCountVO count(LocalDate start) {
@@ -76,8 +76,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
 
         //计算余热发电
-        LocalDate finalEnd = end;
-        List<BigDecimal> heatPowerList = FeignOptional.of(() -> dataPlatformFeignApi.heatPower(new TupleDTO<>(start, finalEnd)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        List<BigDecimal> heatPowerList = epHeatPowerService.heatPower(start, end);
         //获取能源类型
         EpEnergyTypeVO eleEnergy = eleOp.get();
         EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
@@ -89,21 +88,33 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(reduce, 0));
         dataList.add(heatPowerRow);
 
-        Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
-        //获取用油量数据
-        List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
+        try {
+            //获取用油量数据
+            Optional<EpEnergyTypeVO> oilOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_OIL.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
+            dataList.addAll(oilRowList);
+        } catch (Exception e) {
 
-        //获取用气量
-        Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
-        List<EpDayReportCountRowVO> gasRowList = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
+        }
 
-        //获取用气量
-        Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
-        List<EpDayReportCountRowVO> waterRowList = consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
+        try {
+            //获取用气量
+            Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> gasRowList = consumeRow(gasOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_GAS), allThickList);
+            dataList.addAll(gasRowList);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
 
-        dataList.addAll(waterRowList);
-        dataList.addAll(gasRowList);
-        dataList.addAll(oilRowList);
+        try {
+            //获取用水量
+            Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
+            List<EpDayReportCountRowVO> waterRowList = consumeRow(waterOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_WATER), allThickList);
+            dataList.addAll(waterRowList);
+        } catch (Exception e) {
+            log.error("{}", e.getLocalizedMessage());
+        }
+
         resVo.setDataList(dataList);
         return resVo;
     }

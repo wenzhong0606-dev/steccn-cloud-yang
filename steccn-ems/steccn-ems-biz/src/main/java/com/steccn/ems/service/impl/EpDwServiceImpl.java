@@ -14,10 +14,7 @@ import com.steccn.data.dto.DwMeterReadDiffDTO;
 import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.data.vo.DwEpMeterCollectVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.domain.EpEnergyMoney;
-import com.steccn.ems.domain.EpMeterRead;
-import com.steccn.ems.domain.EpMeterReadDistant;
-import com.steccn.ems.domain.EpTaskExecute;
+import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.DwEpEnergyMoneyDTO;
 import com.steccn.ems.dto.EpDwEnergyPricePlanDTO;
 import com.steccn.ems.dto.EpDwMeterPartitionDTO;
@@ -31,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -61,6 +59,7 @@ public class EpDwServiceImpl implements EpDwService {
     private final EpTaskExecuteService epTaskExecuteService;
     private final RemoteOfficeFeign remoteOfficeFeign;
     private final EpMeterReadService epMeterReadService;
+    private final EpHeatPowerService epHeatPowerService;
 
     @Override
     public Boolean meterRead(LocalDate date) {
@@ -257,6 +256,17 @@ public class EpDwServiceImpl implements EpDwService {
             });
         });
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean heatPower(LocalDate date) {
+        BigDecimal value = FeignOptional.of(() -> remoteDataPlatformFeignApi.heatPower(date), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
+        epHeatPowerService.remove(new LambdaQueryWrapper<EpHeatPower>().eq(EpHeatPower::getClassDate,date));
+        EpHeatPower model = new EpHeatPower();
+        model.setValue(value);
+        model.setClassDate(date);
+        return epHeatPowerService.save(model);
     }
 
     /**

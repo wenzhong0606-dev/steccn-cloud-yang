@@ -151,10 +151,10 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
     }
 
     @Override
-    public List<BigDecimal> heatPower(LocalDate startDate, LocalDate endDate) {
+    public BigDecimal heatPower(LocalDate date) {
         //考虑做缓存
-        LocalDateTime start = LocalDateUtil.getMorning(startDate);
-        LocalDateTime end = LocalDateUtil.getMorning(endDate.plusDays(1));
+        LocalDateTime start = LocalDateUtil.getMorning(date);
+        LocalDateTime end = LocalDateUtil.getMorning(date.plusDays(1));
         List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
 
         List<EpMeterCollect> dbList1 = list(new LambdaQueryWrapper<EpMeterCollect>()
@@ -171,7 +171,7 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
         //根据时间取2个集合的交集
         List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection = intersection(dbList1, dbList2);
 
-        Map<LocalDate, BigDecimal> heatPowerMap = new TreeMap<>();
+        BigDecimal resValue = BigDecimal.ZERO;
         if(CollUtil.isNotEmpty(intersection)){
             //根据班次日期查询
             LocalDateTime preLdt = LocalDateUtil.getMorning(intersection.get(0).getField1());
@@ -184,20 +184,11 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
                 BigDecimal multiply = BigDecimalUtil.multiply(sum, BigDecimal.valueOf(between));
                 BigDecimal val = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(60));
                 //计算当前节点属于什么班次日期
-                LocalDate classDate = LocalDateUtil.getClassDate(ele.getField1(), Boolean.TRUE);
-                heatPowerMap.put(classDate, BigDecimalUtil.add(heatPowerMap.get(classDate), val));
+                resValue = BigDecimalUtil.add(resValue, val);
                 preLdt = ele.getField1();
             }
         }
-
-        //如果余热没有数据，则返回null
-        while (startDate.isBefore(endDate) || startDate.isEqual(endDate)) {
-            if (!heatPowerMap.containsKey(startDate)) {
-                heatPowerMap.put(startDate, null);
-            }
-            startDate = startDate.plusDays(1);
-        }
-        return heatPowerMap.values().stream().collect(Collectors.toList());
+        return resValue;
     }
 
     /**

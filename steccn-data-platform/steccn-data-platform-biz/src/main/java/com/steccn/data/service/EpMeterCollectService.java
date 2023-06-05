@@ -71,9 +71,8 @@ public interface EpMeterCollectService extends IService<EpMeterCollect> {
 
     /**
      * 计算余热发电
-     * @param start 开始日期
-     * @param end  结束日期
+     * @param date 班次日期
      * @return
      */
-    List<BigDecimal> heatPower(LocalDate start, LocalDate end);
+    BigDecimal heatPower(LocalDate date);
 }

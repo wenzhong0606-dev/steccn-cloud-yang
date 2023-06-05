@@ -80,7 +80,7 @@ public class DataPlatformController {
 
     @PostMapping("/heat/power")
     @ApiOperation("计算余热发电")
-    R<List<BigDecimal>> heatPower(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO){
-        return R.success(epMeterCollectService.heatPower(tupleDTO.getField1(),tupleDTO.getField2()));
+    R<BigDecimal> heatPower(@RequestBody LocalDate date){
+        return R.success(epMeterCollectService.heatPower(date));
     }
 }
