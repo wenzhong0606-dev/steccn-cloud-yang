@@ -3,20 +3,17 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.google.common.collect.Lists;
-import com.steccn.authserver.util.FeignOptional;
-import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.EpChartGraphVO;
 import com.steccn.common.vo.EpChartGraphXAxisVO;
-import com.steccn.data.feign.RemoteDataPlatformFeignApi;
 import com.steccn.ems.constant.EpManagerConstant;
+import com.steccn.ems.dto.EpTableDTO;
+import com.steccn.ems.service.*;
 import com.steccn.ems.vo.EpDayReportCountHeadVO;
 import com.steccn.ems.vo.EpDayReportCountRowVO;
 import com.steccn.ems.vo.EpDayReportCountVO;
-import com.steccn.ems.dto.EpTableDTO;
-import com.steccn.ems.service.*;
 import com.steccn.ems.vo.EpEnergyTypeVO;
 import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +70,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //计算电耗
         Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
-
+        List<EpDayReportCountRowVO> elecList = calElec(eleOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC), allThickList);
 
         //计算余热发电
         List<BigDecimal> heatPowerList = epHeatPowerService.heatPower(start, end);
@@ -94,9 +91,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpDayReportCountRowVO> oilRowList = consumeRow(oilOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_OIL), allThickList);
             dataList.addAll(oilRowList);
         } catch (Exception e) {
-
+            log.error("{}", e.getLocalizedMessage());
         }
-
         try {
             //获取用气量
             Optional<EpEnergyTypeVO> gasOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_GAS.equals(v.getId())).findFirst();
@@ -105,7 +101,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         } catch (Exception e) {
             log.error("{}", e.getLocalizedMessage());
         }
-
         try {
             //获取用水量
             Optional<EpEnergyTypeVO> waterOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_WATER.equals(v.getId())).findFirst();
@@ -117,6 +112,30 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         resVo.setDataList(dataList);
         return resVo;
+    }
+
+    /**
+     * 计算电
+     *
+     * @param epEnergy      能源类型
+     * @param start         开始日期
+     * @param end           结束日期
+     * @param partitionList 所有节点的集合
+     * @param thickList     所有厚度集合
+     * @return
+     */
+    private List<EpDayReportCountRowVO> calElec(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TupleDTO<Long, String>> partitionList, List<BigDecimal> thickList) {
+        EpTableDTO epTableDTO = new EpTableDTO();
+        epTableDTO.setEnergyType(epEnergy.getId());
+        epTableDTO.setStart(start);
+        epTableDTO.setEnd(end);
+        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+        List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
+        epTableDTO.setPartitionIdList(partitionIdList);
+        epTableDTO.setThick(thickList);
+        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> epChart = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
+        log.info("{}", epChart);
+        return null;
     }
 
     /**

@@ -696,6 +696,15 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     .in(EpMeterReadDistant::getMeterId, meterIdSet)
                     .in(EpMeterReadDistant::getReadDate, dateSet));
             if (CollUtil.isNotEmpty(dbList)) {
+                dbList.forEach(ele ->{
+                    if(Objects.isNull(ele.getClassId())){
+                        ele.setClassId(-1);
+                    }
+                    if(Objects.isNull(ele.getThick())){
+                        ele.setThick(BigDecimalUtil.MINUS_ONE);
+                    }
+                });
+
                 Map<String, List<EpMeterReadDistant>> groupData = dbList.stream().collect(Collectors.groupingBy(v -> v.getMeterId() + "_" + v.getReadDate() + "_"+ v.getClassId() + "_" + v.getThick()));
                 groupData.forEach((k, v) -> {
                     BigDecimal reduce = v.stream().map(EpMeterReadDistant::getReadValue).filter(e -> Objects.nonNull(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
