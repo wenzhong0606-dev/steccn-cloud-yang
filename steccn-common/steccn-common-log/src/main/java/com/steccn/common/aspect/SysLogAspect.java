@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -52,7 +53,9 @@ public class SysLogAspect {
         log.debug("[类名]:{},[方法]:{}", strClassName, strMethodName);
 
         SysLogDTO logDTO = getSysLog(point.getArgs());
-        logDTO.setTitle(apiOperation.value());
+        if (Objects.nonNull(logDTO)) {
+            logDTO.setTitle(apiOperation.value());
+        }
         // 发送异步日志事件
         Long startTime = System.currentTimeMillis();
         Object obj;
@@ -64,19 +67,27 @@ public class SysLogAspect {
             throw e;
         } finally {
             Long endTime = System.currentTimeMillis();
-            logDTO.setTime(endTime - startTime);
-            publisher.publishEvent(new SysLogEvent(logDTO));
+            if (Objects.nonNull(logDTO)) {
+                logDTO.setTime(endTime - startTime);
+                publisher.publishEvent(new SysLogEvent(logDTO));
+            }
         }
         return obj;
     }
 
     /**
      * 获取日志对象
+     *
      * @return
      */
     private SysLogDTO getSysLog(Object[] args) {
+        //定时任务
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (Objects.isNull(attributes)) {
+            return null;
+        }
         HttpServletRequest request = ((ServletRequestAttributes) Objects
-                .requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
+                .requireNonNull(attributes)).getRequest();
         SysLogDTO sysLog = new SysLogDTO();
         SteccnUser user = SecurityUtils.getUser();
         //白名单接口 是匿名类
