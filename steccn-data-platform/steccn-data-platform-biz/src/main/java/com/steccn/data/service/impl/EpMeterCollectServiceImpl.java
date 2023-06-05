@@ -24,6 +24,7 @@ import com.steccn.data.dto.DwMeterReadDTO;
 import com.steccn.data.service.EpMeterCollectService;
 import com.steccn.data.mapper.EpMeterCollectMapper;
 import com.steccn.qms.util.ShardTimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -32,8 +33,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -41,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @createDate 2022-12-16 13:23:55
  */
 @Service
+@Slf4j
 public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper, EpMeterCollect>
         implements EpMeterCollectService {
 
@@ -148,10 +152,78 @@ public class EpMeterCollectServiceImpl extends ServiceImpl<EpMeterCollectMapper,
 
     @Override
     public List<BigDecimal> heatPower(LocalDate startDate, LocalDate endDate) {
+        //考虑做缓存
         LocalDateTime start = LocalDateUtil.getMorning(startDate);
         LocalDateTime end = LocalDateUtil.getMorning(endDate.plusDays(1));
         List<LocalDateTime> shardList = ShardTimeUtil.shard(start, end, 300);
 
-        return null;
+        List<EpMeterCollect> dbList1 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1003_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+
+        List<EpMeterCollect> dbList2 = list(new LambdaQueryWrapper<EpMeterCollect>()
+                .eq(EpMeterCollect::getCode, "LL1023_P_ER")
+                .in(EpMeterCollect::getRecordTime, shardList)
+                .gt(EpMeterCollect::getValue, 0)
+                .orderByAsc(EpMeterCollect::getRecordTime));
+        //根据时间取2个集合的交集
+        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection = intersection(dbList1, dbList2);
+
+        Map<LocalDate, BigDecimal> heatPowerMap = new TreeMap<>();
+        if(CollUtil.isNotEmpty(intersection)){
+            //根据班次日期查询
+            LocalDateTime preLdt = LocalDateUtil.getMorning(intersection.get(0).getField1());
+            for (int i = 0; i < intersection.size(); i++) {
+                TripleDTO<LocalDateTime, BigDecimal, BigDecimal> ele = intersection.get(i);
+                //和班次开始时间差值
+                long between = LocalDateTimeUtil.between(preLdt, ele.getField1(), ChronoUnit.MINUTES);
+                //求均值
+                BigDecimal sum = BigDecimalUtil.add(ele.getField2(), ele.getField3());
+                BigDecimal multiply = BigDecimalUtil.multiply(sum, BigDecimal.valueOf(between));
+                BigDecimal val = BigDecimalUtil.divide(multiply, BigDecimal.valueOf(60));
+                //计算当前节点属于什么班次日期
+                LocalDate classDate = LocalDateUtil.getClassDate(ele.getField1(), Boolean.TRUE);
+                heatPowerMap.put(classDate, BigDecimalUtil.add(heatPowerMap.get(classDate), val));
+                preLdt = ele.getField1();
+            }
+        }
+
+        //如果余热没有数据，则返回null
+        while (startDate.isBefore(endDate) || startDate.isEqual(endDate)) {
+            if (!heatPowerMap.containsKey(startDate)) {
+                heatPowerMap.put(startDate, null);
+            }
+            startDate = startDate.plusDays(1);
+        }
+        return heatPowerMap.values().stream().collect(Collectors.toList());
     }
+
+    /**
+     * 获取两个集合的时间交集值
+     * @param dbList1 集合1
+     * @param dbList2 集合2
+     * @return
+     */
+    public List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> intersection(List<EpMeterCollect> dbList1, List<EpMeterCollect> dbList2) {
+        int i = 0, j = 0;
+        List<TripleDTO<LocalDateTime, BigDecimal, BigDecimal>> resList = Lists.newArrayList();
+        while (i < dbList1.size() && j < dbList2.size()) {
+            EpMeterCollect one = dbList1.get(i);
+            EpMeterCollect two = dbList2.get(j);
+
+            if (one.getRecordTime().isEqual(two.getRecordTime())) {
+                resList.add(new TripleDTO<>(one.getRecordTime(), one.getValue(), two.getValue()));
+                i++;
+                j++;
+            }else if(one.getRecordTime().isBefore(two.getRecordTime())){
+                i++;
+            }else {
+                j++;
+            }
+        }
+        return resList;
+    }
+
 }

@@ -392,8 +392,8 @@ public class LocalDateUtil {
      * @return
      */
     public static LocalDate getClassDate(LocalDateTime dateTime, Boolean isPrev) {
-        if (dateTime.isAfter(LocalDateTime.of(dateTime.toLocalDate(), LocalTime.MIN)) && dateTime.isBefore(getMorning(dateTime))) {
-            //在0:00-8:00之间 班次日期为T-1
+        if (isRange(dateTime, LocalDateTime.of(dateTime.toLocalDate(), LocalTime.MIN), getMorning(dateTime), true, false)) {
+            //在[0:00-8:00)之间 班次日期为T-1
             return dateTime.toLocalDate().minusDays(1);
         } else if (dateTime.isEqual(getMorning(dateTime)) && isPrev) {
             //正好8：00 isPrev == true  算前一天
