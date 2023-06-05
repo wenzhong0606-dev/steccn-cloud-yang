@@ -106,7 +106,7 @@ public class DataPlatformFeignController {
         return R.success(pmStationCollectService.stationInfo(dto));
     }
 
-    @PostMapping("/feign/data/warehouse/heat/power")
+    @PostMapping("/heat/power")
     @ApiOperation("计算余热发电")
     R<List<BigDecimal>> heatPower(@RequestBody TupleDTO<LocalDate,LocalDate> tupleDTO){
         return R.success(epMeterCollectService.heatPower(tupleDTO.getField1(),tupleDTO.getField2()));

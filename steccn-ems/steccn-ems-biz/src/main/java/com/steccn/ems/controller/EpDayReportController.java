@@ -36,7 +36,6 @@ public class EpDayReportController {
         } catch (Exception e) {
             throw new BusinessException("日期格式异常");
         }
-        log.info("{}", parse);
         return R.success(epDayReportService.count(parse));
     }
 }
