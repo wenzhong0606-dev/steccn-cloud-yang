@@ -139,6 +139,15 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<Integer> diningList = Lists.newArrayList(652, 653);
         //公用电【深加工二车间（东线）->公用电,深加工二车间（西线）->公用电】
         List<Integer> gydList = Lists.newArrayList(633, 3653);
+        //风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
+        List<Integer> fl610 = Lists.newArrayList(666, 667, 668, 669, 670, 673);
+        //风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
+        List<Integer> fl15 = Lists.newArrayList(661, 662, 663, 664, 665, 671, 672);
+
+        //深加工8条产线
+        List<Integer> sjgLineList = Lists.newArrayList();
+        sjgLine14List.forEach(ele -> sjgLineList.add(ele));
+        sjgLine58List.forEach(ele -> sjgLineList.add(ele));
 
 
         LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
@@ -150,18 +159,21 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取全量数据表
         List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
         //每个节点，每天的数据
-        //基片制造部
+        //基片制造部=b1+b2+b3
         List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> v.getOfficeName().equals("基片制造部")).collect(Collectors.toList());
         List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
         //构建基片制造部
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
         BigDecimal jpSum = BigDecimal.ZERO;
         List<BigDecimal> jpValueList = Lists.newArrayList();
+
+        Map<LocalDate, List<BigDecimal>> jpResMap = Maps.newHashMap();
         for (LocalDate ele : timeList) {
             List<EpMeterReadAllDataVO> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
             BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
             jpSum = BigDecimalUtil.add(jpSum, reduce);
             jpValueList.add(BigDecimalUtil.setScale(reduce, 0));
+            jpResMap.put(ele, Lists.newArrayList(reduce));
         }
         jpRow.setSumStr(BigDecimalUtil.setScale(jpSum, 0));
         jpRow.setConsumeList(jpValueList);
@@ -221,11 +233,101 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //获取几条产线的产量，用于分摊公用电
         Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
-        Map<String, BigDecimal> productNumRateMap = getProductNumRateMap(sjgLine14List, sjgLine58List, timeList, productNumMap);
+        TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> tupleDTO = getProductNumRateMap(sjgLine14List, sjgLine58List, timeList, productNumMap);
+        Map<String, BigDecimal> productNumLineRateMap = tupleDTO.getField1();
+        Map<String, BigDecimal> productNumRateMap = tupleDTO.getField2();
+
         //获取公用电
-        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumRateMap, lineResMap);
+        gydRate(classDateAllData, gydList, Lists.newArrayList(sjgLine14List, sjgLine58List), timeList, productNumLineRateMap, lineResMap);
+
+        //获取风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
+        //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
+        fl610(classDateAllData, fl610, sjgLineList, timeList, productNumRateMap, lineResMap);
+
+        //获取风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
+        //获取b2
+        fl15(classDateAllData, fl15, timeList, jpResMap);
+
+        //获取总能耗N 按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3按照比例分摊
+        //N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
+        Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
 
         return resList;
+    }
+
+    /**
+     * N按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3共9部分的比例分摊，
+     * 则N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
+     *
+     * @param sjgLineList 深加工产线集合
+     * @param timeList    班次日期集合
+     * @param jpResMap    基片制造部数据
+     * @param lineResMap  产线数据
+     * @return 分摊比例map
+     */
+    private Map<String, BigDecimal> getNRateMap(List<Integer> sjgLineList, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap, Map<String, List<BigDecimal>> lineResMap) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        for (LocalDate classDate : timeList) {
+            BigDecimal b1 = jpResMap.get(classDate).get(0);
+            BigDecimal sum = b1;
+            Map<Integer, BigDecimal> lineDataMap = Maps.newHashMap();
+
+            for (Integer line : sjgLineList) {
+                List<BigDecimal> lineDataList = lineResMap.get(mapKey(line, classDate));
+                //ax.1 + ax.2 + ax.3
+                BigDecimal lineDaySum = lineDataList.stream().filter(v -> Objects.nonNull(v)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                sum = BigDecimalUtil.add(sum, lineDaySum);
+                lineDataMap.put(line, lineDaySum);
+            }
+            //基片制造部比例
+            resMap.put(mapKey(-1, classDate), BigDecimalUtil.divide(b1, sum));
+            //深加工产线比例
+            for (Map.Entry<Integer, BigDecimal> entry : lineDataMap.entrySet()) {
+                resMap.put(mapKey(entry.getKey(), classDate), BigDecimalUtil.divide(entry.getValue(), sum));
+            }
+        }
+        return resMap;
+    }
+
+    /**
+     * 获取b2
+     *
+     * @param classDateAllData 全量数据表
+     * @param fl15             风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
+     * @param timeList         时间集合
+     * @param jpResMap         基片的数据集合
+     */
+    private void fl15(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> fl15, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap) {
+        List<EpMeterReadAllDataVO> fl610DataList = classDateAllData.stream().filter(v -> fl15.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        for (LocalDate ele : timeList) {
+            List<EpMeterReadAllDataVO> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
+            BigDecimal b2 = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            jpResMap.get(ele).add(b2);
+        }
+    }
+
+    /**
+     * 查询的6个总能耗值加总记为M 分摊到产线
+     *
+     * @param classDateAllData  全量数据表
+     * @param fl610             风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
+     * @param sjgLineList       深加工产线集合
+     * @param timeList          时间集合
+     * @param productNumRateMap 产量比例集合
+     * @param lineResMap        产线数据集合
+     */
+    private void fl610(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> fl610, List<Integer> sjgLineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumRateMap, Map<String, List<BigDecimal>> lineResMap) {
+        List<EpMeterReadAllDataVO> fl610DataList = classDateAllData.stream().filter(v -> fl610.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        for (LocalDate ele : timeList) {
+            List<EpMeterReadAllDataVO> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
+            BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
+            for (Integer sjgLine : sjgLineList) {
+                String mapKey = mapKey(sjgLine, ele);
+                BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
+                lineResMap.get(mapKey).add(rateValue);
+            }
+        }
     }
 
     /**
@@ -266,8 +368,15 @@ public class EpDayReportServiceImpl implements EpDayReportService {
      * @param productNumMap 产量集合
      * @return
      */
-    private Map<String, BigDecimal> getProductNumRateMap(List<Integer> sjgLine14List, List<Integer> sjgLine58List, List<LocalDate> timeList, Map<String, BigDecimal> productNumMap) {
+    private TupleDTO<Map<String, BigDecimal>, Map<String, BigDecimal>> getProductNumRateMap(List<Integer> sjgLine14List, List<Integer> sjgLine58List, List<LocalDate> timeList, Map<String, BigDecimal> productNumMap) {
+        Map<String, BigDecimal> productNumLineRateMap = Maps.newHashMap();
         Map<String, BigDecimal> productNumRateMap = Maps.newHashMap();
+
+        //深加工8条产线
+        List<Integer> sjgLineList = Lists.newArrayList();
+        sjgLine14List.forEach(ele -> sjgLineList.add(ele));
+        sjgLine58List.forEach(ele -> sjgLineList.add(ele));
+
         //获取几条产线的每日产量对比
         for (LocalDate classDate : timeList) {
             //深加工四条产线【一二三四】
@@ -278,7 +387,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             for (Integer line : sjgLine14List) {
                 String mapKey = mapKey(line, classDate);
                 BigDecimal num = productNumMap.getOrDefault(mapKey, BigDecimal.ZERO);
-                productNumRateMap.put(mapKey, BigDecimalUtil.divide(num, sum14));
+                productNumLineRateMap.put(mapKey, BigDecimalUtil.divide(num, sum14));
             }
             //深加工四条产线【五六七八】
             BigDecimal sum58 = BigDecimal.ZERO;
@@ -288,10 +397,20 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             for (Integer line : sjgLine58List) {
                 String mapKey = mapKey(line, classDate);
                 BigDecimal num = productNumMap.getOrDefault(mapKey, BigDecimal.ZERO);
-                productNumRateMap.put(mapKey, BigDecimalUtil.divide(num, sum58));
+                productNumLineRateMap.put(mapKey, BigDecimalUtil.divide(num, sum58));
+            }
+            //深加工八条产线【一二三四五六七八】
+            BigDecimal sum = BigDecimal.ZERO;
+            for (Integer line : sjgLineList) {
+                sum = BigDecimalUtil.add(sum, productNumMap.getOrDefault(mapKey(line, classDate), BigDecimal.ZERO));
+            }
+            for (Integer line : sjgLineList) {
+                String mapKey = mapKey(line, classDate);
+                BigDecimal num = productNumMap.getOrDefault(mapKey, BigDecimal.ZERO);
+                productNumRateMap.put(mapKey, BigDecimalUtil.divide(num, sum));
             }
         }
-        return productNumRateMap;
+        return new TupleDTO<>(productNumLineRateMap, productNumRateMap);
     }
 
     /**
