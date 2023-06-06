@@ -17,6 +17,7 @@ import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.LockConstant;
 import com.steccn.common.constant.MpConstant;
 import com.steccn.common.constant.SysDictConstant;
+import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.vo.BaseSelectVO;
@@ -38,6 +39,7 @@ import com.steccn.wms.feign.RemoteWmsInventoryFeignApi;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.apache.tomcat.jni.Local;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -711,6 +713,26 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
             }
         }
         return sjgDataList;
+    }
+
+    @Override
+    public Map<String, BigDecimal> classDateProductNum(Set<Integer> lineSet, LocalDate startLd, LocalDate endLd) {
+        Map<String, BigDecimal> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(lineSet) && Objects.nonNull(startLd) && Objects.nonNull(endLd)) {
+            LocalDateTime start = LocalDateUtil.getMorning(startLd);
+            LocalDateTime end = LocalDateUtil.getMorning(endLd.plusDays(1));
+            List<PmsReportWork> dbList = list(new LambdaQueryWrapper<PmsReportWork>().in(PmsReportWork::getProductLineId, lineSet)
+                    .ge(PmsReportWork::getStartTime, start)
+                    .le(PmsReportWork::getEndTime, end));
+            if (CollUtil.isNotEmpty(dbList)) {
+                Map<String, List<PmsReportWork>> dbMap = dbList.stream().collect(Collectors.groupingBy(v -> v.getProductLineId() + "_" + LocalDateUtil.getClassDate(v.getStartTime(), Boolean.FALSE)));
+                for (Map.Entry<String, List<PmsReportWork>> entry : dbMap.entrySet()) {
+                    BigDecimal sumNum = entry.getValue().stream().filter(v -> Objects.nonNull(v.getProcessQuantity())).map(v -> v.getProcessQuantity()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resMap.put(entry.getKey(), sumNum);
+                }
+            }
+        }
+        return resMap;
     }
 
     /**

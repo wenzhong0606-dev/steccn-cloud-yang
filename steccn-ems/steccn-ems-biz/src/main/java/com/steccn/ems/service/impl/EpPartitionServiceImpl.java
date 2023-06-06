@@ -12,6 +12,7 @@ import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.common.constant.FeignConstant;
 import com.steccn.common.constant.MpConstant;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.EpInstrumentAccount;
@@ -598,10 +599,11 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
     }
 
     @Override
-    public Map<Integer, List<TupleDTO<Long, String>>> dayReportCountDefaultNode() {
-        Map<Integer, List<TupleDTO<Long, String>>> resMap = Maps.newHashMap();
+    public Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode() {
+        //需要切换成 根据code获取officeName
+        Map<Integer, List<TripleDTO<Long, Integer, String>>> resMap = Maps.newHashMap();
         resMap.put(EpManagerConstant.ENERGY_ELECTRIC, queryNodeByNameList(EpManagerConstant.ENERGY_ELECTRIC, Arrays.asList("基片制造部", "员工餐厅", "员工宿舍"
-                ,"深加工一产线", "深加工二产线","深加工三产线","深加工四产线","深加工五产线","深加工六产线","深加工七产线","深加工八产线","公用电"
+                ,"深加工二车间一产线", "深加工二车间二产线","深加工二车间三产线","深加工二车间四产线","深加工三车间一产线","深加工三车间二产线","深加工三车间三产线","深加工三车间四产线","公用电"
                 ,"风冷螺杆式空压机6","风冷螺杆式空压机7","风冷螺杆式空压机8","风冷螺杆式空压机9","风冷螺杆式空压机10","微热吸附式干燥器3"
                 ,"风冷螺杆式空压机1","风冷螺杆式空压机2","风冷螺杆式空压机3","风冷螺杆式空压机4","风冷螺杆式空压机5","微热吸附式干燥器1","微热吸附式干燥器2"
                 ,"大数据控制中心")));
@@ -618,12 +620,12 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
      * @param officeNameList 组织结构名称集合
      * @return
      */
-    private List<TupleDTO<Long, String>> queryNodeByNameList(Integer energyType, List<String> officeNameList) {
-        List<TupleDTO<Long, String>> resList = Lists.newArrayList();
+    private List<TripleDTO<Long, Integer, String>> queryNodeByNameList(Integer energyType, List<String> officeNameList) {
+        List<TripleDTO<Long, Integer, String>> resList = Lists.newArrayList();
         List<EpPartition> dbList = list(new LambdaQueryWrapper<EpPartition>().eq(EpPartition::getType, energyType).in(EpPartition::getOfficeName, officeNameList));
         if (CollUtil.isNotEmpty(dbList)) {
             for (EpPartition epPartition : dbList) {
-                resList.add(new TupleDTO<>(epPartition.getId(), epPartition.getOfficeName()));
+                resList.add(new TripleDTO<>(epPartition.getId(), epPartition.getOfficeId(), epPartition.getOfficeName()));
             }
         }
         return resList;

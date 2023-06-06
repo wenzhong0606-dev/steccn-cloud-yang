@@ -2,6 +2,7 @@ package com.steccn.pms.controller.feign;
 
 import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.vo.R;
 import com.steccn.pms.dto.EpMeterReadRowDTO;
@@ -12,6 +13,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -49,4 +52,9 @@ public class PmsReportWorkFeignController {
         return R.success(pmsReportWorkService.sjgOrderRw(sjgDataList));
     }
 
+    @ApiOperation("获取指定日期，指定产线的所有产量")
+    @PostMapping("/num/line/date")
+    R<Map<String, BigDecimal>> classDateProductNum(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> dto) {
+        return R.success(pmsReportWorkService.classDateProductNum(dto.getField1(), dto.getField2(), dto.getField3()));
+    }
 }
