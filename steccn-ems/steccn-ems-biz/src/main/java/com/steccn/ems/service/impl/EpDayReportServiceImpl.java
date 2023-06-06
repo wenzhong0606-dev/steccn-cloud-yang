@@ -62,16 +62,24 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取指定的组织结构名称和主键
         Map<Integer, List<TripleDTO<Long, Integer, String>>> defaultNodeMap = epPartitionService.dayReportCountDefaultNode();
 
-        //计算电耗
-        Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
-        List<EpDayReportCountRowVO> elecList = calElec(eleOp.get(), start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC));
-        dataList.addAll(elecList);
-
-        //获取能源类型
-        EpEnergyTypeVO elecEnergy = eleOp.get();
-        dataList.add(heatPowerRow(start, end, elecEnergy));
-        //插入合计行
-        dataList.add(countRow(dataList, elecEnergy));
+        CompletableFuture<List<EpDayReportCountRowVO>> elecFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                //计算电耗
+                Optional<EpEnergyTypeVO> eleOp = energyTypeList.stream().filter(v -> EpManagerConstant.ENERGY_ELECTRIC.equals(v.getId())).findFirst();
+                EpEnergyTypeVO elecEnergy = eleOp.get();
+                List<EpDayReportCountRowVO> elecList = calElec(elecEnergy, start, end, defaultNodeMap.get(EpManagerConstant.ENERGY_ELECTRIC));
+                //获取能源类型
+                EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy);
+                //插入合计行
+                EpDayReportCountRowVO sumRow = countRow(dataList, elecEnergy);
+                elecList.add(heatPowerRow);
+                elecList.add(sumRow);
+                return elecList;
+            } catch (Exception e) {
+                log.error("oil -> {}", e.getLocalizedMessage());
+                throw new BusinessException("业务执行异常");
+            }
+        });
 
         CompletableFuture<List<EpDayReportCountRowVO>> oilFuture = CompletableFuture.supplyAsync(() -> {
             try {
@@ -106,10 +114,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 throw new BusinessException("业务执行异常");
             }
         });
-        //3个都执行完毕，才来执行继续
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(oilFuture, gasFuture, waterFuture);
+        //4个都执行完毕，才来执行继续
+        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(elecFuture, oilFuture, gasFuture, waterFuture);
         completableFuture.isDone();
-
+        try {
+            dataList.addAll(elecFuture.get());
+        } catch (Exception e) {
+            log.error("elec -> {}", e.getLocalizedMessage());
+        }
         try {
             dataList.addAll(oilFuture.get());
         } catch (Exception e) {
@@ -164,8 +176,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setEnergyType(energy.getName());
         heatPowerRow.setDepartmentName("余热发电");
         heatPowerRow.setUnit(energy.getMeasureUnitName());
-        BigDecimal reduce = BigDecimalUtil.sum(heatPowerList);
-        heatPowerRow.setSumStr(BigDecimalUtil.setScale(reduce, 0));
+        BigDecimal heatPowerSum = BigDecimalUtil.sum(heatPowerList);
+        heatPowerRow.setSumStr(BigDecimalUtil.setScale(heatPowerSum, 0));
         return heatPowerRow;
     }
 
@@ -245,15 +257,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
         //构建基片制造部
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
-        BigDecimal jpSum = BigDecimal.ZERO;
         List<BigDecimal> jpValueList = Lists.newArrayList();
 
         Map<LocalDate, List<BigDecimal>> jpResMap = Maps.newHashMap();
         for (LocalDate ele : timeList) {
-            List<EpMeterReadAllDataVO> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-            BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-            jpSum = BigDecimalUtil.add(jpSum, reduce);
-            jpValueList.add(reduce);
+            List<BigDecimal> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
             jpResMap.put(ele, Lists.newArrayList(reduce));
         }
         jpRow.setConsumeList(jpValueList);
@@ -265,14 +274,14 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         List<EpMeterReadAllDataVO> shList = classDateAllData.stream().filter(v -> diningList.contains(v.getSysOfficeId())).collect(Collectors.toList());
         //构建基片制造部
         EpDayReportCountRowVO shRow = new EpDayReportCountRowVO();
-        BigDecimal shSum = BigDecimal.ZERO;
+
         List<BigDecimal> shValueList = Lists.newArrayList();
         for (LocalDate ele : timeList) {
-            List<EpMeterReadAllDataVO> timeDataList = shList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-            BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-            shSum = BigDecimalUtil.add(shSum, reduce);
+            List<BigDecimal> timeDataList = shList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
             shValueList.add(BigDecimalUtil.setScale(reduce, 0));
         }
+        BigDecimal shSum = BigDecimalUtil.sum(shValueList);
         shRow.setSumStr(BigDecimalUtil.setScale(shSum, 0));
         shRow.setConsumeList(shValueList);
         shRow.setUnit(epEnergy.getMeasureUnitName());
@@ -293,15 +302,12 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpMeterReadAllDataVO> lineList = classDateAllData.stream().filter(v -> line.getField1().equals(v.getOfficeId())).collect(Collectors.toList());
             //构建基片制造部
             EpDayReportCountRowVO lineRow = new EpDayReportCountRowVO();
-            BigDecimal lineSum = BigDecimal.ZERO;
             List<BigDecimal> lineValueList = Lists.newArrayList();
             for (LocalDate ele : timeList) {
-                List<EpMeterReadAllDataVO> timeDataList = lineList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-                BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
-                lineSum = BigDecimalUtil.add(lineSum, reduce);
-                lineValueList.add(reduce);
+                List<BigDecimal> timeDataList = lineList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal timeValue = BigDecimalUtil.sum(timeDataList);
                 //a1.1 a2.1 a3.1 a4.1 a5.1 a6.1 a7.1 a8.1
-                lineResMap.put(mapKey(line.getField2(), ele), Lists.newArrayList(reduce));
+                lineResMap.put(mapKey(line.getField2(), ele), Lists.newArrayList(timeValue));
             }
             lineRow.setConsumeList(lineValueList);
             lineRow.setUnit(epEnergy.getMeasureUnitName());
@@ -400,8 +406,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private void dsj(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> dsjList, List<Integer> sjgLineList, List<LocalDate> timeList, Map<String, BigDecimal> nRateMap, Map<LocalDate, List<BigDecimal>> jpResMap, Map<String, List<BigDecimal>> lineResMap) {
         List<EpMeterReadAllDataVO> dsjDataList = classDateAllData.stream().filter(v -> dsjList.contains(v.getSysOfficeId())).collect(Collectors.toList());
         for (LocalDate ele : timeList) {
-            List<EpMeterReadAllDataVO> timeDataList = dsjDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-            BigDecimal dsjValue = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> timeDataList = dsjDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal dsjValue = BigDecimalUtil.sum(timeDataList);
             //基片分摊
             BigDecimal jpValue = BigDecimalUtil.multiply(dsjValue, nRateMap.get(mapKey(-1, ele)));
             jpResMap.get(ele).add(jpValue);
@@ -433,7 +439,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             for (Integer line : sjgLineList) {
                 List<BigDecimal> lineDataList = lineResMap.get(mapKey(line, classDate));
                 //ax.1 + ax.2 + ax.3
-                BigDecimal lineDaySum = lineDataList.stream().filter(v -> Objects.nonNull(v)).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal lineDaySum = BigDecimalUtil.sum(lineDataList);
                 sum = BigDecimalUtil.add(sum, lineDaySum);
                 lineDataMap.put(line, lineDaySum);
             }
@@ -458,8 +464,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private void fl15(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> fl15, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap) {
         List<EpMeterReadAllDataVO> fl610DataList = classDateAllData.stream().filter(v -> fl15.contains(v.getSysOfficeId())).collect(Collectors.toList());
         for (LocalDate ele : timeList) {
-            List<EpMeterReadAllDataVO> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-            BigDecimal b2 = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal b2 = BigDecimalUtil.sum(timeDataList);
             jpResMap.get(ele).add(b2);
         }
     }
@@ -477,8 +483,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private void fl610(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> fl610, List<Integer> sjgLineList, List<LocalDate> timeList, Map<String, BigDecimal> productNumRateMap, Map<String, List<BigDecimal>> lineResMap) {
         List<EpMeterReadAllDataVO> fl610DataList = classDateAllData.stream().filter(v -> fl610.contains(v.getSysOfficeId())).collect(Collectors.toList());
         for (LocalDate ele : timeList) {
-            List<EpMeterReadAllDataVO> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-            BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<BigDecimal> timeDataList = fl610DataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+            BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
             //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
             for (Integer sjgLine : sjgLineList) {
                 String mapKey = mapKey(sjgLine, ele);
@@ -505,8 +511,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             //a1.2 a2.2 a3.2 a4.2
             //a5.2 a6.2 a7.2 a8.2
             for (LocalDate ele : timeList) {
-                List<EpMeterReadAllDataVO> timeDataList = gydDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
-                BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> timeDataList = gydDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal reduce = BigDecimalUtil.sum(timeDataList);
                 for (Integer sjgLine : lineList.get(i)) {
                     String mapKey = mapKey(sjgLine, ele);
                     BigDecimal rateValue = BigDecimalUtil.multiply(reduce, productNumRateMap.get(mapKey));
@@ -615,7 +621,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpMeterReadAllDataVO> dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1())).collect(Collectors.toList());
             List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
             for (LocalDate classDate : timeList) {
-                BigDecimal dataValue = dataList.stream().filter(v -> Objects.nonNull(v.getConsume())).filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+                List<BigDecimal> valueList = dataList.stream().filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).collect(Collectors.toList());
+                BigDecimal dataValue = BigDecimalUtil.sum(valueList);
                 consumeList.add(BigDecimalUtil.setScale(dataValue, 0));
             }
             row.setConsumeList(consumeList);
