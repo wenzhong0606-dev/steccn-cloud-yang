@@ -12,14 +12,10 @@ import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
 import com.steccn.common.util.LocalDateUtil;
-import com.steccn.common.vo.EpChartGraphVO;
-import com.steccn.common.vo.EpChartGraphXAxisVO;
 import com.steccn.ems.constant.EpManagerConstant;
-import com.steccn.ems.dto.EpTableDTO;
 import com.steccn.ems.service.*;
 import com.steccn.ems.vo.*;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
-import com.steccn.qms.constant.QtManagerConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,26 +87,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(reduce, 0));
         dataList.add(heatPowerRow);
 
-        //对行进行合计
-        List<BigDecimal> elecSumRowList = Lists.newArrayList();
-        for (EpDayReportCountRowVO rowVO : dataList) {
-            List<BigDecimal> consumeList = rowVO.getConsumeList();
-            for (int i = 0; i < consumeList.size(); i++) {
-                if (i >= elecSumRowList.size()) {
-                    elecSumRowList.add(i, BigDecimal.ZERO);
-                }
-                BigDecimal add = BigDecimalUtil.add(elecSumRowList.get(i), consumeList.get(i));
-                elecSumRowList.set(i, BigDecimalUtil.setScale(add, 0));
-            }
-        }
-        EpDayReportCountRowVO elecSumRow = new EpDayReportCountRowVO();
-        elecSumRow.setConsumeList(elecSumRowList);
-        elecSumRow.setEnergyType(eleEnergy.getName());
-        elecSumRow.setUnit(eleEnergy.getMeasureUnitName());
-        elecSumRow.setDepartmentName("合计");
-        BigDecimal elecSumRowValue = BigDecimalUtil.sum(elecSumRowList);
-        elecSumRow.setSumStr(BigDecimalUtil.setScale(elecSumRowValue,0));
-        dataList.add(elecSumRow);
+        //插入合计行
+        dataList.add(countRow(dataList, eleEnergy));
 
         try {
             //获取用油量数据
@@ -139,6 +117,36 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         resVo.setDataList(dataList);
         return resVo;
+    }
+
+    /**
+     * 插入合计行
+     *
+     * @param dataList 数据集合
+     * @param energy   能源类型
+     * @return
+     */
+    private EpDayReportCountRowVO countRow(List<EpDayReportCountRowVO> dataList, EpEnergyTypeVO energy) {
+        //对行进行合计
+        List<BigDecimal> countRowList = Lists.newArrayList();
+        for (EpDayReportCountRowVO rowVO : dataList) {
+            List<BigDecimal> consumeList = rowVO.getConsumeList();
+            for (int i = 0; i < consumeList.size(); i++) {
+                if (i > countRowList.size() - 1) {
+                    countRowList.add(i, BigDecimal.ZERO);
+                }
+                BigDecimal add = BigDecimalUtil.add(countRowList.get(i), consumeList.get(i));
+                countRowList.set(i, BigDecimalUtil.setScale(add, 0));
+            }
+        }
+        EpDayReportCountRowVO countRow = new EpDayReportCountRowVO();
+        countRow.setConsumeList(countRowList);
+        countRow.setEnergyType(energy.getName());
+        countRow.setUnit(energy.getMeasureUnitName());
+        countRow.setDepartmentName("合计");
+        BigDecimal countRowValue = BigDecimalUtil.sum(countRowList);
+        countRow.setSumStr(BigDecimalUtil.setScale(countRowValue, 0));
+        return countRow;
     }
 
     /**
@@ -222,7 +230,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         shRow.setDepartmentName("生活用电");
 
         resList.add(jpRow);
-        resList.add(shRow);
 
         //深加工一~八产线
         List<TripleDTO<Long, Integer, String>> linePartitionList = partitionList.stream().filter(v -> sjgLine14List.contains(v.getField2()) || sjgLine58List.contains(v.getField2())).collect(Collectors.toList());
@@ -255,6 +262,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         }
         //产线行
         resList.addAll(lineRowList);
+        //生活用电
+        resList.add(shRow);
 
         //获取几条产线的产量，用于分摊公用电
         Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
@@ -528,87 +537,51 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     /**
      * 获取能耗行
      *
-     * @param energyType
-     * @param start
-     * @param end
-     * @param partitionList
+     * @param epEnergy      能源类型
+     * @param start         开始日期
+     * @param end           结束日期
+     * @param partitionList 节点集合
      * @return
      */
-    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO energyType, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList, List<BigDecimal> allThickList) {
+    private List<EpDayReportCountRowVO> consumeRow(EpEnergyTypeVO epEnergy, LocalDate start, LocalDate end, List<TripleDTO<Long, Integer, String>> partitionList, List<BigDecimal> allThickList) {
         List<EpDayReportCountRowVO> rowList = Lists.newArrayList();
-        if (CollUtil.isEmpty(partitionList) || Objects.isNull(energyType)) {
+        if (CollUtil.isEmpty(partitionList) || Objects.isNull(epEnergy)) {
             return rowList;
         }
-        EpTableDTO epTableDTO = new EpTableDTO();
-        epTableDTO.setEnergyType(energyType.getId());
-        epTableDTO.setStart(start);
-        epTableDTO.setEnd(end);
-        epTableDTO.setGranularity(QtManagerConstant.QtGranularityEnum.DAY.getCode());
+
+        //查询全量数据表
+        LocalDateTime startLdt = LocalDateTime.of(start, ClassUtil.MORNING_START_TIME);
+        LocalDateTime endLdt = LocalDateTime.of(end.plusDays(1), ClassUtil.MORNING_START_TIME.minusNanos(1));
+        //②时间区间内所有班次集
+        List<TupleDTO<LocalDate, Integer>> classRangeList = ClassUtil.classRange(startLdt, endLdt);
+        Set<LocalDate> dateSet = classRangeList.stream().map(v -> v.getField1()).collect(Collectors.toSet());
         List<Long> partitionIdList = partitionList.stream().map(TupleDTO::getField1).collect(Collectors.toList());
-        epTableDTO.setPartitionIdList(partitionIdList);
-        epTableDTO.setThick(allThickList);
-        EpChartGraphVO<EpChartGraphXAxisVO, BigDecimal> epChart = epConsumePartitionChartService.consumePartitionContrast(epTableDTO);
-        List<BigDecimal> data = epChart.getSeriesDataVO().get(0).getData();
+        //获取全量数据表
+        List<EpMeterReadAllDataVO> classDateAllData = meterReadService.classDateAllData(dateSet, epEnergy.getId(), partitionIdList);
 
-        //不同厚度的数据要汇总到一起
-        for (int i = 1; i < epChart.getSeriesDataVO().size(); i++) {
-            List<BigDecimal> temp = epChart.getSeriesDataVO().get(i).getData();
-            for (int j = 0; j < temp.size(); j++) {
-                BigDecimal oldValue = data.get(j);
-                oldValue = BigDecimalUtil.add(oldValue, temp.get(j));
-                data.set(j, oldValue);
-            }
-        }
-
-        //如果部门不止一个 ，需要构造一个合计
-        List<BigDecimal> sumList = Lists.newArrayList();
-        BigDecimal total = null;
-        int count;
-
-        for (int i = 0; i < partitionList.size(); i++) {
-            count = 0;
+        for (TripleDTO<Long, Integer, String> tripleDTO : partitionList) {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
             List<BigDecimal> consumeList = Lists.newArrayList();
-            BigDecimal sum = null;
-            for (int j = i; j < data.size(); j += partitionIdList.size()) {
-                BigDecimal ele = data.get(j);
-                consumeList.add(ele);
-                //列合计
-                if (count > sumList.size() - 1) {
-                    sumList.add(count, BigDecimal.ZERO);
-                }
-                sumList.set(count, BigDecimalUtil.add(sumList.get(count), ele));
-                count++;
-                sum = BigDecimalUtil.add(sum, ele);
+            List<EpMeterReadAllDataVO> dataList = classDateAllData.stream().filter(v -> v.getOfficeId().equals(tripleDTO.getField1())).collect(Collectors.toList());
+            List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
+            for (LocalDate classDate : timeList) {
+                BigDecimal dataValue = dataList.stream().filter(v -> Objects.nonNull(v.getConsume())).filter(v -> v.getReadDate().isEqual(classDate)).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+                consumeList.add(BigDecimalUtil.setScale(dataValue, 0));
             }
-            List<BigDecimal> newConsumeList = Lists.newArrayList();
-            consumeList.forEach(ele -> newConsumeList.add(BigDecimalUtil.setScale(ele, 0)));
-            row.setConsumeList(newConsumeList);
-            row.setEnergyType(energyType.getName());
-            row.setUnit(energyType.getMeasureUnitName());
-            row.setDepartmentName(partitionList.get(i).getField3());
+            row.setConsumeList(consumeList);
+            row.setEnergyType(epEnergy.getName());
+            row.setUnit(epEnergy.getMeasureUnitName());
+            row.setDepartmentName(tripleDTO.getField3());
+            BigDecimal sum = BigDecimalUtil.sum(consumeList);
             row.setSumStr(BigDecimalUtil.setScale(sum, 0));
             rowList.add(row);
-            //合计行总计
-            total = BigDecimalUtil.add(total, sum);
-
         }
 
         //如果超过一行，则添加一个合计行
-        if (partitionIdList.size() > 1) {
-            EpDayReportCountRowVO row = new EpDayReportCountRowVO();
-            List<BigDecimal> sumStrList = Lists.newArrayList();
-            sumList.forEach(ele -> {
-                sumStrList.add(BigDecimalUtil.setScale(ele, 0));
-            });
-            row.setConsumeList(sumStrList);
-            row.setEnergyType(energyType.getName());
-            row.setUnit(energyType.getMeasureUnitName());
-            row.setDepartmentName("合计");
-            row.setSumStr(BigDecimalUtil.setScale(total, 0));
-            rowList.add(row);
+        if (rowList.size() > 1) {
+            EpDayReportCountRowVO countRow = countRow(rowList, epEnergy);
+            rowList.add(countRow);
         }
-
         return rowList;
     }
 
