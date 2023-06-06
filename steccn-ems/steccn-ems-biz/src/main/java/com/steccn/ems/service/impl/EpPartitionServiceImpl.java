@@ -605,9 +605,9 @@ public class EpPartitionServiceImpl extends ServiceImpl<EpPartitionMapper, EpPar
                 ,"风冷螺杆式空压机6","风冷螺杆式空压机7","风冷螺杆式空压机8","风冷螺杆式空压机9","风冷螺杆式空压机10","微热吸附式干燥器3"
                 ,"风冷螺杆式空压机1","风冷螺杆式空压机2","风冷螺杆式空压机3","风冷螺杆式空压机4","风冷螺杆式空压机5","微热吸附式干燥器1","微热吸附式干燥器2"
                 ,"大数据控制中心")));
-        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, Arrays.asList("中国建材桐城新能源材料有限公司", "基片制造部", "深加工制造部", "基片一车间")));
-        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, Arrays.asList("基片一车间")));
-        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, Arrays.asList("基片一车间")));
+        resMap.put(EpManagerConstant.ENERGY_WATER, queryNodeByNameList(EpManagerConstant.ENERGY_WATER, Arrays.asList("基片制造部", "深加工二车间（东线）", "深加工三车间（西线）", "脱硫脱硝")));
+        resMap.put(EpManagerConstant.ENERGY_GAS, queryNodeByNameList(EpManagerConstant.ENERGY_GAS, Arrays.asList("基片二车间")));
+        resMap.put(EpManagerConstant.ENERGY_OIL, queryNodeByNameList(EpManagerConstant.ENERGY_OIL, Arrays.asList("基片二车间")));
         return resMap;
     }
 
