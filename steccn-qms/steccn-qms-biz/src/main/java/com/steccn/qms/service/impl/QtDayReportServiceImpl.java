@@ -1007,13 +1007,13 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         head.add("损耗率");
         if(!dto.getType().equals(QtManagerConstant.LossReportType.MONTH.getCode())){
             for(int i = 0; i <= dayCount; i++){
-                int day = dto.getStartDate().getDayOfMonth() + i;
-                module.add(new BaseReportHeaderVO(dto.getStartDate().getMonthValue() + "月" + day + "日",head));
+                LocalDate date = dto.getStartDate().plusDays(i);
+                module.add(new BaseReportHeaderVO(date.getMonthValue() + "月" + date.getDayOfMonth()+ "日",head));
             }
         }else {
             for(int i = 0; i <= dayCount; i++){
-                int month = dto.getStartDate().getMonthValue() + i;
-                module.add(new BaseReportHeaderVO(dto.getStartDate().getYear() + "年" + month + "月",head));
+                LocalDate date = dto.getStartDate().plusMonths(i);
+                module.add(new BaseReportHeaderVO(date.getYear() + "年" + date.getMonthValue() + "月",head));
             }
         }
         //小计
