@@ -3,6 +3,7 @@ package com.steccn.ems.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.ClassUtil;
@@ -74,8 +75,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //获取能源类型
         EpEnergyTypeVO eleEnergy = eleOp.get();
         EpDayReportCountRowVO heatPowerRow = new EpDayReportCountRowVO();
-        heatPowerList.forEach(ele -> ele.setScale(0));
-        heatPowerRow.setConsumeList(heatPowerList);
+        List<BigDecimal> heatPowerListNew = Lists.newArrayList();
+        heatPowerList.forEach(ele -> heatPowerListNew.add(BigDecimalUtil.setScale(ele, 0)));
+        heatPowerRow.setConsumeList(heatPowerListNew);
         heatPowerRow.setEnergyType(eleEnergy.getName());
         heatPowerRow.setDepartmentName("余热发电");
         heatPowerRow.setUnit(eleEnergy.getMeasureUnitName());
@@ -135,7 +137,6 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //基片制造部
         List<EpMeterReadAllDataVO> jpList = classDateAllData.stream().filter(v -> v.getOfficeName().equals("基片制造部")).collect(Collectors.toList());
         List<LocalDate> timeList = dateSet.stream().sorted(Comparator.comparing(x -> x)).collect(Collectors.toList());
-
         //构建基片制造部
         EpDayReportCountRowVO jpRow = new EpDayReportCountRowVO();
         BigDecimal jpSum = BigDecimal.ZERO;
@@ -144,14 +145,32 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpMeterReadAllDataVO> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
             BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
             jpSum = BigDecimalUtil.add(jpSum, reduce);
-            jpValueList.add(reduce.setScale(0));
+            jpValueList.add(BigDecimalUtil.setScale(reduce, 0));
         }
-        jpRow.setSumStr(jpSum.setScale(0));
+        jpRow.setSumStr(BigDecimalUtil.setScale(jpSum, 0));
         jpRow.setConsumeList(jpValueList);
         jpRow.setUnit(epEnergy.getMeasureUnitName());
         jpRow.setEnergyType(epEnergy.getName());
         jpRow.setDepartmentName("基片制造部");
-        return Lists.newArrayList(jpRow);
+
+        //构建生活用电 = 员工餐厅 + 员工宿舍
+        List<EpMeterReadAllDataVO> shList = classDateAllData.stream().filter(v -> Sets.newHashSet("员工餐厅", "员工宿舍").contains(v.getOfficeName())).collect(Collectors.toList());
+        //构建基片制造部
+        EpDayReportCountRowVO shRow = new EpDayReportCountRowVO();
+        BigDecimal shSum = BigDecimal.ZERO;
+        List<BigDecimal> shValueList = Lists.newArrayList();
+        for (LocalDate ele : timeList) {
+            List<EpMeterReadAllDataVO> timeDataList = shList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
+            BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            shSum = BigDecimalUtil.add(shSum, reduce);
+            shValueList.add(BigDecimalUtil.setScale(reduce, 0));
+        }
+        shRow.setSumStr(BigDecimalUtil.setScale(shSum, 0));
+        shRow.setConsumeList(shValueList);
+        shRow.setUnit(epEnergy.getMeasureUnitName());
+        shRow.setEnergyType(epEnergy.getName());
+        shRow.setDepartmentName("生活用电");
+        return Lists.newArrayList(jpRow, shRow);
     }
 
     /**
@@ -210,12 +229,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 count++;
                 sum = BigDecimalUtil.add(sum, ele);
             }
-            consumeList.forEach(ele -> ele = ele.setScale(0));
-            row.setConsumeList(consumeList);
+            List<BigDecimal> newConsumeList = Lists.newArrayList();
+            consumeList.forEach(ele -> newConsumeList.add(BigDecimalUtil.setScale(ele, 0)));
+            row.setConsumeList(newConsumeList);
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName(partitionList.get(i).getField2());
-            row.setSumStr(sum.setScale(0));
+            row.setSumStr(BigDecimalUtil.setScale(sum, 0));
             rowList.add(row);
             //合计行总计
             total = BigDecimalUtil.add(total, sum);
@@ -227,14 +247,13 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             EpDayReportCountRowVO row = new EpDayReportCountRowVO();
             List<BigDecimal> sumStrList = Lists.newArrayList();
             sumList.forEach(ele -> {
-                ele = ele.setScale(0);
-                sumStrList.add(ele);
+                sumStrList.add(BigDecimalUtil.setScale(ele, 0));
             });
             row.setConsumeList(sumStrList);
             row.setEnergyType(energyType.getName());
             row.setUnit(energyType.getMeasureUnitName());
             row.setDepartmentName("合计");
-            row.setSumStr(total.setScale(0));
+            row.setSumStr(BigDecimalUtil.setScale(total, 0));
             rowList.add(row);
         }
 
