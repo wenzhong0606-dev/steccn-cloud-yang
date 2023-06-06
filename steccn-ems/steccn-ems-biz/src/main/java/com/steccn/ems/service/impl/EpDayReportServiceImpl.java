@@ -140,9 +140,11 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         //公用电【深加工二车间（东线）->公用电,深加工二车间（西线）->公用电】
         List<Integer> gydList = Lists.newArrayList(633, 3653);
         //风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
-        List<Integer> fl610 = Lists.newArrayList(666, 667, 668, 669, 670, 673);
+        List<Integer> fl610List = Lists.newArrayList(666, 667, 668, 669, 670, 673);
         //风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
-        List<Integer> fl15 = Lists.newArrayList(661, 662, 663, 664, 665, 671, 672);
+        List<Integer> fl15List = Lists.newArrayList(661, 662, 663, 664, 665, 671, 672);
+        //大数据控制中心
+        List<Integer> dsjList = Lists.newArrayList(654);
 
         //深加工8条产线
         List<Integer> sjgLineList = Lists.newArrayList();
@@ -172,10 +174,9 @@ public class EpDayReportServiceImpl implements EpDayReportService {
             List<EpMeterReadAllDataVO> timeDataList = jpList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
             BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
             jpSum = BigDecimalUtil.add(jpSum, reduce);
-            jpValueList.add(BigDecimalUtil.setScale(reduce, 0));
+            jpValueList.add(reduce);
             jpResMap.put(ele, Lists.newArrayList(reduce));
         }
-        jpRow.setSumStr(BigDecimalUtil.setScale(jpSum, 0));
         jpRow.setConsumeList(jpValueList);
         jpRow.setUnit(epEnergy.getMeasureUnitName());
         jpRow.setEnergyType(epEnergy.getName());
@@ -207,6 +208,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         Set<Integer> lineOfficeIdSet = Sets.newHashSet();
         Map<String, List<BigDecimal>> lineResMap = Maps.newHashMap();
 
+        List<EpDayReportCountRowVO> lineRowList = Lists.newArrayList();
         for (TripleDTO<Long, Integer, String> line : linePartitionList) {
             //获取产线id集合
             lineOfficeIdSet.add(line.getField2());
@@ -219,17 +221,19 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 List<EpMeterReadAllDataVO> timeDataList = lineList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
                 BigDecimal reduce = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
                 lineSum = BigDecimalUtil.add(lineSum, reduce);
-                lineValueList.add(BigDecimalUtil.setScale(reduce, 0));
+                lineValueList.add(reduce);
                 //a1.1 a2.1 a3.1 a4.1 a5.1 a6.1 a7.1 a8.1
                 lineResMap.put(mapKey(line.getField2(), ele), Lists.newArrayList(reduce));
             }
-            lineRow.setSumStr(BigDecimalUtil.setScale(lineSum, 0));
             lineRow.setConsumeList(lineValueList);
             lineRow.setUnit(epEnergy.getMeasureUnitName());
             lineRow.setEnergyType(epEnergy.getName());
             lineRow.setDepartmentName(line.getField3());
-            resList.add(lineRow);
+            lineRow.setOfficeId(line.getField2());
+            lineRowList.add(lineRow);
         }
+        //产线行
+        resList.addAll(lineRowList);
 
         //获取几条产线的产量，用于分摊公用电
         Map<String, BigDecimal> productNumMap = FeignOptional.of(() -> reportWorkFeignApi.classDateProductNum(new TripleDTO<>(lineOfficeIdSet, start, end)), FeignConstant.STECCN_DATA_PLATFORM_SERVICE_NAME).get();
@@ -242,17 +246,91 @@ public class EpDayReportServiceImpl implements EpDayReportService {
 
         //获取风冷螺杆式空压机6 + 风冷螺杆式空压机7 + 风冷螺杆式空压机8 + 风冷螺杆式空压机9 + 风冷螺杆式空压机10 + 微热吸附式干燥器3
         //a1.3 a2.3 a3.3 a4.3 a5.3 a6.3 a7.3 a8.3
-        fl610(classDateAllData, fl610, sjgLineList, timeList, productNumRateMap, lineResMap);
+        fl610(classDateAllData, fl610List, sjgLineList, timeList, productNumRateMap, lineResMap);
 
         //获取风冷螺杆式空压机1 + 风冷螺杆式空压机2 + 风冷螺杆式空压机3 + 风冷螺杆式空压机4 + 风冷螺杆式空压机5 + 微热吸附式干燥器1 + 微热吸附式干燥器2
         //获取b2
-        fl15(classDateAllData, fl15, timeList, jpResMap);
+        fl15(classDateAllData, fl15List, timeList, jpResMap);
 
         //获取总能耗N 按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3按照比例分摊
         //N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
         Map<String, BigDecimal> nRateMap = getNRateMap(sjgLineList, timeList, jpResMap, lineResMap);
+        dsj(classDateAllData, dsjList, sjgLineList, timeList, nRateMap, jpResMap, lineResMap);
+
+        //重新计算基片行和产线行
+        ftJpRow(jpRow, timeList, jpResMap);
+        ftLineRow(lineRowList, timeList, lineResMap);
 
         return resList;
+    }
+
+    /**
+     * 产线行分摊-数据+合计调整
+     *
+     * @param lineRowList 产线行集合
+     * @param timeList    班次时间集合
+     * @param lineResMap  产线数据集合
+     */
+    private void ftLineRow(List<EpDayReportCountRowVO> lineRowList, List<LocalDate> timeList, Map<String, List<BigDecimal>> lineResMap) {
+        for (EpDayReportCountRowVO row : lineRowList) {
+            BigDecimal rowSum = BigDecimal.ZERO;
+            List<BigDecimal> consumeList = row.getConsumeList();
+            for (int i = 0; i < timeList.size(); i++) {
+                List<BigDecimal> valueList = lineResMap.get(mapKey(row.getOfficeId(), timeList.get(i)));
+                BigDecimal sum = BigDecimalUtil.sum(valueList);
+                BigDecimal format = BigDecimalUtil.setScale(sum, 0);
+                consumeList.set(i, format);
+                rowSum = BigDecimalUtil.add(format, rowSum);
+            }
+            row.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
+        }
+    }
+
+    /**
+     * 重新计算分摊的行-数据+合计调整
+     *
+     * @param jpRow
+     * @param timeList
+     * @param jpResMap
+     */
+    private void ftJpRow(EpDayReportCountRowVO jpRow, List<LocalDate> timeList, Map<LocalDate, List<BigDecimal>> jpResMap) {
+        List<BigDecimal> consumeList = jpRow.getConsumeList();
+        BigDecimal rowSum = BigDecimal.ZERO;
+        for (int i = 0; i < timeList.size(); i++) {
+            List<BigDecimal> valueList = jpResMap.get(timeList.get(i));
+            BigDecimal sum = BigDecimalUtil.sum(valueList);
+            BigDecimal format = BigDecimalUtil.setScale(sum, 0);
+            consumeList.set(i, format);
+            rowSum = BigDecimalUtil.add(format, rowSum);
+        }
+        jpRow.setSumStr(BigDecimalUtil.setScale(rowSum, 0));
+    }
+
+    /**
+     * 基于N按b1、a1.1 + a1.2 + a1.3、a2.1 + a2.2 + a2.3、... 、a8.1 + a8.2 + a8.3共9部分的比例分摊，则N分摊为b3、a1.4、a2.4、... 、a8.4共9个值
+     *
+     * @param classDateAllData 全量数据表
+     * @param dsjList          大数据节点
+     * @param sjgLineList      深加工产线节点
+     * @param timeList         时间集合
+     * @param nRateMap         分摊比例map
+     * @param jpResMap         基片map
+     * @param lineResMap       深加工产线map
+     */
+    private void dsj(List<EpMeterReadAllDataVO> classDateAllData, List<Integer> dsjList, List<Integer> sjgLineList, List<LocalDate> timeList, Map<String, BigDecimal> nRateMap, Map<LocalDate, List<BigDecimal>> jpResMap, Map<String, List<BigDecimal>> lineResMap) {
+        List<EpMeterReadAllDataVO> dsjDataList = classDateAllData.stream().filter(v -> dsjList.contains(v.getSysOfficeId())).collect(Collectors.toList());
+        for (LocalDate ele : timeList) {
+            List<EpMeterReadAllDataVO> timeDataList = dsjDataList.stream().filter(v -> v.getReadDate().isEqual(ele)).collect(Collectors.toList());
+            BigDecimal dsjValue = timeDataList.stream().filter(v -> Objects.nonNull(v.getConsume())).map(EpMeterReadAllDataVO::getConsume).reduce(BigDecimal.ZERO, BigDecimal::add);
+            //基片分摊
+            BigDecimal jpValue = BigDecimalUtil.multiply(dsjValue, nRateMap.get(mapKey(-1, ele)));
+            jpResMap.get(ele).add(jpValue);
+            //产线分摊value
+            for (Integer line : sjgLineList) {
+                BigDecimal lineValue = BigDecimalUtil.multiply(dsjValue, nRateMap.get(mapKey(line, ele)));
+                lineResMap.get(mapKey(line, ele)).add(lineValue);
+            }
+        }
     }
 
     /**

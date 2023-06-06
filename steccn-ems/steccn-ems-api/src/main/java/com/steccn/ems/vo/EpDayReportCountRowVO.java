@@ -1,5 +1,6 @@
 package com.steccn.ems.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -17,6 +18,10 @@ import java.util.List;
 @ApiModel("能耗日统计报表-行数据")
 public class EpDayReportCountRowVO implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty("组织机构id")
+    @JsonIgnore
+    private Integer officeId;
 
     @ApiModelProperty("能源类型")
     private String energyType;

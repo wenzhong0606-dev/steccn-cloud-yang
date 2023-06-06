@@ -1,6 +1,7 @@
 package com.steccn.common.util;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.google.common.collect.Maps;
 import io.swagger.models.auth.In;
@@ -9,9 +10,11 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * @author yequan
@@ -296,6 +299,27 @@ public class BigDecimalUtil {
             return val1.compareTo(val2) == 0;
         }
         return Boolean.FALSE;
+    }
+
+    /**
+     * 求和
+     *
+     * @param valueList 值集合
+     * @return
+     */
+    public static BigDecimal sum(List<BigDecimal> valueList) {
+        //集合为空，则返回null
+        if (CollUtil.isEmpty(valueList)) {
+            return null;
+        }
+        //如果全为空值，则返回null
+        List<BigDecimal> collect = valueList.stream().filter(v -> Objects.nonNull(v)).collect(Collectors.toList());
+        if (CollUtil.isEmpty(collect)) {
+            return null;
+        }
+        //求和，返回结果
+        BigDecimal sumValue = collect.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sumValue;
     }
 
 }
