@@ -999,6 +999,7 @@ public class QtDayReportServiceImpl implements QtDayReportService {
         common.add(new QtSpcHeadTitleVO("缺陷","defectName"));
         if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
             common.add(new QtSpcHeadTitleVO("班次","className"));
+            common.add(new QtSpcHeadTitleVO("班组","groupName"));
         }
         headers.setCommon(common);
         //动态表头
@@ -1036,6 +1037,10 @@ public class QtDayReportServiceImpl implements QtDayReportService {
                 qtDayReportLossDataBai.setType(QtManagerConstant.NUM_0);
                 //算代表的班次
                 String className = QtManagerConstant.QtClassesEnum.code(j).getName();
+                //算班组
+//                String classGroupName = allData.stream().filter(v -> v.getProductLineName().equals(productLine.getOfficeName())
+//                        && v.getWorkOrder().equals(className)
+//                        &&v.getWorkOrderTime().equals()).collect(Collectors.toList());
                 //如果是班次报表则显示班次
                 if(dto.getType().equals(QtManagerConstant.LossReportType.CLASS.getCode())){
                     qtDayReportLossDataPullAmount.setClassName(className);

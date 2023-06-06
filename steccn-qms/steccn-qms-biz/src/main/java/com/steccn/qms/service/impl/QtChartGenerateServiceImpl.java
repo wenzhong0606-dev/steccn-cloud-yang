@@ -23,6 +23,8 @@ import com.steccn.common.vo.QtChartPieVO;
 import com.steccn.common.vo.QtChartPieValueVO;
 import com.steccn.common.vo.QtTaskClassCalculate;
 import com.steccn.common.vo.R;
+import com.steccn.oa.dto.OaGroupCountDTO;
+import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysOfficeDTO;
 import com.steccn.platform.feign.RemoteDictFeignApi;
 import com.steccn.platform.feign.RemoteOfficeFeign;
@@ -88,6 +90,8 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     private final RemotePullForceFeignApi remotePullForceFeignApi;
 
     private final RemoteDictFeignApi remoteDictFeignApi;
+
+    private final OaInfoService oaInfoService;
     /**
      * 生产基片损耗数据
      *
@@ -730,6 +734,14 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
 //            Assert.notEmpty(resultList, "数据为空，暂无报表");
             return resultList;
         }
+        Map<String, OaGroupCountDTO> classGroupMap = FeignOptional.of(() -> oaInfoService.getGroupInfo(LocalDate.parse(resultList.get(0).getWorkOrderTime()), LocalDate.parse(resultList.get(resultList.size() - 1).getWorkOrderTime())), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        resultList.forEach(tmp->{
+            OaGroupCountDTO oaGroupCountDTO = classGroupMap.get(tmp.getWorkOrderTime() + ":" + tmp.getWorkOrder());
+            if(Objects.nonNull(oaGroupCountDTO)){
+                tmp.setClassGroupId(oaGroupCountDTO.getGroupId());
+                tmp.setClassGroupName(oaGroupCountDTO.getGroupName());
+            }
+        });
         return resultList;
     }
 

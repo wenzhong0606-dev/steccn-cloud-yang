@@ -76,4 +76,14 @@ public class QtChartSubDetailDTO implements Serializable {
      */
     private String pullAmountStr;
 
+    /**
+     * 班组id
+     */
+    private Integer classGroupId;
+
+    /**
+     * 班组名字
+     */
+    private String classGroupName;
+
 }
