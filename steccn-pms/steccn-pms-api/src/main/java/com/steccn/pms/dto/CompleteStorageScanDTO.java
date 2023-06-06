@@ -81,4 +81,8 @@ public class CompleteStorageScanDTO implements Serializable {
     @ApiModelProperty("物料编码")
     private String materialCode;
 
+    @ApiModelProperty("入库时间")
+    @NotNull(message = "入库时间不能为空")
+    private LocalDateTime enterTime;
+
 }

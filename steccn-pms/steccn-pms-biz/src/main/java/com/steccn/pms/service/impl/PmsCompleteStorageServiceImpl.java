@@ -456,6 +456,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
         scanDTO.setMaterialName(pmsProduceOrder.getMaterialName());
         scanDTO.setWarehouseName(shelf.getParentName());
         scanDTO.setShelfName(shelf.getOfficeName());
+        //入库时间
+        scanDTO.setEnterTime(dto.getEnterTime());
         scanDtoList.add(scanDTO);
         String generate = generate(scanDtoList);
         //调用确认入库单接口
