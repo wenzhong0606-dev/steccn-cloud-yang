@@ -602,9 +602,9 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
         //过滤当前班次
         String classStr = "";
         if (qtTaskClassCalculate.getClassType().equals(0)) {
-            classStr = "早班";
+            classStr = "白班";
         } else {
-            classStr = "晚班";
+            classStr = "夜班";
         }
         String finalClassStr = classStr;
         oaRosterRecordVOS = oaRosterRecordVOS.stream().filter(v -> v.getSerial().equals(finalClassStr)).collect(Collectors.toList());

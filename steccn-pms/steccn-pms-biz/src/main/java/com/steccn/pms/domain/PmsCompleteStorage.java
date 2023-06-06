@@ -29,6 +29,11 @@ public class PmsCompleteStorage implements Serializable {
     private String code;
 
     /**
+     * 入库时间-用户填写
+     */
+    private LocalDateTime enterTime;
+
+    /**
      * 入库时间
      */
     private LocalDateTime inStorageTime;
