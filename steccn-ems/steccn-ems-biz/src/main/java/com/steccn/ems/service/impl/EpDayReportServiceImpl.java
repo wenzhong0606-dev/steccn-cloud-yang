@@ -87,9 +87,30 @@ public class EpDayReportServiceImpl implements EpDayReportService {
         heatPowerRow.setEnergyType(eleEnergy.getName());
         heatPowerRow.setDepartmentName("余热发电");
         heatPowerRow.setUnit(eleEnergy.getMeasureUnitName());
-        BigDecimal reduce = heatPowerList.stream().filter(v -> Objects.nonNull(v)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal reduce = BigDecimalUtil.sum(heatPowerList);
         heatPowerRow.setSumStr(BigDecimalUtil.setScale(reduce, 0));
         dataList.add(heatPowerRow);
+
+        //对行进行合计
+        List<BigDecimal> elecSumRowList = Lists.newArrayList();
+        for (EpDayReportCountRowVO rowVO : dataList) {
+            List<BigDecimal> consumeList = rowVO.getConsumeList();
+            for (int i = 0; i < consumeList.size(); i++) {
+                if (i >= elecSumRowList.size()) {
+                    elecSumRowList.add(i, BigDecimal.ZERO);
+                }
+                BigDecimal add = BigDecimalUtil.add(elecSumRowList.get(i), consumeList.get(i));
+                elecSumRowList.set(i, BigDecimalUtil.setScale(add, 0));
+            }
+        }
+        EpDayReportCountRowVO elecSumRow = new EpDayReportCountRowVO();
+        elecSumRow.setConsumeList(elecSumRowList);
+        elecSumRow.setEnergyType(eleEnergy.getName());
+        elecSumRow.setUnit(eleEnergy.getMeasureUnitName());
+        elecSumRow.setDepartmentName("合计");
+        BigDecimal elecSumRowValue = BigDecimalUtil.sum(elecSumRowList);
+        elecSumRow.setSumStr(BigDecimalUtil.setScale(elecSumRowValue,0));
+        dataList.add(elecSumRow);
 
         try {
             //获取用油量数据
