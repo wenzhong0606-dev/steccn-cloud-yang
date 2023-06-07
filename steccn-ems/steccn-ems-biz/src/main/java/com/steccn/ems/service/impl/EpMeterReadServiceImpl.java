@@ -607,6 +607,8 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @return
      */
     private List<EpMeterReadAllDataVO> row2List(Integer energyType, Set<Long> partitionIdList, Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap, Map<Long, EpPartition> epPartitionMap, List<EpEnergyConsumeDTO> rowList) {
+        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
+
         EpPartition defaultNode = new EpPartition();
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         for (EpEnergyConsumeDTO row : rowList) {
@@ -626,8 +628,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
                     resVo.setSysOfficeId(epPartition.getOfficeId());
                     resVo.setOfficeName(epPartition.getOfficeName());
                     resVo.setProductNum(yieldMap.get(key));
-                    //设置班组
-
                     resList.add(resVo);
                 }
             });

@@ -36,6 +36,10 @@ public class EpDayReportController {
         } catch (Exception e) {
             throw new BusinessException("日期格式异常");
         }
-        return R.success(epDayReportService.count(parse));
+        boolean flag = Boolean.FALSE;
+        if (LocalDate.now().getMonthValue() > parse.getMonthValue()) {
+            flag = Boolean.TRUE;
+        }
+        return R.success(epDayReportService.count(parse, flag));
     }
 }

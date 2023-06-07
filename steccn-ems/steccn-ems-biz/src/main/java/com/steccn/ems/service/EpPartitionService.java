@@ -1,5 +1,6 @@
 package com.steccn.ems.service;
 
+import com.steccn.common.dto.TripleDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.ems.domain.EpInstrumentAccount;
 import com.steccn.ems.domain.EpPartition;
@@ -138,5 +139,5 @@ public interface EpPartitionService extends IService<EpPartition> {
      * 获取不同能源 日报表默认的统计节点
      * @return
      */
-    Map<Integer, List<TupleDTO<Long, String>>> dayReportCountDefaultNode();
+    Map<Integer, List<TripleDTO<Long, Integer, String>>> dayReportCountDefaultNode();
 }
