@@ -142,4 +142,12 @@ public interface PmsReportWorkService extends IService<PmsReportWork> {
      * @return
      */
     Map<String, BigDecimal> classDateProductNum(Set<Integer> lineSet, LocalDate start, LocalDate end);
+
+    /**
+     * 车间-班次日期，班次对应的班组
+     * @param field1
+     * @param field2
+     * @return
+     */
+    Map<String, Long> workshopClassGroupMap(Set<LocalDate> field1, Map<Integer, Set<Integer>> field2);
 }

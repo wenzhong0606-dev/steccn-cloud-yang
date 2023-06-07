@@ -211,6 +211,7 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 pmsReportWork.setProduceOrderNo(pmsProduceOrder.getCode());
                 pmsReportWork.setBatchNo(pmsWorkOrderBatch.getCode());
                 pmsReportWork.setId(IdUtil.getSnowflake().nextId());
+                pmsReportWork.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(), Boolean.FALSE));
                 save(pmsReportWork);
                 //保存工时信息
                 reportWorkHourService.saveHourList(pmsReportWork.getId(), dto.getHourDTOList());
@@ -610,6 +611,8 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
         PmsReportWork model = getById(dto);
         Assert.notNull(model, "编辑的报工记录不存在");
         getReportWork(dto, model);
+        //设置报工的班次日期
+        model.setClassDate(LocalDateUtil.getClassDate(dto.getStartTime(),Boolean.FALSE));
         updateById(model);
         //更新报工工时信息
         reportWorkHourService.updateHour(dto.getId(), dto.getHourDTOList());
@@ -732,6 +735,12 @@ public class PmsReportWorkServiceImpl extends ServiceImpl<PmsReportWorkMapper, P
                 }
             }
         }
+        return resMap;
+    }
+
+    @Override
+    public Map<String, Long> workshopClassGroupMap(Set<LocalDate> dateSet, Map<Integer, Set<Integer>> workshopStationMap) {
+        Map<String, Long> resMap = Maps.newHashMap();
         return resMap;
     }
 

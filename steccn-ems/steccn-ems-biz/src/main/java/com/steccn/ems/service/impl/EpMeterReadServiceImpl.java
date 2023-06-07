@@ -24,6 +24,7 @@ import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.BigDecimalUtil;
 import com.steccn.common.util.LocalDateUtil;
 import com.steccn.common.util.MapUtil;
+import com.steccn.common.vo.R;
 import com.steccn.ems.constant.EpManagerConstant;
 import com.steccn.ems.domain.*;
 import com.steccn.ems.dto.*;
@@ -607,8 +608,6 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
      * @return
      */
     private List<EpMeterReadAllDataVO> row2List(Integer energyType, Set<Long> partitionIdList, Map<Long, EpInstrumentAccountDTO> nodeLinkMeterMap, Map<Long, EpPartition> epPartitionMap, List<EpEnergyConsumeDTO> rowList) {
-        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
-
         EpPartition defaultNode = new EpPartition();
         List<EpMeterReadAllDataVO> resList = Lists.newArrayList();
         for (EpEnergyConsumeDTO row : rowList) {
@@ -752,6 +751,38 @@ public class EpMeterReadServiceImpl extends ServiceImpl<EpMeterReadMapper, EpMet
         //获取每个节点的office信息
         Map<Long, EpPartition> partitionMap = epPartitionService.listById(nodeLinkMeterMap.keySet());
         List<EpEnergyConsumeDTO> consumeTable = unitTable(dateSet, energyType, nodeLinkMeterMap);
+
+
+        //结合排班表结合报工时填报的班组，在【单耗全量数据表】中加入班组维度，右侧增加三列，每格代表本行的班次是本列的车间的哪个班组（本列的车间所有工位在本行的班次报工时填报的班组中，取填报次数最多的一个班组）
+        //获取所有的工位节点
+
+        List<SysOfficeVO> stationList = FeignOptional.of(() -> remoteOfficeFeign.flatData(SysOfficeConstant.STATION), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取所有的车间
+        List<SysOfficeVO> workshopList = FeignOptional.of(() -> remoteOfficeFeign.flatData(SysOfficeConstant.WORKSHOP), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> stationIdSet = stationList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        Set<Integer> workshopIdSet = workshopList.stream().map(SysOfficeVO::getId).collect(Collectors.toSet());
+        //获取所有工位节点的车间父节点
+        Map<Integer, Integer> parentWorkshop = FeignOptional.of(() -> remoteOfficeFeign.parentType(new TupleDTO<>(SysOfficeConstant.WORKSHOP, stationIdSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Set<Integer> wsSet = Sets.newHashSet();
+        partitionIdList.forEach(ele ->{
+            EpPartition epPartition = partitionMap.get(ele);
+            if(Objects.nonNull(epPartition) && workshopIdSet.contains(epPartition.getOfficeId())){
+                wsSet.add(epPartition.getOfficeId());
+            }
+        });
+
+        Map<Integer,Set<Integer>> shopStationMap = Maps.newHashMap();
+        //查询车间的工位
+        parentWorkshop.forEach((k,v) ->{
+            if(wsSet.contains(v)){
+               MapUtil.computeSet(shopStationMap,v,k);
+            }
+        });
+        //根据工位+时间获取车间班次报工最多的班组
+
+        R<Map<String,Long>> workShopClassMap = remoteReportWorkFeignApi.workshopClassGroupMap(new TupleDTO<>(dateSet,shopStationMap));
+
+
         return row2List(energyType, Sets.newHashSet(partitionIdList), nodeLinkMeterMap, partitionMap, consumeTable);
     }
 

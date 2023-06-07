@@ -57,4 +57,10 @@ public class PmsReportWorkFeignController {
     R<Map<String, BigDecimal>> classDateProductNum(@RequestBody TripleDTO<Set<Integer>, LocalDate, LocalDate> dto) {
         return R.success(pmsReportWorkService.classDateProductNum(dto.getField1(), dto.getField2(), dto.getField3()));
     }
+
+    @ApiOperation("获取车间班次日期中班次报工最多的班组")
+    @PostMapping("/workshop/class/group")
+    R<Map<String, Long>> workshopClassGroupMap(TupleDTO<Set<LocalDate>, Map<Integer, Set<Integer>>> tupleDTO){
+       return R.success(pmsReportWorkService.workshopClassGroupMap(tupleDTO.getField1(),tupleDTO.getField2()));
+    }
 }
