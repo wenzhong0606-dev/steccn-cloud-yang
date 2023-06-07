@@ -1236,31 +1236,32 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
     @Transactional(rollbackFor = Exception.class)
     public Boolean refreshGroupClass() {
         List<QtCheckTask> taskList = list(new LambdaQueryWrapper<QtCheckTask>()
-                .select(QtCheckTask::getId)
-                .and(v->v.between(QtCheckTask::getId,1,5000))
-                .eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
-                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
-                .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode()));
-        taskList.forEach(tmp->{
+                .select(QtCheckTask::getId,QtCheckTask::getStartBy)
+                .and(v->v.between(QtCheckTask::getId,15000,16935))
+                .and(v->v.eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.FIRST.getCode())
+                        .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.PATROL.getCode())
+                        .or().eq(QtCheckTask::getTaskType, QtManagerConstant.QtCheckTaskTypeEnum.ONLINE.getCode())));
+        for(QtCheckTask tmp:taskList){
             QtCheckTask taskModel = new QtCheckTask();
             taskModel.setId(tmp.getId());
             if(tmp.getStartBy()==null){
-                taskModel.setClassGroupName("甲班");
+                taskModel.setClassGroupName("车间倒班-甲班");
                 taskModel.setClassesId(1);
             }else {
                 Set<Long> idList = Sets.newHashSet();
                 idList.add(tmp.getStartBy());
                 List<OaGroupIdAndNameVO> groupByUser = oaInfoService.getGroupByUser(idList).getData();
                 if(CollUtil.isEmpty(groupByUser)){
-                    taskModel.setClassGroupName("甲班");
+                    taskModel.setClassGroupName("车间倒班-甲班");
                     taskModel.setClassesId(1);
                 }else {
                     taskModel.setClassGroupId(groupByUser.get(0).getClassGroupId());
                     taskModel.setClassGroupName(groupByUser.get(0).getClassGroupName());
                 }
-                updateById(taskModel);
             }
-        });
+            updateById(taskModel);
+
+        }
         return true;
     }
 
