@@ -169,6 +169,7 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             pmsCompleteStorage.setUnitId(dtoList.get(0).getUnitId());
 
             Long produceOrderId = dtoList.get(0).getProduceOrderId();
+            LocalDateTime enterTime = dtoList.get(0).getEnterTime();
             PmsProduceOrder pmsProduceOrder = pmsProduceOrderService.getById(produceOrderId);
             Assert.notNull(pmsProduceOrder, "生产订单不存在");
             pmsCompleteStorage.setProductLineId(pmsProduceOrder.getProductionLineId());
@@ -217,6 +218,8 @@ public class PmsCompleteStorageServiceImpl extends ServiceImpl<PmsCompleteStorag
             pmsCompleteStorage.setInStorageVoucher(pmsCompleteStorage.getCode());
             pmsCompleteStorage.setTypeId(sysDictVO.getId());
             pmsCompleteStorage.setState(PmManagerConstant.InVouchEnum.CREATE.getCode());
+            //连线入库 入库时间
+            pmsCompleteStorage.setEnterTime(enterTime);
             save(pmsCompleteStorage);
             //生成入库单
 
