@@ -15,5 +15,5 @@ public interface EpDayReportService {
      * @param month 年月
      * @return 结果
      */
-    EpDayReportCountVO count(LocalDate month);
+    EpDayReportCountVO count(LocalDate month,boolean flag);
 }

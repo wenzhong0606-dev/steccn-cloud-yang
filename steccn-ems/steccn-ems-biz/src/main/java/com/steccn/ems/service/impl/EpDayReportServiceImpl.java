@@ -19,6 +19,8 @@ import com.steccn.ems.vo.*;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -47,7 +49,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteReportWorkFeignApi reportWorkFeignApi;
 
     @Override
-    public EpDayReportCountVO count(LocalDate start) {
+    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+    public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
         LocalDate end = getEndDate(start);
