@@ -19,10 +19,7 @@ import com.steccn.common.dto.StackGraphDTO;
 import com.steccn.common.dto.TupleDTO;
 import com.steccn.common.dto.ValidList;
 import com.steccn.common.util.*;
-import com.steccn.common.vo.QtChartPieVO;
-import com.steccn.common.vo.QtChartPieValueVO;
-import com.steccn.common.vo.QtTaskClassCalculate;
-import com.steccn.common.vo.R;
+import com.steccn.common.vo.*;
 import com.steccn.oa.dto.OaGroupCountDTO;
 import com.steccn.oa.feign.OaInfoService;
 import com.steccn.platform.dto.SysOfficeDTO;
@@ -1157,6 +1154,10 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
     @Override
     public QtLineChartBarDTO generateSubstrateBarLoss(QtChartParamDTO dto) {
         List<QtChartSubDetailDTO> data = this.generateSubstrateLossData(dto);
+        //班组为后期加上，所以需要过滤班组
+        if(dto.getClassGroupId()!=null){
+            data = data.stream().filter(v->v.getClassGroupId()!=null && v.getClassGroupId().equals(dto.getClassGroupId())).collect(Collectors.toList());
+        }
         //过滤班次
         if (CollUtil.isNotEmpty(data)&&CollUtil.isNotEmpty(dto.getFilters())&&dto.getCompare().equals(QtManagerConstant.QtChartCompareEnum.WORK.getCode())){
             data = data.stream().filter(v->dto.getFilters().contains(v.getWorkOrder())).collect(Collectors.toList());
@@ -1404,6 +1405,54 @@ public class QtChartGenerateServiceImpl implements QtChartGenerateService {
                 QtLineChartBarDTO resultDTO = StackGraphUtil.convertData(stackGraphDTOS);
 //                legend = Lists.reverse(legend);
                 resultDTO.setLegend(legend);
+                if(CollUtil.isNotEmpty(data)){
+                    BaseScreenVO baseScreenVO = new BaseScreenVO();
+                    //产线
+                    List<BaseSelectVO<Integer>> productLineSelectList = data.stream()
+                            .collect(Collectors.toMap(
+                                    QtChartSubDetailDTO::getProductLineId,
+                                    tmp -> new BaseSelectVO<>(tmp.getProductLineId(), tmp.getProductLineName()),
+                                    (existing, replacement) -> existing // 处理重复键的情况
+                            ))
+                            .values()
+                            .stream()
+                            .collect(Collectors.toList());
+                    baseScreenVO.setProductLineScreen(productLineSelectList);
+                    //车间
+                    List<BaseSelectVO<Integer>> productWorkShopSelectList = data.stream()
+                            .collect(Collectors.toMap(
+                                    QtChartSubDetailDTO::getProductWorkShopId,
+                                    tmp -> new BaseSelectVO<>(tmp.getProductWorkShopId(), tmp.getProductWorkShopName()),
+                                    (existing, replacement) -> existing // 处理重复键的情况
+                            ))
+                            .values()
+                            .stream()
+                            .collect(Collectors.toList());
+                    baseScreenVO.setProductWorkShopScreen(productWorkShopSelectList);
+                    //班次
+                    List<BaseSelectVO<Integer>> workingOrderSelectList = data.stream()
+                            .collect(Collectors.toMap(
+                                    QtChartSubDetailDTO::getWorkOrder,
+                                    tmp -> new BaseSelectVO<>(QtManagerConstant.QtClassesEnum.name(tmp.getWorkOrder()).getCode(), tmp.getWorkOrder()),
+                                    (existing, replacement) -> existing // 处理重复键的情况
+                            ))
+                            .values()
+                            .stream()
+                            .collect(Collectors.toList());
+                    baseScreenVO.setWorkingOrderScreen(workingOrderSelectList);
+                    //班组
+                    List<BaseSelectVO<Integer>> classGroupSelectList = data.stream()
+                            .collect(Collectors.toMap(
+                                    QtChartSubDetailDTO::getClassGroupId,
+                                    tmp -> new BaseSelectVO<>(tmp.getClassGroupId(),tmp.getClassGroupName()),
+                                    (existing, replacement) -> existing // 处理重复键的情况
+                            ))
+                            .values()
+                            .stream()
+                            .collect(Collectors.toList());
+                    baseScreenVO.setClassGroupScreen(classGroupSelectList);
+                    resultDTO.setOther(baseScreenVO);
+                }
                 return resultDTO;
             }
 

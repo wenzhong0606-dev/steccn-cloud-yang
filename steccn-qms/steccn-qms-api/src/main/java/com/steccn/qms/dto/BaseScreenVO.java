@@ -23,4 +23,16 @@ public class BaseScreenVO implements Serializable {
     @ApiModelProperty("取样时间筛选")
     private List<BaseSelectVO<LocalDate>> sampleTimeScreen;
 
+    @ApiModelProperty("产线筛选")
+    private List<BaseSelectVO<Integer>> productLineScreen;
+
+    @ApiModelProperty("车间筛选")
+    private List<BaseSelectVO<Integer>> productWorkShopScreen;
+
+    @ApiModelProperty("班次筛选")
+    private List<BaseSelectVO<Integer>> workingOrderScreen;
+
+    @ApiModelProperty("班组筛选")
+    private List<BaseSelectVO<Integer>> classGroupScreen;
+
 }

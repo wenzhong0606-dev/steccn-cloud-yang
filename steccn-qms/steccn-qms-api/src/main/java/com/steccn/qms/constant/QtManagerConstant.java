@@ -1059,6 +1059,21 @@ public interface QtManagerConstant {
             }
             return null;
         }
+
+        /**
+         * 根据name筛选code
+         *
+         * @param name
+         * @return
+         */
+        public static QtClassesEnum name(String name) {
+            for (QtClassesEnum ele : QtClassesEnum.values()) {
+                if (ele.getName().equals(name)) {
+                    return ele;
+                }
+            }
+            return null;
+        }
     }
 
     /**
