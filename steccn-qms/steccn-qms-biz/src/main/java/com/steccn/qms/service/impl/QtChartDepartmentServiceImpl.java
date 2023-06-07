@@ -41,12 +41,6 @@ public class QtChartDepartmentServiceImpl implements QtChartDepartmentService {
 
     private final QtCheckTaskMapper qtCheckTaskMapper;
 
-    private final RemoteOfficeFeign remoteOfficeFeign;
-
-    private final RemotePassRateFeignApi remotePassRateFeignApi;
-
-    private final QtCheckTaskService qtCheckTaskService;
-
     private final QtChartTargetValueService qtChartTargetValueService;
 
 

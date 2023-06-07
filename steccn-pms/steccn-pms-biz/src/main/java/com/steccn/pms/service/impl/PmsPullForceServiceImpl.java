@@ -48,8 +48,7 @@ import static java.time.format.DateTimeFormatter.ISO_DATE;
  */
 @RequiredArgsConstructor
 @Service
-public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, PmsPullForce>
-        implements PmsPullForceService {
+public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, PmsPullForce> implements PmsPullForceService {
 
     private final RemoteDictFeignApi remoteDictFeignApi;
 
@@ -63,11 +62,9 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
         LocalDate startDate = date.minusWeeks(1);
         LocalDate endDate = date.plusMonths(1).plusWeeks(1);
 
-        List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, workshopId)
-                .ge(PmsPullForce::getPullForceDate, startDate).le(PmsPullForce::getPullForceDate, endDate));
+        List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getWorkshopId, workshopId).ge(PmsPullForce::getPullForceDate, startDate).le(PmsPullForce::getPullForceDate, endDate));
 
-        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate,endDate);
+        List<LocalDate> localDateList = LocalDateUtil.getLocalDateByStartEndDate(startDate, endDate);
 
 
         //根据日期分组
@@ -122,9 +119,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
 
     @Override
     public List<PmsPullForceDetailsVO> details(Integer workshopId, String pullForceDate) {
-        List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>()
-                .eq(PmsPullForce::getWorkshopId, workshopId)
-                .eq(PmsPullForce::getPullForceDate, pullForceDate));
+        List<PmsPullForce> pmsPullForceList = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getWorkshopId, workshopId).eq(PmsPullForce::getPullForceDate, pullForceDate));
 
         //根据产线分组
         Map<Integer, List<PmsPullForce>> groupBy = pmsPullForceList.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
@@ -222,7 +217,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                     throw new BusinessException("拉引量编辑失败");
                 }
             }
-        }finally {
+        } finally {
             lock.unlock();
         }
         return true;
@@ -232,10 +227,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public Map<Long, PmsPullForce> pullForceDay(Integer productLineId, LocalDate date, List<Long> classGroupIdList) {
         Map<Long, PmsPullForce> resMap = Maps.newHashMap();
         if (Objects.nonNull(productLineId) && Objects.nonNull(date)) {
-            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>()
-                    .eq(PmsPullForce::getProductLineId, productLineId)
-                    .in(CollUtil.isNotEmpty(classGroupIdList), PmsPullForce::getClassesId, classGroupIdList)
-                    .eq(PmsPullForce::getPullForceDate, date));
+            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>().eq(PmsPullForce::getProductLineId, productLineId).in(CollUtil.isNotEmpty(classGroupIdList), PmsPullForce::getClassesId, classGroupIdList).eq(PmsPullForce::getPullForceDate, date));
             if (CollUtil.isNotEmpty(list)) {
                 for (PmsPullForce pmsPullForce : list) {
                     resMap.put(pmsPullForce.getClassesId(), pmsPullForce);
@@ -243,6 +235,17 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             }
         }
         return resMap;
+    }
+
+    @Override
+    public Map<Integer, List<PmsPullForce>> pullForceDayByWorkshop(LocalDate date, List<Integer> productWorkshopIds) {
+        Map<Integer, List<PmsPullForce>> map = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(productWorkshopIds)) {
+            List<PmsPullForce> list = list(new LambdaQueryWrapper<PmsPullForce>().in(PmsPullForce::getWorkshopId, productWorkshopIds).eq(PmsPullForce::getPullForceDate, date));
+
+            map = list.stream().collect(Collectors.groupingBy(PmsPullForce::getProductLineId));
+        }
+        return map;
     }
 
     @Override
@@ -259,18 +262,15 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
                 conditionList.add(pmsPullForce);
             });
             //构造条件 () or ()
-            LambdaQueryWrapper<PmsPullForce> lqw = new LambdaQueryWrapper<PmsPullForce>()
-                    .select(PmsPullForce::getPullForceDate, PmsPullForce::getProductLineId, PmsPullForce::getClassesId, PmsPullForce::getQuantity).and(q -> {
-                        for (int i = 0; i < conditionList.size(); i++) {
-                            PmsPullForce pmsPullForce = conditionList.get(i);
-                            if (i != 0) {
-                                q.or();
-                            }
-                            q.eq(PmsPullForce::getPullForceDate, pmsPullForce.getPullForceDate())
-                                    .eq(PmsPullForce::getProductLineId, pmsPullForce.getProductLineId())
-                                    .eq(PmsPullForce::getClassesId, pmsPullForce.getClassesId());
-                        }
-                    });
+            LambdaQueryWrapper<PmsPullForce> lqw = new LambdaQueryWrapper<PmsPullForce>().select(PmsPullForce::getPullForceDate, PmsPullForce::getProductLineId, PmsPullForce::getClassesId, PmsPullForce::getQuantity).and(q -> {
+                for (int i = 0; i < conditionList.size(); i++) {
+                    PmsPullForce pmsPullForce = conditionList.get(i);
+                    if (i != 0) {
+                        q.or();
+                    }
+                    q.eq(PmsPullForce::getPullForceDate, pmsPullForce.getPullForceDate()).eq(PmsPullForce::getProductLineId, pmsPullForce.getProductLineId()).eq(PmsPullForce::getClassesId, pmsPullForce.getClassesId());
+                }
+            });
             List<PmsPullForce> dbList = list(lqw);
             dbList.forEach(ele -> {
                 resMap.put(ele.getPullForceDate() + "," + ele.getProductLineId() + "," + ele.getClassesId(), ele.getQuantity());
@@ -283,11 +283,7 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
     public Boolean edit(List<PmsPullForceEditDTO> list) {
         SysDictVO sysDictVO = remoteDictFeignApi.getByCode(PmManagerConstant.UNIT_T, PmManagerConstant.ENERGY_CONSUME).getData();
         List<PmsPullForce> forces = list.stream().map(dto -> {
-            PmsPullForce force = getOne(new LambdaQueryWrapper<PmsPullForce>()
-                    .in(PmsPullForce::getWorkshopId, dto.getWorkshopId())
-                    .in(PmsPullForce::getProductLineId, dto.getProductLineId())
-                    .in(PmsPullForce::getClassesId, dto.getClassesId())
-                    .in(PmsPullForce::getPullForceDate, dto.getPullForceDate()));
+            PmsPullForce force = getOne(new LambdaQueryWrapper<PmsPullForce>().in(PmsPullForce::getWorkshopId, dto.getWorkshopId()).in(PmsPullForce::getProductLineId, dto.getProductLineId()).in(PmsPullForce::getClassesId, dto.getClassesId()).in(PmsPullForce::getPullForceDate, dto.getPullForceDate()));
             if (Objects.nonNull(force)) {
                 removeById(force.getId());
             }
@@ -300,6 +296,12 @@ public class PmsPullForceServiceImpl extends ServiceImpl<PmsPullForceMapper, Pms
             saveBatch(forces);
         }
         return true;
+    }
+
+    @Override
+    public List<PmsPullForce> monthlyData(LocalDate date, List<Integer> productWorkshop) {
+        LocalDate startDate = date.withDayOfMonth(1);
+        return list(new LambdaQueryWrapper<PmsPullForce>().in(PmsPullForce::getWorkshopId, productWorkshop).ge(PmsPullForce::getPullForceDate, startDate).le(PmsPullForce::getPullForceDate, date));
     }
 }
 

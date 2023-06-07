@@ -88,6 +88,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,11 +124,14 @@ public class QtCheckTaskServiceImpl extends ServiceImpl<QtCheckTaskMapper, QtChe
 
     private final RemoteOfficeFeign remoteOfficeFeign;
 
-    private final QtMaterialService qtMaterialService;
+    @Autowired
+    private  QtMaterialService qtMaterialService;
 
-    private final QtCheckPlanService qtCheckPlanService;
+    @Autowired
+    private QtCheckPlanService qtCheckPlanService;
 
-    private final QtCheckTaskDetailService qtCheckTaskDetailService;
+    @Autowired
+    private QtCheckTaskDetailService qtCheckTaskDetailService;
 
     private final QtRecheckTaskService qtRecheckTaskService;
 

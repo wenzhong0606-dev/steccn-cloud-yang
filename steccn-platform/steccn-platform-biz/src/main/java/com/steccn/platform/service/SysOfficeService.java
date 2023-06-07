@@ -232,4 +232,6 @@ public interface SysOfficeService extends IService<SysOffice> {
      * @return
      */
     List<SysOfficeVO> getCustomer(String name);
+
+    Map<Integer,List<Integer>> childWorkshop(List<Integer> officeIdSet);
 }

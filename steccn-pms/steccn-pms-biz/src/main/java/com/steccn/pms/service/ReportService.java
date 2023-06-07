@@ -1,13 +1,16 @@
 package com.steccn.pms.service;
 
+import com.steccn.common.constant.ResultCode;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtLineChartBiBarDTO;
 import com.steccn.platform.vo.SysOfficeVO;
 import com.steccn.pms.dto.EnergyCountDTO;
+import com.steccn.pms.dto.OutputQualityDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.vo.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -79,4 +82,12 @@ public interface ReportService {
      * @return
      */
     QtLineChartBarDTO orderProgress(Integer workshopId);
+
+
+    /**
+     * 产量质量报表-基片
+     * @param outputQualityDTO
+     * @return
+     */
+    List<OutputQualityVO> outputQualityJp(OutputQualityDTO outputQualityDTO);
 }

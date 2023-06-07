@@ -2,6 +2,8 @@ package com.steccn.qms.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.steccn.qms.domain.QtCheckTaskDetail;
+import com.steccn.qms.dto.OutputQualityDetailDTO;
+import com.steccn.qms.vo.OutputQualityDetailVO;
 import com.steccn.qms.vo.QtCheckTaskDetailItemMaterialVO;
 import com.steccn.qms.vo.QtIQCAcceptabilityCopyVO;
 
@@ -32,4 +34,21 @@ public interface QtCheckTaskDetailService extends IService<QtCheckTaskDetail> {
      * @return
      */
     List<QtCheckTaskDetailItemMaterialVO> getByClassTime(LocalDateTime startTime, LocalDateTime endTime);
+
+
+    /**
+     *  根据条件获取在线检缺陷信息
+     *
+     * @param outputQualityDetailDTO
+     * @return
+     */
+    List<OutputQualityDetailVO> listDefectiveData(OutputQualityDetailDTO outputQualityDetailDTO);
+
+
+    /**
+     * 根据条件获取巡检平均厚度数据
+     * @param outputQualityDetailDTO
+     * @return
+     */
+    List<OutputQualityDetailVO> listPollingDate(OutputQualityDetailDTO outputQualityDetailDTO);
 }

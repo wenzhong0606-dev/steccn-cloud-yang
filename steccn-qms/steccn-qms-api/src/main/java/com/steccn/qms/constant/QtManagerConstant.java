@@ -170,6 +170,8 @@ public interface QtManagerConstant {
     String ZONGXIANG = "纵向厚度";
     String MAOBAN = "毛板宽";
 
+    String AVERAGE_THICKNESS = "厚度平均值";
+
     /**
      * 机构类型编码
      */

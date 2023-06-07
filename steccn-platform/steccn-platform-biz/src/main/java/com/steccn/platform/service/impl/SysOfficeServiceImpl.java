@@ -475,6 +475,27 @@ public class SysOfficeServiceImpl extends ServiceImpl<SysOfficeMapper, SysOffice
         return resultList;
     }
 
+    public Map<Integer, List<Integer>> childWorkshop(List<Integer> officeIdSet) {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        if (CollUtil.isNotEmpty(officeIdSet)) {
+            List<SysOffice> list = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getId, officeIdSet));
+            if (CollUtil.isNotEmpty(list)) {
+                List<String> codes = list.stream().map(SysOffice::getOfficeCode).collect(Collectors.toList());
+                Map<String, List<SysOffice>> collect = list(new LambdaQueryWrapper<SysOffice>().in(SysOffice::getParentCode, codes))
+                        .stream().collect(Collectors.groupingBy(SysOffice::getParentCode));
+                for (SysOffice sysOffice : list) {
+                    List<SysOffice> childList = collect.get(sysOffice.getOfficeCode());
+                    if (CollUtil.isNotEmpty(childList)) {
+                        List<Integer> ids = childList.stream().map(SysOffice::getId).collect(Collectors.toList());
+                        map.put(sysOffice.getId(), ids);
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+
     @Override
     public SysOfficeVO parentOffice(Integer childId) {
         SysOffice child = getById(childId);

@@ -1,18 +1,15 @@
 package com.steccn.pms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import com.alibaba.nacos.common.utils.CollectionUtils;
+import com.alibaba.nacos.api.config.filter.IFilterConfig;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.steccn.authserver.exception.BusinessException;
 import com.steccn.authserver.util.FeignOptional;
 import com.steccn.authserver.util.SteccnTableAssertUtil;
 import com.steccn.common.constant.FeignConstant;
-import com.steccn.common.constant.SysDictConstant;
 import com.steccn.common.dto.QtLineChartBarDTO;
 import com.steccn.common.dto.QtSeriesDataDTO;
 import com.steccn.common.dto.TupleDTO;
@@ -30,11 +27,15 @@ import com.steccn.pms.constant.PmManagerConstant;
 import com.steccn.pms.constant.PmReportConstant;
 import com.steccn.pms.domain.*;
 import com.steccn.pms.dto.EnergyCountDTO;
+import com.steccn.pms.dto.OutputQualityDTO;
 import com.steccn.pms.dto.PmsDayReportDTO;
 import com.steccn.pms.mapper.PmsProduceOrderMapper;
 import com.steccn.pms.mapper.PmsReportWorkMapper;
 import com.steccn.pms.service.*;
 import com.steccn.pms.vo.*;
+import com.steccn.qms.dto.OutputQualityDetailDTO;
+import com.steccn.qms.feign.RemoteCheckTaskDetailFeignApi;
+import com.steccn.qms.vo.OutputQualityDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,7 @@ public class ReportServiceImpl implements ReportService {
     private final RemoteSpareUnitConvertFeignApi remoteSpareUnitConvertFeignApi;
     private final PmsProduceOrderCraftService pmsProduceOrderCraftService;
     private final PmsMaterialRequisitionInfoService pmsMaterialRequisitionInfoService;
+    private final RemoteCheckTaskDetailFeignApi remoteCheckTaskDetailFeignApi;
 
     @Override
     public SubstrateDayReportVO substrateDayReport(PmsDayReportDTO dto) {
@@ -92,22 +94,22 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(rowDataList, "数据为空，暂无基片日报表");
 
         Set<Long> materialSpecSet = rowDataList.stream().map(SubstrateDataListVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialSpecSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
         //构建表头
         List<SysDictVO> filterClassList = Lists.newArrayList();
-        SubstrateReportHeaderVO header = getSubstrateHeader(dto.getClassGroupIdList(),classList,filterClassList);
+        SubstrateReportHeaderVO header = getSubstrateHeader(dto.getClassGroupIdList(), classList, filterClassList);
 
         //将有数据的产线拉取出来
         Set<Integer> productLineSet = rowDataList.stream().map(SubstrateDataListVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(productLineSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         List<SubstrateDayReportListVO> productLineVOList = Lists.newArrayList();
@@ -159,13 +161,7 @@ public class ReportServiceImpl implements ReportService {
 
                         if (PmReportConstant.SYS_SHIFT_0.equals(c.getCode())) {
                             //早班
-                            row.setMorning(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()),
-                                    BigDecimalUtil.format(bigDecimal1),
-                                    BigDecimalUtil.format(bigDecimal2),
-                                    BigDecimalUtil.format(typeVO1.getQuantity()),
-                                    BigDecimalUtil.format(bigDecimal3),
-                                    BigDecimalUtil.format(bigDecimal4)
-                            ));
+                            row.setMorning(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(bigDecimal1), BigDecimalUtil.format(bigDecimal2), BigDecimalUtil.format(typeVO1.getQuantity()), BigDecimalUtil.format(bigDecimal3), BigDecimalUtil.format(bigDecimal4)));
                             BigDecimalUtil.accumulate(countMap1, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap1, 1, bigDecimal1);
                             BigDecimalUtil.accumulate(countMap1, 2, bigDecimal2);
@@ -174,13 +170,7 @@ public class ReportServiceImpl implements ReportService {
                             BigDecimalUtil.accumulate(countMap1, 5, bigDecimal4);
                         } else {
                             //晚班
-                            row.setNight(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()),
-                                    BigDecimalUtil.format(bigDecimal1),
-                                    BigDecimalUtil.format(bigDecimal2),
-                                    BigDecimalUtil.format(typeVO1.getQuantity()),
-                                    BigDecimalUtil.format(bigDecimal3),
-                                    BigDecimalUtil.format(bigDecimal4)
-                            ));
+                            row.setNight(Arrays.asList(BigDecimalUtil.format(typeVO0.getQuantity()), BigDecimalUtil.format(bigDecimal1), BigDecimalUtil.format(bigDecimal2), BigDecimalUtil.format(typeVO1.getQuantity()), BigDecimalUtil.format(bigDecimal3), BigDecimalUtil.format(bigDecimal4)));
                             BigDecimalUtil.accumulate(countMap2, 0, typeVO0.getQuantity());
                             BigDecimalUtil.accumulate(countMap2, 1, bigDecimal1);
                             BigDecimalUtil.accumulate(countMap2, 2, bigDecimal2);
@@ -200,12 +190,7 @@ public class ReportServiceImpl implements ReportService {
                     BigDecimalUtil.accumulate(countMap3, 3, proCount);
                     BigDecimalUtil.accumulate(countMap3, 4, m3);
                     BigDecimalUtil.accumulate(countMap3, 5, m4);
-                    row.setTotal(Arrays.asList(BigDecimalUtil.format(inCount),
-                            BigDecimalUtil.format(m1),
-                            BigDecimalUtil.format(m2),
-                            BigDecimalUtil.format(proCount),
-                            BigDecimalUtil.format(m3),
-                            BigDecimalUtil.format(m4)));
+                    row.setTotal(Arrays.asList(BigDecimalUtil.format(inCount), BigDecimalUtil.format(m1), BigDecimalUtil.format(m2), BigDecimalUtil.format(proCount), BigDecimalUtil.format(m3), BigDecimalUtil.format(m4)));
                     EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialId, defaultEqpSpareVO);
                     row.setSpecList(Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity())));
                     productLineVOList.add(row);
@@ -214,12 +199,12 @@ public class ReportServiceImpl implements ReportService {
                 rowTotal.setType(PmReportConstant.TYPE_0);
                 rowTotal.setWorkshopName(productLine.getParentName());
                 rowTotal.setProductLineName(productLine.getOfficeName());
-                if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_0){
+                if (dayOrNight(dto.getClassGroupIdList(), classList) == PmReportConstant.TYPE_0) {
                     rowTotal.setMorning(valueStr(countMap1));
                     rowTotal.setNight(valueStr(countMap2));
-                }else if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_1){
+                } else if (dayOrNight(dto.getClassGroupIdList(), classList) == PmReportConstant.TYPE_1) {
                     rowTotal.setMorning(valueStr(countMap1));
-                }else if(dayOrNight(dto.getClassGroupIdList(),classList) == PmReportConstant.TYPE_2){
+                } else if (dayOrNight(dto.getClassGroupIdList(), classList) == PmReportConstant.TYPE_2) {
                     rowTotal.setNight(valueStr(countMap2));
                 }
                 rowTotal.setTotal(valueStr(countMap3));
@@ -237,13 +222,13 @@ public class ReportServiceImpl implements ReportService {
                 BigDecimalUtil.accumulate(allCountMap, sub.getCode(), workshopCountMap.get(sub.getCode()));
             }
             //计算合格率
-            BigDecimalUtil.accumulate(allCountMap,-1,workshopCountMap.get(-1));
-            BigDecimalUtil.accumulate(allCountMap,-2,workshopCountMap.get(-2));
+            BigDecimalUtil.accumulate(allCountMap, -1, workshopCountMap.get(-1));
+            BigDecimalUtil.accumulate(allCountMap, -2, workshopCountMap.get(-2));
         });
         //最后一个总计
         addAllOther(productLineVOList, allCountMap);
         //如果只选择一个班次，则只展示一个班次
-        filterClass(dayOrNight(dto.getClassGroupIdList(),classList),productLineVOList);
+        filterClass(dayOrNight(dto.getClassGroupIdList(), classList), productLineVOList);
         vo.setSpecsNum(3);
         vo.setDataNum(6);
         vo.setHeader(header);
@@ -253,10 +238,11 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 获取map中的数据
+     *
      * @param countMap
      * @return
      */
-    private List<String> valueStr(Map<Integer, BigDecimal> countMap){
+    private List<String> valueStr(Map<Integer, BigDecimal> countMap) {
         List<String> resList = Lists.newArrayList();
         for (int i = 0; i <= 5; i++) {
             resList.add(BigDecimalUtil.format(countMap.get(i)));
@@ -267,6 +253,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 获取所有的单位的id  依次是片，
+     *
      * @param codeSet
      * @param measureUnit
      * @return
@@ -277,9 +264,9 @@ public class ReportServiceImpl implements ReportService {
         sysDictDTO.setType(measureUnit);
         sysDictDTO.setCodeList(codeSet);
         SysDictVO defaultSysDictVO = new SysDictVO();
-        Map<String, SysDictVO> resMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysDictVO> resMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         for (String code : codeSet) {
-            SysDictVO sysDictVO = resMap.getOrDefault(code,defaultSysDictVO);
+            SysDictVO sysDictVO = resMap.getOrDefault(code, defaultSysDictVO);
             resList.add(sysDictVO.getId());
         }
         return resList;
@@ -288,24 +275,25 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 返回0-早班夜班 ， 1-早班 ，2-夜班
+     *
      * @param classesIdList
      * @param classList
      * @return
      */
-    private int dayOrNight(List<Long> classesIdList, List<SysDictVO> classList){
-        if(CollUtil.isEmpty(classesIdList)){
+    private int dayOrNight(List<Long> classesIdList, List<SysDictVO> classList) {
+        if (CollUtil.isEmpty(classesIdList)) {
             return PmReportConstant.TYPE_0;
         }
         List<Long> collect = classList.stream().map(SysDictVO::getId).collect(Collectors.toList());
-        if(classesIdList.containsAll(collect)){
+        if (classesIdList.containsAll(collect)) {
             return PmReportConstant.TYPE_0;
         }
         for (Long cid : classesIdList) {
-            if(collect.indexOf(cid) == PmReportConstant.TYPE_0){
+            if (collect.indexOf(cid) == PmReportConstant.TYPE_0) {
                 return PmReportConstant.TYPE_1;
-            }else if(collect.indexOf(cid) == PmReportConstant.TYPE_1){
+            } else if (collect.indexOf(cid) == PmReportConstant.TYPE_1) {
                 return PmReportConstant.TYPE_2;
-            }else{
+            } else {
                 throw new IllegalArgumentException("班次产线异常");
             }
         }
@@ -315,24 +303,25 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 物料单位转换
-     * @param unitList 单位list
+     *
+     * @param unitList       单位list
      * @param unitConvertMap 单位转换map
-     * @param materialId 物料id
-     * @param num 数量
-     * @param idx 单位id
+     * @param materialId     物料id
+     * @param num            数量
+     * @param idx            单位id
      * @return 转换后的数值
      */
-    private BigDecimal unitConvert(List<Long> unitList,Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap , Long materialId ,BigDecimal num, Integer idx){
+    private BigDecimal unitConvert(List<Long> unitList, Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap, Long materialId, BigDecimal num, Integer idx) {
         //1.获取物料对应的单位转换
         List<SysSpareUnitConversionVO> orDefault = unitConvertMap.getOrDefault(materialId, Lists.newArrayList());
         //2.遍历此物料所有单位转换集合
-        if(CollUtil.isNotEmpty(orDefault)){
-            Map<Long,SysSpareUnitConversionVO> resMap = Maps.newHashMap();
+        if (CollUtil.isNotEmpty(orDefault)) {
+            Map<Long, SysSpareUnitConversionVO> resMap = Maps.newHashMap();
             for (SysSpareUnitConversionVO spare : orDefault) {
-                resMap.put(spare.getConversionUnitId(),spare);
+                resMap.put(spare.getConversionUnitId(), spare);
             }
             SysSpareUnitConversionVO vo = resMap.getOrDefault(unitList.get(idx), new SysSpareUnitConversionVO());
-            if(Objects.nonNull(vo)){
+            if (Objects.nonNull(vo)) {
                 BigDecimal multiply = BigDecimalUtil.multiply(vo.getConversionQuantity(), num);
                 BigDecimal divide = BigDecimalUtil.divide(multiply, vo.getQuantity());
                 return divide;
@@ -346,14 +335,14 @@ public class ReportServiceImpl implements ReportService {
      * 获取基片日报表 表头
      *
      * @param classesIdList dto的参数
-     * @param classList 所有的班次对象集合
+     * @param classList     所有的班次对象集合
      */
-    private SubstrateReportHeaderVO getSubstrateHeader(List<Long> classesIdList, List<SysDictVO> classList, List<SysDictVO> filterClassList ) {
+    private SubstrateReportHeaderVO getSubstrateHeader(List<Long> classesIdList, List<SysDictVO> classList, List<SysDictVO> filterClassList) {
         SubstrateReportHeaderVO header = new SubstrateReportHeaderVO();
         header.setSpecList(new BaseReportHeaderVO("规格", Arrays.asList("长", "宽", "厚")));
 
         List<Long> allClassIdList = classList.stream().map(SysDictVO::getId).collect(Collectors.toList());
-        if(CollUtil.isEmpty(classesIdList)){
+        if (CollUtil.isEmpty(classesIdList)) {
             classesIdList = allClassIdList;
         }
         //只查询白班，或者夜班
@@ -361,9 +350,9 @@ public class ReportServiceImpl implements ReportService {
             int i = allClassIdList.indexOf(cid);
             if (i == 0) {
                 header.setMorning(new BaseReportHeaderVO("早班", Arrays.asList("入库(片)", "入库(㎡)", "入库(t)", "产量(片)", "产量(㎡)", "产量(t)")));
-            } else if(i == 1){
+            } else if (i == 1) {
                 header.setNight(new BaseReportHeaderVO("晚班", Arrays.asList("入库(片)", "入库(㎡)", "入库(t)", "产量(片)", "产量(㎡)", "产量(t)")));
-            }else{
+            } else {
                 throw new IllegalArgumentException("班次数据异常");
             }
             filterClassList.add(classList.get(i));
@@ -380,7 +369,7 @@ public class ReportServiceImpl implements ReportService {
     private List<SysDictVO> getClassList() {
         SysDictDTO sysDictDTO = new SysDictDTO();
         sysDictDTO.setType(PmManagerConstant.SYS_SHIFT);
-        Map<String, SysDictVO> classMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<String, SysDictVO> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         List<SysDictVO> classList = classMap.values().stream().collect(Collectors.toList());
         classList.sort(Comparator.comparing(SysDictVO::getSort));
         return classList;
@@ -398,13 +387,13 @@ public class ReportServiceImpl implements ReportService {
             SubstrateDayReportListVO subVo = rowData(new SysOfficeVO(), Arrays.asList(allCountMap.get(idx), allCountMap.get(idx), allCountMap.get(idx)), consumeEnum.getName());
             if (PmReportConstant.SubstrateReportConsumeEnum.PASS_RATE.getCode().equals(consumeEnum.getCode())) {
                 //产量合格率需要重新算
-                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1),BigDecimalUtil.HUNDRED), allCountMap.get(0));
+                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-1), BigDecimalUtil.HUNDRED), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
-            }else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
+            } else if (PmReportConstant.SubstrateReportConsumeEnum.IN_PASS_RATE.getCode().equals(consumeEnum.getCode())) {
                 //入库合格率需要重新算
-                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-2),BigDecimalUtil.HUNDRED), allCountMap.get(0));
+                BigDecimal divide = BigDecimalUtil.divide(BigDecimalUtil.multiply(allCountMap.get(-2), BigDecimalUtil.HUNDRED), allCountMap.get(0));
                 subVo = rowData(new SysOfficeVO(), Arrays.asList(divide, divide, divide), consumeEnum.getName());
-            }else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
+            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
                 //单耗(kcal/Kg玻璃液) 需要重新计算
                 BigDecimal oil = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
                 BigDecimal gas = allCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
@@ -439,7 +428,7 @@ public class ReportServiceImpl implements ReportService {
                 //合格率需要重新计算
                 BigDecimal rate = BigDecimalUtil.divide(BigDecimalUtil.multiply(workshopCountMap.get(-2), BigDecimalUtil.HUNDRED), workshopCountMap.get(0));
                 subVo = rowData(productLine, Arrays.asList(rate, rate, rate), consumeEnum.getName());
-            } else if(PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())){
+            } else if (PmReportConstant.SubstrateReportConsumeEnum.Kcal.getCode().equals(consumeEnum.getCode())) {
                 //单耗(kcal/Kg玻璃液)需要重新计算
                 BigDecimal oil = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.OIL.getCode());
                 BigDecimal gas = workshopCountMap.get(PmReportConstant.SubstrateReportConsumeEnum.GAS.getCode());
@@ -457,6 +446,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
+     *
      * @param oil 油
      * @param gas 气
      * @param lyl 拉引量
@@ -482,7 +472,7 @@ public class ReportServiceImpl implements ReportService {
      */
     private void addProductLineOther(Map<Integer, BigDecimal> countMap1, Map<Integer, BigDecimal> countMap2, PmsDayReportDTO dto, List<SysDictVO> classList, SysOfficeVO productLine, List<SubstrateDayReportListVO> productLineVOList, Map<Integer, BigDecimal> workshopCountMap) {
         //拉引量(T)
-        Map<Long, PmsPullForce> pmsPullForcesMap = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate() , dto.getClassGroupIdList());
+        Map<Long, PmsPullForce> pmsPullForcesMap = pmsPullForceService.pullForceDay(productLine.getId(), dto.getDate(), dto.getClassGroupIdList());
         PmsPullForce morning = pmsPullForcesMap.get(classList.get(0).getId());
         PmsPullForce night = pmsPullForcesMap.get(classList.get(1).getId());
         BigDecimal morningBigDecimal = Objects.nonNull(morning) ? morning.getQuantity() : BigDecimal.ZERO;
@@ -525,6 +515,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 过滤班级
+     *
      * @param flag
      * @param dataList
      */
@@ -546,6 +537,7 @@ public class ReportServiceImpl implements ReportService {
     /**
      * 单耗(kcal/Kg玻璃液) （耗气量 * 7800 + 耗油量 * 9300  ） / （拉引量 * 1000)
      * 0耗电量 1耗水量 2耗气量 3耗油量
+     *
      * @param productLine       产线id
      * @param morningBigDecimal 早上数量
      * @param nightBigDecimal   晚上数量
@@ -571,7 +563,7 @@ public class ReportServiceImpl implements ReportService {
         BigDecimal gas = BigDecimalUtil.add(morningGas, nightGas);
         BigDecimal oil = BigDecimalUtil.add(morningOil, nightOil);
         BigDecimal lyl = BigDecimalUtil.add(morningBigDecimal, nightBigDecimal);
-        BigDecimal divide = kcal(oil,gas,lyl);
+        BigDecimal divide = kcal(oil, gas, lyl);
 
         SubstrateDayReportListVO bly = rowData(productLine, Lists.newArrayList(morningKcal, nightKcal, divide), "单耗(kcal/Kg玻璃液)");
         BigDecimalUtil.accumulate(workshopCountMap, 6, divide);
@@ -589,7 +581,7 @@ public class ReportServiceImpl implements ReportService {
         String dataStr1 = BigDecimalUtil.format(dataList.get(0));
         String dataStr2 = BigDecimalUtil.format(dataList.get(1));
         String dataStr3 = BigDecimalUtil.format(dataList.get(2));
-        row.setMorning(Arrays.asList(dataStr1, dataStr1,dataStr1,dataStr1,dataStr1,dataStr1));
+        row.setMorning(Arrays.asList(dataStr1, dataStr1, dataStr1, dataStr1, dataStr1, dataStr1));
         row.setNight(Arrays.asList(dataStr2, dataStr2, dataStr2, dataStr2, dataStr2, dataStr2));
         row.setTotal(Arrays.asList(dataStr3, dataStr3, dataStr3, dataStr3, dataStr3, dataStr3));
         return row;
@@ -609,7 +601,7 @@ public class ReportServiceImpl implements ReportService {
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无报表信息");
 
         Set<Long> materialSpecSet = dataList.stream().map(FurtherProduceReportDataVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //遍历所有的物料查询完工数量
@@ -623,19 +615,19 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> processIdSet = dataList.stream().map(FurtherProduceReportDataVO::getProcessId).collect(Collectors.toSet());
         //查询工序的信息
         List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
-        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList, "工艺信息不可为空");
         Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
         List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
-        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList,"工序信息不可为空");
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList, "工序信息不可为空");
         SteccnTableAssertUtil.notEmpty(dataList, "工序信息为空，暂无报表信息");
         //工序信息转换
-        Map<Long,Long> craftProcessIdMap = Maps.newHashMap();
-        pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(),ele.getProcessId()));
+        Map<Long, Long> craftProcessIdMap = Maps.newHashMap();
+        pmsProduceOrderCraftList.forEach(ele -> craftProcessIdMap.put(ele.getId(), ele.getProcessId()));
         dataList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
         List<BaseReportHeaderVO> module = Lists.newArrayList();
         pmProcessList.forEach(ele -> {
-            module.add(new BaseReportHeaderVO(ele.getName(), Arrays.asList("加工(片)","加工(㎡)", "合格(片)","合格(㎡)", "不良(片)","不良(㎡)", "合格率")));
+            module.add(new BaseReportHeaderVO(ele.getName(), Arrays.asList("加工(片)", "加工(㎡)", "合格(片)", "合格(㎡)", "不良(片)", "不良(㎡)", "合格率")));
         });
         //合格率合计得单独算【实际为加权平均】
         module.add(new BaseReportHeaderVO("合计", Arrays.asList("加工(片)", "加工(㎡)", "合格(片)", "合格(㎡)", "合格率")));
@@ -645,7 +637,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取平方米和吨的id
         List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
-        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(()->remoteSpareUnitConvertFeignApi.convert(materialSpecSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(materialSpecSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
 
         //获取班次数据
         List<SysDictVO> classList = getClassList();
@@ -657,7 +649,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherProduceReportListVO> tableData = Lists.newArrayList();
         //查询产线车间信息
         Set<Integer> productLineSet = dataList.stream().map(FurtherProduceReportDataVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(productLineSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -698,7 +690,7 @@ public class ReportServiceImpl implements ReportService {
                             valueStrList.add(BigDecimalUtil.format(value2));
                             BigDecimal subtract = BigDecimalUtil.subtract(orDefault.getProcessQuantity(), orDefault.getBadnessQuantity());
                             valueStrList.add(BigDecimalUtil.format(subtract));
-                            BigDecimal value4 = unitConvert(unitList, unitConvertMap,materialId, subtract, 2);
+                            BigDecimal value4 = unitConvert(unitList, unitConvertMap, materialId, subtract, 2);
                             valueStrList.add(BigDecimalUtil.format(value4));
                             valueStrList.add(BigDecimalUtil.format(orDefault.getBadnessQuantity()));
                             BigDecimal value6 = unitConvert(unitList, unitConvertMap, materialId, orDefault.getBadnessQuantity(), 2);
@@ -716,7 +708,7 @@ public class ReportServiceImpl implements ReportService {
                             //列统计数据  一行数据汇总
                             pmColumnCount(rowCountMap, Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
                             //班组求和
-                            pmRowCount(classCountMap, pmProcess.getId(),Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
+                            pmRowCount(classCountMap, pmProcess.getId(), Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
                             //产线求和
                             pmRowCount(lineCountMap, pmProcess.getId(), Lists.newArrayList(orDefault.getProcessQuantity(), value2, subtract, value4, orDefault.getBadnessQuantity(), value6, value7));
                             //车间求和
@@ -748,9 +740,9 @@ public class ReportServiceImpl implements ReportService {
                         BigDecimal productRate = BigDecimalUtil.divide(BigDecimalUtil.multiply(completeConvert, BigDecimalUtil.HUNDRED), firstProcessNum);
                         moduleList.add(new FurtherValueStrVO(Arrays.asList(BigDecimalUtil.format(completeNum), BigDecimalUtil.format(completeConvert), BigDecimalUtil.format(productRate))));
                         //班次，产线，车间
-                        countIn(classEntry.getKey(), classCountMap, completeNum , completeConvert);
-                        countIn(classEntry.getKey(), lineCountMap, completeNum , completeConvert);
-                        countIn(classEntry.getKey(), workshopCountMap, completeNum , completeConvert);
+                        countIn(classEntry.getKey(), classCountMap, completeNum, completeConvert);
+                        countIn(classEntry.getKey(), lineCountMap, completeNum, completeConvert);
+                        countIn(classEntry.getKey(), workshopCountMap, completeNum, completeConvert);
                         EqpSpareVO eqpSpareVO = specMap.getOrDefault(materialId, defaultEqpSpareVO);
                         List<String> specDataList = Arrays.asList(BigDecimalUtil.format(eqpSpareVO.getLengthQuantity()), BigDecimalUtil.format(eqpSpareVO.getWideQuantity()), BigDecimalUtil.format(eqpSpareVO.getHighQuantity()));
                         FurtherProduceReportListVO rowData = createFurtherProduceReportListVO(Arrays.asList(productLine.getParentName(), productLine.getOfficeName(), sysDictVO.getName()), PmReportConstant.TYPE_0, moduleList, specDataList);
@@ -787,7 +779,7 @@ public class ReportServiceImpl implements ReportService {
         List<FurtherIngredientMapperVO> dataList = pmsReportWorkMapper.furtherIngredient(dto.getProductLineIdList(), dto.getClassGroupIdList(), dto.getDate());
         SteccnTableAssertUtil.notEmpty(dataList, "数据为空，暂无深加工日报表");
         Set<Long> materialSpecSet = dataList.stream().map(FurtherIngredientMapperVO::getMaterialId).collect(Collectors.toSet());
-        Map<Long, EqpSpareVO> specMap = FeignOptional.of(()->remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Long, EqpSpareVO> specMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(Lists.newArrayList(materialSpecSet)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         EqpSpareVO defaultEqpSpareVO = new EqpSpareVO();
 
         //定义
@@ -801,7 +793,7 @@ public class ReportServiceImpl implements ReportService {
         Set<Long> processIdSet = dataList.stream().map(FurtherIngredientMapperVO::getProcessId).collect(Collectors.toSet());
         //查询工序的信息
         List<PmsProduceOrderCraft> pmsProduceOrderCraftList = pmsProduceOrderCraftService.listByIds(processIdSet);
-        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList,"工艺信息不可为空");
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderCraftList, "工艺信息不可为空");
         Set<Long> pidSet = pmsProduceOrderCraftList.stream().map(PmsProduceOrderCraft::getProcessId).collect(Collectors.toSet());
         List<PmProcess> pmProcessList = pmProcessService.listByIds(pidSet);
         SteccnTableAssertUtil.notEmpty(dataList, "工序信息为空，暂无报表信息");
@@ -809,11 +801,11 @@ public class ReportServiceImpl implements ReportService {
         pmProcessList.forEach(ele -> pmProcessMap.put(ele.getId(), ele));
         PmProcess defaultPmProcess = new PmProcess();
 
-        Map<Long,Long> craftProcessIdMap = Maps.newHashMap();
-        Map<Long,Long> processIdCraftMap = Maps.newHashMap();
+        Map<Long, Long> craftProcessIdMap = Maps.newHashMap();
+        Map<Long, Long> processIdCraftMap = Maps.newHashMap();
         pmsProduceOrderCraftList.forEach(ele -> {
-            craftProcessIdMap.put(ele.getId(),ele.getProcessId());
-            processIdCraftMap.put(ele.getProcessId(),ele.getId());
+            craftProcessIdMap.put(ele.getId(), ele.getProcessId());
+            processIdCraftMap.put(ele.getProcessId(), ele.getId());
         });
         dataList.forEach(ele -> ele.setProcessId(craftProcessIdMap.get(ele.getProcessId())));
 
@@ -829,8 +821,8 @@ public class ReportServiceImpl implements ReportService {
         //查询工序需要的物料,兼容所有的工序物料
         Map<Long, List<BaseSelectVO<Long>>> materialProcessMapCopy = pmsWorkOrderBomService.getProcessMaterial(produceOrderIdSet, pidSet);
         Map<Long, List<BaseSelectVO<Long>>> materialProcessMap = Maps.newHashMap();
-        materialProcessMapCopy.forEach((k,v) ->{
-            materialProcessMap.put(processIdCraftMap.get(k),v);
+        materialProcessMapCopy.forEach((k, v) -> {
+            materialProcessMap.put(processIdCraftMap.get(k), v);
         });
 
         Assert.notEmpty(materialProcessMap, "工序信息未配置物料信息，暂无报表数据");
@@ -849,7 +841,7 @@ public class ReportServiceImpl implements ReportService {
 
         //获取车间数据
         Set<Integer> productLineSet = dataList.stream().map(FurtherIngredientMapperVO::getProductLineId).collect(Collectors.toSet());
-        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(()->remoteOfficeFeign.listById(productLineSet),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        Map<Integer, SysOfficeVO> productLineMap = FeignOptional.of(() -> remoteOfficeFeign.listById(productLineSet), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
         //根据车间去划分
         Map<Integer, List<SysOfficeVO>> workShopMap = productLineMap.values().stream().collect(Collectors.groupingBy(SysOfficeVO::getParentId));
         workShopMap.forEach((workshop, productLineList) -> {
@@ -925,7 +917,7 @@ public class ReportServiceImpl implements ReportService {
     public List<SubstrateIngredientVO> subIngredientReport(PmsDayReportDTO dto) {
         //根据条件确定生产订单
         List<SubstrateIngredientVO> dataList = completeDeliveryService.subIngredientReport(dto);
-        if(CollUtil.isNotEmpty(dataList)){
+        if (CollUtil.isNotEmpty(dataList)) {
             List<TupleDTO<Long, Long>> conditionList = Lists.newArrayList();
             dataList.forEach(ele -> {
                 //根据订单和子物料查询工位信息【订单的子物料关联工序，工序关联可执行工位】
@@ -939,12 +931,12 @@ public class ReportServiceImpl implements ReportService {
             Map<Long, Set<Integer>> materialStationMap = pmsWorkOrderBomService.materialOrderStation(conditionList);
             TupleDTO<LocalDate, Map<Long, Set<Integer>>> tupleDTO = new TupleDTO<>(dto.getDate(), materialStationMap);
             Map<Long, BigDecimal> map = Maps.newHashMap();
-            if(CollUtil.isNotEmpty(materialStationMap)){
+            if (CollUtil.isNotEmpty(materialStationMap)) {
                 map = pmsMaterialRequisitionInfoService.quantityMap(tupleDTO);
             }
             for (SubstrateIngredientVO data : dataList) {
                 data.setInKg(map.getOrDefault(data.getMaterialId(), BigDecimal.ZERO));
-                data.setInTon(BigDecimalUtil.divide(data.getInKg(),BigDecimalUtil.THOUSAND));
+                data.setInTon(BigDecimalUtil.divide(data.getInKg(), BigDecimalUtil.THOUSAND));
             }
         }
         return dataList;
@@ -952,24 +944,25 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 生产订单进度跟踪
+     *
      * @param workshopId
      * @return
      */
     @Override
     public QtLineChartBarDTO orderProgress(Integer workshopId) {
         //根据车间id查询产线
-        SysOfficeParentDTO sysOfficeParentDTO =  new SysOfficeParentDTO();
+        SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workshopId);
         sysOfficeParentDTO.setOfficeType("9");
         List<SysOfficeVO> officeData = FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
-        SteccnTableAssertUtil.notEmpty(officeData,"车间下的产线为空");
+        SteccnTableAssertUtil.notEmpty(officeData, "车间下的产线为空");
         //排一下序
-        QtLineChartBarDTO<String,Long> result = new QtLineChartBarDTO();
+        QtLineChartBarDTO<String, Long> result = new QtLineChartBarDTO();
         //放入x轴数据
         List<String> xData = Lists.newArrayList();
         //产线idList
         List<Integer> productLineIds = Lists.newArrayList();
-        officeData.forEach(tmp->{
+        officeData.forEach(tmp -> {
             xData.add(tmp.getOfficeName());
             productLineIds.add(tmp.getId());
         });
@@ -978,21 +971,19 @@ public class ReportServiceImpl implements ReportService {
         //放入y轴数据
         List<QtSeriesDataDTO> seriesDataVO = Lists.newArrayList();
         //计划数量
-        QtSeriesDataDTO<String,BigDecimal> planNum = new QtSeriesDataDTO<>();
+        QtSeriesDataDTO<String, BigDecimal> planNum = new QtSeriesDataDTO<>();
         planNum.setName(PmManagerConstant.PLAN_NUM);
         //完工数量
-        QtSeriesDataDTO<String,BigDecimal> finishNum = new QtSeriesDataDTO<>();
+        QtSeriesDataDTO<String, BigDecimal> finishNum = new QtSeriesDataDTO<>();
         finishNum.setName(PmManagerConstant.FINISH_NUM);
         //入库数量
-        QtSeriesDataDTO<String,BigDecimal> receiptNum = new QtSeriesDataDTO<>();
+        QtSeriesDataDTO<String, BigDecimal> receiptNum = new QtSeriesDataDTO<>();
         receiptNum.setName(PmManagerConstant.RECEIPT_NUM);
         //获得执行中的生产订单数据
-        List<PmsProduceOrder> pmsProduceOrderList = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>()
-                .eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode())
-                .in(PmsProduceOrder::getProductionLineId,productLineIds));
-        SteccnTableAssertUtil.notEmpty(pmsProduceOrderList,"产线下执行中的生产订单为空");
+        List<PmsProduceOrder> pmsProduceOrderList = pmsProduceOrderService.list(new LambdaQueryWrapper<PmsProduceOrder>().eq(PmsProduceOrder::getState, PmManagerConstant.OrderStateEnum.TWO.getCode()).in(PmsProduceOrder::getProductionLineId, productLineIds));
+        SteccnTableAssertUtil.notEmpty(pmsProduceOrderList, "产线下执行中的生产订单为空");
         List<Long> pmsProduceOrderIdList = Lists.newArrayList();
-        pmsProduceOrderList.forEach(tmp->{
+        pmsProduceOrderList.forEach(tmp -> {
             pmsProduceOrderIdList.add(tmp.getId());
         });
         //获得报工数据
@@ -1005,43 +996,43 @@ public class ReportServiceImpl implements ReportService {
         List<BigDecimal> finishNumData = Lists.newArrayList();
         //入库数量data
         List<BigDecimal> receiptNumData = Lists.newArrayList();
-        productLineIds.forEach(tmp->{
+        productLineIds.forEach(tmp -> {
             PmsProduceOrder pmsProduceOrder = pmsProduceOrderList.stream().filter(v -> v.getProductionLineId().equals(tmp)).findFirst().orElse(null);
-            if(Objects.isNull(pmsProduceOrder)){
+            if (Objects.isNull(pmsProduceOrder)) {
                 planNumData.add(BigDecimal.ZERO);
                 finishNumData.add(BigDecimal.ZERO);
                 receiptNumData.add(BigDecimal.ZERO);
-            }else {
-                if(pmsProduceOrder.getQuantity() == null){
+            } else {
+                if (pmsProduceOrder.getQuantity() == null) {
                     planNumData.add(BigDecimal.ZERO);
-                }else {
+                } else {
                     planNumData.add(pmsProduceOrder.getQuantity());
                 }
                 //完工数量
-                if(CollUtil.isNotEmpty(pmsReportWorkList)){
+                if (CollUtil.isNotEmpty(pmsReportWorkList)) {
                     List<PmsReportWork> pmsReportWorkListTmp = pmsReportWorkList.stream().filter(v -> v.getProduceOrderId().equals(pmsProduceOrder.getId())).collect(Collectors.toList());
                     BigDecimal pmsData = BigDecimal.ZERO;
-                    if(CollUtil.isNotEmpty(pmsReportWorkListTmp)){
+                    if (CollUtil.isNotEmpty(pmsReportWorkListTmp)) {
                         for (PmsReportWork v : pmsReportWorkListTmp) {
-                            pmsData = BigDecimalUtil.add(pmsData,v.getProcessQuantity());
+                            pmsData = BigDecimalUtil.add(pmsData, v.getProcessQuantity());
                         }
                     }
                     finishNumData.add(pmsData);
-                }else {
+                } else {
                     finishNumData.add(BigDecimal.ZERO);
                 }
                 //入库数量
-                if(CollUtil.isNotEmpty(pmsCompleteStorageInfoList)){
+                if (CollUtil.isNotEmpty(pmsCompleteStorageInfoList)) {
                     List<PmsCompleteStorageInfo> pmsCompleteStorageInfoListTmp = pmsCompleteStorageInfoList.stream().filter(v -> v.getProduceOrderId().equals(pmsProduceOrder.getId())).collect(Collectors.toList());
                     BigDecimal pmsData = BigDecimal.ZERO;
-                    if(CollUtil.isNotEmpty(pmsCompleteStorageInfoListTmp)){
+                    if (CollUtil.isNotEmpty(pmsCompleteStorageInfoListTmp)) {
                         for (PmsCompleteStorageInfo v : pmsCompleteStorageInfoListTmp) {
-                            pmsData = BigDecimalUtil.add(pmsData,v.getQuantity());
+                            pmsData = BigDecimalUtil.add(pmsData, v.getQuantity());
                         }
                     }
                     receiptNumData.add(pmsData);
 
-                }else {
+                } else {
                     receiptNumData.add(BigDecimal.ZERO);
                 }
             }
@@ -1055,6 +1046,478 @@ public class ReportServiceImpl implements ReportService {
         result.setSeriesDataVO(seriesDataVO);
         //完工数量
         return result;
+    }
+
+    @Override
+    public List<OutputQualityVO> outputQualityJp(OutputQualityDTO dto) {
+        //查询缺陷数据
+        OutputQualityDetailDTO outputQualityDetailDTO = new OutputQualityDetailDTO();
+        outputQualityDetailDTO.setStartDate(dto.getDate());
+        outputQualityDetailDTO.setEndDate(dto.getDate());
+        outputQualityDetailDTO.setProductWorkshopId(dto.getProductWorkshop());
+        List<OutputQualityDetailVO> defectiveData = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listDefectiveData(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        //缺陷数量根据班组拆分
+        Map<String, List<OutputQualityDetailVO>> groupQualityMap = defectiveData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
+        //甲班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> methylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.METHYL_CLASS))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+
+        //乙班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> ethylQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.ETHYL_CLASS))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+        //丙班缺陷数据
+        Map<String, List<OutputQualityDetailVO>> propyleneQualityMap = Optional.ofNullable(groupQualityMap.get(PmManagerConstant.PROPYLENE_CLASS))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.groupingBy(vo -> Objects.toString(vo.getProductOrder(), "")));
+
+        //获取平均厚度数据
+        List<OutputQualityDetailVO> plyData = FeignOptional.of(() -> remoteCheckTaskDetailFeignApi.listPollingDate(outputQualityDetailDTO), FeignConstant.STECCN_QMS_SERVICE_NAME).get();
+        //将平均厚度根据班组拆分
+        Map<String, List<OutputQualityDetailVO>> plyDataMap = plyData.stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getClassGroupName));
+        //甲班
+        Map<String, List<OutputQualityDetailVO>> methylPlyDataMap = plyDataMap.get(PmManagerConstant.METHYL_CLASS).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        //乙班
+        Map<String, List<OutputQualityDetailVO>> ethylPlyDataMap = plyDataMap.get(PmManagerConstant.ETHYL_CLASS).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        //丙班
+        Map<String, List<OutputQualityDetailVO>> propylPlyDataMap = plyDataMap.get(PmManagerConstant.PROPYLENE_CLASS).stream().collect(Collectors.groupingBy(OutputQualityDetailVO::getProductOrder));
+        //获取当班拉引量数据
+        Map<Integer, List<PmsPullForce>> pullForceMap = pmsPullForceService.pullForceDayByWorkshop(dto.getDate(), dto.getProductWorkshop());
+        //获取截至当前日期的当月拉引量数据
+        List<PmsPullForce> pullDataList = pmsPullForceService.monthlyData(dto.getDate(), dto.getProductWorkshop());
+
+        //获取车间下的产线
+        Map<Integer, List<Integer>> integerListMap = FeignOptional.of(() -> remoteOfficeFeign.childWorkshop(dto.getProductWorkshop()), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取产线合集
+        List<Integer> lineIds = integerListMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        //获取产线名称
+        Map<Integer, String> lineNameMap = FeignOptional.of(() -> remoteOfficeFeign.listByIdCh(new HashSet<>(lineIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取报工记录
+        List<PmsReportWorkVO> pmsReportWorkVOS = pmsReportWorkService.listBylineIds(lineIds, dto.getDate());
+        Map<Long, List<PmsReportWorkVO>> reportWorkMap = pmsReportWorkVOS.stream().collect(Collectors.groupingBy(PmsReportWorkVO::getMaterialId));
+        Set<Long> classIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getClassesId).collect(Collectors.toSet());
+        classIds.addAll(pmsReportWorkVOS.stream().map(PmsReportWorkVO::getClassGroupId).collect(Collectors.toSet()));
+        //获取截至当前日期的当月报工数据
+        List<PmsReportWorkVO> reportWorkDataList = pmsReportWorkService.monthlyData(dto.getDate(), lineIds);
+        //获取厚度和生产规格数据
+        List<Long> materialIds = pmsReportWorkVOS.stream().map(PmsReportWorkVO::getMaterialId).collect(Collectors.toList());
+
+        //单位转换
+        List<Long> unitList = allUnit(Lists.newArrayList(PmManagerConstant.MEASURE_UNIT_PIECE, PmManagerConstant.MEASURE_UNIT_TON, PmManagerConstant.MEASURE_UNIT_SM), PmManagerConstant.MEASURE_UNIT);
+        Map<Long, List<SysSpareUnitConversionVO>> unitConvertMap = FeignOptional.of(() -> remoteSpareUnitConvertFeignApi.convert(Sets.newHashSet(materialIds)), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        //获取班次 班组的id
+        Map<Long, String> classMap = FeignOptional.of(() -> remoteDictFeignApi.listByIdCh(classIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        //获取班次的id
+        Set<String> classNames = Sets.newHashSet(PmManagerConstant.FORE_SHIFT, PmManagerConstant.NIGHT_SHIFT);
+        Map<String, Long> classNameMap = FeignOptional.of(() -> remoteDictFeignApi.listByNameCh(classNames), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+
+        Map<Long, EqpSpareVO> materialMap = FeignOptional.of(() -> remoteSpareFeignApi.listById(materialIds), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        List<EqpSpareVO> materialList = new ArrayList<>(materialMap.values());
+        //构建表格模型
+        List<OutputQualityVO> resList = Lists.newArrayList();
+        //构建主表格模型
+        OutputQualityVO outputQualityVO = new OutputQualityVO();
+        outputQualityVO.setType(1);
+        //构建主表格表头
+        List<OutputQualityHeaderVO> columns = Lists.newArrayList();
+        //班次
+        OutputQualityHeaderVO classHeader = new OutputQualityHeaderVO();
+        classHeader.setLabel("班次");
+        classHeader.setProp("classes");
+        columns.add(classHeader);
+        //班组
+        OutputQualityHeaderVO groupHeader = new OutputQualityHeaderVO();
+        groupHeader.setLabel("班组");
+        groupHeader.setProp("classGroup");
+        columns.add(groupHeader);
+        //班长
+        OutputQualityHeaderVO monitorHeader = new OutputQualityHeaderVO();
+        monitorHeader.setLabel("班长");
+        monitorHeader.setProp("monitor");
+        columns.add(monitorHeader);
+        //线别
+        OutputQualityHeaderVO productionLineHeader = new OutputQualityHeaderVO();
+        productionLineHeader.setLabel("线别");
+        productionLineHeader.setProp("productionLine");
+        columns.add(productionLineHeader);
+        //厚度
+        OutputQualityHeaderVO thicknessHeader = new OutputQualityHeaderVO();
+        thicknessHeader.setLabel("厚度");
+        thicknessHeader.setProp("thickness");
+        List<OutputQualityHeaderVO> childThicknessHeader = Lists.newArrayList();
+        OutputQualityHeaderVO thicknessMmHeader = new OutputQualityHeaderVO();
+        thicknessMmHeader.setProp("mm");
+        thicknessMmHeader.setLabel("mm");
+        childThicknessHeader.add(thicknessMmHeader);
+        thicknessHeader.setChildren(childThicknessHeader);
+        columns.add(thicknessHeader);
+        //生产规格
+        OutputQualityHeaderVO productionStandardHeader = new OutputQualityHeaderVO();
+        productionStandardHeader.setLabel("生产规格");
+        productionStandardHeader.setProp("productionStandard");
+        List<OutputQualityHeaderVO> childProductionStandardHeader = Lists.newArrayList();
+        OutputQualityHeaderVO productionStandardMmHeader = new OutputQualityHeaderVO();
+        productionStandardMmHeader.setProp("mm");
+        productionStandardMmHeader.setLabel("mm");
+        childProductionStandardHeader.add(productionStandardMmHeader);
+        productionStandardHeader.setChildren(childProductionStandardHeader);
+        columns.add(productionStandardHeader);
+        //闭口泡
+        OutputQualityHeaderVO shutUpHeader = new OutputQualityHeaderVO();
+        shutUpHeader.setLabel("闭口泡");
+        shutUpHeader.setProp("shutUp");
+        List<OutputQualityHeaderVO> childShutUpHeader = Lists.newArrayList();
+        OutputQualityHeaderVO shutUpUnitHeader = new OutputQualityHeaderVO();
+        shutUpUnitHeader.setProp("shutUpUnit");
+        shutUpUnitHeader.setLabel("个/班");
+        childShutUpHeader.add(shutUpUnitHeader);
+        shutUpHeader.setChildren(childShutUpHeader);
+        columns.add(shutUpHeader);
+        //开口泡
+        OutputQualityHeaderVO startToTalkHeader = new OutputQualityHeaderVO();
+        startToTalkHeader.setLabel("开口泡");
+        startToTalkHeader.setProp("startToTalk");
+        List<OutputQualityHeaderVO> childStartToTalkHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childStartToTalkUnitHeader = new OutputQualityHeaderVO();
+        childStartToTalkUnitHeader.setProp("startToTalkUnit");
+        childStartToTalkUnitHeader.setLabel("个/班");
+        childStartToTalkHeader.add(shutUpUnitHeader);
+        startToTalkHeader.setChildren(childStartToTalkHeader);
+        columns.add(startToTalkHeader);
+        //结石掉落物
+        OutputQualityHeaderVO stoneHeader = new OutputQualityHeaderVO();
+        stoneHeader.setLabel("结石掉落物");
+        stoneHeader.setProp("stone");
+        List<OutputQualityHeaderVO> childStoneHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childStoneUnitHeader = new OutputQualityHeaderVO();
+        childStoneUnitHeader.setProp("stoneUnit");
+        childStoneUnitHeader.setLabel("个/班");
+        childStoneHeader.add(childStoneUnitHeader);
+        startToTalkHeader.setChildren(childStoneHeader);
+        columns.add(startToTalkHeader);
+        //辊印变形
+        OutputQualityHeaderVO variantHeader = new OutputQualityHeaderVO();
+        variantHeader.setLabel("辊印变形");
+        variantHeader.setProp("variant");
+        List<OutputQualityHeaderVO> childVariantHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childVariantUnitHeader = new OutputQualityHeaderVO();
+        childVariantUnitHeader.setProp("variantUnit");
+        childVariantUnitHeader.setLabel("个/班");
+        childVariantHeader.add(childVariantUnitHeader);
+        variantHeader.setChildren(childVariantHeader);
+        columns.add(variantHeader);
+        //总疵点
+        OutputQualityHeaderVO flawHeader = new OutputQualityHeaderVO();
+        flawHeader.setLabel("总疵点");
+        flawHeader.setProp("flaw");
+        List<OutputQualityHeaderVO> childFlawHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childFlawUnitHeader = new OutputQualityHeaderVO();
+        childFlawUnitHeader.setProp("flawUnit");
+        childFlawUnitHeader.setLabel("个/班");
+        childFlawHeader.add(childFlawUnitHeader);
+        flawHeader.setChildren(childFlawHeader);
+        columns.add(flawHeader);
+        //当班拉引量
+        OutputQualityHeaderVO currentClassHeader = new OutputQualityHeaderVO();
+        currentClassHeader.setLabel("当班拉引量");
+        currentClassHeader.setProp("currentClass");
+        List<OutputQualityHeaderVO> childCurrentClassHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childCurrentClassUnitHeader = new OutputQualityHeaderVO();
+        childCurrentClassUnitHeader.setProp("currentClassUnit");
+        childCurrentClassUnitHeader.setLabel("个/班");
+        childCurrentClassHeader.add(childCurrentClassUnitHeader);
+        currentClassHeader.setChildren(childCurrentClassHeader);
+        columns.add(currentClassHeader);
+        //平均厚度
+        OutputQualityHeaderVO averageThicknessHeader = new OutputQualityHeaderVO();
+        averageThicknessHeader.setLabel("平均厚度");
+        averageThicknessHeader.setProp("averageThickness");
+        List<OutputQualityHeaderVO> childAverageThicknessHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childAverageThicknessUnitHeader = new OutputQualityHeaderVO();
+        childAverageThicknessUnitHeader.setProp("averageThicknessUnit");
+        childAverageThicknessUnitHeader.setLabel("吨/班");
+        childAverageThicknessHeader.add(childAverageThicknessUnitHeader);
+        averageThicknessHeader.setChildren(childAverageThicknessHeader);
+        columns.add(averageThicknessHeader);
+        //产量
+        OutputQualityHeaderVO outputHeader = new OutputQualityHeaderVO();
+        outputHeader.setLabel("产量");
+        outputHeader.setProp("output");
+        List<OutputQualityHeaderVO> childOutputHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childOutputUnitHeader = new OutputQualityHeaderVO();
+        childOutputUnitHeader.setProp("outputUnit");
+        childOutputUnitHeader.setLabel("mm");
+        childOutputHeader.add(childOutputUnitHeader);
+        outputHeader.setChildren(childOutputHeader);
+        columns.add(outputHeader);
+        //成品率
+        OutputQualityHeaderVO finishedProductHeader = new OutputQualityHeaderVO();
+        finishedProductHeader.setLabel("成品率");
+        finishedProductHeader.setProp("finishedProduct");
+        List<OutputQualityHeaderVO> childFinishedProductHeader = Lists.newArrayList();
+        OutputQualityHeaderVO childFinishedProductUnitHeader = new OutputQualityHeaderVO();
+        childFinishedProductUnitHeader.setProp("finishedProductUnit");
+        childFinishedProductUnitHeader.setLabel("%");
+        childFinishedProductHeader.add(childFinishedProductUnitHeader);
+        finishedProductHeader.setChildren(childFinishedProductHeader);
+        columns.add(finishedProductHeader);
+        //累计拉引量
+        OutputQualityHeaderVO totalPullHeader = new OutputQualityHeaderVO();
+        totalPullHeader.setLabel("累计拉引量");
+        totalPullHeader.setProp("totalPull");
+        columns.add(totalPullHeader);
+        //累计产量
+        OutputQualityHeaderVO totalOutputHeader = new OutputQualityHeaderVO();
+        totalOutputHeader.setLabel("累计产量");
+        totalOutputHeader.setProp("totalOutput");
+        columns.add(totalOutputHeader);
+        //累计成品率
+        OutputQualityHeaderVO totalFinishedProductHeader = new OutputQualityHeaderVO();
+        totalFinishedProductHeader.setLabel("累计成品率");
+        totalFinishedProductHeader.setProp("totalFinishedProduct");
+        columns.add(totalFinishedProductHeader);
+        //构建主表格数据
+        List<OutputQualityDataVO> outputQualityDataVOS = Lists.newArrayList();
+        if (CollUtil.isNotEmpty(materialList)) {
+            for (EqpSpareVO eqpSpareVO : materialList) {
+                List<PmsReportWorkVO> reportWorks = reportWorkMap.get(eqpSpareVO.getId());
+                for (PmsReportWorkVO reportWork : reportWorks) {
+                    OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
+                    //厚度
+                    outputQualityDataVO.setThickQuantity(eqpSpareVO.getThickQuantity());
+                    String classGroupName = classMap.get(reportWork.getClassGroupId());
+                    //班组
+                    outputQualityDataVO.setClassGroup(classGroupName);
+                    //获取缺陷数据
+                    List<OutputQualityDetailVO> outputQualityDetailVOS = Lists.newArrayList();
+                    //平均厚度
+                    List<OutputQualityDetailVO> plyDataList = new ArrayList<>();
+                    if (PmManagerConstant.METHYL_CLASS_NAME.equals(classGroupName)) {
+                        outputQualityDetailVOS = methylQualityMap.get(reportWork.getProduceOrder());
+                        plyDataList = methylPlyDataMap.get(reportWork.getProduceOrder());
+                    }
+                    if (PmManagerConstant.ETHYL_CLASS_NAME.equals(classGroupName)) {
+                        outputQualityDetailVOS = ethylQualityMap.get(reportWork.getProduceOrder());
+                        plyDataList = ethylPlyDataMap.get(reportWork.getProduceOrder());
+                    }
+                    if (PmManagerConstant.PROPYLENE_CLASS_NAME.equals(classGroupName)) {
+                        outputQualityDetailVOS = propyleneQualityMap.get(reportWork.getProduceOrder());
+                        plyDataList = propylPlyDataMap.get(reportWork.getProduceOrder());
+                    }
+                    //获取厚度以及规格
+                    outputQualityDataVO.setThickQuantity(eqpSpareVO.getThickQuantity());
+                    outputQualityDataVO.setSpecifications(eqpSpareVO.getSpecifications());
+                    BigDecimal quantity = reportWork.getProcessQuantity();
+                    //班次
+                    outputQualityDataVO.setClasses(classMap.get(reportWork.getClassesId()));
+                    Integer shutUp = 0;
+                    Integer startToTalk = 0;
+                    Integer stone = 0;
+                    Integer variant = 0;
+                    BigDecimal averageThickness = BigDecimal.ZERO;
+                    if (CollUtil.isNotEmpty(outputQualityDetailVOS)) {
+                        for (OutputQualityDetailVO outputQualityDetailVO : outputQualityDetailVOS) {
+                            if (PmManagerConstant.QMS_TASK_ITEM_SHUT_UP.equals(outputQualityDetailVO.getDefectName())) {
+                                shutUp = shutUp + outputQualityDetailVO.getDefectNum();
+                            }
+                            if (PmManagerConstant.QMS_TASK_ITEM_START_TO_TALK.equals(outputQualityDetailVO.getDefectName())) {
+                                startToTalk = startToTalk + outputQualityDetailVO.getDefectNum();
+                            }
+                            if (PmManagerConstant.QMS_TASK_ITEM_STONE.equals(outputQualityDetailVO.getDefectName())) {
+                                stone = stone + outputQualityDetailVO.getDefectNum();
+                            }
+                            if (PmManagerConstant.QMS_TASK_ITEM_VARIANT.equals(outputQualityDetailVO.getDefectName())) {
+                                variant = variant + outputQualityDetailVO.getDefectNum();
+                            }
+                        }
+                    }
+                    //平均厚度
+                    if (CollUtil.isNotEmpty(plyDataList)) {
+                        for (OutputQualityDetailVO outputQualityDetailVO : plyDataList) {
+                            averageThickness = averageThickness.add(new BigDecimal(outputQualityDetailVO.getCheckResult()));
+                        }
+                    }
+                    outputQualityDataVO.setAverageThickness(averageThickness);
+                    outputQualityDataVO.setShutUp(shutUp);
+                    outputQualityDataVO.setStartToTalk(startToTalk);
+                    outputQualityDataVO.setStone(stone);
+                    outputQualityDataVO.setVariant(variant);
+                    //总疵点
+                    outputQualityDataVO.setFlaw(shutUp + startToTalk + stone + variant);
+                    //根据报工数量计算产量 吨/平方米
+                    BigDecimal value1 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 1);
+                    BigDecimal value2 = unitConvert(unitList, unitConvertMap, eqpSpareVO.getId(), quantity, 2);
+                    outputQualityDataVO.setOutputTon(value1);
+                    outputQualityDataVO.setOutputSq(value2);
+                    //产线
+                    outputQualityDataVO.setProductLine(lineNameMap.get(reportWork.getProductLineId()));
+                    //当班拉引量
+                    List<PmsPullForce> pmsPullForces = pullForceMap.get(reportWork.getProductLineId());
+                    if (CollUtil.isNotEmpty(pmsPullForces)){
+                        PmsPullForce pmsPullForce = pmsPullForces.stream().collect(Collectors.groupingBy(PmsPullForce::getClassesId)).get(reportWork.getClassesId()).get(0);
+                        outputQualityDataVO.setCurrentClass(pmsPullForce.getQuantity());
+                        //计算成品率
+                        BigDecimal divide = BigDecimalUtil.divide(value1, pmsPullForce.getQuantity(), 4);
+                        BigDecimal hundred = BigDecimal.valueOf(100);
+                        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+                    }
+                    outputQualityDataVOS.add(outputQualityDataVO);
+
+                }
+            }
+
+        }
+        //主表格合计计算
+        if (CollUtil.isNotEmpty(outputQualityDataVOS)) {
+            Map<String, List<OutputQualityDataVO>> collect = outputQualityDataVOS.stream().collect(Collectors.groupingBy(OutputQualityDataVO::getClasses));
+            //早班数据
+            List<OutputQualityDataVO> foreData = collect.get(PmManagerConstant.FORE_SHIFT);
+            //晚班数据
+            List<OutputQualityDataVO> nightData = collect.get(PmManagerConstant.NIGHT_SHIFT);
+            if (CollUtil.isNotEmpty(foreData)) {
+                outputQualityDataVOS.add(total(foreData));
+            }
+            if (CollUtil.isNotEmpty(nightData)) {
+                outputQualityDataVOS.add(total(nightData));
+            }
+            //累计拉引量
+            if (CollUtil.isNotEmpty(pullDataList)) {
+                BigDecimal quantity = BigDecimal.ZERO;
+                BigDecimal nightQuantity = BigDecimal.ZERO;
+                Long classId = classNameMap.get(PmManagerConstant.NIGHT_SHIFT);
+                for (PmsPullForce pmsPullForce : pullDataList) {
+                    quantity = quantity.add(pmsPullForce.getQuantity());
+                    if (dto.getDate().equals(pmsPullForce.getPullForceDate()) && classId.equals(pmsPullForce.getClassesId())) {
+                        //截至日期的夜班拉引量
+                        nightQuantity = nightQuantity.add(pmsPullForce.getQuantity());
+                    }
+                }
+                for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
+                    outputQualityDataVO.setTotalPull(quantity);
+                    if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
+                        outputQualityDataVO.setTotalPull(quantity.subtract(nightQuantity));
+                    }
+                }
+            }
+            //累计产量
+            if (CollUtil.isNotEmpty(reportWorkDataList)) {
+                BigDecimal quantity = BigDecimal.ZERO;
+                BigDecimal nightQuantity = BigDecimal.ZERO;
+                LocalDateTime start = dto.getDate().atStartOfDay();
+                Long classId = classNameMap.get(PmManagerConstant.NIGHT_SHIFT);
+                for (PmsReportWorkVO pmsReportWorkVO : reportWorkDataList) {
+                    quantity = quantity.add(pmsReportWorkVO.getProcessQuantity());
+                    if (LocalDateUtil.isRange(start, pmsReportWorkVO.getStartTime(), pmsReportWorkVO.getEndTime(), false, false)
+                            && classId.equals(pmsReportWorkVO.getClassesId())) {
+                        //截至日期的夜班产量
+                        nightQuantity = nightQuantity.add(pmsReportWorkVO.getProcessQuantity());
+                    }
+                }
+                for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
+                    outputQualityDataVO.setTotalPull(quantity);
+                    if (PmManagerConstant.FORE_SHIFT.equals(outputQualityDataVO.getClasses())) {
+                        outputQualityDataVO.setOutputSq(quantity.subtract(nightQuantity));
+                    }
+                }
+            }
+            //累计成品率
+            for (OutputQualityDataVO outputQualityDataVO : outputQualityDataVOS) {
+                BigDecimal divide = BigDecimalUtil.divide(outputQualityDataVO.getTotalPull(), outputQualityDataVO.getTotalOutput());
+                outputQualityDataVO.setTotalFinishedProduct(divide.multiply(BigDecimal.valueOf(100)));
+            }
+        }
+        outputQualityVO.setColumns(columns);
+        outputQualityVO.setTableList(outputQualityDataVOS);
+        //从表格
+        OutputQualityVO fromTableData = new OutputQualityVO();
+        //构建从表格表头
+        List<OutputQualityHeaderVO> columns1 = Lists.newArrayList();
+        OutputQualityHeaderVO produceLineHeader = new OutputQualityHeaderVO();
+        produceLineHeader.setLabel("产线");
+        produceLineHeader.setProp("produceLineHeader");
+        columns1.add(produceLineHeader);
+        //班次
+        OutputQualityHeaderVO classHeader1 = new OutputQualityHeaderVO();
+        classHeader1.setLabel("班次");
+        classHeader1.setProp("classes1");
+        columns1.add(classHeader1);
+        //时间
+        OutputQualityHeaderVO dateHeader = new OutputQualityHeaderVO();
+        dateHeader.setLabel("时间");
+        dateHeader.setProp("dateHeader");
+        columns1.add(dateHeader);
+        //时长
+        OutputQualityHeaderVO duration = new OutputQualityHeaderVO();
+        duration.setLabel("时长");
+        duration.setProp("duration");
+        columns1.add(duration);
+        //原因
+        OutputQualityHeaderVO cause = new OutputQualityHeaderVO();
+        cause.setLabel("时长");
+        cause.setProp("cause");
+        columns1.add(cause);
+        //备注
+        OutputQualityHeaderVO remark = new OutputQualityHeaderVO();
+        remark.setLabel("备注");
+        remark.setProp("remark");
+        columns1.add(remark);
+        fromTableData.setColumns(columns1);
+        resList.add(outputQualityVO);
+        resList.add(fromTableData);
+        return resList;
+    }
+
+    /**
+     * 早晚班数据合计
+     */
+    private OutputQualityDataVO total(List<OutputQualityDataVO> data) {
+
+        int size = data.stream().map(OutputQualityDataVO::getProductLine).distinct().collect(Collectors.toSet()).size();
+        Integer shutUp = 0;
+        Integer startToTalk = 0;
+        Integer stone = 0;
+        Integer variant = 0;
+        BigDecimal averageThickness = BigDecimal.ZERO;
+        BigDecimal currentClass = BigDecimal.ZERO;
+        BigDecimal outputTon = BigDecimal.ZERO;
+        BigDecimal outputSq = BigDecimal.ZERO;
+        BigDecimal finishedProduct = BigDecimal.ZERO;
+        for (OutputQualityDataVO foreDatum : data) {
+            shutUp = shutUp + foreDatum.getShutUp();
+            startToTalk = startToTalk + foreDatum.getStartToTalk();
+            stone = stone + foreDatum.getStone();
+            variant = variant + foreDatum.getVariant();
+            if (Objects.nonNull(foreDatum.getCurrentClass())){
+                currentClass = currentClass.add(foreDatum.getCurrentClass());
+            }
+            averageThickness = averageThickness.add(foreDatum.getAverageThickness());
+            outputTon = outputTon.add(foreDatum.getOutputSq());
+            outputSq = outputSq.add(foreDatum.getOutputSq());
+        }
+        OutputQualityDataVO outputQualityDataVO = new OutputQualityDataVO();
+        outputQualityDataVO.setType(1);
+        outputQualityDataVO.setShutUp(shutUp);
+        outputQualityDataVO.setStartToTalk(startToTalk);
+        outputQualityDataVO.setStone(stone);
+        outputQualityDataVO.setVariant(variant);
+        outputQualityDataVO.setFlaw(shutUp + startToTalk + stone + variant);
+        if (BigDecimal.ZERO.compareTo(currentClass)==0) {
+            outputQualityDataVO.setCurrentClass(null);
+        }else {
+            outputQualityDataVO.setCurrentClass(currentClass);
+        }
+        outputQualityDataVO.setAverageThickness(averageThickness.divide(new BigDecimal(size)));
+        BigDecimal divide = BigDecimalUtil.divide(outputTon, currentClass, 4);
+        BigDecimal hundred = BigDecimal.valueOf(100);
+        outputQualityDataVO.setFinishedProduct(BigDecimalUtil.multiply(divide, hundred));
+        outputQualityDataVO.setClasses(data.get(0).getClasses());
+        outputQualityDataVO.setClassGroup(data.get(0).getClassGroup());
+        return outputQualityDataVO;
     }
 
     /**
@@ -1082,8 +1545,8 @@ public class ReportServiceImpl implements ReportService {
      *
      * @param classesId     班次
      * @param classCountMap 统计map
-     * @param value1  数据1
-     * @param value2 数据2
+     * @param value1        数据1
+     * @param value2        数据2
      */
     private void countIn(Long classesId, Map<Long, Map<Integer, BigDecimal>> classCountMap, BigDecimal value1, BigDecimal value2) {
         BigDecimalUtil.biAccumulate(classCountMap, -1L, 0, value1);
@@ -1113,7 +1576,7 @@ public class ReportServiceImpl implements ReportService {
             classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(4)));
             classModuleList.add(BigDecimalUtil.format(classCountMap.get(pmProcess.getId()).get(5)));
             BigDecimal divide = BigDecimalUtil.divide(classCountMap.get(pmProcess.getId()).get(2), classCountMap.get(pmProcess.getId()).get(0));
-            classModuleList.add(BigDecimalUtil.format(BigDecimalUtil.multiply(divide,BigDecimalUtil.HUNDRED)));
+            classModuleList.add(BigDecimalUtil.format(BigDecimalUtil.multiply(divide, BigDecimalUtil.HUNDRED)));
             classCountModuleList.add(new FurtherValueStrVO(classModuleList));
             if (i == 0) {
                 firstTotal = rate;
@@ -1161,7 +1624,7 @@ public class ReportServiceImpl implements ReportService {
      *
      * @param countMap    求和map
      * @param pmProcessId 工序主键
-     * @param valueList 数据集合
+     * @param valueList   数据集合
      */
     private void pmRowCount(Map<Long, Map<Integer, BigDecimal>> countMap, Long pmProcessId, List<BigDecimal> valueList) {
         for (int i = 0; i < 7; i++) {
@@ -1225,7 +1688,7 @@ public class ReportServiceImpl implements ReportService {
             //获取班组信息-甲班 乙班 丙班 组成map
             SysDictDTO sysDictDTO = new SysDictDTO();
             sysDictDTO.setType(PmManagerConstant.SYS_TEAM);
-            Map<String, SysDictVO> sysDictMap = FeignOptional.of(()->remoteDictFeignApi.listByCode(sysDictDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+            Map<String, SysDictVO> sysDictMap = FeignOptional.of(() -> remoteDictFeignApi.listByCode(sysDictDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
             //数据字典数据对应
             Map<Long, SysDictVO> dictMap = Maps.newHashMap();
             sysDictMap.forEach((k, v) -> dictMap.put(v.getId(), v));
@@ -1270,21 +1733,20 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 获取报工信息
+     *
      * @param productLineIdList
      * @param dateRangeList
      * @return
      */
     private List<PmsReportWork> getReportWorkList(Set<Integer> productLineIdList, List<LocalDateTime> dateRangeList) {
-        return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>()
-                .lambda().in(PmsReportWork::getProductLineId, productLineIdList)
-                .ge(PmsReportWork::getCreateTime, dateRangeList.get(0))
-                .le(PmsReportWork::getCreateTime, dateRangeList.get(1)));
+        return pmsReportWorkService.list(new QueryWrapper<PmsReportWork>().lambda().in(PmsReportWork::getProductLineId, productLineIdList).ge(PmsReportWork::getCreateTime, dateRangeList.get(0)).le(PmsReportWork::getCreateTime, dateRangeList.get(1)));
     }
 
     /**
      * 获取产线统计
+     *
      * @param productLineList 产线集合
-     * @param dateRangeList 日期集合
+     * @param dateRangeList   日期集合
      * @return
      */
     private OutputCountVO productLineCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
@@ -1304,28 +1766,25 @@ public class ReportServiceImpl implements ReportService {
         outputCountVO.setDataList(outputCountListVOList);
 
         //x轴对应的报工 key-甲乙丙班 value 【key-产线 value-报工集合】
-        Map<Long,Map<Integer,Set<Long>>> xReportMap = Maps.newHashMap();
+        Map<Long, Map<Integer, Set<Long>>> xReportMap = Maps.newHashMap();
         //报工对应拉引量
-        Map<Long,String> reportPfMap = Maps.newHashMap();
+        Map<Long, String> reportPfMap = Maps.newHashMap();
         pmsReportWorkList.forEach(ele -> {
             LocalDate classDate = LocalDateUtil.getClassDate(ele.getStartTime(), Boolean.FALSE);
             reportPfMap.put(ele.getId(), classDate + "," + ele.getProductLineId() + "," + ele.getClassesId());
         });
         //根据报工的信息获取拉引量
-        Map<String,BigDecimal> pullForceMap = pmsPullForceService.getPullForce(Sets.newHashSet(reportPfMap.values()));
+        Map<String, BigDecimal> pullForceMap = pmsPullForceService.getPullForce(Sets.newHashSet(reportPfMap.values()));
 
         //遍历班组，甲乙丙班
         for (SysDictVO sysDictVO : sysDictVOList) {
             //获取产量数据
-            OutputCountListVO reportWork = getReportWork(sysDictVO, pmsReportWorkList, productLineList,xReportMap);
+            OutputCountListVO reportWork = getReportWork(sysDictVO, pmsReportWorkList, productLineList, xReportMap);
             outputCountListVOList.add(reportWork);
         }
 
         //获取入库数
-        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList)
-                , dateRangeList.get(0)
-                , dateRangeList.get(1)
-                , PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode());
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList), dateRangeList.get(0), dateRangeList.get(1), PmReportConstant.DataGaugeTypeEnum.PRODUCT_LINE.getCode());
         for (SysDictVO sysDictVO : sysDictVOList) {
             OutputCountListVO listVO = new OutputCountListVO();
             List<BigDecimal> quantityList = new ArrayList<>();
@@ -1375,8 +1834,9 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 班组统计
+     *
      * @param productLineList 产线集合
-     * @param dateRangeList 日期集合
+     * @param dateRangeList   日期集合
      * @return
      */
     private OutputCountVO classGroupCount(List<SysOfficeVO> productLineList, List<LocalDateTime> dateRangeList) {
@@ -1414,10 +1874,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         //获取入库数
-        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList)
-                , dateRangeList.get(0)
-                , dateRangeList.get(1)
-                , PmReportConstant.DataGaugeTypeEnum.CLASS_GROUP.getCode());
+        List<CompleteStorageCountVO> completeStorageCount = pmsProduceOrderMapper.selectCompleteStorageCount(new ArrayList<>(productLineIdList), dateRangeList.get(0), dateRangeList.get(1), PmReportConstant.DataGaugeTypeEnum.CLASS_GROUP.getCode());
 
         for (SysOfficeVO sysOfficeVO : productLineList) {
             OutputCountListVO listVO = new OutputCountListVO();
@@ -1457,25 +1914,26 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 获取报工的产量信息
-     * @param sysDictVO 班组字典
+     *
+     * @param sysDictVO         班组字典
      * @param pmsReportWorkList 报工数据集合
-     * @param productLineList 产线集合
-     * @param xReportMap 班组 + 产线 -> 报工id集合
+     * @param productLineList   产线集合
+     * @param xReportMap        班组 + 产线 -> 报工id集合
      * @return
      */
-    private OutputCountListVO getReportWork(SysDictVO sysDictVO, List<PmsReportWork> pmsReportWorkList, List<SysOfficeVO> productLineList,Map<Long,Map<Integer,Set<Long>>> xReportMap) {
+    private OutputCountListVO getReportWork(SysDictVO sysDictVO, List<PmsReportWork> pmsReportWorkList, List<SysOfficeVO> productLineList, Map<Long, Map<Integer, Set<Long>>> xReportMap) {
         OutputCountListVO listVO = new OutputCountListVO();
         List<BigDecimal> quantityList = new ArrayList<>();
         listVO.setDataType("产量");
         listVO.setDataName(sysDictVO.getName());
-        Map<Integer,Set<Long>> lineReportWorkMap = Maps.newHashMap();
+        Map<Integer, Set<Long>> lineReportWorkMap = Maps.newHashMap();
         xReportMap.put(sysDictVO.getId(), lineReportWorkMap);
         //根据班组过滤出结果集
         List<PmsReportWork> workFilterList = pmsReportWorkList.stream().filter(reportWork -> sysDictVO.getId().equals(reportWork.getClassGroupId())).collect(Collectors.toList());
         for (SysOfficeVO sysOfficeVO : productLineList) {
             List<PmsReportWork> reportWorkList = workFilterList.stream().filter(pmsReportWork -> sysOfficeVO.getId().equals(pmsReportWork.getProductLineId())).collect(Collectors.toList());
             BigDecimal sumQuantity = BigDecimal.ZERO;
-            lineReportWorkMap.put(sysOfficeVO.getId(),Sets.newHashSet());
+            lineReportWorkMap.put(sysOfficeVO.getId(), Sets.newHashSet());
             for (PmsReportWork pmsReportWork : reportWorkList) {
                 lineReportWorkMap.get(sysOfficeVO.getId()).add(pmsReportWork.getId());
                 sumQuantity = BigDecimalUtil.add(sumQuantity, pmsReportWork.getProcessQuantity());
@@ -1504,7 +1962,7 @@ public class ReportServiceImpl implements ReportService {
         //班次分组map
         Map<Long, List<EnergyGroupListVO>> classGroupDataMap = energyGroupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getClassGroupId));
 
-        Map<String,BigDecimal> pullForceMap = Maps.newHashMap();
+        Map<String, BigDecimal> pullForceMap = Maps.newHashMap();
         //存放报工对应的日期集合
         Map<Long, String> reportWorkDateMap = Maps.newHashMap();
         energyGroupList.forEach(ele -> {
@@ -1513,7 +1971,7 @@ public class ReportServiceImpl implements ReportService {
         });
 
         //x轴上每个点是由多少报工id渲染出来的
-        Map<Integer,Set<Long>> dxReportWorkMap = Maps.newHashMap();
+        Map<Integer, Set<Long>> dxReportWorkMap = Maps.newHashMap();
 
         //定义变量，水电油气
         EnergySeriesDataVO seriesDataVO = new EnergySeriesDataVO();
@@ -1526,10 +1984,10 @@ public class ReportServiceImpl implements ReportService {
             //获取产线分组的数据，也许会为空
             List<EnergyGroupListVO> classGroupList = classGroupDataMap.get(sysDictVO.getId());
             //0耗电量 1耗水量 2耗油量 3耗气量
-            electric.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.ELECTRIC, 0, classGroupList,dxReportWorkMap));
-            water.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.WATER, 1, classGroupList,dxReportWorkMap));
-            oil.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.OIL, 2, classGroupList,dxReportWorkMap));
-            gas.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.GAS, 3, classGroupList,dxReportWorkMap));
+            electric.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.ELECTRIC, 0, classGroupList, dxReportWorkMap));
+            water.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.WATER, 1, classGroupList, dxReportWorkMap));
+            oil.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.OIL, 2, classGroupList, dxReportWorkMap));
+            gas.add(countClassGroupGauge(productLineList, sysDictVO.getName(), PmReportConstant.GAS, 3, classGroupList, dxReportWorkMap));
         }
 
         seriesDataVO.setElectric(electric);
@@ -1589,7 +2047,7 @@ public class ReportServiceImpl implements ReportService {
         //产线分组map
         Map<Integer, List<EnergyGroupListVO>> productLineMap = energyGroupList.stream().collect(Collectors.groupingBy(EnergyGroupListVO::getProductLineId));
 
-        Map<String,BigDecimal> pullForceMap = Maps.newHashMap();
+        Map<String, BigDecimal> pullForceMap = Maps.newHashMap();
         //存放报工对应的日期集合
         Map<Long, String> reportWorkDateMap = Maps.newHashMap();
         energyGroupList.forEach(ele -> {
@@ -1598,7 +2056,7 @@ public class ReportServiceImpl implements ReportService {
         });
 
         //x轴上每个点是由多少报工id渲染出来的
-        Map<Long,Set<Long>> dxReportWorkMap = Maps.newHashMap();
+        Map<Long, Set<Long>> dxReportWorkMap = Maps.newHashMap();
 
         //遍历
         List<String> dxList = Lists.newArrayList();
@@ -1616,10 +2074,10 @@ public class ReportServiceImpl implements ReportService {
             //获取产线分组的数据，也许会为空
             List<EnergyGroupListVO> productGroup = productLineMap.get(productLine.getId());
             //0耗电量 1耗水量 2耗油量 3耗气量
-            electric.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.ELECTRIC, 0, productGroup,dxReportWorkMap));
-            water.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.WATER, 1, productGroup,dxReportWorkMap));
-            oil.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.OIL, 2, productGroup,dxReportWorkMap));
-            gas.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.GAS, 3, productGroup,dxReportWorkMap));
+            electric.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.ELECTRIC, 0, productGroup, dxReportWorkMap));
+            water.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.WATER, 1, productGroup, dxReportWorkMap));
+            oil.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.OIL, 2, productGroup, dxReportWorkMap));
+            gas.add(countProductLineGauge(sysDictVOList, productLine.getOfficeName(), PmReportConstant.GAS, 3, productGroup, dxReportWorkMap));
         }
         seriesDataVO.setElectric(electric);
         seriesDataVO.setWater(water);
@@ -1665,6 +2123,7 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 产线求和-用于汇总能耗统计
+     *
      * @param data data
      * @return
      */
@@ -1694,8 +2153,7 @@ public class ReportServiceImpl implements ReportService {
      * @param dxReportWorkMap
      * @return
      */
-    private EnergyCountListVO countProductLineGauge(List<SysDictVO> sysDictVOList, String
-            productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup, Map<Long, Set<Long>> dxReportWorkMap) {
+    private EnergyCountListVO countProductLineGauge(List<SysDictVO> sysDictVOList, String productLineName, String typeName, Integer type, List<EnergyGroupListVO> productGroup, Map<Long, Set<Long>> dxReportWorkMap) {
         EnergyCountListVO vo = new EnergyCountListVO();
         vo.setName(productLineName);
         vo.setStack(typeName);
@@ -1732,8 +2190,7 @@ public class ReportServiceImpl implements ReportService {
      * @param productGroup    累计分组结果
      * @return
      */
-    private EnergyCountListVO countClassGroupGauge(List<SysOfficeVO> productLineList, String name, String
-            typeName, Integer type, List<EnergyGroupListVO> productGroup,Map<Integer,Set<Long>> dxReportWorkMap) {
+    private EnergyCountListVO countClassGroupGauge(List<SysOfficeVO> productLineList, String name, String typeName, Integer type, List<EnergyGroupListVO> productGroup, Map<Integer, Set<Long>> dxReportWorkMap) {
         EnergyCountListVO vo = new EnergyCountListVO();
         vo.setName(name);
         vo.setStack(typeName);
@@ -1769,7 +2226,7 @@ public class ReportServiceImpl implements ReportService {
         SysOfficeParentDTO sysOfficeParentDTO = new SysOfficeParentDTO();
         sysOfficeParentDTO.setId(workShopId);
         sysOfficeParentDTO.setOfficeType(PmManagerConstant.STATE_9);
-        return FeignOptional.of(()->remoteOfficeFeign.listByParentId(sysOfficeParentDTO),FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
+        return FeignOptional.of(() -> remoteOfficeFeign.listByParentId(sysOfficeParentDTO), FeignConstant.STECCN_PLATFORM_SERVICE_NAME).get();
     }
 
 }
