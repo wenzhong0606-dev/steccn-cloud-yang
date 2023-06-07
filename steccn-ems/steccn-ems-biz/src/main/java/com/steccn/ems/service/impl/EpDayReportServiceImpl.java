@@ -20,6 +20,7 @@ import com.steccn.platform.feign.RemoteSysConfigurationFeignApi;
 import com.steccn.pms.feign.RemoteReportWorkFeignApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -51,7 +52,7 @@ public class EpDayReportServiceImpl implements EpDayReportService {
     private final RemoteSysConfigurationFeignApi remoteSysConfigurationFeignApi;
 
     @Override
-//    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
+    @Cacheable(cacheNames = "ems_count#86400", unless = "#flag == false")
     public EpDayReportCountVO count(LocalDate start, boolean flag) {
         EpDayReportCountVO resVo = new EpDayReportCountVO();
         //获取一个月最后一天--如果当前日期大于end，则只显示到end，否则至显示到当前日期
@@ -99,8 +100,8 @@ public class EpDayReportServiceImpl implements EpDayReportService {
                 //获取能源类型
                 EpDayReportCountRowVO heatPowerRow = heatPowerRow(start, end, elecEnergy);
                 //插入合计行
-                EpDayReportCountRowVO sumRow = countRow(elecList, elecEnergy);
                 elecList.add(heatPowerRow);
+                EpDayReportCountRowVO sumRow = countRow(elecList, elecEnergy);
                 elecList.add(sumRow);
                 return elecList;
             } catch (Exception e) {
