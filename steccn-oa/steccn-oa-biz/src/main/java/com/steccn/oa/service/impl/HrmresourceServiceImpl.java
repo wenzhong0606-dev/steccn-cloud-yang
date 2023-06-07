@@ -71,6 +71,22 @@ public class HrmresourceServiceImpl extends ServiceImpl<HrmresourceMapper, Hrmre
     }
 
     @Override
+    public List<OaUserIdAndName> getUserByDepartmentIdAndJobTitle(Integer departmentId, Integer jobTitle) {
+        List<OaUserIdAndName> userList = Lists.newArrayList();
+        List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>()
+                .eq(Hrmresource::getDepartmentid,departmentId).eq(Hrmresource::getJobtitle,jobTitle));
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(hrmresource -> {
+                OaUserIdAndName oaUserIdAndName = new OaUserIdAndName();
+                oaUserIdAndName.setName(hrmresource.getLastname());
+                oaUserIdAndName.setId(hrmresource.getId());
+                userList.add(oaUserIdAndName);
+            });
+        }
+        return userList;
+    }
+
+    @Override
     public Map<Long, String> listByIdCh(List<Long> idList) {
         Map<Long, String> map = Maps.newHashMap();
         List<Hrmresource> list = list(new LambdaQueryWrapper<Hrmresource>().in(Hrmresource::getId, idList));

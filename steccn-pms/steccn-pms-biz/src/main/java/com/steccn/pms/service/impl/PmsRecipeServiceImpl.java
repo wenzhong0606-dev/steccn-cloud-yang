@@ -623,6 +623,25 @@ public class PmsRecipeServiceImpl extends ServiceImpl<PmsRecipeMapper, PmsRecipe
                 }
             }
         }
+
+        //岗位为二线配料副段长
+        OaHrmDTO hrm = new OaHrmDTO();
+        hrm.setJobtitle(PmManagerConstant.PEILIAO_DUANZHANG);
+        List<OaEmpVO> oaEmpVOS = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitle(hrm), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if (CollUtil.isNotEmpty(oaEmpVOS)) {
+            oaEmpVOS.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
+        }
+
+        //部门为“原料车间”且岗位为“副主任”的人员
+        List<OaUserIdAndName> oaUserIdAndNames = FeignOptional.of(() -> oaInfoService.getUserByIdByJobTitleAndDepartmentId(PmManagerConstant.DEPARTMENT_YUANLIAO_ID, PmManagerConstant.DIRECTOR_ID), FeignConstant.STECCN_OA_SERVICE_NAME).get();
+        if(CollUtil.isNotEmpty(oaUserIdAndNames)){
+            oaUserIdAndNames.forEach(tmp -> {
+                longIds.add(tmp.getId().longValue());
+            });
+        }
+
         if (CollUtil.isNotEmpty(longIds)) {
             SysMsgSendDTO sysMsgDTO = new SysMsgSendDTO();
             sysMsgDTO.setType(SysMsgConstant.MsgTypeEnum.RECIPE_VERSION.getCode());
