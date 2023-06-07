@@ -154,12 +154,20 @@ public class BigDecimalUtil {
 
     /**
      * 将val1 - val2
+     * null -  null = null
+     * x    -  null = x
+     * null -  y = -y
+     * x    -  y = z
      *
      * @param val1 val1
      * @param val2 val2
      * @return 和
      */
     public static BigDecimal subtract(BigDecimal val1, BigDecimal val2, int scale) {
+        //如果2个值为null，则返回null
+        if (Objects.isNull(val1) && Objects.isNull(val2)) {
+            return null;
+        }
         if (Objects.isNull(val1)) {
             val1 = BigDecimal.ZERO;
         }
